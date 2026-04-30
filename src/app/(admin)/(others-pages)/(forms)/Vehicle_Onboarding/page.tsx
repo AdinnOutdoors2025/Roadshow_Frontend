@@ -376,6 +376,7 @@ export default function VehicleOnboardingForm() {
                     { value: "Inactive", label: "Inactive" },
                   ]}
                   placeholder="Active"
+                        onChange={handleBasicInfoChange("status")}
                   className="dark:bg-dark-900"
                 />
                 <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
