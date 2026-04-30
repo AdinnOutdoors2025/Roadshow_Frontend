@@ -30,7 +30,7 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    subItems: [{ name: "Roadshow", path: "/", pro: false }],
   },
   {
     icon: <CalenderIcon />,
@@ -44,10 +44,15 @@ const navItems: NavItem[] = [
   },
 
   {
-    name: "Forms",
+    name: "Vehicles",
     icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+    subItems: [{ name: "Onboarding", path: "/Vehicle_Onboarding", pro: false }],
   },
+  // {
+  //   name: "Forms",
+  //   icon: <ListIcon />,
+  //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+  // },
   {
     name: "Tables",
     icon: <TableIcon />,
@@ -313,14 +318,15 @@ const AppSidebar: React.FC = () => {
             <>
               <Image
                 className="dark:hidden"
-                src="/images/logo/logo.svg"
+                src="/images/logo/AdinnLogo.png"
                 alt="Logo"
                 width={150}
                 height={40}
               />
               <Image
                 className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
+                src="/images/logo/AdinnLogo.png"
+                style={{background:'white'}}
                 alt="Logo"
                 width={150}
                 height={40}
@@ -328,7 +334,7 @@ const AppSidebar: React.FC = () => {
             </>
           ) : (
             <Image
-              src="/images/logo/logo-icon.svg"
+              src="/images/Favicons/adinnIcon32x32.jpg"
               alt="Logo"
               width={32}
               height={32}
@@ -348,7 +354,7 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
+                  ""
                 ) : (
                   <HorizontaLDots />
                 )}

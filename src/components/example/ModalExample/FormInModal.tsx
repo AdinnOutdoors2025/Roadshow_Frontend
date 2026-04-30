@@ -47,7 +47,7 @@ export default function FormInModal() {
 
             <div className="col-span-1">
               <Label>Phone</Label>
-              <Input type="text" placeholder="+09 363 398 46" />
+              <Input type="text" placeholder="+91 7727748990" />
             </div>
 
             <div className="col-span-1 sm:col-span-2">
