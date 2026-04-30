@@ -1,95 +1,3 @@
-// import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-// import CheckboxComponents from "@/components/form/form-elements/CheckboxComponents";
-// import DefaultInputs from "@/components/form/form-elements/DefaultInputs";
-// import DropzoneComponent from "@/components/form/form-elements/DropZone";
-// import FileInputExample from "@/components/form/form-elements/FileInputExample";
-// import InputGroup from "@/components/form/form-elements/InputGroup";
-// import InputStates from "@/components/form/form-elements/InputStates";
-// import RadioButtons from "@/components/form/form-elements/RadioButtons";
-// import SelectInputs from "@/components/form/form-elements/SelectInputs";
-// import TextAreaInput from "@/components/form/form-elements/TextAreaInput";
-// import ToggleSwitch from "@/components/form/form-elements/ToggleSwitch";
-// import { Metadata } from "next";
-// import React from "react";
-// import Label from '../../../../../components/form/Label';
-// import Input from '../../../../../components/form/input/InputField';
-// import ComponentCard from '../../../../../components/common/ComponentCard';
-// import Select from '../../../../../components/form/form-elements/SelectInputs';
-// // import { ChevronDownIcon, EyeCloseIcon, EyeIcon, TimeIcon } from '../../../icons';
-
-// export const metadata: Metadata = {
-//   title: "Onboarding",
-//   description:
-//     "Roadshow Vehicle Onboarding",
-// };
-
-// export default function FormElements() {
-
-//    const cityOptions = [
-//     { value: "Chennai", label: "Chennai" },
-//     { value: "Madurai", label: "Madurai" },
-//     { value: "Coimbatore", label: "Development" },
-//   ];
-//   const handleCitySelectChange = (value: string) => {
-//     console.log("Selected value:", value);
-//   };
-//   return (
-//     <div>
-//       <PageBreadcrumb pageTitle="Vehicle Onboarding Management" />
-//       <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
-//         <div className="space-y-6">
-//           <ComponentCard title="1. Basic Information">
-//             <div>
-//               <div className="vehicleInfoMain" style={{ display: 'flex', justifyContent: 'space-around' }}>
-//                 <div>
-//                   <Label>Vehicle ID</Label>
-//                   <Input type="text" placeholder="VH-2S-001" />
-//                 </div>
-//                 <div>
-//                   <Label>Vehicle Name / Code </Label>
-//                   <Input type="text" placeholder="Single-side LED vehicles" />
-//                 </div>
-
-//                 <div>
-//                   <Label>Registeration Number</Label>
-//                   <Input type="text" placeholder="TN 01 AB 3456" />
-//                 </div>
-
-//                 <div>
-//                   <Label>Select Input</Label>
-//                   <div className="relative">
-//                     <Select
-//                       cityOptions={cityOptions}
-//                       placeholder="Select an option"
-//                       onChange={handleCitySelectChange}
-//                       className="dark:bg-dark-900"
-//                     />
-//                     <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
-//                       <ChevronDownIcon />
-//                     </span>
-//                   </div>
-//                 </div>
-
-//               </div>
-//             </div>
-//             {/* <DefaultInputs />
-//           <SelectInputs />
-//           <TextAreaInput />
-//           <InputStates /> */}
-//           </ComponentCard>
-//         </div>
-//         <div className="space-y-6">
-//           <InputGroup />
-//           <FileInputExample />
-//           <CheckboxComponents />
-//           <RadioButtons />
-//           <ToggleSwitch />
-//           <DropzoneComponent />
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
 "use client";
 
 import React, { useState } from "react";
@@ -174,8 +82,6 @@ export default function VehicleOnboardingForm() {
     nextServiceDueDate: "",
     insuranceExpiryDate: "",
     pollutionCertificateExpiryDate: "",
-    // Manufacturing Year ,   Last Service Date , Next Service Due Date , Insurance Expiry Date , Pollution Certificate Expiry
-
   });
 
   const cityOptions = [
@@ -186,7 +92,7 @@ export default function VehicleOnboardingForm() {
   const permitOptions = [
     { value: "Local", label: "Local" },
     { value: "State", label: "State" },
-    { value: "National", label: "Coimbatore" },
+    { value: "National", label: "National" },
   ];
 
   const vehicleTypeOptions = [
@@ -260,7 +166,7 @@ export default function VehicleOnboardingForm() {
     { value: "Off-Road", label: "Off-Road" },
   ];
 
-  // Fixed: Direct handlers instead of generic function
+  // Handlers
   const handleBasicInfoChange = (field: string) => (value: string) => {
     setBasicInfo((prev) => ({ ...prev, [field]: value }));
   };
@@ -318,13 +224,11 @@ export default function VehicleOnboardingForm() {
             <div>
               <Label>Vehicle ID <span style={{ color: 'red' }}>*</span></Label>
               <Input
-                type="text" value={basicInfo.vehicleId}
+                type="text"
+                defaultValue={basicInfo.vehicleId}
                 onChange={handleInputChange(setBasicInfo, "vehicleId")}
                 placeholder="VH-2S-001"
               />
-              {/* <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Auto generated
-              </p> */}
             </div>
 
             <div>
@@ -346,7 +250,7 @@ export default function VehicleOnboardingForm() {
               <Label>Vehicle Name / Code <span style={{ color: 'red' }}>*</span></Label>
               <Input
                 type="text"
-                value={basicInfo.vehicleName}
+                defaultValue={basicInfo.vehicleName}
                 onChange={handleInputChange(setBasicInfo, "vehicleName")}
                 placeholder="e.g. Single-side LED vehicles"
               />
@@ -355,7 +259,7 @@ export default function VehicleOnboardingForm() {
               <Label>Registration Number <span style={{ color: 'red' }}>*</span></Label>
               <Input
                 type="text"
-                value={basicInfo.registrationNumber}
+                defaultValue={basicInfo.registrationNumber}
                 onChange={handleInputChange(setBasicInfo, "registrationNumber")}
                 placeholder="TN 01 AB 1234"
               />
@@ -375,10 +279,6 @@ export default function VehicleOnboardingForm() {
               </div>
             </div>
 
-
-
-
-
             <div>
               <Label>Permit Type <span style={{ color: 'red' }}>*</span></Label>
               <div className="relative">
@@ -393,7 +293,6 @@ export default function VehicleOnboardingForm() {
                 </span>
               </div>
             </div>
-
 
             <div>
               <Label>Model / Configuration <span style={{ color: 'red' }}>*</span></Label>
@@ -452,7 +351,6 @@ export default function VehicleOnboardingForm() {
                 </span>
               </div>
             </div>
-
 
             <div>
               <Label>Manufacturing / Vendor</Label>
@@ -597,7 +495,7 @@ export default function VehicleOnboardingForm() {
               </div>
             </div>
             <div>
-              <Label>Generator Capactiy</Label>
+              <Label>Generator Capacity</Label>
               <Input
                 type="text"
                 placeholder="e.g. 1000Watts"
@@ -622,7 +520,6 @@ export default function VehicleOnboardingForm() {
             </div>
           </div>
         </ComponentCard>
-
 
         {/* Section 3: Pricing & Charges */}
         <ComponentCard title="3. Pricing & Charges">
@@ -660,14 +557,13 @@ export default function VehicleOnboardingForm() {
             </div>
 
             <div>
-              <Label>Extra  Charges (₹ / Km) <span style={{ color: 'red' }}>*</span></Label>
+              <Label>Extra Charges (₹ / Km) <span style={{ color: 'red' }}>*</span></Label>
               <Input
                 type="text"
                 placeholder="e.g. 12"
                 onChange={handleInputChange(setVehicleDetails, "extraKmPrice")}
               />
             </div>
-
 
             <div>
               <Label>Average Booking Hours <span style={{ color: 'red' }}>*</span></Label>
@@ -679,7 +575,7 @@ export default function VehicleOnboardingForm() {
             </div>
 
             <div>
-              <Label>Extra  Charges (₹ / hr) <span style={{ color: 'red' }}>*</span></Label>
+              <Label>Extra Charges (₹ / hr) <span style={{ color: 'red' }}>*</span></Label>
               <Input
                 type="text"
                 placeholder="e.g. 500"
@@ -688,7 +584,7 @@ export default function VehicleOnboardingForm() {
             </div>
 
             <div>
-              <Label>RTO Charges (₹) </Label>
+              <Label>RTO Charges (₹)</Label>
               <Input
                 type="text"
                 placeholder="e.g. 10,000"
@@ -728,14 +624,11 @@ export default function VehicleOnboardingForm() {
                 onChange={handleInputChange(setPricing, "waitingCharges")}
               />
             </div>
-
           </div>
         </ComponentCard>
 
         {/* Section 4: Media & Description */}
         <ComponentCard title="4. Media & Description">
-          {/* <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"> </div> */}
-          {/* Upload Images Section */}
           <div className="mt-2">
             <Label>Upload Images <span style={{ color: 'red' }}>*</span></Label>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -777,7 +670,7 @@ export default function VehicleOnboardingForm() {
               </div>
             </div>
           </div>
-          <div >
+          <div className="mt-4">
             <Label>Vehicle Description <span style={{ color: 'red' }}>*</span></Label>
             <textarea
               rows={3}
@@ -789,17 +682,9 @@ export default function VehicleOnboardingForm() {
           </div>
         </ComponentCard>
 
-
         {/* Section 5: Maintenance & Lifecycle */}
         <ComponentCard title="5. Maintenance & Lifecycle">
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {/* <div>
-              <Label>Manufacturing Year </Label>
-              <Input
-                type="date"
-                onChange={handleInputChange(setMaintenanceInfo, "manufacturingYr")}
-              />
-            </div> */}
             <div>
               <Label>Manufacturing Year</Label>
               <Input
@@ -815,7 +700,7 @@ export default function VehicleOnboardingForm() {
               />
             </div>
             <div>
-              <Label>Insurance Expiry Date </Label>
+              <Label>Insurance Expiry Date</Label>
               <Input
                 type="date"
                 onChange={handleInputChange(setMaintenanceInfo, "insuranceExpiryDate")}
@@ -828,10 +713,8 @@ export default function VehicleOnboardingForm() {
                 onChange={handleInputChange(setMaintenanceInfo, "pollutionCertificateExpiryDate")}
               />
             </div>
-
           </div>
         </ComponentCard>
-
 
         {/* Section 6: Driver Details */}
         <ComponentCard title="6. Driver Details">
@@ -944,7 +827,7 @@ export default function VehicleOnboardingForm() {
               <Label>Expected Ready Date</Label>
               <Input
                 type="date"
-                value={maintenanceInfo.expectedReadyDate}
+                defaultValue={maintenanceInfo.expectedReadyDate}
                 onChange={handleInputChange(setMaintenanceInfo, "expectedReadyDate")}
                 disabled={maintenanceInfo.maintenanceStatus === "No"}
                 className={maintenanceInfo.maintenanceStatus === "No" ? "opacity-50" : ""}
@@ -955,7 +838,7 @@ export default function VehicleOnboardingForm() {
               <Input
                 type="text"
                 placeholder="Enter maintenance notes (if any)"
-                value={maintenanceInfo.maintenanceNotes}
+                defaultValue={maintenanceInfo.maintenanceNotes}
                 onChange={handleInputChange(setMaintenanceInfo, "maintenanceNotes")}
                 disabled={maintenanceInfo.maintenanceStatus === "No"}
                 className={maintenanceInfo.maintenanceStatus === "No" ? "opacity-50" : ""}
