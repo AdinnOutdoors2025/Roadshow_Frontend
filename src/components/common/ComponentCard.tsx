@@ -27,6 +27,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
             {desc}
           </p>
         )}
+
       </div>
 
       {/* Card Body */}
