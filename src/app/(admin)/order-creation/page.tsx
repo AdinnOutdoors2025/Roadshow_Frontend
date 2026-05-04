@@ -794,9 +794,6 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
               </p>
             </div>
           </div>
-
-         
-          
         </div>
       </div>
     </div>

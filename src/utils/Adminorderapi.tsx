@@ -1,6 +1,4 @@
 
-
-
 import API_BASE from "../../baseurl";
 
 const ADMIN = `${API_BASE}admin/`;
