@@ -42,6 +42,11 @@ const navItems: NavItem[] = [
   //   name: "User Profile",
   //   path: "/profile",
   // },
+   {
+    name: "Order Creation",
+    icon: <ListIcon />,
+    path: "/order-creation"
+  },
     {
     name: "Package Management",
     icon: <ListIcon />,

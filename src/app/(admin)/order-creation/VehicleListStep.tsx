@@ -1,0 +1,132 @@
+"use client";
+// steps/VehicleListStep.tsx
+
+import React, { useState } from "react";
+import { VehicleConfig } from "./AdminOrderForm";
+import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineTruck } from "react-icons/hi2";
+import VehicleFormModal from "./VehicleFormModal";
+
+interface Props {
+  vehicles: VehicleConfig[];
+  onChange: (vehicles: VehicleConfig[]) => void;
+  onNext: () => void;
+  onBack: () => void;
+}
+
+export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: Props) {
+  const [showModal, setShowModal]       = useState(false);
+  const [editingV, setEditingV]         = useState<VehicleConfig | null>(null);
+  const [error, setError]               = useState("");
+
+  const openAdd  = () => { setEditingV(null); setShowModal(true); };
+  const openEdit = (v: VehicleConfig) => { setEditingV(v); setShowModal(true); };
+  const remove   = (id: string) => onChange(vehicles.filter((v) => v.id !== id));
+
+  const handleSave = (v: VehicleConfig) => {
+    onChange(editingV ? vehicles.map((x) => (x.id === v.id ? v : x)) : [...vehicles, v]);
+    setShowModal(false);
+    setEditingV(null);
+    setError("");
+  };
+
+  const handleNext = () => {
+    if (vehicles.length === 0) { setError("At least one vehicle add பண்ணுங்க"); return; }
+    onNext();
+  };
+
+  const grandTotal = vehicles.reduce((s, v) => s + (v.pricing?.totalAmount || 0), 0);
+  const totalGst   = vehicles.reduce((s, v) => s + (v.pricing?.gstAmount || 0), 0);
+  const subTotal   = vehicles.reduce((s, v) => s + (v.pricing?.subtotal || 0), 0);
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Stage 3 · Vehicles</h3>
+        
+        </div>
+        <button onClick={openAdd} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
+          <HiOutlinePlus className="h-3.5 w-3.5 stroke-2" />
+          Add Vehicle
+        </button>
+      </div>
+
+      {vehicles.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 gap-3 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800">
+            <HiOutlineTruck className="h-6 w-6 text-gray-400" />
+          </span>
+          <div className="text-center">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">No vehicles added</p>
+            <p className="text-xs text-gray-400 mt-0.5">Click "Add Vehicle" to configure the first vehicle</p>
+          </div>
+          <button onClick={openAdd} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+            <HiOutlinePlus className="h-4 w-4 stroke-2" />
+            Book 1st Vehicle
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {vehicles.map((v, idx) => (
+            <div key={v.id} className="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600">V{idx + 1}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p>
+                    <p className="text-xs text-gray-400">
+                      {v.fromDate && v.toDate
+                        ? `${v.fromDate} → ${v.toDate} · ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000)}d`
+                        : "Dates not set"}
+                      {v.city ? ` · ${v.city}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {v.pricing && <span className="text-sm font-bold text-gray-800 dark:text-gray-100">₹{v.pricing.totalAmount.toLocaleString()}</span>}
+                  <button onClick={() => openEdit(v)} className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-all dark:border-gray-700 dark:bg-gray-800">
+                    <HiOutlinePencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button onClick={() => remove(v.id)} className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-red-400 hover:bg-red-50 hover:text-red-600 transition-all dark:border-gray-700 dark:bg-gray-800">
+                    <HiOutlineTrash className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {v.campaignType && <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">{v.campaignType}</span>}
+                {v.needPromoter && <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Promoter · {v.promoterType}</span>}
+                {v.quantity > 1 && <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">Qty: {v.quantity}</span>}
+                {!v.pricing && <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600">Pricing pending</span>}
+              </div>
+            </div>
+          ))}
+
+          {/* Order total */}
+          {vehicles.length > 0 && (
+            <div className="rounded-xl border border-blue-100 bg-blue-50/50 dark:border-blue-900/30 dark:bg-blue-900/10 p-4 space-y-1.5">
+              <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-2">Order Total ({vehicles.length} vehicle{vehicles.length > 1 ? "s" : ""})</p>
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300"><span>Subtotal</span><span>₹{subTotal.toLocaleString()}</span></div>
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300"><span>GST (18%)</span><span>₹{totalGst.toLocaleString()}</span></div>
+              <div className="flex justify-between text-base font-bold text-gray-900 dark:text-white border-t border-blue-100 dark:border-blue-900/30 pt-1.5 mt-1"><span>Grand Total</span><span>₹{grandTotal.toLocaleString()}</span></div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+
+      <div className="flex items-center justify-between pt-2">
+        <button onClick={onBack} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          Back
+        </button>
+        <button onClick={handleNext} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+          Review Order
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+        </button>
+      </div>
+
+      {showModal && <VehicleFormModal editing={editingV} onSave={handleSave} onClose={() => { setShowModal(false); setEditingV(null); }} />}
+    </div>
+  );
+}
