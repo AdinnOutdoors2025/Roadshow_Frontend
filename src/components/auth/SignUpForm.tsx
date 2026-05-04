@@ -101,7 +101,7 @@ export default function SignUpForm() {
         saveToken(data.token);
       }
 
-      router.push("/order-creation");
+      router.push("/dashboard");
     } catch (err) {
       setError("Server error. Please try again.");
     } finally {
