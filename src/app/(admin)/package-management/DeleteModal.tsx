@@ -60,3 +60,4 @@ export default function DeleteConfirmModal({ loading, onConfirm, onCancel }: Pro
         </div>
     );
 }
+

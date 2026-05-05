@@ -174,7 +174,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
 
   const handleSave = () => {
     if (!validate()) return;
-    if (!form.pricing) { setPricingError("Pricing-ஐ calculate பண்ண dates, vehicle, quantity check பண்ணுங்க"); return; }
+    if (!form.pricing) { setPricingError("Pricing calculate the dates, vehicle, quantity check "); return; }
     onSave(form);
   };
 

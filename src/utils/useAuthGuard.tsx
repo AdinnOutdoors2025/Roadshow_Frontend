@@ -23,25 +23,28 @@ export function useAuthGuard(): void {
   const router = useRouter();
 
   useEffect(() => {
-    const token = getToken();
+    const token = getToken(); 
 
+   
     if (!token) {
-      router.push("/signin");
+      router.replace("/signin");
       return;
     }
 
     const payload = parseJwt(token);
 
+    
     if (!payload || Date.now() >= payload.exp * 1000) {
       clearToken();
-      router.push("/signin");
+      router.replace("/signin");
       return;
     }
 
+  
     const msLeft = payload.exp * 1000 - Date.now();
     const timer = setTimeout(() => {
       clearToken();
-      router.push("/signin");
+      router.replace("/signin");
     }, msLeft);
 
     return () => clearTimeout(timer);

@@ -30,17 +30,26 @@ export default function CustomerDetailsStep({ data, onChange, onNext }: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="mb-2">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Stage 1 · Customer Basic Details</h3>
-    
-      </div>
+
 
       <FormField label="Customer Name" error={errors.name} required>
         <input type="text" value={data.name} onChange={(e) => set("name", e.target.value)} placeholder="Enter full name" className={inputClass(!!errors.name)} />
       </FormField>
 
       <FormField label="Phone Number" error={errors.phone} required>
-        <input type="tel" value={data.phone} onChange={(e) => set("phone", e.target.value)} placeholder="e.g. 9876543210" className={inputClass(!!errors.phone)} />
+        <input
+          type="tel"
+          value={data.phone}
+          onChange={(e) => {
+
+            const cleaned = e.target.value.replace(/\D/g, "");
+            if (cleaned.length <= 10) {
+              set("phone", cleaned);
+            }
+          }}
+          placeholder="e.g. 9876543210"
+          className={inputClass(!!errors.phone)}
+        />
       </FormField>
 
       <FormField label="Address" error={errors.address} required>

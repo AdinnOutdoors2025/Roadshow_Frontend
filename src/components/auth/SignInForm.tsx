@@ -1,9 +1,7 @@
-
-
 "use client";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
+import { EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState, ChangeEvent, FormEvent } from "react";
@@ -13,7 +11,6 @@ import API_BASE from "../../../baseurl";
 interface FormState {
   username: string;
   password: string;
-  secretCode: string;
 }
 
 interface ApiResponse {
@@ -30,7 +27,6 @@ interface ApiResponse {
 const ERROR_MESSAGES: Record<string, string> = {
   ADMIN_NOT_FOUND: "Admin account not found.",
   INVALID_PASSWORD: "Incorrect password.",
-  INVALID_SECRET_CODE: "Incorrect secret code.",
 };
 
 const inputClass =
@@ -38,7 +34,6 @@ const inputClass =
 
 export default function SignInForm() {
   const router = useRouter();
-
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -46,7 +41,6 @@ export default function SignInForm() {
   const [form, setForm] = useState<FormState>({
     username: "",
     password: "",
-    secretCode: "",
   });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -55,13 +49,11 @@ export default function SignInForm() {
     setError("");
   };
 
-  const handleSubmit = async (
-    e: FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setError("");
 
-    if (!form.username || !form.password || !form.secretCode) {
+    if (!form.username || !form.password) {
       setError("All fields are required.");
       return;
     }
@@ -75,16 +67,13 @@ export default function SignInForm() {
         body: JSON.stringify({
           username: form.username.trim(),
           password: form.password,
-          secretCode: form.secretCode,
         }),
       });
 
       const data: ApiResponse = await res.json();
 
       if (!res.ok || !data.success) {
-        setError(
-          ERROR_MESSAGES[data.message] || data.message || "Login failed."
-        );
+        setError(ERROR_MESSAGES[data.message] || data.message || "Login failed.");
         return;
       }
 
@@ -102,16 +91,6 @@ export default function SignInForm() {
 
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
-      {/* <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
-        <Link
-          href="/"
-          className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-        >
-          <ChevronLeftIcon />
-          Back to dashboard
-        </Link>
-      </div> */}
-
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>
           <div className="mb-5 sm:mb-8">
@@ -125,12 +104,8 @@ export default function SignInForm() {
 
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
-
-            
               <div>
-                <Label>
-                  Username <span className="text-error-500">*</span>
-                </Label>
+                <Label>Username <span className="text-error-500">*</span></Label>
                 <input
                   type="text"
                   name="username"
@@ -141,11 +116,8 @@ export default function SignInForm() {
                 />
               </div>
 
-             
               <div>
-                <Label>
-                  Password <span className="text-error-500">*</span>
-                </Label>
+                <Label>Password <span className="text-error-500">*</span></Label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -168,50 +140,22 @@ export default function SignInForm() {
                 </div>
               </div>
 
-             
-              <div>
-                <Label>
-                  Admin Secret Code <span className="text-error-500">*</span>
-                </Label>
-                <input
-                  type="password"
-                  name="secretCode"
-                  placeholder="Enter the admin secret code"
-                  value={form.secretCode}
-                  onChange={handleChange}
-                  className={inputClass}
-                />
-              </div>
-
-           
               {error && (
-                <p className="text-sm text-red-500 dark:text-red-400">
-                  {error}
-                </p>
+                <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
               )}
 
-            
               <div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  size="sm"
-                  disabled={loading}
-                >
+                <Button type="submit" className="w-full" size="sm" disabled={loading}>
                   {loading ? "Signing in..." : "Sign In"}
                 </Button>
               </div>
-
             </div>
           </form>
 
           <div className="mt-5">
             <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
               Don&apos;t have an account?{" "}
-              <Link
-                href="/signup"
-                className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
-              >
+              <Link href="/signup" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
                 Sign Up
               </Link>
             </p>
