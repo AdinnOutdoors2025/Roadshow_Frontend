@@ -27,6 +27,7 @@ export interface Package {
   rtoCharges: number;
   isActive: boolean;
   inactiveReason?: string;
+   perKmCharge: number, 
 }
 
 const HEADERS = [

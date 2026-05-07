@@ -1,5 +1,5 @@
 "use client";
-// steps/VehicleListStep.tsx
+
 
 import React, { useState } from "react";
 import { VehicleConfig } from "./AdminOrderForm";
@@ -14,13 +14,13 @@ interface Props {
 }
 
 export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: Props) {
-  const [showModal, setShowModal]       = useState(false);
-  const [editingV, setEditingV]         = useState<VehicleConfig | null>(null);
-  const [error, setError]               = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [editingV, setEditingV] = useState<VehicleConfig | null>(null);
+  const [error, setError] = useState("");
 
-  const openAdd  = () => { setEditingV(null); setShowModal(true); };
+  const openAdd = () => { setEditingV(null); setShowModal(true); };
   const openEdit = (v: VehicleConfig) => { setEditingV(v); setShowModal(true); };
-  const remove   = (id: string) => onChange(vehicles.filter((v) => v.id !== id));
+  const remove = (id: string) => onChange(vehicles.filter((v) => v.id !== id));
 
   const handleSave = (v: VehicleConfig) => {
     onChange(editingV ? vehicles.map((x) => (x.id === v.id ? v : x)) : [...vehicles, v]);
@@ -29,26 +29,42 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
     setError("");
   };
 
+  console.log("vehicles", vehicles)
+
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).replace(/ /g, "-"); 
+  };
+
   const handleNext = () => {
-    if (vehicles.length === 0) { setError("At least one vehicle add பண்ணுங்க"); return; }
+    if (vehicles.length === 0) { setError("At least one vehicle add "); return; }
     onNext();
   };
 
   const grandTotal = vehicles.reduce((s, v) => s + (v.pricing?.totalAmount || 0), 0);
-  const totalGst   = vehicles.reduce((s, v) => s + (v.pricing?.gstAmount || 0), 0);
-  const subTotal   = vehicles.reduce((s, v) => s + (v.pricing?.subtotal || 0), 0);
+  const totalGst = vehicles.reduce((s, v) => s + (v.pricing?.gstAmount || 0), 0);
+  const subTotal = vehicles.reduce((s, v) => s + (v.pricing?.subtotal || 0), 0);
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Stage 3 · Vehicles</h3>
-        
-        </div>
-        <button onClick={openAdd} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
-          <HiOutlinePlus className="h-3.5 w-3.5 stroke-2" />
-          Add Vehicle
-        </button>
+      <div className="flex items-center justify-end mb-2">
+
+
+
+    
+        {vehicles.length > 0 && (
+          <button
+            onClick={openAdd}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors"
+          >
+            <HiOutlinePlus className="h-3.5 w-3.5 stroke-2" />
+            Add Vehicle
+          </button>
+        )}
       </div>
 
       {vehicles.length === 0 ? (
@@ -62,7 +78,7 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
           </div>
           <button onClick={openAdd} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
             <HiOutlinePlus className="h-4 w-4 stroke-2" />
-            Book 1st Vehicle
+            Add Vehicle
           </button>
         </div>
       ) : (
@@ -74,9 +90,10 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600">V{idx + 1}</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p>
+                 
                     <p className="text-xs text-gray-400">
                       {v.fromDate && v.toDate
-                        ? `${v.fromDate} → ${v.toDate} · ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000)}d`
+                        ? `${formatDate(v.fromDate)} → ${formatDate(v.toDate)} · ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000)}d`
                         : "Dates not set"}
                       {v.city ? ` · ${v.city}` : ""}
                     </p>
@@ -94,14 +111,19 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {v.campaignType && <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">{v.campaignType}</span>}
-                {v.needPromoter && <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Promoter · {v.promoterType}</span>}
+              
+                {v.needPromoter && (
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                    Promoter · {v.promoterType === "Other" ? v.otherPromoterType : v.promoterType}
+                  </span>
+                )}
                 {v.quantity > 1 && <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">Qty: {v.quantity}</span>}
                 {!v.pricing && <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600">Pricing pending</span>}
               </div>
             </div>
           ))}
 
-          {/* Order total */}
+
           {vehicles.length > 0 && (
             <div className="rounded-xl border border-blue-100 bg-blue-50/50 dark:border-blue-900/30 dark:bg-blue-900/10 p-4 space-y-1.5">
               <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-2">Order Total ({vehicles.length} vehicle{vehicles.length > 1 ? "s" : ""})</p>

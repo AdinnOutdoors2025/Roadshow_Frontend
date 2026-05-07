@@ -7,21 +7,20 @@ import AdminOrderForm from "./AdminOrderForm";
 import { HiOutlineShoppingBag, HiOutlineEye } from "react-icons/hi";
 import { HiOutlinePlus, HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi2";
 import API_BASE from "../../../../baseurl";
-import { HiOutlinePencil, HiOutlineTrash } from "react-icons/hi2";
-
-
-
 
 interface BookingItem {
   vehicleModel: string;
   vehicleType: string;
   campaignType: string;
+  otherCampaignType?: string;      
   fromDate: string;
   toDate: string;
   state: string;
   city: string;
   quantity: number;
   totalDays: number;
+  extraDays?: number;               
+  extraKm?: number;                 
   subtotal: number;
   gstAmount: number;
   totalAmount: number;
@@ -29,7 +28,14 @@ interface BookingItem {
   fromLocation?: string;
   toLocation?: string;
   promoterType?: string;
+  otherPromoterType?: string;        
   bookingFor?: string;
+  additionalCharges?: {             
+    id: string;
+    label: string;
+    amount: number;
+    mode: "+" | "-";
+  }[];
 }
 
 interface Order {
@@ -47,6 +53,7 @@ interface Order {
   createdAt: string;
   handlername?: string;
   grandNegotiationTotal?: number;
+  campaignType?:string
 }
 
 
@@ -138,7 +145,7 @@ export default function OrdersPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
 
- 
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
@@ -198,7 +205,7 @@ export default function OrdersPage() {
     document.getElementById("orders-table-top")?.scrollIntoView({ behavior: "smooth" });
   };
 
- 
+
   const stats = {
     total: orders.length,
     pending: orders.filter((o) => o.orderStatus === "Pending").length,
@@ -212,7 +219,7 @@ export default function OrdersPage() {
   return (
     <div id="orders-table-top" className="w-full space-y-4">
 
-    
+
       {successMsg && (
         <div className="flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
           <svg className="h-4 w-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -238,7 +245,7 @@ export default function OrdersPage() {
         ))}
       </div>
 
-   
+
       <div className="w-full rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
 
         <div className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 dark:border-gray-800">
@@ -265,10 +272,10 @@ export default function OrdersPage() {
           </button>
         </div>
 
-      
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 px-6 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
 
-        
+
           <div className="relative w-full sm:max-w-xs">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -282,7 +289,7 @@ export default function OrdersPage() {
             />
           </div>
 
-        
+
           <select
             value={filterPipeline}
             onChange={(e) => { setFilterPipeline(e.target.value); setCurrentPage(1); }}
@@ -294,7 +301,7 @@ export default function OrdersPage() {
             ))}
           </select>
 
-         
+
           <select
             value={filterStatus}
             onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
@@ -306,7 +313,7 @@ export default function OrdersPage() {
             <option value="Cancelled">Cancelled</option>
           </select>
 
-      
+
           {(searchQ || filterPipeline !== "all" || filterStatus !== "all") && (
             <button
               onClick={() => { setSearchQ(""); setFilterPipeline("all"); setFilterStatus("all"); setCurrentPage(1); }}
@@ -316,7 +323,7 @@ export default function OrdersPage() {
             </button>
           )}
 
-        
+
           <button
             onClick={fetchOrders}
             disabled={loading}
@@ -329,10 +336,10 @@ export default function OrdersPage() {
           </button>
         </div>
 
-     
+
         <div className="p-4 sm:p-6">
 
-        
+
           {loading && (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-blue-200 border-t-blue-600" />
@@ -340,7 +347,7 @@ export default function OrdersPage() {
             </div>
           )}
 
-        
+
           {!loading && error && (
             <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
               <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -358,13 +365,13 @@ export default function OrdersPage() {
             </div>
           )}
 
-        
+
           {!loading && !error && (
             <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[1200px] border-collapse text-sm">
 
-                
+
                   <thead>
                     <tr className="bg-gray-50 dark:bg-gray-800/60">
                       {HEADERS.map((h) => (
@@ -378,10 +385,10 @@ export default function OrdersPage() {
                     </tr>
                   </thead>
 
-              
+
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
 
-                    
+
                     {currentItems.length === 0 && (
                       <tr>
                         <td colSpan={HEADERS.length} className="px-5 py-20 text-center">
@@ -406,7 +413,7 @@ export default function OrdersPage() {
                       </tr>
                     )}
 
-                  
+
                     {currentItems.map((order, idx) => {
                       const pipeline = PIPELINE_CONFIG[order.pipelineStatus] || { label: order.pipelineStatus, color: "bg-gray-100 text-gray-500" };
                       const statusCfg = STATUS_CONFIG[order.orderStatus] || { color: "bg-gray-100 text-gray-500", dot: "bg-gray-400" };
@@ -422,12 +429,12 @@ export default function OrdersPage() {
                           className={`group transition-colors duration-100 hover:bg-blue-50/40 dark:hover:bg-blue-900/10
                             ${idx % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50/50 dark:bg-gray-800/20"}`}
                         >
-                        
+
                           <td className="px-5 py-4 text-xs text-gray-400 dark:text-gray-500">
                             {startIndex + idx + 1}
                           </td>
 
-                        
+
                           <td className="px-5 py-4">
                             <div className="flex flex-col gap-1">
                               <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400">
@@ -441,7 +448,7 @@ export default function OrdersPage() {
                             </div>
                           </td>
 
-                       
+
                           <td className="px-5 py-4">
                             <p className="font-medium text-gray-800 dark:text-gray-200 truncate max-w-[130px]">
                               {order.name}
@@ -449,7 +456,7 @@ export default function OrdersPage() {
                             <p className="text-xs text-gray-400 mt-0.5">{order.phone}</p>
                           </td>
 
-                         
+
                           <td className="px-5 py-4">
                             <div className="flex flex-col gap-1">
                               <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 w-fit">
@@ -463,38 +470,42 @@ export default function OrdersPage() {
                             </div>
                           </td>
 
-                       
+
                           <td className="px-5 py-4 text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">
                             {getDateRange(order.bookingItems || [])}
                           </td>
 
-                       
+
                           <td className="px-5 py-4">
                             <p className="text-xs text-gray-600 dark:text-gray-300 max-w-[130px] truncate" title={getLocations(order.bookingItems || [])}>
                               {getLocations(order.bookingItems || [])}
                             </p>
                           </td>
 
-                        
+
                           <td className="px-5 py-4">
                             <p className="font-bold text-gray-900 dark:text-white">
-                              ₹{displayTotal?.toLocaleString() ?? "—"}
+                              ₹{displayTotal ? displayTotal.toLocaleString("en-IN") : "—"}
                             </p>
-                            {order.grandNegotiationTotal && order.grandNegotiationTotal > 0 && order.grandNegotiationTotal !== order.grandTotal && (
-                              <p className="text-[10px] text-gray-400 line-through">
-                                ₹{order.grandTotal.toLocaleString()}
-                              </p>
-                            )}
+
+                            {order.grandNegotiationTotal &&
+                              order.grandNegotiationTotal > 0 &&
+                              order.grandNegotiationTotal !== order.grandTotal && (
+                                <p className="text-[10px] text-gray-400 line-through">
+                                  ₹{order.grandTotal.toLocaleString("en-IN")}
+                                </p>
+                              )
+                            }
                           </td>
 
-                         
+
                           <td className="px-5 py-4">
                             <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${pipeline.color}`}>
                               {pipeline.label}
                             </span>
                           </td>
 
-                        
+
                           <td className="px-5 py-4">
                             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${statusCfg.color}`}>
                               <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} />
@@ -502,15 +513,15 @@ export default function OrdersPage() {
                             </span>
                           </td>
 
-                        
+
                           <td className="px-5 py-4 text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
                             {formatDate(order.createdAt)}
                           </td>
 
-                        
+
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity duration-150">
-                        
+
                               <button
                                 onClick={() => setSelectedOrder(order)}
                                 title="View"
@@ -519,7 +530,7 @@ export default function OrdersPage() {
                                 <HiOutlineEye className="h-4 w-4" />
                               </button>
 
-                             
+
                               {/* {order.orderStatus !== "Confirmed" && order.orderStatus !== "Cancelled" && (
                                 <button
                                   onClick={() => setEditingOrder(order)}
@@ -530,7 +541,7 @@ export default function OrdersPage() {
                                 </button>
                               )} */}
 
-                             
+
                               {/* {order.orderStatus !== "Confirmed" && (
                                 <button
                                   onClick={() => setDeletingOrder(order)}
@@ -549,11 +560,11 @@ export default function OrdersPage() {
                 </table>
               </div>
 
-              {/* Table Footer / Pagination */}
+            
               {filtered.length > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100 bg-gray-50/70 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/40">
 
-                 
+
                   <div className="flex gap-1.5 flex-wrap">
                     {Object.entries(STATUS_CONFIG).map(([s, cfg]) => {
                       const count = orders.filter((o) => o.orderStatus === s).length;
@@ -565,7 +576,7 @@ export default function OrdersPage() {
                     })}
                   </div>
 
-                
+
                   {totalPages > 1 && (
                     <div className="flex items-center gap-1.5">
                       <button
@@ -612,7 +623,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-   
+
       {showForm && (
         <AdminOrderForm
           onClose={() => setShowForm(false)}
@@ -624,7 +635,7 @@ export default function OrdersPage() {
         />
       )}
 
-  
+
       {selectedOrder && (
         <OrderDetailDrawer
           order={selectedOrder}
@@ -637,6 +648,7 @@ export default function OrdersPage() {
     </div>
   );
 }
+
 
 
 function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => void }) {
@@ -654,7 +666,7 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
     >
       <div className="w-full max-w-lg h-full overflow-y-auto bg-white shadow-2xl dark:bg-gray-900 flex flex-col animate-in slide-in-from-right duration-200">
 
-    
+        {/* ── Header ── */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
           <div>
             <p className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">{order.orderId}</p>
@@ -683,9 +695,9 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Customer</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4 space-y-2.5">
               {[
-                { label: "Name", val: order.name },
-                { label: "Phone", val: order.phone },
-                { label: "Email", val: order.email || "—" },
+                { label: "Name",    val: order.name },
+                { label: "Phone",   val: order.phone },
+                { label: "Email",   val: order.email || "—" },
                 { label: "Address", val: order.address || "—" },
               ].map(({ label, val }) => (
                 <div key={label} className="flex justify-between text-sm gap-4">
@@ -723,77 +735,149 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
               Vehicles ({order.bookingItems?.length || 0})
             </p>
             <div className="space-y-3">
-              {(order.bookingItems || []).map((item, i) => (
-                <div key={i} className="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4">
+              {(order.bookingItems || []).map((item, i) => {
+             
+                const baseDays = item.fromDate && item.toDate
+                  ? Math.ceil(
+                      (new Date(item.toDate).getTime() - new Date(item.fromDate).getTime()) / 86400000
+                    )
+                  : 0;
+                const extraDays = item.extraDays || 0;
+                const totalDays = baseDays + extraDays;
 
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600 dark:text-blue-400">
-                      V{i + 1}
-                    </span>
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
-                      {item.vehicleModel || "—"}
-                    </p>
-                    {item.vehicleType && (
-                      <span className="text-[10px] text-gray-400">· {item.vehicleType}</span>
+                const durationLabel =
+                  item.fromDate && item.toDate
+                    ? `${formatDate(item.fromDate)} → ${formatDate(item.toDate)} (${baseDays}d base${
+                        extraDays ? ` +${extraDays} extra = ${totalDays}d total` : ""
+                      })`
+                    : "—";
+
+            
+                const campaignLabel =
+                  item.campaignType === "Other"
+                    ? item.otherCampaignType || "Other"
+                    : item.campaignType || "—";
+
+             
+                const promoterLabel = item.needPromoter
+                  ? `Yes · ${
+                      item.promoterType === "Other"
+                        ? item.otherPromoterType || "Other"
+                        : item.promoterType || ""
+                    }`
+                  : "No";
+
+                return (
+                  <div
+                    key={i}
+                    className="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4"
+                  >
+                    {/* Vehicle header */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600 dark:text-blue-400">
+                        V{i + 1}
+                      </span>
+                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
+                        {item.vehicleModel || "—"}
+                      </p>
+                      {item.vehicleType && (
+                        <span className="text-[10px] text-gray-400">· {item.vehicleType}</span>
+                      )}
+                    </div>
+
+                  
+                    <div className="space-y-1.5">
+                      {[
+                        { label: "Booking For",  val: item.bookingFor || "—" },
+                        { label: "Campaign",      val: campaignLabel },
+                        { label: "Duration",      val: durationLabel },
+                        { label: "State / City",  val: [item.state, item.city].filter(Boolean).join(" / ") || "—" },
+                        { label: "Route",         val: item.fromLocation && item.toLocation ? `${item.fromLocation} → ${item.toLocation}` : "—" },
+                        { label: "Quantity",      val: item.quantity ?? "—" },
+                        { label: "Promoter",      val: promoterLabel },
+                      ].map(({ label, val }) => (
+                        <div key={label} className="flex justify-between text-sm gap-4">
+                          <span className="text-gray-400 shrink-0">{label}</span>
+                          <span className="font-medium text-gray-800 dark:text-gray-200 text-right">{val}</span>
+                        </div>
+                      ))}
+
+                     
+                     {(item.extraKm ?? 0) > 0 && (
+                        <div className="flex justify-between text-sm gap-4">
+                          <span className="text-gray-400 shrink-0">Extra KM</span>
+                          <span className="font-medium text-gray-800 dark:text-gray-200 text-right">
+                            {item.extraKm}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    
+                   {(item.additionalCharges?.length ?? 0) > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
+                        <p className="text-[10px] font-semibold uppercase text-gray-400 mb-1">
+                          Additional Charges
+                        </p>
+                       {(item.additionalCharges ?? []).map((c) => (
+                          <div key={c.id} className="flex justify-between text-sm">
+                            <span className="text-gray-500">{c.label || "Unnamed"}</span>
+                            <span
+                              className={
+                                c.mode === "+"
+                                  ? "text-green-600 font-medium"
+                                  : "text-red-500 font-medium"
+                              }
+                            >
+                              {c.mode}₹{Number(c.amount).toLocaleString()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                   
+                    {(item.totalAmount > 0 || item.subtotal > 0) && (
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1.5">
+                        <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                          <span>Subtotal</span>
+                          <span>₹{(item.subtotal || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                          <span>GST (18%)</span>
+                          <span>₹{(item.gstAmount || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white">
+                          <span>Vehicle Total</span>
+                          <span>₹{(item.totalAmount || 0).toLocaleString()}</span>
+                        </div>
+                      </div>
                     )}
                   </div>
-
-                
-                  <div className="space-y-1.5">
-                    {[
-                      { label: "Booking For", val: item.bookingFor || "—" },
-                      { label: "Campaign", val: item.campaignType || "—" },
-                      { label: "Duration", val: item.fromDate && item.toDate ? `${formatDate(item.fromDate)} → ${formatDate(item.toDate)} (${item.totalDays || "?"}d)` : "—" },
-                      { label: "State / City", val: [item.state, item.city].filter(Boolean).join(" / ") || "—" },
-                      { label: "Route", val: item.fromLocation && item.toLocation ? `${item.fromLocation} → ${item.toLocation}` : "—" },
-                      { label: "Quantity", val: item.quantity ?? "—" },
-                      { label: "Promoter", val: item.needPromoter ? `Yes${item.promoterType ? " · " + item.promoterType : ""}` : "No" },
-                    ].map(({ label, val }) => (
-                      <div key={label} className="flex justify-between text-sm gap-4">
-                        <span className="text-gray-400 shrink-0">{label}</span>
-                        <span className="font-medium text-gray-800 dark:text-gray-200 text-right">{val}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                
-                  {(item.totalAmount > 0 || item.subtotal > 0) && (
-                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1.5">
-                      <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                        <span>Subtotal</span>
-                        <span>₹{(item.subtotal || 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                        <span>GST (18%)</span>
-                        <span>₹{(item.gstAmount || 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white">
-                        <span>Vehicle Total</span>
-                        <span>₹{(item.totalAmount || 0).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
 
-        
+         
           <div className="rounded-xl border border-blue-100 bg-blue-50 dark:border-blue-900/30 dark:bg-blue-900/10 p-4">
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Grand Total</p>
-                {order.grandNegotiationTotal && order.grandNegotiationTotal > 0 && order.grandNegotiationTotal !== order.grandTotal && (
-                  <p className="text-xs text-gray-400 line-through mt-0.5">
-                    Original: ₹{order.grandTotal.toLocaleString()}
-                  </p>
-                )}
+                {order.grandNegotiationTotal &&
+                  order.grandNegotiationTotal > 0 &&
+                  order.grandNegotiationTotal !== order.grandTotal && (
+                    <p className="text-xs text-gray-400 line-through mt-0.5">
+                      Original: ₹{order.grandTotal.toLocaleString()}
+                    </p>
+                  )}
               </div>
               <p className="text-xl font-bold text-gray-900 dark:text-white">
                 ₹{displayTotal?.toLocaleString() ?? "—"}
               </p>
             </div>
           </div>
+
         </div>
       </div>
     </div>

@@ -31,6 +31,7 @@ const defaultForm: Package = {
   promoterChargePerDay: 0,
   driverCharges: 0,
   rtoCharges: 0,
+  perKmCharge: 0,
   isActive: true,
   inactiveReason: "",
 };
@@ -201,6 +202,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
       promoterChargePerDay: form.promoterAvailable ? Number(form.promoterChargePerDay) : 0,
       driverCharges: Number(form.driverCharges),
       rtoCharges: Number(form.rtoCharges),
+      perKmCharge: Number(form.perKmCharge),
       isActive: form.isActive,
       inactiveReason: form.isActive ? "" : (form.inactiveReason || ""),
     };
@@ -321,6 +323,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
             </FormField>
           </div>
 
+         
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Additional Hour Charges (₹)" error={errors.additionalHourCharges} required>
@@ -388,6 +391,18 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                 value={form.rtoCharges ? formatAmount(form.rtoCharges) : ""}
                 onChange={(e) => handleAmountChange("rtoCharges", e.target.value)}
                 placeholder="e.g. 500"
+                className={inputClass(false)}
+              />
+            </FormField>
+          </div>
+
+           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField label="Per KM Charge (₹)">
+              <input
+                type="text"
+                value={form.perKmCharge ? formatAmount(form.perKmCharge) : ""}
+                onChange={(e) => handleAmountChange("perKmCharge", e.target.value)}
+                placeholder="e.g. 12"
                 className={inputClass(false)}
               />
             </FormField>

@@ -1,17 +1,14 @@
+
 "use client";
 
 import React, { useState } from "react";
 import { IoMdClose } from "react-icons/io";
-import { HiOutlineUser, HiOutlineTag, HiOutlineTruck, HiOutlineClipboardList } from "react-icons/hi";
+import { HiOutlineUser, HiOutlineTruck, HiOutlineClipboardList, HiOutlinePhone } from "react-icons/hi";
 import CustomerDetailsStep from "./CustomerDetailsStep";
-import CustomerTypeStep from "./CustomerTypeStep";
 import VehicleListStep from "./VehicleListStep";
 import OrderSummaryStep from "./OrderSummaryStep";
-import { Customer, PricingPreview, createAdminOrder, VehiclePayload } from "./../../../utils/Adminorderapi";
-
-
-
-
+import { Customer, PricingPreview} from "./../../../utils/Adminorderapi";
+import API_BASE from "../../../../baseurl";
 export interface CustomerFormData {
   name: string;
   phone: string;
@@ -22,6 +19,15 @@ export interface CustomerFormData {
 export interface CustomerSelection {
   type: "existing" | "new" | "";
   customer: Customer | null;
+}
+
+export interface AdditionalCharge {
+  id: string;
+  label: string;
+  mode: "+" | "-";
+  amount: number;
+  reduceType?: "amount" | "percent";
+  discountPercent?: number;
 }
 
 export interface VehicleConfig {
@@ -39,12 +45,17 @@ export interface VehicleConfig {
   fromLocation: string;
   toLocation: string;
   quantity: number;
+  extraKm: number;
+  extraDays: number;
   needPromoter: boolean;
   promoterType: string;
   otherPromoterType: string;
   campaignImages: File[];
   campaignVideos: File[];
+  additionalCharges: AdditionalCharge[];
   pricing: PricingPreview | null;
+  gstNumber: string;    
+  extraHours: number;
 }
 
 export interface OrderState {
@@ -55,9 +66,8 @@ export interface OrderState {
 
 const STEPS = [
   { label: "Customer Details", icon: HiOutlineUser },
-  { label: "Customer Type",    icon: HiOutlineTag },
-  { label: "Vehicles",         icon: HiOutlineTruck },
-  { label: "Summary",          icon: HiOutlineClipboardList },
+  { label: "Vehicles", icon: HiOutlineTruck },
+  { label: "Summary", icon: HiOutlineClipboardList },
 ];
 
 const defaultOrder: OrderState = {
@@ -76,9 +86,6 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
   const [order, setOrder] = useState<OrderState>(defaultOrder);
   const [submitting, setSubmitting] = useState(false);
 
-
-  
-
   const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
@@ -87,50 +94,92 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
     if (!customerSelection.customer) return;
     try {
       setSubmitting(true);
-      const payload: VehiclePayload[] = vehicles.map((v) => ({
-        packageId: v.packageId,
-        bookingFor: v.bookingFor,
-        campaignType: v.campaignType,
-        otherCampaignType: v.otherCampaignType,
-        fromDate: v.fromDate,
-        toDate: v.toDate,
-        state: v.state,
-        city: v.city,
-        fromLocation: v.fromLocation,
-        toLocation: v.toLocation,
-        quantity: v.quantity,
-        needPromoter: v.needPromoter,
-        promoterType: v.promoterType,
-        otherPromoterType: v.otherPromoterType,
-        campaignImages: [],
-        campaignVideos: [],
-      }));
-      const result = await createAdminOrder({ customerId: customerSelection.customer._id, vehicles: payload });
-      onSuccess(result.orderId);
+
+      const formData = new FormData();
+      formData.append("customerId", customerSelection.customer._id);
+
+      vehicles.forEach((v, i) => {
+        const vData = {
+          packageId: v.packageId,
+          bookingFor: v.bookingFor,
+           gstNumber: v.gstNumber || "",
+          campaignType: v.campaignType,
+          otherCampaignType: v.otherCampaignType,
+          fromDate: v.fromDate,
+          toDate: v.toDate,
+          state: v.state,
+          city: v.city,
+          fromLocation: v.fromLocation,
+          toLocation: v.toLocation,
+          quantity: v.quantity,
+          extraKm: v.extraKm,
+          extraDays: v.extraDays,
+          extraHours: v.extraHours,
+          needPromoter: v.needPromoter,
+          promoterType: v.promoterType,
+          otherPromoterType: v.otherPromoterType,
+          additionalCharges: v.additionalCharges.map((c) => ({
+            label: c.label,
+            mode: c.mode,
+            amount: c.amount,
+          })),
+        };
+      
+        formData.append(`vehicle_${i}`, JSON.stringify(vData));
+
+      
+        (v.campaignImages as File[]).forEach((file) => {
+          formData.append(`campaignImages_${i}`, file);
+        });
+        (v.campaignVideos as File[]).forEach((file) => {
+          formData.append(`campaignVideos_${i}`, file);
+        });
+      });
+
+      const res = await fetch(`${API_BASE}admin/orders/create`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed");
+      onSuccess(data.orderId);
     } catch (err: any) {
       alert(err.message || "Failed to create order");
     } finally {
       setSubmitting(false);
     }
   };
-
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget && !submitting) onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={handleBackdropClick}>
-      <div className="relative w-full max-w-3xl max-h-[70vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-2" onClick={handleBackdropClick}>
+      <div className="relative w-full max-w-3xl max-h-[80vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
 
-    
+       
         <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
           <div className="flex items-center justify-between mb-4">
+          
+
             <div>
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Create Admin Order</h2>
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+                Create Admin Order
+              </h2>
+
               {order.customerSelection.customer && (
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Customer: <span className="font-medium text-blue-600">{order.customerSelection.customer.name}</span>
-                  {" · "}{order.customerSelection.customer.phone}
+                <p className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                  <HiOutlineUser  size={16} className="inline-block text-gray-500" />
+
+                  <span className="font-medium text-blue-600">
+                    {order.customerSelection.customer.name}
+                  </span>
+
+                  {" · "}
+
+                  <HiOutlinePhone  size={16} className="inline-block text-gray-500" />
+
+                  {order.customerSelection.customer.phone}
                 </p>
               )}
             </div>
@@ -163,25 +212,18 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
           </div>
         </div>
 
-  
+      
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {step === 0 && (
             <CustomerDetailsStep
               data={order.customerForm}
+              customerSelection={order.customerSelection}
               onChange={(d) => setOrder((p) => ({ ...p, customerForm: { ...p.customerForm, ...d } }))}
+              onCustomerChange={(d) => setOrder((p) => ({ ...p, customerSelection: { ...p.customerSelection, ...d } }))}
               onNext={next}
             />
           )}
           {step === 1 && (
-            <CustomerTypeStep
-              formData={order.customerForm}
-              data={order.customerSelection}
-              onChange={(d) => setOrder((p) => ({ ...p, customerSelection: { ...p.customerSelection, ...d } }))}
-              onNext={next}
-              onBack={back}
-            />
-          )}
-          {step === 2 && (
             <VehicleListStep
               vehicles={order.vehicles}
               onChange={(vehicles) => setOrder((p) => ({ ...p, vehicles }))}
@@ -189,7 +231,7 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
               onBack={back}
             />
           )}
-          {step === 3 && (
+          {step === 2 && (
             <OrderSummaryStep
               order={order}
               onBack={back}

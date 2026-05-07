@@ -91,7 +91,7 @@ export default function CustomerTypeStep({ formData, data, onChange, onNext, onB
 
       </div>
 
-      {/* Type selector */}
+     
       <div className="grid grid-cols-2 gap-3">
         {(["existing", "new"] as const).map((t) => (
           <button key={t} type="button" onClick={() => selectType(t)}
@@ -104,7 +104,7 @@ export default function CustomerTypeStep({ formData, data, onChange, onNext, onB
         ))}
       </div>
 
-      {/* ── Existing Customer: Search ── */}
+     
       {data.type === "existing" && (
         <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer Search</p>
@@ -162,7 +162,7 @@ export default function CustomerTypeStep({ formData, data, onChange, onNext, onB
         </div>
       )}
 
-      {/* ── New Customer: Create ── */}
+    
       {data.type === "new" && (
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50 space-y-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">New Customer Details (Stage 1)</p>
