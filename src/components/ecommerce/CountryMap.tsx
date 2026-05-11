@@ -50,7 +50,7 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
         [
           {
             latLng: [37.2580397, -104.657039],
-            name: "United States",
+            name: "Tamil Nadu",
             style: {
               fill: "#465FFF",
               borderWidth: 1,
