@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import AdminOrderForm from "./AdminOrderForm";
 import { HiOutlineShoppingBag, HiOutlineEye } from "react-icons/hi";
