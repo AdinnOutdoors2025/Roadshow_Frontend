@@ -5,7 +5,7 @@ export function middleware(request: NextRequest): NextResponse {
   const token = request.cookies.get("adminToken")?.value;
   const { pathname } = request.nextUrl;
 
-  const protectedPaths: string[] = ["/dashboard"];
+  const protectedPaths: string[] = ["/admin/dashboard"];
   const authPaths: string[] = ["/signin", "/signup"];
 
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
@@ -16,7 +16,7 @@ export function middleware(request: NextRequest): NextResponse {
     if (!token) {
       return NextResponse.redirect(new URL("/signin", request.url));
     }
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
   }
 
   if (isProtected && !token) {
@@ -24,12 +24,12 @@ export function middleware(request: NextRequest): NextResponse {
   }
 
   if (isAuthPage && token) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/signin", "/signup"],
+  matcher: ["/", "/admin/dashboard/:path*", "/signin", "/signup"],
 };

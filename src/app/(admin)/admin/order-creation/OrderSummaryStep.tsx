@@ -3,7 +3,7 @@
 "use client";
 
 import React from "react";
-import { OrderState} from "./AdminOrderForm";
+import { OrderState } from "./AdminOrderForm";
 
 interface Props {
   order: OrderState;
@@ -16,9 +16,13 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
   const { customerSelection, vehicles } = order;
   const customer = customerSelection.customer;
 
-  const grandTotal = vehicles.reduce((s, v) => s + (v.pricing?.totalAmount || 0), 0);
-  const totalGst   = vehicles.reduce((s, v) => s + (v.pricing?.gstAmount || 0), 0);
-  const subTotal   = vehicles.reduce((s, v) => s + (v.pricing?.subtotal || 0), 0);
+
+
+  const totalDiscount  = vehicles.reduce((s, v) => s + ((v.pricing as any)?.additionalCuts || 0), 0);
+const taxableAmount  = vehicles.reduce((s, v) => s + (v.pricing?.subtotal || 0), 0);
+const subTotal       = taxableAmount + totalDiscount;
+const totalGst       = Math.floor(taxableAmount * 0.18);
+const grandTotal     = taxableAmount + totalGst;
 
   const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
     <div className="flex justify-between text-sm">
@@ -28,13 +32,23 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
   );
 
 
-   const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).replace(/ /g, "-"); 
-};
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).replace(/ /g, "-");
+  };
+
+    const formatINR = (value: string | number) => {
+    const num = parseFloat(String(value).replace(/[^0-9.]/g, ""));
+    if (isNaN(num) || value === "" || value === undefined) return "";
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(num);
+  };
 
   return (
     <div className="space-y-5">
@@ -43,7 +57,7 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
         <p className="text-xs text-gray-400 mt-0.5">Confirm before creating order</p>
       </div>
 
-      {/* Customer */}
+    
       <div className="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
           Customer ·{" "}
@@ -52,14 +66,14 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
           </span>
         </p>
         <div className="space-y-1.5">
-          <Row label="Name"    value={customer?.name} />
-          <Row label="Phone"   value={customer?.phone} />
+          <Row label="Name" value={customer?.name} />
+          <Row label="Phone" value={customer?.phone} />
           <Row label="Address" value={customer?.address || "—"} />
-          <Row label="ID"      value={<span className="font-mono text-xs text-gray-400">{customer?._id}</span>} />
+      
         </div>
       </div>
 
-      {/* Vehicles */}
+   
       {vehicles.map((v, idx) => {
         const p = v.pricing;
         const baseDays = v.fromDate && v.toDate
@@ -74,18 +88,18 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{v.vehicleModel} · {v.vehicleType}</p>
             </div>
             <div className="space-y-1.5">
-              <Row label="Booking For"  value={v.bookingFor} />
-              <Row label="Campaign"     value={v.campaignType === "Other" ? v.otherCampaignType : v.campaignType} />
-              <Row label="Duration"     value={`${formatDate(v.fromDate)} → ${formatDate(v.toDate)} (${baseDays}d ${v.extraDays ? ` +${v.extraDays} d extra = ${totalDays}d total` : ""})`} />
+              <Row label="Booking For" value={v.bookingFor} />
+              <Row label="Campaign" value={v.campaignType === "Other" ? v.otherCampaignType : v.campaignType} />
+              <Row label="Duration" value={`${formatDate(v.fromDate)} → ${formatDate(v.toDate)} (${baseDays}D ${v.extraDays ? ` +${v.extraDays} D extra = ${totalDays}D total` : ""})`} />
               <Row label="State / City" value={`${v.state} / ${v.city}`} />
-              <Row label="Route"        value={`${v.fromLocation} → ${v.toLocation}`} />
-              <Row label="Quantity"     value={v.quantity} />
+              <Row label="Route" value={`${v.fromLocation} → ${v.toLocation}`} />
+              <Row label="Quantity" value={v.quantity} />
               {v.extraKm > 0 && <Row label="Extra KM" value={v.extraKm} />}
-              <Row label="Promoter"     value={v.needPromoter ? (v.promoterType === "Other" ? v.otherPromoterType : v.promoterType) : "No"} />
-             
+              <Row label="Promoter" value={v.needPromoter ? (v.promoterType === "Other" ? v.otherPromoterType : v.promoterType) : "No"} />
+
             </div>
 
-            {/* Additional charges */}
+         
             {v.additionalCharges.length > 0 && (
               <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
                 <p className="text-[10px] font-semibold uppercase text-gray-400 mb-1">Additional Charges</p>
@@ -93,31 +107,76 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
                   <div key={c.id} className="flex justify-between text-sm">
                     <span className="text-gray-500">{c.label || "Unnamed"}</span>
                     <span className={c.mode === "+" ? "text-green-600 font-medium" : "text-red-500 font-medium"}>
-                      {c.mode}₹{Number(c.amount).toLocaleString()}
+                    {c.mode}{formatINR(c.amount)}
                     </span>
                   </div>
                 ))}
               </div>
             )}
 
+
+
             {p && (
               <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
-                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300"><span>Subtotal</span><span>₹{p.subtotal.toLocaleString()}</span></div>
-                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300"><span>GST (18%)</span><span>₹{p.gstAmount.toLocaleString()}</span></div>
-                <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white"><span> Total</span><span>₹{p.totalAmount.toLocaleString()}</span></div>
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                  <span>Subtotal</span>
+                   <span>{formatINR(p.subtotal)}</span>
+                </div>
+                {(p as any).additionalCuts > 0 && (
+                  <div className="flex justify-between text-sm text-red-500">
+                    <span>Discount</span>
+                    <span>-{formatINR((p as any).additionalCuts)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white">
+                  <span>Total (excl. GST)</span>
+                  <span>{formatINR(p.totalAmount)}</span>
+                </div>
               </div>
             )}
           </div>
         );
       })}
 
-  
+
+
       <div className="rounded-xl border border-blue-200 bg-blue-50 dark:border-blue-900/40 dark:bg-blue-900/10 p-4 space-y-1.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-blue-500 mb-2">Order Total</p>
-        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300"><span> Subtotal</span><span>₹{subTotal.toLocaleString()}</span></div>
-        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300"><span>GST</span><span>₹{totalGst.toLocaleString()}</span></div>
-        <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-blue-200 dark:border-blue-900/40 pt-2 mt-1"><span>Grand Total</span><span>₹{grandTotal.toLocaleString()}</span></div>
+  <p className="text-xs font-semibold uppercase tracking-wide text-blue-500 mb-2">
+    Order Total ({vehicles.length} vehicle{vehicles.length > 1 ? "s" : ""})
+  </p>
+
+
+  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+    <span>Subtotal (excl. GST)</span>
+     <span>{formatINR(subTotal)}</span>
+  </div>
+
+
+  {totalDiscount > 0 && (
+    <>
+      <div className="flex justify-between text-sm text-red-500">
+        <span>Discount</span>
+         <span>-{formatINR(totalDiscount)}</span>
       </div>
+      <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+        <span>Taxable Amount</span>
+        <span>{formatINR(taxableAmount)}</span>
+      </div>
+    </>
+  )}
+
+
+  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+    <span>GST (18%)</span>
+    <span>{formatINR(totalGst)}</span>
+  </div>
+
+  
+  <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-blue-200 dark:border-blue-900/40 pt-2 mt-1">
+    <span>Grand Total</span>
+     <span>{formatINR(grandTotal)}</span>
+  </div>
+</div>
 
       <div className="flex items-center justify-between pt-2">
         <button onClick={onBack} disabled={loading} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-60">

@@ -5,10 +5,9 @@
 import React, { useEffect, useState } from "react";
 import { Package } from "./page";
 import { IoMdClose } from "react-icons/io";
-import { HiOutlineExclamationTriangle } from "react-icons/hi2";
-import API_BASE from '../../../../baseurl';
-import { inputClass, selectClass } from "./../../../components/reusableFormField";
-import FormField from "../../../components/reusableFormField";
+import API_BASE from '../../../../../baseurl';
+import { inputClass, selectClass } from "../../../../components/reusableFormField";
+import FormField from "../../../../components/reusableFormField";
 
 
 const DEFAULT_VEHICLE_TYPES = ["Customizable Vehicle", "Non-Customizable Vehicle"];
@@ -43,9 +42,7 @@ function formatAmount(value: number | string): string {
   return Number(num).toLocaleString("en-IN");
 }
 
-function parseAmount(value: string): number {
-  return Number(value.replace(/,/g, "")) || 0;
-}
+
 
 export default function PackageFormModal({ editingPackage, onSuccess, onClose }: Props) {
   const [form, setForm] = useState<Package>(defaultForm);
@@ -64,26 +61,26 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
   const [existingPackageWarning, setExistingPackageWarning] = useState<string | null>(null);
   const [checkingExistence, setCheckingExistence] = useState(false);
 
-  useEffect(() => {
-    fetchVehicleOptions();
-  }, []);
+  // useEffect(() => {
+  //   fetchVehicleOptions();
+  // }, []);
 
-  const fetchVehicleOptions = async () => {
-    try {
-      const res = await fetch(`${API_BASE}packages/vehicle-options`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const { types, models } = data.data;
+  // const fetchVehicleOptions = async () => {
+  //   try {
+  //     const res = await fetch(`${API_BASE}packages/vehicle-options`);
+  //     if (!res.ok) return;
+  //     const data = await res.json();
+  //     const { types, models } = data.data;
 
 
-      const mergedTypes = Array.from(new Set([...DEFAULT_VEHICLE_TYPES, ...types]));
-      const mergedModels = Array.from(new Set([...DEFAULT_VEHICLE_MODELS, ...models]));
-      setVehicleTypes(mergedTypes);
-      setVehicleModels(mergedModels);
-    } catch {
+  //     const mergedTypes = Array.from(new Set([...DEFAULT_VEHICLE_TYPES, ...types]));
+  //     const mergedModels = Array.from(new Set([...DEFAULT_VEHICLE_MODELS, ...models]));
+  //     setVehicleTypes(mergedTypes);
+  //     setVehicleModels(mergedModels);
+  //   } catch {
 
-    }
-  };
+  //   }
+  // };
 
   useEffect(() => {
     if (editingPackage) {
@@ -244,14 +241,11 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
     }
   };
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) onClose();
-  };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={handleBackdropClick}
+     
     >
       <div className="relative w-full max-w-2xl max-h-[70vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
 
@@ -280,7 +274,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                 className={selectClass(!!errors.vehicleType)}
               >
                 <option value="">Select vehicle type</option>
-                {vehicleTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                {DEFAULT_VEHICLE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
 
               </select>
 
@@ -293,7 +287,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                 className={selectClass(!!errors.vehicleModel)}
               >
                 <option value="">Select vehicle model</option>
-                {vehicleModels.map((m) => <option key={m} value={m}>{m}</option>)}
+                {DEFAULT_VEHICLE_MODELS.map((m) => <option key={m} value={m}>{m}</option>)}
 
               </select>
 
