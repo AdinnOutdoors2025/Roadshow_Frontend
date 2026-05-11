@@ -3,11 +3,11 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { VehicleConfig, AdditionalCharge } from "./AdminOrderForm";
-import { PricingPreview, getPackagesForOrder, previewPricing } from "./../../../utils/Adminorderapi";
-import FormField, { inputClass } from "../../../components/reusableFormField";
+import { PricingPreview, getPackagesForOrder} from "../../../../utils/Adminorderapi";
+import FormField, { inputClass } from "../../../../components/reusableFormField";
 import { HiOutlinePlus, HiOutlineTrash } from "react-icons/hi2";
 import { IoMdClose } from "react-icons/io";
-import API_BASE from "../../../../baseurl";
+import API_BASE from "../../../../../baseurl";
 import DatePicker from "@/components/form/date-picker";
 
 interface PackageOption {
@@ -64,6 +64,9 @@ function defaultForm(): Omit<VehicleConfig, "id"> {
     pricing: null,
     gstNumber: "",
     extraHours: 0,
+    promoterGender: "",
+    promoterLanguage: "",
+    promoterQuantity: 0,
   };
 }
 
@@ -77,7 +80,9 @@ function calcPricing(
   extraKm: number,
   extraDays: number,
   extraHours: number,
-  additionalCharges: AdditionalCharge[]
+
+  additionalCharges: AdditionalCharge[],
+  promoterQuantity: number,
 ): PricingPreview | null {
   if (!fromDate || !toDate || quantity < 1) return null;
   const from = new Date(fromDate);
@@ -89,7 +94,10 @@ function calcPricing(
 
   const rentalCost = pkg.perDayRentalCost * totalDays * quantity;
   const driverCost = pkg.driverCharges * totalDays * quantity;
-  const promoterCost = needPromoter ? (pkg.promoterChargePerDay || 0) * totalDays * quantity : 0;
+
+  const promoterCost = needPromoter
+    ? (pkg.promoterChargePerDay || 0) * totalDays * promoterQuantity
+    : 0;
   const rtoCost = pkg.rtoCharges * quantity;
 
   const extraKmCost = extraKm > 0 ? pkg.perKmCharge * extraKm : 0;
@@ -125,12 +133,9 @@ function calcPricing(
 
 
   const additionalNet = additionalAdds - additionalCuts;
-
-
-
-  const taxableAmount = Math.max(subtotal - additionalCuts, 0);
-  const gstAmount = Math.round(taxableAmount * 0.18);
-  const totalAmount = taxableAmount + gstAmount;
+  const totalAmount = Math.max(subtotal - additionalCuts, 0);
+  const gstAmount = 0
+  const taxableAmount = totalAmount;
 
   return {
     totalDays,
@@ -154,7 +159,79 @@ function calcPricing(
     additionalNet,
   } as any;
 }
-// ─── Component ────────────────────────────────────────────────────────────────
+
+function VehicleTypeSelect({
+  value,
+  onChange,
+  error,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  error?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  const VEHICLE_TYPES_LOCAL = ["Non-Customizable Vehicle", "Customizable Vehicle"];
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={inputClass(!!error) + " flex items-center justify-between w-full text-left"}
+      >
+        <span className={value ? "text-gray-900 dark:text-white" : "text-gray-400"}>
+          {value || "Select type"}
+        </span>
+        <svg className="w-4 h-4 text-gray-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden">
+          {VEHICLE_TYPES_LOCAL.map((t) => {
+            const isDisabled = t === "Customizable Vehicle";
+            return (
+              <div
+                key={t}
+                onClick={() => {
+                  if (!isDisabled) { onChange(t); setOpen(false); }
+                }}
+                className={`flex items-center justify-between px-3 py-2.5 text-sm transition-colors
+                  ${isDisabled
+                    ? "cursor-not-allowed text-gray-400 bg-gray-50 dark:bg-gray-700/50"
+                    : "cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-900 dark:text-white"
+                  }`}
+              >
+                <span>{t}</span>
+                {isDisabled && (
+                  <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                  </svg>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
 export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [form, setForm] = useState<VehicleConfig>(editing ?? { id: uid(), ...defaultForm() });
   const [packages, setPackages] = useState<any[]>([]);
@@ -163,8 +240,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [packageslist, setPackageslist] = useState<PackageOption[]>([]);
   const [campaignTypes, setCampaignTypes] = useState<{ _id: string, name: string }[]>([]);
-  const DISCOUNT_BASE = process.env.NEXT_PUBLIC_MAX_DISCOUNT_PERCENT;
-
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   const [editablePackage, setEditablePackage] = useState<Record<string, string>>({});
   const [savingPkg, setSavingPkg] = useState(false);
@@ -174,26 +250,29 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [cityOptions, setCityOptions] = useState<string[]>([]);
   console.log("locationData", locationData)
 
-useEffect(() => {
-  fetch(`${API_BASE}locations`)
-    .then(r => r.json())
-    .then(d => {
-      if (d.success && d.data?.locations?.length > 0) {
-        const raw = d.data.locations[0]; 
-        const map: Record<string, string[]> = {};
+  const PROMOTER_GENDER_OPTIONS = ["Male", "Female", "Other"];
+  const PROMOTER_LANGUAGE_OPTIONS = ["Tamil", "English", "Telugu", "Hindi", "Kannada", "Malayalam"];
 
-        Object.entries(raw).forEach(([key, value]) => {
-          if (key === "_id" || key === "cities" || key === "__v") return;
-          if (Array.isArray(value)) {
-            map[key] = value as string[];
-          }
-        });
+  useEffect(() => {
+    fetch(`${API_BASE}locations`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.success && d.data?.locations?.length > 0) {
+          const raw = d.data.locations[0];
+          const map: Record<string, string[]> = {};
 
-        setLocationData(map);
-      }
-    })
-    .catch(() => { });
-}, []);
+          Object.entries(raw).forEach(([key, value]) => {
+            if (key === "_id" || key === "cities" || key === "__v") return;
+            if (Array.isArray(value)) {
+              map[key] = value as string[];
+            }
+          });
+
+          setLocationData(map);
+        }
+      })
+      .catch(() => { });
+  }, []);
 
   useEffect(() => {
     if (editing?.state && locationData[editing.state]) {
@@ -241,11 +320,13 @@ useEffect(() => {
       form.quantity, form.needPromoter,
       form.extraKm, form.extraDays,
       form.extraHours,
-      form.additionalCharges
+      form.additionalCharges,
+      form.promoterQuantity
+
     );
     setForm(f => ({ ...f, pricing: p }));
   }, [selectedPackage, editablePackage, form.fromDate, form.toDate,
-    form.quantity, form.needPromoter, form.extraKm, form.extraDays, form.additionalCharges]);
+    form.quantity, form.needPromoter, form.extraKm, form.extraDays, form.additionalCharges, form.promoterQuantity]);
 
 
   const VEHICLE_TYPES = ["Non-Customizable Vehicle", "Customizable Vehicle"];
@@ -270,8 +351,12 @@ useEffect(() => {
 
   useEffect(() => {
     fetch(`${API_BASE}admin/campaign-types`)
-      .then(r => r.json())
-      .then(d => { if (d.success) setCampaignTypes(d.types); })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) {
+          setCampaignTypes(d.data.types || []);
+        }
+      })
       .catch(() => { });
   }, []);
 
@@ -282,7 +367,7 @@ useEffect(() => {
     }
   }, [packageslist, editing]);
 
-  
+
   useEffect(() => {
     if (!selectedPackage) { setForm((f) => ({ ...f, pricing: null })); return; }
     const p = calcPricing(
@@ -294,10 +379,12 @@ useEffect(() => {
       form.extraKm,
       form.extraDays,
       form.extraHours,
-      form.additionalCharges
+      form.additionalCharges,
+      form.promoterQuantity
+
     );
     setForm((f) => ({ ...f, pricing: p }));
-  }, [selectedPackage, form.fromDate, form.toDate, form.quantity, form.needPromoter, form.extraKm, form.extraDays, form.extraHours, form.additionalCharges]);
+  }, [selectedPackage, form.fromDate, form.toDate, form.quantity, form.needPromoter, form.extraKm, form.extraDays, form.extraHours, form.additionalCharges, form.promoterQuantity]);
 
   const set = useCallback(<K extends keyof VehicleConfig>(key: K, val: VehicleConfig[K]) => {
     setForm((f) => ({ ...f, [key]: val }));
@@ -334,16 +421,6 @@ useEffect(() => {
     }));
   };
 
-
-
-
-  const addCharge = () => {
-    const newCharge: AdditionalCharge = {
-      id: uid(), label: "", mode: "+",
-      amount: 0, reduceType: "amount", discountPercent: 0
-    };
-    set("additionalCharges", [...form.additionalCharges, newCharge]);
-  };
 
 
 
@@ -390,6 +467,10 @@ useEffect(() => {
     }
     if (form.needPromoter && !form.promoterType) e.promoterType = "Select promoter type";
     if (form.needPromoter && form.promoterType === "Other" && !form.otherPromoterType) e.otherPromoterType = "Required";
+    if (form.needPromoter && !form.promoterGender) e.promoterGender = "Select gender";
+    if (form.needPromoter && !form.promoterLanguage) e.promoterLanguage = "Select language";
+    if (form.needPromoter && (!form.promoterQuantity || form.promoterQuantity < 1))
+      e.promoterQuantity = "Enter valid quantity";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -449,9 +530,35 @@ useEffect(() => {
     }
   };
 
-  const handleSave = async () => {
-    if (!validate()) return;
 
+  const handleSave = async () => {
+    if (!validate()) {
+      setTimeout(() => {
+        const fieldOrder = [
+          "vehicleType", "vehicleModel", "bookingFor", "gstNumber",
+          "campaignType", "otherCampaignType", "fromDate", "toDate",
+          "state", "city", "fromLocation", "toLocation", "quantity",
+          "promoterType", "otherPromoterType", "promoterGender",
+          "promoterLanguage", "promoterQuantity", "packageUnsaved",
+        ];
+
+        const firstErrorKey = fieldOrder.find((key) =>
+          document.getElementById(`field-${key}`)
+        );
+
+        if (firstErrorKey && scrollContainerRef.current) {
+          const el = document.getElementById(`field-${firstErrorKey}`);
+          if (el) {
+            const container = scrollContainerRef.current;
+            const containerTop = container.getBoundingClientRect().top;
+            const elTop = el.getBoundingClientRect().top;
+            const offset = elTop - containerTop + container.scrollTop - 20;
+            container.scrollTo({ top: offset, behavior: "smooth" });
+          }
+        }
+      }, 50);
+      return;
+    }
 
     let finalCampaignType = form.campaignType;
     if (form.campaignType === "Other" && form.otherCampaignType.trim()) {
@@ -464,19 +571,19 @@ useEffect(() => {
         const data = await res.json();
         if (data.success) {
           finalCampaignType = data.type.name;
-
           setCampaignTypes(prev =>
             prev.find(c => c._id === data.type._id)
               ? prev
               : [...prev, data.type]
           );
         }
-      } catch { /* silent */ }
+      } catch (err: any) {
+        console.log(err)
+      }
     }
 
     onSave({ ...form, campaignType: finalCampaignType });
   };
-
   const p = form.pricing;
 
 
@@ -498,7 +605,7 @@ useEffect(() => {
     return new Intl.NumberFormat("en-IN").format(Number(raw));
   };
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-2" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-2">
       <div className="relative w-full max-w-2xl max-h-[80vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
 
 
@@ -512,19 +619,19 @@ useEffect(() => {
         </div>
 
 
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
 
-
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
           <section className="space-y-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Vehicle Selection</p>
 
             <>
               <div className="grid grid-cols-2 gap-4">
                 <FormField label="Vehicle Type" error={errors.vehicleType} required>
-                  <select value={form.vehicleType} onChange={(e) => handleVehicleTypeChange(e.target.value)} className={inputClass(!!errors.vehicleType)}>
-                    <option value="">Select type</option>
-                    {VEHICLE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                  <VehicleTypeSelect
+                    value={form.vehicleType}
+                    onChange={handleVehicleTypeChange}
+                    error={errors.vehicleType}
+                  />
                 </FormField>
 
                 <FormField label="Vehicle Model" error={errors.vehicleModel} required>
@@ -555,7 +662,25 @@ useEffect(() => {
                       { label: "Extra hours", key: "additionalHourCharges" },
                       { label: "Promoter/day", key: "promoterChargePerDay", disabled: !selectedPackage.promoterAvailable },
                     ].map(({ label, key, disabled }) => (
-                      <div key={key} className="rounded-lg bg-blue-50 dark:bg-blue-900/20 px-2 py-2 text-center">
+                      <div
+                        key={key}
+                        className={`relative group rounded-lg bg-blue-50 dark:bg-blue-900/20 px-2 py-2 text-center
+      ${key === "dailyKmLimit" ? "cursor-not-allowed" : ""}`} >
+
+                        {key === "dailyKmLimit" && (
+                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-10
+        hidden group-hover:flex
+        items-center gap-1
+        bg-gray-800 text-white text-[10px] rounded-md px-2 py-1 whitespace-nowrap shadow-lg">
+                            <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                            </svg>
+                            Read only — cannot be edited
+
+                            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
+                          </div>
+                        )}
                         <p className="text-[9px] text-gray-400 uppercase leading-tight mb-1">{label}</p>
 
                         {disabled ? (
@@ -611,7 +736,7 @@ useEffect(() => {
           ${pkgSaved
                           ? "bg-green-100 text-green-700"
                           : changedKeys.length > 0
-                            ? "bg-amber-500 text-white hover:bg-amber-600"   // ← changed: amber when dirty
+                            ? "bg-amber-500 text-white hover:bg-amber-600"
                             : "bg-blue-600 text-white hover:bg-blue-700"}`}
                     >
                       {savingPkg ? "Saving..." : pkgSaved ? "✓ Saved" : changedKeys.length > 0 ? `Update Package (${changedKeys.length})` : "Update Package"}
@@ -650,7 +775,7 @@ useEffect(() => {
 
                   </FormField>
 
-                  <FormField label="Extra Hours" error={errors.extraHours}>
+                  <FormField label="Extra Hours (Approximate ) " error={errors.extraHours}>
                     <input
                       type="number" min={0}
                       value={form.extraHours || ""}
@@ -659,7 +784,7 @@ useEffect(() => {
                       className={inputClass(!!errors.extraHours)}
                     />
                   </FormField>
-                  <FormField label="Extra Days" error={errors.extraDays}>
+                  <FormField label="Extra Days (Optional)" error={errors.extraDays}>
                     <input
                       type="number"
                       min={0}
@@ -694,25 +819,86 @@ useEffect(() => {
 
                   {form.needPromoter && (
                     <div className="grid grid-cols-2 gap-4">
-                      <FormField label="Promoter Type" error={errors.promoterType} required>
-                        <select value={form.promoterType} onChange={(e) => set("promoterType", e.target.value)} className={inputClass(!!errors.promoterType)}>
-                          <option value="">Select</option>
-                          {PROMOTER_TYPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                        </select>
-                      </FormField>
+                      <div id="field-promoterType">
+                        <FormField label="Promoter Type" error={errors.promoterType} required>
+                          <select value={form.promoterType} onChange={(e) => set("promoterType", e.target.value)} className={inputClass(!!errors.promoterType)}>
+                            <option value="">Select</option>
+                            {PROMOTER_TYPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                          </select>
+                        </FormField>
+                      </div>
+
+
+
                       {form.promoterType === "Other" && (
                         <FormField label="Specify Type" error={errors.otherPromoterType} required>
                           <input type="text" value={form.otherPromoterType} onChange={(e) => set("otherPromoterType", e.target.value)} className={inputClass(!!errors.otherPromoterType)} />
                         </FormField>
                       )}
+
+
+
                     </div>
+
+
                   )}
 
                   {form.needPromoter && selectedPackage.promoterAvailable && (
                     <p className="text-[10px] text-gray-400">
-                      Promoter charge: ₹{selectedPackage.promoterChargePerDay.toLocaleString()}/day × days × qty
+                      Promoter charge: {formatINR(selectedPackage.promoterChargePerDay)}/day × days × qty
                     </p>
                   )}
+
+                  {form.needPromoter && (
+                    <div className="grid grid-cols-2 gap-4 mt-3">
+                      {/* Gender */}
+                      <div id="field-promoterGender">
+                        <FormField label="Gender" error={errors.promoterGender} required>
+                          <select
+                            value={form.promoterGender}
+                            onChange={(e) => set("promoterGender", e.target.value)}
+                            className={inputClass(!!errors.promoterGender)}
+                          >
+                            <option value="">Select</option>
+                            {PROMOTER_GENDER_OPTIONS.map((g) => (
+                              <option key={g} value={g}>{g}</option>
+                            ))}
+                          </select>
+                        </FormField>
+                      </div>
+
+                      <div id="field-promoterLanguage">
+                        <FormField label="Language" error={errors.promoterLanguage} required>
+                          <select
+                            value={form.promoterLanguage}
+                            onChange={(e) => set("promoterLanguage", e.target.value)}
+                            className={inputClass(!!errors.promoterLanguage)}
+                          >
+                            <option value="">Select</option>
+                            {PROMOTER_LANGUAGE_OPTIONS.map((l) => (
+                              <option key={l} value={l}>{l}</option>
+                            ))}
+                          </select>
+                        </FormField>
+                      </div>
+
+                      <div id="field-promoterQuantity">
+                        <FormField label="Promoter Quantity" error={errors.promoterQuantity} required>
+                          <input
+                            type="number"
+                            min={1}
+                            value={form.promoterQuantity || ""}
+                            onChange={(e) =>
+                              set("promoterQuantity", Math.max(0, parseInt(e.target.value) || 0))
+                            }
+                            placeholder="Enter quantity"
+                            className={inputClass(!!errors.promoterQuantity)}
+                          />
+                        </FormField>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               )}
             </>
@@ -724,36 +910,42 @@ useEffect(() => {
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Booking Details</p>
 
             <div className="grid grid-cols-2 gap-4">
-              <FormField label="Booking For" error={errors.bookingFor} required>
-                <select value={form.bookingFor} onChange={(e) => set("bookingFor", e.target.value)} className={inputClass(!!errors.bookingFor)}>
-                  <option value="">Select</option>
-                  {BOOKING_FOR_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </FormField>
+              <div id="field-bookingFor">
+                <FormField label="Booking For" error={errors.bookingFor} required>
+                  <select value={form.bookingFor} onChange={(e) => set("bookingFor", e.target.value)} className={inputClass(!!errors.bookingFor)}>
+                    <option value="">Select</option>
+                    {BOOKING_FOR_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </FormField>
+              </div>
 
               {form.bookingFor === "Agency" && (
-                <FormField label="GST Number" required error={errors.gstNumber}>
-                  <input
-                    type="text"
-                    value={form.gstNumber}
-                    onChange={(e) => set("gstNumber", e.target.value.toUpperCase())}
-                    placeholder="e.g. 22AAAAA0000A1Z5"
-                    maxLength={15}
-                    className={inputClass(!!errors.gstNumber)}
-                  />
-                </FormField>
+                <div id="field-gstNumber">
+                  <FormField label="GST Number" required error={errors.gstNumber}>
+                    <input
+                      type="text"
+                      value={form.gstNumber}
+                      onChange={(e) => set("gstNumber", e.target.value.toUpperCase())}
+                      placeholder="e.g. 22AAAAA0000A1Z5"
+                      maxLength={15}
+                      className={inputClass(!!errors.gstNumber)}
+                    />
+                  </FormField>
+                </div>
               )}
 
 
-              <FormField label="Campaign Type" error={errors.campaignType} required>
-                <select value={form.campaignType} onChange={(e) => set("campaignType", e.target.value)} className={inputClass(!!errors.campaignType)}>
-                  <option value="">Select</option>
-                  {campaignTypes.map((ct) => (
-                    <option key={ct._id} value={ct.name}>{ct.name}</option>
-                  ))}
-                  <option value="Other">Other</option>
-                </select>
-              </FormField>
+              <div id="field-campaignType">
+                <FormField label="Campaign Type" error={errors.campaignType} required>
+                  <select value={form.campaignType} onChange={(e) => set("campaignType", e.target.value)} className={inputClass(!!errors.campaignType)}>
+                    <option value="">Select</option>
+                    {campaignTypes.map((ct) => (
+                      <option key={ct._id} value={ct.name}>{ct.name}</option>
+                    ))}
+                    <option value="Other">Other</option>
+                  </select>
+                </FormField>
+              </div>
             </div>
 
 
@@ -770,7 +962,7 @@ useEffect(() => {
             )}
 
 
-            <div className="grid grid-cols-2 gap-4">
+            <div id="field-fromDate" className="grid grid-cols-2 gap-4">
               <DatePicker
                 id="from-date"
                 label="From Date"
@@ -789,7 +981,7 @@ useEffect(() => {
               />
 
               <DatePicker
-                id="to-date"
+                id="field-toDate"
                 label="To Date"
                 value={form.toDate}
                 minDate={form.fromDate || new Date().toLocaleDateString("en-CA")}
@@ -817,42 +1009,49 @@ useEffect(() => {
           <section className="space-y-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Location</p>
             <div className="grid grid-cols-2 gap-4">
-            
 
-              <FormField label="State" error={errors.state} required>
-                <select
-                  value={form.state}
-                  onChange={(e) => handleStateChange(e.target.value)}
-                  className={inputClass(!!errors.state)}
-                >
-                  <option value="">Select state</option>
-                  {Object.keys(locationData).sort().map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </FormField>
+              <div id="field-state">
+                <FormField label="State" error={errors.state} required>
+                  <select
+                    value={form.state}
+                    onChange={(e) => handleStateChange(e.target.value)}
+                    className={inputClass(!!errors.state)}
+                  >
+                    <option value="">Select state</option>
+                    {Object.keys(locationData).sort().map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
 
-              <FormField label="City" error={errors.city} required>
-                <select
-                  value={form.city}
-                  onChange={(e) => set("city", e.target.value)}
-                  disabled={!form.state}
-                  className={inputClass(!!errors.city)}
-                >
-                  <option value="">
-                    {form.state ? "Select city" : "Select state first"}
-                  </option>
-                  {cityOptions.map((c, idx) => (
-                    <option key={`${c}-${idx}`} value={c}>{c}</option>
-                  ))}
-                </select>
-              </FormField>
-              <FormField label="From Location" error={errors.fromLocation} required>
-                <input type="text" value={form.fromLocation} onChange={(e) => set("fromLocation", e.target.value)} placeholder="Starting point" className={inputClass(!!errors.fromLocation)} />
-              </FormField>
-              <FormField label="To Location" error={errors.toLocation} required>
-                <input type="text" value={form.toLocation} onChange={(e) => set("toLocation", e.target.value)} placeholder="Destination" className={inputClass(!!errors.toLocation)} />
-              </FormField>
+              <div id="field-city">
+                <FormField label="City" error={errors.city} required>
+                  <select
+                    value={form.city}
+                    onChange={(e) => set("city", e.target.value)}
+                    disabled={!form.state}
+                    className={inputClass(!!errors.city)}
+                  >
+                    <option value="">
+                      {form.state ? "Select city" : "Select state first"}
+                    </option>
+                    {cityOptions.map((c, idx) => (
+                      <option key={`${c}-${idx}`} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+              <div id="field-fromLocation">
+                <FormField label="From Location" error={errors.fromLocation} required>
+                  <input type="text" value={form.fromLocation} onChange={(e) => set("fromLocation", e.target.value)} placeholder="Starting point" className={inputClass(!!errors.fromLocation)} />
+                </FormField>
+              </div>
+              <div id="field-toLocation">
+                <FormField label="To Location" error={errors.toLocation} required>
+                  <input type="text" value={form.toLocation} onChange={(e) => set("toLocation", e.target.value)} placeholder="Destination" className={inputClass(!!errors.toLocation)} />
+                </FormField>
+              </div>
             </div>
           </section>
 
@@ -955,26 +1154,26 @@ useEffect(() => {
             </div>
           </section>
 
-
-          <FormField label="  Vehicle Quantity" error={errors.quantity} required>
-            <input
-              type="number"
-              min={1}
-              value={form.quantity === 0 ? "" : form.quantity}
-              onChange={(e) => {
-                const rawValue = e.target.value;
-                if (rawValue === "") {
-                  set("quantity", 0);
-                } else {
-                  const val = parseInt(rawValue);
-                  set("quantity", isNaN(val) ? 0 : val);
-                }
-              }}
-              className={inputClass(!!errors.quantity) + " w-32"}
-              placeholder="Enter quantity"
-            />
-          </FormField>
-
+          <div id="field-quantity">
+            <FormField label="  Vehicle Quantity" error={errors.quantity} required>
+              <input
+                type="number"
+                min={1}
+                value={form.quantity === 0 ? "" : form.quantity}
+                onChange={(e) => {
+                  const rawValue = e.target.value;
+                  if (rawValue === "") {
+                    set("quantity", 0);
+                  } else {
+                    const val = parseInt(rawValue);
+                    set("quantity", isNaN(val) ? 0 : val);
+                  }
+                }}
+                className={inputClass(!!errors.quantity) + " w-32"}
+                placeholder="Enter quantity"
+              />
+            </FormField>
+          </div>
 
 
           {p && selectedPackage && (
@@ -983,13 +1182,13 @@ useEffect(() => {
 
 
 
-           
+
               {(() => {
                 const hasExtraHours = form.extraHours > 0;
                 const hasExtraKm = form.extraKm > 0;
                 const hasPromoter = form.needPromoter;
 
-             
+
                 const lastRow = hasExtraHours
                   ? "extraHours"
                   : hasExtraKm
@@ -1004,14 +1203,14 @@ useEffect(() => {
                 return (
                   <>
                     <SummaryRow
-                      label={`Rental (${p.totalDays}d × ₹${selectedPackage.perDayRentalCost.toLocaleString()} × qty ${form.quantity})`}
+                      label={`Rental (${p.totalDays}D × ${formatINR(selectedPackage.perDayRentalCost)} × Qty ${form.quantity})`}
                       val={p.rentalCost}
                       isLast={false}
                       hasCharges={form.additionalCharges.length > 0}
                       onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
                     />
                     <SummaryRow
-                      label={`Driver (${p.totalDays}d × ₹${selectedPackage.driverCharges.toLocaleString()} × qty ${form.quantity})`}
+                      label={`Driver (${p.totalDays}D × ${formatINR(selectedPackage.driverCharges)} × Qty ${form.quantity})`}
                       val={p.driverCost}
                       isLast={false}
                       hasCharges={form.additionalCharges.length > 0}
@@ -1019,7 +1218,7 @@ useEffect(() => {
                     />
                     {hasPromoter && (
                       <SummaryRow
-                        label={`Promoter (${p.totalDays}d × ₹${selectedPackage.promoterChargePerDay.toLocaleString()} × qty ${form.quantity})`}
+                        label={`Promoter (${p.totalDays}D × ${formatINR(selectedPackage.promoterChargePerDay)} × ${form.promoterQuantity} Promoter)`}
                         val={p.promoterCost}
                         isLast={false}
                         hasCharges={form.additionalCharges.length > 0}
@@ -1035,7 +1234,7 @@ useEffect(() => {
                     />
                     {hasExtraKm && (
                       <SummaryRow
-                        label={`Extra KM (${form.extraKm} × ₹${selectedPackage.perKmCharge.toLocaleString()})`}
+                        label={`Extra KM / K (${form.extraKm.toLocaleString('en-IN')} × ${formatINR(selectedPackage.perKmCharge)})`}
                         val={(p as any).extraKmCost || 0}
                         isLast={lastRow === "extraKm"}
                         hasCharges={form.additionalCharges.length > 0}
@@ -1044,7 +1243,7 @@ useEffect(() => {
                     )}
                     {hasExtraHours && (
                       <SummaryRow
-                        label={`Extra Hours (${form.extraHours} × ₹${selectedPackage.additionalHourCharges.toLocaleString()})`}
+                        label={`Extra Hours / H (${form.extraHours} × ${formatINR(selectedPackage.additionalHourCharges)})`}
                         val={(p as any).extraHourCost || 0}
                         isLast={lastRow === "extraHours"}
                         hasCharges={form.additionalCharges.length > 0}
@@ -1060,7 +1259,7 @@ useEffect(() => {
                 <div key={charge.id} className="flex items-center gap-1.5 pl-2 border-l-2 border-blue-100 dark:border-blue-900/40 w-full min-w-0">
 
 
-                
+
                   <input
                     type="text"
                     value={charge.label}
@@ -1069,7 +1268,7 @@ useEffect(() => {
                     className="w-36 min-w-0 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs text-gray-700 dark:text-gray-300 outline-none focus:border-blue-400"
                   />
 
-                
+
                   <select
                     value={charge.mode}
                     onChange={(e) => updateCharge(charge.id, {
@@ -1087,7 +1286,7 @@ useEffect(() => {
                     <option value="-">- Reduce</option>
                   </select>
 
-               
+
                   <div className="flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shrink-0">
                     <select
                       disabled={charge.mode === "+"}
@@ -1103,10 +1302,10 @@ useEffect(() => {
                       <option value="percent">%</option>
                     </select>
                     <input
-                    
+
                       min={0}
                       max={charge.mode === "-" && charge.reduceType === "percent" ? 100 : undefined}
-                    
+
                       value={
                         charge.mode === "-" && charge.reduceType === "percent"
                           ? (charge.discountPercent || "")
@@ -1130,7 +1329,7 @@ useEffect(() => {
                     />
                   </div>
 
-               
+
                   <button
                     type="button"
                     onClick={() => {
@@ -1148,7 +1347,7 @@ useEffect(() => {
                     <HiOutlinePlus className="h-3 w-3 stroke-2" />
                   </button>
 
-                 
+
                   <button
                     type="button"
                     onClick={() => removeCharge(charge.id)}
@@ -1157,16 +1356,27 @@ useEffect(() => {
                   >
                     <HiOutlineTrash className="h-3 w-3" />
                   </button>
+
+
+                  {/* Right side amount display */}
+                  {charge.mode === "+" && charge.amount > 0 && (
+                    <span className="ml-auto text-xs font-semibold shrink-0 text-gray-800 dark:text-gray-200">
+                      {formatINR(charge.amount)}
+                    </span>
+                  )}
+
                 </div>
               ))}
 
-             
+
+
+
               <div className="flex justify-between text-sm font-semibold text-gray-700 dark:text-gray-200 border-t border-blue-200 dark:border-blue-900/30 pt-2 mt-1">
                 <span>Subtotal</span>
-                <span>₹{p.subtotal.toLocaleString()}</span>
+                <span>{formatINR(p.subtotal)}</span>
               </div>
 
-             
+
               {(() => {
                 const MAX_PCT = parseFloat(process.env.NEXT_PUBLIC_MAX_DISCOUNT_PERCENT || "15");
                 const maxAmt = Math.round((p?.subtotal ?? 0) * (MAX_PCT / 100));
@@ -1185,7 +1395,7 @@ useEffect(() => {
                     if (requestedAmt > remaining) {
                       isCapped = true;
                       const appliedPct = parseFloat(((cutAmt / (p?.subtotal ?? 1)) * 100).toFixed(2));
-                      capMessage = `Remaining Balance: ₹${remaining.toLocaleString()} (${appliedPct}%) only · ₹${cutAmt.toLocaleString()} applied`;
+                      capMessage = `Remaining Balance: ${formatINR(remaining)} (${appliedPct}%) only · ${formatINR(cutAmt)} applied`;
                     }
                   } else {
                     const requested = Number(c.amount) || 0;
@@ -1194,7 +1404,7 @@ useEffect(() => {
                     if (requested > remaining) {
                       isCapped = true;
                       const appliedPct = parseFloat(((cutAmt / (p?.subtotal ?? 1)) * 100).toFixed(2));
-                      capMessage = `Balance: ₹${remaining.toLocaleString()} (${appliedPct}%) only · ₹${cutAmt.toLocaleString()} deducted`;
+                      capMessage = `Balance:${formatINR(remaining)} (${appliedPct}%) only · ${formatINR(cutAmt)} deducted`;
                     }
                   }
                   usedAmt += cutAmt;
@@ -1206,7 +1416,9 @@ useEffect(() => {
                           {c.label}
                           {isPercent && <span className="ml-1 text-xs text-red-400">({Math.min(c.discountPercent ?? 0, MAX_PCT)}%)</span>}
                         </span>
-                        <span className="font-medium text-red-500">-₹{cutAmt.toLocaleString()}</span>
+                        <span className="font-medium text-red-500">
+                          -{formatINR(cutAmt)}
+                        </span>
                       </div>
                       {isCapped && (
                         <div className="flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-2 py-1">
@@ -1221,28 +1433,28 @@ useEffect(() => {
                 });
               })()}
 
-             
+
               <div className="border-t border-blue-200 dark:border-blue-900/30 pt-2 mt-2 space-y-1.5">
                 {(p as any).additionalCuts > 0 && (
                   <div className="flex justify-between text-sm font-medium text-red-500">
                     <span>Total Discount</span>
-                    <span>-₹{(p as any).additionalCuts.toLocaleString()}</span>
+                    <span>{formatINR((p as any).additionalCuts)}</span>
                   </div>
                 )}
+
                 {(p as any).additionalCuts > 0 && (
                   <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                     <span>Taxable Amount</span>
-                    <span>₹{(p as any).taxableAmount.toLocaleString()}</span>
+                    <span>{formatINR((p as any).taxableAmount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
-                  <span>GST (18%)</span>
-                  <span>₹{p.gstAmount.toLocaleString()}</span>
+
+
+                <div className="flex justify-between text-base font-bold">
+                  <span>Total (excl. GST)</span>
+                  <span>{formatINR(p.totalAmount)}</span>
                 </div>
-                <div className="flex justify-between text-base font-bold text-gray-900 dark:text-white pt-1 border-t border-blue-200 dark:border-blue-900/30">
-                  <span>Total</span>
-                  <span>₹{p.totalAmount.toLocaleString()}</span>
-                </div>
+
               </div>
             </section>
           )}
@@ -1266,11 +1478,24 @@ useEffect(() => {
 
 
 function SummaryRow({ label, val, onAdd, isLast = false, hasCharges = false }: { label: string; val: number; onAdd: () => void; isLast?: boolean; hasCharges?: boolean }) {
+
+
+  const formatINR = (value: string | number) => {
+    const num = parseFloat(String(value).replace(/[^0-9.]/g, ""));
+    if (isNaN(num) || value === "" || value === undefined) return "";
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(num);
+  };
   return (
     <div className="flex justify-between items-center text-sm">
       <span className="text-gray-500">{label}</span>
       <span className="flex items-center gap-2">
-        <span className="font-medium text-gray-800 dark:text-gray-200">₹{val.toLocaleString()}</span>
+        <span className="font-medium text-gray-800 dark:text-gray-200">
+          {formatINR(val)}
+        </span>
         {isLast && !hasCharges && (
           <button
             type="button"
@@ -1281,8 +1506,8 @@ function SummaryRow({ label, val, onAdd, isLast = false, hasCharges = false }: {
             <HiOutlinePlus className="h-3 w-3 stroke-2" />
           </button>
         )}
-        {(!isLast || hasCharges) && <span className="w-5" />}
+
       </span>
     </div>
   );
-}
+} 

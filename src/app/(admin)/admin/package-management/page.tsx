@@ -4,13 +4,14 @@
 import React, { useEffect, useState } from "react";
 import PackageFormModal from "./PackageFormModal";
 import DeleteConfirmModal from "./DeleteModal";
-import API_BASE from "../../../../baseurl";
+import API_BASE from "../../../../../baseurl";
 import { FaRegEdit } from "react-icons/fa";
 import { MdOutlineDelete } from "react-icons/md";
 import { HiOutlineCube } from "react-icons/hi";
 import { HiOutlinePlus } from "react-icons/hi2";
 import { HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi";
 import { useSearch } from "@/context/SearchContext";
+import { useAuthGuard } from "../../../../utils/useAuthGuard"; 
 
 
 export interface Package {
@@ -103,7 +104,7 @@ export default function PackageTable() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-
+  useAuthGuard();
 
   const [showReasonModal, setShowReasonModal] = useState(false);
   const [toggleTarget, setToggleTarget] = useState<Package | null>(null);
@@ -133,15 +134,13 @@ export default function PackageTable() {
 
   useEffect(() => { fetchPackages(); }, []);
 
-
-  // const filteredPackages = packages.filter((pkg) => {
-  //   if (filterType && pkg.vehicleType !== filterType) return false;
-  //   if (filterModel && pkg.vehicleModel !== filterModel) return false;
-  //   if (filterStatus === "active" && !pkg.isActive) return false;
-  //   if (filterStatus === "inactive" && pkg.isActive) return false;
-  //   return true;
-  // });
-
+function formatINR(amount: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 
 const filteredPackages = packages.filter((pkg) => {
   if (filterType && pkg.vehicleType !== filterType) return false;
@@ -376,31 +375,31 @@ const filteredPackages = packages.filter((pkg) => {
                         </td>
                         <td className="px-5 py-4 text-gray-600 dark:text-gray-300">{pkg.vehicleModel}</td>
                         <td className="px-5 py-4 text-center font-semibold text-gray-800 dark:text-gray-100">
-                          ₹{pkg.perDayRentalCost.toLocaleString("en-IN")}
+                        {formatINR(pkg.perDayRentalCost)}
                         </td>
                         <td className="px-5 py-4">
                           <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                            {pkg.dailyKmLimit} km
+                          {pkg.dailyKmLimit.toLocaleString("en-IN")} km
                           </span>
                         </td>
                         <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
-                          ₹{pkg.additionalHourCharges.toLocaleString("en-IN")}/hr
+                        {formatINR(pkg.additionalHourCharges)}/hr
                         </td>
                         <td className="px-5 py-4">
                           {pkg.promoterAvailable ? (
                             <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                              Yes {pkg.promoterChargePerDay ? `· ₹${pkg.promoterChargePerDay.toLocaleString("en-IN")}/day` : ""}
+                              Yes {pkg.promoterChargePerDay ? `·${formatINR(pkg.promoterChargePerDay)}/day` : ""}
                             </span>
                           ) : (
                             <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">No</span>
                           )}
                         </td>
                         <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
-                          ₹{pkg.driverCharges.toLocaleString("en-IN")}
+                         {formatINR(pkg.driverCharges)}
                         </td>
                         <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
-                          ₹{pkg.rtoCharges.toLocaleString("en-IN")}
+                         {formatINR(pkg.rtoCharges)}
                         </td>
                         <td className="px-5 py-4">
                        
@@ -451,18 +450,6 @@ const filteredPackages = packages.filter((pkg) => {
            
             {filteredPackages.length > 0 && (
               <div className="flex flex-col sm:flex-row items-center justify-end gap-4 border-t border-gray-100 bg-gray-50/70 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/40">
-                {/* <div className="flex gap-1">
-                  {packages.filter((p) => p.isActive).length > 0 && (
-                    <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                      {packages.filter((p) => p.isActive).length} active
-                    </span>
-                  )}
-                  {packages.filter((p) => !p.isActive).length > 0 && (
-                    <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-600">
-                      {packages.filter((p) => !p.isActive).length} inactive
-                    </span>
-                  )}
-                </div> */}
 
                 {totalPages > 1 && (
                   <div className="flex items-center gap-1.5">

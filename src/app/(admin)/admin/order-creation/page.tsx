@@ -6,21 +6,22 @@ import React, { useEffect, useState } from "react";
 import AdminOrderForm from "./AdminOrderForm";
 import { HiOutlineShoppingBag, HiOutlineEye } from "react-icons/hi";
 import { HiOutlinePlus, HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi2";
-import API_BASE from "../../../../baseurl";
+import API_BASE from "../../../../../baseurl";
+import { useAuthGuard } from "../../../../utils/useAuthGuard"; 
 
 interface BookingItem {
   vehicleModel: string;
   vehicleType: string;
   campaignType: string;
-  otherCampaignType?: string;      
+  otherCampaignType?: string;
   fromDate: string;
   toDate: string;
   state: string;
   city: string;
   quantity: number;
   totalDays: number;
-  extraDays?: number;               
-  extraKm?: number;                 
+  extraDays?: number;
+  extraKm?: number;
   subtotal: number;
   gstAmount: number;
   totalAmount: number;
@@ -28,9 +29,15 @@ interface BookingItem {
   fromLocation?: string;
   toLocation?: string;
   promoterType?: string;
-  otherPromoterType?: string;        
+  otherPromoterType?: string;
   bookingFor?: string;
-  additionalCharges?: {             
+  additionalCharges?: {
+    id: string;
+    label: string;
+    amount: number;
+    mode: "+" | "-";
+  }[];
+  additionalFields?: {
     id: string;
     label: string;
     amount: number;
@@ -53,7 +60,8 @@ interface Order {
   createdAt: string;
   handlername?: string;
   grandNegotiationTotal?: number;
-  campaignType?:string
+  campaignType?: string
+  grandGst?: number
 }
 
 
@@ -126,6 +134,7 @@ function getTotalDays(items: BookingItem[]) {
 
 
 export default function OrdersPage() {
+  
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,13 +147,17 @@ export default function OrdersPage() {
   const [filterPipeline, setFilterPipeline] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchQ, setSearchQ] = useState("");
-
+  useAuthGuard();
 
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-
+  function formatINR(amount: number): string {
+    return new Intl.NumberFormat("en-IN", {
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
 
   const fetchOrders = async () => {
     try {
@@ -159,7 +172,7 @@ export default function OrdersPage() {
       }
 
       const data = await res.json();
-      const list: Order[] = data.orders || data.data || [];
+      const list: Order[] = data.data?.orders || [];
       setOrders(list);
       setCurrentPage(1);
     } catch (err: any) {
@@ -173,7 +186,7 @@ export default function OrdersPage() {
     fetchOrders();
   }, []);
 
-  // Auto-dismiss success message
+
   useEffect(() => {
     if (!successMsg) return;
     const t = setTimeout(() => setSuccessMsg(null), 4000);
@@ -183,7 +196,7 @@ export default function OrdersPage() {
 
 
 
-  // ── Filtered & searched orders ───────────────────────────────────
+
   const filtered = orders.filter((o) => {
     const matchPipeline = filterPipeline === "all" || o.pipelineStatus === filterPipeline;
     const matchStatus = filterStatus === "all" || o.orderStatus === filterStatus;
@@ -492,7 +505,7 @@ export default function OrdersPage() {
                               order.grandNegotiationTotal > 0 &&
                               order.grandNegotiationTotal !== order.grandTotal && (
                                 <p className="text-[10px] text-gray-400 line-through">
-                                  ₹{order.grandTotal.toLocaleString("en-IN")}
+                                  ₹{formatINR(order.grandTotal)}
                                 </p>
                               )
                             }
@@ -560,7 +573,7 @@ export default function OrdersPage() {
                 </table>
               </div>
 
-            
+
               {filtered.length > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100 bg-gray-50/70 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/40">
 
@@ -643,8 +656,6 @@ export default function OrdersPage() {
         />
       )}
 
-
-
     </div>
   );
 }
@@ -658,6 +669,13 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
   const displayTotal = order.grandNegotiationTotal && order.grandNegotiationTotal > 0
     ? order.grandNegotiationTotal
     : order.grandTotal;
+
+
+  function formatINR(amount: number): string {
+    return new Intl.NumberFormat("en-IN", {
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
 
   return (
     <div
@@ -690,14 +708,14 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 
         <div className="flex-1 px-6 py-5 space-y-5">
 
-       
+
           <section>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Customer</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4 space-y-2.5">
               {[
-                { label: "Name",    val: order.name },
-                { label: "Phone",   val: order.phone },
-                { label: "Email",   val: order.email || "—" },
+                { label: "Name", val: order.name },
+                { label: "Phone", val: order.phone },
+                { label: "Email", val: order.email || "—" },
                 { label: "Address", val: order.address || "—" },
               ].map(({ label, val }) => (
                 <div key={label} className="flex justify-between text-sm gap-4">
@@ -729,42 +747,40 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
             </div>
           </section>
 
-        
+
           <section>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
               Vehicles ({order.bookingItems?.length || 0})
             </p>
             <div className="space-y-3">
               {(order.bookingItems || []).map((item, i) => {
-             
+
                 const baseDays = item.fromDate && item.toDate
                   ? Math.ceil(
-                      (new Date(item.toDate).getTime() - new Date(item.fromDate).getTime()) / 86400000
-                    )
+                    (new Date(item.toDate).getTime() - new Date(item.fromDate).getTime()) / 86400000
+                  )
                   : 0;
                 const extraDays = item.extraDays || 0;
                 const totalDays = baseDays + extraDays;
 
                 const durationLabel =
                   item.fromDate && item.toDate
-                    ? `${formatDate(item.fromDate)} → ${formatDate(item.toDate)} (${baseDays}d base${
-                        extraDays ? ` +${extraDays} extra = ${totalDays}d total` : ""
-                      })`
+                    ? `${formatDate(item.fromDate)} → ${formatDate(item.toDate)} (${baseDays}d base${extraDays ? ` +${extraDays} extra = ${totalDays}d total` : ""
+                    })`
                     : "—";
 
-            
+
                 const campaignLabel =
                   item.campaignType === "Other"
                     ? item.otherCampaignType || "Other"
                     : item.campaignType || "—";
 
-             
+
                 const promoterLabel = item.needPromoter
-                  ? `Yes · ${
-                      item.promoterType === "Other"
-                        ? item.otherPromoterType || "Other"
-                        : item.promoterType || ""
-                    }`
+                  ? `Yes · ${item.promoterType === "Other"
+                    ? item.otherPromoterType || "Other"
+                    : item.promoterType || ""
+                  }`
                   : "No";
 
                 return (
@@ -772,7 +788,7 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
                     key={i}
                     className="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4"
                   >
-                    {/* Vehicle header */}
+
                     <div className="flex items-center gap-2 mb-3">
                       <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600 dark:text-blue-400">
                         V{i + 1}
@@ -785,16 +801,16 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
                       )}
                     </div>
 
-                  
+
                     <div className="space-y-1.5">
                       {[
-                        { label: "Booking For",  val: item.bookingFor || "—" },
-                        { label: "Campaign",      val: campaignLabel },
-                        { label: "Duration",      val: durationLabel },
-                        { label: "State / City",  val: [item.state, item.city].filter(Boolean).join(" / ") || "—" },
-                        { label: "Route",         val: item.fromLocation && item.toLocation ? `${item.fromLocation} → ${item.toLocation}` : "—" },
-                        { label: "Quantity",      val: item.quantity ?? "—" },
-                        { label: "Promoter",      val: promoterLabel },
+                        { label: "Booking For", val: item.bookingFor || "—" },
+                        { label: "Campaign", val: campaignLabel },
+                        { label: "Duration", val: durationLabel },
+                        { label: "State / City", val: [item.state, item.city].filter(Boolean).join(" / ") || "—" },
+                        { label: "Route", val: item.fromLocation && item.toLocation ? `${item.fromLocation} → ${item.toLocation}` : "—" },
+                        { label: "Quantity", val: item.quantity ?? "—" },
+                        { label: "Promoter", val: promoterLabel },
                       ].map(({ label, val }) => (
                         <div key={label} className="flex justify-between text-sm gap-4">
                           <span className="text-gray-400 shrink-0">{label}</span>
@@ -802,8 +818,8 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
                         </div>
                       ))}
 
-                     
-                     {(item.extraKm ?? 0) > 0 && (
+
+                      {(item.extraKm ?? 0) > 0 && (
                         <div className="flex justify-between text-sm gap-4">
                           <span className="text-gray-400 shrink-0">Extra KM</span>
                           <span className="font-medium text-gray-800 dark:text-gray-200 text-right">
@@ -813,14 +829,17 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
                       )}
                     </div>
 
-                    
-                   {(item.additionalCharges?.length ?? 0) > 0 && (
+
+                    {((item.additionalFields?.length ?? 0) > 0 || (item.additionalCharges?.length ?? 0) > 0) && (
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
                         <p className="text-[10px] font-semibold uppercase text-gray-400 mb-1">
                           Additional Charges
                         </p>
-                       {(item.additionalCharges ?? []).map((c) => (
-                          <div key={c.id} className="flex justify-between text-sm">
+
+                        {/* {([...(item.additionalFields ?? []), ...(item.additionalCharges ?? [])]).map((c) => (
+                          <div key={c.id} className="flex justify-between text-sm"> */}
+                        {([...(item.additionalFields ?? []), ...(item.additionalCharges ?? [])]).map((c, chargeIdx) => (
+                          <div key={`charge-${chargeIdx}-${c.id}`} className="flex justify-between text-sm">
                             <span className="text-gray-500">{c.label || "Unnamed"}</span>
                             <span
                               className={
@@ -836,20 +855,38 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
                       </div>
                     )}
 
-                   
+
+
+
                     {(item.totalAmount > 0 || item.subtotal > 0) && (
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1.5">
+
+
                         <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
                           <span>Subtotal</span>
-                          <span>₹{(item.subtotal || 0).toLocaleString()}</span>
+                          <span>₹{formatINR(item.subtotal || 0)}</span>
                         </div>
-                        <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                          <span>GST (18%)</span>
-                          <span>₹{(item.gstAmount || 0).toLocaleString()}</span>
-                        </div>
+
+
+                        {(item.additionalCharges || [])
+                          .filter((c) => c.mode === "-")
+                          .reduce((s, c) => s + Number(c.amount), 0) > 0 && (
+                            <div className="flex justify-between text-sm text-red-500">
+                              <span>Discount</span>
+                              <span>
+                                -₹{formatINR(
+                                  (item.additionalCharges || [])
+                                    .filter((c) => c.mode === "-")
+                                    .reduce((s, c) => s + Number(c.amount), 0)
+                                )}
+                              </span>
+                            </div>
+                          )}
+
+
                         <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white">
-                          <span>Vehicle Total</span>
-                          <span>₹{(item.totalAmount || 0).toLocaleString()}</span>
+                          <span>Total (excl. GST)</span>
+                          <span>₹{formatINR(item.totalAmount || 0)}</span>
                         </div>
                       </div>
                     )}
@@ -859,24 +896,79 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
             </div>
           </section>
 
-         
-          <div className="rounded-xl border border-blue-100 bg-blue-50 dark:border-blue-900/30 dark:bg-blue-900/10 p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Grand Total</p>
+
+
+          {(() => {
+            const bookingItems = order.bookingItems || [];
+
+            const totalDiscount = bookingItems.reduce((s, item) =>
+              s + (item.additionalFields || [])
+                .filter((c) => c.mode === "-")
+                .reduce((a, c) => a + Number(c.amount), 0), 0
+            );
+
+
+            const subTotal = bookingItems.reduce((s, item) => s + (item.subtotal || 0), 0);
+            const Taxableamount = bookingItems.reduce((s, item) => s + (item.subtotal || 0), 0) + totalDiscount
+
+            const totalGst = Math.floor(subTotal * 0.18);
+            const grandTotal = subTotal + totalGst;
+
+            const displayTotal =
+              order.grandNegotiationTotal && order.grandNegotiationTotal > 0
+                ? order.grandNegotiationTotal
+                : order.grandTotal || grandTotal;
+
+            return (
+              <div className="rounded-xl border border-blue-100 bg-blue-50 dark:border-blue-900/30 dark:bg-blue-900/10 p-4 space-y-1.5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-500 mb-2">
+                  Order Total ({bookingItems.length} vehicle{bookingItems.length > 1 ? "s" : ""})
+                </p>
+
+
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                  <span>Subtotal (excl. GST)</span>
+                  <span>₹{formatINR(Taxableamount)}</span>
+                </div>
+
+
+                {totalDiscount > 0 && (
+                  <div className="flex justify-between text-sm text-red-500">
+                    <span>Discount</span>
+                    <span>-₹{formatINR(totalDiscount)}</span>
+                  </div>
+                )}
+
+
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                  <span>Taxable Amount</span>
+                  <span>₹{formatINR(subTotal)}</span>
+                </div>
+
+                {/* GST */}
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                  <span>GST (18%)</span>
+                  <span>₹{formatINR(order.grandGst || totalGst)}</span>
+                </div>
+
+
                 {order.grandNegotiationTotal &&
                   order.grandNegotiationTotal > 0 &&
                   order.grandNegotiationTotal !== order.grandTotal && (
-                    <p className="text-xs text-gray-400 line-through mt-0.5">
-                      Original: ₹{order.grandTotal.toLocaleString()}
-                    </p>
+                    <div className="flex justify-between text-sm text-gray-400 line-through">
+                      <span>Original Total</span>
+                      <span>₹{formatINR(order.grandTotal)}</span>
+                    </div>
                   )}
+
+
+                <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-blue-200 dark:border-blue-900/40 pt-2 mt-1">
+                  <span>Grand Total</span>
+                  <span>₹{formatINR(displayTotal)}</span>
+                </div>
               </div>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">
-                ₹{displayTotal?.toLocaleString() ?? "—"}
-              </p>
-            </div>
-          </div>
+            );
+          })()}
 
         </div>
       </div>

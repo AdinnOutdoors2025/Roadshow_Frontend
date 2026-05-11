@@ -3,8 +3,8 @@
 
 import React, { useState, useRef } from "react";
 import { CustomerFormData, CustomerSelection } from "./AdminOrderForm";
-import FormField, { inputClass } from "../../../components/reusableFormField";
-import { Customer, createCustomer, searchCustomers } from "./../../../utils/Adminorderapi";
+import FormField, { inputClass } from "../../../../components/reusableFormField";
+import { Customer, createCustomer, searchCustomers } from "../../../../utils/Adminorderapi";
 
 interface Props {
   data: CustomerFormData;
@@ -12,12 +12,13 @@ interface Props {
   onChange: (d: Partial<CustomerFormData>) => void;
   onCustomerChange: (d: Partial<CustomerSelection>) => void;
   onNext: () => void;
+ 
 }
 
 type PhoneStatus = "idle" | "checking" | "found" | "not_found" | "creating" | "created" | "error";
 
 export default function CustomerDetailsStep({ data, customerSelection, onChange, onCustomerChange, onNext }: Props) {
-  const [errors, setErrors] = useState<Partial<Record<keyof CustomerFormData, string>>>({});
+const [errors, setErrors] = useState<Partial<Record<keyof CustomerFormData | "email", string>>>({});
   const [phoneStatus, setPhoneStatus] = useState<PhoneStatus>("idle");
   const [phoneError, setPhoneError] = useState("");
   const [globalError, setGlobalError] = useState("");
@@ -45,17 +46,27 @@ export default function CustomerDetailsStep({ data, customerSelection, onChange,
     setErrors((p) => ({ ...p, [field]: undefined }));
   };
 
- 
+
+
+
   const validateFields = () => {
     const e: Partial<Record<keyof CustomerFormData, string>> = {};
     if (!data.phone.trim()) e.phone = "Phone number is required";
     else if (!/^[6-9]\d{9}$/.test(data.phone.trim())) e.phone = "Enter a valid 10-digit mobile number";
     if (!data.name.trim()) e.name = "Customer name is required";
     if (!data.address.trim()) e.address = "Address is required";
+    
+
+    if (data.email && data.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(data.email.trim())) {
+        e.email = "Please enter a valid email address";
+      }
+    }
+    
     setErrors(e);
     return Object.keys(e).length === 0;
   };
-
 
   const handleNext = async () => {
     setGlobalError("");
@@ -63,7 +74,7 @@ export default function CustomerDetailsStep({ data, customerSelection, onChange,
 
     if (!validateFields()) return;
 
-  
+
     if (!selectedType) {
       setGlobalError("Please select 'Existing Customer' or 'New Customer' at the bottom.");
       return;
@@ -74,31 +85,26 @@ export default function CustomerDetailsStep({ data, customerSelection, onChange,
       return;
     }
 
-    if (selectedType === "existing") {
-      try {
-        setPhoneStatus("checking");
-        const { customers } = await searchCustomers(data.phone);
-        const match = customers.find((c: Customer) => c.phone === data.phone);
 
-        if (match) {
-        
-          onCustomerChange({ customer: { ...match, customerType: 0 } as any, type: "existing" });
-          setPhoneStatus("found");
-          onNext();
-        } else {
-          setPhoneStatus("error");
-          setPhoneError("No customer found with this number. Please select 'New Customer' instead.");
-          setGlobalError("Phone number not found in existing customers please click new customer.");
-        }
-      } catch (e: any) {
-        setPhoneStatus("error");
-        setPhoneError(e.message || "Lookup failed");
-        setGlobalError("Failed to search customer. Try again.");
-      }
-      return;
-    }
+if (selectedType === "existing") {
 
-   
+  const existCustomer = {
+    
+    name: data.name,
+    phone: data.phone,
+    address: data.address,
+    email: data.email || "",
+  };
+  onCustomerChange({ 
+    customer: { ...existCustomer, customerType: 0 } as any, 
+    type: "existing" 
+  });
+  onNext();
+  return;
+}
+    
+
+
     if (selectedType === "new") {
       try {
         setPhoneStatus("creating");
@@ -108,7 +114,7 @@ export default function CustomerDetailsStep({ data, customerSelection, onChange,
           address: data.address,
           email: data.email,
         });
-       
+
         onCustomerChange({ customer: { ...customer, customerType: 1 } as any, type: "new" });
         setPhoneStatus("created");
         onNext();
@@ -126,7 +132,7 @@ export default function CustomerDetailsStep({ data, customerSelection, onChange,
     <div className="space-y-5">
 
 
-    
+
       <div className="space-y-4">
 
         <FormField label="Customer Name" error={errors.name} required>
@@ -162,18 +168,19 @@ export default function CustomerDetailsStep({ data, customerSelection, onChange,
           />
         </FormField>
 
-        <FormField label="Email (Optional)">
+
+        <FormField label="Email (Optional)" error={errors.email}>
           <input
             type="email"
             value={data.email || ""}
             onChange={(e) => set("email", e.target.value)}
             placeholder="customer@example.com"
-            className={inputClass(false)}
+            className={inputClass(!!errors.email)}
           />
         </FormField>
       </div>
 
-    
+
       <div className="border-t border-gray-200 dark:border-gray-700 pt-5 mt-5">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
           Select Customer Type <span className="text-red-500">*</span>
@@ -203,7 +210,7 @@ export default function CustomerDetailsStep({ data, customerSelection, onChange,
         )}
       </div>
 
-    
+
       {phoneStatus === "checking" && (
         <div className="flex items-center gap-2 text-sm text-blue-600">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
@@ -244,12 +251,12 @@ export default function CustomerDetailsStep({ data, customerSelection, onChange,
         <p className="text-xs text-red-500">{phoneError}</p>
       )}
 
-    
+
       {globalError && globalError !== "Please select 'Existing Customer' or 'New Customer' at the bottom." && (
         <p className="text-xs text-red-500">{globalError}</p>
       )}
 
-    
+
       <div className="flex justify-end pt-2">
         <button
           onClick={handleNext}

@@ -16,11 +16,13 @@ interface FormState {
 interface ApiResponse {
   success: boolean;
   message: string;
-  token?: string;
-  user?: {
-    id: string;
-    username: string;
-    role: string;
+  data?: {
+    token: string;
+    user: {
+      id: string;
+      username: string;
+      role: string;
+    };
   };
 }
 
@@ -47,7 +49,7 @@ export default function SignInForm() {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     setError("");
-  };
+  }; 
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
@@ -77,11 +79,11 @@ export default function SignInForm() {
         return;
       }
 
-      if (data.token) {
-        saveToken(data.token);
-      }
+     if (data.data?.token) {
+      saveToken(data.data.token);
+    }
 
-      router.push("/dashboard");
+      router.push("/admin/dashboard");
     } catch (err) {
       setError("Server error. Please try again.");
     } finally {

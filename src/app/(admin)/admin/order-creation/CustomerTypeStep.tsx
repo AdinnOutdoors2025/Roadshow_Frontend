@@ -2,8 +2,8 @@
 
 import React, { useState, useCallback } from "react";
 import { CustomerFormData, CustomerSelection } from "./AdminOrderForm";
-import { Customer, createCustomer, searchCustomers } from "./../../../utils/Adminorderapi";
-import FormField, { inputClass } from "../../../components/reusableFormField";
+import { Customer, createCustomer, searchCustomers } from "../../../../utils/Adminorderapi";
+import FormField, { inputClass } from "../../../../components/reusableFormField";
 
 interface Props {
   formData: CustomerFormData;     

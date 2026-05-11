@@ -37,7 +37,7 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
       day: "2-digit",
       month: "short",
       year: "numeric",
-    }).replace(/ /g, "-"); 
+    }).replace(/ /g, "-");
   };
 
   const handleNext = () => {
@@ -45,9 +45,21 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
     onNext();
   };
 
-  const grandTotal = vehicles.reduce((s, v) => s + (v.pricing?.totalAmount || 0), 0);
-  const totalGst = vehicles.reduce((s, v) => s + (v.pricing?.gstAmount || 0), 0);
-  const subTotal = vehicles.reduce((s, v) => s + (v.pricing?.subtotal || 0), 0);
+  const totalDiscount = vehicles.reduce((s, v) => s + ((v.pricing as any)?.additionalCuts || 0), 0);
+  const taxableAmount = vehicles.reduce((s, v) => s + (v.pricing?.subtotal || 0), 0);
+  const subTotal = taxableAmount + totalDiscount;
+  const totalGst = Math.floor(taxableAmount * 0.18);
+  const grandTotal = taxableAmount + totalGst;
+
+  const formatINR = (value: string | number) => {
+    const num = parseFloat(String(value).replace(/[^0-9.]/g, ""));
+    if (isNaN(num) || value === "" || value === undefined) return "";
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(num);
+  };
 
   return (
     <div className="space-y-5">
@@ -55,7 +67,7 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
 
 
 
-    
+
         {vehicles.length > 0 && (
           <button
             onClick={openAdd}
@@ -90,7 +102,7 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600">V{idx + 1}</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p>
-                 
+
                     <p className="text-xs text-gray-400">
                       {v.fromDate && v.toDate
                         ? `${formatDate(v.fromDate)} → ${formatDate(v.toDate)} · ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000)}d`
@@ -100,7 +112,11 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {v.pricing && <span className="text-sm font-bold text-gray-800 dark:text-gray-100">₹{v.pricing.totalAmount.toLocaleString()}</span>}
+                  {v.pricing && (
+                    <span className="text-sm font-bold text-gray-800 dark:text-gray-100">
+                      {formatINR(v.pricing.totalAmount)}
+                    </span>
+                  )}
                   <button onClick={() => openEdit(v)} className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-all dark:border-gray-700 dark:bg-gray-800">
                     <HiOutlinePencil className="h-3.5 w-3.5" />
                   </button>
@@ -111,7 +127,7 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {v.campaignType && <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">{v.campaignType}</span>}
-              
+
                 {v.needPromoter && (
                   <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                     Promoter · {v.promoterType === "Other" ? v.otherPromoterType : v.promoterType}
@@ -124,12 +140,44 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
           ))}
 
 
+
           {vehicles.length > 0 && (
             <div className="rounded-xl border border-blue-100 bg-blue-50/50 dark:border-blue-900/30 dark:bg-blue-900/10 p-4 space-y-1.5">
-              <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-2">Order Total ({vehicles.length} vehicle{vehicles.length > 1 ? "s" : ""})</p>
-              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300"><span>Subtotal</span><span>₹{subTotal.toLocaleString()}</span></div>
-              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300"><span>GST (18%)</span><span>₹{totalGst.toLocaleString()}</span></div>
-              <div className="flex justify-between text-base font-bold text-gray-900 dark:text-white border-t border-blue-100 dark:border-blue-900/30 pt-1.5 mt-1"><span>Grand Total</span><span>₹{grandTotal.toLocaleString()}</span></div>
+              <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-2">
+                Order Total ({vehicles.length} vehicle{vehicles.length > 1 ? "s" : ""})
+              </p>
+
+           
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                <span>Subtotal (excl. GST)</span>
+             <span>{formatINR(subTotal)}</span>
+              </div>
+
+            
+              {totalDiscount > 0 && (
+                <>
+                  <div className="flex justify-between text-sm text-red-500">
+                    <span>Discount</span>
+                  <span>-{formatINR(totalDiscount)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                    <span>Taxable Amount</span>
+                     <span>{formatINR(taxableAmount)}</span>
+                  </div>
+                </>
+              )}
+
+           
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                <span>GST (18%)</span>
+               <span>{formatINR(totalGst)}</span>
+              </div>
+
+        
+              <div className="flex justify-between text-base font-bold text-gray-900 dark:text-white border-t border-blue-100 dark:border-blue-900/30 pt-1.5 mt-1">
+                <span>Grand Total</span>
+               <span>{formatINR(grandTotal)}</span>
+              </div>
             </div>
           )}
         </div>
