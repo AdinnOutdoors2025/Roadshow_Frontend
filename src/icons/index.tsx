@@ -32,6 +32,7 @@ import LockIcon from "./lock.svg";
 import EnvelopeIcon from "./envelope.svg";
 import UserIcon from "./user-line.svg";
 import CalenderIcon from "./calender-line.svg";
+import CalendarSvg from './calendar.svg';
 import EyeIcon from "./eye.svg";
 import EyeCloseIcon from "./eye-close.svg";
 import TimeIcon from "./time.svg";
@@ -106,4 +107,5 @@ export {
   HorizontaLDots,
   ChevronUpIcon,
   ChatIcon,
+  CalendarSvg
 };
