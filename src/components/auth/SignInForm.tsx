@@ -63,7 +63,7 @@ export default function SignInForm() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}admin`, {
+      const res = await fetch(`${API_BASE}/admin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
