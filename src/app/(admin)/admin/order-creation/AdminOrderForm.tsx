@@ -9,6 +9,7 @@ import VehicleListStep from "./VehicleListStep";
 import OrderSummaryStep from "./OrderSummaryStep";
 import { Customer, PricingPreview } from "../../../../utils/Adminorderapi";
 import API_BASE from "../../../../../baseurl";
+import { getToken } from "@/utils/auth";
 export interface CustomerFormData {
   name: string;
   phone: string;
@@ -99,6 +100,8 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
     try {
       setSubmitting(true);
 
+        const token = getToken();
+
       const formData = new FormData();
       formData.append("customerName", order.customerForm.name);
       formData.append("customerPhone", order.customerForm.phone);
@@ -177,6 +180,9 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
       const res = await fetch(`${API_BASE}admin/orders/create`, {
         method: "POST",
         body: formData,
+         headers: {
+        Authorization: `Bearer ${token}`, 
+      },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed");

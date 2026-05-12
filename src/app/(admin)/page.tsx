@@ -1,6 +1,6 @@
 'use client'
 
-import type { Metadata } from "next";
+// import type { Metadata } from "next";
 import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
 import React from "react";
 import MonthlyTarget from "@/components/ecommerce/MonthlyTarget";
@@ -10,11 +10,11 @@ import RecentOrders from "@/components/ecommerce/RecentOrders";
 import DemographicCard from "@/components/ecommerce/DemographicCard";
 import { useAuthGuard } from "./../../utils/useAuthGuard"; 
 
-export const metadata: Metadata = {
-  title:
-    "Adinn Roadshows",
-  description: "Roadshows - Vehicle Management",
-};
+// export const metadata: Metadata = {
+//   title:
+//     "Adinn Roadshows",
+//   description: "Roadshows - Vehicle Management",
+// };
 
 export default function Ecommerce() {
     useAuthGuard();
