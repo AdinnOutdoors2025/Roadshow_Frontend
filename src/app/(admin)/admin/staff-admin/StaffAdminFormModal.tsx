@@ -6,6 +6,7 @@ import API_BASE from "../../../../../baseurl";
 import { inputClass, selectClass } from "../../../../components/reusableFormField";
 import FormField from "../../../../components/reusableFormField";
 import { getToken } from "@/utils/auth";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export interface StaffAdmin {
   _id?: string;
@@ -32,12 +33,16 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
   const [form, setForm] = useState<StaffAdmin>(defaultForm);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof StaffAdmin, string>>>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const isEdit = !!editingStaffAdmin;
 
   useEffect(() => {
     setForm(editingStaffAdmin ? { ...editingStaffAdmin, password: "" } : defaultForm);
     setErrors({});
+    setConfirmPassword("");
   }, [editingStaffAdmin]);
 
   const handleChange = (field: keyof StaffAdmin, value: any) => {
@@ -49,7 +54,9 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
     const newErrors: Partial<Record<keyof StaffAdmin, string>> = {};
     if (!form.username.trim()) newErrors.username = "Username is required";
     if (!isEdit && !form.password) newErrors.password = "Password is required";
-    if (form.password && form.password.length < 6) newErrors.password = "Min 6 characters";
+    // if (form.password && form.password.length < 6) newErrors.password = "Min 6 characters";
+    if (form.password && form.password !== confirmPassword)
+      newErrors.password = "Passwords do not match";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -58,7 +65,7 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
     if (!validate()) return;
     try {
       setLoading(true);
-      const token = getToken(); 
+      const token = getToken();
 
       const payload: any = {
         username: form.username.trim(),
@@ -94,7 +101,7 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-md max-h-[80vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+      <div className="relative w-full max-w-md max-h-[70vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
 
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
@@ -117,7 +124,7 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
             />
           </FormField>
 
-          <FormField
+          {/* <FormField
             label={isEdit ? "New Password (optional)" : "Password"}
             error={errors.password}
             required={!isEdit}
@@ -129,14 +136,59 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
               placeholder={isEdit ? "Leave blank to keep current" : "Min 6 characters"}
               className={inputClass(!!errors.password)}
             />
+          </FormField> */}
+
+          <FormField label={isEdit ? "New Password (optional)" : "Password"}>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={form.password || ""}
+                onChange={(e) => handleChange("password", e.target.value)}
+                placeholder={isEdit ? "Leave blank to keep current" : "Min 6 characters"}
+                className={inputClass(!!errors.password)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((p) => !p)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
+              </button>
+            </div>
           </FormField>
+
+          {(form.password || !isEdit) && (
+            <FormField label="Confirm Password" required={!isEdit}>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onPaste={(e) => e.preventDefault()}  // paste disable
+                  placeholder="Re-enter password"
+                  className={inputClass(false)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((p) => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
+                </button>
+              </div>
+            </FormField>
+          )}
 
           <FormField label="Phone Number">
             <input
-              type="text"
+              type="tel"
               value={form.phone}
-              onChange={(e) => handleChange("phone", e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                handleChange("phone", val);
+              }}
               placeholder="e.g. 9876543210"
+              maxLength={10}
               className={inputClass(false)}
             />
           </FormField>
@@ -146,13 +198,11 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
             <button
               type="button"
               onClick={() => handleChange("status", form.status === "active" ? "inactive" : "active")}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                form.status === "active" ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.status === "active" ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
+                }`}
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${
-                form.status === "active" ? "translate-x-6" : "translate-x-1"
-              }`} />
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${form.status === "active" ? "translate-x-6" : "translate-x-1"
+                }`} />
             </button>
             <span className={`text-sm font-medium ${form.status === "active" ? "text-green-600" : "text-red-500"}`}>
               {form.status === "active" ? "Active" : "Inactive"}
@@ -184,6 +234,6 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
           </button>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

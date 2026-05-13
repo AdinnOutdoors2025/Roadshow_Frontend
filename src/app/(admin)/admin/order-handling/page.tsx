@@ -4,8 +4,11 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import API_BASE from "../../../../../baseurl";
-import { MdOutlineAccessTime } from "react-icons/md";
+import { MdOutlineAccessTime, MdOutlinePeopleOutline } from "react-icons/md";
 import { getToken } from "@/utils/auth";
+import { jwtDecode } from "jwt-decode";
+import NegotiationForm from "./customernegotiationForm";
+import toast from "react-hot-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface BookingItem {
@@ -72,6 +75,7 @@ interface Order {
     pipelineLogs: PipelineLog[];
     negotiationLogs?: any[];
     createdAt: string;
+    updatedAt?: string;
 }
 
 // ─── Stage config ─────────────────────────────────────────────────────────────
@@ -112,6 +116,21 @@ const fmtDate = (d?: string) =>
             .replace(/ /g, "-")
         : "—";
 
+const fmtDatetime = (d?: string) =>
+    d
+        ? new Date(d)
+            .toLocaleString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+            })
+            .replace(/ /g, "-")
+        : "—";
+
 
 const fmtDateTime = (d?: string) => {
     if (!d) return "—";
@@ -143,7 +162,7 @@ export default function PipelineBoard() {
     const dragFrom = useRef<string>("");
 
     // modals
-    const [drawerOrder, setDrawerOrder] = useState<Order | null>(null);
+    const [drawerOrder, setDrawerOrder] = useState<any | null>(null);
     const [dropTarget, setDropTarget] = useState<{ order: Order; toStage: string } | null>(null);
 
     // modal form states
@@ -156,30 +175,61 @@ export default function PipelineBoard() {
     const [saving, setSaving] = useState(false);
     const [modalError, setModalError] = useState("");
     const [confirmMove, setConfirmMove] = useState<{ order: Order; toStage: string } | null>(null);
+    const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState<number>(1);
+    const [staffAdmins, setStaffAdmins] = useState<{ username: string }[]>([]);
+    const [discountType, setDiscountType] = useState<"amount" | "percent">("amount");
+    const [discountValue, setDiscountValue] = useState("");
+
+    const MAX_DISCOUNT_PCT = Number(process.env.NEXT_PUBLIC_MAX_DISCOUNT_PERCENT) || 15;
 
     // ── Fetch ──────────────────────────────────────────────────────────
-  const fetchPipeline = async () => {
-  setLoading(true);
+    const fetchPipeline = async () => {
+        setLoading(true);
 
-  try {
-    const token = getToken(); 
+        try {
+            const token = getToken();
 
-    const { data } = await axios.get(`${API_BASE}admin/pipeline`, {
-      headers: {
-        Authorization: `Bearer ${token}`, 
-      },
-    });
+            const { data } = await axios.get(`${API_BASE}admin/pipeline`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
 
-    setGrouped(data.data.grouped);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
+            setGrouped(data.data.grouped);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
 
     useEffect(() => { fetchPipeline(); }, []);
+
+
+
+    useEffect(() => {
+        const token = getToken();
+        if (token) {
+            try {
+                const decoded: any = jwtDecode(token);
+                setCurrentUserIsAdmin(decoded.isAdmin ?? 1);
+            } catch { }
+        }
+        fetchPipeline();
+        fetchStaffList();
+    }, []);
+
+    // Staff list fetch — super admin dropdown-க்கு
+    const fetchStaffList = async () => {
+        try {
+            const token = getToken();
+            const { data } = await axios.get(`${API_BASE}staff-admins`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setStaffAdmins(data.data.data || []);
+        } catch { }
+    };
 
     // ── Drag handlers ──────────────────────────────────────────────────
     const onDragStart = (order: Order, fromStage: string) => {
@@ -191,21 +241,35 @@ export default function PipelineBoard() {
         const order = dragOrder.current;
         if (!order || dragFrom.current === toStage) return;
 
-        // Stages that need modal
+        // todo → inProgress
+        if (dragFrom.current === "todo" && toStage === "inProgress") {
+            if (currentUserIsAdmin === 0) {
+                // Staff admin — modal வேண்டாம், directly move
+                // handlerName backend-ல req.user.username auto set ஆகும்
+                commitMove(order, toStage, {});
+            } else {
+                // Super admin — confirm modal காட்டு
+                setConfirmMove({ order, toStage });
+            }
+            return;
+        }
+
         const needsModal =
             toStage === "inProgress" ||
             toStage === "waitingForPO" ||
             toStage === "paymentStage1" ||
-            toStage === "projectCodeCreation";
-
-        if (dragFrom.current === "todo" && toStage === "inProgress") {
-            setConfirmMove({ order, toStage });
-            return;
-        }
+            toStage === "projectCodeCreation"
+        // toStage === "customerConfirmation"; 
 
         if (needsModal) {
-            setHandlerName(""); setCustType(null);
-            setPoFile(null); setPayAmt(""); setAdvAmt(""); setTotAmt("");
+            setHandlerName("");
+            setCustType(null);
+            setPoFile(null);
+            setPayAmt("");
+            setAdvAmt("");
+            setTotAmt("");
+            setDiscountType("amount");
+            setDiscountValue("");
             setModalError("");
             setDropTarget({ order, toStage });
         } else {
@@ -213,7 +277,8 @@ export default function PipelineBoard() {
         }
     };
 
-    // ── Commit move ────────────────────────────────────────────────────
+
+
     // const commitMove = async (
     //     order: Order,
     //     toStage: string,
@@ -224,22 +289,27 @@ export default function PipelineBoard() {
     //         paymentAmount?: number;
     //         advancePayment?: number;
     //         totalPayment?: number;
+    //         discountType?: string;
+    //         discountValue?: number;
     //     }
     // ) => {
     //     try {
     //         setSaving(true);
+    //         const token = getToken();
     //         const fd = new FormData();
     //         fd.append("pipelineStatus", toStage);
-    //         fd.append("movedBy", "Admin");
+
     //         if (extra.handlerName) fd.append("handlerName", extra.handlerName);
     //         if (extra.customerType != null) fd.append("customerType", String(extra.customerType));
     //         if (extra.poFile) fd.append("poDocument", extra.poFile);
     //         if (extra.paymentAmount) fd.append("paymentAmount", String(extra.paymentAmount));
     //         if (extra.advancePayment) fd.append("advancePayment", String(extra.advancePayment));
     //         if (extra.totalPayment) fd.append("totalPayment", String(extra.totalPayment));
+    //         if (extra.discountType) fd.append("discountType", extra.discountType);
+    //         if (extra.discountValue != null) fd.append("discountValue", String(extra.discountValue));
 
     //         await axios.patch(`${API_BASE}admin/pipeline/${order._id}`, fd, {
-    //             headers: { "Content-Type": "multipart/form-data" },
+    //             headers: { Authorization: `Bearer ${token}` },
     //         });
 
     //         setDropTarget(null);
@@ -253,47 +323,49 @@ export default function PipelineBoard() {
 
 
     const commitMove = async (
-  order: Order,
-  toStage: string,
-  extra: {
-    handlerName?: string;
-    customerType?: number;
-    poFile?: File | null;
-    paymentAmount?: number;
-    advancePayment?: number;
-    totalPayment?: number;
-  }
-) => {
-  try {
-    setSaving(true);
+        order: Order,
+        toStage: string,
+        extra: {
+            handlerName?: string;
+            customerType?: number;
+            poFile?: File | null;
+            paymentAmount?: number;
+            advancePayment?: number;
+            totalPayment?: number;
+            discountType?: string;
+            discountValue?: number;
+        }
+    ) => {
+        try {
+            setSaving(true);
+            const token = getToken();
+            const fd = new FormData();
+            fd.append("pipelineStatus", toStage);
 
-    const token = getToken(); 
+            if (extra.handlerName) fd.append("handlerName", extra.handlerName);
+            if (extra.customerType != null) fd.append("customerType", String(extra.customerType));
+            if (extra.poFile) fd.append("poDocument", extra.poFile);
+            if (extra.paymentAmount) fd.append("paymentAmount", String(extra.paymentAmount));
+            if (extra.advancePayment) fd.append("advancePayment", String(extra.advancePayment));
+            if (extra.totalPayment) fd.append("totalPayment", String(extra.totalPayment));
+            if (extra.discountType) fd.append("discountType", extra.discountType);
+            if (extra.discountValue != null) fd.append("discountValue", String(extra.discountValue));
 
-    const fd = new FormData();
-    fd.append("pipelineStatus", toStage);
-    fd.append("movedBy", "Admin");
+            await axios.patch(`${API_BASE}admin/pipeline/${order._id}`, fd, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
-    if (extra.handlerName) fd.append("handlerName", extra.handlerName);
-    if (extra.customerType != null) fd.append("customerType", String(extra.customerType));
-    if (extra.poFile) fd.append("poDocument", extra.poFile);
-    if (extra.paymentAmount) fd.append("paymentAmount", String(extra.paymentAmount));
-    if (extra.advancePayment) fd.append("advancePayment", String(extra.advancePayment));
-    if (extra.totalPayment) fd.append("totalPayment", String(extra.totalPayment));
-
-    await axios.patch(`${API_BASE}admin/pipeline/${order._id}`, fd, {
-      headers: {
-        Authorization: `Bearer ${token}`,  
-      },
-    });
-
-    setDropTarget(null);
-    await fetchPipeline();
-  } catch (e: any) {
-    setModalError(e?.response?.data?.message || "Something went wrong");
-  } finally {
-    setSaving(false);
-  }
-};
+            setDropTarget(null);
+            toast.success("Order moved successfully!");
+            await fetchPipeline();
+        } catch (e: any) {
+            const msg = e?.response?.data?.message || "Something went wrong";
+            setModalError(msg);
+            toast.error(msg);
+        } finally {
+            setSaving(false);
+        }
+    };
 
     // ── Modal submit ───────────────────────────────────────────────────
     const handleModalSubmit = () => {
@@ -302,11 +374,12 @@ export default function PipelineBoard() {
         setModalError("");
 
         if (toStage === "inProgress") {
-            if (!handlerName.trim()) return setModalError("Handler name is required");
+            if (currentUserIsAdmin === 1 && !handlerName.trim())
+                return setModalError("Handler name is required");
             if ((order.customerType === null || order.customerType === undefined) && custType === null)
                 return setModalError("Please select customer type");
             commitMove(order, toStage, {
-                handlerName,
+                handlerName: currentUserIsAdmin === 1 ? handlerName : undefined,
                 customerType: order.customerType ?? custType ?? undefined,
             });
         }
@@ -316,18 +389,55 @@ export default function PipelineBoard() {
             commitMove(order, toStage, { poFile });
         }
 
-        if (toStage === "paymentStage1" || toStage === "projectCodeCreation") {
-            if (toStage === "paymentStage1") {
-                if (!payAmt || !advAmt || !totAmt) return setModalError("All payment fields are required");
-                commitMove(order, toStage, {
-                    paymentAmount: Number(payAmt),
-                    advancePayment: Number(advAmt),
-                    totalPayment: Number(totAmt),
-                });
-            } else {
-                commitMove(order, toStage, {});
-            }
+        // if (toStage === "paymentStage1") {
+        //     if (!payAmt || !advAmt || !totAmt)
+        //         return setModalError("All payment fields are required");
+        //     commitMove(order, toStage, {
+        //         paymentAmount: Number(payAmt),
+        //         advancePayment: Number(advAmt),
+        //         totalPayment: Number(totAmt),
+        //     });
+        // }
+
+        if (toStage === "projectCodeCreation") {
+            commitMove(order, toStage, {});
         }
+
+        // புதுசா — customerConfirmation
+        //   if (toStage === "customerConfirmation") {
+        //     if (!advAmt) return setModalError("Advance payment is required");
+        //     commitMove(order, toStage, {
+        //       advancePayment: Number(advAmt),
+        //       discountType,
+        //       discountValue: Number(discountValue) || 0,
+        //     });
+        //   }
+
+        // if (toStage === "customerConfirmation") {
+        //     if (!advAmt) return setModalError("Advance payment is required");
+
+        //     const grandTotal = order.grandTotal;
+        //     const maxDiscountAmount = Math.round((grandTotal * MAX_DISCOUNT_PCT) / 100);
+        //     const discVal = Number(discountValue) || 0;
+
+        //     // Percent validation
+        //     if (discountType === "percent" && discVal > MAX_DISCOUNT_PCT) {
+        //         return setModalError(`Maximum discount is ${MAX_DISCOUNT_PCT}%`);
+        //     }
+
+        //     // Amount validation
+        //     if (discountType === "amount" && discVal > maxDiscountAmount) {
+        //         return setModalError(
+        //             `Maximum discount amount is ₹ ${maxDiscountAmount.toLocaleString("en-IN")} (${MAX_DISCOUNT_PCT}% of Grand Total)`
+        //         );
+        //     }
+
+        //     commitMove(order, toStage, {
+        //         advancePayment: Number(advAmt),
+        //         discountType,
+        //         discountValue: discVal,
+        //     });
+        // }
     };
 
     // ── Render ─────────────────────────────────────────────────────────
@@ -340,48 +450,6 @@ export default function PipelineBoard() {
 
     return (
         <div className="flex flex-col h-full">
-            {/* Board */}
-            {/* <div className="overflow-x-auto pb-4">
-        <div className="flex gap-3 px-4 pt-4" style={{ minWidth: "max-content" }}>
-          {STAGES.map((stage) => {
-            const orders = grouped[stage.key] || [];
-            return (
-              <div
-                key={stage.key}
-                className="flex flex-col w-56 flex-shrink-0"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => onDrop(stage.key)}
-              >
-               
-                <div className={`flex items-center justify-between px-3 py-2 rounded-xl mb-2 ${stage.bg}`}>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${stage.dot}`} />
-                    <span className={`text-xs font-semibold truncate ${stage.color}`}>
-                      {stage.label}
-                    </span>
-                  </div>
-                  <span className={`ml-1 flex-shrink-0 text-xs font-bold px-1.5 py-0.5 rounded-full ${stage.bg} ${stage.color} border border-current border-opacity-20`}>
-                    {orders.length}
-                  </span>
-                </div>
-
-               
-                <div className="flex flex-col gap-2 min-h-[60px]">
-                  {orders.map((order) => (
-                    <OrderCard
-                      key={order._id}
-                      order={order}
-                      stageKey={stage.key}
-                      onDragStart={() => onDragStart(order, stage.key)}
-                      onClick={() => setDetailOrder(order)}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div> */}
 
             <div className="flex flex-col gap-4 px-4 pt-4">
                 {/* Row 1 — 8 columns */}
@@ -416,14 +484,24 @@ export default function PipelineBoard() {
                 </div>
             </div>
 
-            {/* ── Detail Modal ── */}
-            {/* {detailOrder && (
-        <DetailModal order={detailOrder} onClose={() => setDetailOrder(null)} />
-      )} */}
-
 
             {drawerOrder && (
-                <DetailDrawer order={drawerOrder} onClose={() => setDrawerOrder(null)} />
+                <DetailDrawer
+                    order={drawerOrder}
+                    onClose={() => setDrawerOrder(null)}
+                    onRefresh={async () => {
+                        const token = getToken();
+                        const { data } = await axios.get(`${API_BASE}admin/pipeline`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                        });
+                        setGrouped(data.data.grouped);
+                        // ✅ drawerOrder-ஐ updated order-ஆல் மாத்து
+                        const updatedOrder = Object.values(data.data.grouped)
+                            .flat()
+                            .find((o: any) => o._id === drawerOrder._id) as Order | undefined;
+                        if (updatedOrder) setDrawerOrder(updatedOrder);
+                    }}
+                />
             )}
 
             {/* ── Todo → InProgress Confirm Modal ── */}
@@ -508,19 +586,37 @@ export default function PipelineBoard() {
                         {/* ── inProgress ── */}
                         {dropTarget.toStage === "inProgress" && (
                             <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Handler Name <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        value={handlerName}
-                                        onChange={(e) => setHandlerName(e.target.value)}
-                                        placeholder="Enter handler name"
-                                        className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
-                                </div>
+                                {/* Handler Name — super admin மட்டும் காட்டு */}
+                                {currentUserIsAdmin === 1 && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Assign Handler <span className="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            value={handlerName}
+                                            onChange={(e) => setHandlerName(e.target.value)}
+                                            className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            <option value="">-- Select Handler --</option>
+                                            {staffAdmins.map((s) => (
+                                                <option key={s.username} value={s.username}>
+                                                    {s.username}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
 
-                                {/* Customer type — only if null */}
+                                {/* Staff admin ஆனா — auto assign message காட்டு */}
+                                {currentUserIsAdmin === 0 && (
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2.5">
+                                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                                            You will be assigned as the handler for this order.
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Customer type — இல்லாட்டி மட்டும் */}
                                 {(dropTarget.order.customerType === null || dropTarget.order.customerType === undefined) && (
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -537,9 +633,14 @@ export default function PipelineBoard() {
                                                         : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
                                                         }`}
                                                 >
-                                                    <div className={`h-3 w-3 rounded-full border-2 mb-2 transition-all ${custType === (i === 0 ? 1 : 0) ? "border-blue-500 bg-blue-500" : "border-gray-300"}`} />
-                                                    <p className="font-semibold text-xs">{t === "existing" ? "Existing Customer" : "New Customer"}</p>
-                                                    <p className="text-xs mt-0.5 opacity-60">{t === "existing" ? "Already registered" : "Create new account"}</p>
+                                                    <div className={`h-3 w-3 rounded-full border-2 mb-2 transition-all ${custType === (i === 0 ? 1 : 0) ? "border-blue-500 bg-blue-500" : "border-gray-300"
+                                                        }`} />
+                                                    <p className="font-semibold text-xs">
+                                                        {t === "existing" ? "Existing Customer" : "New Customer"}
+                                                    </p>
+                                                    <p className="text-xs mt-0.5 opacity-60">
+                                                        {t === "existing" ? "Already registered" : "Create new account"}
+                                                    </p>
                                                 </button>
                                             ))}
                                         </div>
@@ -547,6 +648,8 @@ export default function PipelineBoard() {
                                 )}
                             </div>
                         )}
+
+
 
                         {/* ── waitingForPO ── */}
                         {dropTarget.toStage === "waitingForPO" && (
@@ -645,7 +748,11 @@ export default function PipelineBoard() {
     );
 }
 
-// ─── Order Card ───────────────────────────────────────────────────────────────
+
+
+import { User, Clock } from "lucide-react";
+import DetailDrawer from "./DetailsModel";
+
 function OrderCard({ order, stageKey, onDragStart, onClick }: {
     order: Order;
     stageKey: string;
@@ -655,238 +762,78 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
     const stage = STAGE_MAP[stageKey];
     const displayAmt = order.grandNegotiationTotal ?? order.grandTotal;
 
+    const custBadge =
+        order.customerType === 1
+            ? { bg: "#E7F1FF", color: "#0A3F91", label: "New Customer" }
+            : order.customerType === 0
+                ? { bg: "#E6FBF4", color: "#046B4F", label: "Existing Customer" }
+                : { bg: "#F4F2EA", color: "#4A4A45", label: "Not Set" };
+
     return (
         <div
             draggable
             onDragStart={onDragStart}
             onClick={onClick}
-            className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-3 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-gray-200 dark:hover:border-gray-700 transition-all select-none"
+            className="
+                bg-white dark:bg-gray-900 
+                border border-gray-200 dark:border-gray-800 
+                rounded-xl p-3 cursor-grab active:cursor-grabbing 
+                hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700 
+                transition duration-150 ease-out select-none
+            "
         >
-            {/* Order ID */}
-            <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500 mb-0.5">
-                {order.orderId}
-            </p>
+            {/* Row 1 — ID + Badge */}
+            <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500">
+                    {order.orderId}
+                </p>
 
-            {/* Name */}
-            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-tight">
+                <span
+                    className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                    style={{ background: custBadge.bg, color: custBadge.color }}
+                >
+                    {custBadge.label}
+                </span>
+            </div>
+
+            {/* Row 2 — Name */}
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight mb-2">
                 {order.name}
             </p>
 
-
-            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
-                <MdOutlineAccessTime className="text-[14px]" />
-                {fmtDateTime(order.createdAt)}
-            </p>
-
-            {/* Grand Total */}
-            <p className={`text-base font-bold mt-1.5 ${stage.color}`}>
+            {/* Row 3 — Amount */}
+            <p className={`text-lg font-bold mb-3 ${stage.color}`}>
                 {fmt(displayAmt)}
             </p>
 
-            {/* Customer Type + Handler */}
-            <div className="flex items-center justify-between mt-2 gap-1">
-                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${order.customerType === 1
-                        ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20"
-                        : order.customerType === 0
-                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20"
-                            : "bg-gray-100 text-gray-400"
-                    }`}>
-                    {customerLabel(order.customerType)}
-                </span>
-
-                {order.handlerName && (
-                    <span className="text-[10px] font-medium text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 px-2 py-0.5 rounded-full truncate max-w-[80px]">
+            {/* Row 4 — Handler + UpdatedAt */}
+            <div className="flex items-center justify-between">
+                {order.handlerName ? (
+                    <span className="
+                        text-[11px] font-medium 
+                        text-violet-700 dark:text-violet-300 
+                        bg-violet-100 dark:bg-violet-900/30 
+                        px-2 py-0.5 rounded-full 
+                        flex items-center gap-1 max-w-[130px] truncate
+                    ">
+                        <User size={12} className="flex-shrink-0" />
                         {order.handlerName}
                     </span>
+                ) : (
+                    <span />
                 )}
+
+                <span className="
+                    text-[10px] text-gray-500 dark:text-gray-400 
+                    flex items-center gap-1
+                ">
+                    <Clock size={12} />
+                    {fmtDate(order.updatedAt)}
+                </span>
             </div>
         </div>
     );
 }
-// ─── Detail Modal ─────────────────────────────────────────────────────────────
-function DetailDrawer({ order, onClose }: { order: Order; onClose: () => void }) {
-    const stage = STAGE_MAP[order.pipelineStatus];
-
-    return (
-
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="bg-white dark:bg-gray-900 w-full max-w-3xl max-h-[70vh] flex flex-col shadow-2xl rounded-2xl">
-                {/* Header */}
-                <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-5 py-4 flex items-center justify-between rounded-t-2xl">
-                    <div>
-                        <h2 className="text-base font-semibold text-gray-900 dark:text-white">Order Details</h2>
-                        <p className="text-xs text-gray-400 mt-0.5">{order.orderId}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {order.handlerName && (
-                            <span className="text-xs font-medium text-violet-600 bg-violet-50 dark:bg-violet-900/30 px-2.5 py-1 rounded-full">
-                                {order.handlerName}
-                            </span>
-                        )}
-                        <button
-                            onClick={onClose}
-                            className="w-8 h-8 rounded-full bg-red-50 hover:bg-red-100 dark:bg-red-900/20 text-red-500 flex items-center justify-center text-sm font-bold transition-all"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-5 space-y-5">
-                    {/* Customer info */}
-                    <Section title="Customer Information">
-                        <Row label="Order ID" value={order.orderId} />
-                        <Row label="Name" value={order.name} />
-                        <Row label="Phone" value={order.phone} />
-                        {order.email && <Row label="Email" value={order.email} />}
-                        {order.address && <Row label="Address" value={order.address} />}
-                        <Row
-                            label="Customer Type"
-                            value={
-                                order.customerType === 1
-                                    ? "Individual"
-                                    : order.customerType === 0
-                                        ? "Agency"
-                                        : "Not set"
-                            }
-                        />
-                    </Section>
-
-                    {/* Pipeline status */}
-                    <Section title="Pipeline Status">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${stage?.bg} ${stage?.color}`}>
-                            <span className={`w-2 h-2 rounded-full ${stage?.dot}`} />
-                            {stage?.label}
-                        </div>
-                    </Section>
-
-                    {/* Pricing */}
-                    <Section title="Pricing">
-                        <Row label="Grand Total" value={fmt(order.grandTotal)} highlight />
-                        {order.grandNegotiationTotal != null && (
-                            <Row label="Negotiated Total" value={fmt(order.grandNegotiationTotal)} highlight />
-                        )}
-                        <Row label="GST" value={fmt(order.grandGst)} />
-                        {order.paymentAmount != null && order.paymentAmount > 0 && <Row label="Payment Amount" value={fmt(order.paymentAmount)} />}
-                        {order.advancePayment != null && order.advancePayment > 0 && <Row label="Advance Payment" value={fmt(order.advancePayment)} />}
-                        {order.totalPayment != null && order.totalPayment > 0 && <Row label="Total Payment" value={fmt(order.totalPayment)} />}
-                    </Section>
-
-                    {/* Vehicle Bookings */}
-                    <Section title="Vehicle Bookings">
-                        <div className="overflow-x-auto -mx-1">
-                            <table className="w-full text-xs">
-                                <thead>
-                                    <tr className="border-b border-gray-100 dark:border-gray-800">
-                                        {["Vehicle", "City", "Qty", "From", "To", "Days", "Price/Day", "Total"].map((h) => (
-                                            <th key={h} className="text-left px-2 py-2 text-gray-400 font-medium whitespace-nowrap">{h}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {order.bookingItems.map((item, i) => (
-                                        <tr key={i} className="border-b border-gray-50 dark:border-gray-800/50">
-                                            <td className="px-2 py-2 font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">{item.vehicleModel}</td>
-                                            <td className="px-2 py-2 text-gray-500 whitespace-nowrap">{item.city}</td>
-                                            <td className="px-2 py-2 text-gray-500">{item.quantity}</td>
-                                            <td className="px-2 py-2 text-gray-500 whitespace-nowrap">{fmtDate(item.fromDate)}</td>
-                                            <td className="px-2 py-2 text-gray-500 whitespace-nowrap">{fmtDate(item.toDate)}</td>
-                                            <td className="px-2 py-2 text-gray-500">{item.totalDays}</td>
-                                            <td className="px-2 py-2 text-gray-500 whitespace-nowrap">{fmt(item.perDayRentalCost)}</td>
-                                            <td className="px-2 py-2 font-semibold text-blue-600 whitespace-nowrap">{fmt(item.totalAmount)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div className="text-right mt-2">
-                            <span className="text-sm font-bold text-gray-800 dark:text-gray-200">
-                                Total Amount : {fmt(order.grandTotal)}
-                            </span>
-                        </div>
-                    </Section>
-
-                    {/* Negotiation History */}
-                    {order.negotiationLogs && order.negotiationLogs.length > 0 && (
-                        <Section title="Negotiation History">
-                            {order.negotiationLogs.map((log: any, i: number) => (
-                                <div key={i} className="flex items-start gap-3 py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
-                                    <span className="w-2 h-2 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
-                                    <div>
-                                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                            {log.fromStage} → {log.toStage}
-                                        </p>
-                                        {log.amount && (
-                                            <p className="text-xs text-green-600 font-semibold">
-                                                Negotiated: {fmt(log.amount)}
-                                            </p>
-                                        )}
-                                        <p className="text-[10px] text-gray-400 mt-0.5">
-                                            {log.movedBy} · {fmtDate(log.movedAt)}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                            <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-800">
-                                <span className="text-xs text-gray-500">Current Negotiation Total</span>
-                                <span className="text-sm font-bold text-gray-800 dark:text-white">
-                                    {fmt(order.grandNegotiationTotal ?? order.grandTotal)}
-                                </span>
-                            </div>
-                        </Section>
-                    )}
-
-                    {/* Pipeline History */}
-                    <Section title="Pipeline History">
-                        {[...order.pipelineLogs].reverse().map((log, i) => {
-                            const toStage = STAGE_MAP[log.toStage];
-                            return (
-                                <div key={i} className="flex items-start gap-3 py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
-                                    <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${toStage?.dot || "bg-gray-400"}`} />
-                                    <div>
-                                        {log.fromStage ? (
-                                            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                                {STAGE_MAP[log.fromStage]?.label || log.fromStage}{" "}
-                                                <span className="text-gray-400">→</span>{" "}
-                                                {toStage?.label || log.toStage}
-                                            </p>
-                                        ) : (
-                                            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                                Start → {toStage?.label || log.toStage}
-                                            </p>
-                                        )}
-                                        {log.handlerName && (
-                                            <p className="text-[10px] text-violet-500 mt-0.5">Handler: {log.handlerName}</p>
-                                        )}
-                                        <p className="text-[10px] text-gray-400 mt-0.5">
-                                            {log.movedBy} · {fmtDate(log.movedAt)}
-                                        </p>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </Section>
-
-                    {/* PO document */}
-                    {order.poDocument && (
-                        <Section title="PO Document">
-                            <a
-                                href={order.poDocument}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
-                            >
-                                📄 View PO Document
-                            </a>
-                        </Section>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-
 
 
 function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
@@ -952,4 +899,4 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
             </span>
         </div>
     );
-}
+}   

@@ -52,8 +52,8 @@ const navItems: NavItem[] = [
     icon: <ListIcon />,
     path: "/admin/order-creation"
   },
-       {
-    name: "Ordr Handling",
+  {
+    name: "Order Handling",
     icon: <ListIcon />,
     path: "/admin/order-handling"
   },

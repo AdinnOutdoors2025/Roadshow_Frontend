@@ -1283,7 +1283,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                       }`}
                   >
                     <option value="+">+ Add</option>
-                    <option value="-">- Reduce</option>
+                    {/* <option value="-">- Reduce</option> */}
                   </select>
 
 
