@@ -4,7 +4,6 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import API_BASE from "../../../../../baseurl";
-import { MdOutlineAccessTime, MdOutlinePeopleOutline } from "react-icons/md";
 import { getToken } from "@/utils/auth";
 import { jwtDecode } from "jwt-decode";
 import NegotiationForm from "./customernegotiationForm";
@@ -147,13 +146,32 @@ const fmtDateTime = (d?: string) => {
 };
 
 
-const customerLabel = (type: number | null) =>
-    type === 1 ? "New Customer" : type === 0 ? "Exist Customer" : "Not Set";
-
 
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function PipelineBoard() {
+
+    const initialForm = {
+        // inProgress
+        handlerName: "",
+        custType: null as 0 | 1 | null,
+
+        // customerConfirmation
+        discountType: "amount" as "amount" | "percent",
+        discountValue: "",
+
+        // waitingForPO
+        poFile: null as File | null,
+        poDate: "",
+        poNotes: "",
+
+        // paymentStage1
+        advPayment: "",
+        paymentProofFile: null as File | null,
+        paymentDate: "",
+        paymentVerification: "",
+        paymentNotes: "",
+    };
     const [grouped, setGrouped] = useState<Record<string, Order[]>>({});
     const [loading, setLoading] = useState(true);
 
@@ -166,21 +184,25 @@ export default function PipelineBoard() {
     const [dropTarget, setDropTarget] = useState<{ order: Order; toStage: string } | null>(null);
 
     // modal form states
-    const [handlerName, setHandlerName] = useState("");
-    const [custType, setCustType] = useState<0 | 1 | null>(null);
-    const [poFile, setPoFile] = useState<File | null>(null);
-    const [payAmt, setPayAmt] = useState("");
-    const [advAmt, setAdvAmt] = useState("");
-    const [totAmt, setTotAmt] = useState("");
+
     const [saving, setSaving] = useState(false);
     const [modalError, setModalError] = useState("");
     const [confirmMove, setConfirmMove] = useState<{ order: Order; toStage: string } | null>(null);
     const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState<number>(1);
     const [staffAdmins, setStaffAdmins] = useState<{ username: string }[]>([]);
-    const [discountType, setDiscountType] = useState<"amount" | "percent">("amount");
-    const [discountValue, setDiscountValue] = useState("");
+    const [form, setForm] = useState(initialForm);
+    const [projectCodeConfirm, setProjectCodeConfirm] = useState<Order | null>(null);
 
-    const MAX_DISCOUNT_PCT = Number(process.env.NEXT_PUBLIC_MAX_DISCOUNT_PERCENT) || 15;
+
+    const setField = <K extends keyof typeof initialForm>(
+        key: K,
+        value: (typeof initialForm)[K]
+    ) => setForm((prev) => ({ ...prev, [key]: value }));
+
+    // Reset all form fields
+    const resetForm = () => setForm(initialForm);
+
+
 
     // ── Fetch ──────────────────────────────────────────────────────────
     const fetchPipeline = async () => {
@@ -220,7 +242,7 @@ export default function PipelineBoard() {
         fetchStaffList();
     }, []);
 
-    // Staff list fetch — super admin dropdown-க்கு
+    // Staff list fetch — super admin dropdown
     const fetchStaffList = async () => {
         try {
             const token = getToken();
@@ -237,90 +259,38 @@ export default function PipelineBoard() {
         dragFrom.current = fromStage;
     };
 
-    const onDrop = (toStage: string) => {
-        const order = dragOrder.current;
-        if (!order || dragFrom.current === toStage) return;
 
-        // todo → inProgress
-        if (dragFrom.current === "todo" && toStage === "inProgress") {
-            if (currentUserIsAdmin === 0) {
-                // Staff admin — modal வேண்டாம், directly move
-                // handlerName backend-ல req.user.username auto set ஆகும்
-                commitMove(order, toStage, {});
-            } else {
-                // Super admin — confirm modal காட்டு
-                setConfirmMove({ order, toStage });
-            }
-            return;
-        }
+const onDrop = (toStage: string) => {
+    const order = dragOrder.current;
+    if (!order || dragFrom.current === toStage) return;
 
-        const needsModal =
-            toStage === "inProgress" ||
-            toStage === "waitingForPO" ||
-            toStage === "paymentStage1" ||
-            toStage === "projectCodeCreation"
-        // toStage === "customerConfirmation"; 
-
-        if (needsModal) {
-            setHandlerName("");
-            setCustType(null);
-            setPoFile(null);
-            setPayAmt("");
-            setAdvAmt("");
-            setTotAmt("");
-            setDiscountType("amount");
-            setDiscountValue("");
-            setModalError("");
-            setDropTarget({ order, toStage });
-        } else {
+    // todo → inProgress
+    if (dragFrom.current === "todo" && toStage === "inProgress") {
+        if (currentUserIsAdmin === 0) {
             commitMove(order, toStage, {});
+        } else {
+            setConfirmMove({ order, toStage });
         }
-    };
+        return;
+    }
 
+    // projectCodeCreation → confirm modal
+    if (toStage === "projectCodeCreation") {
+        setProjectCodeConfirm(order);
+        return;
+    }
 
+    // inProgress → modal
+    if (toStage === "inProgress") {
+        resetForm();
+        setModalError("");
+        setDropTarget({ order, toStage });
+        return;
+    }
 
-    // const commitMove = async (
-    //     order: Order,
-    //     toStage: string,
-    //     extra: {
-    //         handlerName?: string;
-    //         customerType?: number;
-    //         poFile?: File | null;
-    //         paymentAmount?: number;
-    //         advancePayment?: number;
-    //         totalPayment?: number;
-    //         discountType?: string;
-    //         discountValue?: number;
-    //     }
-    // ) => {
-    //     try {
-    //         setSaving(true);
-    //         const token = getToken();
-    //         const fd = new FormData();
-    //         fd.append("pipelineStatus", toStage);
-
-    //         if (extra.handlerName) fd.append("handlerName", extra.handlerName);
-    //         if (extra.customerType != null) fd.append("customerType", String(extra.customerType));
-    //         if (extra.poFile) fd.append("poDocument", extra.poFile);
-    //         if (extra.paymentAmount) fd.append("paymentAmount", String(extra.paymentAmount));
-    //         if (extra.advancePayment) fd.append("advancePayment", String(extra.advancePayment));
-    //         if (extra.totalPayment) fd.append("totalPayment", String(extra.totalPayment));
-    //         if (extra.discountType) fd.append("discountType", extra.discountType);
-    //         if (extra.discountValue != null) fd.append("discountValue", String(extra.discountValue));
-
-    //         await axios.patch(`${API_BASE}admin/pipeline/${order._id}`, fd, {
-    //             headers: { Authorization: `Bearer ${token}` },
-    //         });
-
-    //         setDropTarget(null);
-    //         await fetchPipeline();
-    //     } catch (e: any) {
-    //         setModalError(e?.response?.data?.message || "Something went wrong");
-    //     } finally {
-    //         setSaving(false);
-    //     }
-    // };
-
+    // ✅ waitingForPO உட்பட மற்ற எல்லாமே directly move
+    commitMove(order, toStage, {});
+};
 
     const commitMove = async (
         order: Order,
@@ -329,9 +299,13 @@ export default function PipelineBoard() {
             handlerName?: string;
             customerType?: number;
             poFile?: File | null;
-            paymentAmount?: number;
+            poDate?: string;
+            poNotes?: string;
             advancePayment?: number;
-            totalPayment?: number;
+            paymentProofFile?: File | null;
+            paymentDate?: string;
+            paymentVerification?: string;
+            paymentNotes?: string;
             discountType?: string;
             discountValue?: number;
         }
@@ -344,10 +318,20 @@ export default function PipelineBoard() {
 
             if (extra.handlerName) fd.append("handlerName", extra.handlerName);
             if (extra.customerType != null) fd.append("customerType", String(extra.customerType));
+
+            // waitingForPO
             if (extra.poFile) fd.append("poDocument", extra.poFile);
-            if (extra.paymentAmount) fd.append("paymentAmount", String(extra.paymentAmount));
+            if (extra.poDate) fd.append("poDate", extra.poDate);
+            if (extra.poNotes) fd.append("poNotes", extra.poNotes);
+
+            // paymentStage1
+            if (extra.paymentProofFile) fd.append("paymentProofDocument", extra.paymentProofFile);
             if (extra.advancePayment) fd.append("advancePayment", String(extra.advancePayment));
-            if (extra.totalPayment) fd.append("totalPayment", String(extra.totalPayment));
+            if (extra.paymentDate) fd.append("paymentDate", extra.paymentDate);
+            if (extra.paymentVerification) fd.append("paymentVerification", extra.paymentVerification);
+            if (extra.paymentNotes) fd.append("paymentNotes", extra.paymentNotes);
+
+            // negotiation
             if (extra.discountType) fd.append("discountType", extra.discountType);
             if (extra.discountValue != null) fd.append("discountValue", String(extra.discountValue));
 
@@ -356,6 +340,7 @@ export default function PipelineBoard() {
             });
 
             setDropTarget(null);
+            resetForm();        // ← reset after success
             toast.success("Order moved successfully!");
             await fetchPipeline();
         } catch (e: any) {
@@ -367,78 +352,37 @@ export default function PipelineBoard() {
         }
     };
 
-    // ── Modal submit ───────────────────────────────────────────────────
+   
     const handleModalSubmit = () => {
         if (!dropTarget) return;
         const { order, toStage } = dropTarget;
         setModalError("");
 
+        // ── inProgress ──────────────────────────────────────────────
         if (toStage === "inProgress") {
-            if (currentUserIsAdmin === 1 && !handlerName.trim())
+            if (currentUserIsAdmin === 1 && !form.handlerName.trim())
                 return setModalError("Handler name is required");
-            if ((order.customerType === null || order.customerType === undefined) && custType === null)
+            if (
+                (order.customerType === null || order.customerType === undefined) &&
+                form.custType === null
+            )
                 return setModalError("Please select customer type");
+
             commitMove(order, toStage, {
-                handlerName: currentUserIsAdmin === 1 ? handlerName : undefined,
-                customerType: order.customerType ?? custType ?? undefined,
+                handlerName: currentUserIsAdmin === 1 ? form.handlerName : undefined,
+                customerType: order.customerType ?? form.custType ?? undefined,
             });
         }
 
-        if (toStage === "waitingForPO") {
-            if (!poFile) return setModalError("Please upload the PO document");
-            commitMove(order, toStage, { poFile });
-        }
+    
 
-        // if (toStage === "paymentStage1") {
-        //     if (!payAmt || !advAmt || !totAmt)
-        //         return setModalError("All payment fields are required");
-        //     commitMove(order, toStage, {
-        //         paymentAmount: Number(payAmt),
-        //         advancePayment: Number(advAmt),
-        //         totalPayment: Number(totAmt),
-        //     });
-        // }
-
+        // ── projectCodeCreation ───────────────────────────────────────
         if (toStage === "projectCodeCreation") {
             commitMove(order, toStage, {});
         }
-
-        // புதுசா — customerConfirmation
-        //   if (toStage === "customerConfirmation") {
-        //     if (!advAmt) return setModalError("Advance payment is required");
-        //     commitMove(order, toStage, {
-        //       advancePayment: Number(advAmt),
-        //       discountType,
-        //       discountValue: Number(discountValue) || 0,
-        //     });
-        //   }
-
-        // if (toStage === "customerConfirmation") {
-        //     if (!advAmt) return setModalError("Advance payment is required");
-
-        //     const grandTotal = order.grandTotal;
-        //     const maxDiscountAmount = Math.round((grandTotal * MAX_DISCOUNT_PCT) / 100);
-        //     const discVal = Number(discountValue) || 0;
-
-        //     // Percent validation
-        //     if (discountType === "percent" && discVal > MAX_DISCOUNT_PCT) {
-        //         return setModalError(`Maximum discount is ${MAX_DISCOUNT_PCT}%`);
-        //     }
-
-        //     // Amount validation
-        //     if (discountType === "amount" && discVal > maxDiscountAmount) {
-        //         return setModalError(
-        //             `Maximum discount amount is ₹ ${maxDiscountAmount.toLocaleString("en-IN")} (${MAX_DISCOUNT_PCT}% of Grand Total)`
-        //         );
-        //     }
-
-        //     commitMove(order, toStage, {
-        //         advancePayment: Number(advAmt),
-        //         discountType,
-        //         discountValue: discVal,
-        //     });
-        // }
     };
+
+
 
     // ── Render ─────────────────────────────────────────────────────────
     if (loading)
@@ -543,17 +487,62 @@ export default function PipelineBoard() {
                                 Cancel
                             </button>
                             <button
+                                // REPLACE the onClick of "Yes, Move" button in confirmMove modal:
                                 onClick={() => {
                                     const { order, toStage } = confirmMove;
                                     setConfirmMove(null);
-                                    setHandlerName(""); setCustType(null);
-                                    setPoFile(null); setPayAmt(""); setAdvAmt(""); setTotAmt("");
+                                    resetForm();         // ← single line
                                     setModalError("");
                                     setDropTarget({ order, toStage });
                                 }}
                                 className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all"
                             >
                                 Yes, Move
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Project Code Creation Confirm Modal ── */}
+            {projectCodeConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                        <div className="flex justify-center mb-4">
+                            <div className="w-14 h-14 rounded-full bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center text-2xl">
+                                🗂️
+                            </div>
+                        </div>
+                        <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-2">
+                            Move to Project Code Creation?
+                        </h2>
+                        <p className="text-center text-xs font-mono text-gray-400 mb-2">
+                            {projectCodeConfirm.orderId}
+                        </p>
+                        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-6">
+                            Are you sure you want to move{" "}
+                            <span className="font-semibold text-gray-700 dark:text-gray-300">
+                                {projectCodeConfirm.name}
+                            </span>{" "}
+                            to{" "}
+                            <span className="font-semibold text-cyan-600">Project Code Creation</span>?
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setProjectCodeConfirm(null)}
+                                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    commitMove(projectCodeConfirm, "projectCodeCreation", {});
+                                    setProjectCodeConfirm(null);
+                                }}
+                                disabled={saving}
+                                className="flex-1 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 text-white text-sm font-medium transition-all"
+                            >
+                                {saving ? "Moving..." : "Yes, Move"}
                             </button>
                         </div>
                     </div>
@@ -586,28 +575,24 @@ export default function PipelineBoard() {
                         {/* ── inProgress ── */}
                         {dropTarget.toStage === "inProgress" && (
                             <div className="space-y-4">
-                                {/* Handler Name — super admin மட்டும் காட்டு */}
                                 {currentUserIsAdmin === 1 && (
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                             Assign Handler <span className="text-red-500">*</span>
                                         </label>
                                         <select
-                                            value={handlerName}
-                                            onChange={(e) => setHandlerName(e.target.value)}
+                                            value={form.handlerName}
+                                            onChange={(e) => setField("handlerName", e.target.value)}
                                             className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         >
                                             <option value="">-- Select Handler --</option>
                                             {staffAdmins.map((s) => (
-                                                <option key={s.username} value={s.username}>
-                                                    {s.username}
-                                                </option>
+                                                <option key={s.username} value={s.username}>{s.username}</option>
                                             ))}
                                         </select>
                                     </div>
                                 )}
 
-                                {/* Staff admin ஆனா — auto assign message காட்டு */}
                                 {currentUserIsAdmin === 0 && (
                                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2.5">
                                         <p className="text-sm text-blue-700 dark:text-blue-300">
@@ -616,33 +601,35 @@ export default function PipelineBoard() {
                                     </div>
                                 )}
 
-                                {/* Customer type — இல்லாட்டி மட்டும் */}
                                 {(dropTarget.order.customerType === null || dropTarget.order.customerType === undefined) && (
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             Customer Type <span className="text-red-500">*</span>
                                         </label>
                                         <div className="grid grid-cols-2 gap-3">
-                                            {(["existing", "new"] as const).map((t, i) => (
-                                                <button
-                                                    key={t}
-                                                    type="button"
-                                                    onClick={() => setCustType(i === 0 ? 1 : 0)}
-                                                    className={`rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all text-left ${custType === (i === 0 ? 1 : 0)
-                                                        ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-                                                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
-                                                        }`}
-                                                >
-                                                    <div className={`h-3 w-3 rounded-full border-2 mb-2 transition-all ${custType === (i === 0 ? 1 : 0) ? "border-blue-500 bg-blue-500" : "border-gray-300"
-                                                        }`} />
-                                                    <p className="font-semibold text-xs">
-                                                        {t === "existing" ? "Existing Customer" : "New Customer"}
-                                                    </p>
-                                                    <p className="text-xs mt-0.5 opacity-60">
-                                                        {t === "existing" ? "Already registered" : "Create new account"}
-                                                    </p>
-                                                </button>
-                                            ))}
+                                            {(["existing", "new"] as const).map((t, i) => {
+                                                const val = i === 0 ? 1 : 0;
+                                                return (
+                                                    <button
+                                                        key={t}
+                                                        type="button"
+                                                        onClick={() => setField("custType", val as 0 | 1)}
+                                                        className={`rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all text-left ${form.custType === val
+                                                            ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                                                            : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                                            }`}
+                                                    >
+                                                        <div className={`h-3 w-3 rounded-full border-2 mb-2 transition-all ${form.custType === val ? "border-blue-500 bg-blue-500" : "border-gray-300"
+                                                            }`} />
+                                                        <p className="font-semibold text-xs">
+                                                            {t === "existing" ? "Existing Customer" : "New Customer"}
+                                                        </p>
+                                                        <p className="text-xs mt-0.5 opacity-60">
+                                                            {t === "existing" ? "Already registered" : "Create new account"}
+                                                        </p>
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
@@ -651,74 +638,7 @@ export default function PipelineBoard() {
 
 
 
-                        {/* ── waitingForPO ── */}
-                        {dropTarget.toStage === "waitingForPO" && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Upload PO Document <span className="text-red-500">*</span>
-                                </label>
-                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all">
-                                    {poFile ? (
-                                        <div className="text-center">
-                                            <div className="text-2xl mb-1">📄</div>
-                                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{poFile.name}</p>
-                                            <p className="text-xs text-gray-400">{(poFile.size / 1024).toFixed(1)} KB</p>
-                                        </div>
-                                    ) : (
-                                        <div className="text-center">
-                                            <div className="text-2xl mb-1">☁️</div>
-                                            <p className="text-sm text-gray-500">Click to upload PO document</p>
-                                            <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG supported</p>
-                                        </div>
-                                    )}
-                                    <input
-                                        type="file"
-                                        accept=".pdf,.jpg,.jpeg,.png"
-                                        className="hidden"
-                                        onChange={(e) => setPoFile(e.target.files?.[0] || null)}
-                                    />
-                                </label>
-                            </div>
-                        )}
-
-                        {/* ── paymentStage1 ── */}
-                        {dropTarget.toStage === "paymentStage1" && (
-                            <div className="space-y-3">
-                                <p className="text-xs text-gray-500 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
-                                    Enter payment details for this order
-                                </p>
-                                {[
-                                    { label: "Payment Amount", val: payAmt, set: setPayAmt },
-                                    { label: "Advance Payment", val: advAmt, set: setAdvAmt },
-                                    { label: "Total Payment", val: totAmt, set: setTotAmt },
-                                ].map(({ label, val, set }) => (
-                                    <div key={label}>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            {label} <span className="text-red-500">*</span>
-                                        </label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
-                                            <input
-                                                type="number"
-                                                value={val}
-                                                onChange={(e) => set(e.target.value)}
-                                                placeholder="0"
-                                                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl pl-7 pr-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* ── projectCodeCreation (customerType 0) ── */}
-                        {dropTarget.toStage === "projectCodeCreation" && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg px-3 py-2">
-                                This order will move to <strong>Project Code Creation</strong> (Agency customer path).
-                            </p>
-                        )}
-
-                        {/* Error */}
+                      
                         {modalError && (
                             <p className="mt-3 text-xs text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
                                 {modalError}
@@ -877,26 +797,3 @@ function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
         </div>
     );
 }
-
-// ─── Small helpers ────────────────────────────────────────────────────────────
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4">
-            <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-                {title}
-            </h3>
-            {children}
-        </div>
-    );
-}
-
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-    return (
-        <div className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-700/50 last:border-0">
-            <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
-            <span className={`text-xs font-medium ${highlight ? "text-blue-600 dark:text-blue-400 font-bold" : "text-gray-800 dark:text-gray-200"}`}>
-                {value}
-            </span>
-        </div>
-    );
-}   

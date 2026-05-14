@@ -1,5 +1,306 @@
 
 
+// "use client";
+
+// import { useState } from "react";
+// import axios from "axios";
+// import { getToken } from "@/utils/auth";
+// import toast from "react-hot-toast";
+// import API_BASE from "../../../../../baseurl";
+
+// interface NegotiationFormProps {
+//     order: any;
+//     onNegotiationSaved: () => Promise<void>;
+
+// }
+
+// const HIDE_STAGES = ["todo", "inProgress", "newOrder"];
+
+// export default function NegotiationForm({ order, onNegotiationSaved }: NegotiationFormProps) {
+
+//     if (HIDE_STAGES.includes(order.pipelineStatus)) return null;
+
+//     const MAX_DISCOUNT_PCT = Number(process.env.NEXT_PUBLIC_MAX_DISCOUNT_PERCENT) || 15;
+
+//     const subtotal = order.bookingItems.reduce(
+//         (sum: number, item: any) => sum + (item.totalAmount || 0), 0
+//     );
+//     const gst = order.grandGst;
+//     const grandTotal = order.grandTotal;
+
+//     //   // ✅ Previous negotiations total
+//     //   const previousLogs = order.negotiationLogs || [];
+//     //   const previousTotalDiscount = previousLogs.reduce(
+//     //     (sum: number, log: any) => sum + (log.discountAmount || 0), 0
+//     //   );
+//     //   const remainingSubtotal = subtotal - previousTotalDiscount;
+
+//     //   // ✅ Max discount இந்த remaining-ல இருந்து மட்டும்
+//     //   const maxDiscountAmount = Math.round((remainingSubtotal * MAX_DISCOUNT_PCT) / 100);
+
+//     // ✅ CORRECT
+//     const previousLogs = order.negotiationLogs || [];
+
+//     // ✅ 0 discount logs filter பண்ணி காட்டாதே
+//     const filteredLogs = previousLogs.filter((log: any) => (log.discountAmount || 0) > 0);
+
+//     const previousTotalDiscount = previousLogs.reduce(
+//         (sum: number, log: any) => sum + (log.discountAmount || 0), 0
+//     );
+
+//     // Balance = subtotal - all previous discounts
+//     const remainingSubtotal = subtotal - previousTotalDiscount;
+
+//     // ✅ Max = subtotal × 15% - previousTotalDiscount
+//     // எப்பவும் original subtotal வைத்து 15% போட்டு, previous discount கழி
+//     const maxAllowedTotal = Math.round((subtotal * MAX_DISCOUNT_PCT) / 100);
+//     const maxDiscountAmount = Math.max(0, maxAllowedTotal - previousTotalDiscount);
+
+//     // ✅ New discount input fields state
+//     const [showNewDiscount, setShowNewDiscount] = useState(false);
+//     const [discountType, setDiscountType] = useState<"amount" | "percent">("amount");
+//     const [discountValue, setDiscountValue] = useState("");
+//     const [saving, setSaving] = useState(false);
+//     const [error, setError] = useState("");
+
+//     const discVal = Number(discountValue) || 0;
+//     const discountAmt =
+//         discountType === "percent"
+//             ? Math.round((remainingSubtotal * Math.min(discVal, MAX_DISCOUNT_PCT)) / 100)
+//             : discVal;
+
+//     const percentExceeded = discountType === "percent" && discVal > MAX_DISCOUNT_PCT;
+//     const amountExceeded = discountType === "amount" && discVal > maxDiscountAmount;
+//     const isInvalid = percentExceeded || amountExceeded;
+
+//     // ✅ Final balance = remainingSubtotal - new discount
+//     const balanceAfterNew = remainingSubtotal - discountAmt;
+
+//     const fmt = (n?: number | null) =>
+//         n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
+
+//     const handleSubmit = async () => {
+//         if (isInvalid) {
+//             toast.error("Discount limit exceeded");
+//             return;
+//         }
+//         if (!showNewDiscount || discVal === 0) {
+//             toast.error("Please add a discount amount");
+//             return;
+//         }
+
+//         setSaving(true);
+//         setError("");
+
+//         try {
+//             const token = getToken();
+//             const fd = new FormData();
+//             fd.append("pipelineStatus", "customerConfirmation");
+//             fd.append("discountType", discountType);
+//             fd.append("discountValue", String(discVal));
+
+//             await axios.patch(`${API_BASE}admin/pipeline/${order._id}`, fd, {
+//                 headers: { Authorization: `Bearer ${token}` },
+//             });
+
+//             toast.success("Discount added successfully!");
+//             await onNegotiationSaved(); 
+//             setShowNewDiscount(false);  
+//             setDiscountValue("");       
+//         } catch (e: any) {
+//             const msg = e?.response?.data?.message || "Something went wrong";
+//             setError(msg);
+//             toast.error(msg);
+//         } finally {
+//             setSaving(false);
+//         }
+//     };
+
+//     return (
+//         <Section title="Customer Negotiation">
+//             <div className="space-y-3">
+
+//                 {/* ── Summary rows ── */}
+//                 <Row label="Subtotal" value={fmt(subtotal)} />
+//                 <Row label="GST" value={fmt(gst)} />
+//                 <Row label="Grand Total" value={fmt(grandTotal)} highlight />
+
+//                 {/* ── Existing discount logs ── */}
+//                 {previousLogs.length > 0 && (
+//                     <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-3 space-y-2">
+//                         <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+//                             Discount History
+//                         </p>
+
+//                         {filteredLogs.map((log: any, i: number) => (
+//                             <div key={i} className="flex items-center justify-between">
+//                                 <div className="flex items-center gap-2">
+//                                     <span className="w-5 h-5 rounded-full bg-orange-50 text-orange-500 text-[10px] font-bold flex items-center justify-center border border-orange-200">
+//                                         {i + 1}
+//                                     </span>
+//                                     <span className="text-xs text-gray-500">
+//                                        Stage {i + 1} Discount
+//                                     </span>
+//                                 </div>
+//                                 <span className="text-xs font-semibold text-orange-600">
+//                                     - ₹{(log.discountAmount || 0).toLocaleString("en-IN")}
+//                                 </span>
+//                             </div>
+//                         ))}
+
+//                         {/* Total discount */}
+//                         <div className="border-t border-gray-100 dark:border-gray-800 pt-2 flex justify-between">
+//                             <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+//                                 Total Discount Applied
+//                             </span>
+//                             <span className="text-xs font-bold text-red-600">
+//                                 - ₹{previousTotalDiscount.toLocaleString("en-IN")}
+//                             </span>
+//                         </div>
+
+//                         {/* Balance after existing discounts */}
+//                         <div className="flex justify-between">
+//                             <span className="text-xs text-gray-500">Balance (after discounts)</span>
+//                             <span className="text-xs font-bold text-blue-600">
+//                                 ₹{remainingSubtotal.toLocaleString("en-IN")}
+//                             </span>
+//                         </div>
+//                     </div>
+//                 )}
+
+//                 {/* ── Add new discount button ── */}
+//                 {!showNewDiscount && (
+//                     <button
+//                         type="button"
+//                         onClick={() => setShowNewDiscount(true)}
+//                         className="w-full py-2.5 rounded-xl border-2 border-dashed border-blue-300 text-blue-600 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all flex items-center justify-center gap-2"
+//                     >
+//                         <span className="text-lg font-bold">+</span>
+//                         Add Discount
+//                     </button>
+//                 )}
+
+//                 {/* ── New discount input ── */}
+//                 {showNewDiscount && (
+//                     <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-3 space-y-3">
+//                         <div className="flex items-center justify-between">
+//                             <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+//                                 New Discount
+//                             </p>
+//                             <button
+//                                 type="button"
+//                                 onClick={() => {
+//                                     setShowNewDiscount(false);
+//                                     setDiscountValue("");
+//                                     setDiscountType("amount");
+//                                 }}
+//                                 className="text-xs text-gray-400 hover:text-gray-600"
+//                             >
+//                                 ✕ Cancel
+//                             </button>
+//                         </div>
+
+//                         {/* Max allowed info */}
+//                         <div className="text-[10px] text-blue-600 bg-blue-100 dark:bg-blue-900/20 rounded-lg px-2 py-1">
+//                             Max allowed: ₹{maxDiscountAmount.toLocaleString("en-IN")}
+//                             ({MAX_DISCOUNT_PCT}% of ₹{subtotal.toLocaleString("en-IN")} − previous discounts)
+//                         </div>
+
+
+//                         {/* Toggle ₹ / % */}
+//                         <div className="flex gap-2">
+//                             <div className="flex overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
+//                                 <button
+//                                     type="button"
+//                                     onClick={() => { setDiscountType("amount"); setDiscountValue(""); }}
+//                                     className={`px-3 py-2 text-sm font-semibold ${discountType === "amount" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-500"}`}
+//                                 >₹</button>
+//                                 <button
+//                                     type="button"
+//                                     onClick={() => { setDiscountType("percent"); setDiscountValue(""); }}
+//                                     className={`px-3 py-2 text-sm font-semibold ${discountType === "percent" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-500"}`}
+//                                 >%</button>
+//                             </div>
+
+//                             <input
+//                                 type="number"
+//                                 value={discountValue}
+//                                 onChange={(e) => setDiscountValue(e.target.value)}
+//                                 placeholder={
+//                                     discountType === "percent"
+//                                         ? `Max ${MAX_DISCOUNT_PCT}%`
+//                                         : `Max ₹${maxDiscountAmount.toLocaleString("en-IN")}`
+//                                 }
+//                                 className={`flex-1 border rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${isInvalid ? "border-red-400 focus:ring-red-400" : "border-gray-200 dark:border-gray-700 focus:ring-blue-500"}`}
+//                             />
+//                         </div>
+
+//                         {/* Validation errors */}
+//                         {percentExceeded && (
+//                             <p className="text-xs text-red-500">
+//                                 Max {MAX_DISCOUNT_PCT}% = ₹{maxDiscountAmount.toLocaleString("en-IN")}
+//                             </p>
+//                         )}
+//                         {amountExceeded && (
+//                             <p className="text-xs text-red-500">
+//                                 Max discount ₹{maxDiscountAmount.toLocaleString("en-IN")}
+//                             </p>
+//                         )}
+
+//                         {/* Live balance preview */}
+//                         {discountAmt > 0 && !isInvalid && (
+//                             <div className="space-y-1">
+//                                 <div className="flex justify-between text-xs">
+//                                     <span className="text-orange-500">This discount:</span>
+//                                     <span className="font-semibold text-orange-600">- ₹{discountAmt.toLocaleString("en-IN")}</span>
+//                                 </div>
+//                                 <div className={`rounded-xl px-3 py-2 text-sm font-semibold border ${balanceAfterNew > 0 ? "border-red-200 bg-red-50 text-red-600" : "border-green-200 bg-green-50 text-green-600"}`}>
+//                                     New Balance: ₹{balanceAfterNew.toLocaleString("en-IN")}
+//                                 </div>
+//                             </div>
+//                         )}
+//                     </div>
+//                 )}
+
+//                 {error && <p className="text-xs text-red-500">{error}</p>}
+
+//                 {/* Submit — only show when new discount input is open */}
+//                 {showNewDiscount && (
+//                     <button
+//                         onClick={handleSubmit}
+//                         disabled={saving || isInvalid || discVal === 0}
+//                         className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium"
+//                     >
+//                         {saving ? "Saving..." : "Confirm Discount"}
+//                     </button>
+//                 )}
+//             </div>
+//         </Section>
+//     );
+// }
+
+// function Section({ title, children }: { title: string; children: React.ReactNode }) {
+//     return (
+//         <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4">
+//             <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+//                 {title}
+//             </h3>
+//             {children}
+//         </div>
+//     );
+// }
+
+// function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+//     return (
+//         <div className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-700/50 last:border-0">
+//             <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
+//             <span className={`text-xs font-medium ${highlight ? "text-blue-600 dark:text-blue-400 font-bold" : "text-gray-800 dark:text-gray-200"}`}>
+//                 {value}
+//             </span>
+//         </div>
+//     );
+// }
+
 "use client";
 
 import { useState } from "react";
@@ -7,17 +308,24 @@ import axios from "axios";
 import { getToken } from "@/utils/auth";
 import toast from "react-hot-toast";
 import API_BASE from "../../../../../baseurl";
+import { Percent, IndianRupee, Plus, X, Tag, TrendingDown, AlertCircle, CheckCircle2, ArrowRight, Calculator, History } from "lucide-react";
 
 interface NegotiationFormProps {
     order: any;
     onNegotiationSaved: () => Promise<void>;
-
 }
 
 const HIDE_STAGES = ["todo", "inProgress", "newOrder"];
 
-export default function NegotiationForm({ order, onNegotiationSaved }: NegotiationFormProps) {
+const formatIndianNumber = (value: string | number) => {
+  if (!value) return "";
 
+  const number = value.toString().replace(/,/g, "");
+
+  return new Intl.NumberFormat("en-IN").format(Number(number));
+};
+
+export default function NegotiationForm({ order, onNegotiationSaved }: NegotiationFormProps) {
     if (HIDE_STAGES.includes(order.pipelineStatus)) return null;
 
     const MAX_DISCOUNT_PCT = Number(process.env.NEXT_PUBLIC_MAX_DISCOUNT_PERCENT) || 15;
@@ -28,35 +336,17 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
     const gst = order.grandGst;
     const grandTotal = order.grandTotal;
 
-    //   // ✅ Previous negotiations total
-    //   const previousLogs = order.negotiationLogs || [];
-    //   const previousTotalDiscount = previousLogs.reduce(
-    //     (sum: number, log: any) => sum + (log.discountAmount || 0), 0
-    //   );
-    //   const remainingSubtotal = subtotal - previousTotalDiscount;
-
-    //   // ✅ Max discount இந்த remaining-ல இருந்து மட்டும்
-    //   const maxDiscountAmount = Math.round((remainingSubtotal * MAX_DISCOUNT_PCT) / 100);
-
-    // ✅ CORRECT
     const previousLogs = order.negotiationLogs || [];
-
-    // ✅ 0 discount logs filter பண்ணி காட்டாதே
     const filteredLogs = previousLogs.filter((log: any) => (log.discountAmount || 0) > 0);
 
     const previousTotalDiscount = previousLogs.reduce(
         (sum: number, log: any) => sum + (log.discountAmount || 0), 0
     );
 
-    // Balance = subtotal - all previous discounts
     const remainingSubtotal = subtotal - previousTotalDiscount;
-
-    // ✅ Max = subtotal × 15% - previousTotalDiscount
-    // எப்பவும் original subtotal வைத்து 15% போட்டு, previous discount கழி
-    const maxAllowedTotal = Math.round((subtotal * MAX_DISCOUNT_PCT) / 100);
+    const maxAllowedTotal = Math.floor((subtotal * MAX_DISCOUNT_PCT) / 100);
     const maxDiscountAmount = Math.max(0, maxAllowedTotal - previousTotalDiscount);
 
-    // ✅ New discount input fields state
     const [showNewDiscount, setShowNewDiscount] = useState(false);
     const [discountType, setDiscountType] = useState<"amount" | "percent">("amount");
     const [discountValue, setDiscountValue] = useState("");
@@ -73,7 +363,6 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
     const amountExceeded = discountType === "amount" && discVal > maxDiscountAmount;
     const isInvalid = percentExceeded || amountExceeded;
 
-    // ✅ Final balance = remainingSubtotal - new discount
     const balanceAfterNew = remainingSubtotal - discountAmt;
 
     const fmt = (n?: number | null) =>
@@ -103,10 +392,10 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            toast.success("Discount added successfully!");
-            await onNegotiationSaved(); 
-            setShowNewDiscount(false);  
-            setDiscountValue("");       
+            toast.success("🎉 Discount added successfully!");
+            await onNegotiationSaved();
+            setShowNewDiscount(false);
+            setDiscountValue("");
         } catch (e: any) {
             const msg = e?.response?.data?.message || "Something went wrong";
             setError(msg);
@@ -117,186 +406,364 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
     };
 
     return (
-        <Section title="Customer Negotiation">
-            <div className="space-y-3">
-
-                {/* ── Summary rows ── */}
-                <Row label="Subtotal" value={fmt(subtotal)} />
-                <Row label="GST" value={fmt(gst)} />
-                <Row label="Grand Total" value={fmt(grandTotal)} highlight />
-
-                {/* ── Existing discount logs ── */}
+        <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200/60 dark:border-gray-700/50 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+            {/* Header */}
+            <div className="flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border-b border-gray-100 dark:border-gray-700/50">
+                <span className="text-lg">💰</span>
+                <h3 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Customer Negotiation
+                </h3>
                 {previousLogs.length > 0 && (
-                    <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-3 space-y-2">
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                            Discount History
-                        </p>
+                    <span className="ml-auto px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                        {filteredLogs.length} discount{filteredLogs.length !== 1 ? 's' : ''}
+                    </span>
+                )}
+            </div>
 
-                        {filteredLogs.map((log: any, i: number) => (
-                            <div key={i} className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-5 h-5 rounded-full bg-orange-50 text-orange-500 text-[10px] font-bold flex items-center justify-center border border-orange-200">
-                                        {i + 1}
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                       Stage {i + 1} Discount
-                                    </span>
-                                </div>
-                                <span className="text-xs font-semibold text-orange-600">
-                                    - ₹{(log.discountAmount || 0).toLocaleString("en-IN")}
-                                </span>
+            <div className="p-5 space-y-4">
+                {/* ── Summary Cards ── */}
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/40 dark:to-gray-800/60 rounded-xl p-3.5 border border-gray-100 dark:border-gray-700/50">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                <Calculator size={14} className="text-blue-600 dark:text-blue-400" />
                             </div>
-                        ))}
+                            <p className="text-[12px] font-semibold text-gray-400 uppercase">Subtotal</p>
+                        </div>
+                        <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{fmt(subtotal)}</p>
+                    </div>
 
-                        {/* Total discount */}
-                        <div className="border-t border-gray-100 dark:border-gray-800 pt-2 flex justify-between">
-                            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
-                                Total Discount Applied
-                            </span>
-                            <span className="text-xs font-bold text-red-600">
-                                - ₹{previousTotalDiscount.toLocaleString("en-IN")}
-                            </span>
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/40 dark:to-gray-800/60 rounded-xl p-3.5 border border-gray-100 dark:border-gray-700/50">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                <IndianRupee size={14} className="text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <p className="text-[12px] font-semibold text-gray-400 uppercase">GST</p>
+                        </div>
+                        <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{fmt(gst)}</p>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-3.5 border-2 border-blue-200 dark:border-blue-700/50">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center">
+                                <IndianRupee size={14} className="text-white" />
+                            </div>
+                            <p className="text-[12px] font-semibold text-blue-600 dark:text-blue-400 uppercase">Grand Total</p>
+                        </div>
+                        <p className="text-lg font-bold text-blue-700 dark:text-blue-300">{fmt(grandTotal)}</p>
+                    </div>
+                </div>
+
+                {/* ── Discount History ── */}
+                {previousLogs.length > 0 && (
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 rounded-xl border border-amber-200 dark:border-amber-800/50 p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                            <History size={16} className="text-amber-600 dark:text-amber-400" />
+                            <p className="text-md font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+                                Discount History
+                            </p>
                         </div>
 
-                        {/* Balance after existing discounts */}
-                        <div className="flex justify-between">
-                            <span className="text-xs text-gray-500">Balance (after discounts)</span>
-                            <span className="text-xs font-bold text-blue-600">
-                                ₹{remainingSubtotal.toLocaleString("en-IN")}
-                            </span>
+                        <div className="space-y-2">
+                            {filteredLogs.map((log: any, i: number) => (
+                                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/60 dark:bg-gray-800/40 border border-amber-100 dark:border-amber-900/30 hover:shadow-sm transition-all group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-xs shadow-md">
+                                            {i + 1}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                                Discount {i + 1}
+                                            </p>
+                                            <p className="text-[12px] text-gray-400 mt-0.5">
+                                                Stage {i + 1}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-gray-500 mb-0.5">Amount</p>
+                                        <p className="text-sm font-bold text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform">
+                                            - ₹{(log.discountAmount || 0).toLocaleString("en-IN")}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Total Discount */}
+                            <div className="flex items-center justify-between p-3 mt-2 rounded-lg bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800/50">
+                                <div className="flex items-center gap-2">
+                                    <TrendingDown size={16} className="text-red-600 dark:text-red-400" />
+                                    <span className="text-xs font-bold text-red-700 dark:text-red-400">
+                                        Total Discount Applied
+                                    </span>
+                                </div>
+                                <span className="text-lg font-bold text-red-700 dark:text-red-400">
+                                    - ₹{previousTotalDiscount.toLocaleString("en-IN")}
+                                </span>
+                            </div>
+
+                            {/* Balance */}
+                            <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50">
+                                <div className="flex items-center gap-2">
+                                    <ArrowRight size={16} className="text-blue-600 dark:text-blue-400" />
+                                    <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">
+                                        Balance After Discounts
+                                    </span>
+                                </div>
+                                <span className="text-sm font-bold text-blue-700 dark:text-blue-400">
+                                    ₹{remainingSubtotal.toLocaleString("en-IN")}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* ── Add new discount button ── */}
+                {/* ── Add New Discount Button ── */}
                 {!showNewDiscount && (
                     <button
                         type="button"
                         onClick={() => setShowNewDiscount(true)}
-                        className="w-full py-2.5 rounded-xl border-2 border-dashed border-blue-300 text-blue-600 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all flex items-center justify-center gap-2"
+                        className="w-full group py-4 rounded-xl border-2 border-dashed border-blue-300 dark:border-blue-700 hover:border-blue-500 dark:hover:border-blue-500 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10 hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 transition-all duration-300"
                     >
-                        <span className="text-lg font-bold">+</span>
-                        Add Discount
+                        <div className="flex items-center justify-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-all">
+                                <Plus size={20} className="text-blue-600 dark:text-blue-400 group-hover:text-white" />
+                            </div>
+                            <div className="text-left">
+                                <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 group-hover:text-blue-600 dark:group-hover:text-blue-300">
+                                    Add New Discount
+                                </p>
+                                <p className="text-xs text-blue-500 dark:text-blue-500/70 mt-0.5">
+                                    Max {MAX_DISCOUNT_PCT}% of subtotal allowed
+                                </p>
+                            </div>
+                        </div>
                     </button>
                 )}
 
-                {/* ── New discount input ── */}
+                {/* ── New Discount Input ── */}
                 {showNewDiscount && (
-                    <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-3 space-y-3">
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border-2 border-blue-300 dark:border-blue-700 p-5 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                        {/* Header with cancel */}
                         <div className="flex items-center justify-between">
-                            <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">
-                                New Discount
-                            </p>
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+                                    <Tag size={16} className="text-white" />
+                                </div>
+                                <p className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                                    New Discount
+                                </p>
+                            </div>
                             <button
                                 type="button"
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     setShowNewDiscount(false);
                                     setDiscountValue("");
                                     setDiscountType("amount");
                                 }}
-                                className="text-xs text-gray-400 hover:text-gray-600"
+                                className="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center transition-colors group"
                             >
-                                ✕ Cancel
+                                <X size={16} className="text-gray-400 group-hover:text-red-500" />
                             </button>
                         </div>
 
                         {/* Max allowed info */}
-                        <div className="text-[10px] text-blue-600 bg-blue-100 dark:bg-blue-900/20 rounded-lg px-2 py-1">
-                            Max allowed: ₹{maxDiscountAmount.toLocaleString("en-IN")}
-                            ({MAX_DISCOUNT_PCT}% of ₹{subtotal.toLocaleString("en-IN")} − previous discounts)
+                        <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800/50">
+                            <AlertCircle size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-xs font-semibold text-blue-700 dark:text-blue-400">
+                                    Maximum Allowed Discount
+                                </p>
+                                <p className="text-lg font-bold text-blue-800 dark:text-blue-300 mt-0.5">
+                                    ₹{maxDiscountAmount.toLocaleString("en-IN")}
+                                </p>
+                                <p className="text-[10px] text-blue-600 dark:text-blue-500/70 mt-1">
+                                    {MAX_DISCOUNT_PCT}% of ₹{subtotal.toLocaleString("en-IN")} − previous discounts
+                                </p>
+                            </div>
                         </div>
 
-
-                        {/* Toggle ₹ / % */}
-                        <div className="flex gap-2">
-                            <div className="flex overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
+                        {/* Toggle & Input */}
+                        <div className="space-y-3">
+                            <div className="flex rounded-xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                                 <button
                                     type="button"
                                     onClick={() => { setDiscountType("amount"); setDiscountValue(""); }}
-                                    className={`px-3 py-2 text-sm font-semibold ${discountType === "amount" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-500"}`}
-                                >₹</button>
+                                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-all ${discountType === "amount"
+                                            ? "bg-blue-600 text-white shadow-lg"
+                                            : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                        }`}
+                                >
+                                    <IndianRupee size={16} />
+                                    Amount
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => { setDiscountType("percent"); setDiscountValue(""); }}
-                                    className={`px-3 py-2 text-sm font-semibold ${discountType === "percent" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-500"}`}
-                                >%</button>
+                                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-all ${discountType === "percent"
+                                            ? "bg-blue-600 text-white shadow-lg"
+                                            : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                        }`}
+                                >
+                                    <Percent size={16} />
+                                    Percent
+                                </button>
                             </div>
 
-                            <input
-                                type="number"
-                                value={discountValue}
-                                onChange={(e) => setDiscountValue(e.target.value)}
-                                placeholder={
-                                    discountType === "percent"
-                                        ? `Max ${MAX_DISCOUNT_PCT}%`
-                                        : `Max ₹${maxDiscountAmount.toLocaleString("en-IN")}`
-                                }
-                                className={`flex-1 border rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${isInvalid ? "border-red-400 focus:ring-red-400" : "border-gray-200 dark:border-gray-700 focus:ring-blue-500"}`}
-                            />
+                            {/* <div className="relative">
+                                <input
+                                    type="number"
+                                    value={discountValue}
+                                    onChange={(e) => setDiscountValue(e.target.value)}
+                                    placeholder={
+                                        discountType === "percent"
+                                            ? `Enter percentage (max ${MAX_DISCOUNT_PCT}%)`
+                                            : `Enter amount (max ₹${maxDiscountAmount.toLocaleString("en-IN")})`
+                                    }
+                                    className={`w-full px-4 py-3.5 rounded-xl border-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 text-sm font-medium focus:outline-none focus:ring-4 transition-all ${
+                                        isInvalid 
+                                            ? "border-red-300 dark:border-red-700 focus:ring-red-100 dark:focus:ring-red-900/30" 
+                                            : "border-gray-200 dark:border-gray-700 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500"
+                                    }`}
+                                />
+                                {discountType === "percent" && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        <Percent size={18} className="text-gray-400" />
+                                    </div>
+                                )}
+                                {discountType === "amount" && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        <IndianRupee size={18} className="text-gray-400" />
+                                    </div>
+                                )}
+                            </div> */}
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={
+                                        discountType === "amount"
+                                            ? formatIndianNumber(discountValue)
+                                            : discountValue
+                                    }
+                                    onChange={(e) => {
+                                        const rawValue = e.target.value.replace(/,/g, "");
+
+                                        if (/^\d*$/.test(rawValue)) {
+                                            setDiscountValue(rawValue);
+                                        }
+                                    }}
+                                    placeholder={
+                                        discountType === "percent"
+                                            ? `Enter percentage (max ${MAX_DISCOUNT_PCT}%)`
+                                            : `Enter amount (max ₹${maxDiscountAmount.toLocaleString("en-IN")})`
+                                    }
+                                    className={`w-full px-4 py-3.5 rounded-xl border-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 text-sm font-medium focus:outline-none focus:ring-4 transition-all ${isInvalid
+                                            ? "border-red-300 dark:border-red-700 focus:ring-red-100 dark:focus:ring-red-900/30"
+                                            : "border-gray-200 dark:border-gray-700 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500"
+                                        }`}
+                                />
+
+                                {discountType === "percent" && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        <Percent size={18} className="text-gray-400" />
+                                    </div>
+                                )}
+
+                                {discountType === "amount" && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        <IndianRupee size={18} className="text-gray-400" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Validation errors */}
-                        {percentExceeded && (
-                            <p className="text-xs text-red-500">
-                                Max {MAX_DISCOUNT_PCT}% = ₹{maxDiscountAmount.toLocaleString("en-IN")}
-                            </p>
-                        )}
-                        {amountExceeded && (
-                            <p className="text-xs text-red-500">
-                                Max discount ₹{maxDiscountAmount.toLocaleString("en-IN")}
-                            </p>
-                        )}
-
-                        {/* Live balance preview */}
-                        {discountAmt > 0 && !isInvalid && (
-                            <div className="space-y-1">
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-orange-500">This discount:</span>
-                                    <span className="font-semibold text-orange-600">- ₹{discountAmt.toLocaleString("en-IN")}</span>
-                                </div>
-                                <div className={`rounded-xl px-3 py-2 text-sm font-semibold border ${balanceAfterNew > 0 ? "border-red-200 bg-red-50 text-red-600" : "border-green-200 bg-green-50 text-green-600"}`}>
-                                    New Balance: ₹{balanceAfterNew.toLocaleString("en-IN")}
+                        {/* Validation Errors */}
+                        {isInvalid && (
+                            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50">
+                                <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-xs font-semibold text-red-700 dark:text-red-400">
+                                        Discount Limit Exceeded
+                                    </p>
+                                    <p className="text-xs text-red-600 dark:text-red-500 mt-0.5">
+                                        {percentExceeded && `Maximum allowed is ${MAX_DISCOUNT_PCT}% (₹${maxDiscountAmount.toLocaleString("en-IN")})`}
+                                        {amountExceeded && `Maximum allowed amount is ₹${maxDiscountAmount.toLocaleString("en-IN")}`}
+                                    </p>
                                 </div>
                             </div>
                         )}
+
+                        {/* Live Balance Preview */}
+                        {discountAmt > 0 && !isInvalid && (
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between p-3 rounded-lg bg-white/80 dark:bg-gray-800/40 border border-orange-200 dark:border-orange-800/50">
+                                    <div className="flex items-center gap-2">
+                                        <TrendingDown size={16} className="text-orange-500" />
+                                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">This Discount</span>
+                                    </div>
+                                    <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                                        - ₹{discountAmt.toLocaleString("en-IN")}
+                                    </span>
+                                </div>
+
+                                <div className={`p-4 rounded-xl border-2 ${balanceAfterNew > 0
+                                        ? "bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700"
+                                        : "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700"
+                                    }`}>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            {balanceAfterNew > 0 ? (
+                                                <CheckCircle2 size={18} className="text-green-600 dark:text-green-400" />
+                                            ) : (
+                                                <AlertCircle size={18} className="text-red-600 dark:text-red-400" />
+                                            )}
+                                            <span className={`text-xs font-semibold ${balanceAfterNew > 0
+                                                    ? "text-green-700 dark:text-green-400"
+                                                    : "text-red-700 dark:text-red-400"
+                                                }`}>
+                                                New Balance After Discount
+                                            </span>
+                                        </div>
+                                        <span className={`text-lg font-bold ${balanceAfterNew > 0
+                                                ? "text-green-700 dark:text-green-400"
+                                                : "text-red-700 dark:text-red-400"
+                                            }`}>
+                                            ₹{balanceAfterNew.toLocaleString("en-IN")}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50">
+                                <AlertCircle size={14} className="text-red-500" />
+                                <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+                            </div>
+                        )}
+
+                        {/* Submit Button */}
+                        <button
+                            onClick={handleSubmit}
+                            disabled={saving || isInvalid || discVal === 0}
+                            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 group"
+                        >
+                            {saving ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle2 size={18} className="group-hover:scale-110 transition-transform" />
+                                    Confirm Discount
+                                </>
+                            )}
+                        </button>
                     </div>
                 )}
-
-                {error && <p className="text-xs text-red-500">{error}</p>}
-
-                {/* Submit — only show when new discount input is open */}
-                {showNewDiscount && (
-                    <button
-                        onClick={handleSubmit}
-                        disabled={saving || isInvalid || discVal === 0}
-                        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium"
-                    >
-                        {saving ? "Saving..." : "Confirm Discount"}
-                    </button>
-                )}
             </div>
-        </Section>
-    );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4">
-            <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-                {title}
-            </h3>
-            {children}
-        </div>
-    );
-}
-
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-    return (
-        <div className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-700/50 last:border-0">
-            <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
-            <span className={`text-xs font-medium ${highlight ? "text-blue-600 dark:text-blue-400 font-bold" : "text-gray-800 dark:text-gray-200"}`}>
-                {value}
-            </span>
         </div>
     );
 }
