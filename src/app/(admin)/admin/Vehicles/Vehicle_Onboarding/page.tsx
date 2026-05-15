@@ -374,7 +374,7 @@ const unformatRegistrationNumber = (regNumber) => {
 };
 
 // ─── Step validation rules ────────────────────────────────────────────────────
-const validateStep = (step, { commonInfo, vehicles, techSpecs,vehicleDescription  }) => {
+const validateStep = (step, { commonInfo, vehicles, techSpecs, vehicleDescription }) => {
   const errors = {};
 
   if (step === 1) {
@@ -387,14 +387,14 @@ const validateStep = (step, { commonInfo, vehicles, techSpecs,vehicleDescription
     if (!techSpecs.screenType) errors.screenType = "Screen Type is required";
     if (!techSpecs.numberOfScreens)
       errors.numberOfScreens = "Number of Screens is required";
-    
+
     // Updated validation for new field structure
     if (!techSpecs.leftRightScreenWidth || !techSpecs.leftRightScreenHeight)
       errors.leftRightScreenSize = "Left/Right Screen size (Width & Height) is required";
-    
+
     if (!techSpecs.leftRightResolutionWidth || !techSpecs.leftRightResolutionHeight)
       errors.leftRightResolution = "Left/Right Resolution (Width & Height) is required";
-    
+
     if (!techSpecs.audioOutput) errors.audioOutput = "Audio Output is required";
     if (!techSpecs.generatorCapacity)
       errors.generatorCapacity = "Generator Capacity is required";
@@ -449,7 +449,10 @@ const VehicleTypeModal = ({
 
   const handleSubmit = async () => {
     if (!typeName.trim()) {
-      toast.error("Please enter vehicle type name");
+      toast.error("Please enter vehicle type name", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return;
     }
     setLoading(true);
@@ -887,15 +890,24 @@ const AddVehicleModal = ({
       cleanReg.length !== 10 ||
       !isValidRegistrationNumber(formData.registrationNumber)
     ) {
-      toast.error("Please enter a valid registration number");
+      toast.error("Please enter a valid registration number", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return;
     }
     if (!formData.city) {
-      toast.error("City is required");
+      toast.error("City is required", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return;
     }
     if (!formData.fuelType) {
-      toast.error("Fuel Type is required");
+      toast.error("Fuel Type is required", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return;
     }
 
@@ -903,13 +915,19 @@ const AddVehicleModal = ({
       const currentYear = new Date().getFullYear();
       const yearNum = parseInt(formData.manufacturingYear);
       if (isNaN(yearNum) || yearNum > currentYear || yearNum < 1900) {
-        toast.error(`Manufacturing year must be between 1900 and ${currentYear}`);
+        toast.error(`Manufacturing year must be between 1900 and ${currentYear}`, {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
         return;
       }
     }
 
     if (formData.driverPhone && formData.driverPhone.length !== 10) {
-      toast.error("Driver phone number must be 10 digits");
+      toast.error("Driver phone number must be 10 digits", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return;
     }
 
@@ -918,7 +936,10 @@ const AddVehicleModal = ({
       formData.backupDriverPhone.length !== 10 &&
       formData.backupDriverPhone.length > 0
     ) {
-      toast.error("Backup driver phone number must be 10 digits");
+      toast.error("Backup driver phone number must be 10 digits", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return;
     }
 
@@ -927,12 +948,17 @@ const AddVehicleModal = ({
       !formData.availableFrom
     ) {
       toast.error(
-        "Please provide Available From date for Unavailable status"
-      );
+        "Please provide Available From date for Unavailable status", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return;
     }
     if (formData.currentStatus === "Unavailable" && !formData.remarks) {
-      toast.error("Please provide remarks for Unavailable status");
+      toast.error("Please provide remarks for Unavailable status", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return;
     }
 
@@ -941,7 +967,10 @@ const AddVehicleModal = ({
       editingVehicle?.registrationNumber
     );
     if (isDuplicate && !editingVehicle) {
-      toast.error("This registration number already exists");
+      toast.error("This registration number already exists", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return;
     }
 
@@ -1760,31 +1789,6 @@ export default function VehicleOnboardingForm() {
     5: false,
     6: false
   });
-  // // Add this useEffect around line 1300 with your other useEffects
-  // useEffect(() => {
-  //   const handleGlobalKeyDown = (e) => {
-  //     // Prevent Enter from submitting form when not on step 6
-  //     if (e.key === 'Enter' && currentStep !== 6) {
-  //       // Check if the active element is not a textarea or input where Enter is expected
-  //       const activeElement = document.activeElement;
-  //       const isTextarea = activeElement?.tagName === 'TEXTAREA';
-  //       const isInput = activeElement?.tagName === 'INPUT';
-
-  //       // Allow Enter in textareas and inputs (for new lines or form fields)
-  //       if (isTextarea || isInput) {
-  //         return; // Let the default behavior happen in inputs/textarea
-  //       }
-
-  //       e.preventDefault();
-  //       e.stopPropagation();
-  //     }
-  //   };
-
-  //   document.addEventListener('keydown', handleGlobalKeyDown);
-  //   return () => document.removeEventListener('keydown', handleGlobalKeyDown);
-  // }, [currentStep]);
-
-
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -1816,14 +1820,11 @@ export default function VehicleOnboardingForm() {
 
   // Add this effect to refresh registration numbers after adding/updating vehicles
   useEffect(() => {
-    // Refresh the global registration numbers whenever vehicles change
-    // This ensures we always have the latest data
-    if (!isModalOpen) { // Don't refresh while modal is open to avoid interference
+    if (!isModalOpen) {
       fetchExistingRegNumbers();
     }
   }, [vehicles.length]); // Refresh when number of vehicles changes
 
-// Helper: Save current step to backend (no pricing)
   const saveCurrentStep = async (stepNumber, nextStep = null) => {
     if (!commonInfo.vehicleType && stepNumber !== 1) {
       toast.error("Please select a vehicle type first");
@@ -1886,38 +1887,38 @@ export default function VehicleOnboardingForm() {
       //     },
       //   })),
       // };
-   stepData = {
-    registrationVehicles: vehicles.map(v => ({
-      registrationNumber: unformatRegistrationNumber(v.registrationNumber),
-      vehicleId: v.vehicleId,
-      city: v.city,
-      modelConfig: v.modelConfig,
-      permitType: v.permitType,
-      ownershipType: v.ownershipType,
-      fuelType: v.fuelType,
-      manufacturingYear: v.manufacturingYear,
-      gpsEnabled: v.gpsEnabled,
-      activeStatus: v.activeStatus,
-      statusAvailability: {
-        currentStatus: v.currentStatus || "Available",
-        availableFrom: v.availableFrom || null,
-        remarks: v.remarks || "",
-      },
-      driverDetails: {
-        driverName: v.driverName || "",
-        driverPhone: v.driverPhone || "",
-        backupDriver: v.backupDriver || "",
-        backupDriverPhone: v.backupDriverPhone || "",
-        driverCharges: Number(v.driverCharges) || 0,
-      },
-      maintenance: {
-        lastServiceDate: v.lastServiceDate || null,
-        insuranceExpiryDate: v.insuranceExpiryDate || null,
-        pollutionExpiryDate: v.pollutionExpiryDate || null,
-      },
-    })),
+      stepData = {
+        registrationVehicles: vehicles.map(v => ({
+          registrationNumber: unformatRegistrationNumber(v.registrationNumber),
+          vehicleId: v.vehicleId,
+          city: v.city,
+          modelConfig: v.modelConfig,
+          permitType: v.permitType,
+          ownershipType: v.ownershipType,
+          fuelType: v.fuelType,
+          manufacturingYear: v.manufacturingYear,
+          gpsEnabled: v.gpsEnabled,
+          activeStatus: v.activeStatus,
+          statusAvailability: {
+            currentStatus: v.currentStatus || "Available",
+            availableFrom: v.availableFrom || null,
+            remarks: v.remarks || "",
+          },
+          driverDetails: {
+            driverName: v.driverName || "",
+            driverPhone: v.driverPhone || "",
+            backupDriver: v.backupDriver || "",
+            backupDriverPhone: v.backupDriverPhone || "",
+            driverCharges: Number(v.driverCharges) || 0,
+          },
+          maintenance: {
+            lastServiceDate: v.lastServiceDate || null,
+            insuranceExpiryDate: v.insuranceExpiryDate || null,
+            pollutionExpiryDate: v.pollutionExpiryDate || null,
+          },
+        })),
+      }
     }
-  }
 
     const formData = new FormData();
     formData.append("data", JSON.stringify(stepData));
@@ -1943,7 +1944,10 @@ export default function VehicleOnboardingForm() {
         const createRes = await axios.post(`${baseUrl}/api/createVehicle`, payload);
         if (createRes.data.success) {
           setCurrentEditingGroupId(createRes.data.data._id);
-          toast.success("Basic info saved");
+          toast.success("Basic info saved", {
+            position: "bottom-right",
+            autoClose: 3000,
+          });
           if (nextStep) setCurrentStep(nextStep);
           return true;
         }
@@ -1957,7 +1961,10 @@ export default function VehicleOnboardingForm() {
       }
     } catch (error) {
       console.error("Save step error:", error);
-      toast.error("Failed to save step");
+      toast.error("Failed to save step", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return false;
     }
   };
@@ -1990,12 +1997,18 @@ export default function VehicleOnboardingForm() {
     ];
 
     if (isVideo && !validVideoTypes.includes(file.type)) {
-      toast.error("Please select a valid video file");
+      toast.error("Please select a valid video file", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return;
     }
 
     if (!isVideo && !validImageTypes.includes(file.type)) {
-      toast.error("Please select a valid image file");
+      toast.error("Please select a valid image file", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return;
     }
 
@@ -2035,60 +2048,6 @@ export default function VehicleOnboardingForm() {
       });
     };
   }, []);
-
-  // const fetchExistingRegNumbers = async () => {
-  //   try {
-  //     console.log("Fetching ALL registration numbers from database...");
-  //     // Fetch ALL vehicles without any filter - use a large limit
-  //     const response = await axios.get(`${baseUrl}/api/getNewVehicles?page=1&limit=10000`);
-  //     if (response.data.success) {
-  //       const allRegNumbers = new Set();
-  //       response.data.data.forEach((vehicle) => {
-  //         if (vehicle.registrationVehicles) {
-  //           vehicle.registrationVehicles.forEach((rv) => {
-  //             allRegNumbers.add(rv.registrationNumber);
-  //             console.log("Found registration:", rv.registrationNumber, "for vehicle type:", vehicle.basicInfo?.vehicleType);
-  //           });
-  //         }
-  //       });
-  //       setExistingRegNumbersSet(allRegNumbers);
-  //       console.log("Total unique registration numbers loaded:", allRegNumbers.size);
-  //       console.log("All registration numbers:", Array.from(allRegNumbers));
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching existing registration numbers:", error);
-  //   }
-  // };
-
-  // const checkDuplicateRegistration = async (regNumber, excludeRegNumber = null) => {
-  //   const cleanReg = unformatRegistrationNumber(regNumber);
-
-  //   console.log("Checking duplicate for:", cleanReg);
-  //   console.log("Current existingRegNumbersSet size:", existingRegNumbersSet.size);
-  //   console.log("Current existingRegNumbersSet values:", Array.from(existingRegNumbersSet));
-
-  //   // Check local duplicates in current form state (within this session)
-  //   const localDuplicate = vehicles.some(
-  //     (v) => unformatRegistrationNumber(v.registrationNumber) === cleanReg &&
-  //     (!excludeRegNumber || v.registrationNumber !== excludeRegNumber)
-  //   );
-  //   if (localDuplicate) {
-  //     console.log("Local duplicate found");
-  //     return true;
-  //   }
-
-  //   // Check database duplicates - ACROSS ALL VEHICLE TYPES
-  //   // Important: excludeRegNumber should be the UNFORMATTED version
-  //   const targetExclude = excludeRegNumber ? unformatRegistrationNumber(excludeRegNumber) : null;
-
-  //   if (existingRegNumbersSet.has(cleanReg) && cleanReg !== targetExclude) {
-  //     console.log("Database duplicate found:", cleanReg);
-  //     return true;
-  //   }
-
-  //   console.log("No duplicate found");
-  //   return false;
-  // }; 
 
 
   const fetchExistingRegNumbers = async () => {
@@ -2135,368 +2094,172 @@ export default function VehicleOnboardingForm() {
   const fetchVehicleTypes = async () => {
     try {
       const response = await axios.get(`${baseUrl}/api/vehicle-types`);
+      console.log("VEHICLE TYPE", response);
+      console.log("Vehicle types array:", response.data.data);  // 👈 This is what you want
+
       if (response.data.success) {
         setVehicleTypes(response.data.data);
+        const typeNames = response.data.data.map(type => type.typeName);
+        console.log("Vehicle type names:", typeNames);
       }
     } catch (error) {
       console.error("Error fetching vehicle types:", error);
     }
   };
 
-//   const fetchVehicleByType = async (typeId) => {
-//     if (!typeId) return;
 
-//     setIsLoadingVehicleData(true);
-//     try {
-//       const response = await axios.get(
-//         `${baseUrl}/api/getVehicleGroupByType/${typeId}`
-//       );
-//       if (response.data.success && response.data.data) {
-//         const vehicleData = response.data.data;
-//         setSelectedVehicleTypeData(vehicleData);
-//         setCurrentEditingGroupId(vehicleData._id);
-
-//         if (vehicleData.techSpecs) {
-//          setTechSpecs({
-//   screenType: vehicleData.techSpecs?.screenType || "LED Only",
-//   numberOfScreens: vehicleData.techSpecs?.numberOfScreens || "",
-//   leftRightScreenWidth: vehicleData.techSpecs?.leftRightScreenWidth || "",
-//   leftRightScreenHeight: vehicleData.techSpecs?.leftRightScreenHeight || "",
-//   backScreenWidth: vehicleData.techSpecs?.backScreenWidth || "",
-//   backScreenHeight: vehicleData.techSpecs?.backScreenHeight || "",
-//   leftRightResolutionWidth: vehicleData.techSpecs?.leftRightResolutionWidth || "",
-//   leftRightResolutionHeight: vehicleData.techSpecs?.leftRightResolutionHeight || "",
-//   backResolutionWidth: vehicleData.techSpecs?.backResolutionWidth || "",
-//   backResolutionHeight: vehicleData.techSpecs?.backResolutionHeight || "",
-//   audioOutput: vehicleData.techSpecs?.audioOutput || "",
-//   brightness: vehicleData.techSpecs?.brightness || "",
-//   displayVersion: vehicleData.techSpecs?.displayVersion || "",
-//   soundQuality: vehicleData.techSpecs?.soundQuality || "",
-//   generatorCapacity: vehicleData.techSpecs?.generatorCapacity || "",
-//   additionalFeatures: vehicleData.techSpecs?.additionalFeatures || "",
-// });
-
-//         }
-
-//         if (vehicleData.pricing) {
-//           setPricing({
-//             basePriceType: vehicleData.pricing.basePriceType || "Per Day",
-//             costPerDay: vehicleData.pricing.costPerDay
-//               ? String(vehicleData.pricing.costPerDay)
-//               : "",
-//             avgKmPerDay: vehicleData.pricing.avgKmPerDay
-//               ? String(vehicleData.pricing.avgKmPerDay)
-//               : "",
-//             extraKmPrice: vehicleData.pricing.extraKmPrice
-//               ? String(vehicleData.pricing.extraKmPrice)
-//               : "",
-//             avgBookingHrs: vehicleData.pricing.avgBookingHrs
-//               ? String(vehicleData.pricing.avgBookingHrs)
-//               : "",
-//             extraHrPrice: vehicleData.pricing.extraHrPrice
-//               ? String(vehicleData.pricing.extraHrPrice)
-//               : "",
-//             rtoCharges: vehicleData.pricing.rtoCharges
-//               ? String(vehicleData.pricing.rtoCharges)
-//               : "",
-//             fuelEfficiency: vehicleData.pricing.fuelEfficiency
-//               ? String(vehicleData.pricing.fuelEfficiency)
-//               : "",
-//             minBookingDuration: vehicleData.pricing.minBookingDuration || "",
-//             overtimeCharges: vehicleData.pricing.overtimeCharges
-//               ? String(vehicleData.pricing.overtimeCharges)
-//               : "",
-//             waitingCharges: vehicleData.pricing.waitingCharges
-//               ? String(vehicleData.pricing.waitingCharges)
-//               : "",
-//           });
-//         }
-
-//         // FIX 3: also restore vehicleDescription when editing
-//         if (vehicleData.vehicleDescription) {
-//           setVehicleDescription(vehicleData.vehicleDescription);
-//         }
-
-//         if (vehicleData.mediaFiles) {
-//           setExistingMediaUrls({
-//             frontViewImage: vehicleData.mediaFiles.frontViewImage || "",
-//             leftSideImage: vehicleData.mediaFiles.leftSideImage || "",
-//             rightSideImage: vehicleData.mediaFiles.rightSideImage || "",
-//             rearViewImage: vehicleData.mediaFiles.rearViewImage || "",
-//             interiorImage: vehicleData.mediaFiles.interiorImage || "",
-//             demoVideo: vehicleData.mediaFiles.demoVideo || "",
-//           });
-//         }
-
-//         if (
-//           vehicleData.registrationVehicles &&
-//           vehicleData.registrationVehicles.length > 0
-//         ) {
-//           const formattedVehicles = vehicleData.registrationVehicles.map(
-//             (rv) => ({
-//               registrationNumber: rv.registrationNumber,
-//               vehicleId: rv.vehicleId,
-//               city: rv.city || "",
-//               permitType: rv.permitType || "",
-//               modelConfig: rv.modelConfig || "",
-//               ownershipType: rv.ownershipType || "",
-//               fuelType: rv.fuelType || "",
-//               manufacturingYear: rv.manufacturingYear || "",
-//               gpsEnabled:
-//                 rv.gpsEnabled !== undefined ? rv.gpsEnabled : true,
-//               activeStatus:
-//                 rv.activeStatus !== undefined ? rv.activeStatus : true,
-//               currentStatus:
-//                 rv.statusAvailability?.currentStatus || "Available",
-//               availableFrom: rv.statusAvailability?.availableFrom
-//                 ? rv.statusAvailability.availableFrom.split("T")[0]
-//                 : "",
-//               remarks: rv.statusAvailability?.remarks || "",
-//               driverName: rv.driverDetails?.driverName || "",
-//               driverPhone: rv.driverDetails?.driverPhone || "",
-//               backupDriver: rv.driverDetails?.backupDriver || "",
-//               backupDriverPhone: rv.driverDetails?.backupDriverPhone || "",
-//               driverCharges: rv.driverDetails?.driverCharges
-//                 ? String(rv.driverDetails.driverCharges)
-//                 : "",
-//               lastServiceDate: rv.maintenance?.lastServiceDate
-//                 ? rv.maintenance.lastServiceDate.split("T")[0]
-//                 : "",
-//               insuranceExpiryDate: rv.maintenance?.insuranceExpiryDate
-//                 ? rv.maintenance.insuranceExpiryDate.split("T")[0]
-//                 : "",
-//               pollutionExpiryDate: rv.maintenance?.pollutionExpiryDate
-//                 ? rv.maintenance.pollutionExpiryDate.split("T")[0]
-//                 : "",
-//             })
-//           );
-//           setVehicles(formattedVehicles);
-
-//           // const regNumbers = new Set(existingRegNumbersSet);
-//           // formattedVehicles.forEach((v) =>
-//           //   regNumbers.add(
-//           //     unformatRegistrationNumber(v.registrationNumber)
-//           //   )
-//           // );
-//           // setExistingRegNumbersSet(regNumbers);
-
-//           console.log("Vehicles loaded for this type:", formattedVehicles.map(v => v.registrationNumber));
-
-//         }
-
-//         toast.success(
-//           `Loaded ${vehicleData.registrationVehicles?.length || 0} vehicle(s) for this type`
-//         );
-//       } else {
-//         setSelectedVehicleTypeData(null);
-//         setCurrentEditingGroupId(null);
-//         setVehicles([]);
-//         toast.info(
-//           "No existing vehicles found for this type. You can add new ones."
-//         );
-//       }
-//     } catch (error) {
-//       console.error("Error fetching vehicle by type:", error);
-//       setSelectedVehicleTypeData(null);
-//       setCurrentEditingGroupId(null);
-//       setVehicles([]);
-//     } finally {
-//       setIsLoadingVehicleData(false);
-//     }
-//   };
+  // const fetchVehicleByType = async (typeId) => {
+  //   if (!typeId) return;
+  //   setIsLoadingVehicleData(true);
+  //   try {
+  //     const res = await axios.get(`${baseUrl}/api/getVehicleGroupByType/${typeId}`);
+  //     if (res.data.success && res.data.data) {
+  //       const data = res.data.data;
+  //       setSelectedVehicleTypeData(data);
+  //       setCurrentEditingGroupId(data._id);
+  //       setCommonInfo(data.basicInfo);
+  //       setTechSpecs(data.techSpecs);
+  //       setVehicleDescription(data.vehicleDescription || "");
+  //       setExistingMediaUrls(data.mediaFiles || {});
+  //       if (data.registrationVehicles) {
+  //         const formatted = data.registrationVehicles.map(rv => ({
+  //           registrationNumber: rv.registrationNumber,
+  //           vehicleId: rv.vehicleId,
+  //           city: rv.city,
+  //           permitType: rv.permitType,
+  //           modelConfig: rv.modelConfig,
+  //           ownershipType: rv.ownershipType,
+  //           fuelType: rv.fuelType,
+  //           manufacturingYear: rv.manufacturingYear,
+  //           gpsEnabled: rv.gpsEnabled,
+  //           activeStatus: rv.activeStatus,
+  //           currentStatus: rv.statusAvailability?.currentStatus || "Available",
+  //           availableFrom: rv.statusAvailability?.availableFrom?.split("T")[0] || "",
+  //           remarks: rv.statusAvailability?.remarks || "",
+  //           driverName: rv.driverDetails?.driverName || "",
+  //           driverPhone: rv.driverDetails?.driverPhone || "",
+  //           backupDriver: rv.driverDetails?.backupDriver || "",
+  //           backupDriverPhone: rv.driverDetails?.backupDriverPhone || "",
+  //           driverCharges: String(rv.driverDetails?.driverCharges || ""),
+  //           lastServiceDate: rv.maintenance?.lastServiceDate?.split("T")[0] || "",
+  //           insuranceExpiryDate: rv.maintenance?.insuranceExpiryDate?.split("T")[0] || "",
+  //           pollutionExpiryDate: rv.maintenance?.pollutionExpiryDate?.split("T")[0] || "",
+  //         }));
+  //         setVehicles(formatted);
+  //       }
+  //       const comp = data.completedSteps || {};
+  //       setStepCompletionStatus({
+  //         1: comp.step1 || false,
+  //         2: comp.step2 || false,
+  //         3: comp.step3 || false,
+  //         4: comp.step4 || false,
+  //         5: comp.step5 || false,
+  //       });
+  //       // Get the type name from vehicleTypes state (already loaded)
+  //       const typeName = vehicleTypes.find(t => t._id === data.basicInfo.vehicleType)?.typeName || data.basicInfo.vehicleType;
+  //       toast.success(`Loaded ${vehicleData.registrationVehicles?.length || 0} vehicle(s) for " ${typeName} "`, {
+  //         position: "bottom-right",
+  //         autoClose: 3000,
+  //       });
+  //     } else {
+  //       resetFormForNewVehicleType();
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     resetFormForNewVehicleType();
+  //   } finally {
+  //     setIsLoadingVehicleData(false);
+  //   }
+  // };
 
 
 
-// const fetchVehicleByType = async (typeId) => {
-//   if (!typeId) return;
+  const fetchVehicleByType = async (typeId) => {
+  if (!typeId) return;
+  setIsLoadingVehicleData(true);
+  try {
+    const res = await axios.get(`${baseUrl}/api/getVehicleGroupByType/${typeId}`);
+    if (res.data.success && res.data.data) {
+      const data = res.data.data;
+      setSelectedVehicleTypeData(data);
+      setCurrentEditingGroupId(data._id);
+      setCommonInfo(data.basicInfo);
+      setTechSpecs(data.techSpecs || {
+        screenType: "LED Only",
+        numberOfScreens: "",
+        leftRightScreenWidth: "",
+        leftRightScreenHeight: "",
+        backScreenWidth: "",
+        backScreenHeight: "",
+        leftRightResolutionWidth: "",
+        leftRightResolutionHeight: "",
+        backResolutionWidth: "",
+        backResolutionHeight: "",
+        audioOutput: "",
+        brightness: "",
+        displayVersion: "",
+        soundQuality: "",
+        generatorCapacity: "",
+        additionalFeatures: "",
+      });
+      setVehicleDescription(data.vehicleDescription || "");
+      setExistingMediaUrls(data.mediaFiles || {});
 
-//   setIsLoadingVehicleData(true);
-//   try {
-//     const response = await axios.get(
-//       `${baseUrl}/api/getVehicleGroupByType/${typeId}`
-//     );
-//     if (response.data.success && response.data.data) {
-//       const vehicleData = response.data.data;
-//       setSelectedVehicleTypeData(vehicleData);
-//       setCurrentEditingGroupId(vehicleData._id);
-
-//       // Update techSpecs
-//       if (vehicleData.techSpecs) {
-//         setTechSpecs({
-//           screenType: vehicleData.techSpecs?.screenType || "LED Only",
-//           numberOfScreens: vehicleData.techSpecs?.numberOfScreens || "",
-//           leftRightScreenWidth: vehicleData.techSpecs?.leftRightScreenWidth || "",
-//           leftRightScreenHeight: vehicleData.techSpecs?.leftRightScreenHeight || "",
-//           backScreenWidth: vehicleData.techSpecs?.backScreenWidth || "",
-//           backScreenHeight: vehicleData.techSpecs?.backScreenHeight || "",
-//           leftRightResolutionWidth: vehicleData.techSpecs?.leftRightResolutionWidth || "",
-//           leftRightResolutionHeight: vehicleData.techSpecs?.leftRightResolutionHeight || "",
-//           backResolutionWidth: vehicleData.techSpecs?.backResolutionWidth || "",
-//           backResolutionHeight: vehicleData.techSpecs?.backResolutionHeight || "",
-//           audioOutput: vehicleData.techSpecs?.audioOutput || "",
-//           brightness: vehicleData.techSpecs?.brightness || "",
-//           displayVersion: vehicleData.techSpecs?.displayVersion || "",
-//           soundQuality: vehicleData.techSpecs?.soundQuality || "",
-//           generatorCapacity: vehicleData.techSpecs?.generatorCapacity || "",
-//           additionalFeatures: vehicleData.techSpecs?.additionalFeatures || "",
-//         });
-//       }
-
-//       // Update pricing
-//       if (vehicleData.pricing) {
-//         setPricing({
-//           basePriceType: vehicleData.pricing.basePriceType || "Per Day",
-//           costPerDay: vehicleData.pricing.costPerDay ? String(vehicleData.pricing.costPerDay) : "",
-//           avgKmPerDay: vehicleData.pricing.avgKmPerDay ? String(vehicleData.pricing.avgKmPerDay) : "",
-//           extraKmPrice: vehicleData.pricing.extraKmPrice ? String(vehicleData.pricing.extraKmPrice) : "",
-//           avgBookingHrs: vehicleData.pricing.avgBookingHrs ? String(vehicleData.pricing.avgBookingHrs) : "",
-//           extraHrPrice: vehicleData.pricing.extraHrPrice ? String(vehicleData.pricing.extraHrPrice) : "",
-//           rtoCharges: vehicleData.pricing.rtoCharges ? String(vehicleData.pricing.rtoCharges) : "",
-//           fuelEfficiency: vehicleData.pricing.fuelEfficiency ? String(vehicleData.pricing.fuelEfficiency) : "",
-//           minBookingDuration: vehicleData.pricing.minBookingDuration || "",
-//           overtimeCharges: vehicleData.pricing.overtimeCharges ? String(vehicleData.pricing.overtimeCharges) : "",
-//           waitingCharges: vehicleData.pricing.waitingCharges ? String(vehicleData.pricing.waitingCharges) : "",
-//         });
-//       }
-
-//       // Update vehicle description
-//       if (vehicleData.vehicleDescription) {
-//         setVehicleDescription(vehicleData.vehicleDescription);
-//       }
-
-//       // Update media URLs
-//       if (vehicleData.mediaFiles) {
-//         setExistingMediaUrls({
-//           frontViewImage: vehicleData.mediaFiles.frontViewImage || "",
-//           leftSideImage: vehicleData.mediaFiles.leftSideImage || "",
-//           rightSideImage: vehicleData.mediaFiles.rightSideImage || "",
-//           rearViewImage: vehicleData.mediaFiles.rearViewImage || "",
-//           interiorImage: vehicleData.mediaFiles.interiorImage || "",
-//           demoVideo: vehicleData.mediaFiles.demoVideo || "",
-//         });
-//       }
-
-//       // Update vehicles list
-//       if (vehicleData.registrationVehicles && vehicleData.registrationVehicles.length > 0) {
-//         const formattedVehicles = vehicleData.registrationVehicles.map((rv) => ({
-//           registrationNumber: rv.registrationNumber,
-//           vehicleId: rv.vehicleId,
-//           city: rv.city || "",
-//           permitType: rv.permitType || "",
-//           modelConfig: rv.modelConfig || "",
-//           ownershipType: rv.ownershipType || "",
-//           fuelType: rv.fuelType || "",
-//           manufacturingYear: rv.manufacturingYear || "",
-//           gpsEnabled: rv.gpsEnabled !== undefined ? rv.gpsEnabled : true,
-//           activeStatus: rv.activeStatus !== undefined ? rv.activeStatus : true,
-//           currentStatus: rv.statusAvailability?.currentStatus || "Available",
-//           availableFrom: rv.statusAvailability?.availableFrom ? rv.statusAvailability.availableFrom.split("T")[0] : "",
-//           remarks: rv.statusAvailability?.remarks || "",
-//           driverName: rv.driverDetails?.driverName || "",
-//           driverPhone: rv.driverDetails?.driverPhone || "",
-//           backupDriver: rv.driverDetails?.backupDriver || "",
-//           backupDriverPhone: rv.driverDetails?.backupDriverPhone || "",
-//           driverCharges: rv.driverDetails?.driverCharges ? String(rv.driverDetails.driverCharges) : "",
-//           lastServiceDate: rv.maintenance?.lastServiceDate ? rv.maintenance.lastServiceDate.split("T")[0] : "",
-//           insuranceExpiryDate: rv.maintenance?.insuranceExpiryDate ? rv.maintenance.insuranceExpiryDate.split("T")[0] : "",
-//           pollutionExpiryDate: rv.maintenance?.pollutionExpiryDate ? rv.maintenance.pollutionExpiryDate.split("T")[0] : "",
-//         }));
-//         setVehicles(formattedVehicles);
-        
-//         // Mark step 5 as completed if vehicles exist (since drivers/maintenance can be filled)
-//         setStepCompletionStatus(prev => ({
-//           ...prev,
-//           5: true
-//         }));
-//       }
-
-//       // Mark steps as completed if data exists
-//       const hasTechSpecs = Object.values(vehicleData.techSpecs || {}).some(v => v);
-//       const hasPricing = Object.values(vehicleData.pricing || {}).some(v => v);
-      
-//       setStepCompletionStatus(prev => ({
-//         ...prev,
-//         2: hasTechSpecs,
-//         3: hasPricing,
-//         4: !!vehicleData.vehicleDescription,
-//       }));
-
-//       toast.success(`Loaded ${vehicleData.registrationVehicles?.length || 0} vehicle(s) for this type`);
-//     } else {
-//       // No existing data, reset everything but keep step 1 completed
-//       resetFormForNewVehicleType();
-//       toast.info("No existing vehicles found for this type. You can add new ones.");
-//     }
-//   } catch (error) {
-//     console.error("Error fetching vehicle by type:", error);
-//     resetFormForNewVehicleType();
-//   } finally {
-//     setIsLoadingVehicleData(false);
-//   }
-// };
-
-
-
- const fetchVehicleByType = async (typeId) => {
-    if (!typeId) return;
-    setIsLoadingVehicleData(true);
-    try {
-      const res = await axios.get(`${baseUrl}/api/getVehicleGroupByType/${typeId}`);
-      if (res.data.success && res.data.data) {
-        const data = res.data.data;
-        setSelectedVehicleTypeData(data);
-        setCurrentEditingGroupId(data._id);
-        setCommonInfo(data.basicInfo);
-        setTechSpecs(data.techSpecs);
-        setVehicleDescription(data.vehicleDescription || "");
-        setExistingMediaUrls(data.mediaFiles || {});
-        if (data.registrationVehicles) {
-          const formatted = data.registrationVehicles.map(rv => ({
-            registrationNumber: rv.registrationNumber,
-            vehicleId: rv.vehicleId,
-            city: rv.city,
-            permitType: rv.permitType,
-            modelConfig: rv.modelConfig,
-            ownershipType: rv.ownershipType,
-            fuelType: rv.fuelType,
-            manufacturingYear: rv.manufacturingYear,
-            gpsEnabled: rv.gpsEnabled,
-            activeStatus: rv.activeStatus,
-            currentStatus: rv.statusAvailability?.currentStatus || "Available",
-            availableFrom: rv.statusAvailability?.availableFrom?.split("T")[0] || "",
-            remarks: rv.statusAvailability?.remarks || "",
-            driverName: rv.driverDetails?.driverName || "",
-            driverPhone: rv.driverDetails?.driverPhone || "",
-            backupDriver: rv.driverDetails?.backupDriver || "",
-            backupDriverPhone: rv.driverDetails?.backupDriverPhone || "",
-            driverCharges: String(rv.driverDetails?.driverCharges || ""),
-            lastServiceDate: rv.maintenance?.lastServiceDate?.split("T")[0] || "",
-            insuranceExpiryDate: rv.maintenance?.insuranceExpiryDate?.split("T")[0] || "",
-            pollutionExpiryDate: rv.maintenance?.pollutionExpiryDate?.split("T")[0] || "",
-          }));
-          setVehicles(formatted);
-        }
-        const comp = data.completedSteps || {};
-        setStepCompletionStatus({
-          1: comp.step1 || false,
-          2: comp.step2 || false,
-          3: comp.step3 || false,
-          4: comp.step4 || false,
-          5: comp.step5 || false,
-        });
-        toast.success(`Loaded existing data for ${data.basicInfo.vehicleType}`);
+      if (data.registrationVehicles && data.registrationVehicles.length > 0) {
+        const formatted = data.registrationVehicles.map(rv => ({
+          registrationNumber: rv.registrationNumber,
+          vehicleId: rv.vehicleId,
+          city: rv.city,
+          permitType: rv.permitType,
+          modelConfig: rv.modelConfig,
+          ownershipType: rv.ownershipType,
+          fuelType: rv.fuelType,
+          manufacturingYear: rv.manufacturingYear,
+          gpsEnabled: rv.gpsEnabled,
+          activeStatus: rv.activeStatus,
+          currentStatus: rv.statusAvailability?.currentStatus || "Available",
+          availableFrom: rv.statusAvailability?.availableFrom?.split("T")[0] || "",
+          remarks: rv.statusAvailability?.remarks || "",
+          driverName: rv.driverDetails?.driverName || "",
+          driverPhone: rv.driverDetails?.driverPhone || "",
+          backupDriver: rv.driverDetails?.backupDriver || "",
+          backupDriverPhone: rv.driverDetails?.backupDriverPhone || "",
+          driverCharges: String(rv.driverDetails?.driverCharges || ""),
+          lastServiceDate: rv.maintenance?.lastServiceDate?.split("T")[0] || "",
+          insuranceExpiryDate: rv.maintenance?.insuranceExpiryDate?.split("T")[0] || "",
+          pollutionExpiryDate: rv.maintenance?.pollutionExpiryDate?.split("T")[0] || "",
+        }));
+        setVehicles(formatted);
       } else {
-        resetFormForNewVehicleType();
+        setVehicles([]);
       }
-    } catch (err) {
-      console.error(err);
+
+      const comp = data.completedSteps || {};
+      setStepCompletionStatus({
+        1: comp.step1 || false,
+        2: comp.step2 || false,
+        3: comp.step3 || false,
+        4: comp.step4 || false,
+        5: comp.step5 || false,
+      });
+
+      const typeName = vehicleTypes.find(t => t._id === data.basicInfo.vehicleType)?.typeName || data.basicInfo.vehicleType;
+      toast.success(`Loaded ${data.registrationVehicles?.length || 0} vehicle(s) for "${typeName}"`, {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
+    } else {
       resetFormForNewVehicleType();
-    } finally {
-      setIsLoadingVehicleData(false);
+      toast.info("No existing data found for this vehicle type", { position: "bottom-right", autoClose: 3000 });
     }
-  };
-
-
+  } catch (err) {
+    console.error(err);
+    resetFormForNewVehicleType();
+    toast.error("Error loading vehicle data", { position: "bottom-right", autoClose: 3000 });
+  } finally {
+    setIsLoadingVehicleData(false);
+  }
+};
 
 
   const createVehicleType = async (typeName) => {
@@ -2505,14 +2268,18 @@ export default function VehicleOnboardingForm() {
         typeName,
       });
       if (response.data.success) {
-        toast.success("Vehicle type created successfully");
+        toast.success("Vehicle type created successfully", {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
         await fetchVehicleTypes();
         return response.data.data;
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Error creating vehicle type"
-      );
+      toast.error(error.response?.data?.message || "Error creating vehicle type", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       throw error;
     }
   };
@@ -2523,14 +2290,18 @@ export default function VehicleOnboardingForm() {
         typeName,
       });
       if (response.data.success) {
-        toast.success("Vehicle type updated successfully");
+        toast.success("Vehicle type updated successfully", {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
         await fetchVehicleTypes();
         return response.data.data;
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Error updating vehicle type"
-      );
+      toast.error(error.response?.data?.message || "Error updating vehicle type", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       throw error;
     }
   };
@@ -2541,13 +2312,17 @@ export default function VehicleOnboardingForm() {
         `${baseUrl}/api/vehicle-types/${id}`
       );
       if (response.data.success) {
-        toast.success("Vehicle type deleted successfully");
+        toast.success("Vehicle type deleted successfully", {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
         await fetchVehicleTypes();
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Error deleting vehicle type"
-      );
+      toast.error(error.response?.data?.message || "Error deleting vehicle type", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       throw error;
     }
   };
@@ -2558,111 +2333,7 @@ export default function VehicleOnboardingForm() {
   }, []);
 
 
-
-// const resetFormForNewVehicleType = () => {
-//   // Reset vehicles
-//   setVehicles([]);
-  
-//   // Reset techSpecs to default values
-//   setTechSpecs({
-//     screenType: "LED Only",
-//     numberOfScreens: "",
-//     leftRightScreenWidth: "",
-//     leftRightScreenHeight: "",
-//     backScreenWidth: "",
-//     backScreenHeight: "",
-//     leftRightResolutionWidth: "",
-//     leftRightResolutionHeight: "",
-//     backResolutionWidth: "",
-//     backResolutionHeight: "",
-//     audioOutput: "",
-//     brightness: "",
-//     displayVersion: "",
-//     soundQuality: "",
-//     generatorCapacity: "",
-//     additionalFeatures: "",
-//   });
-  
-//   // Reset pricing
-//   setPricing({
-//     basePriceType: "Per Day",
-//     costPerDay: "",
-//     avgKmPerDay: "",
-//     extraKmPrice: "",
-//     avgBookingHrs: "",
-//     extraHrPrice: "",
-//     rtoCharges: "",
-//     fuelEfficiency: "",
-//     minBookingDuration: "",
-//     overtimeCharges: "",
-//     waitingCharges: "",
-//   });
-  
-//   // Reset vehicle description
-//   setVehicleDescription("");
-  
-//   // Reset media files
-//   setMediaFiles({
-//     frontViewImage: null,
-//     leftSideImage: null,
-//     rightSideImage: null,
-//     rearViewImage: null,
-//     interiorImage: null,
-//     demoVideo: null,
-//   });
-  
-//   setMediaPreviews({
-//     frontViewImage: null,
-//     leftSideImage: null,
-//     rightSideImage: null,
-//     rearViewImage: null,
-//     interiorImage: null,
-//     demoVideo: null,
-//   });
-  
-//   setExistingMediaUrls({
-//     frontViewImage: "",
-//     leftSideImage: "",
-//     rightSideImage: "",
-//     rearViewImage: "",
-//     interiorImage: "",
-//     demoVideo: "",
-//   });
-  
-//   // Reset editing group ID
-//   setCurrentEditingGroupId(null);
-//   setSelectedVehicleTypeData(null);
-  
-//   // Reset step completion status for steps 2-5 (keep step 1 completion status)
-//   setStepCompletionStatus(prev => ({
-//     ...prev,
-//     2: false,
-//     3: false,
-//     4: false,
-//     5: false,
-//     6: false
-//   }));
-  
-//   // Reset completed steps set
-//   setCompletedSteps(new Set([1])); // Keep step 1 as completed
-// };
-
-
-
-
-
-  // useEffect(() => {
-  //   if (commonInfo.vehicleType) {
-  //     fetchVehicleByType(commonInfo.vehicleType);
-  //   } else {
-  //     setVehicles([]);
-  //     setSelectedVehicleTypeData(null);
-  //     setCurrentEditingGroupId(null);
-  //   }
-  // }, [commonInfo.vehicleType]);
- 
-
-   const resetFormForNewVehicleType = () => {
+  const resetFormForNewVehicleType = () => {
     setVehicles([]);
     setTechSpecs({ /* default as above */ });
     setVehicleDescription("");
@@ -2674,18 +2345,18 @@ export default function VehicleOnboardingForm() {
   };
 
 
- 
+
   useEffect(() => {
-  if (commonInfo.vehicleType) {
-    // Reset form first before fetching new data
-    resetFormForNewVehicleType();
-    // Then fetch data for the selected type
-    fetchVehicleByType(commonInfo.vehicleType);
-  } else {
-    // If no vehicle type selected, reset everything
-    resetFormForNewVehicleType();
-  }
-}, [commonInfo.vehicleType]);
+    if (commonInfo.vehicleType) {
+      // Reset form first before fetching new data
+      resetFormForNewVehicleType();
+      // Then fetch data for the selected type
+      fetchVehicleByType(commonInfo.vehicleType);
+    } else {
+      // If no vehicle type selected, reset everything
+      resetFormForNewVehicleType();
+    }
+  }, [commonInfo.vehicleType]);
 
   const steps = [
     { number: 1, title: "Basic Information" },
@@ -2736,7 +2407,10 @@ export default function VehicleOnboardingForm() {
             : v
         )
       );
-      toast.success("Vehicle updated successfully");
+      toast.success("Vehicle updated successfully", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
     } else {
       const exists = vehicles.some(
         (v) =>
@@ -2744,14 +2418,20 @@ export default function VehicleOnboardingForm() {
           vehicleData.registrationNumber
       );
       if (exists) {
-        toast.error("Vehicle with this registration number already exists");
+        toast.error("Vehicle with this registration number already exists", {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
         return;
       }
       setVehicles((prev) => [...prev, newVehicle]);
       setExistingRegNumbersSet(
         (prev) => new Set([...prev, vehicleData.registrationNumber])
       );
-      toast.success("Vehicle added successfully");
+      toast.success("Vehicle added successfully", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
     }
     setEditingVehicle(null);
   };
@@ -2771,7 +2451,10 @@ export default function VehicleOnboardingForm() {
             unformatRegistrationNumber(registrationNumber)
         )
       );
-      toast.success("Vehicle removed successfully");
+      toast.success("Vehicle removed successfully", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
     }
   };
 
@@ -2801,81 +2484,22 @@ export default function VehicleOnboardingForm() {
     toast.success(
       `Driver & Maintenance details saved for ${formatRegistrationNumber(
         registrationNumber
-      )}`
+      )}`, {
+      position: "bottom-right",
+      autoClose: 3000,
+    }
     );
   };
-
-
-  // const handleNextStep = () => {
-
-  //   // Validate current step
-  //   const errors = validateStep(currentStep, {
-  //     commonInfo,
-  //     vehicles,
-  //     pricing,
-  //     techSpecs,
-  //   });
-
-  //   if (Object.keys(errors).length > 0) {
-  //     setStepErrors(errors);
-  //     toast.error(Object.values(errors)[0]);
-  //     return;
-  //   }
-
-  //   setStepErrors({});
-  //   setCompletedSteps((prev) => new Set([...prev, currentStep]));
-
-  //   // Move to next step (including from step 5 to step 6)
-  //   setCurrentStep((prev) => prev + 1);
-  // };
-
-
-
-  // // Updated handleNextStep with completion tracking
-  // const handleNextStep = () => {
-  //   // Validate current step before proceeding
-  //   const errors = validateStep(currentStep, {
-  //     commonInfo,
-  //     vehicles,
-  //     // pricing,
-  //     techSpecs,
-  //     vehicleDescription
-  //   });
-
-  //   if (Object.keys(errors).length > 0) {
-  //     setStepErrors(errors);
-  //     toast.error(Object.values(errors)[0]);
-  //     return;
-  //   }
-
-  //   // Clear errors and mark step as completed
-  //   setStepErrors({});
-  //   setCompletedSteps((prev) => new Set([...prev, currentStep]));
-
-  //   // Update step completion status
-  //   setStepCompletionStatus(prev => ({
-  //     ...prev,
-  //     [currentStep]: true
-  //   }));
-
-  //   // // Move to next step (this will go from step 5 to step 6)
-  //   // if (currentStep < 6) {
-  //   //   setCurrentStep(currentStep + 1);
-  //   // }
-
-  //   if (currentStep < 6) {
-  //     const nextStep = currentStep + 1;
-  //     currentStepRef.current = nextStep;
-  //     setCurrentStep(nextStep);
-  //   }
-  // };
 
 
   const handleNextStep = async () => {
     const errors = validateStep(currentStep, { commonInfo, vehicles, techSpecs, vehicleDescription });
     if (Object.keys(errors).length > 0) {
       setStepErrors(errors);
-      toast.error(Object.values(errors)[0]);
+      toast.error(Object.values(errors)[0], {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
       return;
     }
     setStepErrors({});
@@ -2914,229 +2538,7 @@ export default function VehicleOnboardingForm() {
   };
 
 
-  // FIX 1: handleSubmit only fires at step 6 — modals are now outside <form> so
-  // their buttons can never accidentally trigger this
-  // const handleSubmit = async (e) => {
-  //   if (e) {
-  //     e.preventDefault();
-  //     e.stopPropagation();
-  //   }
-
-  //   // CRITICAL: Only allow submission on step 6
-  //   if (currentStepRef.current !== 6) {
-  //     console.log("Preventing submit - not on step 6");
-  //     toast.info("Please complete all steps before submitting", {
-  //       position: "bottom-right",
-  //       autoClose: 2000,
-  //     });
-  //     return;
-  //   }
-
-  //   if (!validateForm()) {
-  //     toast.error("Please fix the validation errors before submitting");
-  //     return;
-  //   }
-
-  //   setLoading(true);
-  //   setUploadProgress(0);
-
-  //   try {
-  //     const formData = new FormData();
-
-  //     const registrationVehicles = vehicles.map((vehicle) => ({
-  //       registrationNumber: unformatRegistrationNumber(
-  //         vehicle.registrationNumber
-  //       ),
-  //       vehicleId: vehicle.vehicleId,
-  //       city: vehicle.city,
-  //       modelConfig: vehicle.modelConfig,
-  //       permitType: vehicle.permitType,
-  //       ownershipType: vehicle.ownershipType,
-  //       fuelType: vehicle.fuelType,
-  //       manufacturingYear: vehicle.manufacturingYear,
-  //       gpsEnabled: vehicle.gpsEnabled,
-  //       activeStatus: vehicle.activeStatus,
-  //       statusAvailability: {
-  //         currentStatus: vehicle.currentStatus || "Available",
-  //         availableFrom: vehicle.availableFrom || null,
-  //         remarks: vehicle.remarks || "",
-  //       },
-  //       maintenance: {
-  //         lastServiceDate: vehicle.lastServiceDate || null,
-  //         insuranceExpiryDate: vehicle.insuranceExpiryDate || null,
-  //         pollutionExpiryDate: vehicle.pollutionExpiryDate || null,
-  //       },
-  //       driverDetails: {
-  //         driverName: vehicle.driverName || "",
-  //         driverPhone: vehicle.driverPhone || "",
-  //         backupDriver: vehicle.backupDriver || "",
-  //         backupDriverPhone: vehicle.backupDriverPhone || "",
-  //         driverCharges: vehicle.driverCharges
-  //           ? Number(vehicle.driverCharges)
-  //           : 0,
-  //       },
-  //     }));
-
-  //     const payload = {
-  //       basicInfo: {
-  //         customizedType: commonInfo.customizedType,
-  //         vehicleType: commonInfo.vehicleType,
-  //         vehicleName: commonInfo.vehicleName || "",
-  //       },
-  //       vehicleDescription: vehicleDescription,
-  //       techSpecs: techSpecs,
-  //       pricing: {
-  //         ...pricing,
-  //         costPerDay: Number(pricing.costPerDay) || 0,
-  //         avgKmPerDay: Number(pricing.avgKmPerDay) || 0,
-  //         extraKmPrice: Number(pricing.extraKmPrice) || 0,
-  //         avgBookingHrs: Number(pricing.avgBookingHrs) || 0,
-  //         extraHrPrice: Number(pricing.extraHrPrice) || 0,
-  //         rtoCharges: Number(pricing.rtoCharges) || 0,
-  //         fuelEfficiency: Number(pricing.fuelEfficiency) || 0,
-  //         overtimeCharges: Number(pricing.overtimeCharges) || 0,
-  //         waitingCharges: Number(pricing.waitingCharges) || 0,
-  //       },
-  //       registrationVehicles: registrationVehicles,
-  //     };
-
-  //     formData.append("data", JSON.stringify(payload));
-
-  //     Object.keys(mediaFiles).forEach((key) => {
-  //       if (mediaFiles[key] && mediaFiles[key] instanceof File) {
-  //         formData.append(key, mediaFiles[key]);
-  //       }
-  //     });
-
-  //     let response;
-  //     if (currentEditingGroupId) {
-  //       response = await axios.put(
-  //         `${baseUrl}/api/updateVehicle/${currentEditingGroupId}`,
-  //         formData,
-  //         {
-  //           headers: { "Content-Type": "multipart/form-data" },
-  //           onUploadProgress: (progressEvent) => {
-  //             const percentCompleted = Math.round(
-  //               (progressEvent.loaded * 100) / progressEvent.total
-  //             );
-  //             setUploadProgress(percentCompleted);
-  //           },
-  //         }
-  //       );
-  //     } else {
-  //       response = await axios.post(
-  //         `${baseUrl}/api/createVehicle`,
-  //         formData,
-  //         {
-  //           headers: { "Content-Type": "multipart/form-data" },
-  //           onUploadProgress: (progressEvent) => {
-  //             const percentCompleted = Math.round(
-  //               (progressEvent.loaded * 100) / progressEvent.total
-  //             );
-  //             setUploadProgress(percentCompleted);
-  //           },
-  //         }
-  //       );
-  //     }
-
-  //     if (response.data.success) {
-  //       toast.success(response.data.message);
-  //       setVehicles([]);
-  //       setCommonInfo({
-  //         customizedType: "Non-Customized",
-  //         vehicleType: "",
-  //         vehicleName: "",
-  //       });
-  //       setTechSpecs({
-  //         screenType: "LED Only",
-  //         numberOfScreens: "",
-  //         screenSizeWidth: "",
-  //         screenSizeHeight: "",
-  //         backScreenWidth: "",
-  //         backScreenHeight: "",
-  //         resolution: "",
-  //         backResolution: "",
-  //         videoSize: "",
-  //         backVideoSize: "",
-  //         audioOutput: "",
-  //         brightness: "",
-  //         displayVersion: "",
-  //         soundQuality: "",
-  //         generatorCapacity: "",
-  //         additionalFeatures: "",
-  //       });
-  //       setPricing({
-  //         basePriceType: "Per Day",
-  //         costPerDay: "",
-  //         avgKmPerDay: "",
-  //         extraKmPrice: "",
-  //         avgBookingHrs: "",
-  //         extraHrPrice: "",
-  //         rtoCharges: "",
-  //         fuelEfficiency: "",
-  //         minBookingDuration: "",
-  //         overtimeCharges: "",
-  //         waitingCharges: "",
-  //       });
-  //       setVehicleDescription("");
-
-  //       Object.keys(mediaPreviews).forEach((key) => {
-  //         if (mediaPreviews[key] && mediaPreviews[key].startsWith("blob:")) {
-  //           URL.revokeObjectURL(mediaPreviews[key]);
-  //         }
-  //       });
-  //       setMediaFiles({
-  //         frontViewImage: null,
-  //         leftSideImage: null,
-  //         rightSideImage: null,
-  //         rearViewImage: null,
-  //         interiorImage: null,
-  //         demoVideo: null,
-  //       });
-  //       setMediaPreviews({
-  //         frontViewImage: null,
-  //         leftSideImage: null,
-  //         rightSideImage: null,
-  //         rearViewImage: null,
-  //         interiorImage: null,
-  //         demoVideo: null,
-  //       });
-  //       setExistingMediaUrls({
-  //         frontViewImage: "",
-  //         leftSideImage: "",
-  //         rightSideImage: "",
-  //         rearViewImage: "",
-  //         interiorImage: "",
-  //         demoVideo: "",
-  //       });
-  //       setCurrentEditingGroupId(null);
-  //       setCompletedSteps(new Set());
-  //       setStepCompletionStatus({
-  //         1: false,
-  //         2: false,
-  //         3: false,
-  //         4: false,
-  //         5: false,
-  //         6: false
-  //       });
-  //       currentStepRef.current = 1;
-  //       setCurrentStep(1);
-  //       setUploadProgress(0);
-  //       fetchExistingRegNumbers();
-  //     }
-  //   } catch (error) {
-  //     console.error("Error submitting form:", error);
-  //     toast.error(
-  //       error.response?.data?.message ||
-  //       "Error saving vehicle. Please try again."
-  //     );
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-
-   const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (currentStep !== 5) {
       toast.info("Please complete all steps before submitting");
@@ -3197,12 +2599,18 @@ export default function VehicleOnboardingForm() {
         });
       }
       if (response.data.success) {
-        toast.success("Onboarding completed successfully!");
+        toast.success("Onboarding completed successfully!", {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
         window.location.reload();
       }
     } catch (err) {
       console.error(err);
-      toast.error("Submission failed");
+      toast.error("Submission failed", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
     } finally {
       setLoading(false);
     }
@@ -3299,7 +2707,7 @@ export default function VehicleOnboardingForm() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ToastContainer position="top-right" />
+      <ToastContainer position="bottom-right" />
 
       <div className="px-6 pt-6">
         <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -3316,8 +2724,8 @@ export default function VehicleOnboardingForm() {
         </p>
       </div>
 
-  
-{/* 
+
+      {/* 
       <AddVehicleModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -3375,7 +2783,7 @@ export default function VehicleOnboardingForm() {
           }
         }}
       > */}
-            <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}>
         <div className="px-6 pb-10">
           <StepperHeader
             steps={steps}
@@ -3389,9 +2797,9 @@ export default function VehicleOnboardingForm() {
             //     setCurrentStep(stepNum);
             //   }
             // }}
-                        onStepClick={(num) => { if (num <= currentStep) setCurrentStep(num); }}
+            onStepClick={(num) => { if (num <= currentStep) setCurrentStep(num); }}
             canAccessStep6={canAccessStep6}
-            stepCompletionStatus={stepCompletionStatus}  
+            stepCompletionStatus={stepCompletionStatus}
 
           />
 
@@ -3467,7 +2875,7 @@ export default function VehicleOnboardingForm() {
                         {validationErrors.vehicleType || stepErrors.vehicleType}
                       </p>
                     )} */}
-                     {stepErrors.vehicleType && <p className="text-red-500 text-xs mt-1">{stepErrors.vehicleType}</p>}
+                  {stepErrors.vehicleType && <p className="text-red-500 text-xs mt-1">{stepErrors.vehicleType}</p>}
 
                   <p className="mt-1 text-xs text-gray-400">
                     Selecting a vehicle type will auto-fill technical specs,
@@ -3574,14 +2982,14 @@ export default function VehicleOnboardingForm() {
                   className="flex items-center gap-2 mt-4 text-blue-600 hover:text-blue-700 font-medium"
                 >
                   <PlusIcon className="w-4 h-4" />
-                 Add Another Vehicle
+                  Add Another Vehicle
                 </button>
                 {/* {(validationErrors.vehicles || stepErrors.vehicles) && (
                   <p className="mt-1 text-xs text-red-500">
                     {validationErrors.vehicles || stepErrors.vehicles}
                   </p>
                 )} */}
-                                {stepErrors.vehicles && <p className="text-red-500 text-xs mt-1">{stepErrors.vehicles}</p>}
+                {stepErrors.vehicles && <p className="text-red-500 text-xs mt-1">{stepErrors.vehicles}</p>}
 
               </div>
             </div>
@@ -4375,7 +3783,7 @@ export default function VehicleOnboardingForm() {
                 //     ? "Saving..."
                 //     : `✅ Submit ${vehicles.length} Vehicle(s)`}
                 // </button>
-                 <button type="submit" disabled={loading || !stepCompletionStatus[4]} className="px-6 py-2.5 bg-green-600 text-white rounded-lg">
+                <button type="submit" disabled={loading || !stepCompletionStatus[4]} className="px-6 py-2.5 bg-green-600 text-white rounded-lg">
                   {loading ? "Submitting..." : `Submit ${vehicles.length} Vehicle(s)`}
                 </button>
               )}
@@ -4384,7 +3792,7 @@ export default function VehicleOnboardingForm() {
         </div>
       </form>
 
-      
+
     </div>
   );
 }
