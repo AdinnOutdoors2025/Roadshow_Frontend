@@ -6,7 +6,6 @@ import axios from "axios";
 import API_BASE from "../../../../../baseurl";
 import { getToken } from "@/utils/auth";
 import { jwtDecode } from "jwt-decode";
-import NegotiationForm from "./customernegotiationForm";
 import toast from "react-hot-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -75,6 +74,7 @@ interface Order {
     negotiationLogs?: any[];
     createdAt: string;
     updatedAt?: string;
+    paymentStageFirst:string;
 }
 
 // ─── Stage config ─────────────────────────────────────────────────────────────
@@ -148,24 +148,23 @@ const fmtDateTime = (d?: string) => {
 
 
 
-// ─── Main component ───────────────────────────────────────────────────────────
 export default function PipelineBoard() {
 
     const initialForm = {
-        // inProgress
+  
         handlerName: "",
         custType: null as 0 | 1 | null,
 
-        // customerConfirmation
+       
         discountType: "amount" as "amount" | "percent",
         discountValue: "",
 
-        // waitingForPO
+       
         poFile: null as File | null,
         poDate: "",
         poNotes: "",
 
-        // paymentStage1
+        
         advPayment: "",
         paymentProofFile: null as File | null,
         paymentDate: "",
@@ -175,15 +174,14 @@ export default function PipelineBoard() {
     const [grouped, setGrouped] = useState<Record<string, Order[]>>({});
     const [loading, setLoading] = useState(true);
 
-    // drag state
+  
     const dragOrder = useRef<Order | null>(null);
     const dragFrom = useRef<string>("");
 
-    // modals
+
     const [drawerOrder, setDrawerOrder] = useState<any | null>(null);
     const [dropTarget, setDropTarget] = useState<{ order: Order; toStage: string } | null>(null);
 
-    // modal form states
 
     const [saving, setSaving] = useState(false);
     const [modalError, setModalError] = useState("");
@@ -199,12 +197,12 @@ export default function PipelineBoard() {
         value: (typeof initialForm)[K]
     ) => setForm((prev) => ({ ...prev, [key]: value }));
 
-    // Reset all form fields
+  
     const resetForm = () => setForm(initialForm);
 
 
 
-    // ── Fetch ──────────────────────────────────────────────────────────
+  
     const fetchPipeline = async () => {
         setLoading(true);
 
@@ -242,7 +240,6 @@ export default function PipelineBoard() {
         fetchStaffList();
     }, []);
 
-    // Staff list fetch — super admin dropdown
     const fetchStaffList = async () => {
         try {
             const token = getToken();
@@ -253,7 +250,7 @@ export default function PipelineBoard() {
         } catch { }
     };
 
-    // ── Drag handlers ──────────────────────────────────────────────────
+
     const onDragStart = (order: Order, fromStage: string) => {
         dragOrder.current = order;
         dragFrom.current = fromStage;
@@ -264,7 +261,7 @@ const onDrop = (toStage: string) => {
     const order = dragOrder.current;
     if (!order || dragFrom.current === toStage) return;
 
-    // todo → inProgress
+
     if (dragFrom.current === "todo" && toStage === "inProgress") {
         if (currentUserIsAdmin === 0) {
             commitMove(order, toStage, {});
@@ -274,13 +271,12 @@ const onDrop = (toStage: string) => {
         return;
     }
 
-    // projectCodeCreation → confirm modal
     if (toStage === "projectCodeCreation") {
         setProjectCodeConfirm(order);
         return;
     }
 
-    // inProgress → modal
+
     if (toStage === "inProgress") {
         resetForm();
         setModalError("");
@@ -288,7 +284,7 @@ const onDrop = (toStage: string) => {
         return;
     }
 
-    // ✅ waitingForPO உட்பட மற்ற எல்லாமே directly move
+  
     commitMove(order, toStage, {});
 };
 
@@ -319,19 +315,18 @@ const onDrop = (toStage: string) => {
             if (extra.handlerName) fd.append("handlerName", extra.handlerName);
             if (extra.customerType != null) fd.append("customerType", String(extra.customerType));
 
-            // waitingForPO
             if (extra.poFile) fd.append("poDocument", extra.poFile);
             if (extra.poDate) fd.append("poDate", extra.poDate);
             if (extra.poNotes) fd.append("poNotes", extra.poNotes);
 
-            // paymentStage1
+        
             if (extra.paymentProofFile) fd.append("paymentProofDocument", extra.paymentProofFile);
             if (extra.advancePayment) fd.append("advancePayment", String(extra.advancePayment));
             if (extra.paymentDate) fd.append("paymentDate", extra.paymentDate);
             if (extra.paymentVerification) fd.append("paymentVerification", extra.paymentVerification);
             if (extra.paymentNotes) fd.append("paymentNotes", extra.paymentNotes);
 
-            // negotiation
+         
             if (extra.discountType) fd.append("discountType", extra.discountType);
             if (extra.discountValue != null) fd.append("discountValue", String(extra.discountValue));
 
@@ -340,7 +335,7 @@ const onDrop = (toStage: string) => {
             });
 
             setDropTarget(null);
-            resetForm();        // ← reset after success
+            resetForm();       
             toast.success("Order moved successfully!");
             await fetchPipeline();
         } catch (e: any) {
@@ -358,7 +353,7 @@ const onDrop = (toStage: string) => {
         const { order, toStage } = dropTarget;
         setModalError("");
 
-        // ── inProgress ──────────────────────────────────────────────
+        
         if (toStage === "inProgress") {
             if (currentUserIsAdmin === 1 && !form.handlerName.trim())
                 return setModalError("Handler name is required");
@@ -376,7 +371,7 @@ const onDrop = (toStage: string) => {
 
     
 
-        // ── projectCodeCreation ───────────────────────────────────────
+       
         if (toStage === "projectCodeCreation") {
             commitMove(order, toStage, {});
         }
@@ -384,7 +379,7 @@ const onDrop = (toStage: string) => {
 
 
 
-    // ── Render ─────────────────────────────────────────────────────────
+  
     if (loading)
         return (
             <div className="flex items-center justify-center h-64">
@@ -396,7 +391,7 @@ const onDrop = (toStage: string) => {
         <div className="flex flex-col h-full">
 
             <div className="flex flex-col gap-4 px-4 pt-4">
-                {/* Row 1 — 8 columns */}
+             
                 <div className="flex gap-3" style={{ minWidth: "max-content" }}>
                     {ROW1.map((stage) => (
                         <StageColumn
@@ -410,10 +405,10 @@ const onDrop = (toStage: string) => {
                     ))}
                 </div>
 
-                {/* Divider */}
+           
                 <div className="border-t-2 border-dashed border-gray-200 dark:border-gray-700 mx-2" />
 
-                {/* Row 2 — 7 columns */}
+              
                 <div className="flex gap-3" style={{ minWidth: "max-content" }}>
                     {ROW2.map((stage) => (
                         <StageColumn
@@ -439,7 +434,7 @@ const onDrop = (toStage: string) => {
                             headers: { Authorization: `Bearer ${token}` },
                         });
                         setGrouped(data.data.grouped);
-                        // ✅ drawerOrder-ஐ updated order-ஆல் மாத்து
+                      
                         const updatedOrder = Object.values(data.data.grouped)
                             .flat()
                             .find((o: any) => o._id === drawerOrder._id) as Order | undefined;
@@ -448,16 +443,16 @@ const onDrop = (toStage: string) => {
                 />
             )}
 
-            {/* ── Todo → InProgress Confirm Modal ── */}
+          
             {confirmMove && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6">
 
                         {/* Icon */}
                         <div className="flex justify-center mb-4">
-                            {/* <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-2xl">
+                            <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-2xl">
                     🚀
-                </div> */}
+                </div>
                         </div>
 
                         {/* Title */}
@@ -487,11 +482,11 @@ const onDrop = (toStage: string) => {
                                 Cancel
                             </button>
                             <button
-                                // REPLACE the onClick of "Yes, Move" button in confirmMove modal:
+                           
                                 onClick={() => {
                                     const { order, toStage } = confirmMove;
                                     setConfirmMove(null);
-                                    resetForm();         // ← single line
+                                    resetForm();         
                                     setModalError("");
                                     setDropTarget({ order, toStage });
                                 }}
@@ -549,7 +544,7 @@ const onDrop = (toStage: string) => {
                 </div>
             )}
 
-            {/* ── Stage Transition Modal ── */}
+         
             {dropTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6">
@@ -572,7 +567,7 @@ const onDrop = (toStage: string) => {
                             </button>
                         </div>
 
-                        {/* ── inProgress ── */}
+                     
                         {dropTarget.toStage === "inProgress" && (
                             <div className="space-y-4">
                                 {currentUserIsAdmin === 1 && (
@@ -673,6 +668,8 @@ const onDrop = (toStage: string) => {
 import { User, Clock } from "lucide-react";
 import DetailDrawer from "./DetailsModel";
 
+
+
 function OrderCard({ order, stageKey, onDragStart, onClick }: {
     order: Order;
     stageKey: string;
@@ -680,7 +677,20 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
     onClick: () => void;
 }) {
     const stage = STAGE_MAP[stageKey];
-    const displayAmt = order.grandNegotiationTotal ?? order.grandTotal;
+
+     const logs: any = order.paymentStageFirst || [];
+    const totalAdvance = logs.reduce((sum, log) => sum + (log.advancePayment || 0), 0);
+
+    // Pricing calculations
+    const subtotal = order.bookingItems.reduce((s, i) => s + (i.totalAmount || 0), 0);
+    const totalDiscount = (order.negotiationLogs || []).reduce((s, l) => s + (l.discountAmount || 0), 0);
+    const taxable = subtotal - totalDiscount;
+    const gstAmt = Math.floor(taxable * 0.18);
+    const finalNet = taxable + gstAmt;
+    const balanceAmount = finalNet - totalAdvance;
+
+    // const displayAmt = order.grandNegotiationTotal ?? order.grandTotal;
+    const displayAmt = balanceAmount;
 
     const custBadge =
         order.customerType === 1
@@ -702,7 +712,7 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
                 transition duration-150 ease-out select-none
             "
         >
-            {/* Row 1 — ID + Badge */}
+           
             <div className="flex items-center justify-between mb-2">
                 <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500">
                     {order.orderId}
@@ -716,17 +726,17 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
                 </span>
             </div>
 
-            {/* Row 2 — Name */}
+           
             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight mb-2">
                 {order.name}
             </p>
 
-            {/* Row 3 — Amount */}
+           
             <p className={`text-lg font-bold mb-3 ${stage.color}`}>
                 {fmt(displayAmt)}
             </p>
 
-            {/* Row 4 — Handler + UpdatedAt */}
+           
             <div className="flex items-center justify-between">
                 {order.handlerName ? (
                     <span className="
@@ -769,7 +779,7 @@ function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
             onDragOver={(e) => e.preventDefault()}
             onDrop={() => onDrop(stage.key)}
         >
-            {/* Column header */}
+         
             <div className={`flex items-center justify-between px-3 py-2 rounded-xl mb-2 ${stage.bg}`}>
                 <div className="flex items-center gap-2 min-w-0">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${stage.dot}`} />
@@ -782,7 +792,7 @@ function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
                 </span>
             </div>
 
-            {/* Cards */}
+           
             <div className="flex flex-col gap-2 min-h-[60px]">
                 {orders.map((order) => (
                     <OrderCard

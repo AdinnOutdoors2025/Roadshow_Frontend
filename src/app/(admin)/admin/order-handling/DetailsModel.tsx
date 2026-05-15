@@ -78,7 +78,7 @@ interface PipelineLog {
     movedAt: string;
 }
 
-// ─── Stage Map with Gradient Colors ──────────────────────────────────────────
+
 const STAGE_MAP: Record<string, { label: string; gradient: string; icon: string }> = {
     todo: { label: "To Do", gradient: "from-slate-400 to-slate-500", icon: "📋" },
     inProgress: { label: "In Progress", gradient: "from-blue-400 to-blue-600", icon: "🔄" },
@@ -90,7 +90,7 @@ const STAGE_MAP: Record<string, { label: string; gradient: string; icon: string 
     cancelled: { label: "Cancelled", gradient: "from-red-400 to-red-600", icon: "❌" },
 };
 
-// ─── Formatters ───────────────────────────────────────────────────────────────
+
 const fmt = (n?: number | null) =>
     n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
 
@@ -103,7 +103,7 @@ const fmtDatetime = (s?: string) =>
         })
         : "—";
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+
 function Section({ icon, title, accent, children }: { icon: React.ReactNode; title: string; accent?: string; children: React.ReactNode }) {
     return (
         <div className="bg-white dark:bg-gray-800/50 rounded-xl md:rounded-2xl border border-gray-200/60 dark:border-gray-700/50 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
@@ -156,7 +156,7 @@ function TimelineItem({ dotColor, children, isLast }: { dotColor: string; childr
     );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+
 export default function DetailDrawer({
     order,
     onClose,
@@ -174,7 +174,7 @@ export default function DetailDrawer({
     const logs: PaymentStageFirst[] = order.paymentStageFirst || [];
     const totalAdvance = logs.reduce((sum, log) => sum + (log.advancePayment || 0), 0);
 
-    // Pricing calculations
+  
     const subtotal = order.bookingItems.reduce((s, i) => s + (i.totalAmount || 0), 0);
     const totalDiscount = (order.negotiationLogs || []).reduce((s, l) => s + (l.discountAmount || 0), 0);
     const taxable = subtotal - totalDiscount;
@@ -186,16 +186,16 @@ export default function DetailDrawer({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-gray-900/60 to-black/70 backdrop-blur-md p-2 md:p-4">
             <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 w-full max-w-4xl h-full md:max-h-[85vh] flex flex-col shadow-2xl rounded-xl md:rounded-3xl border border-gray-200/60 dark:border-gray-700/50 overflow-hidden animate-in fade-in zoom-in duration-300">
 
-                {/* ── Stunning Header ───────────────────────────────────────── */}
+             
                 <div className="relative flex-shrink-0 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 dark:from-gray-800 dark:via-gray-750 dark:to-gray-800 text-white px-3 md:px-6 py-3 md:py-5">
-                    {/* Background Pattern */}
+                 
                     <div className="absolute inset-0 opacity-5">
                         <div className="absolute top-0 right-0 w-48 md:w-64 h-48 md:h-64 bg-blue-500 rounded-full blur-3xl" />
                         <div className="absolute bottom-0 left-0 w-36 md:w-48 h-36 md:h-48 bg-purple-500 rounded-full blur-3xl" />
                     </div>
 
                     <div className="relative flex items-start justify-between gap-3 md:gap-4">
-                        {/* Left Section */}
+                     
                         <div className="flex items-center gap-2 md:gap-4 min-w-0">
                             <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0 border border-white/20">
                                 <span className="text-xl md:text-2xl">🚗</span>
@@ -220,7 +220,7 @@ export default function DetailDrawer({
                             </div>
                         </div>
 
-                        {/* Right Section */}
+                     
                         <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
                             {order.handlerName && (
                                 <div className="hidden sm:flex items-center gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg md:rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
@@ -242,7 +242,6 @@ export default function DetailDrawer({
                         </div>
                     </div>
 
-                    {/* Mobile Handler Info */}
                     {order.handlerName && (
                         <div className="sm:hidden mt-2 flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20">
                             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center text-xs font-bold">
@@ -256,10 +255,10 @@ export default function DetailDrawer({
                     )}
                 </div>
 
-                {/* ── Scrollable Content ───────────────────────────────────── */}
+               
                 <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-3 md:space-y-5 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
 
-                    {/* Customer Information Card */}
+                 
                     <Section icon="👤" title="Customer Information" accent="from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
                             <InfoChip icon={<Hash size={14} />} label="Order ID" value={order.orderId} />
@@ -282,7 +281,7 @@ export default function DetailDrawer({
                         </div>
                     </Section>
 
-                    {/* Booking Summary */}
+             
                     <Section icon="📅" title="Vehicle Bookings" accent="from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
                         {/* Mobile Card View */}
                         <div className="block sm:hidden space-y-3">
@@ -324,7 +323,7 @@ export default function DetailDrawer({
                             ))}
                         </div>
 
-                        {/* Desktop Table View */}
+                 
                         <div className="hidden sm:block overflow-x-auto">
                             <table className="w-full">
                                 <thead>
@@ -450,7 +449,7 @@ export default function DetailDrawer({
                         </div>
                     </Section>
 
-                    {/* Pricing Breakdown */}
+              
                     <Section icon="💰" title="Pricing Breakdown" accent="from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
                         <div className="space-y-1">
                             <PricingRow label="Subtotal" value={fmt(subtotal)} icon={<IndianRupee size={16} />} />
@@ -463,17 +462,7 @@ export default function DetailDrawer({
                                 <PricingRow label="Advance Paid" value={`− ${fmt(totalAdvance)}`} icon={<IndianRupee size={16} />} />
                             )}
                         </div>
-                        {/* <div className="mt-3 md:mt-4 p-4 md:p-5 rounded-xl md:rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700/50">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-[10px] md:text-xs text-green-600 dark:text-green-400 font-semibold uppercase tracking-wider mb-0.5 md:mb-1">Final Amount</p>
-                                    <p className="text-xl md:text-2xl font-bold text-green-700 dark:text-green-300">{fmt(finalNet)}</p>
-                                </div>
-                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-green-500 flex items-center justify-center text-xl md:text-2xl shadow-lg">
-                                    💵
-                                </div>
-                            </div>
-                        </div> */}
+                       
                         <div className="mt-3 md:mt-4 p-4 md:p-5 rounded-xl md:rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700/50">
                             <div className="flex items-center justify-between">
                                 <div className="flex-1">

@@ -625,8 +625,8 @@ console.log("filteredModels",filteredModels)
     return new Intl.NumberFormat("en-IN").format(Number(raw));
   };
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-2">
-      <div className="relative w-full max-w-2xl max-h-[80vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-2">
+      <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
 
 
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">

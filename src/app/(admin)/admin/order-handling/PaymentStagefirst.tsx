@@ -189,7 +189,7 @@ export function PaymentStage1Section({
   const isCurrentStage = order.pipelineStatus === "paymentStage1";
   if (!isCurrentStage && !hasLogs) return null;
 
-  console.log("order", order)
+
 
   // Form state
   const [proofFile, setProofFile] = useState<File | null>(null);
@@ -271,7 +271,7 @@ export function PaymentStage1Section({
   return (
     <>
       <div className="bg-white dark:bg-gray-800/50 rounded-xl md:rounded-2xl border border-gray-200/60 dark:border-gray-700/50 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
-        {/* Header */}
+     
         <div className="flex items-center gap-2.5 px-3 md:px-5 py-2.5 md:py-3 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-b border-orange-100 dark:border-orange-900/30">
           <span className="text-base md:text-lg">💳</span>
           <h3 className="text-[10px] md:text-xs font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">
@@ -286,7 +286,7 @@ export function PaymentStage1Section({
 
         <div className="p-3 md:p-5 space-y-4 md:space-y-5">
 
-          {/* ── Existing Payment Logs ── */}
+   
           {logs.length > 0 && (
             <div className="space-y-2">
               <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
@@ -312,13 +312,13 @@ export function PaymentStage1Section({
                         </p>
                       </div>
                     </div>
-                    {/* Amount badge */}
+            
                     <span className="text-sm font-bold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 px-3 py-1 rounded-lg">
                       {fmt(log.advancePayment)}
                     </span>
                   </div>
 
-                  {/* Details grid */}
+           
                   <div className="grid grid-cols-2 gap-2 text-[10px] mt-2">
                     <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
                       <Calendar size={10} />
