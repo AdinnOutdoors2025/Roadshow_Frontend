@@ -56,13 +56,13 @@ const navItems: NavItem[] = [
   {
     name: "Vehicles",
     icon: <ListIcon />,
-    subItems: [{ name: "Onboarding", path: "/Vehicle_Onboarding", pro: false }],
+    subItems: [
+      { name: "Vehicle Onboarding", path: "/admin/Vehicles/Vehicle_Onboarding", pro: false },
+      { name: "Vehicle Inventory", path: "/admin/Vehicles/Vehicle_Inventory", pro: false }
+    ],
+
   },
-  // {
-  //   name: "Forms",
-  //   icon: <ListIcon />,
-  //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  // },
+
   {
     name: "Tables",
     icon: <TableIcon />,
