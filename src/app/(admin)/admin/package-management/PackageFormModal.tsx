@@ -1,17 +1,18 @@
-
-
+//CORRECTED CODE FOR FETCHING THE DETAILS USING THE VEHICLE TYPE ID
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { Package } from "./page";
 import { IoMdClose } from "react-icons/io";
-import API_BASE from '../../../../../baseurl';
+import API_BASE from "../../../../../baseurl";
 import { inputClass, selectClass } from "../../../../components/reusableFormField";
 import FormField from "../../../../components/reusableFormField";
 
-
-const DEFAULT_VEHICLE_TYPES = ["Customizable Vehicle", "Non-Customizable Vehicle"];
-const DEFAULT_VEHICLE_MODELS = ["LED Van", "LED Truck", "Mini Promotion Vehicle", "Campaign Bus"];
+interface VehicleType {
+  _id: string;
+  typeName: string;
+  isActive: boolean;
+}
 
 interface Props {
   editingPackage: Package | null;
@@ -19,9 +20,28 @@ interface Props {
   onClose: () => void;
 }
 
-const defaultForm: Package = {
+const VEHICLE_MODEL_OPTIONS = ["Non-Customizable Vehicle"];
+
+// (vehicleType is ID)
+interface PackageFormData {
+  vehicleType: string; // ID
+  vehicleModel: string;
+  perDayRentalCost: number;
+  dailyKmLimit: number;
+  additionalHourCharges: number;
+  endUserCustomizationPermission: boolean;
+  promoterAvailable: boolean;
+  promoterChargePerDay: number;
+  driverCharges: number;
+  rtoCharges: number;
+  perKmCharge: number;
+  isActive: boolean;
+  inactiveReason: string;
+}
+
+const defaultForm: PackageFormData = {
   vehicleType: "",
-  vehicleModel: "",
+  vehicleModel: "Non-Customizable Vehicle",
   perDayRentalCost: 0,
   dailyKmLimit: 0,
   additionalHourCharges: 0,
@@ -35,89 +55,163 @@ const defaultForm: Package = {
   inactiveReason: "",
 };
 
-
 function formatAmount(value: number | string): string {
   const num = typeof value === "string" ? value.replace(/,/g, "") : String(value);
   if (!num || isNaN(Number(num))) return "";
   return Number(num).toLocaleString("en-IN");
 }
 
-
+// Extract vehicle type ID from a Package object
+const getVehicleTypeId = (pkg: Package | null): string => {
+  if (!pkg || !pkg.vehicleType) return "";
+  if (typeof pkg.vehicleType === "object" && pkg.vehicleType._id) {
+    return pkg.vehicleType._id;
+  }
+  return String(pkg.vehicleType);
+};
 
 export default function PackageFormModal({ editingPackage, onSuccess, onClose }: Props) {
-  const [form, setForm] = useState<Package>(defaultForm);
+  const [form, setForm] = useState<PackageFormData>(defaultForm);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof Package, string>>>({});
-
-
-  const [vehicleTypes, setVehicleTypes] = useState<string[]>(DEFAULT_VEHICLE_TYPES);
-  const [vehicleModels, setVehicleModels] = useState<string[]>(DEFAULT_VEHICLE_MODELS);
-
-
-  const [newVehicleType, setNewVehicleType] = useState("");
-  const [newVehicleModel, setNewVehicleModel] = useState("");
-
-
+  const [errors, setErrors] = useState<Partial<Record<keyof PackageFormData, string>>>({});
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
+  const [loadingTypes, setLoadingTypes] = useState(false);
   const [existingPackageWarning, setExistingPackageWarning] = useState<string | null>(null);
   const [checkingExistence, setCheckingExistence] = useState(false);
+  const [fetchingPackage, setFetchingPackage] = useState(false);
 
-  // useEffect(() => {
-  //   fetchVehicleOptions();
-  // }, []);
+  // Fetch vehicle types from database
+  const fetchVehicleTypes = async () => {
+    try {
+      setLoadingTypes(true);
+      const res = await fetch(`${API_BASE}api/vehicle-types`);
+      if (!res.ok) throw new Error("Failed to fetch vehicle types");
+      const data = await res.json();
+      if (data.success && data.data) {
+        setVehicleTypes(data.data.filter((type: VehicleType) => type.isActive));
+      }
+    } catch (error) {
+      console.error("Error fetching vehicle types:", error);
+    } finally {
+      setLoadingTypes(false);
+    }
+  };
 
-  // const fetchVehicleOptions = async () => {
-  //   try {
-  //     const res = await fetch(`${API_BASE}packages/vehicle-options`);
-  //     if (!res.ok) return;
-  //     const data = await res.json();
-  //     const { types, models } = data.data;
-
-
-  //     const mergedTypes = Array.from(new Set([...DEFAULT_VEHICLE_TYPES, ...types]));
-  //     const mergedModels = Array.from(new Set([...DEFAULT_VEHICLE_MODELS, ...models]));
-  //     setVehicleTypes(mergedTypes);
-  //     setVehicleModels(mergedModels);
-  //   } catch {
-
-  //   }
-  // };
+  // Fetch existing package by vehicle type ID and model
+  const fetchExistingPackage = async (vehicleTypeId: string, vehicleModel: string) => {
+    if (!vehicleTypeId || !vehicleModel) return null;
+    try {
+      setFetchingPackage(true);
+      const res = await fetch(
+        `${API_BASE}packages/check-exists?vehicleType=${vehicleTypeId}&vehicleModel=${encodeURIComponent(vehicleModel)}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.data.exists && data.data.package) {
+          return data.data.package;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching package:", error);
+      return null;
+    } finally {
+      setFetchingPackage(false);
+    }
+  };
 
   useEffect(() => {
+    fetchVehicleTypes();
+  }, []);
+
+  // Initialize form when editingPackage changes
+  useEffect(() => {
     if (editingPackage) {
-      setForm(editingPackage);
+      const vehicleTypeId = getVehicleTypeId(editingPackage);
+      setForm({
+        vehicleType: vehicleTypeId,
+        vehicleModel: editingPackage.vehicleModel,
+        perDayRentalCost: editingPackage.perDayRentalCost,
+        dailyKmLimit: editingPackage.dailyKmLimit,
+        additionalHourCharges: editingPackage.additionalHourCharges,
+        endUserCustomizationPermission: editingPackage.endUserCustomizationPermission,
+        promoterAvailable: editingPackage.promoterAvailable,
+        promoterChargePerDay: editingPackage.promoterChargePerDay,
+        driverCharges: editingPackage.driverCharges,
+        rtoCharges: editingPackage.rtoCharges,
+        perKmCharge: editingPackage.perKmCharge,
+        isActive: editingPackage.isActive,
+        inactiveReason: editingPackage.inactiveReason || "",
+      });
       setExistingPackageWarning(null);
     } else {
       setForm(defaultForm);
       setExistingPackageWarning(null);
     }
     setErrors({});
-    setNewVehicleType("");
-    setNewVehicleModel("");
   }, [editingPackage]);
 
   const isEdit = !!editingPackage;
 
-
-  const checkExistingCombination = async (type: string, model: string) => {
-    const finalType = type === "__new__" ? newVehicleType.trim() : type;
-    const finalModel = model === "__new__" ? newVehicleModel.trim() : model;
-
-    if (!finalType || !finalModel || isEdit) {
+  const checkExistingCombination = async (typeId: string, model: string) => {
+    if (!typeId || !model) {
       setExistingPackageWarning(null);
       return;
     }
 
+    // If editing and same combination
+    if (isEdit) {
+      const currentTypeId = getVehicleTypeId(editingPackage);
+      if (currentTypeId === typeId && editingPackage.vehicleModel === model) {
+        setExistingPackageWarning(null);
+        return;
+      }
+    }
+
     try {
       setCheckingExistence(true);
-      const res = await fetch(`${API_BASE}packages/check-exists?vehicleType=${encodeURIComponent(finalType)}&vehicleModel=${encodeURIComponent(finalModel)}`);
+      const res = await fetch(
+        `${API_BASE}packages/check-exists?vehicleType=${typeId}&vehicleModel=${encodeURIComponent(model)}`
+      );
       if (res.ok) {
         const data = await res.json();
         if (data.data.exists) {
+          const existing = data.data.package;
+          const typeName = vehicleTypes.find((t) => t._id === typeId)?.typeName || typeId;
           setExistingPackageWarning(
-            `A package with vehicle type "${finalType}" and model "${finalModel}" already exists. Adding will update the existing record instead of creating a new one.`
+            `A package with vehicle type "${typeName}" and model "${model}" already exists. Editing will update the existing record.`
           );
+          // Populate form with existing package data
+          if (existing && !isEdit) {
+            setForm((prev) => ({
+              ...prev,
+              perDayRentalCost: existing.perDayRentalCost || 0,
+              dailyKmLimit: existing.dailyKmLimit || 0,
+              additionalHourCharges: existing.additionalHourCharges || 0,
+              endUserCustomizationPermission: existing.endUserCustomizationPermission ?? true,
+              promoterAvailable: existing.promoterAvailable ?? false,
+              promoterChargePerDay: existing.promoterChargePerDay || 0,
+              driverCharges: existing.driverCharges || 0,
+              rtoCharges: existing.rtoCharges || 0,
+              perKmCharge: existing.perKmCharge || 0,
+              isActive: existing.isActive ?? true,
+              inactiveReason: existing.inactiveReason || "",
+            }));
+          }
         } else {
           setExistingPackageWarning(null);
+          if (!isEdit) {
+            setForm((prev) => ({
+              ...prev,
+              perDayRentalCost: 0,
+              dailyKmLimit: 0,
+              additionalHourCharges: 0,
+              promoterChargePerDay: 0,
+              driverCharges: 0,
+              rtoCharges: 0,
+              perKmCharge: 0,
+            }));
+          }
         }
       }
     } catch {
@@ -127,32 +221,27 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
     }
   };
 
-  const handleChange = (field: keyof Package, value: any) => {
+  const handleVehicleTypeChange = (typeId: string) => {
+    setForm((prev) => ({ ...prev, vehicleType: typeId }));
+    setTimeout(() => {
+      checkExistingCombination(typeId, form.vehicleModel);
+    }, 100);
+  };
+
+  const handleChange = (field: keyof PackageFormData, value: any) => {
     setForm((prev) => {
       const updated = { ...prev, [field]: value };
-
-
-      if (field === "vehicleType" || field === "vehicleModel") {
-        const typeToCheck = field === "vehicleType" ? value : prev.vehicleType;
-        const modelToCheck = field === "vehicleModel" ? value : prev.vehicleModel;
-
-
+      if (field === "vehicleModel") {
         setTimeout(() => {
-          checkExistingCombination(
-            field === "vehicleType" ? value : typeToCheck,
-            field === "vehicleModel" ? value : modelToCheck
-          );
+          checkExistingCombination(prev.vehicleType, value);
         }, 100);
       }
-
       return updated;
     });
-
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-
-  const handleAmountChange = (field: keyof Package, raw: string) => {
+  const handleAmountChange = (field: keyof PackageFormData, raw: string) => {
     const cleaned = raw.replace(/,/g, "");
     if (cleaned === "" || /^\d*$/.test(cleaned)) {
       handleChange(field, cleaned === "" ? 0 : Number(cleaned));
@@ -160,19 +249,18 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
   };
 
   const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof Package, string>> = {};
-    const finalType = form.vehicleType === "__new__" ? newVehicleType.trim() : form.vehicleType;
-    const finalModel = form.vehicleModel === "__new__" ? newVehicleModel.trim() : form.vehicleModel;
+    const newErrors: Partial<Record<keyof PackageFormData, string>> = {};
     const finalReason = form.inactiveReason?.trim() || "";
 
     if (!form.isActive && !finalReason) {
       newErrors.inactiveReason = "Inactive reason is required";
     }
-    if (!finalType) newErrors.vehicleType = "Vehicle type is required";
-    if (!finalModel) newErrors.vehicleModel = "Vehicle model is required";
+    if (!form.vehicleType) newErrors.vehicleType = "Vehicle type is required";
+    if (!form.vehicleModel) newErrors.vehicleModel = "Vehicle model is required";
     if (!form.perDayRentalCost || form.perDayRentalCost <= 0) newErrors.perDayRentalCost = "Enter a valid cost";
     if (!form.dailyKmLimit || form.dailyKmLimit <= 0) newErrors.dailyKmLimit = "Enter a valid KM limit";
-    if (!form.additionalHourCharges || form.additionalHourCharges <= 0) newErrors.additionalHourCharges = "Enter valid charges";
+    if (!form.additionalHourCharges || form.additionalHourCharges <= 0)
+      newErrors.additionalHourCharges = "Enter valid charges";
     if (form.promoterAvailable && (!form.promoterChargePerDay || form.promoterChargePerDay <= 0)) {
       newErrors.promoterChargePerDay = "Enter promoter charge per day";
     }
@@ -185,12 +273,9 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
   const handleSubmit = async () => {
     if (!validate()) return;
 
-    const finalType = form.vehicleType === "__new__" ? newVehicleType.trim() : form.vehicleType;
-    const finalModel = form.vehicleModel === "__new__" ? newVehicleModel.trim() : form.vehicleModel;
-
     const payload = {
-      vehicleType: finalType,
-      vehicleModel: finalModel,
+      vehicleType: form.vehicleType,
+      vehicleModel: form.vehicleModel,
       perDayRentalCost: Number(form.perDayRentalCost),
       dailyKmLimit: Number(form.dailyKmLimit),
       additionalHourCharges: Number(form.additionalHourCharges),
@@ -201,14 +286,13 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
       rtoCharges: Number(form.rtoCharges),
       perKmCharge: Number(form.perKmCharge),
       isActive: form.isActive,
-      inactiveReason: form.isActive ? "" : (form.inactiveReason || ""),
+      inactiveReason: form.isActive ? "" : form.inactiveReason || "",
     };
 
     try {
       setLoading(true);
 
       if (isEdit) {
-
         const url = `${API_BASE}packages/${editingPackage._id}`;
         const res = await fetch(url, {
           method: "PUT",
@@ -220,16 +304,28 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
           throw new Error(errData?.message || "Failed to update package");
         }
       } else {
+        // Check existence again before saving
+        const checkRes = await fetch(
+          `${API_BASE}packages/check-exists?vehicleType=${form.vehicleType}&vehicleModel=${encodeURIComponent(form.vehicleModel)}`
+        );
+        const checkData = await checkRes.json();
 
-        const url = `${API_BASE}packages/add`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData?.message || "Failed to save package");
+        if (checkData.data.exists && checkData.data.package) {
+          const url = `${API_BASE}packages/${checkData.data.package._id}`;
+          const res = await fetch(url, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) throw new Error("Failed to update package");
+        } else {
+          const url = `${API_BASE}packages/add`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) throw new Error("Failed to save package");
         }
       }
 
@@ -241,18 +337,13 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
     }
   };
 
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-     
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="relative w-full max-w-2xl max-h-[70vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
-
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-            {isEdit ? "Edit Package" : "Add New Package"}
+            {isEdit ? "Edit Package" : existingPackageWarning ? "Update Existing Package" : "Add New Package"}
           </h2>
           <button
             onClick={onClose}
@@ -263,21 +354,29 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
         </div>
 
         <div className="px-6 py-5 space-y-5">
-
-
+          {fetchingPackage && (
+            <div className="flex items-center justify-center py-4">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+              <span className="ml-2 text-sm text-gray-500">Loading package details...</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Vehicle Type" error={errors.vehicleType} required>
               <select
                 value={form.vehicleType}
-                onChange={(e) => handleChange("vehicleType", e.target.value)}
+                onChange={(e) => handleVehicleTypeChange(e.target.value)}
                 className={selectClass(!!errors.vehicleType)}
+                disabled={loadingTypes || isEdit}
               >
                 <option value="">Select vehicle type</option>
-                {DEFAULT_VEHICLE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-
+                {vehicleTypes.map((type) => (
+                  <option key={type._id} value={type._id}>
+                    {type.typeName}
+                  </option>
+                ))}
               </select>
-
+              {loadingTypes && <p className="text-xs text-gray-400 mt-1">Loading vehicle types...</p>}
             </FormField>
 
             <FormField label="Vehicle Model" error={errors.vehicleModel} required>
@@ -285,16 +384,19 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                 value={form.vehicleModel}
                 onChange={(e) => handleChange("vehicleModel", e.target.value)}
                 className={selectClass(!!errors.vehicleModel)}
+                disabled={isEdit}
               >
                 <option value="">Select vehicle model</option>
-                {DEFAULT_VEHICLE_MODELS.map((m) => <option key={m} value={m}>{m}</option>)}
-
+                {VEHICLE_MODEL_OPTIONS.map((model) => (
+                  <option key={model} value={model}>
+                    {model}
+                  </option>
+                ))}
               </select>
-
             </FormField>
           </div>
 
-
+          {/* Rest of the form fields (same as before) */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Per Day Rental Cost (₹)" error={errors.perDayRentalCost} required>
               <input
@@ -316,8 +418,6 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
               />
             </FormField>
           </div>
-
-         
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Additional Hour Charges (₹)" error={errors.additionalHourCharges} required>
@@ -341,7 +441,6 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
               </select>
             </FormField>
           </div>
-
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Promoter Available">
@@ -390,7 +489,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
             </FormField>
           </div>
 
-           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Per KM Charge (₹)">
               <input
                 type="text"
@@ -407,19 +506,20 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
             <button
               type="button"
               onClick={() => handleChange("isActive", !form.isActive)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.isActive ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
-                }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                form.isActive ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
+              }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${form.isActive ? "translate-x-6" : "translate-x-1"
-                  }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${
+                  form.isActive ? "translate-x-6" : "translate-x-1"
+                }`}
               />
             </button>
             <span className={`text-sm font-medium ${form.isActive ? "text-green-600" : "text-red-500"}`}>
               {form.isActive ? "Active" : "Inactive"}
             </span>
           </div>
-
 
           {!form.isActive && (
             <FormField label="Reason for Inactive" required error={errors.inactiveReason}>
@@ -436,6 +536,11 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
           )}
         </div>
 
+        {existingPackageWarning && (
+          <div className="mx-6 mb-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
+            {existingPackageWarning}
+          </div>
+        )}
 
         <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-gray-100 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
           <button
@@ -447,7 +552,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
           </button>
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || fetchingPackage}
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition-colors"
           >
             {loading && (
