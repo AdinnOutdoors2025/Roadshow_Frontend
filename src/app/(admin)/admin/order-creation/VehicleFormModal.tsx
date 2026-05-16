@@ -12,7 +12,7 @@ import DatePicker from "@/components/form/date-picker";
 
 interface PackageOption {
   _id: string;
-  vehicleType: string;
+  vehicleType: string | { _id: string; typeName: string }; 
   vehicleModel: string;
   perDayRentalCost: number;
   driverCharges: number;
@@ -242,7 +242,9 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [campaignTypes, setCampaignTypes] = useState<{ _id: string, name: string }[]>([]);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
-  console.log("form",form)
+  console.log("packageslist", packageslist)
+
+  console.log("form", form)
 
   const [editablePackage, setEditablePackage] = useState<Record<string, string>>({});
   const [savingPkg, setSavingPkg] = useState(false);
@@ -250,7 +252,8 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [changedKeys, setChangedKeys] = useState<string[]>([]);
   const [locationData, setLocationData] = useState<Record<string, string[]>>({});
   const [cityOptions, setCityOptions] = useState<string[]>([]);
-  const [vehicleTypes, setVehicleTypes] = useState([]);
+  const [vehicleTypes, setVehicleTypes] = useState<any>([]);
+  console.log("vehicleTypes", vehicleTypes)
   console.log("locationData", locationData)
 
   const PROMOTER_GENDER_OPTIONS = ["Male", "Female", "Other"];
@@ -336,7 +339,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const filteredModels = packageslist.filter((p) => p.vehicleType);
 
 
-console.log("filteredModels",filteredModels)
+  console.log("filteredModels", filteredModels)
 
   const fetchVehicleTypes = async () => {
     try {
@@ -431,15 +434,23 @@ console.log("filteredModels",filteredModels)
     // }
   };
 
+
   const handleVehicleModelChange = (modelId: string) => {
-    const pkg = packageslist.find((p) => p._id === modelId) || null;
-    setSelectedPackage(pkg);
-    setForm((f) => ({
-      ...f,
-      packageId: modelId,
-      vehicleModel: pkg?.vehicleType || "",
-    }));
-  };
+  const pkg = packageslist.find((p) => p._id === modelId) || null;
+  setSelectedPackage(pkg);
+
+ 
+  const vehicleModelName =
+    typeof pkg?.vehicleType === "object" && pkg?.vehicleType !== null
+      ? (pkg.vehicleType as any).typeName ?? ""
+      : pkg?.vehicleType ?? "";
+
+  setForm((f) => ({
+    ...f,
+    packageId: modelId,
+    vehicleModel: vehicleModelName,  
+  }));
+};
 
 
 
@@ -662,14 +673,17 @@ console.log("filteredModels",filteredModels)
                     className={inputClass(!!errors.vehicleModel)}
                   >
                     <option value="">Select model</option>
-                    {/* {filteredModels.map((pkg) => (
-                      <option key={pkg._id} value={pkg._id}>{pkg.vehicleModel}</option>
-                    ))} */}
-                    // AFTER
+
                     {filteredModels.map((pkg) => {
-                      const typeName = vehicleTypes.find(t => t._id === pkg.vehicleType)?.typeName || pkg.vehicleModel;
+                      const label =
+                        typeof pkg.vehicleType === "object" && pkg.vehicleType !== null
+                          ? pkg.vehicleType.typeName         
+                          : vehicleTypes.find((t) => t._id === pkg.vehicleType)?.typeName ?? pkg.vehicleType;
+
                       return (
-                        <option key={pkg._id} value={pkg._id}>{typeName}</option>
+                        <option key={pkg._id} value={pkg._id}>
+                          {label || "Unknown"}
+                        </option>
                       );
                     })}
                   </select>
