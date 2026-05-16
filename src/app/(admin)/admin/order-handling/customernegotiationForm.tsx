@@ -15,13 +15,14 @@ interface NegotiationFormProps {
 }
 
 const HIDE_STAGES = ["todo", "inProgress", "newOrder"];
+const HIDE_ADD_DISCOUNT_STAGES = ["todo", "inProgress", "newOrder", "waitingForPO", "paymentStage1", "projectCodeCreation", "projectExecution", "onRoad", "campaignRunning", "vehicleUnavailable", "clientClosure", "invoiceGeneration", "paymentStage2", "closedWon", "closedLost"];
 
 const formatIndianNumber = (value: string | number) => {
-  if (!value) return "";
+    if (!value) return "";
 
-  const number = value.toString().replace(/,/g, "");
+    const number = value.toString().replace(/,/g, "");
 
-  return new Intl.NumberFormat("en-IN").format(Number(number));
+    return new Intl.NumberFormat("en-IN").format(Number(number));
 };
 
 export default function NegotiationForm({ order, onNegotiationSaved }: NegotiationFormProps) {
@@ -38,6 +39,8 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
     const previousLogs = order.negotiationLogs || [];
     const filteredLogs = previousLogs.filter((log: any) => (log.discountAmount || 0) > 0);
 
+    console.log("filteredLogs", filteredLogs)
+
     const previousTotalDiscount = previousLogs.reduce(
         (sum: number, log: any) => sum + (log.discountAmount || 0), 0
     );
@@ -51,6 +54,15 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
     const [discountValue, setDiscountValue] = useState("");
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [discountNotes, setDiscountNotes] = useState("");
+
+    const fmtDatetime = (s?: string) =>
+        s
+            ? new Date(s).toLocaleString("en-IN", {
+                day: "2-digit", month: "short", year: "numeric",
+                hour: "2-digit", minute: "2-digit",
+            })
+            : "—";
 
     const discVal = Number(discountValue) || 0;
     const discountAmt =
@@ -86,6 +98,7 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
             fd.append("pipelineStatus", "customerConfirmation");
             fd.append("discountType", discountType);
             fd.append("discountValue", String(discVal));
+            fd.append("discountNotes", discountNotes);
 
             await axios.patch(`${API_BASE}admin/pipeline/${order._id}`, fd, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -95,6 +108,7 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
             await onNegotiationSaved();
             setShowNewDiscount(false);
             setDiscountValue("");
+            setDiscountNotes("");
         } catch (e: any) {
             const msg = e?.response?.data?.message || "Something went wrong";
             setError(msg);
@@ -121,7 +135,7 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
 
             <div className="p-5 space-y-4">
                 {/* ── Summary Cards ── */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-4 gap-3">
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/40 dark:to-gray-800/60 rounded-xl p-3.5 border border-gray-100 dark:border-gray-700/50">
                         <div className="flex items-center gap-2 mb-2">
                             <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -151,6 +165,16 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
                         </div>
                         <p className="text-lg font-bold text-blue-700 dark:text-blue-300">{fmt(grandTotal)}</p>
                     </div>
+
+                    <div className="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 rounded-xl p-3.5 border-2 border-red-200 dark:border-red-700/50">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-7 h-7 rounded-lg bg-red-500 flex items-center justify-center">
+                                <Percent size={14} className="text-white" />
+                            </div>
+                            <p className="text-[12px] font-semibold text-red-600 dark:text-red-400 uppercase">Discount</p>
+                        </div>
+                        <p className="text-lg font-bold text-red-700 dark:text-red-300">- ₹{previousTotalDiscount.toLocaleString("en-IN")}</p>
+                    </div>
                 </div>
 
                 {/* ── Discount History ── */}
@@ -163,6 +187,7 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
                             </p>
                         </div>
 
+
                         <div className="space-y-2">
                             {filteredLogs.map((log: any, i: number) => (
                                 <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/60 dark:bg-gray-800/40 border border-amber-100 dark:border-amber-900/30 hover:shadow-sm transition-all group">
@@ -171,11 +196,11 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
                                             {i + 1}
                                         </div>
                                         <div>
-                                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                                Discount {i + 1}
+                                            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                                {log.movedBy || "Unknown"}
                                             </p>
                                             <p className="text-[12px] text-gray-400 mt-0.5">
-                                                Stage {i + 1}
+                                                {fmtDatetime(log.movedAt)}
                                             </p>
                                         </div>
                                     </div>
@@ -217,8 +242,8 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
                     </div>
                 )}
 
-              
-                {!showNewDiscount && (
+
+                {!showNewDiscount && !HIDE_ADD_DISCOUNT_STAGES.includes(order.pipelineStatus) && (
                     <button
                         type="button"
                         onClick={() => setShowNewDiscount(true)}
@@ -290,8 +315,8 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
                                     type="button"
                                     onClick={() => { setDiscountType("amount"); setDiscountValue(""); }}
                                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-all ${discountType === "amount"
-                                            ? "bg-blue-600 text-white shadow-lg"
-                                            : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                        ? "bg-blue-600 text-white shadow-lg"
+                                        : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
                                         }`}
                                 >
                                     <IndianRupee size={16} />
@@ -301,8 +326,8 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
                                     type="button"
                                     onClick={() => { setDiscountType("percent"); setDiscountValue(""); }}
                                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-all ${discountType === "percent"
-                                            ? "bg-blue-600 text-white shadow-lg"
-                                            : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                        ? "bg-blue-600 text-white shadow-lg"
+                                        : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
                                         }`}
                                 >
                                     <Percent size={16} />
@@ -310,7 +335,7 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
                                 </button>
                             </div>
 
-                          
+
                             <div className="relative">
                                 <input
                                     type="text"
@@ -332,8 +357,8 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
                                             : `Enter amount (max ₹${maxDiscountAmount.toLocaleString("en-IN")})`
                                     }
                                     className={`w-full px-4 py-3.5 rounded-xl border-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 text-sm font-medium focus:outline-none focus:ring-4 transition-all ${isInvalid
-                                            ? "border-red-300 dark:border-red-700 focus:ring-red-100 dark:focus:ring-red-900/30"
-                                            : "border-gray-200 dark:border-gray-700 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500"
+                                        ? "border-red-300 dark:border-red-700 focus:ring-red-100 dark:focus:ring-red-900/30"
+                                        : "border-gray-200 dark:border-gray-700 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500"
                                         }`}
                                 />
 
@@ -348,6 +373,20 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
                                         <IndianRupee size={18} className="text-gray-400" />
                                     </div>
                                 )}
+                            </div>
+                            <div>
+                                <textarea
+                                    value={discountNotes}
+                                    onChange={(e) => setDiscountNotes(e.target.value)}
+                                    placeholder="Add notes (optional)..."
+                                    rows={2}
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 
+    dark:border-gray-700 bg-white dark:bg-gray-800 text-sm
+    text-gray-900 dark:text-white placeholder-gray-400
+    focus:outline-none focus:ring-4 focus:ring-blue-100
+    dark:focus:ring-blue-900/30 focus:border-blue-500 resize-none"
+                                />
+
                             </div>
                         </div>
 
@@ -381,8 +420,8 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
                                 </div>
 
                                 <div className={`p-4 rounded-xl border-2 ${balanceAfterNew > 0
-                                        ? "bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700"
-                                        : "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700"
+                                    ? "bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700"
+                                    : "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700"
                                     }`}>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
@@ -392,15 +431,15 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
                                                 <AlertCircle size={18} className="text-red-600 dark:text-red-400" />
                                             )}
                                             <span className={`text-xs font-semibold ${balanceAfterNew > 0
-                                                    ? "text-green-700 dark:text-green-400"
-                                                    : "text-red-700 dark:text-red-400"
+                                                ? "text-green-700 dark:text-green-400"
+                                                : "text-red-700 dark:text-red-400"
                                                 }`}>
                                                 New Balance After Discount
                                             </span>
                                         </div>
                                         <span className={`text-lg font-bold ${balanceAfterNew > 0
-                                                ? "text-green-700 dark:text-green-400"
-                                                : "text-red-700 dark:text-red-400"
+                                            ? "text-green-700 dark:text-green-400"
+                                            : "text-red-700 dark:text-red-400"
                                             }`}>
                                             ₹{balanceAfterNew.toLocaleString("en-IN")}
                                         </span>
@@ -440,3 +479,5 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
         </div>
     );
 }
+
+

@@ -6,7 +6,7 @@ import axios from "axios";
 import API_BASE from "../../../../../baseurl";
 import { getToken } from "@/utils/auth";
 import { jwtDecode } from "jwt-decode";
-import toast from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface BookingItem {
@@ -74,7 +74,7 @@ interface Order {
     negotiationLogs?: any[];
     createdAt: string;
     updatedAt?: string;
-    paymentStageFirst:string;
+    paymentStageFirst: string;
 }
 
 // ─── Stage config ─────────────────────────────────────────────────────────────
@@ -104,67 +104,35 @@ const ROW2 = STAGES.slice(8, 15);
 const fmt = (n?: number | null) =>
     n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
 
-// const fmtDate = (d?: string) =>
-//   d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
 
-const fmtDate = (d?: string) =>
-    d
-        ? new Date(d)
-            .toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
-            .replace(/ /g, "-")
+const fmtDatetime = (s?: string) =>
+    s
+        ? new Date(s).toLocaleString("en-IN", {
+            day: "2-digit", month: "short", year: "numeric",
+            hour: "2-digit", minute: "2-digit",
+        })
         : "—";
-
-const fmtDatetime = (d?: string) =>
-    d
-        ? new Date(d)
-            .toLocaleString("en-IN", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true,
-            })
-            .replace(/ /g, "-")
-        : "—";
-
-
-const fmtDateTime = (d?: string) => {
-    if (!d) return "—";
-    const date = new Date(d);
-    const datePart = date
-        .toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
-        .replace(/ /g, "-");
-    const timePart = date.toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-    });
-    return `${datePart} · ${timePart}`;
-};
-
 
 
 
 export default function PipelineBoard() {
 
     const initialForm = {
-  
+
         handlerName: "",
         custType: null as 0 | 1 | null,
 
-       
+
         discountType: "amount" as "amount" | "percent",
         discountValue: "",
 
-       
+
         poFile: null as File | null,
         poDate: "",
         poNotes: "",
 
-        
+
         advPayment: "",
         paymentProofFile: null as File | null,
         paymentDate: "",
@@ -174,7 +142,7 @@ export default function PipelineBoard() {
     const [grouped, setGrouped] = useState<Record<string, Order[]>>({});
     const [loading, setLoading] = useState(true);
 
-  
+
     const dragOrder = useRef<Order | null>(null);
     const dragFrom = useRef<string>("");
 
@@ -197,12 +165,12 @@ export default function PipelineBoard() {
         value: (typeof initialForm)[K]
     ) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  
+
     const resetForm = () => setForm(initialForm);
 
 
 
-  
+
     const fetchPipeline = async () => {
         setLoading(true);
 
@@ -257,12 +225,236 @@ export default function PipelineBoard() {
     };
 
 
-const onDrop = (toStage: string) => {
+
+    // const onDrop = (toStage: string) => {
+    //     const order = dragOrder.current;
+    //     if (!order || dragFrom.current === toStage) return;
+
+    //     const fromStage = dragFrom.current;
+
+
+    //     const stageIndex = STAGES.map(s => s.key);
+    //     const inProgressIdx = stageIndex.indexOf("inProgress");
+    //     const fromIdx = stageIndex.indexOf(fromStage);
+    //     const toIdx = stageIndex.indexOf(toStage);
+
+    //     // If moving forward past inProgress, but order hasn't been through inProgress
+    //     const hasCompletedInProgress = order.pipelineLogs?.some(
+    //         log => log.toStage === "inProgress"
+    //     );
+
+    //     if (
+    //         toStage !== "inProgress" &&
+    //         toStage !== "closedLost" &&   // closedLost always allow
+    //         fromStage === "todo" &&
+    //         !hasCompletedInProgress
+    //     ) {
+    //         toast.error("Please move to In Progress first before proceeding!");
+    //         return;
+    //     }
+
+    //    
+    //     // "complete" = inProgress modal submit ஆச்சா (handlerName set ஆச்சா)
+    //     if (
+    //         fromStage !== "todo" &&
+    //         order.pipelineLogs?.some(log => log.toStage === "inProgress") &&
+    //         !order.handlerName &&
+    //         toStage !== "closedLost"
+    //     ) {
+    //         toast.error("In Progress stage is not complete yet!");
+    //         return;
+    //     }
+
+    //     // existing logic continues...
+    //     if (dragFrom.current === "todo" && toStage === "inProgress") {
+    //         if (currentUserIsAdmin === 0) {
+    //             commitMove(order, toStage, {});
+    //         } else {
+    //             setConfirmMove({ order, toStage });
+    //         }
+    //         return;
+    //     }
+
+    //     if (toStage === "projectCodeCreation") {
+    //         setProjectCodeConfirm(order);
+    //         return;
+    //     }
+
+    //     if (toStage === "inProgress") {
+    //         resetForm();
+    //         setModalError("");
+    //         setDropTarget({ order, toStage });
+    //         return;
+    //     }
+
+    //     commitMove(order, toStage, {});
+    // };
+
+    // const onDrop = (toStage: string) => {
+    //     const order = dragOrder.current;
+    //     if (!order || dragFrom.current === toStage) return;
+
+    //     const fromStage = dragFrom.current;
+
+    //     // ── Existing: must go through inProgress first ──────────────
+    //     const hasCompletedInProgress = order.pipelineLogs?.some(
+    //         log => log.toStage === "inProgress"
+    //     );
+    //     if (
+    //         toStage !== "inProgress" &&
+    //         toStage !== "closedLost" &&
+    //         fromStage === "todo" &&
+    //         !hasCompletedInProgress
+    //     ) {
+    //         toast.error("Please move to In Progress first before proceeding!");
+    //         return;
+    //     }
+
+    //     // ── Existing: inProgress not yet complete ───────────────────
+    //     if (
+    //         fromStage !== "todo" &&
+    //         order.pipelineLogs?.some(log => log.toStage === "inProgress") &&
+    //         !order.handlerName &&
+    //         toStage !== "closedLost"
+    //     ) {
+    //         toast.error("In Progress stage is not complete yet!");
+    //         return;
+    //     }
+
+    //     // ── NEW: WaitingForPO routing ────────────────────────────────
+    //     if (fromStage === "waitingForPO" && toStage !== "closedLost") {
+    //         const hasPoDocument = (order.poDocumentLogs?.length ?? 0) > 0;
+
+    //         if (!hasPoDocument) {
+    //             toast.error("Please upload a PO document first before moving to the next stage!");
+    //             return;
+    //         }
+
+    //         const isExisting = order.customerType === 0;
+    //         const isNew = order.customerType === 1;
+
+    //         // Existing customer: only projectCodeCreation allowed, block paymentStage1
+    //         if (isExisting && toStage === "paymentStage1") {
+    //             toast.error("Existing customers must move to Project Code Creation, not Payment Stage 1.");
+    //             return;
+    //         }
+
+    //         // New customer: paymentStage1 is the direct path — allow immediately
+    //         // New customer: projectCodeCreation needs confirmation modal
+    //         if (isNew && toStage === "projectCodeCreation") {
+    //             setProjectCodeConfirm(order);
+    //             return;
+    //         }
+
+    //         // Existing customer: projectCodeCreation → allow (direct commitMove below)
+    //         // New customer: paymentStage1 → allow (direct commitMove below)
+    //     }
+
+    //     // ── Existing handlers ────────────────────────────────────────
+    //     if (dragFrom.current === "todo" && toStage === "inProgress") {
+    //         if (currentUserIsAdmin === 0) {
+    //             commitMove(order, toStage, {});
+    //         } else {
+    //             setConfirmMove({ order, toStage });
+    //         }
+    //         return;
+    //     }
+
+    //     if (toStage === "projectCodeCreation") {
+    //         setProjectCodeConfirm(order);
+    //         return;
+    //     }
+
+    //     if (toStage === "inProgress") {
+    //         resetForm();
+    //         setModalError("");
+    //         setDropTarget({ order, toStage });
+    //         return;
+    //     }
+
+    //     commitMove(order, toStage, {});
+    // };
+
+    const onDrop = (toStage: string) => {
     const order = dragOrder.current;
     if (!order || dragFrom.current === toStage) return;
 
+    const fromStage = dragFrom.current;
 
-    if (dragFrom.current === "todo" && toStage === "inProgress") {
+    // ── Block if not gone through inProgress ─────────────────────
+    const hasCompletedInProgress = order.pipelineLogs?.some(
+        log => log.toStage === "inProgress"
+    );
+    if (
+        toStage !== "inProgress" &&
+        toStage !== "closedLost" &&
+        fromStage === "todo" &&
+        !hasCompletedInProgress
+    ) {
+        toast.error("Please move to In Progress first before proceeding!");
+        return;
+    }
+
+    // ── Block if inProgress not complete ─────────────────────────
+    if (
+        fromStage !== "todo" &&
+        order.pipelineLogs?.some(log => log.toStage === "inProgress") &&
+        !order.handlerName &&
+        toStage !== "closedLost"
+    ) {
+        toast.error("In Progress stage is not complete yet!");
+        return;
+    }
+
+   
+    const requiresPoCheck =
+        (fromStage === "inProgress" || fromStage === "customerConfirmation") &&
+        (toStage === "paymentStage1" || toStage === "projectCodeCreation");
+
+    if (requiresPoCheck) {
+        const hasPoDocument = (order.poDocumentLogs?.length ?? 0) > 0;
+        if (!hasPoDocument) {
+            toast.error(
+                "Please upload PO document in 'Waiting for PO' stage before moving to next stage!"
+            );
+            return;
+        }
+    }
+
+    // ── waitingForPO routing ──────────────────────────────────────
+    if (fromStage === "waitingForPO" && toStage !== "closedLost") {
+        const hasPoDocument = (order.poDocumentLogs?.length ?? 0) > 0;
+
+        if (!hasPoDocument) {
+            toast.error("Please upload a PO document first before moving!");
+            return;
+        }
+
+        const isExisting = order.customerType === 0;
+        const isNew = order.customerType === 1;
+
+        if (isExisting && toStage === "paymentStage1") {
+            toast.error("Existing customers must move to Project Code Creation.");
+            return;
+        }
+
+        if (isNew && toStage === "projectCodeCreation") {
+            setProjectCodeConfirm(order);
+            return;
+        }
+
+        commitMove(order, toStage, {});
+        return;
+    }
+
+    // ── paymentStage1 → projectCodeCreation (new customer) ───────
+    if (fromStage === "paymentStage1" && toStage === "projectCodeCreation") {
+        setProjectCodeConfirm(order);
+        return;
+    }
+
+    // ── todo → inProgress ─────────────────────────────────────────
+    if (fromStage === "todo" && toStage === "inProgress") {
         if (currentUserIsAdmin === 0) {
             commitMove(order, toStage, {});
         } else {
@@ -271,12 +463,13 @@ const onDrop = (toStage: string) => {
         return;
     }
 
+    // ── Any other stage → projectCodeCreation ────────────────────
     if (toStage === "projectCodeCreation") {
         setProjectCodeConfirm(order);
         return;
     }
 
-
+    // ── inProgress modal ──────────────────────────────────────────
     if (toStage === "inProgress") {
         resetForm();
         setModalError("");
@@ -284,9 +477,9 @@ const onDrop = (toStage: string) => {
         return;
     }
 
-  
     commitMove(order, toStage, {});
 };
+
 
     const commitMove = async (
         order: Order,
@@ -319,14 +512,14 @@ const onDrop = (toStage: string) => {
             if (extra.poDate) fd.append("poDate", extra.poDate);
             if (extra.poNotes) fd.append("poNotes", extra.poNotes);
 
-        
+
             if (extra.paymentProofFile) fd.append("paymentProofDocument", extra.paymentProofFile);
             if (extra.advancePayment) fd.append("advancePayment", String(extra.advancePayment));
             if (extra.paymentDate) fd.append("paymentDate", extra.paymentDate);
             if (extra.paymentVerification) fd.append("paymentVerification", extra.paymentVerification);
             if (extra.paymentNotes) fd.append("paymentNotes", extra.paymentNotes);
 
-         
+
             if (extra.discountType) fd.append("discountType", extra.discountType);
             if (extra.discountValue != null) fd.append("discountValue", String(extra.discountValue));
 
@@ -335,7 +528,7 @@ const onDrop = (toStage: string) => {
             });
 
             setDropTarget(null);
-            resetForm();       
+            resetForm();
             toast.success("Order moved successfully!");
             await fetchPipeline();
         } catch (e: any) {
@@ -347,13 +540,13 @@ const onDrop = (toStage: string) => {
         }
     };
 
-   
+
     const handleModalSubmit = () => {
         if (!dropTarget) return;
         const { order, toStage } = dropTarget;
         setModalError("");
 
-        
+
         if (toStage === "inProgress") {
             if (currentUserIsAdmin === 1 && !form.handlerName.trim())
                 return setModalError("Handler name is required");
@@ -369,9 +562,9 @@ const onDrop = (toStage: string) => {
             });
         }
 
-    
 
-       
+
+
         if (toStage === "projectCodeCreation") {
             commitMove(order, toStage, {});
         }
@@ -379,7 +572,7 @@ const onDrop = (toStage: string) => {
 
 
 
-  
+
     if (loading)
         return (
             <div className="flex items-center justify-center h-64">
@@ -388,10 +581,11 @@ const onDrop = (toStage: string) => {
         );
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col  h-full ">
+             <Toaster position="top-right" />
 
-            <div className="flex flex-col gap-4 px-4 pt-4">
-             
+            {/* <div className="flex flex-col gap-4 px-4 pt-4">
+
                 <div className="flex gap-3" style={{ minWidth: "max-content" }}>
                     {ROW1.map((stage) => (
                         <StageColumn
@@ -405,10 +599,10 @@ const onDrop = (toStage: string) => {
                     ))}
                 </div>
 
-           
+
                 <div className="border-t-2 border-dashed border-gray-200 dark:border-gray-700 mx-2" />
 
-              
+
                 <div className="flex gap-3" style={{ minWidth: "max-content" }}>
                     {ROW2.map((stage) => (
                         <StageColumn
@@ -421,7 +615,44 @@ const onDrop = (toStage: string) => {
                         />
                     ))}
                 </div>
+            </div> */}
+
+            <div className="flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4 pb-2">
+            <div className="flex flex-col gap-4" style={{ minWidth: "max-content" }}>
+
+                {/* Row 1 */}
+                <div className="flex gap-3">
+                    {ROW1.map((stage) => (
+                        <StageColumn
+                            key={stage.key}
+                            stage={stage}
+                            orders={grouped[stage.key] || []}
+                            onDrop={onDrop}
+                            onDragStart={onDragStart}
+                            onCardClick={setDrawerOrder}
+                        />
+                    ))}
+                </div>
+
+                {/* Divider */}
+                <div className="border-t-2 border-dashed border-gray-200 dark:border-gray-700 mx-2" />
+
+                {/* Row 2 */}
+                <div className="flex gap-3">
+                    {ROW2.map((stage) => (
+                        <StageColumn
+                            key={stage.key}
+                            stage={stage}
+                            orders={grouped[stage.key] || []}
+                            onDrop={onDrop}
+                            onDragStart={onDragStart}
+                            onCardClick={setDrawerOrder}
+                        />
+                    ))}
+                </div>
+
             </div>
+        </div>
 
 
             {drawerOrder && (
@@ -434,7 +665,7 @@ const onDrop = (toStage: string) => {
                             headers: { Authorization: `Bearer ${token}` },
                         });
                         setGrouped(data.data.grouped);
-                      
+
                         const updatedOrder = Object.values(data.data.grouped)
                             .flat()
                             .find((o: any) => o._id === drawerOrder._id) as Order | undefined;
@@ -443,7 +674,7 @@ const onDrop = (toStage: string) => {
                 />
             )}
 
-          
+
             {confirmMove && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6">
@@ -451,8 +682,8 @@ const onDrop = (toStage: string) => {
                         {/* Icon */}
                         <div className="flex justify-center mb-4">
                             <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-2xl">
-                    🚀
-                </div>
+                                🚀
+                            </div>
                         </div>
 
                         {/* Title */}
@@ -482,11 +713,11 @@ const onDrop = (toStage: string) => {
                                 Cancel
                             </button>
                             <button
-                           
+
                                 onClick={() => {
                                     const { order, toStage } = confirmMove;
                                     setConfirmMove(null);
-                                    resetForm();         
+                                    resetForm();
                                     setModalError("");
                                     setDropTarget({ order, toStage });
                                 }}
@@ -544,7 +775,7 @@ const onDrop = (toStage: string) => {
                 </div>
             )}
 
-         
+
             {dropTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6">
@@ -567,7 +798,7 @@ const onDrop = (toStage: string) => {
                             </button>
                         </div>
 
-                     
+
                         {dropTarget.toStage === "inProgress" && (
                             <div className="space-y-4">
                                 {currentUserIsAdmin === 1 && (
@@ -633,7 +864,7 @@ const onDrop = (toStage: string) => {
 
 
 
-                      
+
                         {modalError && (
                             <p className="mt-3 text-xs text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
                                 {modalError}
@@ -678,7 +909,7 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
 }) {
     const stage = STAGE_MAP[stageKey];
 
-     const logs: any = order.paymentStageFirst || [];
+    const logs: any = order.paymentStageFirst || [];
     const totalAdvance = logs.reduce((sum, log) => sum + (log.advancePayment || 0), 0);
 
     // Pricing calculations
@@ -691,6 +922,14 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
 
     // const displayAmt = order.grandNegotiationTotal ?? order.grandTotal;
     const displayAmt = balanceAmount;
+
+
+   
+    const isInProgressComplete = order.pipelineLogs?.some(
+        log => log.toStage === "inProgress"
+    ) && !!order.handlerName;
+
+
 
     const custBadge =
         order.customerType === 1
@@ -712,11 +951,25 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
                 transition duration-150 ease-out select-none
             "
         >
-           
+
             <div className="flex items-center justify-between mb-2">
                 <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500">
                     {order.orderId}
                 </p>
+
+
+                {/* {!isInProgressComplete && order.pipelineStatus === "todo" && (
+                    <span className="text-[9px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full">
+                        ⚠️ Start In Progress first
+                    </span>
+                )}
+
+                {order.pipelineStatus === "waitingForPO" &&
+                    (order.poDocumentLogs?.length ?? 0) === 0 && (
+                        <span className="text-[9px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full">
+                            📎 Upload PO to proceed
+                        </span>
+                    )} */}
 
                 <span
                     className="text-[10px] font-medium px-2 py-0.5 rounded-full"
@@ -726,17 +979,17 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
                 </span>
             </div>
 
-           
+
             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight mb-2">
                 {order.name}
             </p>
 
-           
+
             <p className={`text-lg font-bold mb-3 ${stage.color}`}>
                 {fmt(displayAmt)}
             </p>
 
-           
+
             <div className="flex items-center justify-between">
                 {order.handlerName ? (
                     <span className="
@@ -758,13 +1011,55 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
                     flex items-center gap-1
                 ">
                     <Clock size={12} />
-                    {fmtDate(order.updatedAt)}
+                    {fmtDatetime(order.updatedAt)}
                 </span>
             </div>
         </div>
     );
 }
 
+
+// function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
+//     stage: { key: string; label: string; color: string; bg: string; dot: string };
+//     orders: Order[];
+//     onDrop: (stageKey: string) => void;
+//     onDragStart: (order: Order, stageKey: string) => void;
+//     onCardClick: (order: Order) => void;
+// }) {
+//     return (
+//         <div
+//             className="flex flex-col w-56 flex-shrink-0"
+//             onDragOver={(e) => e.preventDefault()}
+//             onDrop={() => onDrop(stage.key)}
+//         >
+
+//             <div className={`flex items-center justify-between px-3 py-2 rounded-xl mb-2 ${stage.bg}`}>
+//                 <div className="flex items-center gap-2 min-w-0">
+//                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${stage.dot}`} />
+//                     <span className={`text-xs font-semibold truncate ${stage.color}`}>
+//                         {stage.label}
+//                     </span>
+//                 </div>
+//                 <span className={`ml-1 flex-shrink-0 text-xs font-bold px-1.5 py-0.5 rounded-full ${stage.bg} ${stage.color} border border-current border-opacity-20`}>
+//                     {orders.length}
+//                 </span>
+//             </div>
+
+
+//             <div className="flex flex-col gap-2 min-h-[60px]">
+//                 {orders.map((order) => (
+//                     <OrderCard
+//                         key={order._id}
+//                         order={order}
+//                         stageKey={stage.key}
+//                         onDragStart={() => onDragStart(order, stage.key)}
+//                         onClick={() => onCardClick(order)}
+//                     />
+//                 ))}
+//             </div>
+//         </div>
+//     );
+// }
 
 function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
     stage: { key: string; label: string; color: string; bg: string; dot: string };
@@ -776,11 +1071,12 @@ function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
     return (
         <div
             className="flex flex-col w-56 flex-shrink-0"
+            style={{ height: "calc(45vh - 60px)" }}
             onDragOver={(e) => e.preventDefault()}
             onDrop={() => onDrop(stage.key)}
         >
-         
-            <div className={`flex items-center justify-between px-3 py-2 rounded-xl mb-2 ${stage.bg}`}>
+            {/* Stage Header — fixed, scroll ஆகாது */}
+            <div className={`flex items-center justify-between px-3 py-2 rounded-xl mb-2 flex-shrink-0 ${stage.bg}`}>
                 <div className="flex items-center gap-2 min-w-0">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${stage.dot}`} />
                     <span className={`text-xs font-semibold truncate ${stage.color}`}>
@@ -792,8 +1088,10 @@ function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
                 </span>
             </div>
 
-           
-            <div className="flex flex-col gap-2 min-h-[60px]">
+            {/* Cards — vertically scrollable */}
+            <div className="flex flex-col gap-2 overflow-y-auto flex-1 pr-1
+                scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600
+                scrollbar-track-transparent">
                 {orders.map((order) => (
                     <OrderCard
                         key={order._id}
@@ -803,6 +1101,12 @@ function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
                         onClick={() => onCardClick(order)}
                     />
                 ))}
+              
+                {orders.length === 0 && (
+                    <div className="flex-1 min-h-[80px] rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center">
+                        <p className="text-xs text-gray-400 dark:text-gray-600">Drop here</p>
+                    </div>
+                )}
             </div>
         </div>
     );
