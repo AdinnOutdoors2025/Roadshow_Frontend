@@ -376,109 +376,109 @@ export default function PipelineBoard() {
     // };
 
     const onDrop = (toStage: string) => {
-    const order = dragOrder.current;
-    if (!order || dragFrom.current === toStage) return;
+        const order = dragOrder.current;
+        if (!order || dragFrom.current === toStage) return;
 
-    const fromStage = dragFrom.current;
+        const fromStage = dragFrom.current;
 
-    // ── Block if not gone through inProgress ─────────────────────
-    const hasCompletedInProgress = order.pipelineLogs?.some(
-        log => log.toStage === "inProgress"
-    );
-    if (
-        toStage !== "inProgress" &&
-        toStage !== "closedLost" &&
-        fromStage === "todo" &&
-        !hasCompletedInProgress
-    ) {
-        toast.error("Please move to In Progress first before proceeding!");
-        return;
-    }
-
-    // ── Block if inProgress not complete ─────────────────────────
-    if (
-        fromStage !== "todo" &&
-        order.pipelineLogs?.some(log => log.toStage === "inProgress") &&
-        !order.handlerName &&
-        toStage !== "closedLost"
-    ) {
-        toast.error("In Progress stage is not complete yet!");
-        return;
-    }
-
-   
-    const requiresPoCheck =
-        (fromStage === "inProgress" || fromStage === "customerConfirmation") &&
-        (toStage === "paymentStage1" || toStage === "projectCodeCreation");
-
-    if (requiresPoCheck) {
-        const hasPoDocument = (order.poDocumentLogs?.length ?? 0) > 0;
-        if (!hasPoDocument) {
-            toast.error(
-                "Please upload PO document in 'Waiting for PO' stage before moving to next stage!"
-            );
-            return;
-        }
-    }
-
-    // ── waitingForPO routing ──────────────────────────────────────
-    if (fromStage === "waitingForPO" && toStage !== "closedLost") {
-        const hasPoDocument = (order.poDocumentLogs?.length ?? 0) > 0;
-
-        if (!hasPoDocument) {
-            toast.error("Please upload a PO document first before moving!");
+        // ── Block if not gone through inProgress ─────────────────────
+        const hasCompletedInProgress = order.pipelineLogs?.some(
+            log => log.toStage === "inProgress"
+        );
+        if (
+            toStage !== "inProgress" &&
+            toStage !== "closedLost" &&
+            fromStage === "todo" &&
+            !hasCompletedInProgress
+        ) {
+            toast.error("Please move to In Progress first before proceeding!");
             return;
         }
 
-        const isExisting = order.customerType === 0;
-        const isNew = order.customerType === 1;
-
-        if (isExisting && toStage === "paymentStage1") {
-            toast.error("Existing customers must move to Project Code Creation.");
+        // ── Block if inProgress not complete ─────────────────────────
+        if (
+            fromStage !== "todo" &&
+            order.pipelineLogs?.some(log => log.toStage === "inProgress") &&
+            !order.handlerName &&
+            toStage !== "closedLost"
+        ) {
+            toast.error("In Progress stage is not complete yet!");
             return;
         }
 
-        if (isNew && toStage === "projectCodeCreation") {
+
+        const requiresPoCheck =
+            (fromStage === "inProgress" || fromStage === "customerConfirmation") &&
+            (toStage === "paymentStage1" || toStage === "projectCodeCreation");
+
+        if (requiresPoCheck) {
+            const hasPoDocument = (order.poDocumentLogs?.length ?? 0) > 0;
+            if (!hasPoDocument) {
+                toast.error(
+                    "Please upload PO document in 'Waiting for PO' stage before moving to next stage!"
+                );
+                return;
+            }
+        }
+
+        // ── waitingForPO routing ──────────────────────────────────────
+        if (fromStage === "waitingForPO" && toStage !== "closedLost") {
+            const hasPoDocument = (order.poDocumentLogs?.length ?? 0) > 0;
+
+            if (!hasPoDocument) {
+                toast.error("Please upload a PO document first before moving!");
+                return;
+            }
+
+            const isExisting = order.customerType === 0;
+            const isNew = order.customerType === 1;
+
+            if (isExisting && toStage === "paymentStage1") {
+                toast.error("Existing customers must move to Project Code Creation.");
+                return;
+            }
+
+            if (isNew && toStage === "projectCodeCreation") {
+                setProjectCodeConfirm(order);
+                return;
+            }
+
+            commitMove(order, toStage, {});
+            return;
+        }
+
+        // ── paymentStage1 → projectCodeCreation (new customer) ───────
+        if (fromStage === "paymentStage1" && toStage === "projectCodeCreation") {
             setProjectCodeConfirm(order);
             return;
         }
 
-        commitMove(order, toStage, {});
-        return;
-    }
-
-    // ── paymentStage1 → projectCodeCreation (new customer) ───────
-    if (fromStage === "paymentStage1" && toStage === "projectCodeCreation") {
-        setProjectCodeConfirm(order);
-        return;
-    }
-
-    // ── todo → inProgress ─────────────────────────────────────────
-    if (fromStage === "todo" && toStage === "inProgress") {
-        if (currentUserIsAdmin === 0) {
-            commitMove(order, toStage, {});
-        } else {
-            setConfirmMove({ order, toStage });
+        // ── todo → inProgress ─────────────────────────────────────────
+        if (fromStage === "todo" && toStage === "inProgress") {
+            if (currentUserIsAdmin === 0) {
+                commitMove(order, toStage, {});
+            } else {
+                setConfirmMove({ order, toStage });
+            }
+            return;
         }
-        return;
-    }
 
-    // ── Any other stage → projectCodeCreation ────────────────────
-    if (toStage === "projectCodeCreation") {
-        setProjectCodeConfirm(order);
-        return;
-    }
+        // ── Any other stage → projectCodeCreation ────────────────────
+        if (toStage === "projectCodeCreation") {
+            setProjectCodeConfirm(order);
+            return;
+        }
 
-    // ── inProgress modal ──────────────────────────────────────────
-    if (toStage === "inProgress") {
-        resetForm();
-        setModalError("");
-        setDropTarget({ order, toStage });
-        return;
-    }
+        // ── inProgress modal ──────────────────────────────────────────
+        if (toStage === "inProgress") {
+            resetForm();
+            setModalError("");
+            setDropTarget({ order, toStage });
+            return;
+        }
 
-    commitMove(order, toStage, {});
-};
+        commitMove(order, toStage, {});
+    };
 
 
     const commitMove = async (
@@ -582,7 +582,7 @@ export default function PipelineBoard() {
 
     return (
         <div className="flex flex-col  h-full ">
-             <Toaster position="top-right" />
+            <Toaster position="top-right" />
 
             {/* <div className="flex flex-col gap-4 px-4 pt-4">
 
@@ -618,44 +618,44 @@ export default function PipelineBoard() {
             </div> */}
 
             <div className="flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4 pb-2">
-            <div className="flex flex-col gap-4" style={{ minWidth: "max-content" }}>
+                <div className="flex flex-col gap-4" style={{ minWidth: "max-content" }}>
 
-                {/* Row 1 */}
-                <div className="flex gap-3">
-                    {ROW1.map((stage) => (
-                        <StageColumn
-                            key={stage.key}
-                            stage={stage}
-                            orders={grouped[stage.key] || []}
-                            onDrop={onDrop}
-                            onDragStart={onDragStart}
-                            onCardClick={setDrawerOrder}
-                        />
-                    ))}
+                    {/* Row 1 */}
+                    <div className="flex gap-3">
+                        {ROW1.map((stage) => (
+                            <StageColumn
+                                key={stage.key}
+                                stage={stage}
+                                orders={grouped[stage.key] || []}
+                                onDrop={onDrop}
+                                onDragStart={onDragStart}
+                                onCardClick={setDrawerOrder}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t-2 border-dashed border-gray-200 dark:border-gray-700 mx-2" />
+
+                    {/* Row 2 */}
+                    <div className="flex gap-3">
+                        {ROW2.map((stage) => (
+                            <StageColumn
+                                key={stage.key}
+                                stage={stage}
+                                orders={grouped[stage.key] || []}
+                                onDrop={onDrop}
+                                onDragStart={onDragStart}
+                                onCardClick={setDrawerOrder}
+                            />
+                        ))}
+                    </div>
+
                 </div>
-
-                {/* Divider */}
-                <div className="border-t-2 border-dashed border-gray-200 dark:border-gray-700 mx-2" />
-
-                {/* Row 2 */}
-                <div className="flex gap-3">
-                    {ROW2.map((stage) => (
-                        <StageColumn
-                            key={stage.key}
-                            stage={stage}
-                            orders={grouped[stage.key] || []}
-                            onDrop={onDrop}
-                            onDragStart={onDragStart}
-                            onCardClick={setDrawerOrder}
-                        />
-                    ))}
-                </div>
-
             </div>
-        </div>
 
 
-            {drawerOrder && (
+            {/* {drawerOrder && (
                 <DetailDrawer
                     order={drawerOrder}
                     onClose={() => setDrawerOrder(null)}
@@ -666,6 +666,26 @@ export default function PipelineBoard() {
                         });
                         setGrouped(data.data.grouped);
 
+                        const updatedOrder = Object.values(data.data.grouped)
+                            .flat()
+                            .find((o: any) => o._id === drawerOrder._id) as Order | undefined;
+                        if (updatedOrder) setDrawerOrder(updatedOrder);
+                    }}
+                />
+            )} */}
+
+            {drawerOrder && (
+                <DetailDrawer
+                    order={drawerOrder}
+                    onClose={() => setDrawerOrder(null)}
+                    staffAdmins={staffAdmins}
+                    currentUserIsAdmin={currentUserIsAdmin}
+                    onRefresh={async () => {
+                        const token = getToken();
+                        const { data } = await axios.get(`${API_BASE}admin/pipeline`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                        });
+                        setGrouped(data.data.grouped);
                         const updatedOrder = Object.values(data.data.grouped)
                             .flat()
                             .find((o: any) => o._id === drawerOrder._id) as Order | undefined;
@@ -924,7 +944,7 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
     const displayAmt = balanceAmount;
 
 
-   
+
     const isInProgressComplete = order.pipelineLogs?.some(
         log => log.toStage === "inProgress"
     ) && !!order.handlerName;
@@ -1101,7 +1121,7 @@ function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
                         onClick={() => onCardClick(order)}
                     />
                 ))}
-              
+
                 {orders.length === 0 && (
                     <div className="flex-1 min-h-[80px] rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center">
                         <p className="text-xs text-gray-400 dark:text-gray-600">Drop here</p>

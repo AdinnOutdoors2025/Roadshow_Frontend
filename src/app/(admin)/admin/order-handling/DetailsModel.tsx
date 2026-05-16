@@ -5,6 +5,11 @@ import { Clock, Car, User, ReceiptText, GitBranch, Percent, History, X, FileText
 import NegotiationForm from "./customernegotiationForm";
 import { WaitingForPOSection } from "./waitingforpo";
 import { PaymentStage1Section } from "./PaymentStagefirst";
+import { useState } from "react";
+import axios from "axios";
+import { getToken } from "@/utils/auth";
+import API_BASE from "../../../../../baseurl";
+import toast from "react-hot-toast";
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -68,8 +73,8 @@ interface NegotiationLog {
     discountAmount?: number;
     movedBy: string;
     movedAt: string;
-    discountNotes:any
-    
+    discountNotes: any
+
 }
 
 interface PipelineLog {
@@ -83,28 +88,24 @@ interface PipelineLog {
 
 
 const STAGE_MAP: Record<string, { label: string; gradient: string; icon: string }> = {
-    todo:                    { label: "To-Do",                              gradient: "from-slate-400 to-slate-500",    icon: "📋" },
-    inProgress:              { label: "In Progress",                        gradient: "from-blue-400 to-blue-600",      icon: "🔄" },
-    customerConfirmation:    { label: "Customer Confirmation & Negotiation", gradient: "from-violet-400 to-violet-600",  icon: "🤝" },
-    waitingForPO:            { label: "Waiting for PO",                     gradient: "from-amber-400 to-amber-600",    icon: "⏳" },
-    paymentStage1:           { label: "Payment Processing Stage 1",         gradient: "from-orange-400 to-orange-600",  icon: "💳" },
-    projectCodeCreation:     { label: "Project Code Creation",              gradient: "from-cyan-400 to-cyan-600",      icon: "🔢" },
-    projectExecution:        { label: "Project Execution",                  gradient: "from-teal-400 to-teal-600",      icon: "⚙️" },
-    onRoad:                  { label: "On Road",                            gradient: "from-sky-400 to-sky-600",        icon: "🚗" },
-    campaignRunning:         { label: "Campaign Running",                   gradient: "from-indigo-400 to-indigo-600",  icon: "📣" },
-    vehicleUnavailable:      { label: "Vehicle Unavailable",               gradient: "from-red-400 to-red-500",        icon: "🚫" },
-    clientClosure:           { label: "Client Closure & Feedback",          gradient: "from-pink-400 to-pink-600",      icon: "📝" },
-    invoiceGeneration:       { label: "Invoice Generation",                 gradient: "from-fuchsia-400 to-fuchsia-600",icon: "🧾" },
-    paymentStage2:           { label: "Payment Processing Stage 2",         gradient: "from-purple-400 to-purple-600",  icon: "💰" },
-    closedWon:               { label: "Closed Won",                         gradient: "from-green-400 to-green-600",    icon: "🎉" },
-    closedLost:              { label: "Closed Lost",                        gradient: "from-rose-400 to-rose-600",      icon: "❌" },
+    newOrder: { label: "To-Do", gradient: "from-slate-400 to-slate-500", icon: "📋" },
+    inProgress: { label: "In Progress", gradient: "from-blue-400 to-blue-600", icon: "🔄" },
+    customerConfirmation: { label: "Customer Confirmation & Negotiation", gradient: "from-violet-400 to-violet-600", icon: "🤝" },
+    waitingForPO: { label: "Waiting for PO", gradient: "from-amber-400 to-amber-600", icon: "⏳" },
+    paymentStage1: { label: "Payment Processing Stage 1", gradient: "from-orange-400 to-orange-600", icon: "💳" },
+    projectCodeCreation: { label: "Project Code Creation", gradient: "from-cyan-400 to-cyan-600", icon: "🔢" },
+    projectExecution: { label: "Project Execution", gradient: "from-teal-400 to-teal-600", icon: "⚙️" },
+    onRoad: { label: "On Road", gradient: "from-sky-400 to-sky-600", icon: "🚗" },
+    campaignRunning: { label: "Campaign Running", gradient: "from-indigo-400 to-indigo-600", icon: "📣" },
+    vehicleUnavailable: { label: "Vehicle Unavailable", gradient: "from-red-400 to-red-500", icon: "🚫" },
+    clientClosure: { label: "Client Closure & Feedback", gradient: "from-pink-400 to-pink-600", icon: "📝" },
+    invoiceGeneration: { label: "Invoice Generation", gradient: "from-fuchsia-400 to-fuchsia-600", icon: "🧾" },
+    paymentStage2: { label: "Payment Processing Stage 2", gradient: "from-purple-400 to-purple-600", icon: "💰" },
+    closedWon: { label: "Closed Won", gradient: "from-green-400 to-green-600", icon: "🎉" },
+    closedLost: { label: "Closed Lost", gradient: "from-rose-400 to-rose-600", icon: "❌" },
 
-   
-    newOrder:                { label: "New Order",                          gradient: "from-violet-500 to-purple-600",  icon: "✨" },
-    inquiry:                 { label: "Inquiry",                            gradient: "from-amber-400 to-orange-500",   icon: "🔍" },
-    followUp:                { label: "Follow-up",                          gradient: "from-orange-400 to-red-500",     icon: "📞" },
-    booked:                  { label: "Booked",                             gradient: "from-green-400 to-green-600",    icon: "✅" },
-    cancelled:               { label: "Cancelled",                          gradient: "from-red-400 to-red-600",        icon: "🚫" },
+
+  
 };
 
 
@@ -178,16 +179,26 @@ export default function DetailDrawer({
     order,
     onClose,
     onRefresh,
+    staffAdmins = [],
+    currentUserIsAdmin = 1,
 }: {
     order: Order;
     onClose: () => void;
     onRefresh: () => Promise<void>;
+    staffAdmins?: { username: string }[];
+    currentUserIsAdmin?: number;
 }) {
 
 
 
 
     const stage = STAGE_MAP[order.pipelineStatus];
+    const [moving, setMoving] = useState(false);
+    const [showHandlerModal, setShowHandlerModal] = useState(false);
+    const [handlerName, setHandlerName] = useState("");
+    const [handlerError, setHandlerError] = useState("");
+    const [custType, setCustType] = useState<0 | 1 | null>(null);
+
     const logs: PaymentStageFirst[] = order.paymentStageFirst || [];
     const totalAdvance = logs.reduce((sum, log) => sum + (log.advancePayment || 0), 0);
 
@@ -199,6 +210,115 @@ export default function DetailDrawer({
     const finalNet = taxable + gstAmt;
     const balanceAmount = finalNet - totalAdvance;
     const discountPercentage = Math.round((totalDiscount / subtotal) * 100);
+
+    const doMove = async (toStage: string, extra?: Record<string, string>) => {
+        setMoving(true);
+        try {
+            const token = getToken();
+            const fd = new FormData();
+            fd.append("pipelineStatus", toStage);
+            if (extra) {
+                Object.entries(extra).forEach(([k, v]) => fd.append(k, v));
+            }
+            await axios.patch(`${API_BASE}admin/pipeline/${order._id}`, fd, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            toast.success("Order moved successfully!");
+            await onRefresh();
+        } catch (e: any) {
+            toast.error(e?.response?.data?.message || "Something went wrong");
+        } finally {
+            setMoving(false);
+        }
+    };
+
+    // ── Next stage button click ───────────────────────────────────
+    const handleNextStage = () => {
+        const status = order.pipelineStatus;
+
+        if (status === "newOrder") {
+            setHandlerName("");
+            setHandlerError("");
+            setCustType(null);
+            setShowHandlerModal(true);
+            return;
+        }
+
+        if (status === "inProgress") {
+            doMove("customerConfirmation");
+            return;
+        }
+
+        if (status === "customerConfirmation") {
+            doMove("waitingForPO");
+            return;
+        }
+
+        if (status === "waitingForPO") {
+            const hasPoDocument = (order.poDocumentLogs?.length ?? 0) > 0;
+            if (!hasPoDocument) {
+                toast.error("Please upload PO document first before moving to next stage!");
+                return;
+            }
+            if (order.customerType === 0) {
+                doMove("projectCodeCreation");
+            } else if (order.customerType === 1) {
+                doMove("paymentStage1");
+            }
+            return;
+        }
+
+        if (status === "paymentStage1") {
+            doMove("projectCodeCreation");
+            return;
+        }
+    };
+
+    // ── Handler modal submit ──────────────────────────────────────
+    const handleHandlerSubmit = async () => {
+        setHandlerError("");
+
+        if (currentUserIsAdmin === 1 && !handlerName.trim()) {
+            setHandlerError("Please select a handler");
+            return;
+        }
+
+        if (
+            (order.customerType === null || order.customerType === undefined) &&
+            custType === null
+        ) {
+            setHandlerError("Please select customer type");
+            return;
+        }
+
+        const extra: Record<string, string> = {};
+        if (currentUserIsAdmin === 1) extra.handlerName = handlerName;
+        if (order.customerType === null || order.customerType === undefined) {
+            extra.customerType = String(custType);
+        }
+
+        await doMove("inProgress", extra);
+        setShowHandlerModal(false);
+    };
+
+    // ── Next stage button label ───────────────────────────────────
+    const getNextStageLabel = (): string | null => {
+        const status = order.pipelineStatus;
+        if (status === "newOrder") return "Move to In Progress 🚀";
+        if (status === "inProgress") return "Move to Customer Confirmation 🤝";
+        if (status === "customerConfirmation") return "Move to Waiting for PO ⏳";
+        if (status === "waitingForPO") {
+            if (order.customerType === 0) return "Move to Project Code Creation 🔢";
+            if (order.customerType === 1) return "Move to Payment Stage 1 💳";
+            return "Move to Next Stage";
+        }
+        if (status === "paymentStage1") return "Move to Project Code Creation 🔢";
+        return null;
+    };
+
+    const nextStageLabel = getNextStageLabel();
+
+
 
 
     return (
@@ -258,8 +378,27 @@ export default function DetailDrawer({
                             >
                                 <X size={16} className="md:w-[18px] md:h-[18px]" />
                             </button>
+
+                          
                         </div>
                     </div>
+
+                      {/* {nextStageLabel && (
+                                <button
+                                    onClick={handleNextStage}
+                                    disabled={moving}
+                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold transition-all shadow-sm"
+                                >
+                                    {moving ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Moving...
+                                        </>
+                                    ) : (
+                                        nextStageLabel
+                                    )}
+                                </button>
+                            )} */}
 
                     {order.handlerName && (
                         <div className="sm:hidden mt-2 flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20">
@@ -395,7 +534,7 @@ export default function DetailDrawer({
                     <WaitingForPOSection order={order} onRefresh={onRefresh} />
                     <PaymentStage1Section order={order} onRefresh={onRefresh} />
 
-                     <Section icon="💰" title="Pricing Breakdown" accent="from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+                    <Section icon="💰" title="Pricing Breakdown" accent="from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
                         <div className="space-y-1">
                             <PricingRow label="Subtotal" value={fmt(subtotal)} icon={<IndianRupee size={16} />} />
                             {/* {totalDiscount > 0 && (
@@ -451,86 +590,86 @@ export default function DetailDrawer({
 
                     </Section>
 
-                  
 
-<Section icon="📝" title="Notes" accent="from-yellow-50 to-amber-50 
+
+                    <Section icon="📝" title="Notes" accent="from-yellow-50 to-amber-50 
   dark:from-yellow-900/20 dark:to-amber-900/20">
-  
-  {/* Discount Negotiation Notes */}
-  {(order.negotiationLogs || []).filter(l => l.discountNotes).length > 0 && (
-    <div className="mb-4">
-      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-        💬 Discount Negotiation Notes
-      </p>
-      <div className="space-y-2">
-        {order.negotiationLogs
-          .filter((l: any) => l.discountNotes)
-          .map((log: any, i: number) => (
-            <div key={i} className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 
+
+                        {/* Discount Negotiation Notes */}
+                        {(order.negotiationLogs || []).filter(l => l.discountNotes).length > 0 && (
+                            <div className="mb-4">
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                    💬 Discount Negotiation Notes
+                                </p>
+                                <div className="space-y-2">
+                                    {order.negotiationLogs
+                                        .filter((l: any) => l.discountNotes)
+                                        .map((log: any, i: number) => (
+                                            <div key={i} className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 
               border border-amber-200 dark:border-amber-800/50">
-              <p className="text-sm text-gray-700 dark:text-gray-300">{log.discountNotes}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                By {log.movedBy} • {fmtDatetime(log.movedAt)}
-              </p>
-            </div>
-          ))}
-      </div>
-    </div>
-  )}
+                                                <p className="text-sm text-gray-700 dark:text-gray-300">{log.discountNotes}</p>
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    By {log.movedBy} • {fmtDatetime(log.movedAt)}
+                                                </p>
+                                            </div>
+                                        ))}
+                                </div>
+                            </div>
+                        )}
 
-  {/* PO Notes */}
-  {(order.poDocumentLogs || []).filter(l => l.poNotes).length > 0 && (
-    <div className="mb-4">
-      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-        📄 PO Notes
-      </p>
-      <div className="space-y-2">
-        {order.poDocumentLogs
-          .filter((l: any) => l.poNotes)
-          .map((log: any, i: number) => (
-            <div key={i} className="p-3 rounded-xl bg-sky-50 dark:bg-sky-900/20 
+                        {/* PO Notes */}
+                        {(order.poDocumentLogs || []).filter(l => l.poNotes).length > 0 && (
+                            <div className="mb-4">
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                    📄 PO Notes
+                                </p>
+                                <div className="space-y-2">
+                                    {order.poDocumentLogs
+                                        .filter((l: any) => l.poNotes)
+                                        .map((log: any, i: number) => (
+                                            <div key={i} className="p-3 rounded-xl bg-sky-50 dark:bg-sky-900/20 
               border border-sky-200 dark:border-sky-800/50">
-              <p className="text-sm text-gray-700 dark:text-gray-300">{log.poNotes}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                By {log.uploadedBy} • {fmtDatetime(log.poDate)}
-              </p>
-            </div>
-          ))}
-      </div>
-    </div>
-  )}
+                                                <p className="text-sm text-gray-700 dark:text-gray-300">{log.poNotes}</p>
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    By {log.uploadedBy} • {fmtDatetime(log.poDate)}
+                                                </p>
+                                            </div>
+                                        ))}
+                                </div>
+                            </div>
+                        )}
 
-  {/* Payment Notes */}
-  {(order.paymentStageFirst || []).filter(l => l.paymentNotes).length > 0 && (
-    <div>
-      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-        💳 Payment Notes
-      </p>
-      <div className="space-y-2">
-        {order.paymentStageFirst
-          .filter((l: any) => l.paymentNotes)
-          .map((log: any, i: number) => (
-            <div key={i} className="p-3 rounded-xl bg-green-50 dark:bg-green-900/20 
+                        {/* Payment Notes */}
+                        {(order.paymentStageFirst || []).filter(l => l.paymentNotes).length > 0 && (
+                            <div>
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                    💳 Payment Notes
+                                </p>
+                                <div className="space-y-2">
+                                    {order.paymentStageFirst
+                                        .filter((l: any) => l.paymentNotes)
+                                        .map((log: any, i: number) => (
+                                            <div key={i} className="p-3 rounded-xl bg-green-50 dark:bg-green-900/20 
               border border-green-200 dark:border-green-800/50">
-              <p className="text-sm text-gray-700 dark:text-gray-300">{log.paymentNotes}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                By {log.uploadedBy} • {fmtDatetime(log.paymentDate)}
-              </p>
-            </div>
-          ))}
-      </div>
-    </div>
-  )}
+                                                <p className="text-sm text-gray-700 dark:text-gray-300">{log.paymentNotes}</p>
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    By {log.uploadedBy} • {fmtDatetime(log.paymentDate)}
+                                                </p>
+                                            </div>
+                                        ))}
+                                </div>
+                            </div>
+                        )}
 
-  {/* No notes fallback */}
-  {(order.negotiationLogs || []).filter(l => l.discountNotes).length === 0 &&
-   (order.poDocumentLogs || []).filter(l => l.poNotes).length === 0 &&
-   (order.paymentStageFirst || []).filter(l => l.paymentNotes).length === 0 && (
-    <p className="text-sm text-gray-400 text-center py-4">No notes added yet</p>
-  )}
-</Section>
+                        {/* No notes fallback */}
+                        {(order.negotiationLogs || []).filter(l => l.discountNotes).length === 0 &&
+                            (order.poDocumentLogs || []).filter(l => l.poNotes).length === 0 &&
+                            (order.paymentStageFirst || []).filter(l => l.paymentNotes).length === 0 && (
+                                <p className="text-sm text-gray-400 text-center py-4">No notes added yet</p>
+                            )}
+                    </Section>
 
-                 
+
                     <Section icon="🔄" title="Pipeline Journey" accent="from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20">
                         <div className="space-y-0">
                             {(() => {
@@ -564,7 +703,7 @@ export default function DetailDrawer({
                                     });
                                 });
 
-                           
+
 
                                 // Merge all negotiation logs into ONE entry with total discount + latest date
                                 const negLogs = order.negotiationLogs || [];
@@ -614,7 +753,7 @@ export default function DetailDrawer({
                         </div>
                     </Section>
 
-                   
+
 
                     {/* PO Document */}
                     {order.poDocument && (
@@ -639,6 +778,109 @@ export default function DetailDrawer({
                         </Section>
                     )}
                 </div>
+
+              
+                {showHandlerModal && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+
+                            <div className="flex justify-center mb-4">
+                                <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-2xl">
+                                    🚀
+                                </div>
+                            </div>
+
+                            <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-1">
+                                Move to In Progress?
+                            </h2>
+                            <p className="text-center text-xs text-gray-400 font-mono mb-5">
+                                {order.orderId}
+                            </p>
+
+                            {/* Handler assign */}
+                            {currentUserIsAdmin === 1 ? (
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Assign Handler <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={handlerName}
+                                        onChange={(e) => setHandlerName(e.target.value)}
+                                        className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="">-- Select Handler --</option>
+                                        {staffAdmins.map((s) => (
+                                            <option key={s.username} value={s.username}>{s.username}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
+                                <div className="mb-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2.5">
+                                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                                        You will be assigned as the handler for this order.
+                                    </p>
+                                </div>
+                            )}
+
+                           
+                            {(order.customerType === null || order.customerType === undefined) && (
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Customer Type <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {(["existing", "new"] as const).map((t, i) => {
+                                            const val = i === 0 ? 1 : 0;
+                                            return (
+                                                <button
+                                                    key={t}
+                                                    type="button"
+                                                    onClick={() => setCustType(val as 0 | 1)}
+                                                    className={`rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all text-left ${custType === val
+                                                        ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                                                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                                        }`}
+                                                >
+                                                    <div className={`h-3 w-3 rounded-full border-2 mb-2 transition-all ${custType === val ? "border-blue-500 bg-blue-500" : "border-gray-300"
+                                                        }`} />
+                                                    <p className="font-semibold text-xs">
+                                                        {t === "existing" ? "Existing Customer" : "New Customer"}
+                                                    </p>
+                                                    <p className="text-xs mt-0.5 opacity-60">
+                                                        {t === "existing" ? "Already registered" : "Create new account"}
+                                                    </p>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Error */}
+                            {handlerError && (
+                                <p className="mb-3 text-xs text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                                    {handlerError}
+                                </p>
+                            )}
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowHandlerModal(false)}
+                                    className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleHandlerSubmit}
+                                    disabled={moving}
+                                    className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium transition-all"
+                                >
+                                    {moving ? "Moving..." : "Confirm Move"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
