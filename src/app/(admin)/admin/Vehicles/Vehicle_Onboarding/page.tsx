@@ -1713,7 +1713,7 @@ export default function VehicleOnboardingForm() {
     vehicleName: "",
   });
   const [techSpecs, setTechSpecs] = useState({
-    screenType: "LED Only",
+    screenType: "",
     numberOfScreens: "",
     // Left/Right Screen Size - Separate W & H
     leftRightScreenWidth: "",
@@ -3006,7 +3006,7 @@ export default function VehicleOnboardingForm() {
                   <div className="relative">
                     <Select
                       options={selectOptions.screenTypeOptions}
-                      placeholder="LED Only"
+                      placeholder="Select"
                       value={techSpecs.screenType}
                       onChange={(value) =>
                         setTechSpecs((prev) => ({ ...prev, screenType: value }))
