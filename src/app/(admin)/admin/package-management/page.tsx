@@ -1,4 +1,4 @@
-
+//CORRECTED CODE FOR FETCHING THE DETAILS USING THE VEHICLE TYPE ID
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -11,24 +11,29 @@ import { HiOutlineCube } from "react-icons/hi";
 import { HiOutlinePlus } from "react-icons/hi2";
 import { HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi";
 import { useSearch } from "@/context/SearchContext";
-import { useAuthGuard } from "../../../../utils/useAuthGuard"; 
-
+import { useAuthGuard } from "../../../../utils/useAuthGuard";
 
 export interface Package {
-  _id?: string;
-  vehicleType: string;
+  _id: string;
+  vehicleType: string | { _id: string; typeName: string };
   vehicleModel: string;
   perDayRentalCost: number;
   dailyKmLimit: number;
   additionalHourCharges: number;
   endUserCustomizationPermission: boolean;
   promoterAvailable: boolean;
-  promoterChargePerDay?: number;
+  promoterChargePerDay: number;
   driverCharges: number;
   rtoCharges: number;
+  perKmCharge: number;
   isActive: boolean;
   inactiveReason?: string;
-   perKmCharge: number, 
+}
+
+interface VehicleType {
+  _id: string;
+  typeName: string;
+  isActive: boolean;
 }
 
 const HEADERS = [
@@ -38,7 +43,6 @@ const HEADERS = [
 ];
 
 const ITEMS_PER_PAGE = 10;
-
 
 function InactiveReasonModal({
   onConfirm,
@@ -92,6 +96,22 @@ function InactiveReasonModal({
   );
 }
 
+const getVehicleTypeName = (pkg: Package): string => {
+  if (!pkg.vehicleType) return "Unknown";
+  if (typeof pkg.vehicleType === "object" && pkg.vehicleType.typeName) {
+    return pkg.vehicleType.typeName;
+  }
+  return String(pkg.vehicleType);
+};
+
+const getVehicleTypeId = (pkg: Package): string => {
+  if (!pkg.vehicleType) return "";
+  if (typeof pkg.vehicleType === "object" && pkg.vehicleType._id) {
+    return pkg.vehicleType._id;
+  }
+  return String(pkg.vehicleType);
+};
+
 export default function PackageTable() {
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,11 +130,12 @@ export default function PackageTable() {
   const [toggleTarget, setToggleTarget] = useState<Package | null>(null);
   const [toggleLoading, setToggleLoading] = useState(false);
 
-
-  const [filterType, setFilterType] = useState("");
+  const [filterTypeId, setFilterTypeId] = useState("");
   const [filterModel, setFilterModel] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const { searchTerm } = useSearch();
+
+  const [filterVehicleTypes, setFilterVehicleTypes] = useState<VehicleType[]>([]);
 
   const fetchPackages = async () => {
     try {
@@ -132,66 +153,64 @@ export default function PackageTable() {
     }
   };
 
-  useEffect(() => { fetchPackages(); }, []);
+  const fetchFilterVehicleTypes = async () => {
+    try {
+      const res = await fetch(`${API_BASE}api/vehicle-types`);
+      if (!res.ok) throw new Error("Failed to fetch vehicle types");
+      const data = await res.json();
+      if (data.success && data.data) {
+        setFilterVehicleTypes(data.data.filter((type: VehicleType) => type.isActive));
+      }
+    } catch (error) {
+      console.error("Error fetching vehicle types for filter:", error);
+    }
+  };
 
-function formatINR(amount: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+  useEffect(() => {
+    fetchPackages();
+    fetchFilterVehicleTypes();
+  }, []);
 
-const filteredPackages = packages.filter((pkg) => {
-  if (filterType && pkg.vehicleType !== filterType) return false;
-  if (filterModel && pkg.vehicleModel !== filterModel) return false;
-
-  if (filterStatus === "active" && !pkg.isActive) return false;
-  if (filterStatus === "inactive" && pkg.isActive) return false;
-
-  if (searchTerm) {
-    const term = searchTerm.toLowerCase();
-
-    const matchesSearch =
-      pkg.vehicleType.toLowerCase().includes(term) ||
-      pkg.vehicleModel.toLowerCase().includes(term) ||
-      pkg.perDayRentalCost.toString().includes(term) ||
-      pkg.dailyKmLimit.toString().includes(term) ||
-
-    
-      pkg.additionalHourCharges.toString().includes(term) ||
-      (pkg.promoterChargePerDay?.toString() || "").includes(term) ||
-      pkg.driverCharges.toString().includes(term) ||
-      pkg.rtoCharges.toString().includes(term) ||
-
-     
-      (term === "true" && (
-        pkg.endUserCustomizationPermission ||
-        pkg.promoterAvailable
-      )) ||
-      (term === "false" && (
-        !pkg.endUserCustomizationPermission ||
-        !pkg.promoterAvailable
-      )) ||
-
-      (term === "customizable" && pkg.endUserCustomizationPermission) ||
-      (term === "non-customizable" && !pkg.endUserCustomizationPermission) ||
-
-      (term === "promoter" && pkg.promoterAvailable) ||
-      (term === "no promoter" && !pkg.promoterAvailable) ||
-
-      (term === "active" && pkg.isActive) ||
-      (term === "inactive" && !pkg.isActive);
-
-    if (!matchesSearch) return false;
+  function formatINR(amount: number): string {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(amount);
   }
 
-  return true;
-});
+  const filteredPackages = packages.filter((pkg) => {
+    const pkgTypeId = getVehicleTypeId(pkg);
+    if (filterTypeId && pkgTypeId !== filterTypeId) return false;
+    if (filterModel && pkg.vehicleModel !== filterModel) return false;
+    if (filterStatus === "active" && !pkg.isActive) return false;
+    if (filterStatus === "inactive" && pkg.isActive) return false;
 
-  
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      const typeName = getVehicleTypeName(pkg).toLowerCase();
+      const matchesSearch =
+        typeName.includes(term) ||
+        pkg.vehicleModel.toLowerCase().includes(term) ||
+        pkg.perDayRentalCost.toString().includes(term) ||
+        pkg.dailyKmLimit.toString().includes(term) ||
+        pkg.additionalHourCharges.toString().includes(term) ||
+        (pkg.promoterChargePerDay?.toString() || "").includes(term) ||
+        pkg.driverCharges.toString().includes(term) ||
+        pkg.rtoCharges.toString().includes(term) ||
+        (term === "true" && (pkg.endUserCustomizationPermission || pkg.promoterAvailable)) ||
+        (term === "false" && (!pkg.endUserCustomizationPermission || !pkg.promoterAvailable)) ||
+        (term === "customizable" && pkg.endUserCustomizationPermission) ||
+        (term === "non-customizable" && !pkg.endUserCustomizationPermission) ||
+        (term === "promoter" && pkg.promoterAvailable) ||
+        (term === "no promoter" && !pkg.promoterAvailable) ||
+        (term === "active" && pkg.isActive) ||
+        (term === "inactive" && !pkg.isActive);
+      if (!matchesSearch) return false;
+    }
+    return true;
+  });
 
-  const uniqueTypes = Array.from(new Set(packages.map((p) => p.vehicleType)));
   const uniqueModels = Array.from(new Set(packages.map((p) => p.vehicleModel)));
 
   const totalItems = filteredPackages.length;
@@ -204,9 +223,18 @@ const filteredPackages = packages.filter((pkg) => {
     document.getElementById("package-table")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleAddNew = () => { setEditingPackage(null); setShowFormModal(true); };
-  const handleEdit = (pkg: Package) => { setEditingPackage(pkg); setShowFormModal(true); };
-  const handleDeleteClick = (id: string) => { setDeletingId(id); setShowDeleteModal(true); };
+  const handleAddNew = () => {
+    setEditingPackage(null);
+    setShowFormModal(true);
+  };
+  const handleEdit = (pkg: Package) => {
+    setEditingPackage(pkg);
+    setShowFormModal(true);
+  };
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+    setShowDeleteModal(true);
+  };
 
   const handleDeleteConfirm = async () => {
     if (!deletingId) return;
@@ -230,14 +258,11 @@ const filteredPackages = packages.filter((pkg) => {
     fetchPackages();
   };
 
- 
   const handleToggleClick = (pkg: Package) => {
     if (pkg.isActive) {
-    
       setToggleTarget(pkg);
       setShowReasonModal(true);
     } else {
-    
       doToggle(pkg, "");
     }
   };
@@ -263,7 +288,6 @@ const filteredPackages = packages.filter((pkg) => {
 
   return (
     <div id="package-table" className="w-full rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-
       {/* Header */}
       <div className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-3">
@@ -281,29 +305,46 @@ const filteredPackages = packages.filter((pkg) => {
         </button>
       </div>
 
-
+      {/* Filters */}
       <div className="flex flex-wrap gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20">
         <select
-          value={filterType}
-          onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
+          value={filterTypeId}
+          onChange={(e) => {
+            setFilterTypeId(e.target.value);
+            setCurrentPage(1);
+          }}
           className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
         >
           <option value="">All Vehicle Types</option>
-          {uniqueTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+          {filterVehicleTypes.map((type) => (
+            <option key={type._id} value={type._id}>
+              {type.typeName}
+            </option>
+          ))}
         </select>
 
         <select
           value={filterModel}
-          onChange={(e) => { setFilterModel(e.target.value); setCurrentPage(1); }}
+          onChange={(e) => {
+            setFilterModel(e.target.value);
+            setCurrentPage(1);
+          }}
           className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
         >
           <option value="">All Vehicle Models</option>
-          {uniqueModels.map((m) => <option key={m} value={m}>{m}</option>)}
+          {uniqueModels.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
         </select>
 
         <select
           value={filterStatus}
-          onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+          onChange={(e) => {
+            setFilterStatus(e.target.value);
+            setCurrentPage(1);
+          }}
           className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
         >
           <option value="">All Status</option>
@@ -311,9 +352,14 @@ const filteredPackages = packages.filter((pkg) => {
           <option value="inactive">Inactive</option>
         </select>
 
-        {(filterType || filterModel || filterStatus) && (
+        {(filterTypeId || filterModel || filterStatus) && (
           <button
-            onClick={() => { setFilterType(""); setFilterModel(""); setFilterStatus(""); setCurrentPage(1); }}
+            onClick={() => {
+              setFilterTypeId("");
+              setFilterModel("");
+              setFilterStatus("");
+              setCurrentPage(1);
+            }}
             className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 hover:bg-red-100 transition-colors dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
           >
             Clear Filters
@@ -321,6 +367,7 @@ const filteredPackages = packages.filter((pkg) => {
         )}
       </div>
 
+      {/* Table */}
       <div className="p-4 sm:p-6">
         {loading && (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -332,7 +379,9 @@ const filteredPackages = packages.filter((pkg) => {
         {!loading && error && (
           <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
             <p className="text-sm text-red-700">{error}</p>
-            <button onClick={fetchPackages} className="ml-2 text-sm font-medium underline">Retry</button>
+            <button onClick={fetchPackages} className="ml-2 text-sm font-medium underline">
+              Retry
+            </button>
           </div>
         )}
 
@@ -343,7 +392,10 @@ const filteredPackages = packages.filter((pkg) => {
                 <thead>
                   <tr className="bg-gray-50 dark:bg-gray-800/60">
                     {HEADERS.map((h) => (
-                      <th key={h} className="whitespace-nowrap px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      <th
+                        key={h}
+                        className="whitespace-nowrap px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                      >
                         {h}
                       </th>
                     ))}
@@ -361,7 +413,9 @@ const filteredPackages = packages.filter((pkg) => {
                       <tr
                         key={pkg._id}
                         className={`group transition-colors hover:bg-blue-50/40 dark:hover:bg-blue-900/10 ${
-                          idx % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50/50 dark:bg-gray-800/20"
+                          idx % 2 === 0
+                            ? "bg-white dark:bg-gray-900"
+                            : "bg-gray-50/50 dark:bg-gray-800/20"
                         }`}
                       >
                         <td className="px-5 py-4 text-gray-600 dark:text-gray-300">
@@ -370,20 +424,24 @@ const filteredPackages = packages.filter((pkg) => {
                         <td className="px-5 py-4">
                           <span className="inline-flex items-center gap-1.5">
                             <span className="h-2 w-2 rounded-full bg-blue-400 opacity-70" />
-                            <span className="font-medium text-gray-800 dark:text-gray-200">{pkg.vehicleType}</span>
+                            <span className="font-medium text-gray-800 dark:text-gray-200">
+                              {getVehicleTypeName(pkg)}
+                            </span>
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300">{pkg.vehicleModel}</td>
+                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300">
+                          {pkg.vehicleModel}
+                        </td>
                         <td className="px-5 py-4 text-center font-semibold text-gray-800 dark:text-gray-100">
-                        {formatINR(pkg.perDayRentalCost)}
+                          {formatINR(pkg.perDayRentalCost)}
                         </td>
                         <td className="px-5 py-4">
                           <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                          {pkg.dailyKmLimit.toLocaleString("en-IN")} km
+                            {pkg.dailyKmLimit.toLocaleString("en-IN")} km
                           </span>
                         </td>
                         <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
-                        {formatINR(pkg.additionalHourCharges)}/hr
+                          {formatINR(pkg.additionalHourCharges)}/hr
                         </td>
                         <td className="px-5 py-4">
                           {pkg.promoterAvailable ? (
@@ -392,35 +450,33 @@ const filteredPackages = packages.filter((pkg) => {
                               Yes {pkg.promoterChargePerDay ? `·${formatINR(pkg.promoterChargePerDay)}/day` : ""}
                             </span>
                           ) : (
-                            <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">No</span>
+                            <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                              No
+                            </span>
                           )}
                         </td>
                         <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
-                         {formatINR(pkg.driverCharges)}
+                          {formatINR(pkg.driverCharges)}
                         </td>
                         <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
-                         {formatINR(pkg.rtoCharges)}
+                          {formatINR(pkg.rtoCharges)}
                         </td>
                         <td className="px-5 py-4">
-                       
                           <button
                             onClick={() => handleToggleClick(pkg)}
                             title={pkg.isActive ? "Click to Deactivate" : "Click to Activate"}
                             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all hover:opacity-80 active:scale-95"
-                            style={pkg.isActive
-                              ? { background: "#dcfce7", color: "#15803d" }
-                              : { background: "#fee2e2", color: "#dc2626" }
+                            style={
+                              pkg.isActive
+                                ? { background: "#dcfce7", color: "#15803d" }
+                                : { background: "#fee2e2", color: "#dc2626" }
                             }
                           >
-                            <span className={`h-1.5 w-1.5 rounded-full ${pkg.isActive ? "bg-green-500 animate-pulse" : "bg-red-400"}`} />
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${pkg.isActive ? "bg-green-500 animate-pulse" : "bg-red-400"}`}
+                            />
                             {pkg.isActive ? "Active" : "Inactive"}
                           </button>
-                       
-                          {/* {!pkg.isActive && pkg.inactiveReason && (
-                            <p className="mt-1 text-xs text-gray-400 max-w-[120px] truncate" title={pkg.inactiveReason}>
-                              {pkg.inactiveReason}
-                            </p>
-                          )} */}
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
@@ -447,10 +503,8 @@ const filteredPackages = packages.filter((pkg) => {
               </table>
             </div>
 
-           
             {filteredPackages.length > 0 && (
               <div className="flex flex-col sm:flex-row items-center justify-end gap-4 border-t border-gray-100 bg-gray-50/70 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/40">
-
                 {totalPages > 1 && (
                   <div className="flex items-center gap-1.5">
                     <button
@@ -466,7 +520,9 @@ const filteredPackages = packages.filter((pkg) => {
                     </button>
                     <p className="text-xs text-gray-400">
                       Showing <span className="font-medium text-gray-600">{startIndex + 1}</span> to{" "}
-                      <span className="font-medium text-gray-600">{Math.min(startIndex + ITEMS_PER_PAGE, totalItems)}</span>{" "}
+                      <span className="font-medium text-gray-600">
+                        {Math.min(startIndex + ITEMS_PER_PAGE, totalItems)}
+                      </span>{" "}
                       of <span className="font-medium text-gray-600">{totalItems}</span>
                     </p>
                     <button
@@ -488,12 +544,15 @@ const filteredPackages = packages.filter((pkg) => {
         )}
       </div>
 
-   
+      {/* Modals */}
       {showFormModal && (
         <PackageFormModal
           editingPackage={editingPackage}
           onSuccess={handleFormSuccess}
-          onClose={() => { setShowFormModal(false); setEditingPackage(null); }}
+          onClose={() => {
+            setShowFormModal(false);
+            setEditingPackage(null);
+          }}
         />
       )}
 
@@ -501,16 +560,21 @@ const filteredPackages = packages.filter((pkg) => {
         <DeleteConfirmModal
           loading={deleteLoading}
           onConfirm={handleDeleteConfirm}
-          onCancel={() => { setShowDeleteModal(false); setDeletingId(null); }}
+          onCancel={() => {
+            setShowDeleteModal(false);
+            setDeletingId(null);
+          }}
         />
       )}
-
 
       {showReasonModal && toggleTarget && (
         <InactiveReasonModal
           loading={toggleLoading}
           onConfirm={(reason) => doToggle(toggleTarget, reason)}
-          onCancel={() => { setShowReasonModal(false); setToggleTarget(null); }}
+          onCancel={() => {
+            setShowReasonModal(false);
+            setToggleTarget(null);
+          }}
         />
       )}
     </div>
