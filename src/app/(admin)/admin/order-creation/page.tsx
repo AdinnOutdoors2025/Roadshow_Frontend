@@ -8,6 +8,7 @@ import { HiOutlineShoppingBag, HiOutlineEye } from "react-icons/hi";
 import { HiOutlinePlus, HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi2";
 import API_BASE from "../../../../../baseurl";
 import { useAuthGuard } from "../../../../utils/useAuthGuard"; 
+import { getToken } from "@/utils/auth";
 
 interface BookingItem {
   vehicleModel: string;
@@ -159,32 +160,39 @@ export default function OrdersPage() {
     }).format(amount);
   }
 
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+ const fetchOrders = async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
-      const res = await fetch(`${API_BASE}admin/orders`);
+    const token = getToken(); 
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || `Server error: ${res.status}`);
-      }
+    const res = await fetch(`${API_BASE}admin/orders`, {
+      headers: {
+        Authorization: `Bearer ${token}`,  
+        "Content-Type": "application/json",
+      },
+    });
 
-      const data = await res.json();
-      const list: Order[] = data.data?.orders || [];
-      setOrders(list);
-      setCurrentPage(1);
-    } catch (err: any) {
-      setError(err.message || "Failed to load orders");
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || `Server error: ${res.status}`);
     }
-  };
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+    const data = await res.json();
+    const list: Order[] = data.data?.orders || [];
+    setOrders(list);
+    setCurrentPage(1);
+  } catch (err: any) {
+    setError(err.message || "Failed to load orders");
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  fetchOrders();
+}, []);
 
 
   useEffect(() => {

@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { VehicleConfig, AdditionalCharge } from "./AdminOrderForm";
-import { PricingPreview, getPackagesForOrder} from "../../../../utils/Adminorderapi";
+import { PricingPreview, getPackagesForOrder } from "../../../../utils/Adminorderapi";
 import FormField, { inputClass } from "../../../../components/reusableFormField";
 import { HiOutlinePlus, HiOutlineTrash } from "react-icons/hi2";
 import { IoMdClose } from "react-icons/io";
@@ -242,12 +242,15 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [campaignTypes, setCampaignTypes] = useState<{ _id: string, name: string }[]>([]);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
+  console.log("form",form)
+
   const [editablePackage, setEditablePackage] = useState<Record<string, string>>({});
   const [savingPkg, setSavingPkg] = useState(false);
   const [pkgSaved, setPkgSaved] = useState(false);
   const [changedKeys, setChangedKeys] = useState<string[]>([]);
   const [locationData, setLocationData] = useState<Record<string, string[]>>({});
   const [cityOptions, setCityOptions] = useState<string[]>([]);
+  const [vehicleTypes, setVehicleTypes] = useState([]);
   console.log("locationData", locationData)
 
   const PROMOTER_GENDER_OPTIONS = ["Male", "Female", "Other"];
@@ -330,8 +333,25 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
 
 
   const VEHICLE_TYPES = ["Non-Customizable Vehicle", "Customizable Vehicle"];
-  const filteredModels = packageslist.filter((p) => p.vehicleType === form.vehicleType);
+  const filteredModels = packageslist.filter((p) => p.vehicleType);
 
+
+console.log("filteredModels",filteredModels)
+
+  const fetchVehicleTypes = async () => {
+    try {
+
+      const res = await fetch(`${API_BASE}api/vehicle-types`);
+      if (!res.ok) throw new Error("Failed to fetch packages");
+      const data = await res.json();
+      setVehicleTypes(data.data);
+
+    } catch (err: any) {
+      console.log(err)
+    }
+  };
+
+  useEffect(() => { fetchVehicleTypes(); }, []);
 
 
   const fetchPackages = async () => {
@@ -396,19 +416,19 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     setForm((f) => ({ ...f, vehicleType: type, vehicleModel: "", packageId: "" }));
     setSelectedPackage(null);
 
-    if (type) {
-      setLoadingPkg(true);
-      try {
-        const { packages: pkgs } = await getPackagesForOrder({ vehicleType: type });
-        setPackages(pkgs);
-      } catch (error) {
-        console.error("Error while fetching packages:", error);
-      } finally {
-        setLoadingPkg(false);
-      }
-    } else {
-      setPackages([]);
-    }
+    // if (type) {
+    //   setLoadingPkg(true);
+    //   try {
+    //     const { packages: pkgs } = await getPackagesForOrder({ vehicleType: type });
+    //     setPackages(pkgs);
+    //   } catch (error) {
+    //     console.error("Error while fetching packages:", error);
+    //   } finally {
+    //     setLoadingPkg(false);
+    //   }
+    // } else {
+    //   setPackages([]);
+    // }
   };
 
   const handleVehicleModelChange = (modelId: string) => {
@@ -417,7 +437,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     setForm((f) => ({
       ...f,
       packageId: modelId,
-      vehicleModel: pkg?.vehicleModel || "",
+      vehicleModel: pkg?.vehicleType || "",
     }));
   };
 
@@ -605,8 +625,8 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     return new Intl.NumberFormat("en-IN").format(Number(raw));
   };
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-2">
-      <div className="relative w-full max-w-2xl max-h-[80vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-2">
+      <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
 
 
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
@@ -642,9 +662,16 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                     className={inputClass(!!errors.vehicleModel)}
                   >
                     <option value="">Select model</option>
-                    {filteredModels.map((pkg) => (
+                    {/* {filteredModels.map((pkg) => (
                       <option key={pkg._id} value={pkg._id}>{pkg.vehicleModel}</option>
-                    ))}
+                    ))} */}
+                    // AFTER
+                    {filteredModels.map((pkg) => {
+                      const typeName = vehicleTypes.find(t => t._id === pkg.vehicleType)?.typeName || pkg.vehicleModel;
+                      return (
+                        <option key={pkg._id} value={pkg._id}>{typeName}</option>
+                      );
+                    })}
                   </select>
                 </FormField>
               </div>
@@ -1283,7 +1310,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                       }`}
                   >
                     <option value="+">+ Add</option>
-                    <option value="-">- Reduce</option>
+                    {/* <option value="-">- Reduce</option> */}
                   </select>
 
 

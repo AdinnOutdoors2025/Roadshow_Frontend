@@ -42,10 +42,20 @@ const navItems: NavItem[] = [
   //   name: "User Profile",
   //   path: "/profile",
   // },
+     {
+    name: "StaffAdmin",
+    icon: <ListIcon />,
+    path: "/admin/staff-admin"
+  },
    {
     name: "Order Creation",
     icon: <ListIcon />,
     path: "/admin/order-creation"
+  },
+  {
+    name: "Order Handling",
+    icon: <ListIcon />,
+    path: "/admin/order-handling"
   },
     {
     name: "Package Management",

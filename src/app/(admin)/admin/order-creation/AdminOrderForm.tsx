@@ -9,6 +9,7 @@ import VehicleListStep from "./VehicleListStep";
 import OrderSummaryStep from "./OrderSummaryStep";
 import { Customer, PricingPreview } from "../../../../utils/Adminorderapi";
 import API_BASE from "../../../../../baseurl";
+import { getToken } from "@/utils/auth";
 export interface CustomerFormData {
   name: string;
   phone: string;
@@ -99,6 +100,8 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
     try {
       setSubmitting(true);
 
+        const token = getToken();
+
       const formData = new FormData();
       formData.append("customerName", order.customerForm.name);
       formData.append("customerPhone", order.customerForm.phone);
@@ -177,6 +180,9 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
       const res = await fetch(`${API_BASE}admin/orders/create`, {
         method: "POST",
         body: formData,
+         headers: {
+        Authorization: `Bearer ${token}`, 
+      },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed");
@@ -190,8 +196,8 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
 
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-2" >
-      <div className="relative w-full max-w-3xl max-h-[80vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2" >
+      <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
 
 
         <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
