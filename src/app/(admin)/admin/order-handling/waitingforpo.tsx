@@ -22,10 +22,19 @@ interface PoDocumentLog {
   uploadedAt: string;
 }
 
-const fmtDate = (s?: string) =>
-  s ? new Date(s).toLocaleDateString("en-IN", {
-    day: "2-digit", month: "short", year: "numeric",
-  }) : "—";
+
+
+  function fmtDate(d: string) {
+  if (!d) return "—";
+  return new Date(d).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
 
 const isImageFile = (filename: string) => {
   const ext = filename.split('.').pop()?.toLowerCase();
@@ -42,7 +51,7 @@ function MoveConfirmModal({
 }: {
   customerType: number;
   onYes: () => void;
-  onNo?: () => void;        // only for new customer
+  onNo?: () => void;       
   onCancel: () => void;
   saving: boolean;
 }) {
@@ -221,9 +230,8 @@ export function WaitingForPOSection({ order, onRefresh }: { order: any; onRefres
   const [error, setError] = useState("");
   const [previewLog, setPreviewLog] = useState<PoDocumentLog | null>(null);
 
-  // Modal state: null = hidden, "move" = show modal
   const [showMoveModal, setShowMoveModal] = useState(false);
-  // Which action triggered the modal
+
   const [pendingMoveToStage, setPendingMoveToStage] = useState<string | null>(null);
 
   const logs: PoDocumentLog[] = order.poDocumentLogs || [];
@@ -271,7 +279,7 @@ export function WaitingForPOSection({ order, onRefresh }: { order: any; onRefres
   // "Save PO Document" — just save, stay in waitingForPO
   const handleSaveOnly = () => doSave(undefined);
 
-  // "Save PO & Move" button clicked → show modal
+
   const handleSaveAndMove = () => {
     setError("");
     if (!poFile) return setError("Please upload a PO document");
@@ -311,17 +319,7 @@ export function WaitingForPOSection({ order, onRefresh }: { order: any; onRefres
 
       <div className="bg-white dark:bg-gray-800/50 rounded-xl md:rounded-2xl border border-gray-200/60 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all duration-300">
         {/* Header */}
-        <div className="flex items-center gap-2.5 px-3 md:px-5 py-2.5 md:py-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b border-amber-100 dark:border-amber-900/30">
-          <span className="text-base md:text-lg">📋</span>
-          <h3 className="text-[10px] md:text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
-            PO Documents
-          </h3>
-          {logs.length > 0 && (
-            <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-              {logs.length} doc{logs.length > 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
+      
 
         <div className="p-3 md:p-5 space-y-4 md:space-y-5">
           {/* ── Existing PO Logs ── */}
@@ -344,7 +342,7 @@ export function WaitingForPOSection({ order, onRefresh }: { order: any; onRefres
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
                       {log.uploadedBy && (
                         <span className="flex items-center gap-1 text-[12px] text-gray-500 dark:text-gray-400">
-                          Uploaded BY <User size={10} /> {log.uploadedBy}
+                          Uploaded BY <User size={12} /> {log.uploadedBy}
                         </span>
                       )}
                       <span className="flex items-center gap-1 text-[12px] text-gray-500 dark:text-gray-400">
@@ -352,8 +350,8 @@ export function WaitingForPOSection({ order, onRefresh }: { order: any; onRefres
                       </span>
                     </div>
                     {log.poNotes && (
-                      <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                        <StickyNote size={10} /> {log.poNotes}
+                      <p className="mt-1 text-[12px] text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                        <StickyNote size={12} /> {log.poNotes}
                       </p>
                     )}
                   </div>
@@ -454,4 +452,22 @@ export function WaitingForPOSection({ order, onRefresh }: { order: any; onRefres
       </div>
     </>
   );
+}
+
+export function WaitingForPOHeader({ order }: { order: any }) {
+    const logs = order.poDocumentLogs || [];
+    
+    return (
+        <div className="flex items-center gap-2.5">
+            <span className="text-base md:text-lg">📋</span>
+            <h3 className="text-[10px] md:text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+                PO Documents
+            </h3>
+            {logs.length > 0 && (
+                <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                    {logs.length} doc{logs.length > 1 ? "s" : ""}
+                </span>
+            )}
+        </div>
+    );
 }

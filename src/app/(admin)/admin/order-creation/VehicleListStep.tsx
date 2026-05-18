@@ -17,6 +17,7 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
   const [showModal, setShowModal] = useState(false);
   const [editingV, setEditingV] = useState<VehicleConfig | null>(null);
   const [error, setError] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const openAdd = () => { setEditingV(null); setShowModal(true); };
   const openEdit = (v: VehicleConfig) => { setEditingV(v); setShowModal(true); };
@@ -29,7 +30,7 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
     setError("");
   };
 
-  console.log("vehicles", vehicles)
+ 
 
 
   const formatDate = (dateStr: string) => {
@@ -123,6 +124,12 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
                   <button onClick={() => remove(v.id)} className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-red-400 hover:bg-red-50 hover:text-red-600 transition-all dark:border-gray-700 dark:bg-gray-800">
                     <HiOutlineTrash className="h-3.5 w-3.5" />
                   </button>
+                  <button
+                    onClick={() => setExpandedId(expandedId === v.id ? null : v.id)}
+                    className="inline-flex items-center justify-center h-8 px-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-all dark:border-gray-700 dark:bg-gray-800"
+                  >
+                    {expandedId === v.id ? "Hide" : "Details"}
+                  </button>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -135,8 +142,14 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
                 )}
                 {v.quantity > 1 && <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">Qty: {v.quantity}</span>}
                 {!v.pricing && <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600">Pricing pending</span>}
+               
               </div>
+               {expandedId === v.id && v.pricing && (
+  <PricingBreakdown vehicle={v} formatINR={formatINR} />
+)}
             </div>
+
+            
           ))}
 
 
@@ -147,41 +160,44 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
                 Order Total ({vehicles.length} vehicle{vehicles.length > 1 ? "s" : ""})
               </p>
 
-           
+
               <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                 <span>Subtotal (excl. GST)</span>
-             <span>{formatINR(subTotal)}</span>
+                <span>{formatINR(subTotal)}</span>
               </div>
 
-            
+
               {totalDiscount > 0 && (
                 <>
                   <div className="flex justify-between text-sm text-red-500">
                     <span>Discount</span>
-                  <span>-{formatINR(totalDiscount)}</span>
+                    <span>-{formatINR(totalDiscount)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                     <span>Taxable Amount</span>
-                     <span>{formatINR(taxableAmount)}</span>
+                    <span>{formatINR(taxableAmount)}</span>
                   </div>
                 </>
               )}
 
-           
+
               <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                 <span>GST (18%)</span>
-               <span>{formatINR(totalGst)}</span>
+                <span>{formatINR(totalGst)}</span>
               </div>
 
-        
+
               <div className="flex justify-between text-base font-bold text-gray-900 dark:text-white border-t border-blue-100 dark:border-blue-900/30 pt-1.5 mt-1">
                 <span>Grand Total</span>
-               <span>{formatINR(grandTotal)}</span>
+                <span>{formatINR(grandTotal)}</span>
               </div>
             </div>
           )}
         </div>
+        
       )}
+
+      
 
       {error && <p className="text-xs text-red-500">{error}</p>}
 
@@ -197,6 +213,50 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
       </div>
 
       {showModal && <VehicleFormModal editing={editingV} onSave={handleSave} onClose={() => { setShowModal(false); setEditingV(null); }} />}
+    </div>
+  );
+}
+
+
+function PricingBreakdown({ vehicle: v, formatINR }: { vehicle: VehicleConfig; formatINR: (n: number) => string }) {
+  const p = v.pricing!;
+  // const rows: { label: string; amount: number }[] = [
+  //   { label: `Rental (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × Qty ${v.quantity})`, amount: p.rentalCost },
+  //   { label: `Driver (${p.totalDays}D × ${formatINR(p.driverCharges)} × Qty ${v.quantity})`, amount: p.driverCost },
+  // ];
+  const rows: { label: string; amount: number }[] = [
+  { label: `Rental (Driver charges included) (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × Qty ${v.quantity})`, amount: p.rentalCost + p.driverCost },
+];
+  if (v.needPromoter && p.promoterCost > 0)
+    rows.push({ label: `Promoter (${p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${v.promoterQuantity} promoter)`, amount: p.promoterCost });
+  rows.push({ label: "RTO Charges", amount: p.rtoCost });
+  if ((p as any).extraKmCost > 0)
+    rows.push({ label: `Extra KM / K (${v.extraKm} × ${formatINR((p as any).dailyKmcharges || 0)})`, amount: (p as any).extraKmCost });
+  if ((p as any).extraHourCost > 0)
+    rows.push({ label: `Extra Hours / H (${v.extraHours} × ${formatINR(p.additionalHourCharges)})`, amount: (p as any).extraHourCost });
+
+  v.additionalCharges.filter(c => c.label).forEach(c => {
+    rows.push({ label: `${c.label}`, amount: c.mode === "+" ? c.amount : -c.amount });
+  });
+
+  return (
+    <div className="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3 space-y-1">
+      {rows.map((r, i) => (
+        <div key={i} className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+          <span>{r.label}</span>
+          <span className={r.amount < 0 ? "text-red-500" : ""}>{r.amount < 0 ? "-" : ""}{formatINR(Math.abs(r.amount))}</span>
+        </div>
+      ))}
+      {(p as any).additionalCuts > 0 && (
+        <div className="flex justify-between text-xs text-red-500 font-medium">
+          <span>Total Discount</span>
+          <span>-{formatINR((p as any).additionalCuts)}</span>
+        </div>
+      )}
+      <div className="flex justify-between text-xs font-semibold text-gray-700 dark:text-gray-200 border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
+        <span>Total (excl. GST)</span>
+        <span>{formatINR(p.totalAmount)}</span>
+      </div>
     </div>
   );
 }

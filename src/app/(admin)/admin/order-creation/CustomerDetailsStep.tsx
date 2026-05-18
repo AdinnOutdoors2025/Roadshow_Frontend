@@ -8,17 +8,17 @@ import { Customer, createCustomer, searchCustomers } from "../../../../utils/Adm
 
 interface Props {
   data: CustomerFormData;
-  customerSelection: CustomerSelection;
+  customerSelection: CustomerSelection
   onChange: (d: Partial<CustomerFormData>) => void;
   onCustomerChange: (d: Partial<CustomerSelection>) => void;
   onNext: () => void;
- 
+
 }
 
 type PhoneStatus = "idle" | "checking" | "found" | "not_found" | "creating" | "created" | "error";
 
 export default function CustomerDetailsStep({ data, customerSelection, onChange, onCustomerChange, onNext }: Props) {
-const [errors, setErrors] = useState<Partial<Record<keyof CustomerFormData | "email", string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof CustomerFormData | "email", string>>>({});
   const [phoneStatus, setPhoneStatus] = useState<PhoneStatus>("idle");
   const [phoneError, setPhoneError] = useState("");
   const [globalError, setGlobalError] = useState("");
@@ -26,7 +26,7 @@ const [errors, setErrors] = useState<Partial<Record<keyof CustomerFormData | "em
 
   const selectedType = customerSelection.type;
 
-
+console.log("customerSelection",customerSelection)
   const selectType = (t: "existing" | "new") => {
     onCustomerChange({ type: t, customer: null });
     setErrors({});
@@ -55,15 +55,24 @@ const [errors, setErrors] = useState<Partial<Record<keyof CustomerFormData | "em
     else if (!/^[6-9]\d{9}$/.test(data.phone.trim())) e.phone = "Enter a valid 10-digit mobile number";
     if (!data.name.trim()) e.name = "Customer name is required";
     if (!data.address.trim()) e.address = "Address is required";
-    
 
-    if (data.email && data.email.trim()) {
+
+    // if (data.email && data.email.trim()) {
+    //   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    //   if (!emailRegex.test(data.email.trim())) {
+    //     e.email = "Please enter a valid email address";
+    //   }
+    // }
+
+    if (!data.email || !data.email.trim()) {
+      e.email = "Email is required";
+    } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(data.email.trim())) {
         e.email = "Please enter a valid email address";
       }
     }
-    
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -86,37 +95,42 @@ const [errors, setErrors] = useState<Partial<Record<keyof CustomerFormData | "em
     }
 
 
-if (selectedType === "existing") {
+    if (selectedType === "existing") {
 
-  const existCustomer = {
-    
-    name: data.name,
-    phone: data.phone,
-    address: data.address,
-    email: data.email || "",
-  };
-  onCustomerChange({ 
-    customer: { ...existCustomer, customerType: 0 } as any, 
-    type: "existing" 
-  });
-  onNext();
-  return;
-}
-    
+      const existCustomer = {
+
+        name: data.name,
+        phone: data.phone,
+        address: data.address,
+        email: data.email || "",
+      };
+      onCustomerChange({
+        customer: { ...existCustomer, customerType: 0 } as any,
+        type: "existing"
+      });
+      onNext();
+      return;
+    }
 
 
     if (selectedType === "new") {
       try {
         setPhoneStatus("creating");
-        const { customer } = await createCustomer({
+        const { customer, alreadyExists } = await createCustomer({
           name: data.name,
           phone: data.phone,
           address: data.address,
           email: data.email,
         });
 
-        onCustomerChange({ customer: { ...customer, customerType: 1 } as any, type: "new" });
-        setPhoneStatus("created");
+        if (alreadyExists) {
+        
+          onCustomerChange({ customer: { ...customer, customerType: 0 } as any, type: "existing" });
+          setPhoneStatus("found");
+        } else {
+          onCustomerChange({ customer: { ...customer, customerType: 1 } as any, type: "new" });
+          setPhoneStatus("created");
+        }
         onNext();
       } catch (e: any) {
         setPhoneStatus("error");
@@ -169,7 +183,7 @@ if (selectedType === "existing") {
         </FormField>
 
 
-        <FormField label="Email (Optional)" error={errors.email}>
+        <FormField label="Email" error={errors.email} required>
           <input
             type="email"
             value={data.email || ""}

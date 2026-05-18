@@ -60,6 +60,7 @@ export interface VehicleConfig {
   promoterGender: string;
   promoterLanguage: string;
   promoterQuantity: number;
+  dailyKmcharges: any,
 }
 
 export interface OrderState {
@@ -94,107 +95,75 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
 
-  const handleSubmit = async () => {
-    const { customerSelection, vehicles } = order;
-    if (!customerSelection.customer) return;
-    try {
-      setSubmitting(true);
 
-        const token = getToken();
+const handleSubmit = async () => {
+  const { customerSelection, vehicles } = order;
+  if (!customerSelection.customer) return;
+  try {
+    setSubmitting(true);
+    const token = getToken();
+    const formData = new FormData();
 
-      const formData = new FormData();
-      formData.append("customerName", order.customerForm.name);
-      formData.append("customerPhone", order.customerForm.phone);
-      formData.append("customerAddress", order.customerForm.address);
-      formData.append("customerEmail", order.customerForm.email || "");
-      const customerType = order.customerSelection.type === "existing" ? 0 : 1;
-      formData.append("customerType", String(customerType));
+    formData.append("customerName", order.customerForm.name);
+    formData.append("customerPhone", order.customerForm.phone);
+    formData.append("customerAddress", order.customerForm.address);
+    formData.append("customerEmail", order.customerForm.email || "");
+    formData.append("customerType", order.customerSelection.type === "existing" ? "0" : "1");
 
-     
-      const taxableAmount = vehicles.reduce((s, v) => s + (v.pricing?.subtotal || 0), 0);
+    vehicles.forEach((v, i) => {
+      const vData = {
+        packageId: v.packageId,
+        bookingFor: v.bookingFor,
+        gstNumber: v.gstNumber || "",
+        campaignType: v.campaignType,
+        otherCampaignType: v.otherCampaignType,
+        fromDate: v.fromDate,
+        toDate: v.toDate,
+        state: v.state,
+        city: v.city,
+        fromLocation: v.fromLocation,
+        toLocation: v.toLocation,
+        quantity: v.quantity,
+        extraKm: v.extraKm,
+        extraDays: v.extraDays,
+        extraHours: v.extraHours,
+        needPromoter: v.needPromoter,
+        promoterType: v.promoterType,
+        promoterGender: v.promoterGender,
+        promoterLanguage: v.promoterLanguage,
+        promoterQuantity: v.promoterQuantity,
+        otherPromoterType: v.otherPromoterType,
+        additionalCharges: v.additionalCharges.map((c) => ({
+          label: c.label,
+          mode: c.mode,
+          amount: c.amount,
+        })),
+      };
 
-      const grandGst = Math.floor(taxableAmount * 0.18);
-      const grandTotal = taxableAmount + grandGst;
+      formData.append(`vehicle_${i}`, JSON.stringify(vData));
 
-
-      formData.append("grandTotal", String(grandTotal));
-      formData.append("grandGst", String(grandGst));
-
-      vehicles.forEach((v, i) => {
-        const vData = {
-          packageId: v.packageId,
-          bookingFor: v.bookingFor,
-          gstNumber: v.gstNumber || "",
-          campaignType: v.campaignType,
-          otherCampaignType: v.otherCampaignType,
-          fromDate: v.fromDate,
-          toDate: v.toDate,
-          state: v.state,
-          city: v.city,
-          fromLocation: v.fromLocation,
-          toLocation: v.toLocation,
-          quantity: v.quantity,
-          extraKm: v.extraKm,
-          extraDays: v.extraDays,
-          extraHours: v.extraHours,
-          needPromoter: v.needPromoter,
-          promoterType: v.promoterType,
-          promoterGender: v.promoterGender,
-          promoterLanguage: v.promoterLanguage,
-          promoterQuantity: v.promoterQuantity,
-          otherPromoterType: v.otherPromoterType,
-          additionalCharges: v.additionalCharges.map((c) => ({
-            label: c.label,
-            mode: c.mode,
-            amount: c.amount,
-          })),
-          pricing: v.pricing
-            ? {
-              totalDays: v.pricing.totalDays,
-              dailyKmLimit: v.pricing.dailyKmLimit,
-              rentalCost: v.pricing.rentalCost,
-              driverCost: v.pricing.driverCost,
-              promoterCost: v.pricing.promoterCost,
-              rtoCost: v.pricing.rtoCost,
-              extraKmCost: (v.pricing as any).extraKmCost || 0,
-              extraHourCost: (v.pricing as any).extraHourCost || 0,
-              additionalNet: (v.pricing as any).additionalNet || 0,
-              additionalCuts: (v.pricing as any).additionalCuts || 0,
-              subtotal: v.pricing.subtotal,
-              taxableAmount: v.pricing.taxableAmount,
-              totalAmount: v.pricing.totalAmount,
-            }
-            : null,
-        };
-
-        formData.append(`vehicle_${i}`, JSON.stringify(vData));
-
-        (v.campaignImages as File[]).forEach((file) => {
-          formData.append(`campaignImages_${i}`, file);
-        });
-        (v.campaignVideos as File[]).forEach((file) => {
-          formData.append(`campaignVideos_${i}`, file);
-        });
+      (v.campaignImages as File[]).forEach((file) => {
+        formData.append(`campaignImages_${i}`, file);
       });
-
-      const res = await fetch(`${API_BASE}admin/orders/create`, {
-        method: "POST",
-        body: formData,
-         headers: {
-        Authorization: `Bearer ${token}`, 
-      },
+      (v.campaignVideos as File[]).forEach((file) => {
+        formData.append(`campaignVideos_${i}`, file);
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed");
-      onSuccess(data.orderId);
-    } catch (err: any) {
-      alert(err.message || "Failed to create order");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    });
 
-
+    const res = await fetch(`${API_BASE}admin/orders/create`, {
+      method: "POST",
+      body: formData,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed");
+    onSuccess(data.data.orderId); // ✅ successResponse wraps in data
+  } catch (err: any) {
+    alert(err.message || "Failed to create order");
+  } finally {
+    setSubmitting(false);
+  }
+};
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2" >
       <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">

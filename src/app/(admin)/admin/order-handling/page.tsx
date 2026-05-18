@@ -114,6 +114,27 @@ const fmtDatetime = (s?: string) =>
         })
         : "—";
 
+const fmtDatetimenew = (s?: string) => {
+    if (!s) return { date: "—", time: "" };
+    const d = new Date(s);
+    const date = d.toLocaleString("en-IN", {
+        day: "2-digit", month: "short", year: "numeric",
+    });
+    const time = d.toLocaleString("en-IN", {
+        hour: "2-digit", minute: "2-digit",
+    });
+    return { date, time };
+};
+
+// const fmtDatetime = (s?: string) =>
+//     s
+//         ? new Date(s).toLocaleString("en-IN", {
+//             day: "2-digit", month: "short", year: "numeric",
+//             hour: "2-digit", minute: "2-digit",
+//             hour12: false,   // ← 24hr format, "am/pm" disappears
+//         }).replace(/,/g, "")  // clean up commas
+//         : "—";
+
 
 
 export default function PipelineBoard() {
@@ -122,17 +143,11 @@ export default function PipelineBoard() {
 
         handlerName: "",
         custType: null as 0 | 1 | null,
-
-
         discountType: "amount" as "amount" | "percent",
         discountValue: "",
-
-
         poFile: null as File | null,
         poDate: "",
         poNotes: "",
-
-
         advPayment: "",
         paymentProofFile: null as File | null,
         paymentDate: "",
@@ -226,154 +241,6 @@ export default function PipelineBoard() {
 
 
 
-    // const onDrop = (toStage: string) => {
-    //     const order = dragOrder.current;
-    //     if (!order || dragFrom.current === toStage) return;
-
-    //     const fromStage = dragFrom.current;
-
-
-    //     const stageIndex = STAGES.map(s => s.key);
-    //     const inProgressIdx = stageIndex.indexOf("inProgress");
-    //     const fromIdx = stageIndex.indexOf(fromStage);
-    //     const toIdx = stageIndex.indexOf(toStage);
-
-    //     // If moving forward past inProgress, but order hasn't been through inProgress
-    //     const hasCompletedInProgress = order.pipelineLogs?.some(
-    //         log => log.toStage === "inProgress"
-    //     );
-
-    //     if (
-    //         toStage !== "inProgress" &&
-    //         toStage !== "closedLost" &&   // closedLost always allow
-    //         fromStage === "todo" &&
-    //         !hasCompletedInProgress
-    //     ) {
-    //         toast.error("Please move to In Progress first before proceeding!");
-    //         return;
-    //     }
-
-    //    
-    //     // "complete" = inProgress modal submit ஆச்சா (handlerName set ஆச்சா)
-    //     if (
-    //         fromStage !== "todo" &&
-    //         order.pipelineLogs?.some(log => log.toStage === "inProgress") &&
-    //         !order.handlerName &&
-    //         toStage !== "closedLost"
-    //     ) {
-    //         toast.error("In Progress stage is not complete yet!");
-    //         return;
-    //     }
-
-    //     // existing logic continues...
-    //     if (dragFrom.current === "todo" && toStage === "inProgress") {
-    //         if (currentUserIsAdmin === 0) {
-    //             commitMove(order, toStage, {});
-    //         } else {
-    //             setConfirmMove({ order, toStage });
-    //         }
-    //         return;
-    //     }
-
-    //     if (toStage === "projectCodeCreation") {
-    //         setProjectCodeConfirm(order);
-    //         return;
-    //     }
-
-    //     if (toStage === "inProgress") {
-    //         resetForm();
-    //         setModalError("");
-    //         setDropTarget({ order, toStage });
-    //         return;
-    //     }
-
-    //     commitMove(order, toStage, {});
-    // };
-
-    // const onDrop = (toStage: string) => {
-    //     const order = dragOrder.current;
-    //     if (!order || dragFrom.current === toStage) return;
-
-    //     const fromStage = dragFrom.current;
-
-    //     // ── Existing: must go through inProgress first ──────────────
-    //     const hasCompletedInProgress = order.pipelineLogs?.some(
-    //         log => log.toStage === "inProgress"
-    //     );
-    //     if (
-    //         toStage !== "inProgress" &&
-    //         toStage !== "closedLost" &&
-    //         fromStage === "todo" &&
-    //         !hasCompletedInProgress
-    //     ) {
-    //         toast.error("Please move to In Progress first before proceeding!");
-    //         return;
-    //     }
-
-    //     // ── Existing: inProgress not yet complete ───────────────────
-    //     if (
-    //         fromStage !== "todo" &&
-    //         order.pipelineLogs?.some(log => log.toStage === "inProgress") &&
-    //         !order.handlerName &&
-    //         toStage !== "closedLost"
-    //     ) {
-    //         toast.error("In Progress stage is not complete yet!");
-    //         return;
-    //     }
-
-    //     // ── NEW: WaitingForPO routing ────────────────────────────────
-    //     if (fromStage === "waitingForPO" && toStage !== "closedLost") {
-    //         const hasPoDocument = (order.poDocumentLogs?.length ?? 0) > 0;
-
-    //         if (!hasPoDocument) {
-    //             toast.error("Please upload a PO document first before moving to the next stage!");
-    //             return;
-    //         }
-
-    //         const isExisting = order.customerType === 0;
-    //         const isNew = order.customerType === 1;
-
-    //         // Existing customer: only projectCodeCreation allowed, block paymentStage1
-    //         if (isExisting && toStage === "paymentStage1") {
-    //             toast.error("Existing customers must move to Project Code Creation, not Payment Stage 1.");
-    //             return;
-    //         }
-
-    //         // New customer: paymentStage1 is the direct path — allow immediately
-    //         // New customer: projectCodeCreation needs confirmation modal
-    //         if (isNew && toStage === "projectCodeCreation") {
-    //             setProjectCodeConfirm(order);
-    //             return;
-    //         }
-
-    //         // Existing customer: projectCodeCreation → allow (direct commitMove below)
-    //         // New customer: paymentStage1 → allow (direct commitMove below)
-    //     }
-
-    //     // ── Existing handlers ────────────────────────────────────────
-    //     if (dragFrom.current === "todo" && toStage === "inProgress") {
-    //         if (currentUserIsAdmin === 0) {
-    //             commitMove(order, toStage, {});
-    //         } else {
-    //             setConfirmMove({ order, toStage });
-    //         }
-    //         return;
-    //     }
-
-    //     if (toStage === "projectCodeCreation") {
-    //         setProjectCodeConfirm(order);
-    //         return;
-    //     }
-
-    //     if (toStage === "inProgress") {
-    //         resetForm();
-    //         setModalError("");
-    //         setDropTarget({ order, toStage });
-    //         return;
-    //     }
-
-    //     commitMove(order, toStage, {});
-    // };
 
     const onDrop = (toStage: string) => {
         const order = dragOrder.current;
@@ -584,38 +451,6 @@ export default function PipelineBoard() {
         <div className="flex flex-col  h-full ">
             <Toaster position="top-right" />
 
-            {/* <div className="flex flex-col gap-4 px-4 pt-4">
-
-                <div className="flex gap-3" style={{ minWidth: "max-content" }}>
-                    {ROW1.map((stage) => (
-                        <StageColumn
-                            key={stage.key}
-                            stage={stage}
-                            orders={grouped[stage.key] || []}
-                            onDrop={onDrop}
-                            onDragStart={onDragStart}
-                            onCardClick={setDrawerOrder}
-                        />
-                    ))}
-                </div>
-
-
-                <div className="border-t-2 border-dashed border-gray-200 dark:border-gray-700 mx-2" />
-
-
-                <div className="flex gap-3" style={{ minWidth: "max-content" }}>
-                    {ROW2.map((stage) => (
-                        <StageColumn
-                            key={stage.key}
-                            stage={stage}
-                            orders={grouped[stage.key] || []}
-                            onDrop={onDrop}
-                            onDragStart={onDragStart}
-                            onCardClick={setDrawerOrder}
-                        />
-                    ))}
-                </div>
-            </div> */}
 
             <div className="flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4 pb-2">
                 <div className="flex flex-col gap-4" style={{ minWidth: "max-content" }}>
@@ -978,18 +813,6 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
                 </p>
 
 
-                {/* {!isInProgressComplete && order.pipelineStatus === "todo" && (
-                    <span className="text-[9px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full">
-                        ⚠️ Start In Progress first
-                    </span>
-                )}
-
-                {order.pipelineStatus === "waitingForPO" &&
-                    (order.poDocumentLogs?.length ?? 0) === 0 && (
-                        <span className="text-[9px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full">
-                            📎 Upload PO to proceed
-                        </span>
-                    )} */}
 
                 <span
                     className="text-[10px] font-medium px-2 py-0.5 rounded-full"
@@ -1026,60 +849,26 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
                     <span />
                 )}
 
-                <span className="
-                    text-[10px] text-gray-500 dark:text-gray-400 
-                    flex items-center gap-1
-                ">
-                    <Clock size={12} />
-                    {fmtDatetime(order.updatedAt)}
-                </span>
+
+
+                <div className="flex flex-col items-end shrink-0 ml-2">
+                    <span className="text-[11px] text-gray-400 dark:text-gray-500 leading-none mb-0.5">
+                        Updated at
+                    </span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        {fmtDatetimenew(order.updatedAt).date}
+                    </span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1 whitespace-nowrap">
+                        <Clock size={11} />
+                        {fmtDatetimenew(order.updatedAt).time}
+                    </span>
+                </div>
             </div>
         </div>
     );
 }
 
 
-// function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
-//     stage: { key: string; label: string; color: string; bg: string; dot: string };
-//     orders: Order[];
-//     onDrop: (stageKey: string) => void;
-//     onDragStart: (order: Order, stageKey: string) => void;
-//     onCardClick: (order: Order) => void;
-// }) {
-//     return (
-//         <div
-//             className="flex flex-col w-56 flex-shrink-0"
-//             onDragOver={(e) => e.preventDefault()}
-//             onDrop={() => onDrop(stage.key)}
-//         >
-
-//             <div className={`flex items-center justify-between px-3 py-2 rounded-xl mb-2 ${stage.bg}`}>
-//                 <div className="flex items-center gap-2 min-w-0">
-//                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${stage.dot}`} />
-//                     <span className={`text-xs font-semibold truncate ${stage.color}`}>
-//                         {stage.label}
-//                     </span>
-//                 </div>
-//                 <span className={`ml-1 flex-shrink-0 text-xs font-bold px-1.5 py-0.5 rounded-full ${stage.bg} ${stage.color} border border-current border-opacity-20`}>
-//                     {orders.length}
-//                 </span>
-//             </div>
-
-
-//             <div className="flex flex-col gap-2 min-h-[60px]">
-//                 {orders.map((order) => (
-//                     <OrderCard
-//                         key={order._id}
-//                         order={order}
-//                         stageKey={stage.key}
-//                         onDragStart={() => onDragStart(order, stage.key)}
-//                         onClick={() => onCardClick(order)}
-//                     />
-//                 ))}
-//             </div>
-//         </div>
-//     );
-// }
 
 function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
     stage: { key: string; label: string; color: string; bg: string; dot: string };
@@ -1095,7 +884,7 @@ function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
             onDragOver={(e) => e.preventDefault()}
             onDrop={() => onDrop(stage.key)}
         >
-            {/* Stage Header — fixed, scroll ஆகாது */}
+         
             <div className={`flex items-center justify-between px-3 py-2 rounded-xl mb-2 flex-shrink-0 ${stage.bg}`}>
                 <div className="flex items-center gap-2 min-w-0">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${stage.dot}`} />

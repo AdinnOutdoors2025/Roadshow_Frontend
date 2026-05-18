@@ -49,14 +49,20 @@ interface PaymentStageFirst {
 const fmt = (n?: number | null) =>
   n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
 
-const fmtDate = (s?: string) =>
-  s
-    ? new Date(s).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    })
-    : "—";
+
+
+    
+  function fmtDate(d: string) {
+  if (!d) return "—";
+  return new Date(d).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
 
 const formatIndianNumber = (value: string | number) => {
   if (!value) return "";
@@ -67,7 +73,7 @@ const formatIndianNumber = (value: string | number) => {
 };
 
 // ─── DragDropFileInput ──────────────────────────────────────────────────────────
-// Reusable drag-drop file upload component
+
 function DragDropFileInput({
   file,
   onFileChange,
@@ -194,8 +200,7 @@ export function PaymentStage1Section({
   // Form state
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [advPayment, setAdvPayment] = useState("");
-  const [paymentDate, setPaymentDate] = useState("");
-  const [paymentVerification, setPaymentVerification] = useState("");
+ 
   const [paymentNotes, setPaymentNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -204,45 +209,42 @@ export function PaymentStage1Section({
   const [showConfirm, setShowConfirm] = useState(false);
   const [movingSaving, setMovingSaving] = useState(false);
 
-  const handleSave = async () => {
-    setError("");
-    if (!proofFile) return setError("Please upload payment proof");
-    if (!advPayment) return setError("Advance payment amount is required");
-    if (!paymentDate) return setError("Payment date is required");
-    if (!paymentVerification) return setError("Please select verification status");
 
-    setSaving(true);
-    try {
-      const token = getToken();
-      const fd = new FormData();
-      fd.append("pipelineStatus", "paymentStage1");
-      fd.append("paymentProofDocument", proofFile);
-      fd.append("advancePayment", advPayment);
-      fd.append("paymentDate", paymentDate);
-      fd.append("paymentVerification", paymentVerification);
-      if (paymentNotes.trim()) fd.append("paymentNotes", paymentNotes.trim());
+const handleSave = async () => {
+  setError("");
+  if (!proofFile) return setError("Please upload payment proof");
+  if (!advPayment) return setError("Advance payment amount is required");
 
-      await axios.patch(`${API_BASE}admin/pipeline/${order._id}`, fd, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
 
-      toast.success("Payment details saved!");
-      // Reset form
-      setProofFile(null);
-      setAdvPayment("");
-      setPaymentDate("");
-      setPaymentVerification("");
-      setPaymentNotes("");
-      await onRefresh();
-    } catch (e: any) {
-      const msg = e?.response?.data?.message || "Something went wrong";
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setSaving(false);
-    }
-  };
+  setSaving(true);
+  try {
+    const token = getToken();
+    const fd = new FormData();
+    fd.append("pipelineStatus", "paymentStage1");
+    fd.append("paymentProofDocument", proofFile);
+    fd.append("advancePayment", advPayment);
+    fd.append("paymentDate", new Date().toISOString()); 
+    fd.append("paymentVerification", "Verified");       
+    if (paymentNotes.trim()) fd.append("paymentNotes", paymentNotes.trim());
 
+    await axios.patch(`${API_BASE}admin/pipeline/${order._id}`, fd, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    toast.success("Payment details saved!");
+    setProofFile(null);
+    setAdvPayment("");
+   
+    setPaymentNotes("");
+    await onRefresh();
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || "Something went wrong";
+    setError(msg);
+    toast.error(msg);
+  } finally {
+    setSaving(false);
+  }
+};
   const handleMoveToProjectCode = async () => {
     setMovingSaving(true);
     try {
@@ -272,17 +274,6 @@ export function PaymentStage1Section({
     <>
       <div className="bg-white dark:bg-gray-800/50 rounded-xl md:rounded-2xl border border-gray-200/60 dark:border-gray-700/50 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
      
-        <div className="flex items-center gap-2.5 px-3 md:px-5 py-2.5 md:py-3 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-b border-orange-100 dark:border-orange-900/30">
-          <span className="text-base md:text-lg">💳</span>
-          <h3 className="text-[10px] md:text-xs font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">
-            Payment Processing Stage 1
-          </h3>
-          {logs.length > 0 && (
-            <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
-              {logs.length} payment{logs.length > 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
 
         <div className="p-3 md:p-5 space-y-4 md:space-y-5">
 
@@ -307,9 +298,9 @@ export function PaymentStage1Section({
                         <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
                           Payment {i + 1}
                         </p>
-                        <p className="text-[10px] text-gray-400">
+                        {/* <p className="text-[10px] text-gray-400">
                           {fmtDate(log.uploadedAt)}
-                        </p>
+                        </p> */}
                       </div>
                     </div>
             
@@ -319,9 +310,9 @@ export function PaymentStage1Section({
                   </div>
 
            
-                  <div className="grid grid-cols-2 gap-2 text-[10px] mt-2">
+                  <div className="grid grid-cols-2 gap-2 text-[12px] mt-2">
                     <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-                      <Calendar size={10} />
+                      <Calendar size={12} />
                       <span>{fmtDate(log.paymentDate)}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -337,13 +328,13 @@ export function PaymentStage1Section({
                     </div>
                     {log.uploadedBy && (
                       <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-                        <User size={10} />
+                        <User size={12} />
                         <span>{log.uploadedBy}</span>
                       </div>
                     )}
                     {log.paymentNotes && (
                       <div className="col-span-2 flex items-start gap-1.5 text-gray-400">
-                        <StickyNote size={10} className="flex-shrink-0 mt-0.5" />
+                        <StickyNote size={12} className="flex-shrink-0 mt-0.5" />
                         <span>{log.paymentNotes}</span>
                       </div>
                     )}
@@ -356,7 +347,7 @@ export function PaymentStage1Section({
                     rel="noreferrer"
                     className="mt-2 flex items-center gap-2 text-[11px] text-sky-600 dark:text-sky-400 hover:underline"
                   >
-                    <Download size={11} />
+                    <Download size={12} />
                     View Payment Proof
                   </a>
                 </div>
@@ -417,20 +408,7 @@ export function PaymentStage1Section({
 
 
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                    Payment Date <span className="text-red-500">*</span>
-                  </label>
-
-                  <DatePicker
-                    value={paymentDate}
-                    onChange={setPaymentDate}
-                    label="Payment Date"
-                    required
-                  />
-
-
-                </div>
+               
               </div>
 
               {/* Payment Proof Upload */}
@@ -444,33 +422,6 @@ export function PaymentStage1Section({
                   onRemove={() => setProofFile(null)}
                   label="Drag & drop or click to upload proof"
                 />
-              </div>
-
-              {/* Payment Date */}
-
-
-              {/* Payment Verification */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                  Verification Status <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {["Verified", "Pending"].map((v) => (
-                    <button
-                      key={v}
-                      type="button"
-                      onClick={() => setPaymentVerification(v)}
-                      className={`py-2.5 px-4 rounded-xl border-2 text-sm font-semibold transition-all flex items-center justify-center gap-2 ${paymentVerification === v
-                          ? v === "Verified"
-                            ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300"
-                            : "border-yellow-500 bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300"
-                          : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300"
-                        }`}
-                    >
-                      {v === "Verified" ? "✓" : "⏳"} {v}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Payment Notes */}
@@ -584,4 +535,22 @@ export function PaymentStage1Section({
       )}
     </>
   );
+}
+
+export function PaymentStage1Header({ order }: { order: any }) {
+    const logs = order.paymentStageFirst || [];
+    
+    return (
+        <div className="flex items-center gap-2.5">
+            <span className="text-base md:text-lg">💳</span>
+            <h3 className="text-[10px] md:text-xs font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">
+                Payment Processing Stage 1
+            </h3>
+            {logs.length > 0 && (
+                <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
+                    {logs.length} payment{logs.length > 1 ? "s" : ""}
+                </span>
+            )}
+        </div>
+    );
 }
