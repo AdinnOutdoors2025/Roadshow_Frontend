@@ -537,20 +537,3 @@ const handleSave = async () => {
   );
 }
 
-export function PaymentStage1Header({ order }: { order: any }) {
-    const logs = order.paymentStageFirst || [];
-    
-    return (
-        <div className="flex items-center gap-2.5">
-            <span className="text-base md:text-lg">💳</span>
-            <h3 className="text-[10px] md:text-xs font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">
-                Payment Processing Stage 1
-            </h3>
-            {logs.length > 0 && (
-                <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
-                    {logs.length} payment{logs.length > 1 ? "s" : ""}
-                </span>
-            )}
-        </div>
-    );
-}

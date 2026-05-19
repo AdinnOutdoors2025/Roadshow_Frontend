@@ -477,23 +477,3 @@ export default function NegotiationForm({ order, onNegotiationSaved }: Negotiati
     );
 }
 
-
-
-export function NegotiationHeader({ order }: { order: any }) {
-    const previousLogs = order.negotiationLogs || [];
-    const filteredLogs = previousLogs.filter((log: any) => (log.discountAmount || 0) > 0);
-    
-    return (
-        <div className="flex items-center gap-2.5">
-            <span className="text-lg">💰</span>
-            <h3 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                Customer Negotiation
-            </h3>
-            {previousLogs.length > 0 && (
-                <span className="ml-auto px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-                    {filteredLogs.length} discount{filteredLogs.length !== 1 ? 's' : ''}
-                </span>
-            )}
-        </div>
-    );
-}

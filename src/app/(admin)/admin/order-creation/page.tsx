@@ -4,12 +4,13 @@
 
 import React, { useEffect, useState } from "react";
 import AdminOrderForm from "./AdminOrderForm";
-import { HiOutlineShoppingBag, HiOutlineEye } from "react-icons/hi";
+import { HiOutlineShoppingBag, HiOutlineEye, HiOutlineDocumentText } from "react-icons/hi";
 import { HiOutlinePlus, HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi2";
 import API_BASE from "../../../../../baseurl";
 import { useAuthGuard } from "../../../../utils/useAuthGuard";
 import { getToken } from "@/utils/auth";
 import { useVehicle } from './../../../../../src/context/vehicletypecontext';
+import OrderPDFView from "./print";
 
 interface BookingItem {
   vehicleModel: string;
@@ -166,8 +167,9 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedpdf, setSelectedpdf] = useState<Order | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
+  console.log("selectedOrder", selectedOrder)
 
   const [filterPipeline, setFilterPipeline] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -180,7 +182,7 @@ export default function OrdersPage() {
 
 
   const { vehicleTypes, fetchVehicleTypes } = useVehicle();
- 
+
 
 
   useEffect(() => {
@@ -538,18 +540,18 @@ export default function OrdersPage() {
 
 
                           <td className="px-5 py-4">
-                            <p className="font-bold text-gray-900 dark:text-white">
+                            {/* <p className="font-bold text-gray-900 dark:text-white">
                               ₹{displayTotal ? displayTotal.toLocaleString("en-IN") : "—"}
-                            </p>
+                            </p> */}
 
-                            {order.grandNegotiationTotal &&
+                            {/* {order.grandNegotiationTotal &&
                               order.grandNegotiationTotal > 0 &&
-                              order.grandNegotiationTotal !== order.grandTotal && (
-                                <p className="text-[10px] text-gray-400 line-through">
-                                  ₹{formatINR(order.grandTotal)}
-                                </p>
-                              )
-                            }
+                              order.grandNegotiationTotal !== order.grandTotal && ( */}
+                            <p className="text-[13px] text-gray-400">
+                              ₹{formatINR(order.grandTotal)}
+                            </p>
+                            {/* )
+                            } */}
                           </td>
 
 
@@ -582,6 +584,14 @@ export default function OrdersPage() {
                                 className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
                               >
                                 <HiOutlineEye className="h-4 w-4" />
+                              </button>
+
+                              <button
+                                onClick={() => setSelectedpdf(order)}
+                                title="PDF"
+                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                              >
+                                <HiOutlineDocumentText className="h-4 w-4" />
                               </button>
 
 
@@ -695,6 +705,15 @@ export default function OrdersPage() {
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
           vehicleTypes={vehicleTypes}
+        />
+      )}
+
+      {selectedpdf && (
+        <OrderPDFView
+          order={selectedpdf}
+          onClose={() => setSelectedpdf(null)}
+           vehicleTypes={vehicleTypes}
+
         />
       )}
 
@@ -952,18 +971,18 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                           <span>💰</span> Price Breakdown
                         </p>
                         <div className="space-y-2">
-                          {(item.rentalCost || item.driverCost) ? (
+                          {(item.rentalCost) ? (
                             <div className="flex justify-between items-center py-1">
                               <span className="text-gray-600 dark:text-gray-400 text-sm">
                                 Rental & Driver Charges
                               </span>
                               <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{((item.rentalCost || 0) + (item.driverCost || 0)).toLocaleString("en-IN")}
+                                ₹{((item.rentalCost || 0)).toLocaleString("en-IN")}
                               </span>
                             </div>
                           ) : null}
 
-                          {item.promoterCost && item.promoterCost > 0 && (
+                          {item.promoterCost > 0 && (
                             <div className="flex justify-between items-center py-1">
                               <span className="text-gray-600 dark:text-gray-400 text-sm">
                                 Promoter Charges ({item.totalDays}D × ₹{item.promoterChargePerDay?.toLocaleString("en-IN")} × {item.promoterQuantity})
@@ -974,7 +993,16 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                             </div>
                           )}
 
-                          {item.rtoCost && (
+                          {/* {item.rtoCost && (
+                            <div className="flex justify-between items-center py-1">
+                              <span className="text-gray-600 dark:text-gray-400 text-sm">RTO Charges</span>
+                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
+                                ₹{item.rtoCost.toLocaleString("en-IN")}
+                              </span>
+                            </div>
+                          )} */}
+
+                          {item.rtoCost > 0 && (
                             <div className="flex justify-between items-center py-1">
                               <span className="text-gray-600 dark:text-gray-400 text-sm">RTO Charges</span>
                               <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
@@ -983,7 +1011,7 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                             </div>
                           )}
 
-                          {item.extraKmCost && item.extraKmCost > 0 && (
+                          {item.extraKmCost > 0 && (
                             <div className="flex justify-between items-center py-1">
                               <span className="text-gray-600 dark:text-gray-400 text-sm">
                                 Extra KM Charges ({item.extraKm} km × ₹{item.dailyKmcharges?.toLocaleString("en-IN")})
@@ -994,7 +1022,7 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                             </div>
                           )}
 
-                          {item.extraHourCost && item.extraHourCost > 0 && (
+                          {item.extraHourCost > 0 && (
                             <div className="flex justify-between items-center py-1">
                               <span className="text-gray-600 dark:text-gray-400 text-sm">
                                 Extra Hours Charges ({item.extraHours} hrs × ₹{item.additionalHourCharges?.toLocaleString("en-IN")})
@@ -1083,9 +1111,13 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
             const Taxableamount = bookingItems.reduce((s, item) => s + (item.subtotal || 0), 0) + totalDiscount;
             const totalGst = Math.floor(subTotal * 0.18);
             const grandTotal = subTotal + totalGst;
-            const finalDisplayTotal = order.grandNegotiationTotal && order.grandNegotiationTotal > 0
-              ? order.grandNegotiationTotal
-              : order.grandTotal || grandTotal;
+            // const finalDisplayTotal = order.grandNegotiationTotal && order.grandNegotiationTotal > 0
+            //   ? order.grandNegotiationTotal
+            //   : order.grandTotal || grandTotal;
+            const finalDisplayTotal = order.grandTotal
+
+
+
 
             return (
               <div className=" rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-5 shadow-lg">
@@ -1116,12 +1148,12 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                     <span className="text-gray-900 dark:text-white font-semibold text-lg">₹{formatINR(order.grandGst || totalGst)}</span>
                   </div>
 
-                  {order.grandNegotiationTotal && order.grandNegotiationTotal > 0 && order.grandNegotiationTotal !== order.grandTotal && (
+                  {/* {order.grandNegotiationTotal && order.grandNegotiationTotal > 0 && order.grandNegotiationTotal !== order.grandTotal && (
                     <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
                       <span className="text-gray-500 text-base line-through">Original Total</span>
                       <span className="text-gray-500 text-base line-through">₹{formatINR(order.grandTotal)}</span>
                     </div>
-                  )}
+                  )} */}
 
                   <div className="flex justify-between items-center pt-3 mt-2 border-t-2 border-blue-300 dark:border-blue-700">
                     <span className="text-xl font-bold text-gray-900 dark:text-white">Grand Total</span>

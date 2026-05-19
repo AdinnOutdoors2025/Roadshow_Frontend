@@ -114,7 +114,7 @@ function calcPricing(
     return c.mode === "+" ? acc + amt : acc;
   }, 0);
 
-  const subtotal = rentalCost + driverCost + promoterCost + rtoCost + extraKmCost + extraHourCost + additionalAdds;
+  const subtotal = rentalCost + promoterCost + rtoCost + extraKmCost + extraHourCost + additionalAdds;
 
 
   const MAX_DISCOUNT_PCT = parseFloat(process.env.NEXT_PUBLIC_MAX_DISCOUNT_PERCENT || "15");
@@ -247,7 +247,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [packageslist, setPackageslist] = useState<PackageOption[]>([]);
   const [campaignTypes, setCampaignTypes] = useState<{ _id: string, name: string }[]>([]);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
-
+console.log("selectedPackage",selectedPackage)
 
   const [editablePackage, setEditablePackage] = useState<Record<string, string>>({});
   const [savingPkg, setSavingPkg] = useState(false);
@@ -390,6 +390,8 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
       .catch(() => { });
   }, []);
 
+  console.log("packageslist",packageslist)
+
   useEffect(() => {
     if (editing?.packageId && packageslist.length > 0) {
       const match = packageslist.find((p) => p._id === editing.packageId);
@@ -509,53 +511,108 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     rtoCharges: "RTO",
     dailyKmLimit: "KM Limit",
     additionalHourCharges: "Extra hr charge",
-    promoterChargePerDay: "Promoter/day",
+    promoterChargePerDay: "Promoter/day", 
   };
+
+  // const handleSavePackageChanges = async () => {
+  //   if (!selectedPackage) return;
+
+
+  //   const emptyFields = Object.entries(editablePackage)
+  //     .filter(([_, v]) => v === "" || v === ".")
+  //     .map(([k]) => FIELD_LABELS[k] || k);
+
+  //   if (emptyFields.length > 0) {
+  //     alert(`Please fill: ${emptyFields.join(", ")}`);
+  //     return;
+  //   }
+
+  //   setSavingPkg(true);
+  //   try {
+  //     const numericPayload = Object.fromEntries(
+  //       Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
+  //     );
+
+  //     const res = await fetch(`${API_BASE}packages/${selectedPackage._id}`, {
+  //       method: "PUT",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(numericPayload),
+  //     });
+  //     const data = await res.json();
+  //     if (!res.ok) throw new Error(data.message || "Update failed");
+
+
+  //     const summary = changedKeys
+  //       .map(k => `${FIELD_LABELS[k]}: ₹${selectedPackage[k as keyof PackageOption]} → ₹${editablePackage[k]}`)
+  //       .join("\n");
+
+  //     setSelectedPackage(prev => prev ? { ...prev, ...numericPayload } : prev);
+  //     setPkgSaved(true);
+  //     setChangedKeys([]);
+
+  //     if (summary) alert(`✅ Package updated!\n\n${summary}`);
+
+  //   } catch (err: any) {
+  //     alert(err.message || "Failed to update package");
+  //   } finally {
+  //     setSavingPkg(false);
+  //   }
+  // };
+
 
   const handleSavePackageChanges = async () => {
-    if (!selectedPackage) return;
+  if (!selectedPackage) return;
 
+  const emptyFields = Object.entries(editablePackage)
+    .filter(([_, v]) => v === "" || v === ".")
+    .map(([k]) => FIELD_LABELS[k] || k);
 
-    const emptyFields = Object.entries(editablePackage)
-      .filter(([_, v]) => v === "" || v === ".")
-      .map(([k]) => FIELD_LABELS[k] || k);
+  if (emptyFields.length > 0) {
+    alert(`Please fill: ${emptyFields.join(", ")}`);
+    return;
+  }
 
-    if (emptyFields.length > 0) {
-      alert(`Please fill: ${emptyFields.join(", ")}`);
-      return;
-    }
+  setSavingPkg(true);
+  try {
+    const numericPayload = Object.fromEntries(
+      Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
+    );
 
-    setSavingPkg(true);
-    try {
-      const numericPayload = Object.fromEntries(
-        Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
-      );
+    // ✅ Extract the vehicleType ID from selectedPackage
+    const vehicleTypeId =
+      typeof selectedPackage.vehicleType === "object"
+        ? selectedPackage.vehicleType._id
+        : selectedPackage.vehicleType;
 
-      const res = await fetch(`${API_BASE}packages/${selectedPackage._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(numericPayload),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Update failed");
+    const res = await fetch(`${API_BASE}packages/${selectedPackage._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...numericPayload,
+        vehicleType: vehicleTypeId,        
+        vehicleModel: selectedPackage.vehicleModel, 
+      }),
+    });
 
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Update failed");
 
-      const summary = changedKeys
-        .map(k => `${FIELD_LABELS[k]}: ₹${selectedPackage[k as keyof PackageOption]} → ₹${editablePackage[k]}`)
-        .join("\n");
+    const summary = changedKeys
+      .map(k => `${FIELD_LABELS[k]}: ₹${selectedPackage[k as keyof PackageOption]} → ₹${editablePackage[k]}`)
+      .join("\n");
 
-      setSelectedPackage(prev => prev ? { ...prev, ...numericPayload } : prev);
-      setPkgSaved(true);
-      setChangedKeys([]);
+    setSelectedPackage(prev => prev ? { ...prev, ...numericPayload } : prev);
+    setPkgSaved(true);
+    setChangedKeys([]);
 
-      if (summary) alert(`✅ Package updated!\n\n${summary}`);
+    if (summary) alert(`✅ Package updated!\n\n${summary}`);
 
-    } catch (err: any) {
-      alert(err.message || "Failed to update package");
-    } finally {
-      setSavingPkg(false);
-    }
-  };
+  } catch (err: any) {
+    alert(err.message || "Failed to update package");
+  } finally {
+    setSavingPkg(false);
+  }
+};
 
 
   const handleSave = async () => {
@@ -1256,7 +1313,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
 
                     <SummaryRow
                       label={`Rental (Driver charges included) (${p.totalDays}D × ${formatINR(selectedPackage.perDayRentalCost)} × Qty ${form.quantity})`}
-                      val={p.rentalCost + p.driverCost}
+                      val={p.rentalCost}
                       isLast={false}
                       hasCharges={form.additionalCharges.length > 0}
                       onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}

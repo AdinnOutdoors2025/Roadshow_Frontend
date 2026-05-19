@@ -645,7 +645,7 @@ export default function DetailDrawer({
                 <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-3 md:space-y-5 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
 
                     {/* ── 1. Customer Information ── */}
-                    <Section icon="👤" title="Customer Information" accent="from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20" defaultOpen={true}>
+                    <Section icon="👤" title="Customer Information" accent="from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20" defaultOpen={false}>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
                             <InfoChip icon={<Hash size={14} />} label="Order ID" value={order.orderId} />
                             <InfoChip icon={<Phone size={14} />} label="Phone" value={`+91 ${order.phone}`} />
@@ -686,7 +686,7 @@ export default function DetailDrawer({
                         icon="📅"
                         title="Vehicle Bookings"
                         accent="from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20"
-                        defaultOpen={true}
+                        defaultOpen={false}
                         badge={
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
                                 {order.bookingItems.length} vehicle{order.bookingItems.length > 1 ? "s" : ""}

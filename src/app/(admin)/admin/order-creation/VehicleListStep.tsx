@@ -225,7 +225,7 @@ function PricingBreakdown({ vehicle: v, formatINR }: { vehicle: VehicleConfig; f
   //   { label: `Driver (${p.totalDays}D × ${formatINR(p.driverCharges)} × Qty ${v.quantity})`, amount: p.driverCost },
   // ];
   const rows: { label: string; amount: number }[] = [
-  { label: `Rental (Driver charges included) (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × Qty ${v.quantity})`, amount: p.rentalCost + p.driverCost },
+  { label: `Rental (Driver charges included) (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × Qty ${v.quantity})`, amount: p.rentalCost },
 ];
   if (v.needPromoter && p.promoterCost > 0)
     rows.push({ label: `Promoter (${p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${v.promoterQuantity} promoter)`, amount: p.promoterCost });

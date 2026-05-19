@@ -454,20 +454,3 @@ export function WaitingForPOSection({ order, onRefresh }: { order: any; onRefres
   );
 }
 
-export function WaitingForPOHeader({ order }: { order: any }) {
-    const logs = order.poDocumentLogs || [];
-    
-    return (
-        <div className="flex items-center gap-2.5">
-            <span className="text-base md:text-lg">📋</span>
-            <h3 className="text-[10px] md:text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
-                PO Documents
-            </h3>
-            {logs.length > 0 && (
-                <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-                    {logs.length} doc{logs.length > 1 ? "s" : ""}
-                </span>
-            )}
-        </div>
-    );
-}
