@@ -256,15 +256,15 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
       newErrors.inactiveReason = "Inactive reason is required";
     }
     if (!form.vehicleType) newErrors.vehicleType = "Vehicle type is required";
-    if (!form.vehicleModel) newErrors.vehicleModel = "Vehicle model is required";
+    // if (!form.vehicleModel) newErrors.vehicleModel = "Vehicle model is required";
     if (!form.perDayRentalCost || form.perDayRentalCost <= 0) newErrors.perDayRentalCost = "Enter a valid cost";
     if (!form.dailyKmLimit || form.dailyKmLimit <= 0) newErrors.dailyKmLimit = "Enter a valid KM limit";
     if (!form.additionalHourCharges || form.additionalHourCharges <= 0)
       newErrors.additionalHourCharges = "Enter valid charges";
-    if (form.promoterAvailable && (!form.promoterChargePerDay || form.promoterChargePerDay <= 0)) {
-      newErrors.promoterChargePerDay = "Enter promoter charge per day";
-    }
-    if (!form.driverCharges || form.driverCharges <= 0) newErrors.driverCharges = "Enter driver charges";
+    // if (form.promoterAvailable && (!form.promoterChargePerDay || form.promoterChargePerDay <= 0)) {
+    //   newErrors.promoterChargePerDay = "Enter promoter charge per day";
+    // }
+    // if (!form.driverCharges || form.driverCharges <= 0) newErrors.driverCharges = "Enter driver charges";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -379,7 +379,17 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
               {loadingTypes && <p className="text-xs text-gray-400 mt-1">Loading vehicle types...</p>}
             </FormField>
 
-            <FormField label="Vehicle Model" error={errors.vehicleModel} required>
+             <FormField label="Per Day Rental Cost (₹)" error={errors.perDayRentalCost} required>
+              <input
+                type="text"
+                value={form.perDayRentalCost ? formatAmount(form.perDayRentalCost) : ""}
+                onChange={(e) => handleAmountChange("perDayRentalCost", e.target.value)}
+                placeholder="e.g. 5,000"
+                className={inputClass(!!errors.perDayRentalCost)}
+              />
+            </FormField>
+
+            {/* <FormField label="Vehicle Model" error={errors.vehicleModel} required>
               <select
                 value={form.vehicleModel}
                 onChange={(e) => handleChange("vehicleModel", e.target.value)}
@@ -393,20 +403,12 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                   </option>
                 ))}
               </select>
-            </FormField>
+            </FormField> */}
           </div>
 
           {/* Rest of the form fields (same as before) */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="Per Day Rental Cost (₹)" error={errors.perDayRentalCost} required>
-              <input
-                type="text"
-                value={form.perDayRentalCost ? formatAmount(form.perDayRentalCost) : ""}
-                onChange={(e) => handleAmountChange("perDayRentalCost", e.target.value)}
-                placeholder="e.g. 5,000"
-                className={inputClass(!!errors.perDayRentalCost)}
-              />
-            </FormField>
+           
 
             <FormField label="Daily KM Limit" error={errors.dailyKmLimit} required>
               <input
@@ -415,6 +417,16 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                 onChange={(e) => handleAmountChange("dailyKmLimit", e.target.value)}
                 placeholder="e.g. 100"
                 className={inputClass(!!errors.dailyKmLimit)}
+              />
+            </FormField>
+
+             <FormField label="Per KM Charge (₹)">
+              <input
+                type="text"
+                value={form.perKmCharge ? formatAmount(form.perKmCharge) : ""}
+                onChange={(e) => handleAmountChange("perKmCharge", e.target.value)}
+                placeholder="e.g. 12"
+                className={inputClass(false)}
               />
             </FormField>
           </div>
@@ -430,7 +442,17 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
               />
             </FormField>
 
-            <FormField label="End User Customization Permission">
+              <FormField label="RTO Charges (₹)">
+              <input
+                type="text"
+                value={form.rtoCharges ? formatAmount(form.rtoCharges) : ""}
+                onChange={(e) => handleAmountChange("rtoCharges", e.target.value)}
+                placeholder="e.g. 500"
+                className={inputClass(false)}
+              />
+            </FormField>
+
+            {/* <FormField label="End User Customization Permission">
               <select
                 value={form.endUserCustomizationPermission ? "yes" : "no"}
                 onChange={(e) => handleChange("endUserCustomizationPermission", e.target.value === "yes")}
@@ -439,10 +461,10 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
               </select>
-            </FormField>
+            </FormField> */}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Promoter Available">
               <select
                 value={form.promoterAvailable ? "yes" : "no"}
@@ -465,10 +487,10 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                 />
               </FormField>
             )}
-          </div>
+          </div> */}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="Driver Charges (₹)" error={errors.driverCharges}>
+            {/* <FormField label="Driver Charges (₹)" error={errors.driverCharges}>
               <input
                 type="text"
                 value={form.driverCharges ? formatAmount(form.driverCharges) : ""}
@@ -476,29 +498,13 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                 placeholder="e.g. 800"
                 className={inputClass(!!errors.driverCharges)}
               />
-            </FormField>
+            </FormField> */}
 
-            <FormField label="RTO Charges (₹)">
-              <input
-                type="text"
-                value={form.rtoCharges ? formatAmount(form.rtoCharges) : ""}
-                onChange={(e) => handleAmountChange("rtoCharges", e.target.value)}
-                placeholder="e.g. 500"
-                className={inputClass(false)}
-              />
-            </FormField>
+          
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="Per KM Charge (₹)">
-              <input
-                type="text"
-                value={form.perKmCharge ? formatAmount(form.perKmCharge) : ""}
-                onChange={(e) => handleAmountChange("perKmCharge", e.target.value)}
-                placeholder="e.g. 12"
-                className={inputClass(false)}
-              />
-            </FormField>
+           
           </div>
 
           <div className="flex items-center justify-start gap-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800">

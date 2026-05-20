@@ -78,10 +78,11 @@ interface Order {
   createdAt: string;
   handlername?: string;
   grandNegotiationTotal?: number;
-  campaignType?: string
+  campaignType?: number
   grandGst?: number
   dailyKmcharges?: number
   customerType: string
+  
 }
 
 
@@ -168,6 +169,7 @@ export default function OrdersPage() {
   const [showForm, setShowForm] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedpdf, setSelectedpdf] = useState<Order | null>(null);
+  const [selectedpdfWithoutHistory, setSelectedpdfWithoutHistory] = useState<Order | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   console.log("selectedOrder", selectedOrder)
 
@@ -574,10 +576,10 @@ export default function OrdersPage() {
                             {formatDate(order.createdAt)}
                           </td>
 
-
-                          <td className="px-5 py-4">
+                          {/* <td className="px-5 py-4">
                             <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity duration-150">
 
+                             
                               <button
                                 onClick={() => setSelectedOrder(order)}
                                 title="View"
@@ -586,35 +588,72 @@ export default function OrdersPage() {
                                 <HiOutlineEye className="h-4 w-4" />
                               </button>
 
+                             
                               <button
                                 onClick={() => setSelectedpdf(order)}
-                                title="PDF"
-                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                title="PDF With History"
+                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-green-400 hover:bg-green-50 hover:text-green-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
                               >
                                 <HiOutlineDocumentText className="h-4 w-4" />
                               </button>
 
+                            
+                              <button
+                                onClick={() => setSelectedpdfWithoutHistory(order)}
+                                title="PDF Without History"
+                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                              >
+                                <HiOutlineDocumentText className="h-4 w-4" />
+                              </button>
 
-                              {/* {order.orderStatus !== "Confirmed" && order.orderStatus !== "Cancelled" && (
+                            </div>
+                          </td> */}
+
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity duration-150">
+
+                              {/* View Button */}
+                              <div className="relative group/tooltip">
                                 <button
-                                  onClick={() => setEditingOrder(order)}
-                                  title="Edit"
-                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                  onClick={() => setSelectedOrder(order)}
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
                                 >
-                                  <HiOutlinePencil className="h-4 w-4" />
+                                  <HiOutlineEye className="h-4 w-4" />
                                 </button>
-                              )} */}
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none dark:bg-gray-700">
+                                  View Details
+                                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></span>
+                                </span>
+                              </div>
 
-
-                              {/* {order.orderStatus !== "Confirmed" && (
+                              {/* PDF With History */}
+                              <div className="relative group/tooltip">
                                 <button
-                                  onClick={() => setDeletingOrder(order)}
-                                  title="Delete"
-                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-red-400 hover:bg-red-50 hover:text-red-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                  onClick={() => setSelectedpdf(order)}
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-green-400 hover:bg-green-50 hover:text-green-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
                                 >
-                                  <HiOutlineTrash className="h-4 w-4" />
+                                  <HiOutlineDocumentText className="h-4 w-4" />
                                 </button>
-                              )} */}
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none dark:bg-gray-700">
+                                  PDF With History
+                                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></span>
+                                </span>
+                              </div>
+
+                              {/* PDF Without History */}
+                              <div className="relative group/tooltip">
+                                <button
+                                  onClick={() => setSelectedpdfWithoutHistory(order)}
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                >
+                                  <HiOutlineDocumentText className="h-4 w-4" />
+                                </button>
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none dark:bg-gray-700">
+                                  PDF Without History
+                                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></span>
+                                </span>
+                              </div>
+
                             </div>
                           </td>
                         </tr>
@@ -708,12 +747,32 @@ export default function OrdersPage() {
         />
       )}
 
+      {/* {selectedpdf && (
+        <OrderPDFView
+          order={selectedpdf}
+          onClose={() => setSelectedpdf(null)}
+          vehicleTypes={vehicleTypes}
+
+        />
+      )} */}
+
+
       {selectedpdf && (
         <OrderPDFView
           order={selectedpdf}
           onClose={() => setSelectedpdf(null)}
-           vehicleTypes={vehicleTypes}
+          vehicleTypes={vehicleTypes}
+          showHistory={true}
+        />
+      )}
 
+
+      {selectedpdfWithoutHistory && (
+        <OrderPDFView
+          order={selectedpdfWithoutHistory}
+          onClose={() => setSelectedpdfWithoutHistory(null)}
+          vehicleTypes={vehicleTypes}
+          showHistory={false}
         />
       )}
 
@@ -751,7 +810,16 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
     return vehicle?.typeName || vehicleTypeId;
   };
 
-
+const fmtDate = (d?: string): string => {
+  if (!d) return "—";
+  return new Date(d).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 
   return (
@@ -817,12 +885,12 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                     }`}>
                     <span className={`w-2 h-2 rounded-full ${order.customerType === 1 ? 'bg-green-500' : 'bg-blue-500'
                       }`}></span>
-                    {order.customerType === 1 ? '🆕 New Customer' : '⭐ Existing Customer'}
+                    {order.customerType === 1 ? '🆕 Organization' : '⭐ Individual'}
                   </span>
                 </div>
               </div>
 
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-2">
+              {/* <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">📊</span>
@@ -832,7 +900,7 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                     {pipeline.label}
                   </span>
                 </div>
-              </div>
+              </div> */}
 
               {order.handlername && (
                 <div className="flex items-center gap-3">
@@ -865,7 +933,7 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
               </p>
             </div>
             <div className="space-y-4">
-              {(order.bookingItems || []).map((item, i) => {
+              {(order.bookingItems || []).map((item:any, i) => {
                 const baseDays = item.fromDate && item.toDate
                   ? Math.ceil(
                     (new Date(item.toDate).getTime() - new Date(item.fromDate).getTime()) / 86400000
@@ -890,9 +958,7 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                           <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
                             {item.vehicleModel || "Vehicle Details"}
                           </p>
-                          {/* {item.vehicleType && (
-                            <p className="text-sm text-gray-500 mt-0.5">{item.vehicleType}</p>
-                          )} */}
+
                           {item.vehicleType && (
                             <p className="text-sm text-gray-500 mt-0.5">
                               {getVehicleTypeName(item.vehicleType)}
@@ -910,7 +976,7 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                     <div className="p-4 space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {[
-                          { icon: "👤", label: "Booking For", value: item.bookingFor || "—" },
+                          // { icon: "👤", label: "Booking For", value: item.bookingFor || "—" },
                           { icon: "🎯", label: "Campaign", value: item.campaignType === "Other" ? (item.otherCampaignType || "Other") : (item.campaignType || "—") },
                           { icon: "📅", label: "Duration", value: durationLabel && item.totalDays ? `${durationLabel} (${item.totalDays} Days Total)` : "—" },
                           { icon: "📍", label: "Location", value: [item.state, item.city].filter(Boolean).join(" / ") || "—" },
@@ -982,7 +1048,7 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                             </div>
                           ) : null}
 
-                          {item.promoterCost > 0 && (
+                         {(item.promoterCost ?? 0) > 0 && (
                             <div className="flex justify-between items-center py-1">
                               <span className="text-gray-600 dark:text-gray-400 text-sm">
                                 Promoter Charges ({item.totalDays}D × ₹{item.promoterChargePerDay?.toLocaleString("en-IN")} × {item.promoterQuantity})
@@ -993,16 +1059,8 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                             </div>
                           )}
 
-                          {/* {item.rtoCost && (
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-600 dark:text-gray-400 text-sm">RTO Charges</span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{item.rtoCost.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          )} */}
 
-                          {item.rtoCost > 0 && (
+                         {(item.rtoCost ?? 0) > 0 && (
                             <div className="flex justify-between items-center py-1">
                               <span className="text-gray-600 dark:text-gray-400 text-sm">RTO Charges</span>
                               <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
@@ -1011,7 +1069,7 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                             </div>
                           )}
 
-                          {item.extraKmCost > 0 && (
+                        {(item.extraKmCost ?? 0) > 0 && (
                             <div className="flex justify-between items-center py-1">
                               <span className="text-gray-600 dark:text-gray-400 text-sm">
                                 Extra KM Charges ({item.extraKm} km × ₹{item.dailyKmcharges?.toLocaleString("en-IN")})
@@ -1022,7 +1080,7 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
                             </div>
                           )}
 
-                          {item.extraHourCost > 0 && (
+                         {(item.extraHourCost ?? 0) > 0 && (
                             <div className="flex justify-between items-center py-1">
                               <span className="text-gray-600 dark:text-gray-400 text-sm">
                                 Extra Hours Charges ({item.extraHours} hrs × ₹{item.additionalHourCharges?.toLocaleString("en-IN")})
@@ -1100,66 +1158,235 @@ function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onC
           </section>
 
           {/* Order Total Summary */}
+          {/* ── Order Total Summary (REPLACE existing one) ── */}
           {(() => {
             const bookingItems = order.bookingItems || [];
-            const totalDiscount = bookingItems.reduce((s, item) =>
-              s + (item.additionalFields || [])
-                .filter((c) => c.mode === "-")
-                .reduce((a, c) => a + Number(c.amount), 0), 0
+
+            const subtotal = bookingItems.reduce((s, item) => s + (item.subtotal || item.totalAmount || 0), 0);
+
+            const negotiationLogs = (order.negotiationLogs || []).filter(
+              (l) => (l.discountAmount || 0) > 0
             );
-            const subTotal = bookingItems.reduce((s, item) => s + (item.subtotal || 0), 0);
-            const Taxableamount = bookingItems.reduce((s, item) => s + (item.subtotal || 0), 0) + totalDiscount;
-            const totalGst = Math.floor(subTotal * 0.18);
-            const grandTotal = subTotal + totalGst;
-            // const finalDisplayTotal = order.grandNegotiationTotal && order.grandNegotiationTotal > 0
-            //   ? order.grandNegotiationTotal
-            //   : order.grandTotal || grandTotal;
-            const finalDisplayTotal = order.grandTotal
+            const totalDiscount = negotiationLogs.reduce((s, l) => s + (l.discountAmount || 0), 0);
 
+            const taxable = subtotal - totalDiscount;
+            const gstAmt = Math.floor(taxable * 0.18);
+            const grandTotal = taxable + gstAmt;
 
-
+            const paymentLogs = order.paymentStageFirst || [];
+            const totalAdvance = paymentLogs.reduce((s, l) => s + (l.advancePayment || 0), 0);
+            const balanceDue = grandTotal - totalAdvance;
 
             return (
-              <div className=" rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-5 shadow-lg">
+              <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-5 shadow-lg">
                 <p className="text-base font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300 mb-4 flex items-center gap-2">
-                  <span>💰</span> Order Summary ({bookingItems.length} vehicle{bookingItems.length > 1 ? "s" : ""})
+                  <span>💰</span> Financial Summary ({bookingItems.length} vehicle{bookingItems.length > 1 ? "s" : ""})
                 </p>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
+                  {/* Subtotal */}
                   <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                    <span className="text-gray-700 dark:text-gray-300 text-base">Subtotal (excl. GST)</span>
-                    <span className="text-gray-900 dark:text-white font-semibold text-lg">₹{formatINR(Taxableamount)}</span>
+                    <span className="text-gray-700 dark:text-gray-300 text-sm">Subtotal (excl. GST)</span>
+                    <span className="text-gray-900 dark:text-white font-semibold text-base">₹{formatINR(subtotal)}</span>
                   </div>
 
+                  {/* Discount */}
                   {totalDiscount > 0 && (
                     <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                      <span className="text-red-600 dark:text-red-400 text-base font-medium">Discount Applied</span>
-                      <span className="text-red-600 dark:text-red-400 font-bold text-lg">-₹{formatINR(totalDiscount)}</span>
+                      <span className="text-red-600 dark:text-red-400 text-sm font-medium">Total Discount Applied</span>
+                      <span className="text-red-600 dark:text-red-400 font-bold text-base">−₹{formatINR(totalDiscount)}</span>
                     </div>
                   )}
 
+                  {/* Taxable Amount */}
                   <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                    <span className="text-gray-700 dark:text-gray-300 text-base">Taxable Amount</span>
-                    <span className="text-gray-900 dark:text-white font-semibold text-lg">₹{formatINR(subTotal)}</span>
+                    <span className="text-gray-700 dark:text-gray-300 text-sm">Taxable Amount</span>
+                    <span className="text-gray-900 dark:text-white font-semibold text-base">₹{formatINR(taxable)}</span>
                   </div>
 
+                  {/* GST */}
                   <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                    <span className="text-gray-700 dark:text-gray-300 text-base">GST (18%)</span>
-                    <span className="text-gray-900 dark:text-white font-semibold text-lg">₹{formatINR(order.grandGst || totalGst)}</span>
+                    <span className="text-gray-700 dark:text-gray-300 text-sm">GST (18%)</span>
+                    <span className="text-gray-900 dark:text-white font-semibold text-base">₹{formatINR(order.grandGst || gstAmt)}</span>
                   </div>
 
-                  {/* {order.grandNegotiationTotal && order.grandNegotiationTotal > 0 && order.grandNegotiationTotal !== order.grandTotal && (
+                  {/* Advance Paid */}
+                  {totalAdvance > 0 && (
                     <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                      <span className="text-gray-500 text-base line-through">Original Total</span>
-                      <span className="text-gray-500 text-base line-through">₹{formatINR(order.grandTotal)}</span>
+                      <span className="text-orange-600 dark:text-orange-400 text-sm font-medium">Advance Paid</span>
+                      <span className="text-orange-600 dark:text-orange-400 font-bold text-base">−₹{formatINR(totalAdvance)}</span>
                     </div>
-                  )} */}
+                  )}
 
+                  {/* Grand Total */}
                   <div className="flex justify-between items-center pt-3 mt-2 border-t-2 border-blue-300 dark:border-blue-700">
                     <span className="text-xl font-bold text-gray-900 dark:text-white">Grand Total</span>
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">₹{formatINR(finalDisplayTotal)}</span>
+                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">₹{formatINR(grandTotal)}</span>
                   </div>
+
+                  {/* Balance Due */}
+                  {totalAdvance > 0 && (
+                    <div className="flex justify-between items-center pt-2 border-t border-blue-200 dark:border-blue-700">
+                      <span className="text-base font-bold text-green-700 dark:text-green-400">Balance Due</span>
+                      <span className="text-lg font-bold text-green-600 dark:text-green-400">₹{formatINR(balanceDue)}</span>
+                    </div>
+                  )}
                 </div>
+              </div>
+            );
+          })()}
+
+
+        
+          {(() => {
+            const negotiationLogs = (order.negotiationLogs || []).filter(
+              (l) => (l.discountAmount || 0) > 0
+            );
+            const poLogs = order.poDocumentLogs || [];
+            const paymentLogs = order.paymentStageFirst || [];
+
+            const totalDiscount = negotiationLogs.reduce((s, l) => s + (l.discountAmount || 0), 0);
+
+        
+            if (negotiationLogs.length === 0 && poLogs.length === 0 && paymentLogs.length === 0) return null;
+
+            return (
+              <div className="space-y-4">
+                {/* Section Header */}
+                <div className="pt-2 pb-3 border-b-2 border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                    All History Status
+                  </h3>
+                </div>
+
+                {/* Negotiation Logs */}
+                {negotiationLogs.length > 0 && (
+                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-gray-200 dark:border-gray-700">
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                        <span className="text-sm">🏷️</span>
+                      </div>
+                      <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                        Discount Negotiation History
+                      </span>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {negotiationLogs.map((log, i) => (
+                        <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-red-400 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-white">{i + 1}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                              {log.movedBy || "Unknown"}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">{fmtDate(log.movedAt)}</p>
+                            {log.discountNotes && (
+                              <p className="text-xs text-gray-500 mt-1">Notes: {log.discountNotes}</p>
+                            )}
+                          </div>
+                          <span className="text-base font-bold text-red-600 dark:text-red-400 font-mono flex-shrink-0">
+                            −₹{formatINR(log.discountAmount || 0)}
+                          </span>
+                        </div>
+                      ))}
+
+                      {negotiationLogs.length > 1 && (
+                        <div className="flex justify-end mt-2">
+                          <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg px-4 py-2">
+                            <span className="text-sm font-bold text-red-700 dark:text-red-400">
+                              Total Discount: −₹{formatINR(totalDiscount)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* PO Documents */}
+                {poLogs.length > 0 && (
+                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-gray-200 dark:border-gray-700">
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                        <span className="text-sm">📄</span>
+                      </div>
+                      <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                        PO Documents
+                      </span>
+                      <span className="ml-auto text-xs text-gray-500">{poLogs.length} document(s)</span>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {poLogs.map((log, i) => (
+                        <div key={log._id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-white">PO</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                              Purchase Order {i + 1}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Date: {fmtDate(log.poDate)}
+                              {log.uploadedBy ? ` • By: ${log.uploadedBy}` : ""}
+                            </p>
+                            {log.poNotes && (
+                              <p className="text-xs text-gray-500 mt-0.5">Notes: {log.poNotes}</p>
+                            )}
+                          </div>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            ✓ Uploaded
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Payment History */}
+                {paymentLogs.length > 0 && (
+                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3 bg-orange-50 dark:bg-orange-900/20 border-b border-gray-200 dark:border-gray-700">
+                      <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center">
+                        <span className="text-sm">💳</span>
+                      </div>
+                      <span className="text-sm font-semibold text-orange-800 dark:text-orange-300">
+                        Payment History
+                      </span>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {paymentLogs.map((log, i) => (
+                        <div key={log._id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-white">{i + 1}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                              Payment {i + 1}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Date: {fmtDate(log.paymentDate)}
+                              {log.uploadedBy ? ` • By: ${log.uploadedBy}` : ""}
+                            </p>
+                            {log.paymentNotes && (
+                              <p className="text-xs text-gray-500 mt-1">Notes: {log.paymentNotes}</p>
+                            )}
+                            <span className={`inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-xs font-semibold ${log.paymentVerification === "Verified"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                              }`}>
+                              {log.paymentVerification === "Verified" ? "✓ Verified" : "⏳ Pending"}
+                            </span>
+                          </div>
+                          <span className="text-base font-bold text-orange-600 dark:text-orange-400 font-mono flex-shrink-0">
+                            ₹{formatINR(log.advancePayment)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
               </div>
             );
           })()}

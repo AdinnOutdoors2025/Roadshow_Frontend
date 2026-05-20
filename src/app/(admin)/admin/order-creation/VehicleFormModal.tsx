@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { VehicleConfig, AdditionalCharge } from "./AdminOrderForm";
 import { PricingPreview, getPackagesForOrder } from "../../../../utils/Adminorderapi";
 import FormField, { inputClass } from "../../../../components/reusableFormField";
@@ -9,6 +9,7 @@ import { HiOutlinePlus, HiOutlineTrash } from "react-icons/hi2";
 import { IoMdClose } from "react-icons/io";
 import API_BASE from "../../../../../baseurl";
 import DatePicker from "@/components/form/date-picker";
+import { languages } from "../../../../utils/collection.json";
 
 interface PackageOption {
   _id: string;
@@ -66,7 +67,7 @@ function defaultForm(): Omit<VehicleConfig, "id"> {
     gstNumber: "",
     extraHours: 0,
     promoterGender: "",
-    promoterLanguage: "",
+    promoterLanguage: [],
     promoterQuantity: 0,
     dailyKmcharges: 0
 
@@ -88,7 +89,7 @@ function calcPricing(
   dailyKmcharges: number,
 ): PricingPreview | null {
 
- 
+
   if (!fromDate || !toDate || quantity < 1) return null;
   const from = new Date(fromDate);
   const to = new Date(toDate);
@@ -179,6 +180,8 @@ function VehicleTypeSelect({
   const ref = React.useRef<HTMLDivElement>(null);
   const VEHICLE_TYPES_LOCAL = ["Non-Customizable Vehicle", "Customizable Vehicle"];
 
+ 
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -188,6 +191,9 @@ function VehicleTypeSelect({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+
+
 
   return (
     <div ref={ref} className="relative">
@@ -247,7 +253,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [packageslist, setPackageslist] = useState<PackageOption[]>([]);
   const [campaignTypes, setCampaignTypes] = useState<{ _id: string, name: string }[]>([]);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
-console.log("selectedPackage",selectedPackage)
+  console.log("selectedPackage", selectedPackage)
 
   const [editablePackage, setEditablePackage] = useState<Record<string, string>>({});
   const [savingPkg, setSavingPkg] = useState(false);
@@ -257,9 +263,23 @@ console.log("selectedPackage",selectedPackage)
   const [cityOptions, setCityOptions] = useState<string[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<any>([]);
 
+   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
+
+ 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(e.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
 
   const PROMOTER_GENDER_OPTIONS = ["Male", "Female", "Other"];
-  const PROMOTER_LANGUAGE_OPTIONS = ["Tamil", "English", "Telugu", "Hindi", "Kannada", "Malayalam"];
+  // const PROMOTER_LANGUAGE_OPTIONS = ["Tamil", "English", "Telugu", "Hindi", "Kannada", "Malayalam"];
 
   useEffect(() => {
     fetch(`${API_BASE}locations`)
@@ -304,7 +324,7 @@ console.log("selectedPackage",selectedPackage)
         dailyKmLimit: String(selectedPackage.dailyKmLimit),
         additionalHourCharges: String(selectedPackage.additionalHourCharges),
         promoterChargePerDay: String(selectedPackage.promoterChargePerDay),
-       perKmCharge: String(selectedPackage.perKmCharge || 0), 
+        perKmCharge: String(selectedPackage.perKmCharge || 0),
       });
       setPkgSaved(false);
       setChangedKeys([]);
@@ -331,7 +351,7 @@ console.log("selectedPackage",selectedPackage)
       form.extraHours,
       form.additionalCharges,
       form.promoterQuantity,
-       mergedPkg.perKmCharge || 0,
+      mergedPkg.perKmCharge || 0,
 
     );
     setForm(f => ({ ...f, pricing: p }));
@@ -343,7 +363,7 @@ console.log("selectedPackage",selectedPackage)
   const filteredModels = packageslist.filter((p) => p.vehicleType);
 
 
-  
+
 
   const fetchVehicleTypes = async () => {
     try {
@@ -367,8 +387,8 @@ console.log("selectedPackage",selectedPackage)
       const res = await fetch(`${API_BASE}packages/`);
       if (!res.ok) throw new Error("Failed to fetch packages");
       const data = await res.json();
-      
-      
+
+
       const activePackages = data.data.filter((pkg: any) => pkg.isActive === true);
       setPackageslist(activePackages);
 
@@ -390,7 +410,7 @@ console.log("selectedPackage",selectedPackage)
       .catch(() => { });
   }, []);
 
-  console.log("packageslist",packageslist)
+  console.log("packageslist", packageslist)
 
   useEffect(() => {
     if (editing?.packageId && packageslist.length > 0) {
@@ -469,18 +489,18 @@ console.log("selectedPackage",selectedPackage)
     if (changedKeys.length > 0) {
       e.packageUnsaved = `Package charges updated but not saved. Please click "Update Package" before proceeding.`;
     }
-    if (!form.vehicleType) e.vehicleType = "Select vehicle type";
+    // if (!form.vehicleType) e.vehicleType = "Select vehicle type";
     if (!form.packageId) e.vehicleModel = "Select vehicle model";
-    if (!form.bookingFor) e.bookingFor = "Select booking for";
+    // if (!form.bookingFor) e.bookingFor = "Select booking for";
 
     if (!form.campaignType) e.campaignType = "Select campaign type";
 
     if (form.campaignType === "Other" && !form.otherCampaignType) e.otherCampaignType = "Required";
-    if (form.bookingFor === "Agency") {
-      if (!form.gstNumber.trim()) e.gstNumber = "GST number required for Agency";
-      else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(form.gstNumber))
-        e.gstNumber = "Enter valid GST number";
-    }
+    // if (form.bookingFor === "Agency") {
+    //   if (!form.gstNumber.trim()) e.gstNumber = "GST number required for Agency";
+    //   else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(form.gstNumber))
+    //     e.gstNumber = "Enter valid GST number";
+    // }
 
     if (!form.fromDate) e.fromDate = "Select start date";
     if (!form.toDate) e.toDate = "Select end date";
@@ -497,7 +517,8 @@ console.log("selectedPackage",selectedPackage)
     if (form.needPromoter && !form.promoterType) e.promoterType = "Select promoter type";
     if (form.needPromoter && form.promoterType === "Other" && !form.otherPromoterType) e.otherPromoterType = "Required";
     if (form.needPromoter && !form.promoterGender) e.promoterGender = "Select gender";
-    if (form.needPromoter && !form.promoterLanguage) e.promoterLanguage = "Select language";
+    // if (form.needPromoter && !form.promoterLanguage) e.promoterLanguage = "Select language";
+    if (form.needPromoter && form.promoterLanguage.length === 0) e.promoterLanguage = "Select language";
     if (form.needPromoter && (!form.promoterQuantity || form.promoterQuantity < 1))
       e.promoterQuantity = "Enter valid quantity";
     setErrors(e);
@@ -511,7 +532,7 @@ console.log("selectedPackage",selectedPackage)
     rtoCharges: "RTO",
     dailyKmLimit: "KM Limit",
     additionalHourCharges: "Extra hr charge",
-    promoterChargePerDay: "Promoter/day", 
+    promoterChargePerDay: "Promoter/day",
   };
 
   // const handleSavePackageChanges = async () => {
@@ -561,58 +582,58 @@ console.log("selectedPackage",selectedPackage)
 
 
   const handleSavePackageChanges = async () => {
-  if (!selectedPackage) return;
+    if (!selectedPackage) return;
 
-  const emptyFields = Object.entries(editablePackage)
-    .filter(([_, v]) => v === "" || v === ".")
-    .map(([k]) => FIELD_LABELS[k] || k);
+    const emptyFields = Object.entries(editablePackage)
+      .filter(([_, v]) => v === "" || v === ".")
+      .map(([k]) => FIELD_LABELS[k] || k);
 
-  if (emptyFields.length > 0) {
-    alert(`Please fill: ${emptyFields.join(", ")}`);
-    return;
-  }
+    if (emptyFields.length > 0) {
+      alert(`Please fill: ${emptyFields.join(", ")}`);
+      return;
+    }
 
-  setSavingPkg(true);
-  try {
-    const numericPayload = Object.fromEntries(
-      Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
-    );
+    setSavingPkg(true);
+    try {
+      const numericPayload = Object.fromEntries(
+        Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
+      );
 
-    // ✅ Extract the vehicleType ID from selectedPackage
-    const vehicleTypeId =
-      typeof selectedPackage.vehicleType === "object"
-        ? selectedPackage.vehicleType._id
-        : selectedPackage.vehicleType;
+      // ✅ Extract the vehicleType ID from selectedPackage
+      const vehicleTypeId =
+        typeof selectedPackage.vehicleType === "object"
+          ? selectedPackage.vehicleType._id
+          : selectedPackage.vehicleType;
 
-    const res = await fetch(`${API_BASE}packages/${selectedPackage._id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...numericPayload,
-        vehicleType: vehicleTypeId,        
-        vehicleModel: selectedPackage.vehicleModel, 
-      }),
-    });
+      const res = await fetch(`${API_BASE}packages/${selectedPackage._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...numericPayload,
+          vehicleType: vehicleTypeId,
+          vehicleModel: selectedPackage.vehicleModel,
+        }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Update failed");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Update failed");
 
-    const summary = changedKeys
-      .map(k => `${FIELD_LABELS[k]}: ₹${selectedPackage[k as keyof PackageOption]} → ₹${editablePackage[k]}`)
-      .join("\n");
+      const summary = changedKeys
+        .map(k => `${FIELD_LABELS[k]}: ₹${selectedPackage[k as keyof PackageOption]} → ₹${editablePackage[k]}`)
+        .join("\n");
 
-    setSelectedPackage(prev => prev ? { ...prev, ...numericPayload } : prev);
-    setPkgSaved(true);
-    setChangedKeys([]);
+      setSelectedPackage(prev => prev ? { ...prev, ...numericPayload } : prev);
+      setPkgSaved(true);
+      setChangedKeys([]);
 
-    if (summary) alert(`✅ Package updated!\n\n${summary}`);
+      if (summary) alert(`✅ Package updated!\n\n${summary}`);
 
-  } catch (err: any) {
-    alert(err.message || "Failed to update package");
-  } finally {
-    setSavingPkg(false);
-  }
-};
+    } catch (err: any) {
+      alert(err.message || "Failed to update package");
+    } finally {
+      setSavingPkg(false);
+    }
+  };
 
 
   const handleSave = async () => {
@@ -710,19 +731,19 @@ console.log("selectedPackage",selectedPackage)
 
             <>
               <div className="grid grid-cols-2 gap-4">
-                <FormField label="Vehicle Type" error={errors.vehicleType} required>
+                {/* <FormField label="Vehicle Type" error={errors.vehicleType} required>
                   <VehicleTypeSelect
                     value={form.vehicleType}
                     onChange={handleVehicleTypeChange}
                     error={errors.vehicleType}
                   />
-                </FormField>
+                </FormField> */}
 
                 <FormField label="Vehicle Model" error={errors.vehicleModel} required>
                   <select
                     value={form.packageId}
                     onChange={(e) => handleVehicleModelChange(e.target.value)}
-                    disabled={!form.vehicleType}
+                    // disabled={!form.vehicleType}
                     className={inputClass(!!errors.vehicleModel)}
                   >
                     <option value="">Select model</option>
@@ -745,7 +766,7 @@ console.log("selectedPackage",selectedPackage)
 
 
 
-              {selectedPackage && (
+              {/* {selectedPackage && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                     {[
@@ -847,11 +868,11 @@ console.log("selectedPackage",selectedPackage)
                     </div>
                   )}
                 </div>
-              )}
+              )} */}
 
 
               {selectedPackage && (
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
 
                   <FormField label="Extra KM" error={errors.extraKm}>
                     <input
@@ -878,7 +899,7 @@ console.log("selectedPackage",selectedPackage)
                       className={inputClass(!!errors.extraHours)}
                     />
                   </FormField>
-                  <FormField label="Extra Days (Optional)" error={errors.extraDays}>
+                  {/* <FormField label="Extra Days (Optional)" error={errors.extraDays}>
                     <input
                       type="number"
                       min={0}
@@ -887,114 +908,198 @@ console.log("selectedPackage",selectedPackage)
                       placeholder="0"
                       className={inputClass(!!errors.extraDays)}
                     />
-                  </FormField>
+                  </FormField> */}
                 </div>
               )}
 
 
-              {selectedPackage && (
-                <div className="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4 space-y-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Promoter Requirement</p>
+              {/* {selectedPackage && ( */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Promoter Requirement</p>
 
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => { set("needPromoter", !form.needPromoter); if (form.needPromoter) { set("promoterType", ""); set("otherPromoterType", ""); } }}
-                      disabled={!selectedPackage.promoterAvailable}
-                      className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${form.needPromoter ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-600"} disabled:opacity-40`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${form.needPromoter ? "translate-x-5" : ""}`} />
-                    </button>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {form.needPromoter ? "Promoter needed" : "No promoter"}
-                      {!selectedPackage.promoterAvailable && <span className="ml-2 text-xs text-red-400">(Not available for this package)</span>}
-                    </span>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { set("needPromoter", !form.needPromoter); if (form.needPromoter) { set("promoterType", ""); set("otherPromoterType", ""); } }}
+                    // disabled={!selectedPackage.promoterAvailable}
+                    className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${form.needPromoter ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-600"} disabled:opacity-40`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${form.needPromoter ? "translate-x-5" : ""}`} />
+                  </button>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {form.needPromoter ? "Promoter needed" : "No promoter"}
+                    {/* {!selectedPackage.promoterAvailable && <span className="ml-2 text-xs text-red-400">(Not available for this package)</span>} */}
+                  </span>
+                </div>
 
-                  {form.needPromoter && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div id="field-promoterType">
-                        <FormField label="Promoter Type" error={errors.promoterType} required>
-                          <select value={form.promoterType} onChange={(e) => set("promoterType", e.target.value)} className={inputClass(!!errors.promoterType)}>
-                            <option value="">Select</option>
-                            {PROMOTER_TYPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                          </select>
-                        </FormField>
-                      </div>
-
-
-
-                      {form.promoterType === "Other" && (
-                        <FormField label="Specify Type" error={errors.otherPromoterType} required>
-                          <input type="text" value={form.otherPromoterType} onChange={(e) => set("otherPromoterType", e.target.value)} className={inputClass(!!errors.otherPromoterType)} />
-                        </FormField>
-                      )}
-
-
-
+                {form.needPromoter && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div id="field-promoterType">
+                      <FormField label="Promoter Type" error={errors.promoterType} required>
+                        <select value={form.promoterType} onChange={(e) => set("promoterType", e.target.value)} className={inputClass(!!errors.promoterType)}>
+                          <option value="">Select</option>
+                          {PROMOTER_TYPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      </FormField>
                     </div>
 
 
-                  )}
 
-                  {/* {form.needPromoter && selectedPackage.promoterAvailable && (
+                    {form.promoterType === "Other" && (
+                      <FormField label="Specify Type" error={errors.otherPromoterType} required>
+                        <input type="text" value={form.otherPromoterType} onChange={(e) => set("otherPromoterType", e.target.value)} className={inputClass(!!errors.otherPromoterType)} />
+                      </FormField>
+                    )}
+
+
+
+                  </div>
+
+
+                )}
+
+                {/* {form.needPromoter && selectedPackage.promoterAvailable && (
                     <p className="text-[10px] text-gray-400">
                       Promoter charge: {formatINR(selectedPackage.promoterChargePerDay)}/day × days × qty
                     </p>
                   )} */}
 
-                  {form.needPromoter && (
-                    <div className="grid grid-cols-2 gap-4 mt-3">
-                      {/* Gender */}
-                      <div id="field-promoterGender">
-                        <FormField label="Gender" error={errors.promoterGender} required>
-                          <select
-                            value={form.promoterGender}
-                            onChange={(e) => set("promoterGender", e.target.value)}
-                            className={inputClass(!!errors.promoterGender)}
-                          >
-                            <option value="">Select</option>
-                            {PROMOTER_GENDER_OPTIONS.map((g) => (
-                              <option key={g} value={g}>{g}</option>
-                            ))}
-                          </select>
-                        </FormField>
-                      </div>
-
-                      <div id="field-promoterLanguage">
-                        <FormField label="Language" error={errors.promoterLanguage} required>
-                          <select
-                            value={form.promoterLanguage}
-                            onChange={(e) => set("promoterLanguage", e.target.value)}
-                            className={inputClass(!!errors.promoterLanguage)}
-                          >
-                            <option value="">Select</option>
-                            {PROMOTER_LANGUAGE_OPTIONS.map((l) => (
-                              <option key={l} value={l}>{l}</option>
-                            ))}
-                          </select>
-                        </FormField>
-                      </div>
-
-                      <div id="field-promoterQuantity">
-                        <FormField label="Promoter Quantity" error={errors.promoterQuantity} required>
-                          <input
-                            type="number"
-                            min={1}
-                            value={form.promoterQuantity || ""}
-                            onChange={(e) =>
-                              set("promoterQuantity", Math.max(0, parseInt(e.target.value) || 0))
-                            }
-                            placeholder="Enter quantity"
-                            className={inputClass(!!errors.promoterQuantity)}
-                          />
-                        </FormField>
-                      </div>
+                {form.needPromoter && (
+                  <div className="grid grid-cols-2 gap-4 mt-3">
+                    {/* Gender */}
+                    <div id="field-promoterGender">
+                      <FormField label="Gender" error={errors.promoterGender} required>
+                        <select
+                          value={form.promoterGender}
+                          onChange={(e) => set("promoterGender", e.target.value)}
+                          className={inputClass(!!errors.promoterGender)}
+                        >
+                          <option value="">Select</option>
+                          {PROMOTER_GENDER_OPTIONS.map((g) => (
+                            <option key={g} value={g}>{g}</option>
+                          ))}
+                        </select>
+                      </FormField>
                     </div>
-                  )}
 
-                </div>
-              )}
+                    {/* <div id="field-promoterLanguage">
+                      <FormField label="Language" error={errors.promoterLanguage} required>
+                        <select
+                          value={form.promoterLanguage}
+                          onChange={(e) => set("promoterLanguage", e.target.value)}
+                          className={inputClass(!!errors.promoterLanguage)}
+                        >
+                          <option value="">Select</option>
+                          {languages.map((l) => (
+                            <option key={l} value={l}>{l}</option>
+                          ))}
+                        </select>
+                      </FormField>
+                    </div> */}
+
+                  
+                
+                    <div id="field-promoterLanguage">
+                      <FormField label="Language" error={errors.promoterLanguage} required>
+                        <div className="relative" ref={langDropdownRef}>
+
+                       
+                          <div
+                            onClick={() => setLangDropdownOpen((o) => !o)}
+                            className={`min-h-[42px] flex flex-wrap gap-1 p-2 rounded-lg border cursor-pointer
+          ${errors.promoterLanguage
+                                ? "border-red-400 bg-red-50"
+                                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                              }`}
+                          >
+                            {form.promoterLanguage.length === 0 && (
+                              <span className="text-gray-400 text-sm self-center pl-1">
+                                Select languages
+                              </span>
+                            )}
+                            {form.promoterLanguage.map((lang) => (
+                              <span
+                                key={lang}
+                                className="inline-flex items-center gap-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 text-xs font-medium"
+                              >
+                                {lang}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation(); 
+                                    set("promoterLanguage", form.promoterLanguage.filter((l) => l !== lang));
+                                  }}
+                                  className="hover:text-blue-900"
+                                >
+                                  <IoMdClose className="h-3 w-3" />
+                                </button>
+                              </span>
+                            ))}
+
+                            {/* Arrow icon */}
+                            <svg
+                              className={`ml-auto self-center w-4 h-4 text-gray-400 shrink-0 transition-transform ${langDropdownOpen ? "rotate-180" : ""}`}
+                              viewBox="0 0 20 20" fill="currentColor"
+                            >
+                              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+
+                       
+                          {langDropdownOpen && (
+                            <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg">
+                              {languages.map((lang) => {
+                                const selected = form.promoterLanguage.includes(lang);
+                                return (
+                                  <label
+                                    key={lang}
+                                    className={`flex items-center gap-2 px-3 py-2 cursor-pointer text-sm transition-colors
+                  ${selected
+                                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                                        : "hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+                                      }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={selected}
+                                      onChange={() => {
+                                        if (selected) {
+                                          set("promoterLanguage", form.promoterLanguage.filter((l) => l !== lang));
+                                        } else {
+                                          set("promoterLanguage", [...form.promoterLanguage, lang]);
+                                        }
+                                      }}
+                                      className="accent-blue-600 rounded"
+                                    />
+                                    {lang}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </FormField>
+                    </div>
+
+                    <div id="field-promoterQuantity">
+                      <FormField label="Promoter Quantity" error={errors.promoterQuantity} required>
+                        <input
+                          type="number"
+                          min={1}
+                          value={form.promoterQuantity || ""}
+                          onChange={(e) =>
+                            set("promoterQuantity", Math.max(0, parseInt(e.target.value) || 0))
+                          }
+                          placeholder="Enter quantity"
+                          className={inputClass(!!errors.promoterQuantity)}
+                        />
+                      </FormField>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+              {/* )} */}
             </>
 
           </section>
@@ -1004,14 +1109,14 @@ console.log("selectedPackage",selectedPackage)
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Booking Details</p>
 
             <div className="grid grid-cols-2 gap-4">
-              <div id="field-bookingFor">
+              {/* <div id="field-bookingFor">
                 <FormField label="Booking For" error={errors.bookingFor} required>
                   <select value={form.bookingFor} onChange={(e) => set("bookingFor", e.target.value)} className={inputClass(!!errors.bookingFor)}>
                     <option value="">Select</option>
                     {BOOKING_FOR_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </FormField>
-              </div>
+              </div> */}
 
               {form.bookingFor === "Agency" && (
                 <div id="field-gstNumber">

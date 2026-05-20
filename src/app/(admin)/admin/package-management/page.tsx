@@ -38,8 +38,8 @@ interface VehicleType {
 
 const HEADERS = [
   "S.NO", "Vehicle Type", "Vehicle Model", "Per Day Cost",
-  "KM Limit", "Extra Hour Charges", "Promoter Charges",
-  "Driver Charges", "RTO Charges", "Status", "Actions",
+  "KM Limit", "Extra Hour Charges",
+   "RTO Charges", "Status", "Actions",
 ];
 
 const ITEMS_PER_PAGE = 10;
@@ -323,7 +323,7 @@ export default function PackageTable() {
           ))}
         </select>
 
-        <select
+        {/* <select
           value={filterModel}
           onChange={(e) => {
             setFilterModel(e.target.value);
@@ -337,7 +337,7 @@ export default function PackageTable() {
               {m}
             </option>
           ))}
-        </select>
+        </select> */}
 
         <select
           value={filterStatus}
@@ -443,7 +443,7 @@ export default function PackageTable() {
                         <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
                           {formatINR(pkg.additionalHourCharges)}/hr
                         </td>
-                        <td className="px-5 py-4">
+                        {/* <td className="px-5 py-4">
                           {pkg.promoterAvailable ? (
                             <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -454,10 +454,10 @@ export default function PackageTable() {
                               No
                             </span>
                           )}
-                        </td>
-                        <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
+                        </td> */}
+                        {/* <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
                           {formatINR(pkg.driverCharges)}
-                        </td>
+                        </td> */}
                         <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
                           {formatINR(pkg.rtoCharges)}
                         </td>
