@@ -4,13 +4,15 @@
 
 import React, { useEffect, useState } from "react";
 import AdminOrderForm from "./AdminOrderForm";
-import { HiOutlineShoppingBag, HiOutlineEye, HiOutlineDocumentText } from "react-icons/hi";
+import { HiOutlineShoppingBag, HiOutlineEye, HiOutlineDocumentText, HiOutlineArrowRight } from "react-icons/hi";
 import { HiOutlinePlus, HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi2";
 import API_BASE from "../../../../../baseurl";
 import { useAuthGuard } from "../../../../utils/useAuthGuard";
 import { getToken } from "@/utils/auth";
 import { useVehicle } from './../../../../../src/context/vehicletypecontext';
 import OrderPDFView from "./print";
+import OrderDetailDrawer from "./orderdetails";
+import { useRouter } from "next/navigation";
 
 interface BookingItem {
   vehicleModel: string;
@@ -82,7 +84,7 @@ interface Order {
   grandGst?: number
   dailyKmcharges?: number
   customerType: string
-  
+
 }
 
 
@@ -171,17 +173,18 @@ export default function OrdersPage() {
   const [selectedpdf, setSelectedpdf] = useState<Order | null>(null);
   const [selectedpdfWithoutHistory, setSelectedpdfWithoutHistory] = useState<Order | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  console.log("selectedOrder", selectedOrder)
+  // Date filter-க்கு தனி state
+  const [filterFromDate, setFilterFromDate] = useState("");
+  const [filterToDate, setFilterToDate] = useState("");
+
 
   const [filterPipeline, setFilterPipeline] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchQ, setSearchQ] = useState("");
   useAuthGuard();
 
-  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
-  const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
+  const router = useRouter();
 
   const { vehicleTypes, fetchVehicleTypes } = useVehicle();
 
@@ -320,6 +323,15 @@ export default function OrdersPage() {
                 </p>
               )}
             </div>
+            <button
+              onClick={() => router.push("/admin/order-handling")}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-95 transition-all duration-150"
+            >
+
+              Order Handling
+              <HiOutlineArrowRight className="h-4 w-4 stroke-2" />
+            </button>
+
           </div>
           <button
             onClick={() => setShowForm(true)}
@@ -393,6 +405,8 @@ export default function OrdersPage() {
             Refresh
           </button>
         </div>
+
+      
 
 
         <div className="p-4 sm:p-6">
@@ -780,620 +794,4 @@ export default function OrdersPage() {
   );
 }
 
-
-function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onClose: () => void, vehicleTypes: any }) {
-  const pipeline = PIPELINE_CONFIG[order.pipelineStatus] || { label: order.pipelineStatus, color: "bg-gray-100 text-gray-500" };
-  const statusCfg = STATUS_CONFIG[order.orderStatus] || { color: "bg-gray-100 text-gray-500", dot: "bg-gray-400" };
-
-  const displayTotal = order.grandNegotiationTotal && order.grandNegotiationTotal > 0
-    ? order.grandNegotiationTotal
-    : order.grandTotal;
-
-  function formatINR(amount: number): string {
-    return new Intl.NumberFormat("en-IN", {
-      maximumFractionDigits: 0,
-    }).format(amount);
-  }
-
-
-  const getImageUrl = (path: string) => {
-    if (!path) return '';
-    if (path.startsWith('http')) return path;
-    return `http://localhost:3001${path.startsWith('/') ? path : `/${path}`}`;
-  };
-
-
-
-  const getVehicleTypeName = (vehicleTypeId: string) => {
-    if (!vehicleTypeId || !vehicleTypes) return '';
-    const vehicle = vehicleTypes.find((vt: any) => vt._id === vehicleTypeId);
-    return vehicle?.typeName || vehicleTypeId;
-  };
-
-const fmtDate = (d?: string): string => {
-  if (!d) return "—";
-  return new Date(d).toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className="w-full max-w-2xl h-full overflow-y-auto bg-white shadow-2xl dark:bg-gray-900 flex flex-col animate-in slide-in-from-right duration-300">
-
-        {/* ── Header ── */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-5 dark:border-gray-700 dark:bg-gray-900 shadow-sm">
-          <div>
-            <p className="font-mono text-base font-bold text-blue-600 dark:text-blue-400">{order.orderId}</p>
-            <p className="text-sm text-gray-500 mt-1">{formatDate(order.createdAt)}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${statusCfg.color}`}>
-              <span className={`h-2 w-2 rounded-full ${statusCfg.dot}`} />
-              {order.orderStatus}
-            </span>
-            <button
-              onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-all"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 px-6 py-6 space-y-6">
-
-          {/* Customer Information Section */}
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-6 w-1 bg-blue-500 rounded-full"></div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">Customer Information</p>
-            </div>
-            <div className="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-5 space-y-3">
-              {[
-                { label: "Full Name", val: order.name, icon: "👤" },
-                { label: "Phone Number", val: order.phone, icon: "📞" },
-                { label: "Email Address", val: order.email || "—", icon: "✉️" },
-                { label: "Address", val: order.address || "—", icon: "📍" },
-              ].map(({ label, val, icon }) => (
-                <div key={label} className="flex items-start gap-3 text-sm">
-                  <span className="text-lg">{icon}</span>
-                  <div className="flex-1">
-                    <span className="text-gray-500 block text-xs mb-0.5">{label}</span>
-                    <span className="font-medium text-gray-800 dark:text-gray-200 text-base">{val}</span>
-                  </div>
-                </div>
-              ))}
-
-              <div className="flex items-start gap-3 text-sm">
-                <span className="text-lg">🏷️</span>
-                <div className="flex-1">
-                  <span className="text-gray-500 block text-xs mb-0.5">Customer Type</span>
-                  <span className={`font-medium text-base inline-flex items-center gap-2 ${order.customerType === 1
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-blue-600 dark:text-blue-400'
-                    }`}>
-                    <span className={`w-2 h-2 rounded-full ${order.customerType === 1 ? 'bg-green-500' : 'bg-blue-500'
-                      }`}></span>
-                    {order.customerType === 1 ? '🆕 Organization' : '⭐ Individual'}
-                  </span>
-                </div>
-              </div>
-
-              {/* <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">📊</span>
-                    <span className="text-gray-500 text-sm">Pipeline Status</span>
-                  </div>
-                  <span className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold ${pipeline.color}`}>
-                    {pipeline.label}
-                  </span>
-                </div>
-              </div> */}
-
-              {order.handlername && (
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">👨‍💼</span>
-                  <div className="flex-1">
-                    <span className="text-gray-500 block text-xs mb-0.5">Assigned Handler</span>
-                    <span className="font-medium text-gray-800 dark:text-gray-200 text-base">{order.handlername}</span>
-                  </div>
-                </div>
-              )}
-
-              {order.isAdminCreated && (
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">🏷️</span>
-                  <div className="flex-1">
-                    <span className="text-gray-500 block text-xs mb-0.5">Order Source</span>
-                    <span className="text-sm font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 px-2 py-1 rounded inline-block">Admin Created</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* Vehicles Section */}
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-6 w-1 bg-green-500 rounded-full"></div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                Vehicles ({order.bookingItems?.length || 0})
-              </p>
-            </div>
-            <div className="space-y-4">
-              {(order.bookingItems || []).map((item:any, i) => {
-                const baseDays = item.fromDate && item.toDate
-                  ? Math.ceil(
-                    (new Date(item.toDate).getTime() - new Date(item.fromDate).getTime()) / 86400000
-                  )
-                  : 0;
-                const extraDays = item.extraDays || 0;
-                const totalDays = baseDays + extraDays;
-
-                const durationLabel = item.fromDate && item.toDate
-                  ? `${formatDate(item.fromDate)} → ${formatDate(item.toDate)}`
-                  : "—";
-
-                return (
-                  <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 overflow-hidden">
-                    {/* Vehicle Header */}
-                    <div className="bg-gradient-to-r from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-800/50 p-4 border-b border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
-                          <span className="text-sm font-bold text-blue-600 dark:text-blue-400">V{i + 1}</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
-                            {item.vehicleModel || "Vehicle Details"}
-                          </p>
-
-                          {item.vehicleType && (
-                            <p className="text-sm text-gray-500 mt-0.5">
-                              {getVehicleTypeName(item.vehicleType)}
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500">Quantity</p>
-                          <p className="text-lg font-bold text-gray-800 dark:text-gray-200">{item.quantity || 1}x</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Booking Details Grid */}
-                    <div className="p-4 space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[
-                          // { icon: "👤", label: "Booking For", value: item.bookingFor || "—" },
-                          { icon: "🎯", label: "Campaign", value: item.campaignType === "Other" ? (item.otherCampaignType || "Other") : (item.campaignType || "—") },
-                          { icon: "📅", label: "Duration", value: durationLabel && item.totalDays ? `${durationLabel} (${item.totalDays} Days Total)` : "—" },
-                          { icon: "📍", label: "Location", value: [item.state, item.city].filter(Boolean).join(" / ") || "—" },
-                          { icon: "🛣️", label: " Driving Route", value: item.fromLocation && item.toLocation ? `${item.fromLocation} → ${item.toLocation}` : "—" },
-                          item.extraKm && item.extraKm > 0 ? { icon: "➕", label: "Extra KM", value: `${item.extraKm} km` } : null,
-                          item.extraHours && item.extraHours > 0 ? { icon: "⏰", label: "Extra Hours", value: `${item.extraHours} hrs` } : null,
-                          item.extraDays && item.extraDays > 0 ? { icon: "📆", label: "Extra Days", value: `${item.extraDays} days` } : null,
-                        ].filter(Boolean).map((field: any, idx) => (
-                          <div key={idx} className="flex items-start gap-2">
-                            <span className="text-base">{field.icon}</span>
-                            <div className="flex-1">
-                              <span className="text-gray-500 block text-xs">{field.label}</span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">{field.value}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Promoter Details */}
-                      {item.needPromoter && (
-                        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3">
-                          <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2 flex items-center gap-2">
-                            <span>🎤</span> Promoter Details
-                          </p>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <span className="text-gray-500 block text-xs">Type</span>
-                              <span className="text-gray-800 dark:text-gray-200 text-sm">
-                                {item.promoterType === "Other" ? (item.otherPromoterType || "Other") : (item.promoterType || "—")}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 block text-xs">Gender</span>
-                              <span className="text-gray-800 dark:text-gray-200 text-sm">{item.promoterGender || "—"}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 block text-xs">Language</span>
-                              <span className="text-gray-800 dark:text-gray-200 text-sm">{item.promoterLanguage || "—"}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 block text-xs">Quantity</span>
-                              <span className="text-gray-800 dark:text-gray-200 text-sm">{item.promoterQuantity || 0}</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {item.gstNumber && (
-                        <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3">
-                          <p className="text-sm font-semibold text-yellow-700 dark:text-yellow-300 mb-1">GST Information</p>
-                          <p className="text-gray-800 dark:text-gray-200 text-sm">GST Number: {item.gstNumber}</p>
-                        </div>
-                      )}
-
-                      {/* Pricing Breakdown */}
-                      <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                          <span>💰</span> Price Breakdown
-                        </p>
-                        <div className="space-y-2">
-                          {(item.rentalCost) ? (
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-600 dark:text-gray-400 text-sm">
-                                Rental & Driver Charges
-                              </span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{((item.rentalCost || 0)).toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          ) : null}
-
-                         {(item.promoterCost ?? 0) > 0 && (
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-600 dark:text-gray-400 text-sm">
-                                Promoter Charges ({item.totalDays}D × ₹{item.promoterChargePerDay?.toLocaleString("en-IN")} × {item.promoterQuantity})
-                              </span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{item.promoterCost.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          )}
-
-
-                         {(item.rtoCost ?? 0) > 0 && (
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-600 dark:text-gray-400 text-sm">RTO Charges</span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{item.rtoCost.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          )}
-
-                        {(item.extraKmCost ?? 0) > 0 && (
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-600 dark:text-gray-400 text-sm">
-                                Extra KM Charges ({item.extraKm} km × ₹{item.dailyKmcharges?.toLocaleString("en-IN")})
-                              </span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{item.extraKmCost.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          )}
-
-                         {(item.extraHourCost ?? 0) > 0 && (
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-600 dark:text-gray-400 text-sm">
-                                Extra Hours Charges ({item.extraHours} hrs × ₹{item.additionalHourCharges?.toLocaleString("en-IN")})
-                              </span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{item.extraHourCost.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          )}
-
-                          {(item.additionalFields || []).filter((f: any) => f.label).map((f: any, fIdx: number) => (
-                            <div key={fIdx} className="flex justify-between items-center py-1">
-                              <span className={f.mode === "-" ? "text-red-500 text-sm" : "text-gray-600 dark:text-gray-400 text-sm"}>
-                                {f.label}
-                              </span>
-                              <span className={f.mode === "-" ? "text-red-600 font-medium text-base" : "text-gray-800 dark:text-gray-200 font-medium text-base"}>
-                                {f.mode === "-" ? "-" : "+"}₹{Number(f.amount).toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          ))}
-
-                          <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-700 dark:text-gray-300 font-semibold text-sm">Subtotal</span>
-                              <span className="text-gray-900 dark:text-white font-bold text-lg">
-                                ₹{formatINR(item.subtotal || 0)}
-                              </span>
-                            </div>
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-900 dark:text-white font-bold text-base">Total (excl. GST)</span>
-                              <span className="text-blue-600 dark:text-blue-400 font-bold text-xl">
-                                ₹{formatINR(item.totalAmount || 0)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Campaign Media */}
-                      {((item.campaignImages?.length ?? 0) > 0 || (item.campaignVideos?.length ?? 0) > 0) && (
-                        <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                            <span>📸</span> Campaign Media
-                          </p>
-                          <div className="grid grid-cols-2 gap-3">
-                            {(item.campaignImages || []).map((img: string, imgIdx: number) => (
-                              <div key={imgIdx} className="relative group">
-                                <img
-                                  src={getImageUrl(img)}
-                                  alt={`Campaign ${imgIdx + 1}`}
-                                  className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:opacity-90 transition"
-                                  onClick={() => window.open(getImageUrl(img), '_blank')}
-                                />
-                                <span className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">Image {imgIdx + 1}</span>
-                              </div>
-                            ))}
-                            {(item.campaignVideos || []).map((vid: string, vidIdx: number) => (
-                              <div key={vidIdx} className="relative group">
-                                <video
-                                  src={getImageUrl(vid)}
-                                  className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer"
-                                  onClick={() => window.open(getImageUrl(vid), '_blank')}
-                                />
-                                <span className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">Video {vidIdx + 1}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Order Total Summary */}
-          {/* ── Order Total Summary (REPLACE existing one) ── */}
-          {(() => {
-            const bookingItems = order.bookingItems || [];
-
-            const subtotal = bookingItems.reduce((s, item) => s + (item.subtotal || item.totalAmount || 0), 0);
-
-            const negotiationLogs = (order.negotiationLogs || []).filter(
-              (l) => (l.discountAmount || 0) > 0
-            );
-            const totalDiscount = negotiationLogs.reduce((s, l) => s + (l.discountAmount || 0), 0);
-
-            const taxable = subtotal - totalDiscount;
-            const gstAmt = Math.floor(taxable * 0.18);
-            const grandTotal = taxable + gstAmt;
-
-            const paymentLogs = order.paymentStageFirst || [];
-            const totalAdvance = paymentLogs.reduce((s, l) => s + (l.advancePayment || 0), 0);
-            const balanceDue = grandTotal - totalAdvance;
-
-            return (
-              <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-5 shadow-lg">
-                <p className="text-base font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300 mb-4 flex items-center gap-2">
-                  <span>💰</span> Financial Summary ({bookingItems.length} vehicle{bookingItems.length > 1 ? "s" : ""})
-                </p>
-
-                <div className="space-y-2">
-                  {/* Subtotal */}
-                  <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                    <span className="text-gray-700 dark:text-gray-300 text-sm">Subtotal (excl. GST)</span>
-                    <span className="text-gray-900 dark:text-white font-semibold text-base">₹{formatINR(subtotal)}</span>
-                  </div>
-
-                  {/* Discount */}
-                  {totalDiscount > 0 && (
-                    <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                      <span className="text-red-600 dark:text-red-400 text-sm font-medium">Total Discount Applied</span>
-                      <span className="text-red-600 dark:text-red-400 font-bold text-base">−₹{formatINR(totalDiscount)}</span>
-                    </div>
-                  )}
-
-                  {/* Taxable Amount */}
-                  <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                    <span className="text-gray-700 dark:text-gray-300 text-sm">Taxable Amount</span>
-                    <span className="text-gray-900 dark:text-white font-semibold text-base">₹{formatINR(taxable)}</span>
-                  </div>
-
-                  {/* GST */}
-                  <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                    <span className="text-gray-700 dark:text-gray-300 text-sm">GST (18%)</span>
-                    <span className="text-gray-900 dark:text-white font-semibold text-base">₹{formatINR(order.grandGst || gstAmt)}</span>
-                  </div>
-
-                  {/* Advance Paid */}
-                  {totalAdvance > 0 && (
-                    <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                      <span className="text-orange-600 dark:text-orange-400 text-sm font-medium">Advance Paid</span>
-                      <span className="text-orange-600 dark:text-orange-400 font-bold text-base">−₹{formatINR(totalAdvance)}</span>
-                    </div>
-                  )}
-
-                  {/* Grand Total */}
-                  <div className="flex justify-between items-center pt-3 mt-2 border-t-2 border-blue-300 dark:border-blue-700">
-                    <span className="text-xl font-bold text-gray-900 dark:text-white">Grand Total</span>
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">₹{formatINR(grandTotal)}</span>
-                  </div>
-
-                  {/* Balance Due */}
-                  {totalAdvance > 0 && (
-                    <div className="flex justify-between items-center pt-2 border-t border-blue-200 dark:border-blue-700">
-                      <span className="text-base font-bold text-green-700 dark:text-green-400">Balance Due</span>
-                      <span className="text-lg font-bold text-green-600 dark:text-green-400">₹{formatINR(balanceDue)}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
-
-
-        
-          {(() => {
-            const negotiationLogs = (order.negotiationLogs || []).filter(
-              (l) => (l.discountAmount || 0) > 0
-            );
-            const poLogs = order.poDocumentLogs || [];
-            const paymentLogs = order.paymentStageFirst || [];
-
-            const totalDiscount = negotiationLogs.reduce((s, l) => s + (l.discountAmount || 0), 0);
-
-        
-            if (negotiationLogs.length === 0 && poLogs.length === 0 && paymentLogs.length === 0) return null;
-
-            return (
-              <div className="space-y-4">
-                {/* Section Header */}
-                <div className="pt-2 pb-3 border-b-2 border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-                    All History Status
-                  </h3>
-                </div>
-
-                {/* Negotiation Logs */}
-                {negotiationLogs.length > 0 && (
-                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-gray-200 dark:border-gray-700">
-                      <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-                        <span className="text-sm">🏷️</span>
-                      </div>
-                      <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                        Discount Negotiation History
-                      </span>
-                    </div>
-                    <div className="p-4 space-y-3">
-                      {negotiationLogs.map((log, i) => (
-                        <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-red-400 flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-bold text-white">{i + 1}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                              {log.movedBy || "Unknown"}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-0.5">{fmtDate(log.movedAt)}</p>
-                            {log.discountNotes && (
-                              <p className="text-xs text-gray-500 mt-1">Notes: {log.discountNotes}</p>
-                            )}
-                          </div>
-                          <span className="text-base font-bold text-red-600 dark:text-red-400 font-mono flex-shrink-0">
-                            −₹{formatINR(log.discountAmount || 0)}
-                          </span>
-                        </div>
-                      ))}
-
-                      {negotiationLogs.length > 1 && (
-                        <div className="flex justify-end mt-2">
-                          <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg px-4 py-2">
-                            <span className="text-sm font-bold text-red-700 dark:text-red-400">
-                              Total Discount: −₹{formatINR(totalDiscount)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* PO Documents */}
-                {poLogs.length > 0 && (
-                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-gray-200 dark:border-gray-700">
-                      <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-                        <span className="text-sm">📄</span>
-                      </div>
-                      <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                        PO Documents
-                      </span>
-                      <span className="ml-auto text-xs text-gray-500">{poLogs.length} document(s)</span>
-                    </div>
-                    <div className="p-4 space-y-3">
-                      {poLogs.map((log, i) => (
-                        <div key={log._id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-bold text-white">PO</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                              Purchase Order {i + 1}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              Date: {fmtDate(log.poDate)}
-                              {log.uploadedBy ? ` • By: ${log.uploadedBy}` : ""}
-                            </p>
-                            {log.poNotes && (
-                              <p className="text-xs text-gray-500 mt-0.5">Notes: {log.poNotes}</p>
-                            )}
-                          </div>
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                            ✓ Uploaded
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Payment History */}
-                {paymentLogs.length > 0 && (
-                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div className="flex items-center gap-3 px-4 py-3 bg-orange-50 dark:bg-orange-900/20 border-b border-gray-200 dark:border-gray-700">
-                      <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center">
-                        <span className="text-sm">💳</span>
-                      </div>
-                      <span className="text-sm font-semibold text-orange-800 dark:text-orange-300">
-                        Payment History
-                      </span>
-                    </div>
-                    <div className="p-4 space-y-3">
-                      {paymentLogs.map((log, i) => (
-                        <div key={log._id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-bold text-white">{i + 1}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                              Payment {i + 1}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              Date: {fmtDate(log.paymentDate)}
-                              {log.uploadedBy ? ` • By: ${log.uploadedBy}` : ""}
-                            </p>
-                            {log.paymentNotes && (
-                              <p className="text-xs text-gray-500 mt-1">Notes: {log.paymentNotes}</p>
-                            )}
-                            <span className={`inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-xs font-semibold ${log.paymentVerification === "Verified"
-                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                              }`}>
-                              {log.paymentVerification === "Verified" ? "✓ Verified" : "⏳ Pending"}
-                            </span>
-                          </div>
-                          <span className="text-base font-bold text-orange-600 dark:text-orange-400 font-mono flex-shrink-0">
-                            ₹{formatINR(log.advancePayment)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-              </div>
-            );
-          })()}
-
-        </div>
-      </div>
-    </div>
-  );
-}
 

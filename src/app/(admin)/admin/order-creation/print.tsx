@@ -924,10 +924,21 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                                     <div className="detail-label">Gender</div>
                                     <div className="detail-value">{item.promoterGender || "—"}</div>
                                   </div>
-                                  <div className="detail-item">
+                                  {/* <div className="detail-item">
                                     <div className="detail-label">Language</div>
                                     <div className="detail-value">{item.promoterLanguage || "—"}</div>
+                                  </div> */}
+
+                                  <div className="detail-item">
+                                     <div className="detail-label">Language</div>
+                                  <div className="detail-value">
+                                    {typeof item.promoterLanguage === "string"
+                                      ? item.promoterLanguage.replace(/([a-z])([A-Z])/g, '$1 $2') 
+                                      : Array.isArray(item.promoterLanguage)
+                                        ? item.promoterLanguage.join(" ")
+                                        : "—"}
                                   </div>
+                                   </div>
                                   <div className="detail-item">
                                     <div className="detail-label">Quantity</div>
                                     <div className="detail-value">{item.promoterQuantity || 0}</div>

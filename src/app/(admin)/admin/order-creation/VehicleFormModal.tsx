@@ -10,6 +10,7 @@ import { IoMdClose } from "react-icons/io";
 import API_BASE from "../../../../../baseurl";
 import DatePicker from "@/components/form/date-picker";
 import { languages } from "../../../../utils/collection.json";
+import CitySelect from "./cityselect";
 
 interface PackageOption {
   _id: string;
@@ -180,7 +181,7 @@ function VehicleTypeSelect({
   const ref = React.useRef<HTMLDivElement>(null);
   const VEHICLE_TYPES_LOCAL = ["Non-Customizable Vehicle", "Customizable Vehicle"];
 
- 
+
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -246,8 +247,6 @@ function VehicleTypeSelect({
 
 export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [form, setForm] = useState<VehicleConfig>(editing ?? { id: uid(), ...defaultForm() });
-  const [packages, setPackages] = useState<any[]>([]);
-  const [loadingPkg, setLoadingPkg] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<PackageOption | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [packageslist, setPackageslist] = useState<PackageOption[]>([]);
@@ -262,11 +261,17 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [locationData, setLocationData] = useState<Record<string, string[]>>({});
   const [cityOptions, setCityOptions] = useState<string[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<any>([]);
+  const [addCityModalOpen, setAddCityModalOpen] = useState(false);
+  const [newCityName, setNewCityName] = useState("");
+  const [addCityLoading, setAddCityLoading] = useState(false);
+  const [addCityError, setAddCityError] = useState("");
 
-   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  console.log("locationData", locationData)
+
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
 
- 
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (langDropdownRef.current && !langDropdownRef.current.contains(e.target as Node)) {
@@ -418,6 +423,52 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
       if (match) setSelectedPackage(match);
     }
   }, [packageslist, editing]);
+
+
+  const handleAddCity = async () => {
+    if (!newCityName.trim()) {
+      setAddCityError("City name is required");
+      return;
+    }
+    if (!form.state) {
+      setAddCityError("Please select a state first");
+      return;
+    }
+
+    setAddCityLoading(true);
+    setAddCityError("");
+
+    try {
+      const res = await fetch(`${API_BASE}locations/${encodeURIComponent(form.state)}/cities`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ city: newCityName.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Failed to add city");
+
+      // Update local locationData so it appears immediately
+      setLocationData(prev => ({
+        ...prev,
+        [form.state]: [...(prev[form.state] || []), newCityName.trim()],
+      }));
+
+      // Update cityOptions so dropdown shows the new city
+      setCityOptions(prev => [...prev, newCityName.trim()]);
+
+      // Auto-select the newly added city
+      set("city", newCityName.trim());
+
+      setNewCityName("");
+      setAddCityModalOpen(false);
+    } catch (err: any) {
+      setAddCityError(err.message || "Something went wrong");
+    } finally {
+      setAddCityLoading(false);
+    }
+  };
 
 
   useEffect(() => {
@@ -997,13 +1048,13 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                       </FormField>
                     </div> */}
 
-                  
-                
+
+
                     <div id="field-promoterLanguage">
                       <FormField label="Language" error={errors.promoterLanguage} required>
                         <div className="relative" ref={langDropdownRef}>
 
-                       
+
                           <div
                             onClick={() => setLangDropdownOpen((o) => !o)}
                             className={`min-h-[42px] flex flex-wrap gap-1 p-2 rounded-lg border cursor-pointer
@@ -1026,7 +1077,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                                 <button
                                   type="button"
                                   onClick={(e) => {
-                                    e.stopPropagation(); 
+                                    e.stopPropagation();
                                     set("promoterLanguage", form.promoterLanguage.filter((l) => l !== lang));
                                   }}
                                   className="hover:text-blue-900"
@@ -1045,7 +1096,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                             </svg>
                           </div>
 
-                       
+
                           {langDropdownOpen && (
                             <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg">
                               {languages.map((lang) => {
@@ -1224,23 +1275,32 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                 </FormField>
               </div>
 
+
               <div id="field-city">
                 <FormField label="City" error={errors.city} required>
-                  <select
+                  <CitySelect
                     value={form.city}
-                    onChange={(e) => set("city", e.target.value)}
+                    options={cityOptions}
                     disabled={!form.state}
-                    className={inputClass(!!errors.city)}
-                  >
-                    <option value="">
-                      {form.state ? "Select city" : "Select state first"}
-                    </option>
-                    {cityOptions.map((c, idx) => (
-                      <option key={`${c}-${idx}`} value={c}>{c}</option>
-                    ))}
-                  </select>
+                    error={errors.city}
+                    stateName={form.state}
+                    onChange={(city) => set("city", city)}
+                    onAddCity={(newCity) => {
+                      setLocationData(prev => {
+                        const existing = prev[form.state] || [];
+                        if (existing.includes(newCity)) return prev; 
+                        return { ...prev, [form.state]: [...existing, newCity] };
+                      });
+                      setCityOptions(prev =>
+                        prev.includes(newCity) ? prev : [...prev, newCity]
+                      );
+                      set("city", newCity);
+                    }}
+                  />
                 </FormField>
               </div>
+
+
               <div id="field-fromLocation">
                 <FormField label="From Location" error={errors.fromLocation} required>
                   <input type="text" value={form.fromLocation} onChange={(e) => set("fromLocation", e.target.value)} placeholder="Starting point" className={inputClass(!!errors.fromLocation)} />
@@ -1353,6 +1413,64 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
             </div>
           </section>
 
+
+          {addCityModalOpen && (
+            <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black/40 rounded-2xl">
+              <div className="w-80 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 shadow-xl p-5 space-y-4">
+
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-gray-800 dark:text-white">
+                    Add City to {form.state}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => setAddCityModalOpen(false)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <IoMdClose className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    City Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newCityName}
+                    onChange={(e) => { setNewCityName(e.target.value); setAddCityError(""); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleAddCity(); }}
+                    placeholder="e.g. Coimbatore"
+                    className={inputClass(!!addCityError)}
+                    autoFocus
+                  />
+                  {addCityError && (
+                    <p className="text-xs text-red-500">{addCityError}</p>
+                  )}
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setAddCityModalOpen(false)}
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddCity}
+                    disabled={addCityLoading}
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition-colors"
+                  >
+                    {addCityLoading ? "Adding..." : "Add City"}
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
           <div id="field-quantity">
             <FormField label="  Vehicle Quantity" error={errors.quantity} required>
               <input
@@ -1401,23 +1519,9 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
 
                 return (
                   <>
-                    {/* <SummaryRow
-                      label={`Rental (${p.totalDays}D × ${formatINR(selectedPackage.perDayRentalCost)} × Qty ${form.quantity})`}
-                      val={p.rentalCost}
-                      isLast={false}
-                      hasCharges={form.additionalCharges.length > 0}
-                      onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
-                    /> */}
-                    {/* <SummaryRow
-                      label={`Driver (${p.totalDays}D × ${formatINR(selectedPackage.driverCharges)} × Qty ${form.quantity})`}
-                      val={p.driverCost}
-                      isLast={false}
-                      hasCharges={form.additionalCharges.length > 0}
-                      onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
-                    /> */}
 
                     <SummaryRow
-                      label={`Rental (Driver charges included) (${p.totalDays}D × ${formatINR(selectedPackage.perDayRentalCost)} × Qty ${form.quantity})`}
+                      label={`Rental (${p.totalDays}D × ${formatINR(selectedPackage.perDayRentalCost)} × Qty ${form.quantity})`}
                       val={p.rentalCost}
                       isLast={false}
                       hasCharges={form.additionalCharges.length > 0}
@@ -1717,4 +1821,5 @@ function SummaryRow({ label, val, onAdd, isLast = false, hasCharges = false }: {
       </span>
     </div>
   );
-} 
+}
+
