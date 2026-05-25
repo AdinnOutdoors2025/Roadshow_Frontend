@@ -6237,7 +6237,7 @@
 //   // CHANGE 3: Hard delete from DB (not just local state)
 // const handleDeleteVehicle = async (registrationNumber) => {
 //   if (!window.confirm(`Delete vehicle ${registrationNumber}?`)) return;
-  
+
 //   if (currentEditingGroupId) {
 //     // Hard delete from backend
 //     try {
@@ -7539,6 +7539,7 @@ import Switch from "@/components/form/switch/Switch";
 import axios from "axios";
 import { baseUrl } from "../../../../../BaseUrl";
 import AdminSelectOptions from "../../AdminSelectOptions.json";
+import { useAuthGuard } from "../../../../../utils/useAuthGuard";
 
 // ── CHANGE A: Replace emoji icons with Lucide React icons ──────────────────
 import {
@@ -8807,6 +8808,9 @@ export default function VehicleOnboardingForm() {
   const [currentEditingGroupId, setCurrentEditingGroupId] = useState(null);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [stepErrors, setStepErrors] = useState({});
+
+  //TO PROTECT THE ROUTE
+  useAuthGuard();
 
   // FIX 3: vehicleDescription state
   const [vehicleDescription, setVehicleDescription] = useState("");

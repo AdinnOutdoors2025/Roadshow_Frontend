@@ -911,6 +911,8 @@ import {
 } from "lucide-react";
 import { baseUrl } from "../../../../../BaseUrl";
 import AdminSelectOptionsData from "../../AdminSelectOptions.json";
+import { useAuthGuard } from "../../../../../utils/useAuthGuard";
+
 // ── Native toggle — fully controlled, no external Switch dependency needed here
 const ToggleSwitch = ({ checked, onChange, colorOn = "bg-green-500", colorOff = "bg-gray-300", size = "md" }) => {
   const h = size === "sm" ? "h-4" : "h-5";
@@ -949,17 +951,17 @@ const REMARKS_OPTIONAL = AdminSelectOptionsData?.remarksOptionalStatuses || ["Bo
 
 const StatusBadge = ({ status }) => {
   const styles = {
-    "Waiting for Status":    "bg-yellow-100 text-yellow-700 border border-yellow-200",
-    Available:               "bg-green-100 text-green-700 border border-green-200",
-    Running:                 "bg-orange-100 text-orange-700 border border-orange-200",
-    "On Road":               "bg-orange-100 text-orange-700 border border-orange-200",
-    Allotted:                "bg-red-100 text-red-700 border border-red-200",
-    Booked:                  "bg-red-100 text-red-700 border border-red-200",
-    "Under Maintenance":     "bg-yellow-100 text-yellow-700 border border-yellow-200",
-    Maintenance:             "bg-yellow-100 text-yellow-700 border border-yellow-200",
-    Unavailable:             "bg-red-100 text-red-700 border border-red-200",
-    Damaged:                 "bg-red-200 text-red-800 border border-red-300",
-    "Waiting for Branding":  "bg-yellow-100 text-amber-700 border border-yellow-200",
+    "Waiting for Status": "bg-yellow-100 text-yellow-700 border border-yellow-200",
+    Available: "bg-green-100 text-green-700 border border-green-200",
+    Running: "bg-orange-100 text-orange-700 border border-orange-200",
+    "On Road": "bg-orange-100 text-orange-700 border border-orange-200",
+    Allotted: "bg-red-100 text-red-700 border border-red-200",
+    Booked: "bg-red-100 text-red-700 border border-red-200",
+    "Under Maintenance": "bg-yellow-100 text-yellow-700 border border-yellow-200",
+    Maintenance: "bg-yellow-100 text-yellow-700 border border-yellow-200",
+    Unavailable: "bg-red-100 text-red-700 border border-red-200",
+    Damaged: "bg-red-200 text-red-800 border border-red-300",
+    "Waiting for Branding": "bg-yellow-100 text-amber-700 border border-yellow-200",
     "Customization Pending": "bg-yellow-100 text-amber-700 border border-yellow-200",
   };
   return (
@@ -971,7 +973,7 @@ const StatusBadge = ({ status }) => {
 
 const RemarksModal = ({ isOpen, onClose, onConfirm, status, vehicleLabel, isBulk = false }) => {
   const [selectedRemark, setSelectedRemark] = useState("");
-  const [customRemark, setCustomRemark]     = useState("");
+  const [customRemark, setCustomRemark] = useState("");
   const isRequired = REMARKS_REQUIRED.includes(status);
   const isOptional = REMARKS_OPTIONAL.includes(status);
 
@@ -1235,43 +1237,45 @@ const FALLBACK_IMG = "/images/Truck_Image.jpg";
 
 export default function VehicleInventory() {
 
-  const [vehicleTypes, setVehicleTypes]     = useState([]);
+  const [vehicleTypes, setVehicleTypes] = useState([]);
   const [selectedTypeId, setSelectedTypeId] = useState("all");
-  const [vehicles, setVehicles]             = useState([]);
-  const [allVehicles, setAllVehicles]       = useState([]);
-  const [loading, setLoading]               = useState(false);
-  const [loadingAll, setLoadingAll]         = useState(false);
+  const [vehicles, setVehicles] = useState([]);
+  const [allVehicles, setAllVehicles] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingAll, setLoadingAll] = useState(false);
 
-  const [searchQuery, setSearchQuery]       = useState("");
-  const [cityFilter, setCityFilter]         = useState("all");
-  const [statusFilter, setStatusFilter]     = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [cityFilter, setCityFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const [editingRows, setEditingRows]       = useState({});
+  const [editingRows, setEditingRows] = useState({});
 
-  const [selectedRows, setSelectedRows]     = useState(new Set());
-  const [bulkStatus, setBulkStatus]         = useState("");
-  const [bulkCity, setBulkCity]             = useState("");
+  const [selectedRows, setSelectedRows] = useState(new Set());
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [bulkCity, setBulkCity] = useState("");
   // ── FIX: Add bulk GPS state ───────────────────────────────────────────────
-  const [bulkGps, setBulkGps]               = useState(""); // "" | "Active" | "Inactive"
+  const [bulkGps, setBulkGps] = useState(""); // "" | "Active" | "Inactive"
   const [isBulkApplying, setIsBulkApplying] = useState(false);
 
-  const [remarksModal, setRemarksModal]     = useState({
+  const [remarksModal, setRemarksModal] = useState({
     open: false, status: "", vehicleId: null, isBulk: false,
   });
 
-  const [currentPage, setCurrentPage]       = useState(1);
-  const [rowsPerPage, setRowsPerPage]       = useState(6);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(6);
 
-  const [carouselIndex, setCarouselIndex]   = useState(0);
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const modelsPerPage = 3;
 
   // ── FIX: Location data from API ──────────────────────────────────────────
-  const [locationData, setLocationData]     = useState([]); // [{state, cities:[]}]
-const [otherInactiveFilter, setOtherInactiveFilter] = useState(false);
-const [bulkResetKey, setBulkResetKey] = useState(0);
+  const [locationData, setLocationData] = useState([]); // [{state, cities:[]}]
+  const [otherInactiveFilter, setOtherInactiveFilter] = useState(false);
+  const [bulkResetKey, setBulkResetKey] = useState(0);
 
   const statusOptions = AdminSelectOptionsData?.statusOptions || [];
-const [packagesMap, setPackagesMap] = useState({}); // { vehicleTypeId: perDayRentalCost }
+  const [packagesMap, setPackagesMap] = useState({}); // { vehicleTypeId: perDayRentalCost }
+  //TO PROTECT THE ROUTE
+  useAuthGuard();
 
   // const totalVehicles  = allVehicles.length;
   // const availableCount = allVehicles.filter(v => v.status === "Available").length;
@@ -1281,94 +1285,94 @@ const [packagesMap, setPackagesMap] = useState({}); // { vehicleTypeId: perDayRe
   // const gpsActiveCount   = allVehicles.filter(v => v.gpsStatus === "Active").length;
   // const gpsInactiveCount = allVehicles.filter(v => v.gpsStatus !== "Active").length;
 
-//PACKAGES MAP FOR RENTAL COST FOR EACH VEHICLE TYPE IN VEHICLE INVENTORY
-useEffect(() => {
-  fetch(`${baseUrl}/packages`)
-    .then(r => r.json())
-    .then(res => {
-      if (res.success && res.data) {
-        // Build a map: vehicleTypeId → perDayRentalCost
-        // A type may have multiple models; take the first active one or the minimum
-        const map = {};
-        res.data.forEach(pkg => {
-          const typeId = pkg.vehicleType?._id || pkg.vehicleType;
-          if (!typeId) return;
-          if (!map[typeId] || pkg.perDayRentalCost < map[typeId]) {
-            map[typeId] = pkg.perDayRentalCost;
-          }
-        });
-        setPackagesMap(map);
-      }
-    })
-    .catch(() => {});
-}, []);
-// const legendScrollRef = useRef(null);
-// const legendDrag = useRef({ active: false, startX: 0, scrollLeft: 0 });
+  //PACKAGES MAP FOR RENTAL COST FOR EACH VEHICLE TYPE IN VEHICLE INVENTORY
+  useEffect(() => {
+    fetch(`${baseUrl}/packages`)
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && res.data) {
+          // Build a map: vehicleTypeId → perDayRentalCost
+          // A type may have multiple models; take the first active one or the minimum
+          const map = {};
+          res.data.forEach(pkg => {
+            const typeId = pkg.vehicleType?._id || pkg.vehicleType;
+            if (!typeId) return;
+            if (!map[typeId] || pkg.perDayRentalCost < map[typeId]) {
+              map[typeId] = pkg.perDayRentalCost;
+            }
+          });
+          setPackagesMap(map);
+        }
+      })
+      .catch(() => { });
+  }, []);
+  // const legendScrollRef = useRef(null);
+  // const legendDrag = useRef({ active: false, startX: 0, scrollLeft: 0 });
 
-// const handleLegendMouseDown = (e) => {
-//   legendDrag.current = {
-//     active: true,
-//     startX: e.pageX - legendScrollRef.current.offsetLeft,
-//     scrollLeft: legendScrollRef.current.scrollLeft,
-//   };
-//   legendScrollRef.current.style.cursor = "grabbing";
-// };
+  // const handleLegendMouseDown = (e) => {
+  //   legendDrag.current = {
+  //     active: true,
+  //     startX: e.pageX - legendScrollRef.current.offsetLeft,
+  //     scrollLeft: legendScrollRef.current.scrollLeft,
+  //   };
+  //   legendScrollRef.current.style.cursor = "grabbing";
+  // };
 
-// const handleLegendMouseMove = (e) => {
-//   if (!legendDrag.current.active) return;
-//   e.preventDefault();
-//   const x = e.pageX - legendScrollRef.current.offsetLeft;
-//   const walk = x - legendDrag.current.startX;
-//   legendScrollRef.current.scrollLeft = legendDrag.current.scrollLeft - walk;
-// };
+  // const handleLegendMouseMove = (e) => {
+  //   if (!legendDrag.current.active) return;
+  //   e.preventDefault();
+  //   const x = e.pageX - legendScrollRef.current.offsetLeft;
+  //   const walk = x - legendDrag.current.startX;
+  //   legendScrollRef.current.scrollLeft = legendDrag.current.scrollLeft - walk;
+  // };
 
-// const handleLegendMouseUp = () => {
-//   legendDrag.current.active = false;
-//   if (legendScrollRef.current) legendScrollRef.current.style.cursor = "grab";
-// };
+  // const handleLegendMouseUp = () => {
+  //   legendDrag.current.active = false;
+  //   if (legendScrollRef.current) legendScrollRef.current.style.cursor = "grab";
+  // };
 
-// const scrollLegend = (dir) => {
-//   legendScrollRef.current?.scrollBy({ left: dir * 220, behavior: "smooth" });
-// };
+  // const scrollLegend = (dir) => {
+  //   legendScrollRef.current?.scrollBy({ left: dir * 220, behavior: "smooth" });
+  // };
 
 
-const [legendPage, setLegendPage] = useState(0);
-const legendContainerRef = useRef(null);
-const [legendPerPage, setLegendPerPage] = useState(6);
+  const [legendPage, setLegendPage] = useState(0);
+  const legendContainerRef = useRef(null);
+  const [legendPerPage, setLegendPerPage] = useState(6);
 
-// Calculate how many pills fit based on container width
-useEffect(() => {
-  const calculate = () => {
-    if (!legendContainerRef.current) return;
-    const containerWidth = legendContainerRef.current.offsetWidth;
-    // Each pill ~130px avg + 8px gap, reserve 20px buffer
-    const pillWidth = 138;
-    const fits = Math.max(1, Math.floor(containerWidth / pillWidth));
-    setLegendPerPage(fits);
-    setLegendPage(0); // reset to first page on resize
-  };
-  calculate();
-  window.addEventListener("resize", calculate);
-  return () => window.removeEventListener("resize", calculate);
-}, []);
+  // Calculate how many pills fit based on container width
+  useEffect(() => {
+    const calculate = () => {
+      if (!legendContainerRef.current) return;
+      const containerWidth = legendContainerRef.current.offsetWidth;
+      // Each pill ~130px avg + 8px gap, reserve 20px buffer
+      const pillWidth = 138;
+      const fits = Math.max(1, Math.floor(containerWidth / pillWidth));
+      setLegendPerPage(fits);
+      setLegendPage(0); // reset to first page on resize
+    };
+    calculate();
+    window.addEventListener("resize", calculate);
+    return () => window.removeEventListener("resize", calculate);
+  }, []);
 
-const legendItems        = AdminSelectOptionsData.statusLegend;
-const totalLegendPages   = Math.ceil(legendItems.length / legendPerPage);
-const visibleLegendItems = legendItems.slice(
-  legendPage * legendPerPage,
-  legendPage * legendPerPage + legendPerPage
-);
-const canLegendPrev = legendPage > 0;
-const canLegendNext = legendPage + 1 < totalLegendPages;
+  const legendItems = AdminSelectOptionsData.statusLegend;
+  const totalLegendPages = Math.ceil(legendItems.length / legendPerPage);
+  const visibleLegendItems = legendItems.slice(
+    legendPage * legendPerPage,
+    legendPage * legendPerPage + legendPerPage
+  );
+  const canLegendPrev = legendPage > 0;
+  const canLegendNext = legendPage + 1 < totalLegendPages;
 
 
   // Stats cards reflect the currently selected type (vehicles), not all types
-const totalVehicles  = vehicles.length;
-const availableCount = vehicles.filter(v => v.status === "Available").length;
-const bookedCount    = vehicles.filter(v => v.status === "Booked").length;
-const otherCount     = vehicles.filter(v => !["Available", "Booked"].includes(v.status)).length;
-const gpsActiveCount   = vehicles.filter(v => v.gpsStatus === "Active").length;
-const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
+  const totalVehicles = vehicles.length;
+  const availableCount = vehicles.filter(v => v.status === "Available").length;
+  const bookedCount = vehicles.filter(v => v.status === "Booked").length;
+  const otherCount = vehicles.filter(v => !["Available", "Booked"].includes(v.status)).length;
+  const gpsActiveCount = vehicles.filter(v => v.gpsStatus === "Active").length;
+  const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
 
   // const filteredVehicles = vehicles.filter(vehicle => {
   //   const q = searchQuery.toLowerCase().trim();
@@ -1388,7 +1392,7 @@ const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
       vehicle.registrationNumber, vehicle.vehicleId, vehicle.status,
       vehicle.remarks, vehicle.city, vehicle.modelName,
     ].some(field => (field || "").toLowerCase().includes(q));
-    const matchesCity   = cityFilter === "all" || vehicle.city === cityFilter;
+    const matchesCity = cityFilter === "all" || vehicle.city === cityFilter;
     const matchesStatus = otherInactiveFilter
       ? !["Available", "Booked"].includes(vehicle.status)
       : statusFilter === "all" || vehicle.status === statusFilter;
@@ -1396,11 +1400,11 @@ const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
   });
 
 
-  const totalPages       = Math.ceil(filteredVehicles.length / rowsPerPage);
-  const indexOfLastItem  = currentPage * rowsPerPage;
+  const totalPages = Math.ceil(filteredVehicles.length / rowsPerPage);
+  const indexOfLastItem = currentPage * rowsPerPage;
   const indexOfFirstItem = indexOfLastItem - rowsPerPage;
-  const currentVehicles  = filteredVehicles.slice(indexOfFirstItem, indexOfLastItem);
-  const allPageIds       = currentVehicles.map(v => v.id);
+  const currentVehicles = filteredVehicles.slice(indexOfFirstItem, indexOfLastItem);
+  const allPageIds = currentVehicles.map(v => v.id);
 
   useEffect(() => { setCurrentPage(1); }, [searchQuery, cityFilter, statusFilter, rowsPerPage, selectedTypeId, otherInactiveFilter]);
   useEffect(() => { setSelectedRows(new Set()); }, [currentPage, selectedTypeId]);
@@ -1408,11 +1412,11 @@ const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
   const flattenVehicles = (groups) => {
     const flat = [];
     groups.forEach(group => {
-      const groupId       = group._id;
+      const groupId = group._id;
       const vehicleTypeId = group.basicInfo?.vehicleType;
-      const modelName     = group.basicInfo?.vehicleName || "Unknown Model";
-      const techSpecs     = group.techSpecs  || {};
-      const mediaFiles    = group.mediaFiles || {};
+      const modelName = group.basicInfo?.vehicleName || "Unknown Model";
+      const techSpecs = group.techSpecs || {};
+      const mediaFiles = group.mediaFiles || {};
       if (group.registrationVehicles?.length) {
         group.registrationVehicles.forEach(reg => {
           const screenSize = techSpecs.leftRightScreenWidth && techSpecs.leftRightScreenHeight
@@ -1422,18 +1426,18 @@ const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
             id: `${groupId}_${reg.registrationNumber}`,
             groupId,
             registrationNumber: reg.registrationNumber,
-            vehicleId:          reg.vehicleId,
-            city:               reg.city || "",
-            modelConfig:        reg.modelConfig || techSpecs.screenType || "3 Side LED",
+            vehicleId: reg.vehicleId,
+            city: reg.city || "",
+            modelConfig: reg.modelConfig || techSpecs.screenType || "3 Side LED",
             screenSize,
             // ── FIX: read gpsEnabled boolean directly from reg, convert to string label
-            gpsStatus:          reg.gpsEnabled === true ? "Active" : "Inactive",
-            status:             reg.statusAvailability?.currentStatus || "Waiting for Status",
-            remarks:            reg.statusAvailability?.remarks || "",
-            lastUpdated:        formatDate(reg.updatedAt || group.updatedAt),
+            gpsStatus: reg.gpsEnabled === true ? "Active" : "Inactive",
+            status: reg.statusAvailability?.currentStatus || "Waiting for Status",
+            remarks: reg.statusAvailability?.remarks || "",
+            lastUpdated: formatDate(reg.updatedAt || group.updatedAt),
             modelName, techSpecs, mediaFiles,
-            mainImage:          mediaFiles.frontViewImage || FALLBACK_IMG,
-            rawReg:             reg,
+            mainImage: mediaFiles.frontViewImage || FALLBACK_IMG,
+            rawReg: reg,
             vehicleTypeId,
           });
         });
@@ -1445,7 +1449,7 @@ const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
   const fetchAllVehicles = async () => {
     setLoadingAll(true);
     try {
-      const res  = await fetch(`${baseUrl}/api/getNewVehicles`);
+      const res = await fetch(`${baseUrl}/api/getNewVehicles`);
       const data = await res.json();
       if (data.success) setAllVehicles(flattenVehicles(data.data));
       else toast.error(data.message || "Failed to fetch all vehicles", { position: "bottom-right", autoClose: 3000 });
@@ -1459,7 +1463,7 @@ const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
 
   const fetchVehicleTypes = async () => {
     try {
-      const res  = await fetch(`${baseUrl}/api/vehicle-types`);
+      const res = await fetch(`${baseUrl}/api/vehicle-types`);
       const data = await res.json();
       if (data.success) setVehicleTypes(data.data || []);
       else toast.error("Failed to load vehicle types", { position: "bottom-right", autoClose: 3000 });
@@ -1474,7 +1478,7 @@ const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
   // The single document has state names as dynamic keys; cities:[] is a legacy field to skip.
   const fetchLocationData = async () => {
     try {
-      const res  = await fetch(`${baseUrl}/locations`);
+      const res = await fetch(`${baseUrl}/locations`);
       const data = await res.json();
       if (data.success && data.data?.locations?.length) {
         const raw = data.data.locations[0]; // single doc with state names as keys
@@ -1496,7 +1500,7 @@ const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
       const url = (!typeId || typeId === "all")
         ? `${baseUrl}/api/getNewVehicles`
         : `${baseUrl}/api/getNewVehicles?vehicleType=${typeId}`;
-      const res  = await fetch(url);
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) setVehicles(flattenVehicles(data.data));
       else { toast.error(data.message || "Failed to fetch vehicles", { position: "bottom-right", autoClose: 3000 }); setVehicles([]); }
@@ -1541,7 +1545,7 @@ const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
   const deleteRegistrationVehicle = async (groupId, registrationNumber) => {
     try {
       const cleanReg = registrationNumber.replace(/\s/g, "");
-      const res  = await fetch(
+      const res = await fetch(
         `${baseUrl}/api/deleteRegistrationVehicle/${groupId}/${encodeURIComponent(cleanReg)}`,
         { method: "DELETE" }
       );
@@ -1606,19 +1610,19 @@ const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
   const handleSaveRow = async (vehicle) => {
     const updatedFields = editingRows[vehicle.id];
     if (!updatedFields) return;
-    const newStatus  = updatedFields.status  !== undefined ? updatedFields.status  : vehicle.status;
-    const remarks    = updatedFields.remarks !== undefined ? updatedFields.remarks : vehicle.remarks;
+    const newStatus = updatedFields.status !== undefined ? updatedFields.status : vehicle.status;
+    const remarks = updatedFields.remarks !== undefined ? updatedFields.remarks : vehicle.remarks;
     const isReqRemarks = REMARKS_REQUIRED.includes(newStatus);
     if (isReqRemarks && !remarks) {
       toast.error("Please add remarks before saving.", { position: "bottom-right", autoClose: 3000 });
       return;
     }
     const payload = {};
-    if (updatedFields.city      !== undefined) payload.city       = updatedFields.city;
+    if (updatedFields.city !== undefined) payload.city = updatedFields.city;
     // ── FIX: send gpsEnabled boolean to backend ──────────────────────────
     if (updatedFields.gpsStatus !== undefined) payload.gpsEnabled = updatedFields.gpsStatus === "Active";
-    if (updatedFields.status    !== undefined) {
-      payload.currentStatus  = updatedFields.status;
+    if (updatedFields.status !== undefined) {
+      payload.currentStatus = updatedFields.status;
       payload.statusPriority = STATUS_PRIORITY[updatedFields.status] ?? 0;
     }
     if (updatedFields.remarks !== undefined) payload.remarks = updatedFields.remarks;
@@ -1636,7 +1640,7 @@ const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
   };
 
   const isAllPageSelected = allPageIds.length > 0 && allPageIds.every(id => selectedRows.has(id));
-  const isIndeterminate   = selectedRows.size > 0 && !isAllPageSelected;
+  const isIndeterminate = selectedRows.size > 0 && !isAllPageSelected;
 
   const handleSelectAll = () => {
     if (isAllPageSelected) {
@@ -1649,7 +1653,7 @@ const gpsInactiveCount = vehicles.filter(v => v.gpsStatus !== "Active").length;
   const handleSelectRow = (id) => {
     setSelectedRows(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   };
-const handleClearSelection = () => {
+  const handleClearSelection = () => {
     setSelectedRows(new Set());
     setBulkStatus("");
     setBulkCity("");
@@ -1677,10 +1681,10 @@ const handleClearSelection = () => {
     for (const vehicle of selectedVehicles) {
       const payload = {};
       if (status) {
-        payload.currentStatus  = status;
+        payload.currentStatus = status;
         payload.statusPriority = STATUS_PRIORITY[status] ?? 0;
       }
-      if (city)    payload.city    = city;
+      if (city) payload.city = city;
       if (remarks) payload.remarks = remarks;
       else if (status === "Available") payload.remarks = "";
       // ── FIX: send gpsEnabled boolean when bulkGps is set
@@ -1725,7 +1729,7 @@ const handleClearSelection = () => {
   };
 
   const totalModelGroups = Math.ceil(vehicleTypes.length / modelsPerPage);
-  const visibleModels    = vehicleTypes.slice(carouselIndex * modelsPerPage, (carouselIndex + 1) * modelsPerPage);
+  const visibleModels = vehicleTypes.slice(carouselIndex * modelsPerPage, (carouselIndex + 1) * modelsPerPage);
   const nextCarousel = () => { if (carouselIndex + 1 < totalModelGroups) setCarouselIndex(carouselIndex + 1); };
   const prevCarousel = () => { if (carouselIndex - 1 >= 0) setCarouselIndex(carouselIndex - 1); };
 
@@ -1764,13 +1768,13 @@ const handleClearSelection = () => {
           <div className="p-3 bg-green-100 rounded-lg"><CheckCircle2 className="w-6 h-6 text-green-700" /></div>
           <div>
             <p className="text-sm text-gray-500">Available</p> */}
-            <div
-onClick={() => { setStatusFilter(statusFilter === "Available" ? "all" : "Available"); setOtherInactiveFilter(false); }}
-  className={`bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 cursor-pointer transition border-2 ${statusFilter === "Available" ? "border-green-500 bg-green-50" : "border-transparent"}`}
->
-  <div className="p-3 bg-green-100 rounded-lg"><CheckCircle2 className="w-6 h-6 text-green-700" /></div>
-  <div>
-    <p className="text-sm text-gray-500">Available</p>
+        <div
+          onClick={() => { setStatusFilter(statusFilter === "Available" ? "all" : "Available"); setOtherInactiveFilter(false); }}
+          className={`bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 cursor-pointer transition border-2 ${statusFilter === "Available" ? "border-green-500 bg-green-50" : "border-transparent"}`}
+        >
+          <div className="p-3 bg-green-100 rounded-lg"><CheckCircle2 className="w-6 h-6 text-green-700" /></div>
+          <div>
+            <p className="text-sm text-gray-500">Available</p>
             <p className="text-2xl font-bold">{availableCount}</p>
             <p className="text-xs text-green-600">{totalVehicles ? ((availableCount / totalVehicles) * 100).toFixed(2) : 0}% of total</p>
           </div>
@@ -1779,16 +1783,16 @@ onClick={() => { setStatusFilter(statusFilter === "Available" ? "all" : "Availab
           <div className="p-3 bg-orange-100 rounded-lg"><PlayCircle className="w-6 h-6 text-orange-600" /></div>
           <div>
             <p className="text-sm text-gray-500">Other / Inactive</p> */}
-            <div
-  onClick={() => {
-    setOtherInactiveFilter(prev => !prev);
-    setStatusFilter("all"); // clear normal status filter when toggling this
-  }}
-  className={`bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 cursor-pointer transition border-2 ${otherInactiveFilter ? "border-orange-500 bg-orange-50" : "border-transparent"}`}
->
-  <div className="p-3 bg-orange-100 rounded-lg"><PlayCircle className="w-6 h-6 text-orange-600" /></div>
-  <div>
-    <p className="text-sm text-gray-500">Other / Inactive</p>
+        <div
+          onClick={() => {
+            setOtherInactiveFilter(prev => !prev);
+            setStatusFilter("all"); // clear normal status filter when toggling this
+          }}
+          className={`bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 cursor-pointer transition border-2 ${otherInactiveFilter ? "border-orange-500 bg-orange-50" : "border-transparent"}`}
+        >
+          <div className="p-3 bg-orange-100 rounded-lg"><PlayCircle className="w-6 h-6 text-orange-600" /></div>
+          <div>
+            <p className="text-sm text-gray-500">Other / Inactive</p>
             <p className="text-2xl font-bold">{otherCount}</p>
             <p className="text-xs text-orange-600">{totalVehicles ? ((otherCount / totalVehicles) * 100).toFixed(2) : 0}% of total</p>
           </div>
@@ -1797,13 +1801,13 @@ onClick={() => { setStatusFilter(statusFilter === "Available" ? "all" : "Availab
           <div className="p-3 bg-red-100 rounded-lg"><Calendar className="w-6 h-6 text-red-600" /></div>
           <div>
             <p className="text-sm text-gray-500">Booked</p> */}
-            <div
-onClick={() => { setStatusFilter(statusFilter === "Booked" ? "all" : "Booked"); setOtherInactiveFilter(false); }}
-  className={`bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 cursor-pointer transition border-2 ${statusFilter === "Booked" ? "border-red-500 bg-red-50" : "border-transparent"}`}
->
-  <div className="p-3 bg-red-100 rounded-lg"><Calendar className="w-6 h-6 text-red-600" /></div>
-  <div>
-    <p className="text-sm text-gray-500">Booked</p>
+        <div
+          onClick={() => { setStatusFilter(statusFilter === "Booked" ? "all" : "Booked"); setOtherInactiveFilter(false); }}
+          className={`bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 cursor-pointer transition border-2 ${statusFilter === "Booked" ? "border-red-500 bg-red-50" : "border-transparent"}`}
+        >
+          <div className="p-3 bg-red-100 rounded-lg"><Calendar className="w-6 h-6 text-red-600" /></div>
+          <div>
+            <p className="text-sm text-gray-500">Booked</p>
             <p className="text-2xl font-bold">{bookedCount}</p>
             <p className="text-xs text-red-600">{totalVehicles ? ((bookedCount / totalVehicles) * 100).toFixed(2) : 0}% of total</p>
           </div>
@@ -1900,36 +1904,36 @@ onClick={() => { setStatusFilter(statusFilter === "Booked" ? "all" : "Booked"); 
 
 
                 {/* Bulk GPS toggle */}
-<div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white">
-  <span className="text-sm text-gray-600">GPS:</span>
-  <ToggleSwitch
-    checked={bulkGps === "Active"}
-    // onChange={checked => setBulkGps(checked ? "Active" : checked === false && bulkGps === "Active" ? "Inactive" : "")}
-   onChange={checked => {
-  if (bulkGps === "") setBulkGps("Active");
-  else if (bulkGps === "Active") setBulkGps("Inactive");
-  else setBulkGps("");
-}}
-    colorOn="bg-green-500"
-    colorOff="bg-gray-300"
-    size="sm"
-  />
-  <span className={`text-xs font-medium ${bulkGps === "Active" ? "text-green-600" : bulkGps === "Inactive" ? "text-red-400" : "text-gray-400"}`}>
-    {bulkGps === "Active" ? "Enable" : bulkGps === "Inactive" ? "Disable" : "—"}
-  </span>
-  {bulkGps && (
-    <button type="button" onClick={() => setBulkGps("")} className="text-gray-400 hover:text-gray-600 text-xs leading-none ml-1">×</button>
-  )}
-</div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white">
+                  <span className="text-sm text-gray-600">GPS:</span>
+                  <ToggleSwitch
+                    checked={bulkGps === "Active"}
+                    // onChange={checked => setBulkGps(checked ? "Active" : checked === false && bulkGps === "Active" ? "Inactive" : "")}
+                    onChange={checked => {
+                      if (bulkGps === "") setBulkGps("Active");
+                      else if (bulkGps === "Active") setBulkGps("Inactive");
+                      else setBulkGps("");
+                    }}
+                    colorOn="bg-green-500"
+                    colorOff="bg-gray-300"
+                    size="sm"
+                  />
+                  <span className={`text-xs font-medium ${bulkGps === "Active" ? "text-green-600" : bulkGps === "Inactive" ? "text-red-400" : "text-gray-400"}`}>
+                    {bulkGps === "Active" ? "Enable" : bulkGps === "Inactive" ? "Disable" : "—"}
+                  </span>
+                  {bulkGps && (
+                    <button type="button" onClick={() => setBulkGps("")} className="text-gray-400 hover:text-gray-600 text-xs leading-none ml-1">×</button>
+                  )}
+                </div>
 
-{/* Bulk City cascading selector */}
-<BulkLocationSelector
-  locationData={locationData}
-  bulkCity={bulkCity}
-  setBulkCity={setBulkCity}
-    resetKey={bulkResetKey}
+                {/* Bulk City cascading selector */}
+                <BulkLocationSelector
+                  locationData={locationData}
+                  bulkCity={bulkCity}
+                  setBulkCity={setBulkCity}
+                  resetKey={bulkResetKey}
 
-/>
+                />
 
 
                 <button onClick={handleApplyToSelected}
@@ -1971,9 +1975,9 @@ onClick={() => { setStatusFilter(statusFilter === "Booked" ? "all" : "Booked"); 
                     <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-500">No vehicles match the filters.</td></tr>
                   ) : (
                     currentVehicles.map(vehicle => {
-                      const isEditing  = editingRows[vehicle.id] || {};
+                      const isEditing = editingRows[vehicle.id] || {};
                       const isSelected = selectedRows.has(vehicle.id);
-                      const currentStatus  = isEditing.status  !== undefined ? isEditing.status  : vehicle.status;
+                      const currentStatus = isEditing.status !== undefined ? isEditing.status : vehicle.status;
                       const currentRemarks = isEditing.remarks !== undefined ? isEditing.remarks : vehicle.remarks;
                       // ── FIX: GPS checked state reads from editingRows OR vehicle.gpsStatus ──
                       const currentGps = isEditing.gpsStatus !== undefined ? isEditing.gpsStatus : vehicle.gpsStatus;
@@ -2129,160 +2133,160 @@ onClick={() => { setStatusFilter(statusFilter === "Booked" ? "all" : "Booked"); 
       </div>
 
       {/* ── Inventory Summary by Model ── */}
-   {/* ── Inventory Summary by Model ── */}
-{/* ── Inventory Summary by Model ── */}
-<div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-  <div className="lg:col-span-12 bg-white rounded-xl shadow-sm p-5 mb-6">
-    <div className="font-semibold mb-4 flex justify-between items-center">
-      <span>Inventory Summary by Model</span>
-      {vehicleTypes.length > modelsPerPage && (
-        <div className="flex gap-2">
-          <button onClick={prevCarousel} disabled={carouselIndex === 0}
-            className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-30">‹</button>
-          <button onClick={nextCarousel} disabled={carouselIndex + 1 >= totalModelGroups}
-            className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-30">›</button>
-        </div>
-      )}
-    </div>
-
-    <div className="flex justify-around gap-4 overflow-hidden">
-      {visibleModels.map(type => {
-        const typeVehicles = allVehicles.filter(v => v.vehicleTypeId === type._id);
-        const total   = typeVehicles.length;
-
-        // Named counts
-        const avail   = typeVehicles.filter(v => v.status === "Available").length;
-        const booked  = typeVehicles.filter(v => v.status === "Booked").length;
-
-        // Everything except Available and Booked → Others
-        const others  = typeVehicles.filter(
-          v => v.status !== "Available" && v.status !== "Booked"
-        ).length;
-
-        // Breakdown of "others" for tooltip — group by status
-        const otherBreakdown = typeVehicles
-          .filter(v => v.status !== "Available" && v.status !== "Booked")
-          .reduce((acc, v) => {
-            const s = v.status || "Unknown";
-            acc[s] = (acc[s] || 0) + 1;
-            return acc;
-          }, {});
-
-        const gpsOn   = typeVehicles.filter(v => v.gpsStatus === "Active").length;
-        const gpsOff  = typeVehicles.filter(v => v.gpsStatus !== "Active").length;
-        const typeImg = typeVehicles[0]?.mainImage || FALLBACK_IMG;
-        const perDay  = packagesMap[type._id?.toString()];
-
-        return (
-          <div key={type._id} className="flex gap-5 pr-2.5 min-w-[250px]">
-            {/* Left: image + total */}
-            <div className="text-center">
-              <img
-                src={typeImg}
-                className="w-[60px] h-[60px] rounded-lg object-cover"
-                alt="vehicle"
-                onError={e => { e.target.onerror = null; e.target.src = FALLBACK_IMG; }}
-              />
-              <div className="text-xs text-gray-500 mt-1">Total</div>
-              <div className="font-semibold text-xl">{total}</div>
-            </div>
-
-            {/* Right: name + cost + counts */}
-            <div className="flex-1">
-              <div className="font-medium text-sm leading-tight">{type.typeName}</div>
-
-              {/* Per-day cost */}
-              {perDay !== undefined ? (
-                <div className="text-xs font-semibold text-green-700 bg-green-50 border border-green-100
-                                rounded px-2 py-0.5 inline-block mt-0.5 mb-1.5">
-                  ₹{perDay.toLocaleString("en-IN")}/day
-                </div>
-              ) : (
-                <div className="text-xs text-gray-400 mb-1.5">No package</div>
-              )}
-
-              <div className="text-xs text-gray-400 mb-0.5">Counts</div>
-
-              {/* Available */}
-              <div className="flex justify-between gap-2.5 text-sm">
-                <div className="flex items-center gap-1">
-                  <i className="fa-solid fa-circle" style={{ color: "#22c55e", fontSize: "9px" }} />
-                  Available
-                </div>
-                <div className="font-medium">{avail}</div>
+      {/* ── Inventory Summary by Model ── */}
+      {/* ── Inventory Summary by Model ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-12 bg-white rounded-xl shadow-sm p-5 mb-6">
+          <div className="font-semibold mb-4 flex justify-between items-center">
+            <span>Inventory Summary by Model</span>
+            {vehicleTypes.length > modelsPerPage && (
+              <div className="flex gap-2">
+                <button onClick={prevCarousel} disabled={carouselIndex === 0}
+                  className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-30">‹</button>
+                <button onClick={nextCarousel} disabled={carouselIndex + 1 >= totalModelGroups}
+                  className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-30">›</button>
               </div>
-
-              {/* Booked */}
-              <div className="flex justify-between gap-2.5 text-sm">
-                <div className="flex items-center gap-1">
-                  <i className="fa-solid fa-circle" style={{ color: "#ef4444", fontSize: "9px" }} />
-                  Booked
-                </div>
-                <div className="font-medium">{booked}</div>
-              </div>
-
-              {/* Others — with hover tooltip showing breakdown */}
-              <div className="flex justify-between gap-2.5 text-sm relative group">
-                <div className="flex items-center gap-1">
-                  <i className="fa-solid fa-circle" style={{ color: "#9ca3af", fontSize: "9px" }} />
-                  <span className="cursor-help ">Others</span>
-                </div>
-                <div className="font-medium text-gray-500">{others}</div>
-
-                {/* Breakdown tooltip — only shows if others > 0 */}
-                {others > 0 && (
-                  <div className="absolute bottom-full left-0 mb-1.5 z-20 hidden group-hover:block
-                                  bg-white border border-gray-200 rounded-lg shadow-lg p-2.5 min-w-[160px]">
-                    <div className="text-xs font-semibold text-gray-600 mb-1.5">Other statuses</div>
-                    {Object.entries(otherBreakdown).map(([status, count]) => {
-                      const STATUS_COLORS = {
-                        "Waiting for Status":    "#9ca3af",
-                        "Maintenance":           "#eab308",
-                        "Running":               "#f97316",
-                        "Allotted":              "#ef4444",
-                        "On Road":               "#3b82f6",
-                        "Unavailable":           "#dc2626",
-                        "Waiting for Branding":  "#f59e0b",
-                        "Customization Pending": "#d97706",
-                        "Damaged":               "#7f1d1d",
-                      };
-                      return (
-                        <div key={status} className="flex justify-between items-center gap-3 text-xs py-0.5">
-                          <div className="flex items-center gap-1">
-                            <i className="fa-solid fa-circle"
-                               style={{ color: STATUS_COLORS[status] || "#9ca3af", fontSize: "8px" }} />
-                            <span className="text-gray-700">{status}</span>
-                          </div>
-                          <span className="font-medium text-gray-800">{count}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* GPS divider */}
-              <div className="flex justify-between gap-2.5 text-sm mt-1 pt-1 border-t border-gray-100">
-                <div className="flex items-center gap-1">
-                  <Wifi className="inline w-3 h-3 text-green-500" /> GPS On
-                </div>
-                <div className="text-green-600 font-medium">{gpsOn}</div>
-              </div>
-              <div className="flex justify-between gap-2.5 text-sm">
-                <div className="flex items-center gap-1">
-                  <WifiOff className="inline w-3 h-3 text-gray-400" /> GPS Off
-                </div>
-                <div className="text-gray-400">{gpsOff}</div>
-              </div>
-            </div>
+            )}
           </div>
-        );
-      })}
-    </div>
-  </div>
 
-  {/* ── Status Legend right card ── */}
-  {/* <div className="lg:col-span-3 bg-white rounded-xl shadow-sm p-5 mb-6">
+          <div className="flex justify-around gap-4 overflow-hidden">
+            {visibleModels.map(type => {
+              const typeVehicles = allVehicles.filter(v => v.vehicleTypeId === type._id);
+              const total = typeVehicles.length;
+
+              // Named counts
+              const avail = typeVehicles.filter(v => v.status === "Available").length;
+              const booked = typeVehicles.filter(v => v.status === "Booked").length;
+
+              // Everything except Available and Booked → Others
+              const others = typeVehicles.filter(
+                v => v.status !== "Available" && v.status !== "Booked"
+              ).length;
+
+              // Breakdown of "others" for tooltip — group by status
+              const otherBreakdown = typeVehicles
+                .filter(v => v.status !== "Available" && v.status !== "Booked")
+                .reduce((acc, v) => {
+                  const s = v.status || "Unknown";
+                  acc[s] = (acc[s] || 0) + 1;
+                  return acc;
+                }, {});
+
+              const gpsOn = typeVehicles.filter(v => v.gpsStatus === "Active").length;
+              const gpsOff = typeVehicles.filter(v => v.gpsStatus !== "Active").length;
+              const typeImg = typeVehicles[0]?.mainImage || FALLBACK_IMG;
+              const perDay = packagesMap[type._id?.toString()];
+
+              return (
+                <div key={type._id} className="flex gap-5 pr-2.5 min-w-[250px]">
+                  {/* Left: image + total */}
+                  <div className="text-center">
+                    <img
+                      src={typeImg}
+                      className="w-[60px] h-[60px] rounded-lg object-cover"
+                      alt="vehicle"
+                      onError={e => { e.target.onerror = null; e.target.src = FALLBACK_IMG; }}
+                    />
+                    <div className="text-xs text-gray-500 mt-1">Total</div>
+                    <div className="font-semibold text-xl">{total}</div>
+                  </div>
+
+                  {/* Right: name + cost + counts */}
+                  <div className="flex-1">
+                    <div className="font-medium text-sm leading-tight">{type.typeName}</div>
+
+                    {/* Per-day cost */}
+                    {perDay !== undefined ? (
+                      <div className="text-xs font-semibold text-green-700 bg-green-50 border border-green-100
+                                rounded px-2 py-0.5 inline-block mt-0.5 mb-1.5">
+                        ₹{perDay.toLocaleString("en-IN")}/day
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400 mb-1.5">No package</div>
+                    )}
+
+                    <div className="text-xs text-gray-400 mb-0.5">Counts</div>
+
+                    {/* Available */}
+                    <div className="flex justify-between gap-2.5 text-sm">
+                      <div className="flex items-center gap-1">
+                        <i className="fa-solid fa-circle" style={{ color: "#22c55e", fontSize: "9px" }} />
+                        Available
+                      </div>
+                      <div className="font-medium">{avail}</div>
+                    </div>
+
+                    {/* Booked */}
+                    <div className="flex justify-between gap-2.5 text-sm">
+                      <div className="flex items-center gap-1">
+                        <i className="fa-solid fa-circle" style={{ color: "#ef4444", fontSize: "9px" }} />
+                        Booked
+                      </div>
+                      <div className="font-medium">{booked}</div>
+                    </div>
+
+                    {/* Others — with hover tooltip showing breakdown */}
+                    <div className="flex justify-between gap-2.5 text-sm relative group">
+                      <div className="flex items-center gap-1">
+                        <i className="fa-solid fa-circle" style={{ color: "#9ca3af", fontSize: "9px" }} />
+                        <span className="cursor-help ">Others</span>
+                      </div>
+                      <div className="font-medium text-gray-500">{others}</div>
+
+                      {/* Breakdown tooltip — only shows if others > 0 */}
+                      {others > 0 && (
+                        <div className="absolute bottom-full left-0 mb-1.5 z-20 hidden group-hover:block
+                                  bg-white border border-gray-200 rounded-lg shadow-lg p-2.5 min-w-[160px]">
+                          <div className="text-xs font-semibold text-gray-600 mb-1.5">Other statuses</div>
+                          {Object.entries(otherBreakdown).map(([status, count]) => {
+                            const STATUS_COLORS = {
+                              "Waiting for Status": "#9ca3af",
+                              "Maintenance": "#eab308",
+                              "Running": "#f97316",
+                              "Allotted": "#ef4444",
+                              "On Road": "#3b82f6",
+                              "Unavailable": "#dc2626",
+                              "Waiting for Branding": "#f59e0b",
+                              "Customization Pending": "#d97706",
+                              "Damaged": "#7f1d1d",
+                            };
+                            return (
+                              <div key={status} className="flex justify-between items-center gap-3 text-xs py-0.5">
+                                <div className="flex items-center gap-1">
+                                  <i className="fa-solid fa-circle"
+                                    style={{ color: STATUS_COLORS[status] || "#9ca3af", fontSize: "8px" }} />
+                                  <span className="text-gray-700">{status}</span>
+                                </div>
+                                <span className="font-medium text-gray-800">{count}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* GPS divider */}
+                    <div className="flex justify-between gap-2.5 text-sm mt-1 pt-1 border-t border-gray-100">
+                      <div className="flex items-center gap-1">
+                        <Wifi className="inline w-3 h-3 text-green-500" /> GPS On
+                      </div>
+                      <div className="text-green-600 font-medium">{gpsOn}</div>
+                    </div>
+                    <div className="flex justify-between gap-2.5 text-sm">
+                      <div className="flex items-center gap-1">
+                        <WifiOff className="inline w-3 h-3 text-gray-400" /> GPS Off
+                      </div>
+                      <div className="text-gray-400">{gpsOff}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Status Legend right card ── */}
+        {/* <div className="lg:col-span-3 bg-white rounded-xl shadow-sm p-5 mb-6">
     <div className="font-semibold text-sm mb-2">Status Legend</div>
     <div className="flex flex-col gap-1.5 text-xs">
       {[
@@ -2316,7 +2320,7 @@ onClick={() => { setStatusFilter(statusFilter === "Booked" ? "all" : "Booked"); 
       </div>
     </div>
   </div> */}
-</div>
+      </div>
 
       {/* <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
         <div className="flex flex-wrap gap-4 items-center">
@@ -2333,7 +2337,7 @@ onClick={() => { setStatusFilter(statusFilter === "Booked" ? "all" : "Booked"); 
         </div>
       </div> */}
       {/* ── Status Legend – Scrollable Carousel ── */}
-{/* <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
+      {/* <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
   <div className="flex items-center gap-3">
     <div className="font-semibold whitespace-nowrap">Status Legend</div>
     <div
@@ -2377,74 +2381,73 @@ onClick={() => { setStatusFilter(statusFilter === "Booked" ? "all" : "Booked"); 
   </div>
 </div> */}
 
-{/* ── Status Legend ── */}
-{/* ── Status Legend – Proper fit-based carousel ── */}
-<div className="bg-white rounded-xl shadow-sm p-5 mb-6">
-  <div className="flex items-center gap-3">
+      {/* ── Status Legend ── */}
+      {/* ── Status Legend – Proper fit-based carousel ── */}
+      <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
+        <div className="flex items-center gap-3">
 
-    <div className="font-semibold whitespace-nowrap flex-shrink-0">Status Legend</div>
+          <div className="font-semibold whitespace-nowrap flex-shrink-0">Status Legend</div>
 
-    {/* Left arrow — only shown when needed */}
-    <button
-      onClick={() => setLegendPage(p => Math.max(0, p - 1))}
-      disabled={!canLegendPrev}
-      className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200
+          {/* Left arrow — only shown when needed */}
+          <button
+            onClick={() => setLegendPage(p => Math.max(0, p - 1))}
+            disabled={!canLegendPrev}
+            className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200
                  disabled:opacity-30 disabled:cursor-default flex items-center
                  justify-center flex-shrink-0 text-sm transition-opacity"
-    >‹</button>
+          >‹</button>
 
-    {/* Pills container — measured for auto-fit */}
-    <div
-      ref={legendContainerRef}
-      className="flex flex-1 gap-2  overflow-hidden" style={{justifyContent:'space-around'}}
-    >
-      {visibleLegendItems.map(({ label, color, bg, text, border }) => (
-        <div
-          key={label}
-          className={`rounded px-2 py-1 ${bg} ${text} border ${border}
+          {/* Pills container — measured for auto-fit */}
+          <div
+            ref={legendContainerRef}
+            className="flex flex-1 gap-2  overflow-hidden" style={{ justifyContent: 'space-around' }}
+          >
+            {visibleLegendItems.map(({ label, color, bg, text, border }) => (
+              <div
+                key={label}
+                className={`rounded px-2 py-1 ${bg} ${text} border ${border}
                       whitespace-nowrap text-sm flex items-center gap-1 flex-shrink-0`}
-        >
-          <i className="fa-solid fa-circle" style={{ color, fontSize: "10px" }} />
-          {label}
-        </div>
-      ))}
-    </div>
+              >
+                <i className="fa-solid fa-circle" style={{ color, fontSize: "10px" }} />
+                {label}
+              </div>
+            ))}
+          </div>
 
-    {/* Page indicator + right arrow */}
-    <div className="flex items-center gap-2 flex-shrink-0">
-      {totalLegendPages > 1 && (
-        <span className="text-xs text-gray-400 whitespace-nowrap">
-          {legendPage + 1} / {totalLegendPages}
-        </span>
-      )}
-      <button
-        onClick={() => setLegendPage(p => Math.min(totalLegendPages - 1, p + 1))}
-        disabled={!canLegendNext}
-        className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200
+          {/* Page indicator + right arrow */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {totalLegendPages > 1 && (
+              <span className="text-xs text-gray-400 whitespace-nowrap">
+                {legendPage + 1} / {totalLegendPages}
+              </span>
+            )}
+            <button
+              onClick={() => setLegendPage(p => Math.min(totalLegendPages - 1, p + 1))}
+              disabled={!canLegendNext}
+              className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200
                    disabled:opacity-30 disabled:cursor-default flex items-center
                    justify-center flex-shrink-0 text-sm transition-opacity"
-      >›</button>
-    </div>
+            >›</button>
+          </div>
 
-  </div>
+        </div>
 
-  {/* Dot indicators — only when more than 1 page */}
-  {totalLegendPages > 1 && (
-    <div className="flex gap-1.5 mt-2.5 justify-center">
-      {Array.from({ length: totalLegendPages }).map((_, i) => (
-        <button
-          key={i}
-          onClick={() => setLegendPage(i)}
-          className={`rounded-full transition-all ${
-            i === legendPage
-              ? "w-4 h-1.5 bg-gray-500"
-              : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
-          }`}
-        />
-      ))}
-    </div>
-  )}
-</div>
+        {/* Dot indicators — only when more than 1 page */}
+        {totalLegendPages > 1 && (
+          <div className="flex gap-1.5 mt-2.5 justify-center">
+            {Array.from({ length: totalLegendPages }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setLegendPage(i)}
+                className={`rounded-full transition-all ${i === legendPage
+                    ? "w-4 h-1.5 bg-gray-500"
+                    : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
+                  }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
