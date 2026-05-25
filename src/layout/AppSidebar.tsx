@@ -69,6 +69,11 @@ const navItems: NavItem[] = [
     icon: <HiOutlineCube />,
     path: "/admin/package-management"
   },
+  {
+    name: "Driver Management",
+    icon: <HiOutlineCube />,
+    path: "/admin/driver"
+  },
 
    {
     name: "Promoter",

@@ -1308,7 +1308,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
               </div>
               <div id="field-toLocation">
                 <FormField label="To Location" error={errors.toLocation} required>
-                  <input type="text" value={form.toLocation} onChange={(e) => set("toLocation", e.target.value)} placeholder="Destination" className={inputClass(!!errors.toLocation)} />
+                  <input type="text" value={form.toLocation} onChange={(e) => set("toLocation", e.target.value)} placeholder="Ending point" className={inputClass(!!errors.toLocation)} />
                 </FormField>
               </div>
             </div>

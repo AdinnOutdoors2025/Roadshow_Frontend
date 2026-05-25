@@ -245,16 +245,94 @@ export default function OrdersPage() {
 
 
 
-  const filtered = orders.filter((o) => {
-    const matchPipeline = filterPipeline === "all" || o.pipelineStatus === filterPipeline;
-    const matchStatus = filterStatus === "all" || o.orderStatus === filterStatus;
-    const q = searchQ.trim().toLowerCase();
-    const matchSearch = !q ||
-      (o.orderId || "").toLowerCase().includes(q) ||
-      (o.name || "").toLowerCase().includes(q) ||
-      (o.phone || "").includes(q);
-    return matchPipeline && matchStatus && matchSearch;
-  });
+  // const filtered = orders.filter((o) => {
+  //   const matchPipeline = filterPipeline === "all" || o.pipelineStatus === filterPipeline;
+  //   const matchStatus = filterStatus === "all" || o.orderStatus === filterStatus;
+  //   const q = searchQ.trim().toLowerCase();
+  //   const matchSearch = !q ||
+  //     (o.orderId || "").toLowerCase().includes(q) ||
+  //     (o.name || "").toLowerCase().includes(q) ||
+  //     (o.phone || "").includes(q);
+  //   return matchPipeline && matchStatus && matchSearch;
+  // });
+
+
+const filtered = orders.filter((o) => {
+  const matchPipeline = filterPipeline === "all" || o.pipelineStatus === filterPipeline;
+  const matchStatus = filterStatus === "all" || o.orderStatus === filterStatus;
+  
+  // Enhanced search logic
+  const q = searchQ.trim().toLowerCase();
+  const matchSearch = !q || (() => {
+    // Search by Order ID
+    if ((o.orderId || "").toLowerCase().includes(q)) return true;
+    
+    // Search by Customer Name
+    if ((o.name || "").toLowerCase().includes(q)) return true;
+    
+    // Search by Phone
+    if ((o.phone || "").includes(q)) return true;
+    
+    // Search by Vehicles (vehicle models and types)
+    if (o.bookingItems && o.bookingItems.length > 0) {
+      const vehicleSearchText = o.bookingItems.map(item => 
+        `${item.vehicleModel || ""} ${item.vehicleType || ""}`
+      ).join(" ").toLowerCase();
+      if (vehicleSearchText.includes(q)) return true;
+    }
+    
+    // Search by Duration
+    if (o.bookingItems && o.bookingItems.length > 0) {
+      const durationText = getDateRange(o.bookingItems).toLowerCase();
+      if (durationText.includes(q)) return true;
+      
+      // Also search by total days
+      const totalDays = getTotalDays(o.bookingItems);
+      if (totalDays.toString().includes(q)) return true;
+    }
+    
+    // Search by Location (cities and states)
+    if (o.bookingItems && o.bookingItems.length > 0) {
+      const locationText = o.bookingItems.map(item => 
+        `${item.city || ""} ${item.state || ""}`
+      ).join(" ").toLowerCase();
+      if (locationText.includes(q)) return true;
+    }
+    
+    // Search by Grand Total
+    const displayTotal = o.grandNegotiationTotal && o.grandNegotiationTotal > 0
+      ? o.grandNegotiationTotal
+      : o.grandTotal;
+    
+    if (displayTotal) {
+      // Search in different formats
+      if (displayTotal.toString().includes(q)) return true;
+      if (formatINR(displayTotal).toLowerCase().includes(q)) return true;
+      if (displayTotal.toLocaleString("en-IN").includes(q)) return true;
+    }
+    
+    // Search by Created date
+    if (o.createdAt) {
+      const createdDateText = formatDate(o.createdAt).toLowerCase();
+      if (createdDateText.includes(q)) return true;
+      
+      // Also search by date parts
+      const date = new Date(o.createdAt);
+      const dateFormats = [
+        date.toLocaleDateString("en-IN"),
+        date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+        date.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }),
+        date.toISOString().split('T')[0], // YYYY-MM-DD format
+      ];
+      if (dateFormats.some(format => format.toLowerCase().includes(q))) return true;
+    }
+    
+    return false;
+  })();
+  
+  return matchPipeline && matchStatus && matchSearch;
+});
+
 
   // ── Pagination 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
@@ -387,7 +465,7 @@ export default function OrdersPage() {
           {(searchQ || filterPipeline !== "all" || filterStatus !== "all") && (
             <button
               onClick={() => { setSearchQ(""); setFilterPipeline("all"); setFilterStatus("all"); setCurrentPage(1); }}
-              className="text-xs font-medium text-blue-600 hover:underline whitespace-nowrap dark:text-blue-400"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 hover:bg-red-100 transition-colors dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
             >
               Reset filters
             </button>
