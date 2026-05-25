@@ -2,8 +2,8 @@ import SignUpForm from "@/components/auth/SignUpForm";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Next.js SignUp Page | Adinn - Next.js Dashboard Template",
-  description: "This is Next.js SignUp Page Adinn Dashboard Template",
+  title: "Adinn Roadshow Admin - Sign Up",
+  description: "",
   // other metadata
 };
 
