@@ -2,8 +2,8 @@ import SignInForm from "@/components/auth/SignInForm";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Next.js SignIn Page | Adinn - Next.js Dashboard Template",
-  description: "This is Next.js Signin Page Adinn Dashboard Template",
+  title: "Adinn Roadshow Admin - Sign In",
+  description: "",
 };
 
 export default function SignIn() {
