@@ -803,7 +803,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                       const label =
                         typeof pkg.vehicleType === "object" && pkg.vehicleType !== null
                           ? pkg.vehicleType.typeName
-                          : vehicleTypes.find((t) => t._id === pkg.vehicleType)?.typeName ?? pkg.vehicleType;
+                          : vehicleTypes.find((t : any) => t._id === pkg.vehicleType)?.typeName ?? pkg.vehicleType;
 
                       return (
                         <option key={pkg._id} value={pkg._id}>

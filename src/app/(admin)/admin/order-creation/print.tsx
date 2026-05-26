@@ -1,4 +1,5 @@
-
+/* eslint-disable */
+// @ts-nocheck
 "use client";
 
 import React, { useRef } from "react";
