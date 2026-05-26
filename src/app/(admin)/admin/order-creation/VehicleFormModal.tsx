@@ -12,7 +12,7 @@ import DatePicker from "@/components/form/date-picker";
 
 interface PackageOption {
   _id: string;
-  vehicleType: string | { _id: string; typeName: string }; 
+  vehicleType: string | { _id: string; typeName: string };
   vehicleModel: string;
   perDayRentalCost: number;
   driverCharges: number;
@@ -23,6 +23,7 @@ interface PackageOption {
   promoterChargePerDay: number;
   isActive: boolean;
   perKmCharge: number
+  dailyKmcharges: number
 }
 
 interface Props {
@@ -67,6 +68,8 @@ function defaultForm(): Omit<VehicleConfig, "id"> {
     promoterGender: "",
     promoterLanguage: "",
     promoterQuantity: 0,
+    dailyKmcharges: 0
+
   };
 }
 
@@ -80,10 +83,12 @@ function calcPricing(
   extraKm: number,
   extraDays: number,
   extraHours: number,
-
   additionalCharges: AdditionalCharge[],
   promoterQuantity: number,
+  dailyKmcharges: number,
 ): PricingPreview | null {
+
+ 
   if (!fromDate || !toDate || quantity < 1) return null;
   const from = new Date(fromDate);
   const to = new Date(toDate);
@@ -109,7 +114,7 @@ function calcPricing(
     return c.mode === "+" ? acc + amt : acc;
   }, 0);
 
-  const subtotal = rentalCost + driverCost + promoterCost + rtoCost + extraKmCost + extraHourCost + additionalAdds;
+  const subtotal = rentalCost + promoterCost + rtoCost + extraKmCost + extraHourCost + additionalAdds;
 
 
   const MAX_DISCOUNT_PCT = parseFloat(process.env.NEXT_PUBLIC_MAX_DISCOUNT_PERCENT || "15");
@@ -145,6 +150,7 @@ function calcPricing(
     rtoCharges: pkg.rtoCharges,
     additionalHourCharges: pkg.additionalHourCharges,
     dailyKmLimit: pkg.dailyKmLimit,
+    dailyKmcharges: pkg.perKmCharge || dailyKmcharges || 0,
     rentalCost,
     driverCost,
     promoterCost,
@@ -241,10 +247,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [packageslist, setPackageslist] = useState<PackageOption[]>([]);
   const [campaignTypes, setCampaignTypes] = useState<{ _id: string, name: string }[]>([]);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
-
-  console.log("packageslist", packageslist)
-
-  console.log("form", form)
+console.log("selectedPackage",selectedPackage)
 
   const [editablePackage, setEditablePackage] = useState<Record<string, string>>({});
   const [savingPkg, setSavingPkg] = useState(false);
@@ -253,8 +256,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [locationData, setLocationData] = useState<Record<string, string[]>>({});
   const [cityOptions, setCityOptions] = useState<string[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<any>([]);
-  console.log("vehicleTypes", vehicleTypes)
-  console.log("locationData", locationData)
+
 
   const PROMOTER_GENDER_OPTIONS = ["Male", "Female", "Other"];
   const PROMOTER_LANGUAGE_OPTIONS = ["Tamil", "English", "Telugu", "Hindi", "Kannada", "Malayalam"];
@@ -302,6 +304,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
         dailyKmLimit: String(selectedPackage.dailyKmLimit),
         additionalHourCharges: String(selectedPackage.additionalHourCharges),
         promoterChargePerDay: String(selectedPackage.promoterChargePerDay),
+       perKmCharge: String(selectedPackage.perKmCharge || 0), 
       });
       setPkgSaved(false);
       setChangedKeys([]);
@@ -327,7 +330,8 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
       form.extraKm, form.extraDays,
       form.extraHours,
       form.additionalCharges,
-      form.promoterQuantity
+      form.promoterQuantity,
+       mergedPkg.perKmCharge || 0,
 
     );
     setForm(f => ({ ...f, pricing: p }));
@@ -339,7 +343,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const filteredModels = packageslist.filter((p) => p.vehicleType);
 
 
-  console.log("filteredModels", filteredModels)
+  
 
   const fetchVehicleTypes = async () => {
     try {
@@ -357,13 +361,16 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   useEffect(() => { fetchVehicleTypes(); }, []);
 
 
+
   const fetchPackages = async () => {
     try {
-
       const res = await fetch(`${API_BASE}packages/`);
       if (!res.ok) throw new Error("Failed to fetch packages");
       const data = await res.json();
-      setPackageslist(data.data);
+      
+      
+      const activePackages = data.data.filter((pkg: any) => pkg.isActive === true);
+      setPackageslist(activePackages);
 
     } catch (err: any) {
       console.log(err)
@@ -382,6 +389,8 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
       })
       .catch(() => { });
   }, []);
+
+  console.log("packageslist",packageslist)
 
   useEffect(() => {
     if (editing?.packageId && packageslist.length > 0) {
@@ -403,7 +412,8 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
       form.extraDays,
       form.extraHours,
       form.additionalCharges,
-      form.promoterQuantity
+      form.promoterQuantity,
+      selectedPackage.perKmCharge || 0,
 
     );
     setForm((f) => ({ ...f, pricing: p }));
@@ -419,38 +429,26 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     setForm((f) => ({ ...f, vehicleType: type, vehicleModel: "", packageId: "" }));
     setSelectedPackage(null);
 
-    // if (type) {
-    //   setLoadingPkg(true);
-    //   try {
-    //     const { packages: pkgs } = await getPackagesForOrder({ vehicleType: type });
-    //     setPackages(pkgs);
-    //   } catch (error) {
-    //     console.error("Error while fetching packages:", error);
-    //   } finally {
-    //     setLoadingPkg(false);
-    //   }
-    // } else {
-    //   setPackages([]);
-    // }
+
   };
 
 
   const handleVehicleModelChange = (modelId: string) => {
-  const pkg = packageslist.find((p) => p._id === modelId) || null;
-  setSelectedPackage(pkg);
+    const pkg = packageslist.find((p) => p._id === modelId) || null;
+    setSelectedPackage(pkg);
 
- 
-  const vehicleModelName =
-    typeof pkg?.vehicleType === "object" && pkg?.vehicleType !== null
-      ? (pkg.vehicleType as any).typeName ?? ""
-      : pkg?.vehicleType ?? "";
 
-  setForm((f) => ({
-    ...f,
-    packageId: modelId,
-    vehicleModel: vehicleModelName,  
-  }));
-};
+    const vehicleModelName =
+      typeof pkg?.vehicleType === "object" && pkg?.vehicleType !== null
+        ? (pkg.vehicleType as any).typeName ?? ""
+        : pkg?.vehicleType ?? "";
+
+    setForm((f) => ({
+      ...f,
+      packageId: modelId,
+      vehicleModel: vehicleModelName,
+    }));
+  };
 
 
 
@@ -513,53 +511,108 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     rtoCharges: "RTO",
     dailyKmLimit: "KM Limit",
     additionalHourCharges: "Extra hr charge",
-    promoterChargePerDay: "Promoter/day",
+    promoterChargePerDay: "Promoter/day", 
   };
+
+  // const handleSavePackageChanges = async () => {
+  //   if (!selectedPackage) return;
+
+
+  //   const emptyFields = Object.entries(editablePackage)
+  //     .filter(([_, v]) => v === "" || v === ".")
+  //     .map(([k]) => FIELD_LABELS[k] || k);
+
+  //   if (emptyFields.length > 0) {
+  //     alert(`Please fill: ${emptyFields.join(", ")}`);
+  //     return;
+  //   }
+
+  //   setSavingPkg(true);
+  //   try {
+  //     const numericPayload = Object.fromEntries(
+  //       Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
+  //     );
+
+  //     const res = await fetch(`${API_BASE}packages/${selectedPackage._id}`, {
+  //       method: "PUT",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(numericPayload),
+  //     });
+  //     const data = await res.json();
+  //     if (!res.ok) throw new Error(data.message || "Update failed");
+
+
+  //     const summary = changedKeys
+  //       .map(k => `${FIELD_LABELS[k]}: ₹${selectedPackage[k as keyof PackageOption]} → ₹${editablePackage[k]}`)
+  //       .join("\n");
+
+  //     setSelectedPackage(prev => prev ? { ...prev, ...numericPayload } : prev);
+  //     setPkgSaved(true);
+  //     setChangedKeys([]);
+
+  //     if (summary) alert(`✅ Package updated!\n\n${summary}`);
+
+  //   } catch (err: any) {
+  //     alert(err.message || "Failed to update package");
+  //   } finally {
+  //     setSavingPkg(false);
+  //   }
+  // };
+
 
   const handleSavePackageChanges = async () => {
-    if (!selectedPackage) return;
+  if (!selectedPackage) return;
 
+  const emptyFields = Object.entries(editablePackage)
+    .filter(([_, v]) => v === "" || v === ".")
+    .map(([k]) => FIELD_LABELS[k] || k);
 
-    const emptyFields = Object.entries(editablePackage)
-      .filter(([_, v]) => v === "" || v === ".")
-      .map(([k]) => FIELD_LABELS[k] || k);
+  if (emptyFields.length > 0) {
+    alert(`Please fill: ${emptyFields.join(", ")}`);
+    return;
+  }
 
-    if (emptyFields.length > 0) {
-      alert(`Please fill: ${emptyFields.join(", ")}`);
-      return;
-    }
+  setSavingPkg(true);
+  try {
+    const numericPayload = Object.fromEntries(
+      Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
+    );
 
-    setSavingPkg(true);
-    try {
-      const numericPayload = Object.fromEntries(
-        Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
-      );
+    // ✅ Extract the vehicleType ID from selectedPackage
+    const vehicleTypeId =
+      typeof selectedPackage.vehicleType === "object"
+        ? selectedPackage.vehicleType._id
+        : selectedPackage.vehicleType;
 
-      const res = await fetch(`${API_BASE}packages/${selectedPackage._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(numericPayload),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Update failed");
+    const res = await fetch(`${API_BASE}packages/${selectedPackage._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...numericPayload,
+        vehicleType: vehicleTypeId,        
+        vehicleModel: selectedPackage.vehicleModel, 
+      }),
+    });
 
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Update failed");
 
-      const summary = changedKeys
-        .map(k => `${FIELD_LABELS[k]}: ₹${selectedPackage[k as keyof PackageOption]} → ₹${editablePackage[k]}`)
-        .join("\n");
+    const summary = changedKeys
+      .map(k => `${FIELD_LABELS[k]}: ₹${selectedPackage[k as keyof PackageOption]} → ₹${editablePackage[k]}`)
+      .join("\n");
 
-      setSelectedPackage(prev => prev ? { ...prev, ...numericPayload } : prev);
-      setPkgSaved(true);
-      setChangedKeys([]);
+    setSelectedPackage(prev => prev ? { ...prev, ...numericPayload } : prev);
+    setPkgSaved(true);
+    setChangedKeys([]);
 
-      if (summary) alert(`✅ Package updated!\n\n${summary}`);
+    if (summary) alert(`✅ Package updated!\n\n${summary}`);
 
-    } catch (err: any) {
-      alert(err.message || "Failed to update package");
-    } finally {
-      setSavingPkg(false);
-    }
-  };
+  } catch (err: any) {
+    alert(err.message || "Failed to update package");
+  } finally {
+    setSavingPkg(false);
+  }
+};
 
 
   const handleSave = async () => {
@@ -677,7 +730,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                     {filteredModels.map((pkg) => {
                       const label =
                         typeof pkg.vehicleType === "object" && pkg.vehicleType !== null
-                          ? pkg.vehicleType.typeName         
+                          ? pkg.vehicleType.typeName
                           : vehicleTypes.find((t) => t._id === pkg.vehicleType)?.typeName ?? pkg.vehicleType;
 
                       return (
@@ -884,11 +937,11 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
 
                   )}
 
-                  {form.needPromoter && selectedPackage.promoterAvailable && (
+                  {/* {form.needPromoter && selectedPackage.promoterAvailable && (
                     <p className="text-[10px] text-gray-400">
                       Promoter charge: {formatINR(selectedPackage.promoterChargePerDay)}/day × days × qty
                     </p>
-                  )}
+                  )} */}
 
                   {form.needPromoter && (
                     <div className="grid grid-cols-2 gap-4 mt-3">
@@ -1243,16 +1296,24 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
 
                 return (
                   <>
-                    <SummaryRow
+                    {/* <SummaryRow
                       label={`Rental (${p.totalDays}D × ${formatINR(selectedPackage.perDayRentalCost)} × Qty ${form.quantity})`}
                       val={p.rentalCost}
                       isLast={false}
                       hasCharges={form.additionalCharges.length > 0}
                       onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
-                    />
-                    <SummaryRow
+                    /> */}
+                    {/* <SummaryRow
                       label={`Driver (${p.totalDays}D × ${formatINR(selectedPackage.driverCharges)} × Qty ${form.quantity})`}
                       val={p.driverCost}
+                      isLast={false}
+                      hasCharges={form.additionalCharges.length > 0}
+                      onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
+                    /> */}
+
+                    <SummaryRow
+                      label={`Rental (Driver charges included) (${p.totalDays}D × ${formatINR(selectedPackage.perDayRentalCost)} × Qty ${form.quantity})`}
+                      val={p.rentalCost}
                       isLast={false}
                       hasCharges={form.additionalCharges.length > 0}
                       onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
