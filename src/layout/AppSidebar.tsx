@@ -18,6 +18,13 @@ import {
   UserCircleIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
+import {
+  HiOutlineUserGroup,
+  HiOutlineClipboardList,
+  HiOutlineShoppingBag,
+  HiOutlineCube,
+  HiOutlineUsers
+} from "react-icons/hi";
 
 type NavItem = {
   name: string;
@@ -44,23 +51,29 @@ const navItems: NavItem[] = [
   // },
      {
     name: "StaffAdmin",
-    icon: <ListIcon />,
+    icon: <HiOutlineUserGroup />,
     path: "/admin/staff-admin"
   },
    {
     name: "Order Creation",
-    icon: <ListIcon />,
+     icon: <HiOutlineClipboardList />,
     path: "/admin/order-creation"
   },
   {
     name: "Order Handling",
-    icon: <ListIcon />,
+    icon: <HiOutlineShoppingBag />,
     path: "/admin/order-handling"
   },
     {
     name: "Package Management",
-    icon: <ListIcon />,
+    icon: <HiOutlineCube />,
     path: "/admin/package-management"
+  },
+
+   {
+    name: "Promoter",
+    icon: <HiOutlineUsers />,
+    path: "/admin/promoter"
   },
 
   {

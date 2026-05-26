@@ -4,13 +4,15 @@
 
 import React, { useEffect, useState } from "react";
 import AdminOrderForm from "./AdminOrderForm";
-import { HiOutlineShoppingBag, HiOutlineEye, HiOutlineDocumentText } from "react-icons/hi";
+import { HiOutlineShoppingBag, HiOutlineEye, HiOutlineDocumentText, HiOutlineArrowRight } from "react-icons/hi";
 import { HiOutlinePlus, HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi2";
 import API_BASE from "../../../../../baseurl";
 import { useAuthGuard } from "../../../../utils/useAuthGuard";
 import { getToken } from "@/utils/auth";
 import { useVehicle } from './../../../../../src/context/vehicletypecontext';
 import OrderPDFView from "./print";
+import OrderDetailDrawer from "./orderdetails";
+import { useRouter } from "next/navigation";
 
 interface BookingItem {
   vehicleModel: string;
@@ -78,10 +80,11 @@ interface Order {
   createdAt: string;
   handlername?: string;
   grandNegotiationTotal?: number;
-  campaignType?: string
+  campaignType?: number
   grandGst?: number
   dailyKmcharges?: number
   customerType: string
+
 }
 
 
@@ -168,18 +171,20 @@ export default function OrdersPage() {
   const [showForm, setShowForm] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedpdf, setSelectedpdf] = useState<Order | null>(null);
+  const [selectedpdfWithoutHistory, setSelectedpdfWithoutHistory] = useState<Order | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  console.log("selectedOrder", selectedOrder)
+  // Date filter-க்கு தனி state
+  const [filterFromDate, setFilterFromDate] = useState("");
+  const [filterToDate, setFilterToDate] = useState("");
+
 
   const [filterPipeline, setFilterPipeline] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchQ, setSearchQ] = useState("");
   useAuthGuard();
 
-  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
-  const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
+  const router = useRouter();
 
   const { vehicleTypes, fetchVehicleTypes } = useVehicle();
 
@@ -318,6 +323,15 @@ export default function OrdersPage() {
                 </p>
               )}
             </div>
+            <button
+              onClick={() => router.push("/admin/order-handling")}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-95 transition-all duration-150"
+            >
+
+              Order Handling
+              <HiOutlineArrowRight className="h-4 w-4 stroke-2" />
+            </button>
+
           </div>
           <button
             onClick={() => setShowForm(true)}
@@ -391,6 +405,8 @@ export default function OrdersPage() {
             Refresh
           </button>
         </div>
+
+      
 
 
         <div className="p-4 sm:p-6">
@@ -574,10 +590,10 @@ export default function OrdersPage() {
                             {formatDate(order.createdAt)}
                           </td>
 
-
-                          <td className="px-5 py-4">
+                          {/* <td className="px-5 py-4">
                             <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity duration-150">
 
+                             
                               <button
                                 onClick={() => setSelectedOrder(order)}
                                 title="View"
@@ -586,35 +602,72 @@ export default function OrdersPage() {
                                 <HiOutlineEye className="h-4 w-4" />
                               </button>
 
+                             
                               <button
                                 onClick={() => setSelectedpdf(order)}
-                                title="PDF"
-                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                title="PDF With History"
+                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-green-400 hover:bg-green-50 hover:text-green-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
                               >
                                 <HiOutlineDocumentText className="h-4 w-4" />
                               </button>
 
+                            
+                              <button
+                                onClick={() => setSelectedpdfWithoutHistory(order)}
+                                title="PDF Without History"
+                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                              >
+                                <HiOutlineDocumentText className="h-4 w-4" />
+                              </button>
 
-                              {/* {order.orderStatus !== "Confirmed" && order.orderStatus !== "Cancelled" && (
+                            </div>
+                          </td> */}
+
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity duration-150">
+
+                              {/* View Button */}
+                              <div className="relative group/tooltip">
                                 <button
-                                  onClick={() => setEditingOrder(order)}
-                                  title="Edit"
-                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                  onClick={() => setSelectedOrder(order)}
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
                                 >
-                                  <HiOutlinePencil className="h-4 w-4" />
+                                  <HiOutlineEye className="h-4 w-4" />
                                 </button>
-                              )} */}
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none dark:bg-gray-700">
+                                  View Details
+                                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></span>
+                                </span>
+                              </div>
 
-
-                              {/* {order.orderStatus !== "Confirmed" && (
+                              {/* PDF With History */}
+                              <div className="relative group/tooltip">
                                 <button
-                                  onClick={() => setDeletingOrder(order)}
-                                  title="Delete"
-                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-red-400 hover:bg-red-50 hover:text-red-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                  onClick={() => setSelectedpdf(order)}
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-green-400 hover:bg-green-50 hover:text-green-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
                                 >
-                                  <HiOutlineTrash className="h-4 w-4" />
+                                  <HiOutlineDocumentText className="h-4 w-4" />
                                 </button>
-                              )} */}
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none dark:bg-gray-700">
+                                  PDF With History
+                                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></span>
+                                </span>
+                              </div>
+
+                              {/* PDF Without History */}
+                              <div className="relative group/tooltip">
+                                <button
+                                  onClick={() => setSelectedpdfWithoutHistory(order)}
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                >
+                                  <HiOutlineDocumentText className="h-4 w-4" />
+                                </button>
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none dark:bg-gray-700">
+                                  PDF Without History
+                                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></span>
+                                </span>
+                              </div>
+
                             </div>
                           </td>
                         </tr>
@@ -708,12 +761,32 @@ export default function OrdersPage() {
         />
       )}
 
+      {/* {selectedpdf && (
+        <OrderPDFView
+          order={selectedpdf}
+          onClose={() => setSelectedpdf(null)}
+          vehicleTypes={vehicleTypes}
+
+        />
+      )} */}
+
+
       {selectedpdf && (
         <OrderPDFView
           order={selectedpdf}
           onClose={() => setSelectedpdf(null)}
-           vehicleTypes={vehicleTypes}
+          vehicleTypes={vehicleTypes}
+          showHistory={true}
+        />
+      )}
 
+
+      {selectedpdfWithoutHistory && (
+        <OrderPDFView
+          order={selectedpdfWithoutHistory}
+          onClose={() => setSelectedpdfWithoutHistory(null)}
+          vehicleTypes={vehicleTypes}
+          showHistory={false}
         />
       )}
 
@@ -721,452 +794,4 @@ export default function OrdersPage() {
   );
 }
 
-
-function OrderDetailDrawer({ order, onClose, vehicleTypes }: { order: Order; onClose: () => void, vehicleTypes: any }) {
-  const pipeline = PIPELINE_CONFIG[order.pipelineStatus] || { label: order.pipelineStatus, color: "bg-gray-100 text-gray-500" };
-  const statusCfg = STATUS_CONFIG[order.orderStatus] || { color: "bg-gray-100 text-gray-500", dot: "bg-gray-400" };
-
-  const displayTotal = order.grandNegotiationTotal && order.grandNegotiationTotal > 0
-    ? order.grandNegotiationTotal
-    : order.grandTotal;
-
-  function formatINR(amount: number): string {
-    return new Intl.NumberFormat("en-IN", {
-      maximumFractionDigits: 0,
-    }).format(amount);
-  }
-
-
-  const getImageUrl = (path: string) => {
-    if (!path) return '';
-    if (path.startsWith('http')) return path;
-    return `http://localhost:3001${path.startsWith('/') ? path : `/${path}`}`;
-  };
-
-
-
-  const getVehicleTypeName = (vehicleTypeId: string) => {
-    if (!vehicleTypeId || !vehicleTypes) return '';
-    const vehicle = vehicleTypes.find((vt: any) => vt._id === vehicleTypeId);
-    return vehicle?.typeName || vehicleTypeId;
-  };
-
-
-
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className="w-full max-w-2xl h-full overflow-y-auto bg-white shadow-2xl dark:bg-gray-900 flex flex-col animate-in slide-in-from-right duration-300">
-
-        {/* ── Header ── */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-5 dark:border-gray-700 dark:bg-gray-900 shadow-sm">
-          <div>
-            <p className="font-mono text-base font-bold text-blue-600 dark:text-blue-400">{order.orderId}</p>
-            <p className="text-sm text-gray-500 mt-1">{formatDate(order.createdAt)}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${statusCfg.color}`}>
-              <span className={`h-2 w-2 rounded-full ${statusCfg.dot}`} />
-              {order.orderStatus}
-            </span>
-            <button
-              onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-all"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 px-6 py-6 space-y-6">
-
-          {/* Customer Information Section */}
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-6 w-1 bg-blue-500 rounded-full"></div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">Customer Information</p>
-            </div>
-            <div className="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-5 space-y-3">
-              {[
-                { label: "Full Name", val: order.name, icon: "👤" },
-                { label: "Phone Number", val: order.phone, icon: "📞" },
-                { label: "Email Address", val: order.email || "—", icon: "✉️" },
-                { label: "Address", val: order.address || "—", icon: "📍" },
-              ].map(({ label, val, icon }) => (
-                <div key={label} className="flex items-start gap-3 text-sm">
-                  <span className="text-lg">{icon}</span>
-                  <div className="flex-1">
-                    <span className="text-gray-500 block text-xs mb-0.5">{label}</span>
-                    <span className="font-medium text-gray-800 dark:text-gray-200 text-base">{val}</span>
-                  </div>
-                </div>
-              ))}
-
-              <div className="flex items-start gap-3 text-sm">
-                <span className="text-lg">🏷️</span>
-                <div className="flex-1">
-                  <span className="text-gray-500 block text-xs mb-0.5">Customer Type</span>
-                  <span className={`font-medium text-base inline-flex items-center gap-2 ${order.customerType === 1
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-blue-600 dark:text-blue-400'
-                    }`}>
-                    <span className={`w-2 h-2 rounded-full ${order.customerType === 1 ? 'bg-green-500' : 'bg-blue-500'
-                      }`}></span>
-                    {order.customerType === 1 ? '🆕 New Customer' : '⭐ Existing Customer'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">📊</span>
-                    <span className="text-gray-500 text-sm">Pipeline Status</span>
-                  </div>
-                  <span className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold ${pipeline.color}`}>
-                    {pipeline.label}
-                  </span>
-                </div>
-              </div>
-
-              {order.handlername && (
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">👨‍💼</span>
-                  <div className="flex-1">
-                    <span className="text-gray-500 block text-xs mb-0.5">Assigned Handler</span>
-                    <span className="font-medium text-gray-800 dark:text-gray-200 text-base">{order.handlername}</span>
-                  </div>
-                </div>
-              )}
-
-              {order.isAdminCreated && (
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">🏷️</span>
-                  <div className="flex-1">
-                    <span className="text-gray-500 block text-xs mb-0.5">Order Source</span>
-                    <span className="text-sm font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 px-2 py-1 rounded inline-block">Admin Created</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* Vehicles Section */}
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-6 w-1 bg-green-500 rounded-full"></div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                Vehicles ({order.bookingItems?.length || 0})
-              </p>
-            </div>
-            <div className="space-y-4">
-              {(order.bookingItems || []).map((item, i) => {
-                const baseDays = item.fromDate && item.toDate
-                  ? Math.ceil(
-                    (new Date(item.toDate).getTime() - new Date(item.fromDate).getTime()) / 86400000
-                  )
-                  : 0;
-                const extraDays = item.extraDays || 0;
-                const totalDays = baseDays + extraDays;
-
-                const durationLabel = item.fromDate && item.toDate
-                  ? `${formatDate(item.fromDate)} → ${formatDate(item.toDate)}`
-                  : "—";
-
-                return (
-                  <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 overflow-hidden">
-                    {/* Vehicle Header */}
-                    <div className="bg-gradient-to-r from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-800/50 p-4 border-b border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
-                          <span className="text-sm font-bold text-blue-600 dark:text-blue-400">V{i + 1}</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
-                            {item.vehicleModel || "Vehicle Details"}
-                          </p>
-                          {/* {item.vehicleType && (
-                            <p className="text-sm text-gray-500 mt-0.5">{item.vehicleType}</p>
-                          )} */}
-                          {item.vehicleType && (
-                            <p className="text-sm text-gray-500 mt-0.5">
-                              {getVehicleTypeName(item.vehicleType)}
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500">Quantity</p>
-                          <p className="text-lg font-bold text-gray-800 dark:text-gray-200">{item.quantity || 1}x</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Booking Details Grid */}
-                    <div className="p-4 space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[
-                          { icon: "👤", label: "Booking For", value: item.bookingFor || "—" },
-                          { icon: "🎯", label: "Campaign", value: item.campaignType === "Other" ? (item.otherCampaignType || "Other") : (item.campaignType || "—") },
-                          { icon: "📅", label: "Duration", value: durationLabel && item.totalDays ? `${durationLabel} (${item.totalDays} Days Total)` : "—" },
-                          { icon: "📍", label: "Location", value: [item.state, item.city].filter(Boolean).join(" / ") || "—" },
-                          { icon: "🛣️", label: " Driving Route", value: item.fromLocation && item.toLocation ? `${item.fromLocation} → ${item.toLocation}` : "—" },
-                          item.extraKm && item.extraKm > 0 ? { icon: "➕", label: "Extra KM", value: `${item.extraKm} km` } : null,
-                          item.extraHours && item.extraHours > 0 ? { icon: "⏰", label: "Extra Hours", value: `${item.extraHours} hrs` } : null,
-                          item.extraDays && item.extraDays > 0 ? { icon: "📆", label: "Extra Days", value: `${item.extraDays} days` } : null,
-                        ].filter(Boolean).map((field: any, idx) => (
-                          <div key={idx} className="flex items-start gap-2">
-                            <span className="text-base">{field.icon}</span>
-                            <div className="flex-1">
-                              <span className="text-gray-500 block text-xs">{field.label}</span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">{field.value}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Promoter Details */}
-                      {item.needPromoter && (
-                        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3">
-                          <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2 flex items-center gap-2">
-                            <span>🎤</span> Promoter Details
-                          </p>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <span className="text-gray-500 block text-xs">Type</span>
-                              <span className="text-gray-800 dark:text-gray-200 text-sm">
-                                {item.promoterType === "Other" ? (item.otherPromoterType || "Other") : (item.promoterType || "—")}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 block text-xs">Gender</span>
-                              <span className="text-gray-800 dark:text-gray-200 text-sm">{item.promoterGender || "—"}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 block text-xs">Language</span>
-                              <span className="text-gray-800 dark:text-gray-200 text-sm">{item.promoterLanguage || "—"}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 block text-xs">Quantity</span>
-                              <span className="text-gray-800 dark:text-gray-200 text-sm">{item.promoterQuantity || 0}</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {item.gstNumber && (
-                        <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3">
-                          <p className="text-sm font-semibold text-yellow-700 dark:text-yellow-300 mb-1">GST Information</p>
-                          <p className="text-gray-800 dark:text-gray-200 text-sm">GST Number: {item.gstNumber}</p>
-                        </div>
-                      )}
-
-                      {/* Pricing Breakdown */}
-                      <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                          <span>💰</span> Price Breakdown
-                        </p>
-                        <div className="space-y-2">
-                          {(item.rentalCost) ? (
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-600 dark:text-gray-400 text-sm">
-                                Rental & Driver Charges
-                              </span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{((item.rentalCost || 0)).toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          ) : null}
-
-                          {item.promoterCost > 0 && (
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-600 dark:text-gray-400 text-sm">
-                                Promoter Charges ({item.totalDays}D × ₹{item.promoterChargePerDay?.toLocaleString("en-IN")} × {item.promoterQuantity})
-                              </span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{item.promoterCost.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* {item.rtoCost && (
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-600 dark:text-gray-400 text-sm">RTO Charges</span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{item.rtoCost.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          )} */}
-
-                          {item.rtoCost > 0 && (
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-600 dark:text-gray-400 text-sm">RTO Charges</span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{item.rtoCost.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          )}
-
-                          {item.extraKmCost > 0 && (
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-600 dark:text-gray-400 text-sm">
-                                Extra KM Charges ({item.extraKm} km × ₹{item.dailyKmcharges?.toLocaleString("en-IN")})
-                              </span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{item.extraKmCost.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          )}
-
-                          {item.extraHourCost > 0 && (
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-600 dark:text-gray-400 text-sm">
-                                Extra Hours Charges ({item.extraHours} hrs × ₹{item.additionalHourCharges?.toLocaleString("en-IN")})
-                              </span>
-                              <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
-                                ₹{item.extraHourCost.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          )}
-
-                          {(item.additionalFields || []).filter((f: any) => f.label).map((f: any, fIdx: number) => (
-                            <div key={fIdx} className="flex justify-between items-center py-1">
-                              <span className={f.mode === "-" ? "text-red-500 text-sm" : "text-gray-600 dark:text-gray-400 text-sm"}>
-                                {f.label}
-                              </span>
-                              <span className={f.mode === "-" ? "text-red-600 font-medium text-base" : "text-gray-800 dark:text-gray-200 font-medium text-base"}>
-                                {f.mode === "-" ? "-" : "+"}₹{Number(f.amount).toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          ))}
-
-                          <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-700 dark:text-gray-300 font-semibold text-sm">Subtotal</span>
-                              <span className="text-gray-900 dark:text-white font-bold text-lg">
-                                ₹{formatINR(item.subtotal || 0)}
-                              </span>
-                            </div>
-                            <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-900 dark:text-white font-bold text-base">Total (excl. GST)</span>
-                              <span className="text-blue-600 dark:text-blue-400 font-bold text-xl">
-                                ₹{formatINR(item.totalAmount || 0)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Campaign Media */}
-                      {((item.campaignImages?.length ?? 0) > 0 || (item.campaignVideos?.length ?? 0) > 0) && (
-                        <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                            <span>📸</span> Campaign Media
-                          </p>
-                          <div className="grid grid-cols-2 gap-3">
-                            {(item.campaignImages || []).map((img: string, imgIdx: number) => (
-                              <div key={imgIdx} className="relative group">
-                                <img
-                                  src={getImageUrl(img)}
-                                  alt={`Campaign ${imgIdx + 1}`}
-                                  className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:opacity-90 transition"
-                                  onClick={() => window.open(getImageUrl(img), '_blank')}
-                                />
-                                <span className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">Image {imgIdx + 1}</span>
-                              </div>
-                            ))}
-                            {(item.campaignVideos || []).map((vid: string, vidIdx: number) => (
-                              <div key={vidIdx} className="relative group">
-                                <video
-                                  src={getImageUrl(vid)}
-                                  className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer"
-                                  onClick={() => window.open(getImageUrl(vid), '_blank')}
-                                />
-                                <span className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">Video {vidIdx + 1}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Order Total Summary */}
-          {(() => {
-            const bookingItems = order.bookingItems || [];
-            const totalDiscount = bookingItems.reduce((s, item) =>
-              s + (item.additionalFields || [])
-                .filter((c) => c.mode === "-")
-                .reduce((a, c) => a + Number(c.amount), 0), 0
-            );
-            const subTotal = bookingItems.reduce((s, item) => s + (item.subtotal || 0), 0);
-            const Taxableamount = bookingItems.reduce((s, item) => s + (item.subtotal || 0), 0) + totalDiscount;
-            const totalGst = Math.floor(subTotal * 0.18);
-            const grandTotal = subTotal + totalGst;
-            // const finalDisplayTotal = order.grandNegotiationTotal && order.grandNegotiationTotal > 0
-            //   ? order.grandNegotiationTotal
-            //   : order.grandTotal || grandTotal;
-            const finalDisplayTotal = order.grandTotal
-
-
-
-
-            return (
-              <div className=" rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-5 shadow-lg">
-                <p className="text-base font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300 mb-4 flex items-center gap-2">
-                  <span>💰</span> Order Summary ({bookingItems.length} vehicle{bookingItems.length > 1 ? "s" : ""})
-                </p>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                    <span className="text-gray-700 dark:text-gray-300 text-base">Subtotal (excl. GST)</span>
-                    <span className="text-gray-900 dark:text-white font-semibold text-lg">₹{formatINR(Taxableamount)}</span>
-                  </div>
-
-                  {totalDiscount > 0 && (
-                    <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                      <span className="text-red-600 dark:text-red-400 text-base font-medium">Discount Applied</span>
-                      <span className="text-red-600 dark:text-red-400 font-bold text-lg">-₹{formatINR(totalDiscount)}</span>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                    <span className="text-gray-700 dark:text-gray-300 text-base">Taxable Amount</span>
-                    <span className="text-gray-900 dark:text-white font-semibold text-lg">₹{formatINR(subTotal)}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                    <span className="text-gray-700 dark:text-gray-300 text-base">GST (18%)</span>
-                    <span className="text-gray-900 dark:text-white font-semibold text-lg">₹{formatINR(order.grandGst || totalGst)}</span>
-                  </div>
-
-                  {/* {order.grandNegotiationTotal && order.grandNegotiationTotal > 0 && order.grandNegotiationTotal !== order.grandTotal && (
-                    <div className="flex justify-between items-center py-2 border-b border-blue-200 dark:border-blue-800">
-                      <span className="text-gray-500 text-base line-through">Original Total</span>
-                      <span className="text-gray-500 text-base line-through">₹{formatINR(order.grandTotal)}</span>
-                    </div>
-                  )} */}
-
-                  <div className="flex justify-between items-center pt-3 mt-2 border-t-2 border-blue-300 dark:border-blue-700">
-                    <span className="text-xl font-bold text-gray-900 dark:text-white">Grand Total</span>
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">₹{formatINR(finalDisplayTotal)}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-
-        </div>
-      </div>
-    </div>
-  );
-}
 

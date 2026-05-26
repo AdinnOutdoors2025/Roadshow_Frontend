@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { useRef } from "react";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+// ─── Types (keep existing types) ─────────────────────────────────────────────────
 interface AdditionalField {
   label: string;
   mode: "+" | "-";
@@ -111,7 +112,8 @@ interface Order {
 interface OrderPDFViewProps {
   order: Order;
   onClose: () => void;
-  vehicleTypes: any
+  vehicleTypes: any;
+  showHistory?: boolean;
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -160,31 +162,32 @@ const PIPELINE_LABELS: Record<string, string> = {
 
 // ─── Print Styles ──────────────────────────────────────────────────────────────
 const PRINT_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: 'Inter', 'Segoe UI', sans-serif;
-    background: #f8fafc;
-    color: #0f172a;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f4f6f9;
+    color: #1a1f36;
     font-size: 13px;
-    line-height: 1.5;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
   }
 
   .pdf-modal-backdrop {
     position: fixed; inset: 0; z-index: 9999;
-    background: rgba(0,0,0,0.65);
-    backdrop-filter: blur(6px);
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
     display: flex; align-items: flex-start; justify-content: center;
-    padding: 20px; overflow-y: auto;
+    padding: 24px; overflow-y: auto;
   }
 
   .pdf-modal-container {
-    background: #fff;
-    width: 100%; max-width: 900px;
-    border-radius: 16px;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+    background: #ffffff;
+    width: 100%; max-width: 960px;
+    border-radius: 20px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
     overflow: hidden;
     margin: auto;
   }
@@ -192,363 +195,430 @@ const PRINT_STYLES = `
   /* Toolbar */
   .pdf-toolbar {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 20px;
-    background: #1e293b;
-    color: #fff;
-    gap: 12px;
+    padding: 16px 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    gap: 16px;
+  }
+  .pdf-toolbar-left {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .pdf-toolbar-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 18px; font-weight: 700;
   }
   .pdf-toolbar-title {
-    font-size: 14px; font-weight: 700; color: #f1f5f9;
-    display: flex; align-items: center; gap: 8px;
+    font-size: 16px; font-weight: 700; color: #1f2937;
+  }
+  .pdf-toolbar-subtitle {
+    font-size: 12px; color: #6b7280; font-weight: 500;
   }
   .pdf-toolbar-actions {
-    display: flex; gap: 8px; align-items: center;
+    display: flex; gap: 10px; align-items: center;
   }
   .pdf-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
-    cursor: pointer; border: none; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.2s ease;
+    letter-spacing: 0.3px;
   }
-  .pdf-btn-print {
-    background: #3b82f6; color: #fff;
+  .pdf-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
   }
-  .pdf-btn-print:hover { background: #2563eb; }
-  .pdf-btn-close {
-    background: rgba(255,255,255,0.12); color: #e2e8f0; 
-    border: 1px solid rgba(255,255,255,0.15);
+  .pdf-btn-primary:hover { 
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
   }
-  .pdf-btn-close:hover { background: rgba(255,255,255,0.2); }
+  .pdf-btn-secondary {
+    background: #fff; color: #374151;
+    border: 2px solid #e5e7eb;
+  }
+  .pdf-btn-secondary:hover { 
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
 
   /* PDF Content */
   .pdf-content {
     background: #fff;
     padding: 0;
+    max-height: calc(100vh - 160px);
+    overflow-y: auto;
   }
 
   /* Header */
   .pdf-header {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 40%, #1e3a5f 100%);
-    padding: 36px 44px 32px;
+    background: linear-gradient(135deg, #1e293b 0%, #312e81 100%);
+    padding: 40px 48px;
     color: #fff;
     position: relative;
     overflow: hidden;
   }
   .pdf-header::before {
     content: '';
-    position: absolute; top: -60px; right: -60px;
-    width: 220px; height: 220px;
+    position: absolute; top: -80px; right: -80px;
+    width: 280px; height: 280px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%);
+    
   }
   .pdf-header::after {
     content: '';
-    position: absolute; bottom: -40px; left: 40%;
-    width: 140px; height: 140px;
+    position: absolute; bottom: -50px; left: 30%;
+    width: 200px; height: 200px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.1) 0%, transparent 70%);
+  }
+  .pdf-header-content {
+    position: relative; z-index: 1;
   }
   .pdf-header-top {
     display: flex; align-items: flex-start; justify-content: space-between;
-    margin-bottom: 28px; position: relative; z-index: 1;
+    margin-bottom: 32px;
   }
-  .pdf-company-logo {
-    display: flex; align-items: center; gap: 12px;
+  .pdf-company-info h1 {
+    font-size: 28px; font-weight: 800; color: #fff;
+    letter-spacing: -0.5px; margin-bottom: 4px;
   }
-  .pdf-logo-icon {
-    width: 52px; height: 52px; border-radius: 14px;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px; box-shadow: 0 8px 20px rgba(59,130,246,0.4);
+  .pdf-company-info p {
+    font-size: 12px; color: rgba(255, 255, 255, 0.6);
+    font-weight: 500; letter-spacing: 1px;
+    text-transform: uppercase;
   }
-  .pdf-company-name {
-    font-size: 22px; font-weight: 900; color: #fff;
-    letter-spacing: -0.5px;
-  }
-  .pdf-company-sub {
-    font-size: 11px; color: rgba(255,255,255,0.55);
-    font-weight: 500; margin-top: 2px; letter-spacing: 0.5px;
-  }
-  .pdf-order-badge {
-    text-align: right; position: relative; z-index: 1;
-  }
-  .pdf-order-label {
-    font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.5);
-    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;
+  .pdf-order-info {
+    text-align: right;
   }
   .pdf-order-id {
-    font-size: 20px; font-weight: 900; color: #60a5fa;
-    font-family: 'Courier New', monospace; letter-spacing: 1px;
+    font-size: 24px; font-weight: 800; color: #a78bfa;
+    font-family: 'Courier New', monospace; letter-spacing: 0.5px;
   }
   .pdf-order-date {
-    font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px;
+    font-size: 11px; color: rgba(255, 255, 255, 0.5);
+    margin-top: 4px;
   }
 
   .pdf-header-stats {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 16px; position: relative; z-index: 1;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
   }
   .pdf-stat-card {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 12px; padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px; padding: 16px 20px;
     backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
+  }
+  .pdf-stat-card:hover {
+    background: rgba(255, 255, 255, 0.12);
   }
   .pdf-stat-label {
-    font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.45);
-    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;
+    font-size: 10px; font-weight: 600; color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;
   }
   .pdf-stat-value {
-    font-size: 16px; font-weight: 800; color: #fff;
+    font-size: 18px; font-weight: 800; color: #fff;
   }
-  .pdf-stat-value.accent { color: #34d399; }
-  .pdf-stat-value.blue { color: #60a5fa; }
-  .pdf-stat-value.amber { color: #fbbf24; }
+  .pdf-stat-value.primary { color: #a78bfa; }
 
-  /* Body */
+  /* Body Sections */
   .pdf-body {
-    padding: 32px 44px;
-    background: #f8fafc;
+    padding: 40px 48px;
+    background: #fafbfc;
   }
 
-  /* Section */
   .pdf-section {
-    margin-bottom: 28px;
+    margin-bottom: 36px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   }
   .pdf-section-header {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 20px 24px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
   }
   .pdf-section-icon {
-    width: 32px; height: 32px; border-radius: 8px;
+    width: 36px; height: 36px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 15px; flex-shrink: 0;
+    font-size: 16px; flex-shrink: 0; font-weight: 700;
   }
   .pdf-section-title {
-    font-size: 11px; font-weight: 800; color: #475569;
-    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 14px; font-weight: 700; color: #1f2937;
   }
-  .pdf-section-line {
-    flex: 1; height: 1px; background: linear-gradient(to right, #e2e8f0, transparent);
+  .pdf-section-count {
+    font-size: 12px; color: #6b7280; font-weight: 500;
+    margin-left: auto;
+  }
+  .pdf-section-body {
+    padding: 24px;
   }
 
   /* Info Grid */
   .pdf-info-grid {
     display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 16px;
   }
-  .pdf-info-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
-  .pdf-info-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
-  .pdf-info-card {
-    background: #fff; border: 1px solid #e8ecf0;
-    border-radius: 10px; padding: 12px 14px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  .pdf-info-grid.two-col { grid-template-columns: repeat(2, 1fr); }
+  .pdf-info-grid.four-col { grid-template-columns: repeat(4, 1fr); }
+  
+  .pdf-info-item {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px; padding: 14px 16px;
+    transition: all 0.2s ease;
   }
-  .pdf-info-card.span-2 { grid-column: span 2; }
+  .pdf-info-item:hover { background: #f3f4f6; }
+  .pdf-info-item.full-width { grid-column: 1 / -1; }
+  
   .pdf-info-label {
-    font-size: 9px; font-weight: 700; color: #94a3b8;
-    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;
+    font-size: 10px; font-weight: 600; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;
   }
   .pdf-info-value {
-    font-size: 13px; font-weight: 600; color: #1e293b;
+    font-size: 13px; font-weight: 600; color: #1f2937;
     word-break: break-word;
   }
-  .pdf-info-value.mono { font-family: 'Courier New', monospace; color: #3b82f6; }
-  .pdf-info-value.accent { color: #059669; }
-  .pdf-info-value.blue { color: #2563eb; }
+  .pdf-info-value.accent { color: #7c3aed; }
 
-  /* Badge */
+  /* Badges */
   .pdf-badge {
     display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 10px; border-radius: 20px;
-    font-size: 10px; font-weight: 700;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
   }
-  .pdf-badge-green { background: #dcfce7; color: #166534; }
-  .pdf-badge-blue { background: #dbeafe; color: #1d4ed8; }
-  .pdf-badge-amber { background: #fef3c7; color: #92400e; }
-  .pdf-badge-red { background: #fee2e2; color: #991b1b; }
-  .pdf-badge-violet { background: #ede9fe; color: #5b21b6; }
-  .pdf-badge-gray { background: #f1f5f9; color: #475569; }
-  .pdf-badge-cyan { background: #cffafe; color: #0e7490; }
+  .badge-success { background: #dcfce7; color: #166534; }
+  .badge-info { background: #dbeafe; color: #1e40af; }
+  .badge-warning { background: #fef3c7; color: #92400e; }
+  .badge-danger { background: #fee2e2; color: #991b1b; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+  .badge-neutral { background: #f3f4f6; color: #374151; }
 
   /* Vehicle Card */
-  .pdf-vehicle-card {
-    background: #fff; border: 1px solid #e2e8f0;
+  .vehicle-card {
+    border: 1px solid #e5e7eb;
     border-radius: 14px; overflow: hidden;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+    transition: all 0.2s ease;
   }
-  .pdf-vehicle-header {
-    display: flex; align-items: center; gap: 14px;
-    padding: 16px 20px;
-    background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
+  .vehicle-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+  .vehicle-card-header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 24px;
+    background: linear-gradient(to right, #f8fafc 0%, #f0f4ff 100%);
     border-bottom: 1px solid #e0e7ff;
   }
-  .pdf-vehicle-num {
-    width: 40px; height: 40px; border-radius: 12px;
-    background: linear-gradient(135deg, #3b82f6, #6366f1);
+  .vehicle-number {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 800; color: #fff;
-    box-shadow: 0 4px 10px rgba(59,130,246,0.3);
+    font-size: 15px; font-weight: 800; color: #fff;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     flex-shrink: 0;
   }
-  .pdf-vehicle-name {
-    font-size: 16px; font-weight: 800; color: #1e293b;
+  .vehicle-info {
+    flex: 1;
   }
-  .pdf-vehicle-sub {
-    font-size: 11px; color: #64748b; margin-top: 2px;
+  .vehicle-name {
+    font-size: 16px; font-weight: 700; color: #1f2937;
+    margin-bottom: 2px;
   }
-  .pdf-vehicle-total {
-    margin-left: auto; text-align: right;
+  .vehicle-meta {
+    font-size: 11px; color: #6b7280; font-weight: 500;
   }
-  .pdf-vehicle-total-label {
-    font-size: 9px; color: #94a3b8; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 1px;
+  .vehicle-total {
+    text-align: right;
   }
-  .pdf-vehicle-total-value {
-    font-size: 18px; font-weight: 900; color: #2563eb;
+  .vehicle-total-label {
+    font-size: 10px; color: #6b7280; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
   }
-
-  .pdf-vehicle-body { padding: 16px 20px; }
-  .pdf-vehicle-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .pdf-detail-item { }
-  .pdf-detail-label {
-    font-size: 9px; font-weight: 700; color: #94a3b8;
-    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px;
+  .vehicle-total-value {
+    font-size: 20px; font-weight: 800; color: #6366f1;
   }
-  .pdf-detail-value {
-    font-size: 12px; font-weight: 600; color: #334155;
+  
+  .vehicle-card-body {
+    padding: 20px 24px;
+  }
+  .vehicle-details {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .detail-item {
+    background: #f9fafb;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+  }
+  .detail-label {
+    font-size: 9px; font-weight: 600; color: #9ca3af;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+  .detail-value {
+    font-size: 12px; font-weight: 600; color: #374151;
   }
 
   /* Pricing Table */
-  .pdf-pricing-table {
+  .pricing-table {
     width: 100%; border-collapse: collapse;
-    background: #fff; border-radius: 12px; overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    border: 1px solid #e2e8f0;
+    margin-top: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px; overflow: hidden;
   }
-  .pdf-pricing-table th {
-    background: #f8fafc; padding: 10px 16px;
-    font-size: 9px; font-weight: 800; color: #64748b;
-    text-transform: uppercase; letter-spacing: 1px;
-    text-align: left; border-bottom: 1px solid #e2e8f0;
+  .pricing-table thead th {
+    background: #f8fafc;
+    padding: 12px 16px;
+    font-size: 10px; font-weight: 700; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    text-align: left; border-bottom: 2px solid #e5e7eb;
   }
-  .pdf-pricing-table th:last-child { text-align: right; }
-  .pdf-pricing-table td {
-    padding: 10px 16px; font-size: 12px; color: #334155;
-    border-bottom: 1px solid #f1f5f9;
+  .pricing-table thead th:last-child { text-align: right; }
+  .pricing-table tbody td {
+    padding: 12px 16px;
+    font-size: 12px; color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+    font-weight: 500;
   }
-  .pdf-pricing-table td:last-child { text-align: right; font-weight: 600; }
-  .pdf-pricing-table tr:last-child td { border-bottom: none; }
-  .pdf-pricing-table tr.subtotal-row td {
-    background: #eff6ff; font-weight: 700; color: #1e40af;
-    border-top: 2px solid #bfdbfe;
+  .pricing-table tbody td:last-child { 
+    text-align: right; 
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
   }
-  .pdf-pricing-table tr.negative-row td { color: #dc2626; }
-  .pdf-pricing-table tr.negative-row td:last-child { color: #dc2626; }
+  .pricing-table tbody tr:last-child td { border-bottom: none; }
+  .pricing-table .subtotal-row td {
+    background: #f0f4ff;
+    font-weight: 700; color: #4338ca;
+    border-top: 2px solid #c7d2fe;
+    font-size: 13px;
+  }
+  .pricing-table .deduction-row td { color: #dc2626; }
+
+  /* Promoter Box */
+  .promoter-box {
+    background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+    border: 1px solid #d8b4fe;
+    border-radius: 12px; padding: 16px 20px;
+    margin-top: 16px;
+  }
+  .promoter-title {
+    font-size: 11px; font-weight: 700; color: #7c3aed;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 12px; padding-bottom: 10px;
+    border-bottom: 1px solid #e9d5ff;
+  }
+  .promoter-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
 
   /* Summary Box */
-  .pdf-summary-box {
-    background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
-    border: 2px solid #bfdbfe;
-    border-radius: 14px; padding: 20px 24px;
-    margin-top: 20px;
+  .summary-box {
+    background: linear-gradient(135deg, #f0f4ff 0%, #eef2ff 100%);
+    border: 2px solid #c7d2fe;
+    border-radius: 16px; padding: 24px;
   }
-  .pdf-summary-title {
-    font-size: 11px; font-weight: 800; color: #3b82f6;
-    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px;
-    display: flex; align-items: center; gap: 6px;
+  .summary-title {
+    font-size: 13px; font-weight: 800; color: #4338ca;
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 20px; padding-bottom: 12px;
+    border-bottom: 2px solid #c7d2fe;
   }
-  .pdf-summary-row {
+  .summary-row {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(191,219,254,0.5);
+    padding: 10px 0;
   }
-  .pdf-summary-row:last-child { border-bottom: none; }
-  .pdf-summary-row-label { font-size: 12px; color: #475569; font-weight: 500; }
-  .pdf-summary-row-value { font-size: 13px; font-weight: 700; color: #1e293b; }
-  .pdf-summary-row.grand { padding-top: 14px; margin-top: 6px; border-top: 2px solid #93c5fd; }
-  .pdf-summary-row.grand .pdf-summary-row-label {
-    font-size: 16px; font-weight: 800; color: #1e293b;
+  .summary-row:not(:last-child) {
+    border-bottom: 1px solid rgba(199, 210, 254, 0.5);
   }
-  .pdf-summary-row.grand .pdf-summary-row-value {
-    font-size: 22px; font-weight: 900; color: #1d4ed8;
+  .summary-label {
+    font-size: 13px; color: #4b5563; font-weight: 500;
   }
-  .pdf-summary-row.negative .pdf-summary-row-value { color: #dc2626; }
-  .pdf-summary-row.positive .pdf-summary-row-value { color: #059669; }
+  .summary-value {
+    font-size: 14px; font-weight: 700; color: #1f2937;
+    font-family: 'Courier New', monospace;
+  }
+  .summary-row.grand-total {
+    padding-top: 16px; margin-top: 8px;
+    border-top: 2px solid #a5b4fc;
+  }
+  .summary-row.grand-total .summary-label {
+    font-size: 18px; font-weight: 800; color: #1e293b;
+  }
+  .summary-row.grand-total .summary-value {
+    font-size: 24px; font-weight: 900; color: #4338ca;
+  }
+  .summary-value.negative { color: #dc2626; }
+  .summary-value.positive { color: #059669; }
 
-  /* Negotiation / Payment History */
-  .pdf-history-item {
-    display: flex; align-items: flex-start; gap: 12px;
-    padding: 12px 14px; background: #fff;
-    border: 1px solid #e8ecf0; border-radius: 10px;
-    margin-bottom: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  /* History Items */
+  .history-item {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 14px 18px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
   }
-  .pdf-history-num {
-    width: 28px; height: 28px; border-radius: 8px;
-    background: linear-gradient(135deg, #f59e0b, #ef4444);
+  .history-item:hover { background: #f3f4f6; }
+  .history-badge {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
     display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 800; color: #fff;
+    font-size: 12px; font-weight: 800; color: #fff;
     flex-shrink: 0;
   }
-  .pdf-history-content { flex: 1; }
-  .pdf-history-by { font-size: 12px; font-weight: 700; color: #1e293b; }
-  .pdf-history-date { font-size: 10px; color: #94a3b8; margin-top: 2px; }
-  .pdf-history-amount {
-    font-size: 14px; font-weight: 800;
+  .history-content { flex: 1; }
+  .history-title { font-size: 13px; font-weight: 700; color: #1f2937; }
+  .history-date { font-size: 11px; color: #6b7280; margin-top: 4px; }
+  .history-amount {
+    font-size: 16px; font-weight: 800;
     color: #dc2626; text-align: right;
+    font-family: 'Courier New', monospace;
   }
 
-  /* PO Document */
-  .pdf-po-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 16px; background: #fff;
-    border: 1px solid #e0e7ff; border-radius: 10px;
-    margin-bottom: 8px;
+  /* PO Item */
+  .po-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
   }
-  .pdf-po-icon {
-    width: 36px; height: 36px; border-radius: 8px;
-    background: linear-gradient(135deg, #f59e0b, #f97316);
+  .po-item:hover { background: #f3f4f6; }
+  .po-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
     display: flex; align-items: center; justify-content: center;
-    font-size: 16px; flex-shrink: 0;
+    font-size: 18px; color: #fff; flex-shrink: 0;
+    font-weight: 700;
   }
-  .pdf-po-name { font-size: 12px; font-weight: 700; color: #1e293b; }
-  .pdf-po-meta { font-size: 10px; color: #64748b; margin-top: 2px; }
+  .po-content { flex: 1; }
+  .po-name { font-size: 13px; font-weight: 700; color: #1f2937; }
+  .po-meta { font-size: 11px; color: #6b7280; margin-top: 3px; }
 
   /* Footer */
   .pdf-footer {
-    background: #1e293b; padding: 20px 44px;
+    background: #1e293b;
+    padding: 20px 48px;
     display: flex; align-items: center; justify-content: space-between;
   }
-  .pdf-footer-left {
-    font-size: 10px; color: rgba(255,255,255,0.4);
+  .footer-text {
+    font-size: 11px; color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
   }
-  .pdf-footer-right {
-    font-size: 10px; color: rgba(255,255,255,0.4); text-align: right;
-  }
-  .pdf-watermark {
-    font-size: 9px; color: rgba(255,255,255,0.25);
-    letter-spacing: 2px; text-transform: uppercase; margin-top: 3px;
-  }
-
-  /* Divider */
-  .pdf-divider {
-    height: 1px; background: linear-gradient(to right, transparent, #e2e8f0, transparent);
-    margin: 20px 0;
-  }
-
-  /* Promoter box */
-  .pdf-promoter-box {
-    background: linear-gradient(135deg, #f5f3ff, #ede9fe);
-    border: 1px solid #c4b5fd; border-radius: 10px;
-    padding: 12px 16px; margin-top: 12px;
-  }
-  .pdf-promoter-title {
-    font-size: 10px; font-weight: 800; color: #6d28d9;
-    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
-  }
-  .pdf-promoter-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  .footer-watermark {
+    font-size: 10px; color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 1.5px; text-transform: uppercase;
   }
 
   @media print {
@@ -556,15 +626,16 @@ const PRINT_STYLES = `
     .pdf-modal-backdrop { position: static; background: none; padding: 0; }
     .pdf-modal-container { border-radius: 0; box-shadow: none; max-width: 100%; }
     .pdf-toolbar { display: none !important; }
+    .pdf-content { max-height: none; overflow: visible; }
     .pdf-body { background: #fff; }
-    .pdf-vehicle-card { break-inside: avoid; }
-    .pdf-summary-box { break-inside: avoid; }
+    .vehicle-card { break-inside: avoid; }
+    .summary-box { break-inside: avoid; }
     .pdf-section { break-inside: avoid; }
   }
 `;
 
 // ─── Main Component ────────────────────────────────────────────────────────────
-export default function OrderPDFView({ order, onClose ,vehicleTypes}: OrderPDFViewProps) {
+export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory = false }: OrderPDFViewProps) {
   const printRef = useRef<HTMLDivElement>(null);
 
   const bookingItems = order.bookingItems || [];
@@ -578,13 +649,12 @@ export default function OrderPDFView({ order, onClose ,vehicleTypes}: OrderPDFVi
   const totalDiscount = negotiationLogs.reduce((s, l) => s + (l.discountAmount || 0), 0);
   const taxable = subtotal - totalDiscount;
   const gstAmt = Math.floor(taxable * 0.18);
-  const grandTotal =  taxable + gstAmt;
+  const grandTotal = taxable + gstAmt;
   const totalAdvance = paymentLogs.reduce((s, l) => s + (l.advancePayment || 0), 0);
   const balanceDue = grandTotal - totalAdvance;
 
   const handlerName = order.handlerName || order.handlername;
 
-  
   const getVehicleTypeName = (vehicleTypeId: string) => {
     if (!vehicleTypeId || !vehicleTypes) return '';
     const vehicle = vehicleTypes.find((vt: any) => vt._id === vehicleTypeId);
@@ -592,7 +662,7 @@ export default function OrderPDFView({ order, onClose ,vehicleTypes}: OrderPDFVi
   };
 
   const handlePrint = () => {
-    const printWindow = window.open("", "_blank", "width=900,height=700");
+    const printWindow = window.open("", "_blank", "width=960,height=700");
     if (!printWindow || !printRef.current) return;
 
     printWindow.document.write(`
@@ -621,495 +691,570 @@ export default function OrderPDFView({ order, onClose ,vehicleTypes}: OrderPDFVi
 
   return (
     <>
-      {/* Inject styles */}
       <style>{PRINT_STYLES}</style>
 
-      {/* Backdrop */}
       <div className="pdf-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
         <div className="pdf-modal-container">
 
-          {/* Toolbar */}
+          {/* Modern Toolbar */}
           <div className="pdf-toolbar">
-            <div className="pdf-toolbar-title">
-              <span>📄</span>
-              Order Summary — {order.orderId}
+            <div className="pdf-toolbar-left">
+              <div className="pdf-toolbar-icon">VO</div>
+              <div>
+                <div className="pdf-toolbar-title">Order Summary</div>
+                <div className="pdf-toolbar-subtitle">{order.orderId}</div>
+              </div>
             </div>
             <div className="pdf-toolbar-actions">
-              <button className="pdf-btn pdf-btn-print" onClick={handlePrint}>
-                🖨️ Print / Save PDF
+              <button className="pdf-btn pdf-btn-primary" onClick={handlePrint}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+                Print Document
               </button>
-              <button className="pdf-btn pdf-btn-close" onClick={onClose}>
-                ✕ Close
+              <button className="pdf-btn pdf-btn-secondary" onClick={onClose}>
+                Close
               </button>
             </div>
           </div>
 
-          {/* Scrollable PDF Content */}
-          <div style={{ maxHeight: "calc(100vh - 120px)", overflowY: "auto" }}>
+          {/* PDF Content */}
+          <div className="pdf-content">
             <div ref={printRef}>
 
-              {/* ── HEADER ── */}
+              {/* Header */}
               <div className="pdf-header">
-                <div className="pdf-header-top">
-                  <div className="pdf-company-logo">
-                    <div className="pdf-logo-icon">🚗</div>
-                    <div>
-                      <div className="pdf-company-name">VehicleOps</div>
-                      <div className="pdf-company-sub">ORDER SUMMARY DOCUMENT</div>
+                <div className="pdf-header-content">
+                  <div className="pdf-header-top">
+                    <div className="pdf-company-info">
+                      <h1>Vehicle</h1>
+                      <p>Order Summary Document</p>
+                    </div>
+                    <div className="pdf-order-info">
+                      <div className="pdf-order-id">{order.orderId}</div>
+                      <div className="pdf-order-date">
+                        Created: {fmtDate(order.createdAt)}
+                      </div>
                     </div>
                   </div>
-                  <div className="pdf-order-badge">
-                    <div className="pdf-order-label">Order ID</div>
-                    <div className="pdf-order-id">{order.orderId}</div>
-                    <div className="pdf-order-date">Created: {fmtDate(order.createdAt)}</div>
-                  </div>
-                </div>
 
-                <div className="pdf-header-stats">
-                  <div className="pdf-stat-card">
-                    <div className="pdf-stat-label">Grand Total</div>
-                    <div className="pdf-stat-value accent">₹{fmt(grandTotal)}</div>
-                  </div>
-                  <div className="pdf-stat-card">
-                    <div className="pdf-stat-label">Vehicles</div>
-                    <div className="pdf-stat-value blue">{bookingItems.length}</div>
-                  </div>
-                  {/* <div className="pdf-stat-card">
-                    <div className="pdf-stat-label">Pipeline</div>
-                    <div className="pdf-stat-value" style={{ fontSize: 12 }}>{pipelineLabel}</div>
-                  </div> */}
-                  <div className="pdf-stat-card">
-                    <div className="pdf-stat-label">Order Status</div>
-                    <div className="pdf-stat-value amber">{order.orderStatus || "—"}</div>
+                  <div className="pdf-header-stats">
+                    <div className="pdf-stat-card">
+                      <div className="pdf-stat-label">Grand Total</div>
+                      <div className="pdf-stat-value primary">₹{fmt(grandTotal)}</div>
+                    </div>
+                    <div className="pdf-stat-card">
+                      <div className="pdf-stat-label">Total Vehicles</div>
+                      <div className="pdf-stat-value">{bookingItems.length}</div>
+                    </div>
+                    <div className="pdf-stat-card">
+                      <div className="pdf-stat-label">Order Status</div>
+                      <div className="pdf-stat-value" style={{ fontSize: '14px' }}>
+                        {order.orderStatus || "—"}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* ── BODY ── */}
+              {/* Body */}
               <div className="pdf-body">
 
-                {/* 1. Customer Info */}
+                {/* Customer Information */}
                 <div className="pdf-section">
                   <div className="pdf-section-header">
-                    <div className="pdf-section-icon" style={{ background: "#dbeafe" }}>👤</div>
+                    <div className="pdf-section-icon" style={{ background: '#dbeafe', color: '#1e40af' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    </div>
                     <div className="pdf-section-title">Customer Information</div>
-                    <div className="pdf-section-line" />
                   </div>
-
-                  <div className="pdf-info-grid">
-                    <div className="pdf-info-card">
-                      <div className="pdf-info-label">Full Name</div>
-                      <div className="pdf-info-value">{order.name}</div>
-                    </div>
-                    <div className="pdf-info-card">
-                      <div className="pdf-info-label">Phone Number</div>
-                      <div className="pdf-info-value">+91 {order.phone}</div>
-                    </div>
-                    <div className="pdf-info-card">
-                      <div className="pdf-info-label">Email Address</div>
-                      <div className="pdf-info-value">{order.email || "—"}</div>
-                    </div>
-                    <div className="pdf-info-card span-2">
-                      <div className="pdf-info-label">Address</div>
-                      <div className="pdf-info-value">{order.address || "—"}</div>
-                    </div>
-                    <div className="pdf-info-card">
-                      <div className="pdf-info-label">Customer Type</div>
-                      <div className="pdf-info-value">
-                        {order.customerType === 1 ? (
-                          <span className="pdf-badge pdf-badge-green">🆕 New Customer</span>
-                        ) : order.customerType === 0 ? (
-                          <span className="pdf-badge pdf-badge-blue">🔄 Existing Customer</span>
-                        ) : (
-                          <span className="pdf-badge pdf-badge-gray">❓ Not Set</span>
-                        )}
+                  <div className="pdf-section-body">
+                    <div className="pdf-info-grid">
+                      <div className="pdf-info-item">
+                        <div className="pdf-info-label">Full Name</div>
+                        <div className="pdf-info-value">{order.name}</div>
                       </div>
-                    </div>
-                    {handlerName && (
-                      <div className="pdf-info-card">
-                        <div className="pdf-info-label">Assigned Handler</div>
-                        <div className="pdf-info-value">{handlerName}</div>
+                      <div className="pdf-info-item">
+                        <div className="pdf-info-label">Phone Number</div>
+                        <div className="pdf-info-value">+91 {order.phone}</div>
                       </div>
-                    )}
-                    {order.isAdminCreated && (
-                      <div className="pdf-info-card">
-                        <div className="pdf-info-label">Order Source</div>
+                      <div className="pdf-info-item">
+                        <div className="pdf-info-label">Email Address</div>
+                        <div className="pdf-info-value">{order.email || "—"}</div>
+                      </div>
+                      <div className="pdf-info-item full-width">
+                        <div className="pdf-info-label">Address</div>
+                        <div className="pdf-info-value">{order.address || "—"}</div>
+                      </div>
+                      <div className="pdf-info-item">
+                        <div className="pdf-info-label">Customer Type</div>
                         <div className="pdf-info-value">
-                          <span className="pdf-badge pdf-badge-violet">🏷️ Admin Created</span>
+                          {order.customerType === 1 ? (
+                            <span className="pdf-badge badge-success">Organization</span>
+                          ) : order.customerType === 0 ? (
+                            <span className="pdf-badge badge-info">Individual</span>
+                          ) : (
+                            <span className="pdf-badge badge-neutral">Not Set</span>
+                          )}
                         </div>
                       </div>
-                    )}
-                    <div className="pdf-info-card">
-                      <div className="pdf-info-label">Created At</div>
-                      <div className="pdf-info-value" style={{ fontSize: 11 }}>{fmtDate(order.createdAt)}</div>
+                      {handlerName && (
+                        <div className="pdf-info-item">
+                          <div className="pdf-info-label">Assigned Handler</div>
+                          <div className="pdf-info-value">{handlerName}</div>
+                        </div>
+                      )}
+                      {order.isAdminCreated && (
+                        <div className="pdf-info-item">
+                          <div className="pdf-info-label">Order Source</div>
+                          <div className="pdf-info-value">
+                            <span className="pdf-badge badge-purple">Admin Created</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* 2. Vehicle Bookings */}
+                {/* Vehicle Bookings */}
                 <div className="pdf-section">
                   <div className="pdf-section-header">
-                    <div className="pdf-section-icon" style={{ background: "#e0e7ff" }}>🚗</div>
-                    <div className="pdf-section-title">Vehicle Bookings ({bookingItems.length})</div>
-                    <div className="pdf-section-line" />
+                    <div className="pdf-section-icon" style={{ background: '#e0e7ff', color: '#4338ca' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M5 17h14M5 12h14M5 7h14" />
+                      </svg>
+                    </div>
+                    <div className="pdf-section-title">Vehicle Bookings</div>
+                    <div className="pdf-section-count">{bookingItems.length} vehicle(s)</div>
                   </div>
+                  <div className="pdf-section-body">
+                    {bookingItems.map((item: any, i) => {
+                      const campaignLabel =
+                        item.campaignType === "Other"
+                          ? item.otherCampaignType || "Other"
+                          : item.campaignType || "—";
+                      const promoterTypeLabel =
+                        item.promoterType === "Other"
+                          ? item.otherPromoterType || "Other"
+                          : item.promoterType || "—";
+                      const location = [item.state, item.city].filter(Boolean).join(" / ") || "—";
 
-                  {bookingItems.map((item, i) => {
-                    const campaignLabel =
-                      item.campaignType === "Other"
-                        ? item.otherCampaignType || "Other"
-                        : item.campaignType || "—";
-                    const promoterTypeLabel =
-                      item.promoterType === "Other"
-                        ? item.otherPromoterType || "Other"
-                        : item.promoterType || "—";
-                    const location = [item.state, item.city].filter(Boolean).join(" / ") || "—";
-                    const route =
-                      item.fromLocation && item.toLocation
-                        ? `${item.fromLocation} → ${item.toLocation}`
-                        : null;
-
-                    return (
-                      <div key={i} className="pdf-vehicle-card">
-                        <div className="pdf-vehicle-header">
-                          <div className="pdf-vehicle-num">V{i + 1}</div>
-                          <div>
-                            {/* <div className="pdf-vehicle-name">{item.vehicleModel || "Vehicle"}</div> */}
-                               <div className="pdf-vehicle-name">{getVehicleTypeName(item.vehicleType)}</div>
-                            <div className="pdf-vehicle-sub">Qty: {item.quantity || 1} · {item.totalDays} days · {location}</div>
+                      return (
+                        <div key={i} className="vehicle-card">
+                          <div className="vehicle-card-header">
+                            <div className="vehicle-number">{i + 1}</div>
+                            <div className="vehicle-info">
+                              <div className="vehicle-name">
+                                {getVehicleTypeName(item.vehicleType)}
+                              </div>
+                              <div className="vehicle-meta">
+                                Quantity: {item.quantity || 1} &bull; {item.totalDays} days &bull; {location}
+                              </div>
+                            </div>
+                            <div className="vehicle-total">
+                              <div className="vehicle-total-label">Vehicle Total</div>
+                              <div className="vehicle-total-value">
+                                ₹{fmt(item.subtotal || item.totalAmount)}
+                              </div>
+                            </div>
                           </div>
-                          <div className="pdf-vehicle-total">
-                            <div className="pdf-vehicle-total-label">Vehicle Total</div>
-                            <div className="pdf-vehicle-total-value">₹{fmt(item.subtotal || item.totalAmount)}</div>
-                          </div>
-                        </div>
 
-                        <div className="pdf-vehicle-body">
-                          {/* Basic Details */}
-                          <div className="pdf-vehicle-details">
-                            {item.bookingFor && (
-                              <div className="pdf-detail-item">
-                                <div className="pdf-detail-label">Booking For</div>
-                                <div className="pdf-detail-value">{item.bookingFor}</div>
+                          <div className="vehicle-card-body">
+                            <div className="vehicle-details">
+                              {item.bookingFor && (
+                                <div className="detail-item">
+                                  <div className="detail-label">Booking For</div>
+                                  <div className="detail-value">{item.bookingFor}</div>
+                                </div>
+                              )}
+                              <div className="detail-item">
+                                <div className="detail-label">Campaign Type</div>
+                                <div className="detail-value">{campaignLabel}</div>
+                              </div>
+                              <div className="detail-item">
+                                <div className="detail-label">Location</div>
+                                <div className="detail-value">{location}</div>
+                              </div>
+                              <div className="detail-item" style={{ gridColumn: 'span 2' }}>
+                                <div className="detail-label">Duration</div>
+                                <div className="detail-value">
+                                  {fmtDate(item.fromDate)} → {fmtDate(item.toDate)} ({item.totalDays} days)
+                                </div>
+                              </div>
+                              {item.extraKm && item.extraKm > 0 && (
+                                <div className="detail-item">
+                                  <div className="detail-label">Extra KM</div>
+                                  <div className="detail-value">{item.extraKm} km</div>
+                                </div>
+                              )}
+                              {item.extraHours && item.extraHours > 0 && (
+                                <div className="detail-item">
+                                  <div className="detail-label">Extra Hours</div>
+                                  <div className="detail-value">{item.extraHours} hrs</div>
+                                </div>
+                              )}
+                              {item.extraDays > 0 && (
+                                <div className="detail-item">
+                                  <div className="detail-label">Extra Days</div>
+                                  <div className="detail-value">{item.extraDays} days</div>
+                                </div>
+                              )}
+                              {item.gstNumber && (
+                                <div className="detail-item">
+                                  <div className="detail-label">GST Number</div>
+                                  <div className="detail-value">{item.gstNumber}</div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Promoter Details */}
+                            {item.needPromoter && (
+                              <div className="promoter-box">
+                                <div className="promoter-title">Promoter Details</div>
+                                <div className="promoter-grid">
+                                  <div className="detail-item">
+                                    <div className="detail-label">Type</div>
+                                    <div className="detail-value">{promoterTypeLabel}</div>
+                                  </div>
+                                  <div className="detail-item">
+                                    <div className="detail-label">Gender</div>
+                                    <div className="detail-value">{item.promoterGender || "—"}</div>
+                                  </div>
+                                  {/* <div className="detail-item">
+                                    <div className="detail-label">Language</div>
+                                    <div className="detail-value">{item.promoterLanguage || "—"}</div>
+                                  </div> */}
+
+                                  <div className="detail-item">
+                                     <div className="detail-label">Language</div>
+                                  <div className="detail-value">
+                                    {typeof item.promoterLanguage === "string"
+                                      ? item.promoterLanguage.replace(/([a-z])([A-Z])/g, '$1 $2') 
+                                      : Array.isArray(item.promoterLanguage)
+                                        ? item.promoterLanguage.join(" ")
+                                        : "—"}
+                                  </div>
+                                   </div>
+                                  <div className="detail-item">
+                                    <div className="detail-label">Quantity</div>
+                                    <div className="detail-value">{item.promoterQuantity || 0}</div>
+                                  </div>
+                                </div>
                               </div>
                             )}
-                            <div className="pdf-detail-item">
-                              <div className="pdf-detail-label">Campaign Type</div>
-                              <div className="pdf-detail-value">{campaignLabel}</div>
-                            </div>
-                            <div className="pdf-detail-item">
-                              <div className="pdf-detail-label">Location</div>
-                              <div className="pdf-detail-value">{location}</div>
-                            </div>
-                            <div className="pdf-detail-item" style={{ gridColumn: "span 2" }}>
-                              <div className="pdf-detail-label">Duration</div>
-                              <div className="pdf-detail-value">
-                                {fmtDate(item.fromDate)} → {fmtDate(item.toDate)} ({item.totalDays} days)
-                              </div>
-                            </div>
-                            {/* {route && (
-                              <div className="pdf-detail-item">
-                                <div className="pdf-detail-label">Driving Route</div>
-                                <div className="pdf-detail-value">{route}</div>
-                              </div>
-                            )} */}
-                            {item.extraKm && item.extraKm > 0 ? (
-                              <div className="pdf-detail-item">
-                                <div className="pdf-detail-label">Extra KM</div>
-                                <div className="pdf-detail-value">{item.extraKm} km</div>
-                              </div>
-                            ) : null}
-                            {item.extraHours && item.extraHours > 0 ? (
-                              <div className="pdf-detail-item">
-                                <div className="pdf-detail-label">Extra Hours</div>
-                                <div className="pdf-detail-value">{item.extraHours} hrs</div>
-                              </div>
-                            ) : null}
-                            {item.extraDays && item.extraDays > 0 ? (
-                              <div className="pdf-detail-item">
-                                <div className="pdf-detail-label">Extra Days</div>
-                                <div className="pdf-detail-value">{item.extraDays} days</div>
-                              </div>
-                            ) : null}
-                            {item.gstNumber && (
-                              <div className="pdf-detail-item">
-                                <div className="pdf-detail-label">GST Number</div>
-                                <div className="pdf-detail-value">{item.gstNumber}</div>
-                              </div>
-                            )}
-                          </div>
 
-                          {/* Promoter Box */}
-                          {item.needPromoter && (
-                            <div className="pdf-promoter-box">
-                              <div className="pdf-promoter-title">🎤 Promoter Details</div>
-                              <div className="pdf-promoter-grid">
-                                <div className="pdf-detail-item">
-                                  <div className="pdf-detail-label">Type</div>
-                                  <div className="pdf-detail-value">{promoterTypeLabel}</div>
-                                </div>
-                                <div className="pdf-detail-item">
-                                  <div className="pdf-detail-label">Gender</div>
-                                  <div className="pdf-detail-value">{item.promoterGender || "—"}</div>
-                                </div>
-                                <div className="pdf-detail-item">
-                                  <div className="pdf-detail-label">Language</div>
-                                  <div className="pdf-detail-value">{item.promoterLanguage || "—"}</div>
-                                </div>
-                                <div className="pdf-detail-item">
-                                  <div className="pdf-detail-label">Quantity</div>
-                                  <div className="pdf-detail-value">{item.promoterQuantity || 0}</div>
-                                </div>
+                            {/* Price Breakdown */}
+                            <div style={{ marginTop: 20 }}>
+                              <div style={{
+                                fontSize: '11px', fontWeight: 700, color: '#6b7280',
+                                textTransform: 'uppercase', letterSpacing: '0.5px',
+                                marginBottom: 10
+                              }}>
+                                Price Breakdown
                               </div>
+                              <table className="pricing-table">
+                                <thead>
+                                  <tr>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {item.rentalCost > 0 && (
+                                    <tr>
+                                      <td>Rental & Driver Charges</td>
+                                      <td>₹{fmt(item.rentalCost)}</td>
+                                    </tr>
+                                  )}
+                                  {item.promoterCost > 0 && (
+                                    <tr>
+                                      <td>
+                                        Promoter Charges ({item.totalDays}D × ₹{fmt(item.promoterChargePerDay)} × {item.promoterQuantity})
+                                      </td>
+                                      <td>₹{fmt(item.promoterCost)}</td>
+                                    </tr>
+                                  )}
+                                  {item.rtoCost > 0 && (
+                                    <tr>
+                                      <td>RTO Charges</td>
+                                      <td>₹{fmt(item.rtoCost)}</td>
+                                    </tr>
+                                  )}
+                                  {item.extraKmCost > 0 && (
+                                    <tr>
+                                      <td>Extra KM ({item.extraKm} km × ₹{fmt(item.dailyKmcharges)})</td>
+                                      <td>₹{fmt(item.extraKmCost)}</td>
+                                    </tr>
+                                  )}
+                                  {item.extraHourCost > 0 && (
+                                    <tr>
+                                      <td>Extra Hours ({item.extraHours} hrs × ₹{fmt(item.additionalHourCharges)})</td>
+                                      <td>₹{fmt(item.extraHourCost)}</td>
+                                    </tr>
+                                  )}
+                                  {(item.additionalFields || []).filter((f) => f.label).map((f, fi) => (
+                                    <tr key={fi} className={f.mode === "-" ? "deduction-row" : ""}>
+                                      <td>{f.label}</td>
+                                      <td>{f.mode === "-" ? "−" : "+"}₹{fmt(Number(f.amount))}</td>
+                                    </tr>
+                                  ))}
+                                  <tr className="subtotal-row">
+                                    <td>Subtotal (excluding GST)</td>
+                                    <td>₹{fmt(item.subtotal || item.totalAmount)}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
                             </div>
-                          )}
-
-                          {/* Price Breakdown per vehicle */}
-                          <div style={{ marginTop: 16 }}>
-                            <div style={{ fontSize: 9, fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
-                              💰 Price Breakdown
-                            </div>
-                            <table className="pdf-pricing-table">
-                              <thead>
-                                <tr>
-                                  <th>Description</th>
-                                  <th>Amount</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {(item.rentalCost) ? (
-                                  <tr>
-                                    <td>Rental &amp; Driver Charges</td>
-                                    <td>₹{fmt((item.rentalCost || 0))}</td>
-                                  </tr>
-                                ) : null}
-                                {item.promoterCost && item.promoterCost > 0 ? (
-                                  <tr>
-                                    <td>
-                                      Promoter Charges ({item.totalDays}D × ₹{fmt(item.promoterChargePerDay)} × {item.promoterQuantity})
-                                    </td>
-                                    <td>₹{fmt(item.promoterCost)}</td>
-                                  </tr>
-                                ) : null}
-                                {item.rtoCost && item.rtoCost > 0 ? (
-                                  <tr>
-                                    <td>RTO Charges</td>
-                                    <td>₹{fmt(item.rtoCost)}</td>
-                                  </tr>
-                                ) : null}
-                                {item.extraKmCost && item.extraKmCost > 0 ? (
-                                  <tr>
-                                    <td>Extra KM ({item.extraKm} km × ₹{fmt(item.dailyKmcharges)})</td>
-                                    <td>₹{fmt(item.extraKmCost)}</td>
-                                  </tr>
-                                ) : null}
-                                {item.extraHourCost && item.extraHourCost > 0 ? (
-                                  <tr>
-                                    <td>Extra Hours ({item.extraHours} hrs × ₹{fmt(item.additionalHourCharges)})</td>
-                                    <td>₹{fmt(item.extraHourCost)}</td>
-                                  </tr>
-                                ) : null}
-                                {(item.additionalFields || []).filter((f) => f.label).map((f, fi) => (
-                                  <tr key={fi} className={f.mode === "-" ? "negative-row" : ""}>
-                                    <td>{f.label}</td>
-                                    <td>{f.mode === "-" ? "−" : "+"}₹{fmt(Number(f.amount))}</td>
-                                  </tr>
-                                ))}
-                                <tr className="subtotal-row">
-                                  <td>Subtotal (excl. GST)</td>
-                                  <td>₹{fmt(item.subtotal || item.totalAmount)}</td>
-                                </tr>
-                              </tbody>
-                            </table>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* 3. Negotiation / Discount History */}
-                {negotiationLogs.length > 0 && (
+
+
+
+                {/* Financial Summary */}
+                <div className="pdf-section" style={{ border: '2px solid #c7d2fe' }}>
+                  <div className="pdf-section-header" style={{
+                    background: 'linear-gradient(135deg, #f0f4ff 0%, #eef2ff 100%)',
+                    borderBottom: '2px solid #c7d2fe'
+                  }}>
+                    <div className="pdf-section-icon" style={{ background: '#dcfce7', color: '#166534' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="12" y1="1" x2="12" y2="23" />
+                        <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                      </svg>
+                    </div>
+                    <div className="pdf-section-title">Financial Summary</div>
+                  </div>
+                  <div className="pdf-section-body">
+                    <div className="summary-box">
+                      <div className="summary-title">Grand Total Breakdown</div>
+
+                      <div className="summary-row">
+                        <div className="summary-label">Subtotal (excluding GST)</div>
+                        <div className="summary-value">₹{fmt(subtotal)}</div>
+                      </div>
+
+                      {totalDiscount > 0 && (
+                        <div className="summary-row">
+                          <div className="summary-label" style={{ color: '#dc2626' }}>
+                            Total Discount Applied
+                          </div>
+                          <div className="summary-value negative">
+                            −₹{fmt(totalDiscount)}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="summary-row">
+                        <div className="summary-label">Taxable Amount</div>
+                        <div className="summary-value">₹{fmt(taxable)}</div>
+                      </div>
+
+                      <div className="summary-row">
+                        <div className="summary-label">GST (18%)</div>
+                        <div className="summary-value">₹{fmt(gstAmt)}</div>
+                      </div>
+
+                      {totalAdvance > 0 && (
+                        <div className="summary-row">
+                          <div className="summary-label" style={{ color: '#ea580c' }}>
+                            Advance Paid
+                          </div>
+                          <div className="summary-value" style={{ color: '#ea580c' }}>
+                            −₹{fmt(totalAdvance)}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="summary-row grand-total">
+                        <div className="summary-label">Grand Total</div>
+                        <div className="summary-value">₹{fmt(grandTotal)}</div>
+                      </div>
+
+                      {totalAdvance > 0 && (
+                        <div className="summary-row" style={{ marginTop: 12, paddingTop: 12, borderTop: '2px solid #a5b4fc' }}>
+                          <div className="summary-label" style={{ fontWeight: 700, color: '#059669' }}>
+                            Balance Due
+                          </div>
+                          <div className="summary-value positive">
+                            ₹{fmt(balanceDue)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {showHistory && (negotiationLogs.length > 0 || poLogs.length > 0 || paymentLogs.length > 0) && (
+                  <div style={{
+                    padding: '24px 0 8px 0',
+                    fontSize: '18px',
+                    fontWeight: 800,
+                    color: '#1e293b',
+                    letterSpacing: '-0.3px',
+                    borderBottom: '2px solid #e5e7eb',
+                    marginBottom: '24px',
+                  }}>
+                    All History Status
+                  </div>
+                )}
+
+
+                {showHistory && negotiationLogs.length > 0 && (
                   <div className="pdf-section">
                     <div className="pdf-section-header">
-                      <div className="pdf-section-icon" style={{ background: "#fef3c7" }}>💬</div>
+                      <div className="pdf-section-icon" style={{ background: '#fef3c7', color: '#92400e' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg>
+                      </div>
                       <div className="pdf-section-title">Discount Negotiation History</div>
-                      <div className="pdf-section-line" />
                     </div>
+                    <div className="pdf-section-body">
+                      {negotiationLogs.map((log, i) => (
+                        <div key={i} className="history-item">
+                          <div className="history-badge">{i + 1}</div>
+                          <div className="history-content">
+                            <div className="history-title">{log.movedBy || "Unknown"}</div>
+                            <div className="history-date">{fmtDate(log.movedAt)}</div>
+                            {log.discountNotes && (
+                              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
+                                Notes: {log.discountNotes}
+                              </div>
+                            )}
+                          </div>
+                          <div className="history-amount">
+                            −₹{fmt(log.discountAmount)}
+                          </div>
+                        </div>
+                      ))}
 
-                    {negotiationLogs.map((log, i) => (
-                      <div key={i} className="pdf-history-item">
-                        <div className="pdf-history-num">{i + 1}</div>
-                        <div className="pdf-history-content">
-                          <div className="pdf-history-by">{log.movedBy || "Unknown"}</div>
-                          <div className="pdf-history-date">{fmtDate(log.movedAt)}</div>
-                          {log.discountNotes && (
-                            <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
-                              📝 {log.discountNotes}
+                      {negotiationLogs.length > 1 && (
+                        <div style={{
+                          display: 'flex', justifyContent: 'flex-end', marginTop: 12
+                        }}>
+                          <div style={{
+                            background: '#fee2e2', border: '2px solid #fca5a5',
+                            borderRadius: 10, padding: '10px 20px'
+                          }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: '#991b1b' }}>
+                              Total Discount: −₹{fmt(totalDiscount)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+
+                {/* {poLogs.length > 0 && ( */}
+                {showHistory && poLogs.length > 0 && (
+                  <div className="pdf-section">
+                    <div className="pdf-section-header">
+                      <div className="pdf-section-icon" style={{ background: '#fef3c7', color: '#92400e' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                      </div>
+                      <div className="pdf-section-title">PO Documents</div>
+                      <div className="pdf-section-count">{poLogs.length} document(s)</div>
+                    </div>
+                    <div className="pdf-section-body">
+                      {poLogs.map((log, i) => (
+                        <div key={log._id} className="po-item">
+                          <div className="po-icon">PO</div>
+                          <div className="po-content">
+                            <div className="po-name">Purchase Order {i + 1}</div>
+                            <div className="po-meta">
+                              Date: {fmtDate(log.poDate)}
+                              {log.uploadedBy ? ` • By: ${log.uploadedBy}` : ""}
                             </div>
-                          )}
+                            {log.poNotes && (
+                              <div className="po-meta" style={{ marginTop: 3 }}>
+                                Notes: {log.poNotes}
+                              </div>
+                            )}
+                          </div>
+                          <span className="pdf-badge badge-success">Uploaded</span>
                         </div>
-                        <div className="pdf-history-amount">
-                          −₹{fmt(log.discountAmount)}
-                        </div>
-                      </div>
-                    ))}
-
-                    {negotiationLogs.length > 1 && (
-                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                        <div style={{ background: "#fee2e2", border: "2px solid #fca5a5", borderRadius: 8, padding: "8px 16px" }}>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: "#991b1b" }}>
-                            Total Discount: −₹{fmt(totalDiscount)}
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                {/* 4. PO Documents */}
-                {poLogs.length > 0 && (
+
+                {/* {paymentLogs.length > 0 && ( */}
+                {showHistory && paymentLogs.length > 0 && (
                   <div className="pdf-section">
                     <div className="pdf-section-header">
-                      <div className="pdf-section-icon" style={{ background: "#fef3c7" }}>📋</div>
-                      <div className="pdf-section-title">PO Documents ({poLogs.length})</div>
-                      <div className="pdf-section-line" />
-                    </div>
-
-                    {poLogs.map((log, i) => (
-                      <div key={log._id} className="pdf-po-item">
-                        <div className="pdf-po-icon">📄</div>
-                        <div>
-                          <div className="pdf-po-name">PO Document {i + 1}</div>
-                          <div className="pdf-po-meta">
-                            Date: {fmtDate(log.poDate)}
-                            {log.uploadedBy ? ` · By: ${log.uploadedBy}` : ""}
-                          </div>
-                          {log.poNotes && (
-                            <div className="pdf-po-meta" style={{ marginTop: 3 }}>📝 {log.poNotes}</div>
-                          )}
-                        </div>
-                        <span className="pdf-badge pdf-badge-green" style={{ marginLeft: "auto" }}>✓ Uploaded</span>
+                      <div className="pdf-section-icon" style={{ background: '#fed7aa', color: '#9a3412' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                          <line x1="1" y1="10" x2="23" y2="10" />
+                        </svg>
                       </div>
-                    ))}
+                      <div className="pdf-section-title">Payment History</div>
+                    </div>
+                    <div className="pdf-section-body">
+                      {paymentLogs.map((log, i) => (
+                        <div key={log._id} className="history-item">
+                          <div className="history-badge" style={{
+                            background: 'linear-gradient(135deg, #f97316 0%, #fb923c 100%)'
+                          }}>
+                            {i + 1}
+                          </div>
+                          <div className="history-content">
+                            <div className="history-title">Payment {i + 1}</div>
+                            <div className="history-date">
+                              Date: {fmtDate(log.paymentDate)}
+                              {log.uploadedBy ? ` • By: ${log.uploadedBy}` : ""}
+                            </div>
+                            {log.paymentNotes && (
+                              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
+                                Notes: {log.paymentNotes}
+                              </div>
+                            )}
+                            <span className={`pdf-badge ${log.paymentVerification === "Verified" ? "badge-success" : "badge-warning"}`}
+                              style={{ marginTop: 6, display: 'inline-flex' }}>
+                              {log.paymentVerification === "Verified" ? "Verified" : "Pending"}
+                            </span>
+                          </div>
+                          <div className="history-amount" style={{ color: '#ea580c' }}>
+                            ₹{fmt(log.advancePayment)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                {/* 5. Payment History */}
-                {paymentLogs.length > 0 && (
-                  <div className="pdf-section">
-                    <div className="pdf-section-header">
-                      <div className="pdf-section-icon" style={{ background: "#fed7aa" }}>💳</div>
-                      <div className="pdf-section-title">Payment Stage 1 History</div>
-                      <div className="pdf-section-line" />
-                    </div>
-
-                    {paymentLogs.map((log, i) => (
-                      <div key={log._id} className="pdf-history-item">
-                        <div className="pdf-history-num" style={{ background: "linear-gradient(135deg, #f97316, #fb923c)" }}>
-                          {i + 1}
-                        </div>
-                        <div className="pdf-history-content">
-                          <div className="pdf-history-by">Payment {i + 1}</div>
-                          <div className="pdf-history-date">
-                            Date: {fmtDate(log.paymentDate)}
-                            {log.uploadedBy ? ` · By: ${log.uploadedBy}` : ""}
-                          </div>
-                          {log.paymentNotes && (
-                            <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>📝 {log.paymentNotes}</div>
-                          )}
-                          <span className={`pdf-badge ${log.paymentVerification === "Verified" ? "pdf-badge-green" : "pdf-badge-amber"}`}
-                            style={{ marginTop: 4 }}>
-                            {log.paymentVerification === "Verified" ? "✓ Verified" : "⏳ Pending"}
-                          </span>
-                        </div>
-                        <div className="pdf-history-amount" style={{ color: "#ea580c" }}>
-                          ₹{fmt(log.advancePayment)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* 6. Order Total Summary */}
-                <div className="pdf-section">
-                  <div className="pdf-section-header">
-                    <div className="pdf-section-icon" style={{ background: "#dcfce7" }}>💰</div>
-                    <div className="pdf-section-title">Order Financial Summary</div>
-                    <div className="pdf-section-line" />
-                  </div>
-
-                  <div className="pdf-summary-box">
-                    <div className="pdf-summary-title">
-                      💵 Grand Total Breakdown
-                    </div>
-
-                    <div className="pdf-summary-row">
-                      <div className="pdf-summary-row-label">Subtotal (excl. GST)</div>
-                      <div className="pdf-summary-row-value">₹{fmt(subtotal)}</div>
-                    </div>
-
-                    {totalDiscount > 0 && (
-                      <div className="pdf-summary-row negative">
-                        <div className="pdf-summary-row-label" style={{ color: "#dc2626" }}>
-                          Total Discount Applied
-                        </div>
-                        <div className="pdf-summary-row-value" style={{ color: "#dc2626" }}>
-                          −₹{fmt(totalDiscount)}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="pdf-summary-row">
-                      <div className="pdf-summary-row-label">Taxable Amount</div>
-                      <div className="pdf-summary-row-value">₹{fmt(taxable)}</div>
-                    </div>
-
-                    <div className="pdf-summary-row">
-                      <div className="pdf-summary-row-label">GST (18%)</div>
-                      <div className="pdf-summary-row-value">₹{fmt(gstAmt)}</div>
-                    </div>
-
-                    {totalAdvance > 0 && (
-                      <div className="pdf-summary-row negative">
-                        <div className="pdf-summary-row-label" style={{ color: "#ea580c" }}>
-                          Advance Paid
-                        </div>
-                        <div className="pdf-summary-row-value" style={{ color: "#ea580c" }}>
-                          −₹{fmt(totalAdvance)}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="pdf-summary-row grand">
-                      <div className="pdf-summary-row-label">Grand Total</div>
-                      <div className="pdf-summary-row-value">₹{fmt(grandTotal)}</div>
-                    </div>
-
-                    {totalAdvance > 0 && (
-                      <div className="pdf-summary-row positive" style={{ marginTop: 8 }}>
-                        <div className="pdf-summary-row-label" style={{ fontWeight: 700, color: "#059669" }}>
-                          Balance Due
-                        </div>
-                        <div className="pdf-summary-row-value" style={{ color: "#059669" }}>
-                          ₹{fmt(balanceDue)}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
 
               </div>
 
-              {/* ── FOOTER ── */}
+
+
+              {/* Footer */}
               <div className="pdf-footer">
-                <div className="pdf-footer-left">
-                  <div>Generated on {fmtDate(new Date().toISOString())}</div>
-                  {/* <div className="pdf-watermark">CONFIDENTIAL — INTERNAL USE ONLY</div> */}
+                <div className="footer-text">
+                  Generated on {fmtDate(new Date().toISOString())}
                 </div>
-                <div className="pdf-footer-right">
-                  <div>Order: <strong style={{ color: "rgba(255,255,255,0.7)" }}>{order.orderId}</strong></div>
-                  {/* <div className="pdf-watermark">Page 1 of 1</div> */}
+                <div>
+                  <div className="footer-text" style={{ textAlign: 'right' }}>
+                    Order: <strong style={{ color: 'rgba(255, 255, 255, 0.7)' }}>{order.orderId}</strong>
+                  </div>
+                  <div className="footer-watermark" style={{ marginTop: 4 }}>
+                    VehicleOps Order Management System
+                  </div>
                 </div>
               </div>
 

@@ -17,6 +17,8 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
   const { customerSelection, vehicles } = order;
   const customer = customerSelection.customer;
 
+
+
   const totalDiscount = vehicles.reduce((s, v) => s + ((v.pricing as any)?.additionalCuts || 0), 0);
   const taxableAmount = vehicles.reduce((s, v) => s + (v.pricing?.subtotal || 0), 0);
   const subTotal = taxableAmount + totalDiscount;
@@ -61,14 +63,14 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
         <p className="text-xs text-gray-400 mt-0.5">Confirm before creating order</p>
       </div>
 
-  
+
       <div className="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
+        {/* <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
           Customer ·{" "}
           <span className={customerSelection.type === "new" ? "text-green-500" : "text-blue-500"}>
             {customerSelection.type === "new" ? "New" : "Existing"}
           </span>
-        </p>
+        </p> */}
         <div className="space-y-1.5">
           <Row label="Name" value={customer?.name} />
           <Row label="Phone" value={customer?.phone} />
@@ -81,7 +83,7 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
       {order.vehicles.map((v, idx) => {
         const p = v.pricing;
         const totalVehicleCount = v.quantity;
-        
+
         return (
           <div key={v.id} className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
             {/* Header with Vehicle Count Badge */}
@@ -99,8 +101,8 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
                   </p>
                 </div>
               </div>
-              
-            
+
+
               <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
                 <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -115,9 +117,9 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
             </div>
 
             {/* Details Grid */}
-            <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">
+            {/* <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">
               {[
-                ["Booking For", v.bookingFor],
+                ["Booking For", order.customerCategory],
                 ["Campaign", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType],
                 ["Duration", v.fromDate && v.toDate
                   ? `${new Date(v.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(v.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000)}D base${v.extraDays > 0 ? ` +${v.extraDays} D = ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + v.extraDays}D total` : ""})`
@@ -135,6 +137,33 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
                   <span className="text-gray-800 dark:text-gray-200 font-medium text-right">{value}</span>
                 </div>
               ))}
+            </div> */}
+
+            <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">
+              {(
+                [
+                  ["Booking For", order.customerCategory],
+                  ["Campaign", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType],
+                  ["Duration", v.fromDate && v.toDate
+                    ? `${new Date(v.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(v.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000)}D base${v.extraDays > 0 ? ` +${v.extraDays} D = ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + v.extraDays}D total` : ""})`
+                    : "—"],
+                  ["Driving route", `${v.fromLocation} → ${v.toLocation}`],
+                  ["State / City", `${v.state} / ${v.city}`],
+                  ["Vehicle Count", `${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"} ✕ ${v.vehicleModel}`],
+                  v.extraKm > 0 ? ["Extra KM", `${v.extraKm} km`] : null,
+                  v.extraHours > 0 ? ["Extra Hours", `${v.extraHours} hours`] : null,
+                  v.needPromoter ? ["Promoter", `${v.promoterType === "Other" ? v.otherPromoterType : v.promoterType} · ${v.promoterGender} · ${v.promoterLanguage} · Qty ${v.promoterQuantity}`] : null,
+                  v.gstNumber ? ["GST", v.gstNumber] : null,
+                ] as ([string, string] | null)[] 
+              )
+                .filter((item): item is [string, string] => item !== null)  
+                .map(([label, value], i) => (
+                  <div key={i} className="flex justify-between text-sm gap-4">
+                    <span className="text-gray-500 shrink-0">{label}</span>
+                    <span className="text-gray-800 dark:text-gray-200 font-medium text-right">{value}</span>
+                  </div>
+                ))
+              }
             </div>
 
             {/* Pricing Breakdown */}
@@ -142,7 +171,7 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
               <div className="border-t border-gray-100 dark:border-gray-700 pt-3 space-y-1">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Pricing Breakdown</p>
                 {[
-                  { label: `Rental (Driver charges included) (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × ${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"})`, val: p.rentalCost },
+                  { label: `Rental (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × ${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"})`, val: p.rentalCost },
                   v.needPromoter && p.promoterCost > 0 ? { label: `Promoter (${p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${v.promoterQuantity})`, val: p.promoterCost } : null,
                   { label: "RTO Charges", val: p.rtoCost },
                   (p as any).extraKmCost > 0 ? { label: `Extra KM (${v.extraKm} × ₹${(p as any).dailyKmcharges || ""})`, val: (p as any).extraKmCost } : null,
@@ -233,9 +262,9 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
 
       {/* Action Buttons */}
       <div className="flex items-center justify-between pt-2">
-        <button 
-          onClick={onBack} 
-          disabled={loading} 
+        <button
+          onClick={onBack}
+          disabled={loading}
           className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-60"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -243,9 +272,9 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
           </svg>
           Back
         </button>
-        <button 
-          onClick={onSubmit} 
-          disabled={loading} 
+        <button
+          onClick={onSubmit}
+          disabled={loading}
           className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 transition-colors"
         >
           {loading && (
