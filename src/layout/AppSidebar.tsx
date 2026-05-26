@@ -18,6 +18,13 @@ import {
   UserCircleIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
+import {
+  HiOutlineUserGroup,
+  HiOutlineClipboardList,
+  HiOutlineShoppingBag,
+  HiOutlineCube,
+  HiOutlineUsers
+} from "react-icons/hi";
 
 type NavItem = {
   name: string;
@@ -42,27 +49,43 @@ const navItems: NavItem[] = [
   //   name: "User Profile",
   //   path: "/profile",
   // },
+     {
+    name: "StaffAdmin",
+    icon: <HiOutlineUserGroup />,
+    path: "/admin/staff-admin"
+  },
    {
     name: "Order Creation",
-    icon: <ListIcon />,
+     icon: <HiOutlineClipboardList />,
     path: "/admin/order-creation"
+  },
+  {
+    name: "Order Handling",
+    icon: <HiOutlineShoppingBag />,
+    path: "/admin/order-handling"
   },
     {
     name: "Package Management",
-    icon: <ListIcon />,
+    icon: <HiOutlineCube />,
     path: "/admin/package-management"
+  },
+
+   {
+    name: "Promoter",
+    icon: <HiOutlineUsers />,
+    path: "/admin/promoter"
   },
 
   {
     name: "Vehicles",
     icon: <ListIcon />,
-    subItems: [{ name: "Onboarding", path: "/Vehicle_Onboarding", pro: false }],
+    subItems: [
+      { name: "Vehicle Onboarding", path: "/admin/Vehicles/Vehicle_Onboarding", pro: false },
+      { name: "Vehicle Inventory", path: "/admin/Vehicles/Vehicle_Inventory", pro: false }
+    ],
+
   },
-  // {
-  //   name: "Forms",
-  //   icon: <ListIcon />,
-  //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  // },
+
   {
     name: "Tables",
     icon: <TableIcon />,

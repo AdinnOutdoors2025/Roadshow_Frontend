@@ -1,0 +1,103 @@
+{
+  "customizedVehiclesOptions": [
+    { "value": "Non-Customized", "label": "Non-Customized" }
+  ],
+  "remarks": [
+    "Due to Unavailability of Vehicle",
+    "Due to Unavailability of Driver",
+    "Under Maintenance",
+    "Branding in Progress"
+  ],
+  "cities": [
+    "Delhi", "Mumbai", "Bangalore", "Chennai", "Hyderabad",
+    "Pune", "Ahmedabad", "Kolkata", "Surat", "Jaipur",
+    "Madurai", "Coimbatore"
+  ],
+  "statusOptions": [
+    "Waiting for Status",
+    "Available",
+    "Unavailable",
+    "Booked",
+    "Maintenance",
+    "Damaged"
+  ],
+  "statusPriority": {
+    "Waiting for Status": 0,
+    "Available": 1,
+    "Unavailable": 2,
+    "Booked": 3,
+    "Maintenance": 4,
+    "Damaged": 5
+  },
+  "remarksRequiredStatuses": ["Unavailable", "Maintenance", "Damaged"],
+  "remarksOptionalStatuses": ["Booked"],
+  "displayVersionOptions": [
+    { "value": "P4", "label": "P4" },
+    { "value": "P6", "label": "P6" }
+  ],
+  "permitOptions": [
+    { "value": "Local", "label": "Local" },
+    { "value": "State", "label": "State" },
+    { "value": "National", "label": "National" }
+  ],
+  "modelOptions": [
+    { "value": "Standard", "label": "Standard" },
+    { "value": "Premium", "label": "Premium" },
+    { "value": "Deluxe", "label": "Deluxe" }
+  ],
+  "ownershipOptions": [
+    { "value": "Owned", "label": "Owned" },
+    { "value": "Leased", "label": "Leased" },
+    { "value": "Rented", "label": "Rented" }
+  ],
+  "fuelTypeOptions": [
+    { "value": "Petrol", "label": "Petrol" },
+    { "value": "Diesel", "label": "Diesel" },
+    { "value": "CNG", "label": "CNG" },
+    { "value": "Electric", "label": "Electric" }
+  ],
+  "currentStatusOptions": [
+    { "value": "Waiting for Status", "label": "Waiting for Status" },
+    { "value": "Available", "label": "Available" },
+    { "value": "Unavailable", "label": "Unavailable" },
+    { "value": "Maintenance", "label": "Maintenance" },
+    { "value": "Booked", "label": "Booked" }
+  ],
+  "screenTypeOptions": [
+    { "value": "LED Only", "label": "LED Only" },
+    { "value": "Flex Only", "label": "Flex Only" },
+    { "value": "Flex + LED", "label": "Flex + LED" }
+  ],
+  "soundQualityOptions": [
+    { "value": "Standard", "label": "Standard" },
+    { "value": "High", "label": "High" },
+    { "value": "Studio", "label": "Studio" }
+  ],
+  "numberOfScreensOptions": [
+    { "value": "1", "label": "1 Screen" },
+    { "value": "2", "label": "2 Screens" },
+    { "value": "3", "label": "3 Screens" }
+  ],
+ "statusLegend": [
+  { "label": "Waiting for Status",    "color": "#9ca3af", "bg": "bg-gray-50",   "text": "text-gray-700",   "border": "border-gray-100"   },
+  { "label": "Available",             "color": "#22c55e", "bg": "bg-green-50",  "text": "text-green-700",  "border": "border-green-100"  },
+  { "label": "Running",               "color": "#f97316", "bg": "bg-orange-50", "text": "text-orange-700", "border": "border-orange-100" },
+  { "label": "Allotted",              "color": "#ef4444", "bg": "bg-red-50",    "text": "text-red-700",    "border": "border-red-100"    },
+  { "label": "Maintenance",           "color": "#eab308", "bg": "bg-yellow-50", "text": "text-yellow-700", "border": "border-yellow-100" },
+  { "label": "On Road",               "color": "#3b82f6", "bg": "bg-blue-50",   "text": "text-blue-700",   "border": "border-blue-100"   },
+  { "label": "Unavailable",           "color": "#dc2626", "bg": "bg-red-50",    "text": "text-red-700",    "border": "border-red-100"    },
+  { "label": "Damaged",               "color": "#7f1d1d", "bg": "bg-red-50",    "text": "text-red-900",    "border": "border-red-100"    }
+  
+
+],
+  "indianStates": [
+  {
+    "state": "Tamil Nadu",
+    "districts": ["Chennai", "Madurai", "Coimbatore", "Tiruchirappalli", "Salem"]
+  },
+  {
+    "state": "Karnataka",
+    "districts": ["Bangalore", "Mysore", "Hubli"]
+  }
+]
+}

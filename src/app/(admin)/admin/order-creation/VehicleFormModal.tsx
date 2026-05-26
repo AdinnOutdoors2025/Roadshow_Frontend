@@ -1,18 +1,20 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { VehicleConfig, AdditionalCharge } from "./AdminOrderForm";
-import { PricingPreview, getPackagesForOrder} from "../../../../utils/Adminorderapi";
+import { PricingPreview, getPackagesForOrder } from "../../../../utils/Adminorderapi";
 import FormField, { inputClass } from "../../../../components/reusableFormField";
 import { HiOutlinePlus, HiOutlineTrash } from "react-icons/hi2";
 import { IoMdClose } from "react-icons/io";
 import API_BASE from "../../../../../baseurl";
 import DatePicker from "@/components/form/date-picker";
+import { languages } from "../../../../utils/collection.json";
+import CitySelect from "./cityselect";
 
 interface PackageOption {
   _id: string;
-  vehicleType: string;
+  vehicleType: string | { _id: string; typeName: string };
   vehicleModel: string;
   perDayRentalCost: number;
   driverCharges: number;
@@ -23,6 +25,7 @@ interface PackageOption {
   promoterChargePerDay: number;
   isActive: boolean;
   perKmCharge: number
+  dailyKmcharges: number
 }
 
 interface Props {
@@ -65,8 +68,10 @@ function defaultForm(): Omit<VehicleConfig, "id"> {
     gstNumber: "",
     extraHours: 0,
     promoterGender: "",
-    promoterLanguage: "",
+    promoterLanguage: [],
     promoterQuantity: 0,
+    dailyKmcharges: 0
+
   };
 }
 
@@ -80,10 +85,12 @@ function calcPricing(
   extraKm: number,
   extraDays: number,
   extraHours: number,
-
   additionalCharges: AdditionalCharge[],
   promoterQuantity: number,
+  dailyKmcharges: number,
 ): PricingPreview | null {
+
+
   if (!fromDate || !toDate || quantity < 1) return null;
   const from = new Date(fromDate);
   const to = new Date(toDate);
@@ -109,7 +116,7 @@ function calcPricing(
     return c.mode === "+" ? acc + amt : acc;
   }, 0);
 
-  const subtotal = rentalCost + driverCost + promoterCost + rtoCost + extraKmCost + extraHourCost + additionalAdds;
+  const subtotal = rentalCost + promoterCost + rtoCost + extraKmCost + extraHourCost + additionalAdds;
 
 
   const MAX_DISCOUNT_PCT = parseFloat(process.env.NEXT_PUBLIC_MAX_DISCOUNT_PERCENT || "15");
@@ -145,6 +152,7 @@ function calcPricing(
     rtoCharges: pkg.rtoCharges,
     additionalHourCharges: pkg.additionalHourCharges,
     dailyKmLimit: pkg.dailyKmLimit,
+    dailyKmcharges: pkg.perKmCharge || dailyKmcharges || 0,
     rentalCost,
     driverCost,
     promoterCost,
@@ -173,6 +181,8 @@ function VehicleTypeSelect({
   const ref = React.useRef<HTMLDivElement>(null);
   const VEHICLE_TYPES_LOCAL = ["Non-Customizable Vehicle", "Customizable Vehicle"];
 
+
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -182,6 +192,9 @@ function VehicleTypeSelect({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+
+
 
   return (
     <div ref={ref} className="relative">
@@ -234,13 +247,12 @@ function VehicleTypeSelect({
 
 export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [form, setForm] = useState<VehicleConfig>(editing ?? { id: uid(), ...defaultForm() });
-  const [packages, setPackages] = useState<any[]>([]);
-  const [loadingPkg, setLoadingPkg] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<PackageOption | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [packageslist, setPackageslist] = useState<PackageOption[]>([]);
   const [campaignTypes, setCampaignTypes] = useState<{ _id: string, name: string }[]>([]);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  console.log("selectedPackage", selectedPackage)
 
   const [editablePackage, setEditablePackage] = useState<Record<string, string>>({});
   const [savingPkg, setSavingPkg] = useState(false);
@@ -248,10 +260,31 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [changedKeys, setChangedKeys] = useState<string[]>([]);
   const [locationData, setLocationData] = useState<Record<string, string[]>>({});
   const [cityOptions, setCityOptions] = useState<string[]>([]);
+  const [vehicleTypes, setVehicleTypes] = useState<any>([]);
+  const [addCityModalOpen, setAddCityModalOpen] = useState(false);
+  const [newCityName, setNewCityName] = useState("");
+  const [addCityLoading, setAddCityLoading] = useState(false);
+  const [addCityError, setAddCityError] = useState("");
+
   console.log("locationData", locationData)
 
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
+
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(e.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+
   const PROMOTER_GENDER_OPTIONS = ["Male", "Female", "Other"];
-  const PROMOTER_LANGUAGE_OPTIONS = ["Tamil", "English", "Telugu", "Hindi", "Kannada", "Malayalam"];
+  // const PROMOTER_LANGUAGE_OPTIONS = ["Tamil", "English", "Telugu", "Hindi", "Kannada", "Malayalam"];
 
   useEffect(() => {
     fetch(`${API_BASE}locations`)
@@ -296,6 +329,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
         dailyKmLimit: String(selectedPackage.dailyKmLimit),
         additionalHourCharges: String(selectedPackage.additionalHourCharges),
         promoterChargePerDay: String(selectedPackage.promoterChargePerDay),
+        perKmCharge: String(selectedPackage.perKmCharge || 0),
       });
       setPkgSaved(false);
       setChangedKeys([]);
@@ -321,7 +355,8 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
       form.extraKm, form.extraDays,
       form.extraHours,
       form.additionalCharges,
-      form.promoterQuantity
+      form.promoterQuantity,
+      mergedPkg.perKmCharge || 0,
 
     );
     setForm(f => ({ ...f, pricing: p }));
@@ -330,17 +365,37 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
 
 
   const VEHICLE_TYPES = ["Non-Customizable Vehicle", "Customizable Vehicle"];
-  const filteredModels = packageslist.filter((p) => p.vehicleType === form.vehicleType);
+  const filteredModels = packageslist.filter((p) => p.vehicleType);
+
+
+
+
+  const fetchVehicleTypes = async () => {
+    try {
+
+      const res = await fetch(`${API_BASE}api/vehicle-types`);
+      if (!res.ok) throw new Error("Failed to fetch packages");
+      const data = await res.json();
+      setVehicleTypes(data.data);
+
+    } catch (err: any) {
+      console.log(err)
+    }
+  };
+
+  useEffect(() => { fetchVehicleTypes(); }, []);
 
 
 
   const fetchPackages = async () => {
     try {
-
       const res = await fetch(`${API_BASE}packages/`);
       if (!res.ok) throw new Error("Failed to fetch packages");
       const data = await res.json();
-      setPackageslist(data.data);
+
+
+      const activePackages = data.data.filter((pkg: any) => pkg.isActive === true);
+      setPackageslist(activePackages);
 
     } catch (err: any) {
       console.log(err)
@@ -360,12 +415,60 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
       .catch(() => { });
   }, []);
 
+  console.log("packageslist", packageslist)
+
   useEffect(() => {
     if (editing?.packageId && packageslist.length > 0) {
       const match = packageslist.find((p) => p._id === editing.packageId);
       if (match) setSelectedPackage(match);
     }
   }, [packageslist, editing]);
+
+
+  const handleAddCity = async () => {
+    if (!newCityName.trim()) {
+      setAddCityError("City name is required");
+      return;
+    }
+    if (!form.state) {
+      setAddCityError("Please select a state first");
+      return;
+    }
+
+    setAddCityLoading(true);
+    setAddCityError("");
+
+    try {
+      const res = await fetch(`${API_BASE}locations/${encodeURIComponent(form.state)}/cities`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ city: newCityName.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Failed to add city");
+
+      // Update local locationData so it appears immediately
+      setLocationData(prev => ({
+        ...prev,
+        [form.state]: [...(prev[form.state] || []), newCityName.trim()],
+      }));
+
+      // Update cityOptions so dropdown shows the new city
+      setCityOptions(prev => [...prev, newCityName.trim()]);
+
+      // Auto-select the newly added city
+      set("city", newCityName.trim());
+
+      setNewCityName("");
+      setAddCityModalOpen(false);
+    } catch (err: any) {
+      setAddCityError(err.message || "Something went wrong");
+    } finally {
+      setAddCityLoading(false);
+    }
+  };
 
 
   useEffect(() => {
@@ -380,7 +483,8 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
       form.extraDays,
       form.extraHours,
       form.additionalCharges,
-      form.promoterQuantity
+      form.promoterQuantity,
+      selectedPackage.perKmCharge || 0,
 
     );
     setForm((f) => ({ ...f, pricing: p }));
@@ -396,28 +500,24 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     setForm((f) => ({ ...f, vehicleType: type, vehicleModel: "", packageId: "" }));
     setSelectedPackage(null);
 
-    if (type) {
-      setLoadingPkg(true);
-      try {
-        const { packages: pkgs } = await getPackagesForOrder({ vehicleType: type });
-        setPackages(pkgs);
-      } catch (error) {
-        console.error("Error while fetching packages:", error);
-      } finally {
-        setLoadingPkg(false);
-      }
-    } else {
-      setPackages([]);
-    }
+
   };
+
 
   const handleVehicleModelChange = (modelId: string) => {
     const pkg = packageslist.find((p) => p._id === modelId) || null;
     setSelectedPackage(pkg);
+
+
+    const vehicleModelName =
+      typeof pkg?.vehicleType === "object" && pkg?.vehicleType !== null
+        ? (pkg.vehicleType as any).typeName ?? ""
+        : pkg?.vehicleType ?? "";
+
     setForm((f) => ({
       ...f,
       packageId: modelId,
-      vehicleModel: pkg?.vehicleModel || "",
+      vehicleModel: vehicleModelName,
     }));
   };
 
@@ -440,18 +540,18 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     if (changedKeys.length > 0) {
       e.packageUnsaved = `Package charges updated but not saved. Please click "Update Package" before proceeding.`;
     }
-    if (!form.vehicleType) e.vehicleType = "Select vehicle type";
+    // if (!form.vehicleType) e.vehicleType = "Select vehicle type";
     if (!form.packageId) e.vehicleModel = "Select vehicle model";
-    if (!form.bookingFor) e.bookingFor = "Select booking for";
+    // if (!form.bookingFor) e.bookingFor = "Select booking for";
 
     if (!form.campaignType) e.campaignType = "Select campaign type";
 
     if (form.campaignType === "Other" && !form.otherCampaignType) e.otherCampaignType = "Required";
-    if (form.bookingFor === "Agency") {
-      if (!form.gstNumber.trim()) e.gstNumber = "GST number required for Agency";
-      else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(form.gstNumber))
-        e.gstNumber = "Enter valid GST number";
-    }
+    // if (form.bookingFor === "Agency") {
+    //   if (!form.gstNumber.trim()) e.gstNumber = "GST number required for Agency";
+    //   else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(form.gstNumber))
+    //     e.gstNumber = "Enter valid GST number";
+    // }
 
     if (!form.fromDate) e.fromDate = "Select start date";
     if (!form.toDate) e.toDate = "Select end date";
@@ -468,7 +568,8 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     if (form.needPromoter && !form.promoterType) e.promoterType = "Select promoter type";
     if (form.needPromoter && form.promoterType === "Other" && !form.otherPromoterType) e.otherPromoterType = "Required";
     if (form.needPromoter && !form.promoterGender) e.promoterGender = "Select gender";
-    if (form.needPromoter && !form.promoterLanguage) e.promoterLanguage = "Select language";
+    // if (form.needPromoter && !form.promoterLanguage) e.promoterLanguage = "Select language";
+    if (form.needPromoter && form.promoterLanguage.length === 0) e.promoterLanguage = "Select language";
     if (form.needPromoter && (!form.promoterQuantity || form.promoterQuantity < 1))
       e.promoterQuantity = "Enter valid quantity";
     setErrors(e);
@@ -485,9 +586,54 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     promoterChargePerDay: "Promoter/day",
   };
 
+  // const handleSavePackageChanges = async () => {
+  //   if (!selectedPackage) return;
+
+
+  //   const emptyFields = Object.entries(editablePackage)
+  //     .filter(([_, v]) => v === "" || v === ".")
+  //     .map(([k]) => FIELD_LABELS[k] || k);
+
+  //   if (emptyFields.length > 0) {
+  //     alert(`Please fill: ${emptyFields.join(", ")}`);
+  //     return;
+  //   }
+
+  //   setSavingPkg(true);
+  //   try {
+  //     const numericPayload = Object.fromEntries(
+  //       Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
+  //     );
+
+  //     const res = await fetch(`${API_BASE}packages/${selectedPackage._id}`, {
+  //       method: "PUT",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(numericPayload),
+  //     });
+  //     const data = await res.json();
+  //     if (!res.ok) throw new Error(data.message || "Update failed");
+
+
+  //     const summary = changedKeys
+  //       .map(k => `${FIELD_LABELS[k]}: ₹${selectedPackage[k as keyof PackageOption]} → ₹${editablePackage[k]}`)
+  //       .join("\n");
+
+  //     setSelectedPackage(prev => prev ? { ...prev, ...numericPayload } : prev);
+  //     setPkgSaved(true);
+  //     setChangedKeys([]);
+
+  //     if (summary) alert(`✅ Package updated!\n\n${summary}`);
+
+  //   } catch (err: any) {
+  //     alert(err.message || "Failed to update package");
+  //   } finally {
+  //     setSavingPkg(false);
+  //   }
+  // };
+
+
   const handleSavePackageChanges = async () => {
     if (!selectedPackage) return;
-
 
     const emptyFields = Object.entries(editablePackage)
       .filter(([_, v]) => v === "" || v === ".")
@@ -504,14 +650,24 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
         Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
       );
 
+      // ✅ Extract the vehicleType ID from selectedPackage
+      const vehicleTypeId =
+        typeof selectedPackage.vehicleType === "object"
+          ? selectedPackage.vehicleType._id
+          : selectedPackage.vehicleType;
+
       const res = await fetch(`${API_BASE}packages/${selectedPackage._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(numericPayload),
+        body: JSON.stringify({
+          ...numericPayload,
+          vehicleType: vehicleTypeId,
+          vehicleModel: selectedPackage.vehicleModel,
+        }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Update failed");
-
 
       const summary = changedKeys
         .map(k => `${FIELD_LABELS[k]}: ₹${selectedPackage[k as keyof PackageOption]} → ₹${editablePackage[k]}`)
@@ -605,8 +761,8 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     return new Intl.NumberFormat("en-IN").format(Number(raw));
   };
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-2">
-      <div className="relative w-full max-w-2xl max-h-[80vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-2">
+      <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
 
 
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
@@ -626,32 +782,42 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
 
             <>
               <div className="grid grid-cols-2 gap-4">
-                <FormField label="Vehicle Type" error={errors.vehicleType} required>
+                {/* <FormField label="Vehicle Type" error={errors.vehicleType} required>
                   <VehicleTypeSelect
                     value={form.vehicleType}
                     onChange={handleVehicleTypeChange}
                     error={errors.vehicleType}
                   />
-                </FormField>
+                </FormField> */}
 
                 <FormField label="Vehicle Model" error={errors.vehicleModel} required>
                   <select
                     value={form.packageId}
                     onChange={(e) => handleVehicleModelChange(e.target.value)}
-                    disabled={!form.vehicleType}
+                    // disabled={!form.vehicleType}
                     className={inputClass(!!errors.vehicleModel)}
                   >
                     <option value="">Select model</option>
-                    {filteredModels.map((pkg) => (
-                      <option key={pkg._id} value={pkg._id}>{pkg.vehicleModel}</option>
-                    ))}
+
+                    {filteredModels.map((pkg) => {
+                      const label =
+                        typeof pkg.vehicleType === "object" && pkg.vehicleType !== null
+                          ? pkg.vehicleType.typeName
+                          : vehicleTypes.find((t) => t._id === pkg.vehicleType)?.typeName ?? pkg.vehicleType;
+
+                      return (
+                        <option key={pkg._id} value={pkg._id}>
+                          {label || "Unknown"}
+                        </option>
+                      );
+                    })}
                   </select>
                 </FormField>
               </div>
 
 
 
-              {selectedPackage && (
+              {/* {selectedPackage && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                     {[
@@ -753,11 +919,11 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                     </div>
                   )}
                 </div>
-              )}
+              )} */}
 
 
               {selectedPackage && (
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
 
                   <FormField label="Extra KM" error={errors.extraKm}>
                     <input
@@ -784,7 +950,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                       className={inputClass(!!errors.extraHours)}
                     />
                   </FormField>
-                  <FormField label="Extra Days (Optional)" error={errors.extraDays}>
+                  {/* <FormField label="Extra Days (Optional)" error={errors.extraDays}>
                     <input
                       type="number"
                       min={0}
@@ -793,114 +959,198 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                       placeholder="0"
                       className={inputClass(!!errors.extraDays)}
                     />
-                  </FormField>
+                  </FormField> */}
                 </div>
               )}
 
 
-              {selectedPackage && (
-                <div className="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4 space-y-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Promoter Requirement</p>
+              {/* {selectedPackage && ( */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Promoter Requirement</p>
 
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => { set("needPromoter", !form.needPromoter); if (form.needPromoter) { set("promoterType", ""); set("otherPromoterType", ""); } }}
-                      disabled={!selectedPackage.promoterAvailable}
-                      className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${form.needPromoter ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-600"} disabled:opacity-40`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${form.needPromoter ? "translate-x-5" : ""}`} />
-                    </button>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {form.needPromoter ? "Promoter needed" : "No promoter"}
-                      {!selectedPackage.promoterAvailable && <span className="ml-2 text-xs text-red-400">(Not available for this package)</span>}
-                    </span>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { set("needPromoter", !form.needPromoter); if (form.needPromoter) { set("promoterType", ""); set("otherPromoterType", ""); } }}
+                    // disabled={!selectedPackage.promoterAvailable}
+                    className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${form.needPromoter ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-600"} disabled:opacity-40`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${form.needPromoter ? "translate-x-5" : ""}`} />
+                  </button>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {form.needPromoter ? "Promoter needed" : "No promoter"}
+                    {/* {!selectedPackage.promoterAvailable && <span className="ml-2 text-xs text-red-400">(Not available for this package)</span>} */}
+                  </span>
+                </div>
 
-                  {form.needPromoter && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div id="field-promoterType">
-                        <FormField label="Promoter Type" error={errors.promoterType} required>
-                          <select value={form.promoterType} onChange={(e) => set("promoterType", e.target.value)} className={inputClass(!!errors.promoterType)}>
-                            <option value="">Select</option>
-                            {PROMOTER_TYPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                          </select>
-                        </FormField>
-                      </div>
-
-
-
-                      {form.promoterType === "Other" && (
-                        <FormField label="Specify Type" error={errors.otherPromoterType} required>
-                          <input type="text" value={form.otherPromoterType} onChange={(e) => set("otherPromoterType", e.target.value)} className={inputClass(!!errors.otherPromoterType)} />
-                        </FormField>
-                      )}
-
-
-
+                {form.needPromoter && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div id="field-promoterType">
+                      <FormField label="Promoter Type" error={errors.promoterType} required>
+                        <select value={form.promoterType} onChange={(e) => set("promoterType", e.target.value)} className={inputClass(!!errors.promoterType)}>
+                          <option value="">Select</option>
+                          {PROMOTER_TYPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      </FormField>
                     </div>
 
 
-                  )}
 
-                  {form.needPromoter && selectedPackage.promoterAvailable && (
+                    {form.promoterType === "Other" && (
+                      <FormField label="Specify Type" error={errors.otherPromoterType} required>
+                        <input type="text" value={form.otherPromoterType} onChange={(e) => set("otherPromoterType", e.target.value)} className={inputClass(!!errors.otherPromoterType)} />
+                      </FormField>
+                    )}
+
+
+
+                  </div>
+
+
+                )}
+
+                {/* {form.needPromoter && selectedPackage.promoterAvailable && (
                     <p className="text-[10px] text-gray-400">
                       Promoter charge: {formatINR(selectedPackage.promoterChargePerDay)}/day × days × qty
                     </p>
-                  )}
+                  )} */}
 
-                  {form.needPromoter && (
-                    <div className="grid grid-cols-2 gap-4 mt-3">
-                      {/* Gender */}
-                      <div id="field-promoterGender">
-                        <FormField label="Gender" error={errors.promoterGender} required>
-                          <select
-                            value={form.promoterGender}
-                            onChange={(e) => set("promoterGender", e.target.value)}
-                            className={inputClass(!!errors.promoterGender)}
-                          >
-                            <option value="">Select</option>
-                            {PROMOTER_GENDER_OPTIONS.map((g) => (
-                              <option key={g} value={g}>{g}</option>
-                            ))}
-                          </select>
-                        </FormField>
-                      </div>
-
-                      <div id="field-promoterLanguage">
-                        <FormField label="Language" error={errors.promoterLanguage} required>
-                          <select
-                            value={form.promoterLanguage}
-                            onChange={(e) => set("promoterLanguage", e.target.value)}
-                            className={inputClass(!!errors.promoterLanguage)}
-                          >
-                            <option value="">Select</option>
-                            {PROMOTER_LANGUAGE_OPTIONS.map((l) => (
-                              <option key={l} value={l}>{l}</option>
-                            ))}
-                          </select>
-                        </FormField>
-                      </div>
-
-                      <div id="field-promoterQuantity">
-                        <FormField label="Promoter Quantity" error={errors.promoterQuantity} required>
-                          <input
-                            type="number"
-                            min={1}
-                            value={form.promoterQuantity || ""}
-                            onChange={(e) =>
-                              set("promoterQuantity", Math.max(0, parseInt(e.target.value) || 0))
-                            }
-                            placeholder="Enter quantity"
-                            className={inputClass(!!errors.promoterQuantity)}
-                          />
-                        </FormField>
-                      </div>
+                {form.needPromoter && (
+                  <div className="grid grid-cols-2 gap-4 mt-3">
+                    {/* Gender */}
+                    <div id="field-promoterGender">
+                      <FormField label="Gender" error={errors.promoterGender} required>
+                        <select
+                          value={form.promoterGender}
+                          onChange={(e) => set("promoterGender", e.target.value)}
+                          className={inputClass(!!errors.promoterGender)}
+                        >
+                          <option value="">Select</option>
+                          {PROMOTER_GENDER_OPTIONS.map((g) => (
+                            <option key={g} value={g}>{g}</option>
+                          ))}
+                        </select>
+                      </FormField>
                     </div>
-                  )}
 
-                </div>
-              )}
+                    {/* <div id="field-promoterLanguage">
+                      <FormField label="Language" error={errors.promoterLanguage} required>
+                        <select
+                          value={form.promoterLanguage}
+                          onChange={(e) => set("promoterLanguage", e.target.value)}
+                          className={inputClass(!!errors.promoterLanguage)}
+                        >
+                          <option value="">Select</option>
+                          {languages.map((l) => (
+                            <option key={l} value={l}>{l}</option>
+                          ))}
+                        </select>
+                      </FormField>
+                    </div> */}
+
+
+
+                    <div id="field-promoterLanguage">
+                      <FormField label="Language" error={errors.promoterLanguage} required>
+                        <div className="relative" ref={langDropdownRef}>
+
+
+                          <div
+                            onClick={() => setLangDropdownOpen((o) => !o)}
+                            className={`min-h-[42px] flex flex-wrap gap-1 p-2 rounded-lg border cursor-pointer
+          ${errors.promoterLanguage
+                                ? "border-red-400 bg-red-50"
+                                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                              }`}
+                          >
+                            {form.promoterLanguage.length === 0 && (
+                              <span className="text-gray-400 text-sm self-center pl-1">
+                                Select languages
+                              </span>
+                            )}
+                            {form.promoterLanguage.map((lang) => (
+                              <span
+                                key={lang}
+                                className="inline-flex items-center gap-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 text-xs font-medium"
+                              >
+                                {lang}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    set("promoterLanguage", form.promoterLanguage.filter((l) => l !== lang));
+                                  }}
+                                  className="hover:text-blue-900"
+                                >
+                                  <IoMdClose className="h-3 w-3" />
+                                </button>
+                              </span>
+                            ))}
+
+                            {/* Arrow icon */}
+                            <svg
+                              className={`ml-auto self-center w-4 h-4 text-gray-400 shrink-0 transition-transform ${langDropdownOpen ? "rotate-180" : ""}`}
+                              viewBox="0 0 20 20" fill="currentColor"
+                            >
+                              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+
+
+                          {langDropdownOpen && (
+                            <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg">
+                              {languages.map((lang) => {
+                                const selected = form.promoterLanguage.includes(lang);
+                                return (
+                                  <label
+                                    key={lang}
+                                    className={`flex items-center gap-2 px-3 py-2 cursor-pointer text-sm transition-colors
+                  ${selected
+                                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                                        : "hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+                                      }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={selected}
+                                      onChange={() => {
+                                        if (selected) {
+                                          set("promoterLanguage", form.promoterLanguage.filter((l) => l !== lang));
+                                        } else {
+                                          set("promoterLanguage", [...form.promoterLanguage, lang]);
+                                        }
+                                      }}
+                                      className="accent-blue-600 rounded"
+                                    />
+                                    {lang}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </FormField>
+                    </div>
+
+                    <div id="field-promoterQuantity">
+                      <FormField label="Promoter Quantity" error={errors.promoterQuantity} required>
+                        <input
+                          type="number"
+                          min={1}
+                          value={form.promoterQuantity || ""}
+                          onChange={(e) =>
+                            set("promoterQuantity", Math.max(0, parseInt(e.target.value) || 0))
+                          }
+                          placeholder="Enter quantity"
+                          className={inputClass(!!errors.promoterQuantity)}
+                        />
+                      </FormField>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+              {/* )} */}
             </>
 
           </section>
@@ -910,14 +1160,14 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Booking Details</p>
 
             <div className="grid grid-cols-2 gap-4">
-              <div id="field-bookingFor">
+              {/* <div id="field-bookingFor">
                 <FormField label="Booking For" error={errors.bookingFor} required>
                   <select value={form.bookingFor} onChange={(e) => set("bookingFor", e.target.value)} className={inputClass(!!errors.bookingFor)}>
                     <option value="">Select</option>
                     {BOOKING_FOR_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </FormField>
-              </div>
+              </div> */}
 
               {form.bookingFor === "Agency" && (
                 <div id="field-gstNumber">
@@ -1025,23 +1275,32 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                 </FormField>
               </div>
 
+
               <div id="field-city">
                 <FormField label="City" error={errors.city} required>
-                  <select
+                  <CitySelect
                     value={form.city}
-                    onChange={(e) => set("city", e.target.value)}
+                    options={cityOptions}
                     disabled={!form.state}
-                    className={inputClass(!!errors.city)}
-                  >
-                    <option value="">
-                      {form.state ? "Select city" : "Select state first"}
-                    </option>
-                    {cityOptions.map((c, idx) => (
-                      <option key={`${c}-${idx}`} value={c}>{c}</option>
-                    ))}
-                  </select>
+                    error={errors.city}
+                    stateName={form.state}
+                    onChange={(city) => set("city", city)}
+                    onAddCity={(newCity) => {
+                      setLocationData(prev => {
+                        const existing = prev[form.state] || [];
+                        if (existing.includes(newCity)) return prev; 
+                        return { ...prev, [form.state]: [...existing, newCity] };
+                      });
+                      setCityOptions(prev =>
+                        prev.includes(newCity) ? prev : [...prev, newCity]
+                      );
+                      set("city", newCity);
+                    }}
+                  />
                 </FormField>
               </div>
+
+
               <div id="field-fromLocation">
                 <FormField label="From Location" error={errors.fromLocation} required>
                   <input type="text" value={form.fromLocation} onChange={(e) => set("fromLocation", e.target.value)} placeholder="Starting point" className={inputClass(!!errors.fromLocation)} />
@@ -1154,6 +1413,64 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
             </div>
           </section>
 
+
+          {addCityModalOpen && (
+            <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black/40 rounded-2xl">
+              <div className="w-80 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 shadow-xl p-5 space-y-4">
+
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-gray-800 dark:text-white">
+                    Add City to {form.state}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => setAddCityModalOpen(false)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <IoMdClose className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    City Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newCityName}
+                    onChange={(e) => { setNewCityName(e.target.value); setAddCityError(""); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleAddCity(); }}
+                    placeholder="e.g. Coimbatore"
+                    className={inputClass(!!addCityError)}
+                    autoFocus
+                  />
+                  {addCityError && (
+                    <p className="text-xs text-red-500">{addCityError}</p>
+                  )}
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setAddCityModalOpen(false)}
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddCity}
+                    disabled={addCityLoading}
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition-colors"
+                  >
+                    {addCityLoading ? "Adding..." : "Add City"}
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
           <div id="field-quantity">
             <FormField label="  Vehicle Quantity" error={errors.quantity} required>
               <input
@@ -1202,16 +1519,10 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
 
                 return (
                   <>
+
                     <SummaryRow
                       label={`Rental (${p.totalDays}D × ${formatINR(selectedPackage.perDayRentalCost)} × Qty ${form.quantity})`}
                       val={p.rentalCost}
-                      isLast={false}
-                      hasCharges={form.additionalCharges.length > 0}
-                      onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
-                    />
-                    <SummaryRow
-                      label={`Driver (${p.totalDays}D × ${formatINR(selectedPackage.driverCharges)} × Qty ${form.quantity})`}
-                      val={p.driverCost}
                       isLast={false}
                       hasCharges={form.additionalCharges.length > 0}
                       onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
@@ -1283,7 +1594,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                       }`}
                   >
                     <option value="+">+ Add</option>
-                    <option value="-">- Reduce</option>
+                    {/* <option value="-">- Reduce</option> */}
                   </select>
 
 
@@ -1510,4 +1821,5 @@ function SummaryRow({ label, val, onAdd, isLast = false, hasCharges = false }: {
       </span>
     </div>
   );
-} 
+}
+
