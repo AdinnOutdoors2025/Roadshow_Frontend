@@ -59,11 +59,18 @@ const navItems: NavItem[] = [
      icon: <HiOutlineClipboardList />,
     path: "/admin/order-creation"
   },
-  {
+
+    {
+    icon: <GridIcon />,
     name: "Order Handling",
-    icon: <HiOutlineShoppingBag />,
-    path: "/admin/order-handling"
+    subItems: [{ name: "Order Handling", path: "/admin/order-handling", pro: false },{ name: "Sales Handling", path: "/admin/sales-handling", pro: false },{ name: "Operation Handling", path: "/admin/operation-handling", pro: false }],
+    
   },
+  // {
+  //   name: "Order Handling",
+  //   icon: <HiOutlineShoppingBag />,
+  //   path: "/admin/order-handling"
+  // },
     {
     name: "Package Management",
     icon: <HiOutlineCube />,
