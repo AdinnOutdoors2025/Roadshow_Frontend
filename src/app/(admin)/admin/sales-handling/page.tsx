@@ -16,7 +16,7 @@ import {
   FiSearch,
   FiFileText,
   FiRepeat,
-  FiCheckCircle,
+  FiCheckCircle, FiCode,
   FiXCircle,
 } from "react-icons/fi";
 
@@ -103,6 +103,16 @@ export const SALES_STAGES = [
     step: 5,
   },
   {
+    key: "projectCodeCreation",
+    label: "Project Code Creation",
+    color: "text-teal-700",
+    bg: "bg-teal-50",
+    dot: "bg-teal-500",
+    headerGrad: "from-teal-500 to-teal-600",
+    icon: FiCode,
+    step: 6,
+  },
+  {
     key: "closedLost",
     label: "Closed Lost",
     color: "text-rose-700",
@@ -110,7 +120,7 @@ export const SALES_STAGES = [
     dot: "bg-rose-500",
     headerGrad: "from-rose-500 to-rose-600",
     icon: FiXCircle,
-    step: 6,
+    step: 7,
   },
 ];
 
@@ -188,7 +198,7 @@ function SalesOrderCard({
         {fmt(displayAmt)}
       </p>
 
-      {/* Negotiated badge */}
+      {/* Negotiated badge 
       {totalNegotiated > 0 && (
         <div className="flex items-center gap-1 mb-2">
           <TrendingUp size={11} className="text-amber-500" />
@@ -197,6 +207,7 @@ function SalesOrderCard({
           </span>
         </div>
       )}
+        */}
 
       {/* Footer */}
       <div className="flex items-center justify-between">
@@ -289,8 +300,17 @@ export default function SalesPipelineBoard() {
   const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState<number>(1);
   const [staffAdmins, setStaffAdmins] = useState<{ username: string }[]>([]);
   const [saving, setSaving] = useState(false);
+ 
+  const [closedWonWarningModal, setClosedWonWarningModal] = useState<SalesOrder | null>(null);
+  const [pendingProjectCodeOrder, setPendingProjectCodeOrder] = useState<SalesOrder | null>(null);
 
-  // Drag refs
+  // Email modal (Closed Won → Project Code Creation)
+  const [emailModal, setEmailModal] = useState<SalesOrder | null>(null);
+  const [emailFrom, setEmailFrom] = useState("");
+  const [emailTo, setEmailTo] = useState("");
+  const [emailCC, setEmailCC] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+
   const dragOrder = useRef<SalesOrder | null>(null);
   const dragFrom = useRef<string>("");
 
@@ -309,7 +329,7 @@ export default function SalesPipelineBoard() {
   const [lostFile, setLostFile] = useState<File | null>(null);
   const [lostError, setLostError] = useState("");
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
+
   const fetchPipeline = async () => {
     setLoading(true);
     try {
@@ -342,7 +362,7 @@ export default function SalesPipelineBoard() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setStaffAdmins(data.data.data || []);
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
@@ -351,7 +371,7 @@ export default function SalesPipelineBoard() {
       try {
         const decoded: any = jwtDecode(token);
         setCurrentUserIsAdmin(decoded.isAdmin ?? 1);
-      } catch {}
+      } catch { }
     }
     fetchPipeline();
     fetchStaffList();
@@ -415,102 +435,86 @@ export default function SalesPipelineBoard() {
     handleStageMove(order, toStage);
   };
 
-  // ── handleStageMove ───────────────────────────────────────────────────────
-  // const handleStageMove = (order: SalesOrder, toStage: string) => {
-  //   const fromStage = order.salesPipelineStatus;
-
-  //   if (!fromStage) {
-  //     toast.error("Invalid order stage. Please refresh.");
-  //     return;
-  //   }
-
-  //   if (fromStage === "closedWon" || fromStage === "closedLost") {
-  //     toast.error("This order is already closed and cannot be moved.");
-  //     return;
-  //   }
-
-  //   if (toStage === "closedLost") {
-  //     setLostReason("");
-  //     setLostFile(null);
-  //     setLostError("");
-  //     setClosedLostModal(order);
-  //     return;
-  //   }
-
-  //   if (fromStage === "enquiry" && toStage === "needAnalysis") {
-  //     setHandlerName("");
-  //     setHandlerError("");
-  //     setHandlerModal(order);
-  //     return;
-  //   }
-
-  //   if (toStage === "needAnalysis" && !order.salesHandlerName) {
-  //     setHandlerName("");
-  //     setHandlerError("");
-  //     setHandlerModal(order);
-  //     return;
-  //   }
-
-  //   if (toStage === "closedWon") {
-  //     setPoFile(null);
-  //     setPoNotes("");
-  //     setPoError("");
-  //     setClosedWonModal(order);
-  //     return;
-  //   }
-
-  //   commitMove(order, toStage);
-  // };
-
   const handleStageMove = (order: SalesOrder, toStage: string) => {
-  const fromStage = order.salesPipelineStatus;
+    const fromStage = order.salesPipelineStatus;
 
-  if (!fromStage) {
-    toast.error("Invalid order stage. Please refresh.");
-    return;
-  }
-
-
-  if (fromStage === "closedWon" || fromStage === "closedLost") {
-    toast.error("This order is already closed and cannot be moved.");
-    return;
-  }
-
- 
-  if (toStage === "closedLost") {
-    setLostReason("");
-    setLostFile(null);
-    setLostError("");
-    setClosedLostModal(order);
-    return;
-  }
-
- 
-  if (toStage === "needAnalysis" && !order.salesHandlerName) {
-    setHandlerName("");
-    setHandlerError("");
-    setHandlerModal(order);
-    return;
-  }
+    if (!fromStage) {
+      toast.error("Invalid order stage. Please refresh.");
+      return;
+    }
 
 
- 
-  if (!order.salesHandlerName && fromStage === "enquiry") {
-    toast.error("Please move to Need Analysis first before proceeding!");
-    return;
-  }
+    // if (fromStage === "closedWon" || fromStage === "closedLost") {
+    //   toast.error("This order is already closed and cannot be moved.");
+    //   return;
+    // }
+
+  
+    if (fromStage === "closedLost") {
+      toast.error("This order is closed lost and cannot be moved.");
+      return;
+    }
+
+   
+    if (fromStage === "closedWon" && toStage !== "projectCodeCreation") {
+      toast.error("Closed Won order can only move to Project Code Creation.");
+      return;
+    }
 
 
-  if (toStage === "closedWon") {
-    setPoFile(null);
-    setPoNotes("");
-    setPoError("");
-    setClosedWonModal(order);
-    return;
-  }
+    if (toStage === "closedLost") {
+      setLostReason("");
+      setLostFile(null);
+      setLostError("");
+      setClosedLostModal(order);
+      return;
+    }
 
-  commitMove(order, toStage);
-};
+
+    if (toStage === "needAnalysis" && !order.salesHandlerName) {
+      setHandlerName("");
+      setHandlerError("");
+      setHandlerModal(order);
+      return;
+    }
+
+
+
+    if (!order.salesHandlerName && fromStage === "enquiry") {
+      toast.error("Please move to Need Analysis first before proceeding!");
+      return;
+    }
+
+
+    if (toStage === "closedWon") {
+      setPoFile(null);
+      setPoNotes("");
+      setPoError("");
+      setClosedWonModal(order);
+      return;
+    }
+
+   
+    if (
+      toStage === "projectCodeCreation" &&
+      ["needAnalysis", "proposalPriceQuote", "negotiationReview"].includes(fromStage)
+    ) {
+      setPendingProjectCodeOrder(order);
+      setClosedWonWarningModal(order);
+      return;
+    }
+
+    
+    if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
+      setEmailFrom("");
+      setEmailTo("");
+      setEmailCC("");
+      setEmailModal(order);
+      return;
+    }
+
+    commitMove(order, toStage);
+  };
 
   const submitHandlerModal = async () => {
     if (!handlerModal) return;
@@ -652,18 +656,16 @@ export default function SalesPipelineBoard() {
                       onClick={() =>
                         setHandlerName(isSuperSelected ? "" : superAdminUsername)
                       }
-                      className={`w-full mb-2 flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
-                        isSuperSelected
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                          : "border-gray-200 dark:border-gray-700 text-gray-500 hover:border-blue-300 hover:bg-blue-50/40"
-                      }`}
+                      className={`w-full mb-2 flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${isSuperSelected
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                        : "border-gray-200 dark:border-gray-700 text-gray-500 hover:border-blue-300 hover:bg-blue-50/40"
+                        }`}
                     >
                       <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                          isSuperSelected
-                            ? "bg-blue-500 text-white"
-                            : "bg-gray-200 dark:bg-gray-700 text-gray-500"
-                        }`}
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isSuperSelected
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                          }`}
                       >
                         {superAdminUsername.charAt(0).toUpperCase()}
                       </div>
@@ -813,6 +815,137 @@ export default function SalesPipelineBoard() {
                     <FiCheckCircle size={14} /> Close Won
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* ── Closed Won Warning Modal ── */}
+      {closedWonWarningModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center">
+                <FiCheckCircle size={28} className="text-amber-500" />
+              </div>
+            </div>
+            <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-2">
+              You need to complete the Closed Won stage
+            </h2>
+            <p className="text-center text-xs text-gray-400 mb-5">
+              Before moving to Project Code Creation, the Closed Won stage must be completed. Do you want to mark it as Closed Won now?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setClosedWonWarningModal(null);
+                  setPendingProjectCodeOrder(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setClosedWonWarningModal(null);
+                  setPoFile(null);
+                  setPoNotes("");
+                  setPoError("");
+                  setClosedWonModal(pendingProjectCodeOrder);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium transition-all"
+              >
+                Yes, Closed Won
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+    
+      {emailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center">
+                <FiFileText size={28} className="text-teal-500" />
+              </div>
+            </div>
+            <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-1">
+              Project Code Creation Email
+            </h2>
+            <p className="text-center text-xs text-gray-400 font-mono mb-5">
+              {emailModal.orderId}
+            </p>
+
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  From <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={emailFrom}
+                  onChange={(e) => setEmailFrom(e.target.value)}
+                  placeholder="from@company.com"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  To <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={emailTo}
+                  onChange={(e) => setEmailTo(e.target.value)}
+                  placeholder="to@company.com"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  CC <span className="text-gray-400 font-normal text-[10px]">(optional)</span>
+                </label>
+                <input
+                  type="email"
+                  value={emailCC}
+                  onChange={(e) => setEmailCC(e.target.value)}
+                  placeholder="cc@company.com"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEmailModal(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!emailFrom.trim() || !emailTo.trim()) {
+                    toast.error("From and To email required");
+                    return;
+                  }
+                  setEmailSending(true);
+                  await commitMove(emailModal, "projectCodeCreation", {
+                    emailFrom,
+                    emailTo,
+                    emailCC,
+                  });
+                  setEmailModal(null);
+                  setEmailSending(false);
+                }}
+                disabled={emailSending}
+                className="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-medium transition-all flex items-center justify-center gap-2"
+              >
+                {emailSending ? "Sending..." : <><FiFileText size={14} /> Send & Move</>}
               </button>
             </div>
           </div>

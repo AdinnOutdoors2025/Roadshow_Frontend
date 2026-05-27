@@ -331,6 +331,7 @@ function StageUploadForm({
 
 
 import { useVehicle } from './../../../../../src/context/vehicletypecontext';
+import ProjectCodeForm from "./projectcodeform";
 
 // ── Vehicle Item Card ─────────────────────────────────────────────────────────
 function VehicleItemCard({ item, index }: { item: any; index: number }) {
@@ -572,8 +573,11 @@ export default function SalesDetailDrawer({
     if (s === "needAnalysis") return "Move to Proposal";
     if (s === "proposalPriceQuote") return "Move to Negotiation";
     if (s === "negotiationReview") return "Move to Closed Won";
+    if (s === "closedWon") return "Move to Project Code Creation";
     return null;
   };
+
+
   const nextLabel = getNextLabel();
 
   const nextStageKey = () => {
@@ -582,6 +586,7 @@ export default function SalesDetailDrawer({
     if (s === "needAnalysis") return "proposalPriceQuote";
     if (s === "proposalPriceQuote") return "negotiationReview";
     if (s === "negotiationReview") return "closedWon";
+    if (s === "closedWon") return "projectCodeCreation";
     return null;
   };
 
@@ -640,7 +645,7 @@ export default function SalesDetailDrawer({
               )}
 
               {/* Closed Lost button */}
-              {!["closedWon", "closedLost"].includes(order.salesPipelineStatus) && (
+              {!["closedWon", "closedLost", "projectCodeCreation"].includes(order.salesPipelineStatus) && (
                 <button onClick={() => onStageMove(order, "closedLost")}
                   className="hidden sm:flex items-center gap-1 px-2.5 py-2 rounded-xl bg-rose-500/30 hover:bg-rose-500/50 backdrop-blur-sm border border-rose-300/30 text-white text-xs font-medium transition-all">
                   <XCircle size={13} /> Lost
@@ -870,6 +875,42 @@ export default function SalesDetailDrawer({
               ) : (
                 <p className="text-sm text-gray-400 text-center py-3">No PO documents</p>
               )}
+            </Section>
+          )}
+
+
+          {/* Project Code Creation Section */}
+          {stageReached("projectCodeCreation") && order.salesPipelineStatus === "projectCodeCreation" && (
+            <Section
+              icon={<BadgeCheck size={14} className="text-teal-500" />}
+              title="Project Code Creation"
+              accent="from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20"
+              defaultOpen={true}
+            >
+              {(order.projectCodeCreationArray || []).length > 0 ? (
+                <div className="space-y-2 mb-3">
+                  {order.projectCodeCreationArray.map((item: any, i: number) => (
+                    <div key={i} className="p-3 rounded-xl bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800/50">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Project Code</p>
+                          <p className="text-sm font-bold text-teal-700 dark:text-teal-300">{item.projectCode}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Estimation Code</p>
+                          <p className="text-sm font-bold text-teal-700 dark:text-teal-300">{item.estimationCode}</p>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-2">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-3">No project codes added yet</p>
+              )}
+
+              {/* Save Form */}
+              <ProjectCodeForm order={order} onRefresh={onRefresh} />
             </Section>
           )}
 
