@@ -6,12 +6,16 @@ export default function DatePicker({
   value,
   onChange,
   label,
-  required
+  required,
+  minAge = 18,       
+  maxAge = 100       
 }: {
   value: string;
   onChange: (val: string) => void;
-  label:string
-  required:any
+  label?: string;
+  required?: boolean;
+  minAge?: number;
+  maxAge?: number;
 }) {
   const [open, setOpen] = useState(false);
   const [curYear, setCurYear] = useState(new Date().getFullYear());
@@ -24,6 +28,17 @@ export default function DatePicker({
   ];
   const today = new Date();
 
+  // Calculate min and max allowed years based on age
+  const minAllowedYear = today.getFullYear() - maxAge;
+  const maxAllowedYear = today.getFullYear() - minAge;
+
+  // Generate years array from minAllowedYear to maxAllowedYear
+  const years = Array.from(
+    { length: maxAllowedYear - minAllowedYear + 1 },
+    (_, i) => minAllowedYear + i
+  );
+
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -32,13 +47,14 @@ export default function DatePicker({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Set current year/month when dropdown opens
   useEffect(() => {
     if (open && value) {
       const d = new Date(value + "T00:00:00");
       setCurYear(d.getFullYear());
       setCurMonth(d.getMonth());
     }
-  }, [open]);
+  }, [open, value]);
 
   const selected = value ? new Date(value + "T00:00:00") : null;
   const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
@@ -51,7 +67,24 @@ export default function DatePicker({
     setCurMonth(m); setCurYear(y);
   };
 
+  // Check if a date is valid (not in future and meets age criteria)
+  const isDateValid = (year: number, month: number, day: number): boolean => {
+    const selectedDate = new Date(year, month, day);
+    const minDate = new Date(today.getFullYear() - maxAge, today.getMonth(), today.getDate());
+    const maxDate = new Date(today.getFullYear() - minAge, today.getMonth(), today.getDate());
+    
+    return selectedDate <= maxDate && selectedDate >= minDate;
+  };
+
   const selectDay = (d: number) => {
+    // Validate age before selecting
+    if (!isDateValid(curYear, curMonth, d)) {
+      const minDate = new Date(today.getFullYear() - maxAge, today.getMonth(), today.getDate());
+      const maxDate = new Date(today.getFullYear() - minAge, today.getMonth(), today.getDate());
+      alert(`Please select a date between ${minDate.toLocaleDateString()} and ${maxDate.toLocaleDateString()}`);
+      return;
+    }
+    
     const iso = `${curYear}-${String(curMonth + 1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
     onChange(iso);
     setOpen(false);
@@ -61,7 +94,10 @@ export default function DatePicker({
     ? selected.toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" })
     : "Select date";
 
-  const years = Array.from({ length: 16 }, (_, i) => today.getFullYear() - 10 + i);
+  // Check if a day is selectable (meets age criteria)
+  const isDaySelectable = (day: number): boolean => {
+    return isDateValid(curYear, curMonth, day);
+  };
 
   return (
     <div ref={ref} className="relative">
@@ -70,9 +106,9 @@ export default function DatePicker({
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={`w-full flex items-center gap-2 px-3 py-2.5 border rounded-xl text-sm
-          bg-white dark:bg-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-orange-400
+          bg-white dark:bg-gray-800 transition-all focus:outline-none focus:ring-2 
           ${value
-            ? "border-orange-400 text-gray-900 dark:text-white"
+            ? " text-gray-900 dark:text-white"
             : "border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500"
           }`}
       >
@@ -150,17 +186,22 @@ export default function DatePicker({
                 d === today.getDate() &&
                 curMonth === today.getMonth() &&
                 curYear === today.getFullYear();
+              const selectable = isDaySelectable(d);
+              
               return (
                 <button
                   key={d}
                   type="button"
-                  onClick={() => selectDay(d)}
+                  onClick={() => selectable && selectDay(d)}
+                  disabled={!selectable}
                   className={`h-7 w-full rounded-lg text-xs font-medium transition-all
-                    ${isSel
-                      ? "bg-orange-500 text-white"
-                      : isToday
-                      ? "border border-orange-300 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    ${!selectable 
+                      ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50" 
+                      : isSel
+                        ? "bg-orange-500 text-white"
+                        : isToday
+                          ? "border border-orange-300 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                 >
                   {d}
@@ -182,13 +223,23 @@ export default function DatePicker({
             <button
               type="button"
               onClick={() => {
-                const d = today;
-                const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-                onChange(iso); setOpen(false);
+                // Calculate max allowed date (minAge years ago)
+                const maxAllowedDate = new Date();
+                maxAllowedDate.setFullYear(maxAllowedDate.getFullYear() - minAge);
+                
+                // If today is beyond max allowed, adjust to max allowed
+                const targetDate = new Date();
+                if (targetDate > maxAllowedDate) {
+                  targetDate.setTime(maxAllowedDate.getTime());
+                }
+                
+                const iso = `${targetDate.getFullYear()}-${String(targetDate.getMonth()+1).padStart(2,"0")}-${String(targetDate.getDate()).padStart(2,"0")}`;
+                onChange(iso); 
+                setOpen(false);
               }}
               className="text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors"
             >
-              Today
+              Today (Max allowed)
             </button>
           </div>
         </div>

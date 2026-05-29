@@ -754,12 +754,6 @@ export default function DetailDrawer({
                     </Section>
 
 
-                    {/* ── 4. Waiting for PO ── */}
-                    {/* <WaitingForPOSection order={order} onRefresh={onRefresh} /> */}
-
-                    {/* ── 5. Payment Stage 1 ── */}
-                    {/* <PaymentStage1Section order={order} onRefresh={onRefresh} /> */}
-
                     {/* ── 6. Pricing Breakdown ── */}
                     <Section icon="💰" title="Pricing Breakdown" accent="from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20" defaultOpen={true}>
                         <div className="space-y-1">
