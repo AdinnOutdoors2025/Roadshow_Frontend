@@ -4,7 +4,7 @@ import { EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState, ChangeEvent, FormEvent } from "react";
-import { saveToken } from "@/app/utils/auth";
+import { saveToken } from "@/utils/auth";
 import API_BASE from "../../../baseurl";
 
 interface FormState {
@@ -218,7 +218,7 @@ export default function SignUpForm() {
           <div className="mt-5">
             <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
               Already have an account?{" "}
-              <Link href="/admin/signin" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
+              <Link href="/signin" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
                 Sign In
               </Link>
             </p>

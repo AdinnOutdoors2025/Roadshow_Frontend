@@ -5,7 +5,7 @@ import { EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState, ChangeEvent, FormEvent } from "react";
-import { saveToken } from "@/app/utils/auth";
+import { saveToken } from "@/utils/auth";
 import API_BASE from "../../../baseurl";
 
 interface FormState {
@@ -82,7 +82,7 @@ export default function SignInForm() {
      if (data.data?.token) {
       saveToken(data.data.token);
     }
-    
+
       router.push("/admin/dashboard");
     } catch (err) {
       setError("Server error. Please try again.");
@@ -157,7 +157,7 @@ export default function SignInForm() {
           <div className="mt-5">
             <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
               Don&apos;t have an account?{" "}
-              <Link href="/admin/signup" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
+              <Link href="/signup" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
                 Sign Up
               </Link>
             </p>
