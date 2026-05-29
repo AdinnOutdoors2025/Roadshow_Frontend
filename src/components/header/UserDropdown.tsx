@@ -4,7 +4,7 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { clearToken } from "@/utils/auth";
+import { clearToken } from "@/app/utils/auth";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -146,7 +146,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
           </li>
         </ul>
         <Link
-          href="/signin"
+          href="/admin/signin"
            onClick={() => {
     clearToken();
   }}
