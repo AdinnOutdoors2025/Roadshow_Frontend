@@ -304,12 +304,6 @@ export default function SalesPipelineBoard() {
   const [closedWonWarningModal, setClosedWonWarningModal] = useState<SalesOrder | null>(null);
   const [pendingProjectCodeOrder, setPendingProjectCodeOrder] = useState<SalesOrder | null>(null);
 
-  // Email modal (Closed Won → Project Code Creation)
-  const [emailModal, setEmailModal] = useState<SalesOrder | null>(null);
-  const [emailFrom, setEmailFrom] = useState("");
-  const [emailTo, setEmailTo] = useState("");
-  const [emailCC, setEmailCC] = useState("");
-  const [emailSending, setEmailSending] = useState(false);
 
   const dragOrder = useRef<SalesOrder | null>(null);
   const dragFrom = useRef<string>("");
@@ -505,13 +499,18 @@ export default function SalesPipelineBoard() {
     }
 
     
-    if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
-      setEmailFrom("");
-      setEmailTo("");
-      setEmailCC("");
-      setEmailModal(order);
-      return;
-    }
+    // if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
+    //   setEmailFrom("");
+    //   setEmailTo("");
+    //   setEmailCC("");
+    //   setEmailModal(order);
+    //   return;
+    // }
+
+if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
+  commitMove(order, toStage);
+  return;
+}
 
     commitMove(order, toStage);
   };
@@ -866,92 +865,7 @@ export default function SalesPipelineBoard() {
 
 
     
-      {emailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <div className="flex justify-center mb-4">
-              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center">
-                <FiFileText size={28} className="text-teal-500" />
-              </div>
-            </div>
-            <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-1">
-              Project Code Creation Email
-            </h2>
-            <p className="text-center text-xs text-gray-400 font-mono mb-5">
-              {emailModal.orderId}
-            </p>
-
-            <div className="space-y-3 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  From <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={emailFrom}
-                  onChange={(e) => setEmailFrom(e.target.value)}
-                  placeholder="from@company.com"
-                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  To <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={emailTo}
-                  onChange={(e) => setEmailTo(e.target.value)}
-                  placeholder="to@company.com"
-                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  CC <span className="text-gray-400 font-normal text-[10px]">(optional)</span>
-                </label>
-                <input
-                  type="email"
-                  value={emailCC}
-                  onChange={(e) => setEmailCC(e.target.value)}
-                  placeholder="cc@company.com"
-                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setEmailModal(null)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  if (!emailFrom.trim() || !emailTo.trim()) {
-                    toast.error("From and To email required");
-                    return;
-                  }
-                  setEmailSending(true);
-                  await commitMove(emailModal, "projectCodeCreation", {
-                    emailFrom,
-                    emailTo,
-                    emailCC,
-                  });
-                  setEmailModal(null);
-                  setEmailSending(false);
-                }}
-                disabled={emailSending}
-                className="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-medium transition-all flex items-center justify-center gap-2"
-              >
-                {emailSending ? "Sending..." : <><FiFileText size={14} /> Send & Move</>}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+  
       {/* ── Closed Lost Modal ── */}
       {closedLostModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">

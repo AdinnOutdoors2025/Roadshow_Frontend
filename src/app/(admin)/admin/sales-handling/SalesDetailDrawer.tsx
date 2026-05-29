@@ -1,5 +1,3 @@
-
-
 /* eslint-disable */
 // @ts-nocheck
 
@@ -11,13 +9,12 @@ import {
   IndianRupee, ReceiptText, Percent, Download,
   Upload, FileText, CheckCircle2, AlertCircle,
   StickyNote, Eye, Trash2, TrendingDown,
-  Car, DollarSign, Search, FileEdit, Handshake,
-  Trophy, XCircle, RotateCcw, Star, Truck,
-  Megaphone, Route, Clock3, MapPinned, Milestone,
-  PlusCircle, MinusCircle, ImageIcon, Video,
-  Users, Flame, Package, BadgeCheck, Banknote,
-  TrendingUp, AlertTriangle, History, ChevronUp,
-  ArrowRight, CheckSquare, Ban,
+  Car, Search, FileEdit, Handshake,
+  Trophy, XCircle, Milestone,
+  PlusCircle, ImageIcon, Video,
+  Users, BadgeCheck, Banknote,
+  AlertTriangle, History, MoreHorizontal,
+  MessageSquare, RotateCcw, CheckCheck,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import axios from "axios";
@@ -25,6 +22,11 @@ import { getToken } from "@/utils/auth";
 import toast from "react-hot-toast";
 import API_BASE from "../../../../../baseurl";
 import { SALES_STAGE_MAP, SALES_STAGES, SalesOrder } from "./page";
+import {
+  FiClipboard, FiSearch, FiFileText, FiRepeat,
+  FiCheckCircle, FiCode, FiXCircle,
+} from "react-icons/fi";
+import CodeCreationTab from "./CodeCreationTab";
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 const fmt = (n?: number | null) =>
@@ -38,86 +40,112 @@ const fmtDatetime = (s?: string) =>
     })
     : "—";
 
+const fmtRelative = (s?: string) => {
+  if (!s) return "";
+  const diff = Date.now() - new Date(s).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+};
+
+
+const formatINR = (value: string | number) => {
+  const num = parseFloat(String(value).replace(/[^0-9.]/g, ""));
+  if (isNaN(num) || value === "" || value === undefined) return "";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(num);
+};
+
+const fmtStageDuration = (s?: string) => {
+  if (!s) return "—";
+  const diff = Date.now() - new Date(s).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m in Current Stage`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ${mins % 60}m in Current Stage`;
+  return `${Math.floor(hrs / 24)}d ${hrs % 24}h in Current Stage`;
+};
+
 const getFileUrl = (p: string) => {
   if (!p) return "";
   if (p.startsWith("http")) return p;
   return `http://localhost:3001${p.startsWith("/") ? p : `/${p}`}`;
 };
 
-const isImage = (f: string) =>
-  /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
+const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
-// ── Collapsible Section ───────────────────────────────────────────────────────
-function Section({
-  icon, title, accent, children, defaultOpen = true, badge,
-}: {
-  icon: React.ReactNode; title: string; accent?: string;
-  children: React.ReactNode; defaultOpen?: boolean; badge?: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
+// ── Tab type ──────────────────────────────────────────────────────────────────
+type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation";
+
+// ── Document Viewer Modal ─────────────────────────────────────────────────────
+function DocPreviewModal({ url, label, onClose }: { url: string; label: string; onClose: () => void }) {
+  const img = isImage(url);
   return (
-    <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200/60 dark:border-gray-700/50 overflow-hidden shadow-sm">
-      <button type="button" onClick={() => setOpen(!open)}
-        className={`w-full flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r ${accent || "from-gray-50 to-gray-100"} dark:from-gray-800/80 dark:to-gray-800/40 border-b border-gray-100 dark:border-gray-700/50 text-left hover:brightness-95 transition-all`}>
-        <span className="text-base">{icon}</span>
-        <h3 className="text-[10px] md:text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex-1">{title}</h3>
-        {badge && <span className="mr-1">{badge}</span>}
-        <ChevronDown size={15} className={`text-gray-400 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div className="p-4 md:p-5 animate-in fade-in slide-in-from-top-1 duration-200">
-          {children}
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{label}</p>
+          <div className="flex items-center gap-2">
+            <a href={url} download target="_blank" rel="noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-sky-600 hover:bg-sky-50 transition-all">
+              <Download size={13} /> Download
+            </a>
+            <button onClick={onClose}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-all">
+              <X size={16} />
+            </button>
+          </div>
         </div>
-      )}
+        <div className="relative" style={{ height: "calc(90vh - 60px)" }}>
+          {img ? (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800/50 p-4">
+              <img src={url} alt={label} className="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
+            </div>
+          ) : (
+            <iframe src={url} className="w-full h-full" title={label} />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
-// ── Info Chip ─────────────────────────────────────────────────────────────────
-function InfoChip({ icon, label, value, highlight, full }: {
-  icon?: React.ReactNode; label: string; value: React.ReactNode;
-  highlight?: boolean; full?: boolean;
+// ── Doc Item Card ─────────────────────────────────────────────────────────────
+function DocItem({ docPath, label, notes, by, at }: {
+  docPath: string; label: string; notes?: string; by?: string; at?: string;
 }) {
+  const [preview, setPreview] = useState(false);
+  const url = getFileUrl(docPath);
+  if (!docPath) return null;
   return (
-    <div className={`${full ? "col-span-2" : ""} ${highlight ? "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-200 dark:border-blue-700" : "bg-gray-50/80 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50"} rounded-xl p-3.5`}>
-      <div className="flex items-center gap-1.5 mb-1.5">
-        {icon && <span className="text-gray-400 text-xs">{icon}</span>}
-        <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wider">{label}</p>
+    <>
+      {preview && <DocPreviewModal url={url} label={label} onClose={() => setPreview(false)} />}
+      <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50 hover:shadow-sm transition-all">
+        <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+          {isImage(docPath) ? <ImageIcon size={16} className="text-blue-500" /> : <FileText size={16} className="text-blue-500" />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{label}</p>
+          {notes && <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1"><StickyNote size={15} /> {notes}</p>}
+          {by && <p className="text-[11px] text-gray-400 mt-0.5">By {by} · {fmtDatetime(at)}</p>}
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button onClick={() => setPreview(true)}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-sky-500 hover:bg-sky-50 transition-all">
+            <Eye size={14} />
+          </button>
+          <a href={url} download target="_blank" rel="noreferrer"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-green-500 hover:bg-green-50 transition-all">
+            <Download size={14} />
+          </a>
+        </div>
       </div>
-      <div className="text-xs md:text-sm font-semibold text-gray-800 dark:text-gray-200 break-words">{value}</div>
-    </div>
-  );
-}
-
-// ── Pricing Row ───────────────────────────────────────────────────────────────
-function PricingRow({ label, value, highlight, negative, icon }: {
-  label: string; value: string; highlight?: boolean; negative?: boolean; icon?: React.ReactNode;
-}) {
-  return (
-    <div className={`flex items-center justify-between py-2.5 px-4 rounded-lg transition-all ${highlight ? "bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700" : "hover:bg-gray-50 dark:hover:bg-gray-800/40"}`}>
-      <div className="flex items-center gap-2">
-        {icon && <span className="text-gray-400 text-sm">{icon}</span>}
-        <span className="text-sm text-gray-600 dark:text-gray-400">{label}</span>
-      </div>
-      <span className={`text-sm font-bold ${highlight ? "text-blue-700 dark:text-blue-300 text-lg" : negative ? "text-red-600 dark:text-red-400" : "text-gray-800 dark:text-gray-200"}`}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-// ── Timeline Item ─────────────────────────────────────────────────────────────
-function TimelineItem({ dotColor, children, isLast }: {
-  dotColor: string; children: React.ReactNode; isLast: boolean;
-}) {
-  return (
-    <div className="flex items-start gap-3 group">
-      <div className="flex flex-col items-center pt-1.5">
-        <div className={`w-3 h-3 rounded-full bg-gradient-to-br ${dotColor} ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 ring-gray-100 dark:ring-gray-700`} />
-        {!isLast && <div className="w-0.5 flex-1 bg-gradient-to-b from-gray-200 to-gray-100 dark:from-gray-700 dark:to-gray-800 mt-1.5" style={{ minHeight: 24 }} />}
-      </div>
-      <div className="flex-1 pb-4">{children}</div>
-    </div>
+    </>
   );
 }
 
@@ -136,117 +164,42 @@ function DragDropFile({ file, onFile, onRemove, accept = ".pdf,.jpg,.jpeg,.png",
     if (f) onFile(f);
   }, [onFile]);
 
-  const FileTypeIcon = () => {
-    if (ext === "pdf") return <FileText size={18} className="text-blue-500" />;
-    if (["jpg", "jpeg", "png"].includes(ext || "")) return <ImageIcon size={18} className="text-blue-500" />;
-    return <FileText size={18} className="text-blue-500" />;
-  };
-
   return !file ? (
     <label onDrop={onDrop} onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
-      className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-xl cursor-pointer transition-all ${dragging ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50/30"}`}>
-      <div className="text-center pointer-events-none">
-        <div className="flex justify-center mb-1">
-          {dragging
-            ? <Upload size={24} className="text-blue-500" />
-            : <Upload size={24} className="text-gray-400" />}
-        </div>
-        <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{label || "Drag & drop or click to upload"}</p>
-        <p className="text-[10px] text-gray-400 mt-0.5">PDF, JPG, PNG</p>
-      </div>
+      className={`flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-xl cursor-pointer transition-all ${dragging ? "border-blue-500 bg-blue-50" : "border-gray-200 dark:border-gray-600 hover:border-blue-300 hover:bg-blue-50/30"}`}>
+      <Upload size={20} className={dragging ? "text-blue-500 mb-1" : "text-gray-300 mb-1"} />
+      <p className="text-xs text-gray-400">{label || "Click or drag to upload"}</p>
+      <p className="text-[10px] text-gray-300 mt-0.5">PDF, JPG, PNG</p>
       <input ref={ref} type="file" accept={accept} className="hidden"
         onChange={(e) => onFile(e.target.files?.[0] || null)} />
     </label>
   ) : (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700">
-      <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center flex-shrink-0">
-        <FileTypeIcon />
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200">
+      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+        {ext === "pdf" ? <FileText size={15} className="text-blue-500" /> : <ImageIcon size={15} className="text-blue-500" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{file.name}</p>
-        <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+        <p className="text-sm font-semibold text-gray-800 truncate">{file.name}</p>
+        <p className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
       </div>
       <button type="button" onClick={(e) => { e.stopPropagation(); onRemove(); if (ref.current) ref.current.value = ""; }}
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
-        <Trash2 size={14} />
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-50 transition-all">
+        <Trash2 size={13} />
       </button>
     </div>
   );
 }
 
-// ── Document Viewer ───────────────────────────────────────────────────────────
-function DocItem({ docPath, label, notes, by, at }: {
-  docPath: string; label: string; notes?: string; by?: string; at?: string;
-}) {
-  const [preview, setPreview] = useState(false);
-  const url = getFileUrl(docPath);
-  const img = isImage(docPath);
-  if (!docPath) return null;
-  return (
-    <>
-      {preview && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{label}</p>
-              <div className="flex items-center gap-2">
-                <a href={url} download target="_blank" rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-sky-600 hover:bg-sky-50 transition-all">
-                  <Download size={13} /> Download
-                </a>
-                <button onClick={() => setPreview(false)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-all">
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
-            <div className="relative" style={{ height: "calc(90vh - 60px)" }}>
-              {img ? (
-                <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800/50 p-4">
-                  <img src={url} alt={label} className="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
-                </div>
-              ) : (
-                <iframe src={url} className="w-full h-full" title={label} />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50 hover:shadow-sm transition-all">
-        <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-          {img ? <ImageIcon size={16} className="text-blue-500" /> : <FileText size={16} className="text-blue-500" />}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{label}</p>
-          {notes && <p className="text-[15px] text-gray-600 mt-0.5 flex items-center gap-1"><StickyNote size={11} /> {notes}</p>}
-          {by && <p className="text-[13px] text-gray-400 mt-0.5">By {by} · {fmtDatetime(at)}</p>}
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={() => setPreview(true)}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-sky-500 hover:text-sky-700 hover:bg-sky-50 transition-all">
-            <Eye size={14} />
-          </button>
-          <a href={url} download target="_blank" rel="noreferrer"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-green-500 hover:text-green-700 hover:bg-green-50 transition-all">
-            <Download size={14} />
-          </a>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ── Stage Document Upload Form ────────────────────────────────────────────────
+// ── Stage Upload Form ─────────────────────────────────────────────────────────
 function StageUploadForm({
   order, stage, onRefresh,
   docFieldName, notesFieldName, amountFieldName,
-  label, accent, showAmount,
+  label, showAmount,
 }: {
   order: SalesOrder; stage: string; onRefresh: () => Promise<void>;
   docFieldName: string; notesFieldName: string; amountFieldName?: string;
-  label: string; accent?: string; showAmount?: boolean;
+  label: string; showAmount?: boolean;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
@@ -272,29 +225,26 @@ function StageUploadForm({
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success(`${label} saved!`);
-      setFile(null);
-      setNotes("");
-      setAmount("");
+      setFile(null); setNotes(""); setAmount("");
       await onRefresh();
     } catch (e: any) {
       const msg = e?.response?.data?.message || "Something went wrong";
-      setError(msg);
-      toast.error(msg);
+      setError(msg); toast.error(msg);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className={`rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3 mt-3 ${accent || ""}`}>
-      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-        <PlusCircle size={13} /> Add {label}
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3 mt-3">
+      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+        <PlusCircle size={12} /> Add {label}
       </p>
-      <DragDropFile file={file} onFile={setFile} onRemove={() => setFile(null)} label={`Upload ${label} (optional)`} />
+      <DragDropFile file={file} onFile={setFile} onRemove={() => setFile(null)} />
       {showAmount && (
         <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Negotiation Amount <span className="text-gray-400 font-normal">(optional)</span>
+          <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">
+            Negotiation Amount <span className="font-normal text-gray-400">(optional)</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
@@ -304,17 +254,12 @@ function StageUploadForm({
           </div>
         </div>
       )}
-      <div>
-        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-          Notes <span className="text-gray-400 font-normal">(optional)</span>
-        </label>
-        <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)}
-          placeholder="Add notes..."
-          className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
-      </div>
+      <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)}
+        placeholder="Add notes (optional)..."
+        className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
       {error && (
         <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2 flex items-center gap-1.5">
-          <AlertCircle size={13} /> {error}
+          <AlertCircle size={12} /> {error}
         </p>
       )}
       <button onClick={handleSave} disabled={saving}
@@ -322,231 +267,838 @@ function StageUploadForm({
         {saving ? (
           <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</>
         ) : (
-          <><CheckCircle2 size={15} /> Save {label}</>
+          <><CheckCircle2 size={14} /> Save {label}</>
         )}
       </button>
     </div>
   );
 }
 
-
-import { useVehicle } from './../../../../../src/context/vehicletypecontext';
-import ProjectCodeForm from "./projectcodeform";
-
-// ── Vehicle Item Card ─────────────────────────────────────────────────────────
+// ── VehicleItemCard ───────────────────────────────────────────────────────────
 function VehicleItemCard({ item, index }: { item: any; index: number }) {
-  const { vehicleTypes, fetchVehicleTypes } = useVehicle();
   const [open, setOpen] = useState(false);
-
-  const getVehicleTypeName = (vehicleTypeId: string) => {
-    if (!vehicleTypeId || !vehicleTypes) return "";
-    const vehicle: any = vehicleTypes.find((vt: any) => vt._id === vehicleTypeId);
-    return vehicle?.typeName || vehicleTypeId;
-  };
-
-  useEffect(() => {
-    fetchVehicleTypes();
-  }, []);
+  const fmtDate = (s: string) =>
+    s ? new Date(s).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
   const campaignLabel = item.campaignType === "Other"
-    ? (item.otherCampaignType || "Other")
-    : (item.campaignType || "—");
-
-  const promoterTypeLabel = item.promoterType === "Other"
-    ? (item.otherPromoterType || "Other")
-    : (item.promoterType || "—");
-
+    ? (item.otherCampaignType || "Other") : (item.campaignType || "—");
   const drivingRoute = item.fromLocation && item.toLocation
-    ? `${item.fromLocation} → ${item.toLocation}`
-    : null;
-
+    ? `${item.fromLocation} → ${item.toLocation}` : null;
   const locationLabel = [item.state, item.city].filter(Boolean).join(" / ") || "—";
-
   const getImageUrl = (path: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
     return `http://localhost:3001${path.startsWith('/') ? path : `/${path}`}`;
   };
 
-  const fmtDate = (s: string) =>
-    s ? new Date(s).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
-
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
       <button type="button" onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-b border-gray-200 dark:border-gray-700 text-left hover:brightness-95 transition-all">
-        <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-xs font-bold text-blue-600 flex-shrink-0">V{index + 1}</div>
+        className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-left hover:brightness-95 transition-all">
+        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 flex-shrink-0">
+          V{index + 1}
+        </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{getVehicleTypeName(item.vehicleType)}</p>
+          <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">Vehicle {index + 1}</p>
+          <p className="text-xs text-gray-500">{campaignLabel}</p>
         </div>
-        <div className="text-right mr-2">
-          <p className="text-xs text-gray-400">Total</p>
-          <p className="text-sm font-bold text-blue-600">{fmt(item.totalAmount)}</p>
-        </div>
-        <ChevronDown size={15} className={`text-gray-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+        <p className="text-sm font-bold text-blue-600 mr-2">{fmt(item.totalAmount)}</p>
+        <ChevronDown size={14} className={`text-gray-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-
       {open && (
-        <div className="p-3 md:p-4 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
-
-          {/* Basic Info Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        <div className="p-3 space-y-3">
+          <div className="grid grid-cols-2 gap-2 text-xs">
             {[
-              item.bookingFor && { icon: <User size={14} className="text-gray-400" />, label: "Booking For", value: item.bookingFor },
-              { icon: <Megaphone size={14} className="text-gray-400" />, label: "Campaign", value: campaignLabel },
-              { icon: <Calendar size={14} className="text-gray-400" />, label: "Duration", value: `${fmtDatetime(item.fromDate)} → ${fmtDatetime(item.toDate)} (${item.totalDays} days)` },
-              { icon: <MapPin size={14} className="text-gray-400" />, label: "Location", value: locationLabel },
-              drivingRoute && { icon: <Route size={14} className="text-gray-400" />, label: "Driving Route", value: drivingRoute },
-              item.extraKm && item.extraKm > 0 ? { icon: <Milestone size={14} className="text-gray-400" />, label: "Extra KM", value: `${item.extraKm} km` } : null,
-              item.extraHours && item.extraHours > 0 ? { icon: <Clock size={14} className="text-gray-400" />, label: "Extra Hours", value: `${item.extraHours} hrs` } : null,
-              item.extraDays && item.extraDays > 0 ? { icon: <Calendar size={14} className="text-gray-400" />, label: "Extra Days", value: `${item.extraDays} days` } : null,
-              item.gstNumber ? { icon: <Hash size={14} className="text-gray-400" />, label: "GST Number", value: item.gstNumber } : null,
-            ].filter(Boolean).map((field: any, idx) => (
-              <div key={idx} className="flex items-start gap-2">
-                <span className="flex-shrink-0 mt-0.5">{field.icon}</span>
-                <div className="flex-1">
-                  <span className="text-gray-400 block text-[12px] font-semibold uppercase tracking-wide">{field.label}</span>
-                  <span className="text-gray-800 dark:text-gray-200 font-medium text-xs md:text-sm">{field.value}</span>
-                </div>
+              { label: "Campaign", value: campaignLabel },
+              { label: "Location", value: locationLabel },
+              item.fromDate && { label: "Duration", value: `${fmtDate(item.fromDate)} → ${fmtDate(item.toDate)} (${item.totalDays}d)` },
+              drivingRoute && { label: "Route", value: drivingRoute },
+              item.extraKm > 0 && { label: "Extra KM", value: `${item.extraKm} km` },
+              item.extraHours > 0 && { label: "Extra Hours", value: `${item.extraHours} hrs` },
+            ].filter(Boolean).map((f: any, i) => (
+              <div key={i}>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{f.label}</p>
+                <p className="text-gray-800 dark:text-gray-200 font-medium">{f.value}</p>
               </div>
             ))}
           </div>
-
-          {/* Promoter Details */}
-          {item.needPromoter && (
-            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 border border-purple-200 dark:border-purple-800/50">
-              <p className="text-xs font-bold text-purple-700 dark:text-purple-300 mb-2 flex items-center gap-1.5">
-                <Users size={13} /> Promoter Details
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-gray-400 block text-[12px] uppercase tracking-wide">Type</span>
-                  <span className="text-gray-800 dark:text-gray-200 font-medium">{promoterTypeLabel}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400 block text-[12px] uppercase tracking-wide">Gender</span>
-                  <span className="text-gray-800 dark:text-gray-200 font-medium">{item.promoterGender || "—"}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400 block text-[12px] uppercase tracking-wide">Language</span>
-                  <span className="text-gray-800 dark:text-gray-200 font-medium">{item.promoterLanguage || "—"}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400 block text-[12px] uppercase tracking-wide">Quantity</span>
-                  <span className="text-gray-800 dark:text-gray-200 font-medium">{item.promoterQuantity || 0}</span>
-                </div>
+          {/* Price breakdown */}
+          <div className="border-t border-gray-100 dark:border-gray-700 pt-2 space-y-1">
+            {item.rentalCost > 0 && (
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Rental</span>
+                <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(item.rentalCost)}</span>
               </div>
-            </div>
-          )}
-
-          {/* Pricing Breakdown per item */}
-          <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
-            <p className="text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <IndianRupee size={13} /> Price Breakdown
-            </p>
-            <div className="space-y-1.5">
-              {item.rentalCost ? (
-                <div className="flex justify-between items-center py-1 text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Rental Charges</span>
-                  <span className="font-semibold text-gray-800 dark:text-gray-200">
-                    {fmt(item.rentalCost || 0)}
-                  </span>
-                </div>
-              ) : null}
-
-              {item.promoterCost > 0 && (
-                <div className="flex justify-between items-center py-1 text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">
-                    Promoter ({item.totalDays}D × {fmt(item.promoterChargePerDay)} × {item.promoterQuantity})
-                  </span>
-                  <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(item.promoterCost)}</span>
-                </div>
-              )}
-
-              {item.rtoCost && item.rtoCost > 0 && (
-                <div className="flex justify-between items-center py-1 text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">RTO Charges</span>
-                  <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(item.rtoCost)}</span>
-                </div>
-              )}
-
-              {item.extraKmCost && item.extraKmCost > 0 && (
-                <div className="flex justify-between items-center py-1 text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">
-                    Extra KM ({item.extraKm} km × {fmt(item.dailyKmcharges)})
-                  </span>
-                  <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(item.extraKmCost)}</span>
-                </div>
-              )}
-
-              {item.extraHourCost && item.extraHourCost > 0 && (
-                <div className="flex justify-between items-center py-1 text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">
-                    Extra Hours ({item.extraHours} hrs × {fmt(item.additionalHourCharges)})
-                  </span>
-                  <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(item.extraHourCost)}</span>
-                </div>
-              )}
-
-              {(item.additionalFields || []).filter((f: any) => f.label).map((f: any, fIdx: number) => (
-                <div key={fIdx} className="flex justify-between items-center py-1 text-sm">
-                  <span className={f.mode === "-" ? "text-red-500" : "text-gray-500 dark:text-gray-400"}>
-                    {f.label}
-                  </span>
-                  <span className={`font-semibold ${f.mode === "-" ? "text-red-600 dark:text-red-400" : "text-gray-800 dark:text-gray-200"}`}>
-                    {f.mode === "-" ? "−" : "+"}{fmt(Number(f.amount))}
-                  </span>
-                </div>
-              ))}
-
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-1">
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Subtotal (excl. GST)</span>
-                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{fmt(item.subtotal || item.totalAmount)}</span>
-                </div>
+            )}
+            {item.promoterCost > 0 && (
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Promoter</span>
+                <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(item.promoterCost)}</span>
               </div>
+            )}
+            {item.rtoCost > 0 && (
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">RTO</span>
+                <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(item.rtoCost)}</span>
+              </div>
+            )}
+            {(item.additionalFields || []).filter((f: any) => f.label).map((f: any, i: number) => (
+              <div key={i} className="flex justify-between text-xs">
+                <span className={f.mode === "-" ? "text-red-500" : "text-gray-500"}>{f.label}</span>
+                <span className={`font-semibold ${f.mode === "-" ? "text-red-600" : "text-gray-800 dark:text-gray-200"}`}>
+                  {f.mode === "-" ? "−" : "+"}{fmt(Number(f.amount))}
+                </span>
+              </div>
+            ))}
+            <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-100 dark:border-gray-700">
+              <span className="text-gray-700 dark:text-gray-300">Total</span>
+              <span className="text-blue-600">{fmt(item.totalAmount)}</span>
             </div>
           </div>
-
-          {/* Campaign Media */}
-          {((item.campaignImages?.length ?? 0) > 0 || (item.campaignVideos?.length ?? 0) > 0) && (
-            <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <ImageIcon size={12} /> Campaign Media
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {(item.campaignImages || []).map((img: string, imgIdx: number) => (
-                  <div key={imgIdx} className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"
-                    onClick={() => window.open(getImageUrl(img), '_blank')}>
-                    <img
-                      src={getImageUrl(img)}
-                      alt={`Campaign ${imgIdx + 1}`}
-                      className="w-full h-24 md:h-32 object-cover hover:opacity-90 transition"
-                    />
-                    <span className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
-                      <ImageIcon size={9} /> Image {imgIdx + 1}
-                    </span>
-                  </div>
-                ))}
-                {(item.campaignVideos || []).map((vid: string, vidIdx: number) => (
-                  <div key={vidIdx} className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"
-                    onClick={() => window.open(getImageUrl(vid), '_blank')}>
-                    <video src={getImageUrl(vid)} className="w-full h-24 md:h-32 object-cover" />
-                    <span className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
-                      <Video size={9} /> Video {vidIdx + 1}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
   );
 }
 
-// ── Main Drawer ───────────────────────────────────────────────────────────────
+
+
+
+import { useVehicle } from './../../../../../src/context/vehicletypecontext';
+
+function OverviewTab({
+  order, onRefresh, onStageMove,
+}: {
+  order: SalesOrder; onRefresh: () => Promise<void>;
+  onStageMove: (order: SalesOrder, toStage: string) => void;
+}) {
+  const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+
+  useEffect(() => {
+    fetchVehicleTypes()
+  }, [])
+
+
+  const stageIdx = SALES_STAGES.findIndex((s) => s.key === order.salesPipelineStatus);
+  const stage = SALES_STAGE_MAP[order.salesPipelineStatus];
+  const subtotal = order.bookingItems.reduce((s: number, i: any) => s + (i.totalAmount || 0), 0);
+  const totalNegotiated = (order.salesNegotiationArray || []).reduce((s, n) => s + (n.amount || 0), 0);
+  const taxable = subtotal - totalNegotiated;
+  const gstAmt = Math.floor(taxable * 0.18);
+  const finalAmt = taxable + gstAmt;
+
+  const stageReached = (key: string) => {
+    const idx = SALES_STAGES.findIndex((s) => s.key === key);
+    return idx <= stageIdx;
+  };
+
+  const getVehicleTypeName = (vehicleTypeId: string) => {
+    if (!vehicleTypeId || !vehicleTypes) return "";
+    const vehicle = vehicleTypes.find((vt: any) => vt._id === vehicleTypeId);
+    return vehicle?.typeName || vehicleTypeId;
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      {/* Customer Details */}
+      <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+          <User size={13} className="text-gray-400" />
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Customer Details</h3>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            <div>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Order ID</p>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.orderId}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Customer Name</p>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.name}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Customer Type</p>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                {order.customerType === 1 ? "Organization" : order.customerType === 0 ? "Individual" : "—"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Phone</p>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">+91 {order.phone}</p>
+            </div>
+            {order.email && (
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Email</p>
+                <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">{order.email}</p>
+              </div>
+            )}
+            {order.address && (
+              <div className="col-span-2">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Address</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{order.address}</p>
+              </div>
+            )}
+            {order.companyName && (
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Company Name</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.companyName}</p>
+              </div>
+            )}
+            {order.gstNumber && (
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Gst Number</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.gstNumber}</p>
+              </div>
+            )}
+            {order.designation && (
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Designation</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.designation}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Order Created At</p>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{fmtDatetime(order.createdAt)}</p>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+
+      {/* Order Details */}
+
+      {order.bookingItems.map((v, idx) => {
+        const p = v.pricing;
+        const totalVehicleCount = v.quantity;
+
+        return (
+          <div key={v.id} className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+            {/* Header with Vehicle Count Badge */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600">
+                  {idx + 1}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    {getVehicleTypeName(v.vehicleType)}
+                  </p>
+                </div>
+              </div>
+
+
+              <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
+                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                  {totalVehicleCount}
+                </span>
+                <span className="text-xs text-blue-600 dark:text-blue-400">
+                  {totalVehicleCount === 1 ? "Vehicle" : "Vehicles"}
+                </span>
+              </div>
+            </div>
+
+
+            <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">
+              {(
+                [
+                  ["Booking For", order.customerCategory],
+                  ["Campaign", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType],
+                  ["Duration", v.fromDate && v.toDate
+                    ? `${new Date(v.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(v.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000)}D base${v.extraDays > 0 ? ` +${v.extraDays} D = ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + v.extraDays}D total` : ""})`
+                    : "—"],
+                  ["Driving route", `${v.fromLocation} → ${v.toLocation}`],
+                  ["State / City", `${v.state} / ${v.city}`],
+                  ["Vehicle Count", `${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"}`],
+                  v.extraKm > 0 ? ["Extra KM", `${v.extraKm} km`] : null,
+                  v.extraHours > 0 ? ["Extra Hours", `${v.extraHours} hours`] : null,
+                  v.needPromoter ? ["Promoter", `${v.promoterType === "Other" ? v.otherPromoterType : v.promoterType} · ${v.promoterGender} · ${v.promoterLanguage} · Qty ${v.promoterQuantity}`] : null,
+                  v.gstNumber ? ["GST", v.gstNumber] : null,
+                ] as ([string, string] | null)[]
+              )
+                .filter((item): item is [string, string] => item !== null)
+                .map(([label, value], i) => (
+                  <div key={i} className="flex justify-between text-sm gap-4">
+                    <span className="text-gray-500 shrink-0">{label}</span>
+                    <span className="text-gray-800 dark:text-gray-200 font-medium text-right">{value}</span>
+                  </div>
+                ))
+              }
+            </div>
+
+            {/* Pricing Breakdown */}
+
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                <IndianRupee size={14} />
+                Price Breakdown
+              </p>
+              <div className="space-y-2">
+
+                {/* Rental */}
+                {v.rentalCost > 0 && (
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-gray-600 dark:text-gray-400 text-sm">
+                      Rental ({v.totalDays}D × {formatINR(v.perDayRentalCost)} × {v.quantity})
+                    </span>
+                    <span className="text-gray-800 dark:text-gray-200 font-medium">
+                      {formatINR(v.rentalCost)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Promoter */}
+                {(v.promoterCost ?? 0) > 0 && (
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-gray-600 dark:text-gray-400 text-sm">
+                      Promoter Charges ({v.totalDays}D × {formatINR(v.promoterChargePerDay)} × {v.promoterQuantity})
+                    </span>
+                    <span className="text-gray-800 dark:text-gray-200 font-medium">
+                      {formatINR(v.promoterCost)}
+                    </span>
+                  </div>
+                )}
+
+                {/* RTO */}
+                {(v.rtoCost ?? 0) > 0 && (
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-gray-600 dark:text-gray-400 text-sm">RTO Charges</span>
+                    <span className="text-gray-800 dark:text-gray-200 font-medium">
+                      {formatINR(v.rtoCost)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Extra KM */}
+                {(v.extraKmCost ?? 0) > 0 && (
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-gray-600 dark:text-gray-400 text-sm">
+                      Extra KM Charges ({v.extraKm} km × {formatINR(v.dailyKmcharges)})
+                    </span>
+                    <span className="text-gray-800 dark:text-gray-200 font-medium">
+                      {formatINR(v.extraKmCost)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Extra Hours */}
+                {(v.extraHourCost ?? 0) > 0 && (
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-gray-600 dark:text-gray-400 text-sm">
+                      Extra Hours Charges ({v.extraHours} hrs × {formatINR(v.additionalHourCharges)})
+                    </span>
+                    <span className="text-gray-800 dark:text-gray-200 font-medium">
+                      {formatINR(v.extraHourCost)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Additional Charges */}
+                {(v.additionalCharges || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
+                  <div key={fIdx} className="flex justify-between items-center py-1">
+                    <span className={c.mode === "-" ? "text-red-500 text-sm" : "text-gray-600 dark:text-gray-400 text-sm"}>
+                      {c.label}
+                    </span>
+                    <span className={c.mode === "-" ? "text-red-600 font-medium" : "text-gray-800 dark:text-gray-200 font-medium"}>
+                      {c.mode === "-" ? "-" : "+"}
+                      {formatINR(c.amount)}
+                    </span>
+                  </div>
+                ))}
+
+                {/* Subtotal + Total */}
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-gray-700 dark:text-gray-300 font-semibold text-sm">Subtotal</span>
+                    <span className="text-gray-900 dark:text-white font-bold text-base">
+                      {formatINR(v.subtotal)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-gray-900 dark:text-white font-bold text-sm">Total (excl. GST)</span>
+                    <span className="text-blue-600 dark:text-blue-400 font-bold text-lg">
+                      {formatINR(v.totalAmount)}
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+
+          </div>
+        );
+      })}
+
+      {/* Price Breakdown */}
+      <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+          <IndianRupee size={13} className="text-gray-400" />
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Price Breakdown</h3>
+        </div>
+        <div className="p-4">
+          <table className="w-full text-sm">
+            {/* <thead>
+              <tr className="text-gray-400 text-xs border-b border-gray-100 dark:border-gray-700">
+                <th className="text-left pb-2">#</th>
+                <th className="text-left pb-2">Description</th>
+                <th className="text-right pb-2">Amount (₹)</th>
+              </tr>
+            </thead> */}
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+              {/* {order.bookingItems.map((item: any, i: number) => (
+                <tr key={i} className="text-gray-700 dark:text-gray-300">
+                  <td className="py-1.5 text-gray-400">{i + 1}</td>
+                  <td className="py-1.5">Rental Charges ({order.bookingItems.length} Vehicles)</td>
+                  <td className="py-1.5 text-right font-medium">{fmt(item.rentalCost || item.totalAmount)}</td>
+                </tr>
+              ))} */}
+              {/* {order.bookingItems.map((item: any, i: number) => item.rtoCost > 0 && (
+                <tr key={`rto-${i}`} className="text-gray-700 dark:text-gray-300">
+                  <td className="py-1.5 text-gray-400">{order.bookingItems.length + i + 1}</td>
+                  <td className="py-1.5">RTO Charges</td>
+                  <td className="py-1.5 text-right font-medium">{fmt(item.rtoCost)}</td>
+                </tr>
+              ))} */}
+              <tr className="border-t border-gray-200 dark:border-gray-700">
+                <td colSpan={2} className="py-2 text-gray-500 font-medium">Subtotal (Excl. GST)</td>
+                <td className="py-2 text-right font-bold text-gray-800 dark:text-gray-200">{fmt(subtotal)}</td>
+              </tr>
+              {totalNegotiated > 0 && (
+                <tr>
+                  <td colSpan={2} className="py-1.5 text-red-500">Discount</td>
+                  <td className="py-1.5 text-right font-bold text-red-500">−{fmt(totalNegotiated)}</td>
+                </tr>
+              )}
+              <tr>
+                <td colSpan={2} className="py-1.5 text-gray-500">Taxable Amount</td>
+                <td className="py-1.5 text-right font-bold text-gray-800 dark:text-gray-200">{fmt(taxable)}</td>
+              </tr>
+              <tr>
+                <td colSpan={2} className="py-1.5 text-gray-500">GST (18%)</td>
+                <td className="py-1.5 text-right font-bold text-gray-800 dark:text-gray-200">{fmt(gstAmt)}</td>
+              </tr>
+              <tr className="border-t-2 border-red-100 dark:border-red-900/30">
+                <td colSpan={2} className="py-2 text-red-600 font-bold">Final Amount</td>
+                <td className="py-2 text-right font-bold text-red-600 text-base">{fmt(finalAmt)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Closed Lost */}
+      {order.salesPipelineStatus === "closedLost" && (order.closedLostArray || []).length > 0 && (
+        <div className="rounded-xl border border-rose-100 dark:border-rose-800/50 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border-b border-rose-100 dark:border-rose-800/50">
+            <XCircle size={13} className="text-rose-500" />
+            <h3 className="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider">Closed Lost — Reason</h3>
+          </div>
+          <div className="p-4 space-y-2">
+            {order.closedLostArray.map((item, i) => (
+              <div key={i} className="p-3 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200/50">
+                <p className="text-sm font-semibold text-rose-700 flex items-center gap-1.5 mb-1">
+                  <AlertTriangle size={12} /> Reason:
+                </p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{item.reason}</p>
+                <p className="text-[11px] text-gray-400 mt-1">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
+                {item.document && <div className="mt-2"><DocItem docPath={item.document} label="Supporting Document" /></div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ── COMMENTS TAB ─────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () => Promise<void> }) {
+  const [comment, setComment] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // Collect all comments from all stage arrays
+  const allComments: Array<{
+    text: string; by: string; at: string; stage: string; docPath?: string;
+  }> = [];
+
+  // needAnalysisArray notes
+  (order.needAnalysisArray || []).forEach((item) => {
+    if (item.notes || item.analysisDocument) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Need Analysis",
+        docPath: item.analysisDocument,
+      });
+    }
+  });
+  (order.proposalArray || []).forEach((item) => {
+    if (item.notes || item.proposalDocument) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Proposal",
+        docPath: item.proposalDocument,
+      });
+    }
+  });
+  (order.salesNegotiationArray || []).forEach((item) => {
+    if (item.notes || item.document) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Negotiation",
+        docPath: item.document,
+      });
+    }
+  });
+  (order.closedWonArray || []).forEach((item) => {
+    if (item.salesPoNotes || item.salesPoDocument) {
+      allComments.push({
+        text: item.salesPoNotes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Closed Won",
+        docPath: item.salesPoDocument,
+      });
+    }
+  });
+  (order.closedLostArray || []).forEach((item) => {
+    if (item.reason) {
+      allComments.push({
+        text: item.reason,
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Closed Lost",
+        docPath: item.document,
+      });
+    }
+  });
+  // Sort by date desc
+  allComments.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+
+  const handleAddComment = async () => {
+    if (!comment.trim() && !file) return;
+    setSaving(true);
+    try {
+      const token = getToken();
+      const fd = new FormData();
+      fd.append("stage", order.salesPipelineStatus);
+      const notesFieldMap: Record<string, string> = {
+        needAnalysis: "analysisNotes",
+        proposalPriceQuote: "proposalNotes",
+        negotiationReview: "negotiationNotes",
+        closedWon: "salesPoNotes",
+      };
+      const docFieldMap: Record<string, string> = {
+        needAnalysis: "analysisDocument",
+        proposalPriceQuote: "proposalDocument",
+        negotiationReview: "negotiationDocument",
+        closedWon: "salesPoDocument",
+      };
+      const notesField = notesFieldMap[order.salesPipelineStatus] || "analysisNotes";
+      const docField = docFieldMap[order.salesPipelineStatus] || "analysisDocument";
+      fd.append(notesField, comment.trim());
+      if (file) fd.append(docField, file);
+      await axios.post(`${API_BASE}sales/pipeline/${order._id}/documents`, fd, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Comment added!");
+      setComment(""); setFile(null);
+      if (fileRef.current) fileRef.current.value = "";
+      await onRefresh();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Something went wrong");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const stageLabel = SALES_STAGE_MAP[order.salesPipelineStatus]?.label || order.salesPipelineStatus;
+
+  return (
+    <div className="p-4 space-y-4">
+      {/* Add Comment Box */}
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+          <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+            Add a comment for this stage ({stageLabel})
+          </p>
+        </div>
+        <div className="p-4 space-y-3">
+          <textarea
+            rows={3}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Type your comment here..."
+            className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+          />
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-500 hover:bg-gray-50 cursor-pointer transition-all">
+              <Upload size={13} /> {file ? file.name : "Attach File"}
+              <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
+                onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            </label>
+            {file && (
+              <button onClick={() => { setFile(null); if (fileRef.current) fileRef.current.value = ""; }}
+                className="text-red-400 hover:text-red-600 text-xs">Remove</button>
+            )}
+            <button
+              onClick={handleAddComment}
+              disabled={saving || (!comment.trim() && !file)}
+              className="ml-auto px-5 py-2 rounded-xl bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 disabled:opacity-40 text-white dark:text-gray-900 text-sm font-semibold transition-all"
+            >
+              {saving ? "Saving..." : "Add Comment"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Comments History */}
+      <div>
+        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Comments History</h3>
+        {allComments.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 text-sm">No comments yet</div>
+        ) : (
+          <div className="space-y-3">
+            {allComments.map((c, i) => {
+              const initials = c.by.charAt(0).toUpperCase();
+              const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500"];
+              const color = colors[c.by.charCodeAt(0) % colors.length];
+              return (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:hover:bg-gray-800/30 transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700/50">
+                  <div className={`w-9 h-9 rounded-full ${color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+                    {initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{c.by}</span>
+                      <span className="text-xs text-gray-400 px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700">
+                        {c.stage}
+                      </span>
+                    </div>
+                    {c.text && <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">{c.text}</p>}
+                    {c.docPath && (
+                      <div className="mt-1">
+                        <DocItem docPath={c.docPath} label="Attached Document" />
+                      </div>
+                    )}
+                    <p className="text-[11px] text-gray-400 mt-1">{fmtDatetime(c.at)}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TimelineItem({
+  children,
+  dotColor,
+  isLast,
+}: {
+  children: React.ReactNode;
+  dotColor: string;
+  isLast: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-3 relative">
+      {/* Vertical line */}
+      {!isLast && (
+        <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-gray-100 dark:bg-gray-700" />
+      )}
+      {/* Dot */}
+      <div
+        className={`w-8 h-8 rounded-full bg-gradient-to-br ${dotColor} flex-shrink-0 flex items-center justify-center mt-0.5 relative z-10`}
+      >
+        <div className="w-2.5 h-2.5 rounded-full bg-white/70" />
+      </div>
+      {/* Content */}
+      <div className="flex-1 pb-4">{children}</div>
+    </div>
+  );
+}
+
+
+
+function PipelineHistoryTab({ order }: { order: SalesOrder }) {
+  const logs = [...(order.salesPipelineLogs || [])].reverse();
+
+  return (
+    <div className="p-4 space-y-3">
+      {/* Header badge */}
+      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border border-violet-100 dark:border-violet-800/50">
+        <History size={14} className="text-violet-500" />
+        <span className="text-sm font-bold text-violet-700 dark:text-violet-300">
+          Pipeline History
+        </span>
+        <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">
+          {logs.length} events
+        </span>
+      </div>
+
+      {/* Timeline */}
+      {logs.length === 0 ? (
+        <div className="text-center py-10 text-gray-400 text-sm">
+          No pipeline history yet
+        </div>
+      ) : (
+        <div className="space-y-0 pt-2">
+          {logs.map((log, i) => {
+            const toS = SALES_STAGE_MAP[log.toStage];
+            const fromLabel = log.fromStage
+              ? SALES_STAGE_MAP[log.fromStage]?.label || log.fromStage
+              : "Start";
+            const dotColor = toS?.headerGrad || "from-gray-400 to-gray-500";
+
+            return (
+              <TimelineItem
+                key={i}
+                dotColor={dotColor}
+                isLast={i === logs.length - 1}
+              >
+                <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50 hover:shadow-sm transition-all">
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    {log.fromStage
+                      ? `${fromLabel} → ${toS?.label || log.toStage}`
+                      : `Started at ${toS?.label || log.toStage}`}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-400 flex-wrap">
+                    <span>By {log.movedBy}</span>
+                    {log.handlerName && (
+                      <>
+                        <span>·</span>
+                        <span>Handler: {log.handlerName}</span>
+                      </>
+                    )}
+                    <span>·</span>
+                    <span>{fmtDatetime(log.movedAt)}</span>
+                  </div>
+                </div>
+              </TimelineItem>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ── DOCUMENTS TAB ─────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+function DocumentsTab({
+  order, onRefresh, onPoUploadSuccess,
+}: {
+  order: SalesOrder; onRefresh: () => Promise<void>;
+  onPoUploadSuccess?: () => void;
+}) {
+  const [poFile, setPoFile] = useState<File | null>(null);
+  const [poNotes, setPoNotes] = useState("");
+  const [poSaving, setPoSaving] = useState(false);
+  const [showPoForm, setShowPoForm] = useState(false);
+
+  const handlePoUpload = async () => {
+    if (!poFile) { toast.error("Please select a PO document"); return; }
+    setPoSaving(true);
+    try {
+      const token = getToken();
+      const fd = new FormData();
+      fd.append("stage", "closedWon");
+      fd.append("salesPoDocument", poFile);
+      if (poNotes.trim()) fd.append("salesPoNotes", poNotes.trim());
+      await axios.post(`${API_BASE}sales/pipeline/${order._id}/documents`, fd, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("PO Document uploaded!");
+      setPoFile(null); setPoNotes(""); setShowPoForm(false);
+      await onRefresh();
+      onPoUploadSuccess?.();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Something went wrong");
+    } finally {
+      setPoSaving(false);
+    }
+  };
+
+  // Collect all documents
+  const sections = [
+
+    {
+      label: "PO Documents",
+      color: "green",
+      docs: (order.closedWonArray || []).filter(i => i.salesPoDocument).map(i => ({
+        path: i.salesPoDocument, notes: i.salesPoNotes, by: i.uploadedBy, at: i.uploadedAt,
+      })),
+    },
+
+  ].filter(s => s.docs.length > 0);
+
+  const colorMap: Record<string, string> = {
+    blue: "text-blue-700 bg-blue-50 border-blue-100",
+    violet: "text-violet-700 bg-violet-50 border-violet-100",
+    amber: "text-amber-700 bg-amber-50 border-amber-100",
+    green: "text-green-700 bg-green-50 border-green-100",
+    rose: "text-rose-700 bg-rose-50 border-rose-100",
+  };
+
+ 
+  const canUploadPO = ["closedWon", "projectCodeCreation"].includes(order.salesPipelineStatus);
+
+  return (
+    <div className="p-4 space-y-4">
+
+
+      {/* Documents list */}
+      {sections.length === 0 ? (
+        <div className="text-center py-10 text-gray-400">
+          <FileText size={32} className="mx-auto mb-2 opacity-30" />
+          <p className="text-sm">No documents uploaded yet</p>
+        </div>
+      ) : (
+        sections.map((section, si) => (
+          <div key={si} className={`rounded-xl border overflow-hidden ${colorMap[section.color]?.split(" ").slice(2).join(" ") || "border-gray-100"}`}>
+            <div className={`px-4 py-2.5 border-b ${colorMap[section.color]?.split(" ").slice(1).join(" ") || ""}`}>
+              <h3 className={`text-xs font-bold uppercase tracking-wider ${colorMap[section.color]?.split(" ")[0] || "text-gray-500"}`}>
+                {section.label}
+              </h3>
+            </div>
+            <div className="p-3 space-y-2 bg-white dark:bg-gray-900">
+              {section.docs.map((doc, di) => (
+                <DocItem key={di}
+                  docPath={doc.path}
+                  label={`${section.label.replace(" Documents", "")} ${di + 1}`}
+                  notes={doc.notes}
+                  by={doc.by}
+                  at={doc.at}
+                />
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ── MAIN DRAWER ────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
 export default function SalesDetailDrawer({
   order, onClose, onRefresh, onStageMove, staffAdmins, currentUserIsAdmin, saving,
 }: {
@@ -556,17 +1108,10 @@ export default function SalesDetailDrawer({
   currentUserIsAdmin: number;
   saving: boolean;
 }) {
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
   const stage = SALES_STAGE_MAP[order.salesPipelineStatus];
   const stageIdx = SALES_STAGES.findIndex((s) => s.key === order.salesPipelineStatus);
 
-  // ── Pricing ───────────────────────────────────────────────────────────────
-  const subtotal = order.bookingItems.reduce((s: number, i: any) => s + (i.totalAmount || 0), 0);
-  const totalNegotiated = (order.salesNegotiationArray || []).reduce((s, n) => s + (n.amount || 0), 0);
-  const taxable = subtotal - totalNegotiated;
-  const gstAmt = Math.floor(taxable * 0.18);
-  const finalAmt = taxable + gstAmt;
-
-  // ── Next stage label ──────────────────────────────────────────────────────
   const getNextLabel = (): string | null => {
     const s = order.salesPipelineStatus;
     if (s === "enquiry") return "Move to Need Analysis";
@@ -577,8 +1122,15 @@ export default function SalesDetailDrawer({
     return null;
   };
 
-
-  const nextLabel = getNextLabel();
+  const getNextStageShortLabel = (): string | null => {
+    const s = order.salesPipelineStatus;
+    if (s === "enquiry") return "Need Analysis";
+    if (s === "needAnalysis") return "Proposal";
+    if (s === "proposalPriceQuote") return "Negotiation";
+    if (s === "negotiationReview") return "Closed Won";
+    if (s === "closedWon") return "Project Code";
+    return null;
+  };
 
   const nextStageKey = () => {
     const s = order.salesPipelineStatus;
@@ -590,412 +1142,283 @@ export default function SalesDetailDrawer({
     return null;
   };
 
-  // ── Is stage visible ──────────────────────────────────────────────────────
+  const nextLabel = getNextLabel();
+  const nextShort = getNextStageShortLabel();
+
+  // Stage progress pills (for the header bar)
   const stageReached = (key: string) => {
     const idx = SALES_STAGES.findIndex((s) => s.key === key);
     return idx <= stageIdx;
   };
 
+  const isPoStage = ["closedWon", "projectCodeCreation"].includes(order.salesPipelineStatus);
+
+  // const tabs: { key: Tab; label: string }[] = [
+  //   { key: "overview", label: "Overview" },
+  //   { key: "comments", label: "Comments" },
+  //   { key: "pipeline", label: "Pipeline History" },
+  //   { key: "documents",  label: isPoStage ? "PO Document": "" },
+  // ];
+
+  const tabs: { key: Tab; label: string }[] = [
+    { key: "overview", label: "Overview" },
+    { key: "comments", label: "Comments" },
+    { key: "pipeline", label: "Pipeline History" },
+    // { key: "codeCreation", label: "Code Creation" },
+    { key: "documents", label: isPoStage ? "PO Document" : "" },
+    ...(order.salesPipelineStatus === "projectCodeCreation"
+      ? [{ key: "codeCreation" as Tab, label: "Code Creation" }]
+      : []),
+  ];
+
+  // Summary calculations
+  const subtotal = order.bookingItems.reduce((s: number, i: any) => s + (i.totalAmount || 0), 0);
+  const totalNegotiated = (order.salesNegotiationArray || []).reduce((s, n) => s + (n.amount || 0), 0);
+  const taxable = subtotal - totalNegotiated;
+  const gstAmt = Math.floor(taxable * 0.18);
+  const finalAmt = taxable + gstAmt;
+  const lastComment = [...(order.needAnalysisArray || []), ...(order.proposalArray || []), ...(order.salesNegotiationArray || [])]
+    .filter(i => i.uploadedAt)
+    .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())[0];
+
+  const StageIcon = stage?.icon || FiClipboard;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-gray-900/60 to-black/70 backdrop-blur-md p-2 md:p-4">
-      <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 w-full max-w-4xl h-full md:max-h-[90vh] flex flex-col shadow-2xl rounded-xl md:rounded-3xl border border-gray-200/60 dark:border-gray-700/50 overflow-hidden animate-in fade-in zoom-in duration-300">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+      <div className="bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300">
 
-        {/* ── Header ── */}
-        <div className={`relative flex-shrink-0 bg-gradient-to-r ${stage?.headerGrad || "from-slate-700 to-slate-800"} text-white px-4 md:px-6 py-4 md:py-5`}>
-          <div className="relative flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3 md:gap-4 min-w-0">
-              <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0 border border-white/20">
-                <stage.icon size={16} className="text-white flex-shrink-0" />
+        {/* ── TOP HEADER BAR ── */}
+        <div className="flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
+          {/* Title row */}
+          <div className="flex items-center gap-3 px-4 py-3">
+            {/* Stage icon */}
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${stage?.headerGrad || "from-gray-500 to-gray-600"}`}>
+              <StageIcon size={15} className="text-white" />
+            </div>
+
+            {/* Title + meta */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-base font-bold text-gray-900 dark:text-white">Sales Order</span>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${stage?.bg || "bg-gray-100"} ${stage?.color || "text-gray-700"}`}>
+                  {stage?.label || order.salesPipelineStatus}
+                </span>
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <h2 className="text-base md:text-xl font-bold tracking-tight">Sales Order</h2>
-                  {stage && (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-semibold bg-white/20 backdrop-blur-sm border border-white/30 text-white">
-                      {stage.label}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-white/70 flex-wrap">
-                  <span className="font-mono">{order.orderId}</span>
-                  <span className="w-1 h-1 rounded-full bg-white/30 hidden sm:inline" />
-                  <Clock size={12} className="hidden sm:inline" />
-                  <span className="hidden sm:inline">{fmtDatetime(order.updatedAt)}</span>
-                </div>
+              <div className="flex items-center gap-2 text-[11px] text-gray-400 mt-0.5">
+                <span className="font-mono">{order.orderId}</span>
+                <span>·</span>
+                <Clock size={10} />
+                <span>{fmtDatetime(order.updatedAt)}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Stage progress pills */}
-              <div className="hidden lg:flex items-center gap-1">
-                {SALES_STAGES.filter(s => !["closedLost"].includes(s.key)).map((s) => (
-                  <div key={s.key} className={`h-1.5 rounded-full transition-all ${s.key === order.salesPipelineStatus ? "w-8 bg-white" : stageReached(s.key) ? "w-4 bg-white/60" : "w-4 bg-white/20"}`} />
-                ))}
-              </div>
-
-              {/* Next stage button */}
-              {nextLabel && (
-                <button onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
-                  disabled={saving}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 text-white text-xs font-semibold transition-all disabled:opacity-60">
-                  {saving
-                    ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    : <><ChevronRight size={13} /> {nextLabel}</>}
-                </button>
-              )}
-
-              {/* Closed Lost button */}
-              {!["closedWon", "closedLost", "projectCodeCreation"].includes(order.salesPipelineStatus) && (
-                <button onClick={() => onStageMove(order, "closedLost")}
-                  className="hidden sm:flex items-center gap-1 px-2.5 py-2 rounded-xl bg-rose-500/30 hover:bg-rose-500/50 backdrop-blur-sm border border-rose-300/30 text-white text-xs font-medium transition-all">
-                  <XCircle size={13} /> Lost
-                </button>
-              )}
-
-              {/* Handler badge */}
-              {order.salesHandlerName && (
-                <div className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center text-xs font-bold">
-                    {order.salesHandlerName.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-white/70">Handler</p>
-                    <p className="text-xs font-semibold">{order.salesHandlerName}</p>
-                  </div>
-                </div>
-              )}
-
-              <button onClick={onClose}
-                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white flex items-center justify-center transition-all hover:rotate-90 duration-300">
-                <X size={16} />
+            {/* Move to next stage */}
+            {nextShort && (
+              <button
+                onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
+                disabled={saving}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-semibold transition-all whitespace-nowrap"
+              >
+                {saving
+                  ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  : <><ChevronRight size={12} /> Move to {nextShort}</>
+                }
               </button>
-            </div>
+            )}
+
+            {/* Handler avatar */}
+            {order.salesHandlerName && (
+              <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                <div className={`w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-[10px] font-bold text-white`}>
+                  {order.salesHandlerName.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{order.salesHandlerName}</span>
+              </div>
+            )}
+
+            {/* More / Close */}
+            <button onClick={onClose}
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+              <X size={16} />
+            </button>
           </div>
 
-          {/* Mobile: next button */}
-          {nextLabel && (
-            <div className="sm:hidden mt-3 flex gap-2">
-              <button onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
+          {/* Mobile: next stage row */}
+          {nextShort && (
+            <div className="sm:hidden flex items-center gap-2 px-4 pb-3">
+              <button
+                onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
                 disabled={saving}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 text-white text-xs font-semibold transition-all disabled:opacity-60">
-                {saving ? "Moving..." : <>{nextLabel} <ChevronRight size={12} /></>}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-semibold transition-all"
+              >
+                {saving ? "Moving..." : <><ChevronRight size={12} /> Move to {nextShort}</>}
               </button>
-              {!["closedWon", "closedLost"].includes(order.salesPipelineStatus) && (
+              {!["closedWon", "closedLost", "projectCodeCreation"].includes(order.salesPipelineStatus) && (
                 <button onClick={() => onStageMove(order, "closedLost")}
-                  className="px-3 py-2 rounded-xl bg-rose-500/30 hover:bg-rose-500/50 backdrop-blur-sm border border-rose-300/30 text-white text-xs font-medium transition-all flex items-center gap-1">
-                  <XCircle size={13} /> Lost
+                  className="px-3 py-2 rounded-lg bg-rose-50 text-rose-600 text-xs font-semibold border border-rose-200">
+                  <XCircle size={12} />
                 </button>
               )}
             </div>
           )}
+
+          {/* Tabs */}
+          <div className="flex items-center border-b border-gray-100 dark:border-gray-800 px-4">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-3 py-2.5 text-sm font-medium border-b-2 transition-all -mb-px whitespace-nowrap ${activeTab === tab.key
+                  ? "border-red-500 text-red-600 dark:text-red-400"
+                  : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* ── Scrollable Body ── */}
-        <div className="flex-1 overflow-y-auto p-3 md:p-5 space-y-3 md:space-y-4">
+        {/* ── SCROLLABLE BODY ── */}
+        <div className="flex-1 overflow-y-auto">
 
-          {/* 1. Customer Information */}
-          <Section
-            icon={<User size={14} className="text-blue-500" />}
-            title="Customer Information"
-            accent="from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20"
-            defaultOpen={false}
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
-              <InfoChip icon={<Hash size={13} />} label="Order ID" value={order.orderId} />
-              <InfoChip icon={<Phone size={13} />} label="Phone" value={`+91 ${order.phone}`} />
-              <InfoChip icon={<User size={13} />} label="Name" value={order.name} highlight />
-              {order.email && <InfoChip icon={<Mail size={13} />} label="Email" value={order.email} />}
-              <InfoChip icon={<Tag size={13} />} label="Customer Type"
-                value={<span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${order.customerType === 1 ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"}`}>
-                  {order.customerType === 1 ? "Organization" : order.customerType === 0 ? "Individual" : "Not Set"}
-                </span>} />
-              {order.address && <InfoChip icon={<MapPin size={13} />} label="Address" value={order.address} />}
-              {order.companyName && <InfoChip icon={<Building2 size={13} />} label="Company" value={order.companyName} />}
-              {order.gstNumber && <InfoChip icon={<Hash size={13} />} label="GST Number" value={order.gstNumber} />}
-              <InfoChip icon={<Calendar size={13} />} label="Created" value={fmtDatetime(order.createdAt)} />
-              {order.salesHandlerName && (
-                <InfoChip icon={<User size={13} />} label="Sales Handler" value={
-                  <span className="text-violet-700 font-semibold">{order.salesHandlerName}</span>
-                } />
-              )}
-            </div>
-          </Section>
 
-          {/* 2. Vehicle Bookings */}
-          <Section
-            icon={<Car size={14} className="text-purple-500" />}
-            title="Vehicle Bookings"
-            accent="from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20"
-            defaultOpen={false}
-            badge={<span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-700">{order.bookingItems.length} vehicle{order.bookingItems.length !== 1 ? "s" : ""}</span>}
-          >
-            <div className="space-y-3">
-              {order.bookingItems.map((item: any, i: number) => (
-                <VehicleItemCard key={i} item={item} index={i} />
-              ))}
-            </div>
-          </Section>
+          {activeTab === "overview" && (
+            <div className="flex flex-col sm:flex-row h-full min-h-0">
+              {/* Left: main content — scrollable */}
+              <div className="flex-1 overflow-y-auto sm:border-r border-gray-100 dark:border-gray-800">
+                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} />
+              </div>
 
-          {/* 4. Need Analysis */}
-          {stageReached("needAnalysis") && (
-            <Section
-              icon={<Search size={14} className="text-blue-500" />}
-              title="Need Analysis"
-              accent="from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20"
-              defaultOpen={order.salesPipelineStatus === "needAnalysis"}
-              badge={(order.needAnalysisArray || []).length > 0 ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700">
-                  {order.needAnalysisArray.length} doc{order.needAnalysisArray.length !== 1 ? "s" : ""}
-                </span>
-              ) : undefined}
-            >
-              {(order.needAnalysisArray || []).length > 0 ? (
-                <div className="space-y-2 mb-2">
-                  {order.needAnalysisArray.map((item, i) => (
-                    <div key={i}>
-                      {item.analysisDocument && (
-                        <DocItem docPath={item.analysisDocument} label={`Analysis Doc ${i + 1}`} notes={item.notes} by={item.uploadedBy} at={item.uploadedAt} />
-                      )}
-                      {!item.analysisDocument && item.notes && (
-                        <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50">
-                          <p className="text-md text-gray-700 dark:text-gray-300">{item.notes}</p>
-                          <p className="text-[10px] text-gray-400 mt-1">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400 text-center py-3">No documents added yet</p>
-              )}
-              {order.salesPipelineStatus === "needAnalysis" && (
-                <StageUploadForm order={order} stage="needAnalysis" onRefresh={onRefresh}
-                  docFieldName="analysisDocument" notesFieldName="analysisNotes" label="Analysis Document"
-                  accent="bg-blue-50/50 dark:bg-blue-900/10" />
-              )}
-            </Section>
-          )}
-
-          {/* 5. Proposal */}
-          {stageReached("proposalPriceQuote") && (
-            <Section
-              icon={<FileEdit size={14} className="text-violet-500" />}
-              title="Proposal & Price Quote"
-              accent="from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20"
-              defaultOpen={order.salesPipelineStatus === "proposalPriceQuote"}
-              badge={(order.proposalArray || []).length > 0 ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-100 text-violet-700">
-                  {order.proposalArray.length} doc{order.proposalArray.length !== 1 ? "s" : ""}
-                </span>
-              ) : undefined}
-            >
-              {(order.proposalArray || []).length > 0 ? (
-                <div className="space-y-2 mb-2">
-                  {order.proposalArray.map((item, i) => (
-                    <div key={i}>
-                      {item.proposalDocument && (
-                        <DocItem docPath={item.proposalDocument} label={`Proposal Doc ${i + 1}`} notes={item.notes} by={item.uploadedBy} at={item.uploadedAt} />
-                      )}
-                      {!item.proposalDocument && item.notes && (
-                        <div className="p-3 rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800/50">
-                          <p className="text-sm text-gray-700 dark:text-gray-300">{item.notes}</p>
-                          <p className="text-[10px] text-gray-400 mt-1">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400 text-center py-3">No proposals added yet</p>
-              )}
-              {order.salesPipelineStatus === "proposalPriceQuote" && (
-                <StageUploadForm order={order} stage="proposalPriceQuote" onRefresh={onRefresh}
-                  docFieldName="proposalDocument" notesFieldName="proposalNotes" label="Proposal Document"
-                  accent="bg-violet-50/50 dark:bg-violet-900/10" />
-              )}
-            </Section>
-          )}
-
-          {/* 6. Negotiation & Review */}
-          {stageReached("negotiationReview") && (
-            <Section
-              icon={<Handshake size={14} className="text-amber-500" />}
-              title="Negotiation & Review"
-              accent="from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20"
-              defaultOpen={order.salesPipelineStatus === "negotiationReview"}
-              badge={(order.salesNegotiationArray || []).length > 0 ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">
-                  {order.salesNegotiationArray.length} entry
-                </span>
-              ) : undefined}
-            >
-              {(order.salesNegotiationArray || []).length > 0 ? (
-                <div className="space-y-2 mb-2">
-                  {order.salesNegotiationArray.map((item, i) => (
-                    <div key={i} className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-[15px] font-bold text-amber-700">Negotiation {i + 1}</p>
-                        {item.amount > 0 && <span className="text-sm font-bold text-red-600">−{fmt(item.amount)}</span>}
+              {/* Right: sticky sidebar */}
+              <div className="w-full sm:w-[260px] flex-shrink-0 overflow-y-auto p-4 space-y-3 bg-gray-50/50 dark:bg-gray-900/40">
+                {/* Current Stage Card */}
+                <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Current Stage</p>
+                    <MoreHorizontal size={14} className="text-gray-300" />
+                  </div>
+                  <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-bold ${stage?.bg || "bg-gray-100"} ${stage?.color || "text-gray-700"} mb-2`}>
+                    <StageIcon size={13} />
+                    {stage?.label}
+                  </div>
+                  {order.salesHandlerName && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                        {order.salesHandlerName.charAt(0).toUpperCase()}
                       </div>
-                      {item.notes && <p className="text-[13px] text-gray-600 dark:text-gray-400 mb-1">{item.notes}</p>}
-                      <p className="text-[13px] text-gray-400">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
-                      {item.document && <DocItem docPath={item.document} label={`Negotiation Doc ${i + 1}`} />}
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.salesHandlerName}</p>
+                        {/* <p className="text-[10px] text-gray-400">Sales Executive</p> */}
+                      </div>
                     </div>
-                  ))}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800/50">
-                    <span className="text-xs font-bold text-red-700 flex items-center gap-1.5"><TrendingDown size={13} /> Total Negotiated</span>
-                    <span className="text-base font-bold text-red-700">−{fmt(totalNegotiated)}</span>
+                  )}
+                  {order.updatedAt && (
+                    <p className="text-[10px] text-gray-400 mt-2">
+                      Updated On<br />
+                      {fmtDatetime(order.updatedAt)} ({fmtRelative(order.updatedAt)})
+                    </p>
+                  )}
+                </div>
+
+                {/* Quick Actions */}
+                <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Quick Actions</p>
+                  <div className="space-y-2">
+                    {nextShort && (
+                      <button
+                        onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
+                        disabled={saving}
+                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 disabled:opacity-60 text-white dark:text-gray-900 text-xs font-semibold transition-all"
+                      >
+                        <ChevronRight size={13} /> Move to Next Stage
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setActiveTab("comments")}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                    >
+                      <MessageSquare size={13} /> Add Comment
+                    </button>
+                    {/* <button
+                      onClick={() => setActiveTab("documents")}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                    >
+                      <Upload size={13} /> Upload Documents
+                    </button> */}
+                    {/* closedWon / projectCodeCreation-ல் "PO Document" காட்டு, மற்றதில் "Upload Documents" */}
+                    {/* closedWon / projectCodeCreation-ல் "PO Document" காட்டு, மற்றதில் "Upload Documents" */}
+                    {["closedWon", "projectCodeCreation"].includes(order.salesPipelineStatus) && (
+                      <button
+                        onClick={() => setActiveTab("documents")}
+                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 text-xs font-medium hover:bg-green-50 dark:hover:bg-green-900/20 transition-all"
+                      >
+                        <FileText size={13} /> PO Document
+                      </button>
+                    )}
+
+                    {order.salesPipelineStatus === "projectCodeCreation" && (
+                      <button
+                        onClick={() => setActiveTab("codeCreation")}
+                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400 text-xs font-medium hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all"
+                      >
+                        <FiCode size={13} /> Code Creation
+                      </button>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <p className="text-sm text-gray-400 text-center py-3">No negotiations yet</p>
-              )}
-              {order.salesPipelineStatus === "negotiationReview" && (
-                <StageUploadForm order={order} stage="negotiationReview" onRefresh={onRefresh}
-                  docFieldName="negotiationDocument" notesFieldName="negotiationNotes" amountFieldName="amount"
-                  label="Negotiation Entry" showAmount accent="bg-amber-50/50 dark:bg-amber-900/10" />
-              )}
-            </Section>
-          )}
 
-          {/* 7. Closed Won */}
-          {stageReached("closedWon") && order.salesPipelineStatus === "closedWon" && (
-            <Section
-              icon={<Trophy size={14} className="text-green-500" />}
-              title="Closed Won — PO Documents"
-              accent="from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20"
-              defaultOpen={true}
-            >
-              {(order.closedWonArray || []).length > 0 ? (
-                <div className="space-y-2">
-                  {order.closedWonArray.map((item, i) => (
-                    <DocItem key={i} docPath={item.salesPoDocument} label={`Sales PO Document ${i + 1}`} notes={item.salesPoNotes} by={item.uploadedBy} at={item.uploadedAt} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400 text-center py-3">No PO documents</p>
-              )}
-            </Section>
-          )}
-
-
-          {/* Project Code Creation Section */}
-          {stageReached("projectCodeCreation") && order.salesPipelineStatus === "projectCodeCreation" && (
-            <Section
-              icon={<BadgeCheck size={14} className="text-teal-500" />}
-              title="Project Code Creation"
-              accent="from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20"
-              defaultOpen={true}
-            >
-              {(order.projectCodeCreationArray || []).length > 0 ? (
-                <div className="space-y-2 mb-3">
-                  {order.projectCodeCreationArray.map((item: any, i: number) => (
-                    <div key={i} className="p-3 rounded-xl bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800/50">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Project Code</p>
-                          <p className="text-sm font-bold text-teal-700 dark:text-teal-300">{item.projectCode}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Estimation Code</p>
-                          <p className="text-sm font-bold text-teal-700 dark:text-teal-300">{item.estimationCode}</p>
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-gray-400 mt-2">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
+                {/* Summary */}
+                <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Summary</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-xs">Total Vehicles</span>
+                      <span className="font-bold text-gray-800 dark:text-gray-200">{order.bookingItems.length}</span>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400 text-center py-3">No project codes added yet</p>
-              )}
-
-              {/* Save Form */}
-              <ProjectCodeForm order={order} onRefresh={onRefresh} />
-            </Section>
-          )}
-
-          {/* 3. Pricing Breakdown */}
-          <Section
-            icon={<IndianRupee size={14} className="text-green-500" />}
-            title="Pricing Breakdown"
-            accent="from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20"
-            defaultOpen={true}
-          >
-            <div className="space-y-1">
-              <PricingRow label="Subtotal" value={fmt(subtotal)} icon={<IndianRupee size={15} />} />
-              {totalNegotiated > 0 && (
-                <PricingRow label="Total Negotiated Amount" value={`− ${fmt(totalNegotiated)}`} icon={<TrendingDown size={15} />} negative />
-              )}
-              <PricingRow label="Taxable Amount" value={fmt(taxable)} icon={<ReceiptText size={15} />} />
-              <PricingRow label="GST (18%)" value={fmt(gstAmt)} icon={<Percent size={15} />} />
-            </div>
-            <div className="mt-4 p-5 rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700/50">
-              <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-2xl bg-green-500 flex items-center justify-center shadow-lg mr-3">
-                  <Banknote size={22} className="text-white" />
-                </div>
-                <div className="flex-1 text-right">
-                  <p className="text-[10px] text-green-600 font-semibold uppercase tracking-wider mb-1">Final Amount</p>
-                  <p className="text-2xl font-bold text-green-700 dark:text-green-300">{fmt(finalAmt)}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-xs">Final Amount</span>
+                      <span className="font-bold text-gray-800 dark:text-gray-200 text-xs">{fmt(finalAmt)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-xs">Stage Since</span>
+                      <span className="font-bold text-gray-800 dark:text-gray-200 text-xs">{fmtRelative(order.updatedAt)}</span>
+                    </div>
+                    {lastComment && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-500 text-xs">Last Comment</span>
+                        <span className="font-bold text-gray-800 dark:text-gray-200 text-xs">{fmtRelative(lastComment.uploadedAt)}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </Section>
-
-          {/* 8. Closed Lost */}
-          {order.salesPipelineStatus === "closedLost" && (order.closedLostArray || []).length > 0 && (
-            <Section
-              icon={<XCircle size={14} className="text-rose-500" />}
-              title="Closed Lost — Reason"
-              accent="from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20"
-              defaultOpen={true}
-            >
-              {order.closedLostArray.map((item, i) => (
-                <div key={i} className="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/50 space-y-2">
-                  <p className="text-sm font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
-                    <AlertTriangle size={13} /> Reason:
-                  </p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{item.reason}</p>
-                  <p className="text-[10px] text-gray-400">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
-                  {item.document && <DocItem docPath={item.document} label="Supporting Document" />}
-                </div>
-              ))}
-            </Section>
           )}
 
-          {/* 9. Pipeline History */}
-          <Section
-            icon={<History size={14} className="text-violet-500" />}
-            title="Pipeline History"
-            accent="from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20"
-            defaultOpen={false}
-            badge={<span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-100 text-violet-700">{(order.salesPipelineLogs || []).length} events</span>}
-          >
-            <div className="space-y-0">
-              {[...(order.salesPipelineLogs || [])].reverse().map((log, i, arr) => {
-                const toS = SALES_STAGE_MAP[log.toStage];
-                const fromLabel = log.fromStage ? (SALES_STAGE_MAP[log.fromStage]?.label || log.fromStage) : "Start";
-                return (
-                  <TimelineItem key={i} dotColor={toS?.headerGrad || "from-gray-400 to-gray-500"} isLast={i === arr.length - 1}>
-                    <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50 hover:shadow-sm transition-all">
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                        {log.fromStage ? `${fromLabel} → ${toS?.label || log.toStage}` : `Started at ${toS?.label || log.toStage}`}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-400 flex-wrap">
-                        <span>By {log.movedBy}</span>
-                        {log.handlerName && <><span>·</span><span>Handler: {log.handlerName}</span></>}
-                        <span>·</span>
-                        <span>{fmtDatetime(log.movedAt)}</span>
-                      </div>
-                    </div>
-                  </TimelineItem>
-                );
-              })}
-            </div>
-          </Section>
+          {activeTab === "comments" && (
+            <CommentsTab order={order} onRefresh={onRefresh} />
+          )}
+
+          {activeTab === "pipeline" && (
+            <PipelineHistoryTab order={order} />
+          )}
+
+
+
+          {activeTab === "documents" && (
+            <DocumentsTab
+              order={order}
+              onRefresh={onRefresh}
+              onPoUploadSuccess={() => setActiveTab("documents")}
+            />
+          )}
+          {activeTab === "codeCreation" && (
+            <CodeCreationTab order={order} onRefresh={onRefresh} />
+          )}
+
         </div>
       </div>
     </div>
   );
 }
-
