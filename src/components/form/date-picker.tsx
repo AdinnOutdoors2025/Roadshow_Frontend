@@ -181,8 +181,8 @@ useEffect(() => {
     static: false,
     monthSelectorType: "static",
     dateFormat: "Y-m-d",
-    defaultDate: value ?? defaultDate,  // plain string, flatpickr handles it correctly
-    minDate: minDate,                   // plain string, no UTC shift
+    defaultDate: value ?? defaultDate,  
+    minDate: minDate,                   
     onChange,
     disableMobile: true,
     appendTo: document.body,

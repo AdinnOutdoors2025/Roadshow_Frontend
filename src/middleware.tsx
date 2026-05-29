@@ -5,7 +5,7 @@ export function middleware(request: NextRequest): NextResponse {
   const token = request.cookies.get("adminToken")?.value;
   const { pathname } = request.nextUrl;
 
-  const protectedPaths: string[] = ["/admin/dashboard"];
+  const protectedPaths: string[] = ["/admin"];
   const authPaths: string[] = ["/signin", "/signup"];
 
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
@@ -31,5 +31,5 @@ export function middleware(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  matcher: ["/", "/admin/dashboard/:path*", "/signin", "/signup"],
+  matcher: ["/", "/admin/:path*", "/signin", "/signup"],
 };

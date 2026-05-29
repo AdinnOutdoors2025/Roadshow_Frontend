@@ -1,13 +1,19 @@
-
+/* eslint-disable */
+// @ts-nocheck
 
 "use client";
 
 import React, { useEffect, useState } from "react";
 import AdminOrderForm from "./AdminOrderForm";
-import { HiOutlineShoppingBag, HiOutlineEye } from "react-icons/hi";
+import { HiOutlineShoppingBag, HiOutlineEye, HiOutlineDocumentText, HiOutlineArrowRight } from "react-icons/hi";
 import { HiOutlinePlus, HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi2";
 import API_BASE from "../../../../../baseurl";
-import { useAuthGuard } from "../../../../utils/useAuthGuard"; 
+import { useAuthGuard } from "../../../../utils/useAuthGuard";
+import { getToken } from "@/utils/auth";
+import { useVehicle } from './../../../../../src/context/vehicletypecontext';
+import OrderPDFView from "./print";
+import OrderDetailDrawer from "./orderdetails";
+import { useRouter } from "next/navigation";
 
 interface BookingItem {
   vehicleModel: string;
@@ -22,6 +28,7 @@ interface BookingItem {
   totalDays: number;
   extraDays?: number;
   extraKm?: number;
+  extraHours?: number;
   subtotal: number;
   gstAmount: number;
   totalAmount: number;
@@ -30,19 +37,33 @@ interface BookingItem {
   toLocation?: string;
   promoterType?: string;
   otherPromoterType?: string;
+  promoterGender?: string;
+  promoterLanguage?: string;
+  promoterQuantity?: number;
   bookingFor?: string;
-  additionalCharges?: {
-    id: string;
-    label: string;
-    amount: number;
-    mode: "+" | "-";
-  }[];
-  additionalFields?: {
-    id: string;
-    label: string;
-    amount: number;
-    mode: "+" | "-";
-  }[];
+  gstNumber?: string;
+  perDayRentalCost?: number;
+  driverCharges?: number;
+  promoterChargePerDay?: number;
+  rtoCharges?: number;
+  additionalHourCharges?: number;
+  rentalCost?: number;
+  driverCost?: number;
+  promoterCost?: number;
+  rtoCost?: number;
+  extraKmCost?: number;
+  extraHourCost?: number;
+  campaignImages?: string[];
+  campaignVideos?: string[];
+  additionalCharges?: { id: string; label: string; amount: number; mode: "+" | "-" }[];
+  additionalFields?: { id: string; label: string; amount: number; mode: "+" | "-" }[];
+  dailyKmcharges?: number
+}
+
+
+interface VehicleType {
+  _id: string;
+  name: string;
 }
 
 interface Order {
@@ -59,9 +80,17 @@ interface Order {
   bookingItems: BookingItem[];
   createdAt: string;
   handlername?: string;
-  grandNegotiationTotal?: number;
-  campaignType?: string
+  campaignType?: number
   grandGst?: number
+  dailyKmcharges?: number
+  customerType: number
+  handlerName?: string;
+  poDocumentLogs?: any[];
+  paymentStageFirst?: any[];
+  negotiationLogs?: any[];
+  grandNegotiationTotal?: number | null;
+  pipelineLogs?: any[];
+
 }
 
 
@@ -98,14 +127,20 @@ const STATUS_CONFIG: Record<string, { color: string; dot: string }> = {
 
 
 
+
 function formatDate(d: string) {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-IN", {
+  return new Date(d).toLocaleString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
   });
 }
+
+
 
 function getDateRange(items: BookingItem[]) {
   if (!items || items.length === 0) return "—";
@@ -134,14 +169,19 @@ function getTotalDays(items: BookingItem[]) {
 
 
 export default function OrdersPage() {
-  
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedpdf, setSelectedpdf] = useState<Order | null>(null);
+  const [selectedpdfWithoutHistory, setSelectedpdfWithoutHistory] = useState<Order | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  // Date filter-க்கு தனி state
+  const [filterFromDate, setFilterFromDate] = useState("");
+  const [filterToDate, setFilterToDate] = useState("");
 
 
   const [filterPipeline, setFilterPipeline] = useState("all");
@@ -149,9 +189,16 @@ export default function OrdersPage() {
   const [searchQ, setSearchQ] = useState("");
   useAuthGuard();
 
-  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
-  const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const router = useRouter();
+
+  const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+
+
+
+  useEffect(() => {
+    fetchVehicleTypes()
+  }, [])
 
   function formatINR(amount: number): string {
     return new Intl.NumberFormat("en-IN", {
@@ -164,7 +211,14 @@ export default function OrdersPage() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(`${API_BASE}admin/orders`);
+      const token = getToken();
+
+      const res = await fetch(`${API_BASE}admin/orders`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -197,16 +251,94 @@ export default function OrdersPage() {
 
 
 
-  const filtered = orders.filter((o) => {
-    const matchPipeline = filterPipeline === "all" || o.pipelineStatus === filterPipeline;
-    const matchStatus = filterStatus === "all" || o.orderStatus === filterStatus;
-    const q = searchQ.trim().toLowerCase();
-    const matchSearch = !q ||
-      (o.orderId || "").toLowerCase().includes(q) ||
-      (o.name || "").toLowerCase().includes(q) ||
-      (o.phone || "").includes(q);
-    return matchPipeline && matchStatus && matchSearch;
-  });
+  // const filtered = orders.filter((o) => {
+  //   const matchPipeline = filterPipeline === "all" || o.pipelineStatus === filterPipeline;
+  //   const matchStatus = filterStatus === "all" || o.orderStatus === filterStatus;
+  //   const q = searchQ.trim().toLowerCase();
+  //   const matchSearch = !q ||
+  //     (o.orderId || "").toLowerCase().includes(q) ||
+  //     (o.name || "").toLowerCase().includes(q) ||
+  //     (o.phone || "").includes(q);
+  //   return matchPipeline && matchStatus && matchSearch;
+  // });
+
+
+const filtered = orders.filter((o) => {
+  const matchPipeline = filterPipeline === "all" || o.pipelineStatus === filterPipeline;
+  const matchStatus = filterStatus === "all" || o.orderStatus === filterStatus;
+  
+  // Enhanced search logic
+  const q = searchQ.trim().toLowerCase();
+  const matchSearch = !q || (() => {
+    // Search by Order ID
+    if ((o.orderId || "").toLowerCase().includes(q)) return true;
+    
+    // Search by Customer Name
+    if ((o.name || "").toLowerCase().includes(q)) return true;
+    
+    // Search by Phone
+    if ((o.phone || "").includes(q)) return true;
+    
+    // Search by Vehicles (vehicle models and types)
+    if (o.bookingItems && o.bookingItems.length > 0) {
+      const vehicleSearchText = o.bookingItems.map(item => 
+        `${item.vehicleModel || ""} ${item.vehicleType || ""}`
+      ).join(" ").toLowerCase();
+      if (vehicleSearchText.includes(q)) return true;
+    }
+    
+    // Search by Duration
+    if (o.bookingItems && o.bookingItems.length > 0) {
+      const durationText = getDateRange(o.bookingItems).toLowerCase();
+      if (durationText.includes(q)) return true;
+      
+      // Also search by total days
+      const totalDays = getTotalDays(o.bookingItems);
+      if (totalDays.toString().includes(q)) return true;
+    }
+    
+    // Search by Location (cities and states)
+    if (o.bookingItems && o.bookingItems.length > 0) {
+      const locationText = o.bookingItems.map(item => 
+        `${item.city || ""} ${item.state || ""}`
+      ).join(" ").toLowerCase();
+      if (locationText.includes(q)) return true;
+    }
+    
+    // Search by Grand Total
+    const displayTotal = o.grandNegotiationTotal && o.grandNegotiationTotal > 0
+      ? o.grandNegotiationTotal
+      : o.grandTotal;
+    
+    if (displayTotal) {
+      // Search in different formats
+      if (displayTotal.toString().includes(q)) return true;
+      if (formatINR(displayTotal).toLowerCase().includes(q)) return true;
+      if (displayTotal.toLocaleString("en-IN").includes(q)) return true;
+    }
+    
+    // Search by Created date
+    if (o.createdAt) {
+      const createdDateText = formatDate(o.createdAt).toLowerCase();
+      if (createdDateText.includes(q)) return true;
+      
+      // Also search by date parts
+      const date = new Date(o.createdAt);
+      const dateFormats = [
+        date.toLocaleDateString("en-IN"),
+        date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+        date.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }),
+        date.toISOString().split('T')[0], // YYYY-MM-DD format
+      ];
+      if (dateFormats.some(format => format.toLowerCase().includes(q))) return true;
+    }
+    
+    return false;
+  })();
+  
+  return matchPipeline && matchStatus && matchSearch;
+});
+
 
   // ── Pagination 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
@@ -275,6 +407,15 @@ export default function OrdersPage() {
                 </p>
               )}
             </div>
+            <button
+              onClick={() => router.push("/admin/order-handling")}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-95 transition-all duration-150"
+            >
+
+              Order Handling
+              <HiOutlineArrowRight className="h-4 w-4 stroke-2" />
+            </button>
+
           </div>
           <button
             onClick={() => setShowForm(true)}
@@ -330,7 +471,7 @@ export default function OrdersPage() {
           {(searchQ || filterPipeline !== "all" || filterStatus !== "all") && (
             <button
               onClick={() => { setSearchQ(""); setFilterPipeline("all"); setFilterStatus("all"); setCurrentPage(1); }}
-              className="text-xs font-medium text-blue-600 hover:underline whitespace-nowrap dark:text-blue-400"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 hover:bg-red-100 transition-colors dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
             >
               Reset filters
             </button>
@@ -348,6 +489,8 @@ export default function OrdersPage() {
             Refresh
           </button>
         </div>
+
+      
 
 
         <div className="p-4 sm:p-6">
@@ -497,18 +640,18 @@ export default function OrdersPage() {
 
 
                           <td className="px-5 py-4">
-                            <p className="font-bold text-gray-900 dark:text-white">
+                            {/* <p className="font-bold text-gray-900 dark:text-white">
                               ₹{displayTotal ? displayTotal.toLocaleString("en-IN") : "—"}
-                            </p>
+                            </p> */}
 
-                            {order.grandNegotiationTotal &&
+                            {/* {order.grandNegotiationTotal &&
                               order.grandNegotiationTotal > 0 &&
-                              order.grandNegotiationTotal !== order.grandTotal && (
-                                <p className="text-[10px] text-gray-400 line-through">
-                                  ₹{formatINR(order.grandTotal)}
-                                </p>
-                              )
-                            }
+                              order.grandNegotiationTotal !== order.grandTotal && ( */}
+                            <p className="text-[13px] text-gray-400">
+                              ₹{formatINR(order.grandTotal)}
+                            </p>
+                            {/* )
+                            } */}
                           </td>
 
 
@@ -531,10 +674,10 @@ export default function OrdersPage() {
                             {formatDate(order.createdAt)}
                           </td>
 
-
-                          <td className="px-5 py-4">
+                          {/* <td className="px-5 py-4">
                             <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity duration-150">
 
+                             
                               <button
                                 onClick={() => setSelectedOrder(order)}
                                 title="View"
@@ -543,27 +686,72 @@ export default function OrdersPage() {
                                 <HiOutlineEye className="h-4 w-4" />
                               </button>
 
+                             
+                              <button
+                                onClick={() => setSelectedpdf(order)}
+                                title="PDF With History"
+                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-green-400 hover:bg-green-50 hover:text-green-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                              >
+                                <HiOutlineDocumentText className="h-4 w-4" />
+                              </button>
 
-                              {/* {order.orderStatus !== "Confirmed" && order.orderStatus !== "Cancelled" && (
+                            
+                              <button
+                                onClick={() => setSelectedpdfWithoutHistory(order)}
+                                title="PDF Without History"
+                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                              >
+                                <HiOutlineDocumentText className="h-4 w-4" />
+                              </button>
+
+                            </div>
+                          </td> */}
+
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity duration-150">
+
+                              {/* View Button */}
+                              <div className="relative group/tooltip">
                                 <button
-                                  onClick={() => setEditingOrder(order)}
-                                  title="Edit"
-                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                  onClick={() => setSelectedOrder(order)}
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
                                 >
-                                  <HiOutlinePencil className="h-4 w-4" />
+                                  <HiOutlineEye className="h-4 w-4" />
                                 </button>
-                              )} */}
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none dark:bg-gray-700">
+                                  View Details
+                                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></span>
+                                </span>
+                              </div>
 
-
-                              {/* {order.orderStatus !== "Confirmed" && (
+                              {/* PDF With History */}
+                              <div className="relative group/tooltip">
                                 <button
-                                  onClick={() => setDeletingOrder(order)}
-                                  title="Delete"
-                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-red-400 hover:bg-red-50 hover:text-red-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                  onClick={() => setSelectedpdf(order)}
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-green-400 hover:bg-green-50 hover:text-green-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
                                 >
-                                  <HiOutlineTrash className="h-4 w-4" />
+                                  <HiOutlineDocumentText className="h-4 w-4" />
                                 </button>
-                              )} */}
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none dark:bg-gray-700">
+                                  PDF With History
+                                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></span>
+                                </span>
+                              </div>
+
+                              {/* PDF Without History */}
+                              <div className="relative group/tooltip">
+                                <button
+                                  onClick={() => setSelectedpdfWithoutHistory(order)}
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                >
+                                  <HiOutlineDocumentText className="h-4 w-4" />
+                                </button>
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none dark:bg-gray-700">
+                                  PDF Without History
+                                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></span>
+                                </span>
+                              </div>
+
                             </div>
                           </td>
                         </tr>
@@ -653,6 +841,36 @@ export default function OrdersPage() {
         <OrderDetailDrawer
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
+          vehicleTypes={vehicleTypes}
+        />
+      )}
+
+      {/* {selectedpdf && (
+        <OrderPDFView
+          order={selectedpdf}
+          onClose={() => setSelectedpdf(null)}
+          vehicleTypes={vehicleTypes}
+
+        />
+      )} */}
+
+
+      {selectedpdf && (
+        <OrderPDFView
+          order={selectedpdf}
+          onClose={() => setSelectedpdf(null)}
+          vehicleTypes={vehicleTypes}
+          showHistory={true}
+        />
+      )}
+
+
+      {selectedpdfWithoutHistory && (
+        <OrderPDFView
+          order={selectedpdfWithoutHistory}
+          onClose={() => setSelectedpdfWithoutHistory(null)}
+          vehicleTypes={vehicleTypes}
+          showHistory={false}
         />
       )}
 
@@ -661,317 +879,3 @@ export default function OrdersPage() {
 }
 
 
-
-function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => void }) {
-  const pipeline = PIPELINE_CONFIG[order.pipelineStatus] || { label: order.pipelineStatus, color: "bg-gray-100 text-gray-500" };
-  const statusCfg = STATUS_CONFIG[order.orderStatus] || { color: "bg-gray-100 text-gray-500", dot: "bg-gray-400" };
-
-  const displayTotal = order.grandNegotiationTotal && order.grandNegotiationTotal > 0
-    ? order.grandNegotiationTotal
-    : order.grandTotal;
-
-
-  function formatINR(amount: number): string {
-    return new Intl.NumberFormat("en-IN", {
-      maximumFractionDigits: 0,
-    }).format(amount);
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-[2px]"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className="w-full max-w-lg h-full overflow-y-auto bg-white shadow-2xl dark:bg-gray-900 flex flex-col animate-in slide-in-from-right duration-200">
-
-        {/* ── Header ── */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
-          <div>
-            <p className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">{order.orderId}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{formatDate(order.createdAt)}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusCfg.color}`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} />
-              {order.orderStatus}
-            </span>
-            <button
-              onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 px-6 py-5 space-y-5">
-
-
-          <section>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Customer</p>
-            <div className="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4 space-y-2.5">
-              {[
-                { label: "Name", val: order.name },
-                { label: "Phone", val: order.phone },
-                { label: "Email", val: order.email || "—" },
-                { label: "Address", val: order.address || "—" },
-              ].map(({ label, val }) => (
-                <div key={label} className="flex justify-between text-sm gap-4">
-                  <span className="text-gray-400 shrink-0">{label}</span>
-                  <span className="font-medium text-gray-800 dark:text-gray-200 text-right">{val}</span>
-                </div>
-              ))}
-
-              <div className="flex justify-between text-sm gap-4 pt-1 border-t border-gray-100 dark:border-gray-700">
-                <span className="text-gray-400 shrink-0">Pipeline</span>
-                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${pipeline.color}`}>
-                  {pipeline.label}
-                </span>
-              </div>
-
-              {order.handlername && (
-                <div className="flex justify-between text-sm gap-4">
-                  <span className="text-gray-400 shrink-0">Handler</span>
-                  <span className="font-medium text-gray-800 dark:text-gray-200">{order.handlername}</span>
-                </div>
-              )}
-
-              {order.isAdminCreated && (
-                <div className="flex justify-between text-sm gap-4">
-                  <span className="text-gray-400 shrink-0">Source</span>
-                  <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">Admin Created</span>
-                </div>
-              )}
-            </div>
-          </section>
-
-
-          <section>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              Vehicles ({order.bookingItems?.length || 0})
-            </p>
-            <div className="space-y-3">
-              {(order.bookingItems || []).map((item, i) => {
-
-                const baseDays = item.fromDate && item.toDate
-                  ? Math.ceil(
-                    (new Date(item.toDate).getTime() - new Date(item.fromDate).getTime()) / 86400000
-                  )
-                  : 0;
-                const extraDays = item.extraDays || 0;
-                const totalDays = baseDays + extraDays;
-
-                const durationLabel =
-                  item.fromDate && item.toDate
-                    ? `${formatDate(item.fromDate)} → ${formatDate(item.toDate)} (${baseDays}d base${extraDays ? ` +${extraDays} extra = ${totalDays}d total` : ""
-                    })`
-                    : "—";
-
-
-                const campaignLabel =
-                  item.campaignType === "Other"
-                    ? item.otherCampaignType || "Other"
-                    : item.campaignType || "—";
-
-
-                const promoterLabel = item.needPromoter
-                  ? `Yes · ${item.promoterType === "Other"
-                    ? item.otherPromoterType || "Other"
-                    : item.promoterType || ""
-                  }`
-                  : "No";
-
-                return (
-                  <div
-                    key={i}
-                    className="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4"
-                  >
-
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600 dark:text-blue-400">
-                        V{i + 1}
-                      </span>
-                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
-                        {item.vehicleModel || "—"}
-                      </p>
-                      {item.vehicleType && (
-                        <span className="text-[10px] text-gray-400">· {item.vehicleType}</span>
-                      )}
-                    </div>
-
-
-                    <div className="space-y-1.5">
-                      {[
-                        { label: "Booking For", val: item.bookingFor || "—" },
-                        { label: "Campaign", val: campaignLabel },
-                        { label: "Duration", val: durationLabel },
-                        { label: "State / City", val: [item.state, item.city].filter(Boolean).join(" / ") || "—" },
-                        { label: "Route", val: item.fromLocation && item.toLocation ? `${item.fromLocation} → ${item.toLocation}` : "—" },
-                        { label: "Quantity", val: item.quantity ?? "—" },
-                        { label: "Promoter", val: promoterLabel },
-                      ].map(({ label, val }) => (
-                        <div key={label} className="flex justify-between text-sm gap-4">
-                          <span className="text-gray-400 shrink-0">{label}</span>
-                          <span className="font-medium text-gray-800 dark:text-gray-200 text-right">{val}</span>
-                        </div>
-                      ))}
-
-
-                      {(item.extraKm ?? 0) > 0 && (
-                        <div className="flex justify-between text-sm gap-4">
-                          <span className="text-gray-400 shrink-0">Extra KM</span>
-                          <span className="font-medium text-gray-800 dark:text-gray-200 text-right">
-                            {item.extraKm}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-
-                    {((item.additionalFields?.length ?? 0) > 0 || (item.additionalCharges?.length ?? 0) > 0) && (
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
-                        <p className="text-[10px] font-semibold uppercase text-gray-400 mb-1">
-                          Additional Charges
-                        </p>
-
-                        {/* {([...(item.additionalFields ?? []), ...(item.additionalCharges ?? [])]).map((c) => (
-                          <div key={c.id} className="flex justify-between text-sm"> */}
-                        {([...(item.additionalFields ?? []), ...(item.additionalCharges ?? [])]).map((c, chargeIdx) => (
-                          <div key={`charge-${chargeIdx}-${c.id}`} className="flex justify-between text-sm">
-                            <span className="text-gray-500">{c.label || "Unnamed"}</span>
-                            <span
-                              className={
-                                c.mode === "+"
-                                  ? "text-green-600 font-medium"
-                                  : "text-red-500 font-medium"
-                              }
-                            >
-                              {c.mode}₹{Number(c.amount).toLocaleString()}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-
-
-
-                    {(item.totalAmount > 0 || item.subtotal > 0) && (
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1.5">
-
-
-                        <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                          <span>Subtotal</span>
-                          <span>₹{formatINR(item.subtotal || 0)}</span>
-                        </div>
-
-
-                        {(item.additionalCharges || [])
-                          .filter((c) => c.mode === "-")
-                          .reduce((s, c) => s + Number(c.amount), 0) > 0 && (
-                            <div className="flex justify-between text-sm text-red-500">
-                              <span>Discount</span>
-                              <span>
-                                -₹{formatINR(
-                                  (item.additionalCharges || [])
-                                    .filter((c) => c.mode === "-")
-                                    .reduce((s, c) => s + Number(c.amount), 0)
-                                )}
-                              </span>
-                            </div>
-                          )}
-
-
-                        <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white">
-                          <span>Total (excl. GST)</span>
-                          <span>₹{formatINR(item.totalAmount || 0)}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-
-
-          {(() => {
-            const bookingItems = order.bookingItems || [];
-
-            const totalDiscount = bookingItems.reduce((s, item) =>
-              s + (item.additionalFields || [])
-                .filter((c) => c.mode === "-")
-                .reduce((a, c) => a + Number(c.amount), 0), 0
-            );
-
-
-            const subTotal = bookingItems.reduce((s, item) => s + (item.subtotal || 0), 0);
-            const Taxableamount = bookingItems.reduce((s, item) => s + (item.subtotal || 0), 0) + totalDiscount
-
-            const totalGst = Math.floor(subTotal * 0.18);
-            const grandTotal = subTotal + totalGst;
-
-            const displayTotal =
-              order.grandNegotiationTotal && order.grandNegotiationTotal > 0
-                ? order.grandNegotiationTotal
-                : order.grandTotal || grandTotal;
-
-            return (
-              <div className="rounded-xl border border-blue-100 bg-blue-50 dark:border-blue-900/30 dark:bg-blue-900/10 p-4 space-y-1.5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-blue-500 mb-2">
-                  Order Total ({bookingItems.length} vehicle{bookingItems.length > 1 ? "s" : ""})
-                </p>
-
-
-                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
-                  <span>Subtotal (excl. GST)</span>
-                  <span>₹{formatINR(Taxableamount)}</span>
-                </div>
-
-
-                {totalDiscount > 0 && (
-                  <div className="flex justify-between text-sm text-red-500">
-                    <span>Discount</span>
-                    <span>-₹{formatINR(totalDiscount)}</span>
-                  </div>
-                )}
-
-
-                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
-                  <span>Taxable Amount</span>
-                  <span>₹{formatINR(subTotal)}</span>
-                </div>
-
-                {/* GST */}
-                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
-                  <span>GST (18%)</span>
-                  <span>₹{formatINR(order.grandGst || totalGst)}</span>
-                </div>
-
-
-                {order.grandNegotiationTotal &&
-                  order.grandNegotiationTotal > 0 &&
-                  order.grandNegotiationTotal !== order.grandTotal && (
-                    <div className="flex justify-between text-sm text-gray-400 line-through">
-                      <span>Original Total</span>
-                      <span>₹{formatINR(order.grandTotal)}</span>
-                    </div>
-                  )}
-
-
-                <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-blue-200 dark:border-blue-900/40 pt-2 mt-1">
-                  <span>Grand Total</span>
-                  <span>₹{formatINR(displayTotal)}</span>
-                </div>
-              </div>
-            );
-          })()}
-
-        </div>
-      </div>
-    </div>
-  );
-}

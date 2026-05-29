@@ -1,4 +1,6 @@
 
+
+
 "use client";
 
 import React, { useState } from "react";
@@ -9,11 +11,17 @@ import VehicleListStep from "./VehicleListStep";
 import OrderSummaryStep from "./OrderSummaryStep";
 import { Customer, PricingPreview } from "../../../../utils/Adminorderapi";
 import API_BASE from "../../../../../baseurl";
+import { getToken } from "@/utils/auth";
+
 export interface CustomerFormData {
   name: string;
   phone: string;
   address: string;
   email?: string;
+  companyName?: string;
+  clientName?: string;
+  designation?: string;
+  gstNumber?: string;
 }
 
 export interface CustomerSelection {
@@ -57,14 +65,24 @@ export interface VehicleConfig {
   gstNumber: string;
   extraHours: number;
   promoterGender: string;
-  promoterLanguage: string;
+  promoterLanguage: string[];
   promoterQuantity: number;
+  dailyKmcharges: any;
 }
 
+export interface GstDetail {
+  gstDetailId: string;
+  gst_number: string;
+  business_name: string;
+}
 export interface OrderState {
   customerForm: CustomerFormData;
   customerSelection: CustomerSelection;
+  customerCategory: "individual" | "organization";
   vehicles: VehicleConfig[];
+  individualForm: CustomerFormData;
+  organizationForm: CustomerFormData;
+  gstDetails: GstDetail[];
 }
 
 const STEPS = [
@@ -74,9 +92,22 @@ const STEPS = [
 ];
 
 const defaultOrder: OrderState = {
-  customerForm: { name: "", phone: "", address: "" },
+  customerForm: {
+    name: "", phone: "", address: "", email: "",
+    companyName: "", clientName: "", designation: "", gstNumber: ""
+  },
   customerSelection: { type: "", customer: null },
+  customerCategory: "individual",
   vehicles: [],
+  individualForm: {
+    name: "", phone: "", address: "", email: ""
+  },
+  organizationForm: {
+    name: "", phone: "", address: "", email: "",
+    companyName: "", clientName: "", designation: "", gstNumber: ""
+  },
+
+  gstDetails: [],
 };
 
 interface Props {
@@ -88,34 +119,42 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
   const [step, setStep] = useState(0);
   const [order, setOrder] = useState<OrderState>(defaultOrder);
   const [submitting, setSubmitting] = useState(false);
+  const [gstVerified, setGstVerified] = useState(false);
+
+  console.log("order", order)
 
   const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
-
 
   const handleSubmit = async () => {
     const { customerSelection, vehicles } = order;
     if (!customerSelection.customer) return;
     try {
       setSubmitting(true);
-
+      const token = getToken();
       const formData = new FormData();
-      formData.append("customerName", order.customerForm.name);
+      // gstVerifyDetails append
+      formData.append(
+        "gstVerifyDetails",
+        JSON.stringify(
+          order.gstDetails.map((g) => ({
+            gstDetailId: g.gstDetailId,
+            gst_number: g.gst_number,
+            business_name: g.business_name,
+          }))
+        )
+      );
+
+      formData.append("customerName", order.customerForm.name || order.customerForm.clientName || "");
       formData.append("customerPhone", order.customerForm.phone);
-      formData.append("customerAddress", order.customerForm.address);
+      formData.append("customerAddress", order.customerForm.address || "");
       formData.append("customerEmail", order.customerForm.email || "");
-      const customerType = order.customerSelection.type === "existing" ? 0 : 1;
-      formData.append("customerType", String(customerType));
-
-     
-      const taxableAmount = vehicles.reduce((s, v) => s + (v.pricing?.subtotal || 0), 0);
-
-      const grandGst = Math.floor(taxableAmount * 0.18);
-      const grandTotal = taxableAmount + grandGst;
-
-
-      formData.append("grandTotal", String(grandTotal));
-      formData.append("grandGst", String(grandGst));
+      formData.append("customerCategory", order.customerCategory);
+      formData.append("customerType", order.customerCategory === "individual" ? "0" : "1");
+      formData.append("companyName", order.customerForm.companyName || "");
+      formData.append("clientName", order.customerForm.clientName || "");
+      formData.append("designation", order.customerForm.designation || "");
+      formData.append("gstNumber", order.customerForm.gstNumber || "");
 
       vehicles.forEach((v, i) => {
         const vData = {
@@ -145,23 +184,6 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
             mode: c.mode,
             amount: c.amount,
           })),
-          pricing: v.pricing
-            ? {
-              totalDays: v.pricing.totalDays,
-              dailyKmLimit: v.pricing.dailyKmLimit,
-              rentalCost: v.pricing.rentalCost,
-              driverCost: v.pricing.driverCost,
-              promoterCost: v.pricing.promoterCost,
-              rtoCost: v.pricing.rtoCost,
-              extraKmCost: (v.pricing as any).extraKmCost || 0,
-              extraHourCost: (v.pricing as any).extraHourCost || 0,
-              additionalNet: (v.pricing as any).additionalNet || 0,
-              additionalCuts: (v.pricing as any).additionalCuts || 0,
-              subtotal: v.pricing.subtotal,
-              taxableAmount: v.pricing.taxableAmount,
-              totalAmount: v.pricing.totalAmount,
-            }
-            : null,
         };
 
         formData.append(`vehicle_${i}`, JSON.stringify(vData));
@@ -177,10 +199,11 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
       const res = await fetch(`${API_BASE}admin/orders/create`, {
         method: "POST",
         body: formData,
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed");
-      onSuccess(data.orderId);
+      onSuccess(data.data.orderId);
     } catch (err: any) {
       alert(err.message || "Failed to create order");
     } finally {
@@ -189,41 +212,42 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
   };
 
 
+  const displayName =
+    order.customerCategory === "individual"
+      ? order.customerForm.name
+      : order.customerForm.clientName ?? "";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-2" >
-      <div className="relative w-full max-w-3xl max-h-[80vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2">
+      <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
 
-
+        {/* Header */}
         <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
           <div className="flex items-center justify-between mb-4">
-
-
             <div>
               <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
                 Create Admin Order
               </h2>
-
               {order.customerSelection.customer && (
                 <p className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
                   <HiOutlineUser size={16} className="inline-block text-gray-500" />
-
-                  <span className="font-medium text-blue-600">
-                    {order.customerForm.name}
-                  </span>
-
+                  <span className="font-medium text-blue-600">{displayName}</span>
                   {" · "}
-
                   <HiOutlinePhone size={16} className="inline-block text-gray-500" />
-
                   {order.customerForm.phone}
                 </p>
               )}
             </div>
-            <button onClick={onClose} disabled={submitting} className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+            <button
+              onClick={onClose}
+              disabled={submitting}
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+            >
               <IoMdClose />
             </button>
           </div>
 
+          {/* Step indicator */}
           <div className="flex items-center">
             {STEPS.map((s, i) => {
               const Icon = s.icon;
@@ -232,15 +256,34 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
               return (
                 <React.Fragment key={i}>
                   <div className="flex flex-col items-center min-w-0">
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-full transition-all ${isDone ? "bg-blue-600 text-white" : isActive ? "bg-blue-600 text-white ring-4 ring-blue-100 dark:ring-blue-900/40" : "bg-gray-100 text-gray-400 dark:bg-gray-800"}`}>
-                      {isDone
-                        ? <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                        : <Icon className="h-4 w-4" />}
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-full transition-all ${isDone
+                        ? "bg-blue-600 text-white"
+                        : isActive
+                          ? "bg-blue-600 text-white ring-4 ring-blue-100 dark:ring-blue-900/40"
+                          : "bg-gray-100 text-gray-400 dark:bg-gray-800"
+                        }`}
+                    >
+                      {isDone ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <Icon className="h-4 w-4" />
+                      )}
                     </div>
-                    <span className={`mt-1 text-[10px] font-medium hidden sm:block whitespace-nowrap ${isActive ? "text-blue-600" : isDone ? "text-blue-400" : "text-gray-400"}`}>{s.label}</span>
+                    <span
+                      className={`mt-1 text-[10px] font-medium hidden sm:block whitespace-nowrap ${isActive ? "text-blue-600" : isDone ? "text-blue-400" : "text-gray-400"
+                        }`}
+                    >
+                      {s.label}
+                    </span>
                   </div>
                   {i < STEPS.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-1 mb-4 rounded transition-all ${i < step ? "bg-blue-500" : "bg-gray-200 dark:bg-gray-700"}`} />
+                    <div
+                      className={`flex-1 h-0.5 mx-1 mb-4 rounded transition-all ${i < step ? "bg-blue-500" : "bg-gray-200 dark:bg-gray-700"
+                        }`}
+                    />
                   )}
                 </React.Fragment>
               );
@@ -248,16 +291,113 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
           </div>
         </div>
 
-
+        {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {step === 0 && (
+          {/* {step === 0 && (
             <CustomerDetailsStep
+
+              gstDetails={order.gstDetails}
+              onGstVerified={(detail) =>
+                setOrder((p) => ({
+                  ...p,
+                  gstDetails: [
+                    ...p.gstDetails.filter(g => g.gst_number !== detail.gst_number),
+                    detail,
+                  ],
+                }))
+              }
               data={order.customerForm}
               customerSelection={order.customerSelection}
-              // customerForm={order.customerForm}
-              onChange={(d) => setOrder((p) => ({ ...p, customerForm: { ...p.customerForm, ...d } }))}
-              onCustomerChange={(d) => setOrder((p) => ({ ...p, customerSelection: { ...p.customerSelection, ...d } }))}
+              onChange={(d) =>
+                setOrder((p) => ({ ...p, customerForm: { ...p.customerForm, ...d } }))
+              }
+              onCustomerChange={(d) =>
+                setOrder((p) => ({ ...p, customerSelection: { ...p.customerSelection, ...d } }))
+              }
               onNext={next}
+              customerCategory={order.customerCategory}
+
+              onCategoryChange={(cat) =>
+                setOrder((p) => {
+                  const updatedIndividual =
+                    p.customerCategory === "individual" ? p.customerForm : p.individualForm;
+                  const updatedOrganization =
+                    p.customerCategory === "organization" ? p.customerForm : p.organizationForm;
+
+
+                  const nextForm =
+                    cat === "individual" ? updatedIndividual : updatedOrganization;
+
+                  return {
+                    ...p,
+                    customerCategory: cat,
+                    customerForm: nextForm,
+                    individualForm: updatedIndividual,
+                    organizationForm: updatedOrganization,
+                    customerSelection: { type: "", customer: null },
+                  };
+                })
+
+                
+              }
+            />
+
+          )} */}
+
+          {step === 0 && (
+            <CustomerDetailsStep
+              gstDetails={order.gstDetails}
+              // onGstVerified={(detail) =>
+              //   setOrder((p) => ({
+              //     ...p,
+              //     gstDetails: [
+              //       ...p.gstDetails.filter(g => g.gst_number !== detail.gst_number),
+              //       detail,
+              //     ],
+              //   }))
+              // }
+              onGstVerified={(detail) =>
+                setOrder((p) => ({
+                  ...p,
+                  gstDetails: [detail],
+                }))
+              }
+              onGstDetailsReset={() =>
+                setOrder((p) => ({ ...p, gstDetails: [] }))
+              }
+              gstVerified={gstVerified}
+              onGstVerifiedChange={(val) => setGstVerified(val)}
+              data={order.customerForm}
+              customerSelection={order.customerSelection}
+              onChange={(d) =>
+                setOrder((p) => ({ ...p, customerForm: { ...p.customerForm, ...d } }))
+              }
+              onCustomerChange={(d) =>
+                setOrder((p) => ({ ...p, customerSelection: { ...p.customerSelection, ...d } }))
+              }
+              onNext={next}
+              customerCategory={order.customerCategory}
+              onCategoryChange={(cat) => {
+                setOrder((p) => {
+                  const updatedIndividual =
+                    p.customerCategory === "individual" ? p.customerForm : p.individualForm;
+                  const updatedOrganization =
+                    p.customerCategory === "organization" ? p.customerForm : p.organizationForm;
+
+                  const nextForm =
+                    cat === "individual" ? updatedIndividual : updatedOrganization;
+
+                  return {
+                    ...p,
+                    customerCategory: cat,
+                    customerForm: nextForm,
+                    individualForm: updatedIndividual,
+                    organizationForm: updatedOrganization,
+                    customerSelection: { type: "", customer: null },
+                  };
+                });
+                setGstVerified(false);
+              }}
             />
           )}
           {step === 1 && (
