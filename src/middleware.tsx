@@ -1,3 +1,40 @@
+// import { NextResponse } from "next/server";
+// import type { NextRequest } from "next/server";
+
+// export function middleware(request: NextRequest): NextResponse {
+//   const token = request.cookies.get("adminToken")?.value;
+//   const { pathname } = request.nextUrl;
+
+//   const protectedPaths: string[] = ["/admin/dashboard"];
+//   const authPaths: string[] = ["/signin", "/signup"];
+
+//   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
+//   const isAuthPage = authPaths.some((p) => pathname.startsWith(p));
+
+
+//   if (pathname === "/") {
+//     if (!token) {
+//       return NextResponse.redirect(new URL("/signin", request.url));
+//     }
+//     return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+//   }
+
+//   if (isProtected && !token) {
+//     return NextResponse.redirect(new URL("/signin", request.url));
+//   }
+
+//   if (isAuthPage && token) {
+//     return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+//   }
+
+//   return NextResponse.next();
+// }
+
+// export const config = {
+//   matcher: ["/", "/admin/dashboard/:path*", "/signin", "/signup"],
+// };
+
+// src/middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -5,25 +42,26 @@ export function middleware(request: NextRequest): NextResponse {
   const token = request.cookies.get("adminToken")?.value;
   const { pathname } = request.nextUrl;
 
-  const protectedPaths: string[] = ["/admin"];
-  const authPaths: string[] = ["/signin", "/signup"];
+  const adminAuthPaths = ["/admin/signin", "/admin/signup"];
 
-  const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
-  const isAuthPage = authPaths.some((p) => pathname.startsWith(p));
-
-
-  if (pathname === "/") {
-    if (!token) {
-      return NextResponse.redirect(new URL("/signin", request.url));
+  // /admin exact → redirect based on token
+  if (pathname === "/admin") {
+    if (token) {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    } else {
+      return NextResponse.redirect(new URL("/admin/signin", request.url));
     }
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
   }
 
-  if (isProtected && !token) {
-    return NextResponse.redirect(new URL("/signin", request.url));
+  const isAdminRoute = pathname.startsWith("/admin");
+  const isProtectedAdminRoute =
+    isAdminRoute && !adminAuthPaths.some((p) => pathname.startsWith(p));
+
+  if (isProtectedAdminRoute && !token) {
+    return NextResponse.redirect(new URL("/admin/signin", request.url));
   }
 
-  if (isAuthPage && token) {
+  if (token && adminAuthPaths.some((p) => pathname.startsWith(p))) {
     return NextResponse.redirect(new URL("/admin/dashboard", request.url));
   }
 
@@ -31,5 +69,5 @@ export function middleware(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  matcher: ["/", "/admin/:path*", "/signin", "/signup"],
+  matcher: ["/", "/admin", "/admin/:path*"],  // ← added "/admin" here
 };
