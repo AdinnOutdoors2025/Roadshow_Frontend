@@ -1,9 +1,16 @@
 import GridShape from "@/components/common/GridShape";
+import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
-export default function NotFound() {
+export const metadata: Metadata = {
+  title: "Next.js Error 404 | Adinn - Next.js Dashboard Template",
+  description:
+    "This is Next.js Error 404 page for Adinn - Next.js Tailwind CSS Admin Dashboard Template",
+};
+
+export default function Error404() {
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen p-6 overflow-hidden z-1">
       <GridShape />
@@ -28,7 +35,7 @@ export default function NotFound() {
         />
 
         <p className="mt-10 mb-6 text-base text-gray-700 dark:text-gray-400 sm:text-lg">
-          Weeee can’t seem to find the page you are looking for!
+          We can’t seem to find the page you are looking for!
         </p>
 
         <Link
