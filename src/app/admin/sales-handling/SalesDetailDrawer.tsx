@@ -28,6 +28,7 @@ import {
 } from "react-icons/fi";
 import CodeCreationTab from "./CodeCreationTab";
 
+
 // ── Formatters ────────────────────────────────────────────────────────────────
 const fmt = (n?: number | null) =>
   n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
@@ -365,6 +366,7 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
 
 
 import { useVehicle } from '../../../context/vehicletypecontext';
+import PipelineHistoryTab from "./PipelineHistoryTab";
 
 function OverviewTab({
   order, onRefresh, onStageMove,
@@ -373,6 +375,12 @@ function OverviewTab({
   onStageMove: (order: SalesOrder, toStage: string) => void;
 }) {
   const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+
+  const [openItems, setOpenItems] = useState<Record<number, boolean>>({});
+
+  const toggleItem = (idx: number) => {
+  setOpenItems(prev => ({ ...prev, [idx]: !prev[idx] }));
+};
 
   useEffect(() => {
     fetchVehicleTypes()
@@ -473,38 +481,41 @@ function OverviewTab({
         const p = v.pricing;
         const totalVehicleCount = v.quantity;
 
-        return (
-          <div key={v.id} className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
-            {/* Header with Vehicle Count Badge */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600">
-                  {idx + 1}
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                    {getVehicleTypeName(v.vehicleType)}
-                  </p>
-                </div>
+    return (
+          <div key={idx} className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+           
+            <button
+              type="button"
+              onClick={() => setOpenItems(prev => ({ ...prev, [idx]: !prev[idx] }))}
+              className="w-full flex items-center gap-3 p-4 bg-white dark:bg-gray-900 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all"
+            >
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600 flex-shrink-0">
+                {idx + 1}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                  {getVehicleTypeName(v.vehicleType)}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {v.campaignType === "Other" ? v.otherCampaignType : v.campaignType}
+                </p>
               </div>
-
-
               <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
-                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-                <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
-                  {totalVehicleCount}
-                </span>
+                <span className="text-sm font-bold text-blue-700 dark:text-blue-300">{totalVehicleCount}</span>
                 <span className="text-xs text-blue-600 dark:text-blue-400">
                   {totalVehicleCount === 1 ? "Vehicle" : "Vehicles"}
                 </span>
               </div>
-            </div>
+              <ChevronDown
+                size={16}
+                className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openItems[idx] ? "rotate-180" : ""}`}
+              />
+            </button>
 
+            {openItems[idx] && (
+            <div className="border-t border-gray-100 dark:border-gray-700 p-4 space-y-3">
 
-            <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">
-              {(
+            <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">              {(
                 [
                   ["Booking For", order.customerCategory],
                   ["Campaign", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType],
@@ -539,7 +550,6 @@ function OverviewTab({
               </p>
               <div className="space-y-2">
 
-                {/* Rental */}
                 {v.rentalCost > 0 && (
                   <div className="flex justify-between items-center py-1">
                     <span className="text-gray-600 dark:text-gray-400 text-sm">
@@ -551,7 +561,7 @@ function OverviewTab({
                   </div>
                 )}
 
-                {/* Promoter */}
+           
                 {(v.promoterCost ?? 0) > 0 && (
                   <div className="flex justify-between items-center py-1">
                     <span className="text-gray-600 dark:text-gray-400 text-sm">
@@ -563,7 +573,7 @@ function OverviewTab({
                   </div>
                 )}
 
-                {/* RTO */}
+         
                 {(v.rtoCost ?? 0) > 0 && (
                   <div className="flex justify-between items-center py-1">
                     <span className="text-gray-600 dark:text-gray-400 text-sm">RTO Charges</span>
@@ -573,7 +583,7 @@ function OverviewTab({
                   </div>
                 )}
 
-                {/* Extra KM */}
+              
                 {(v.extraKmCost ?? 0) > 0 && (
                   <div className="flex justify-between items-center py-1">
                     <span className="text-gray-600 dark:text-gray-400 text-sm">
@@ -585,7 +595,7 @@ function OverviewTab({
                   </div>
                 )}
 
-                {/* Extra Hours */}
+             
                 {(v.extraHourCost ?? 0) > 0 && (
                   <div className="flex justify-between items-center py-1">
                     <span className="text-gray-600 dark:text-gray-400 text-sm">
@@ -597,7 +607,7 @@ function OverviewTab({
                   </div>
                 )}
 
-                {/* Additional Charges */}
+             
                 {(v.additionalCharges || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
                   <div key={fIdx} className="flex justify-between items-center py-1">
                     <span className={c.mode === "-" ? "text-red-500 text-sm" : "text-gray-600 dark:text-gray-400 text-sm"}>
@@ -610,7 +620,7 @@ function OverviewTab({
                   </div>
                 ))}
 
-                {/* Subtotal + Total */}
+             
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
                   <div className="flex justify-between items-center py-1">
                     <span className="text-gray-700 dark:text-gray-300 font-semibold text-sm">Subtotal</span>
@@ -630,6 +640,8 @@ function OverviewTab({
             </div>
 
 
+        </div>
+            )}
           </div>
         );
       })}
@@ -668,12 +680,6 @@ function OverviewTab({
                 <td colSpan={2} className="py-2 text-gray-500 font-medium">Subtotal (Excl. GST)</td>
                 <td className="py-2 text-right font-bold text-gray-800 dark:text-gray-200">{fmt(subtotal)}</td>
               </tr>
-              {totalNegotiated > 0 && (
-                <tr>
-                  <td colSpan={2} className="py-1.5 text-red-500">Discount</td>
-                  <td className="py-1.5 text-right font-bold text-red-500">−{fmt(totalNegotiated)}</td>
-                </tr>
-              )}
               <tr>
                 <td colSpan={2} className="py-1.5 text-gray-500">Taxable Amount</td>
                 <td className="py-1.5 text-right font-bold text-gray-800 dark:text-gray-200">{fmt(taxable)}</td>
@@ -907,97 +913,6 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
   );
 }
 
-function TimelineItem({
-  children,
-  dotColor,
-  isLast,
-}: {
-  children: React.ReactNode;
-  dotColor: string;
-  isLast: boolean;
-}) {
-  return (
-    <div className="flex items-start gap-3 relative">
-      {/* Vertical line */}
-      {!isLast && (
-        <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-gray-100 dark:bg-gray-700" />
-      )}
-      {/* Dot */}
-      <div
-        className={`w-8 h-8 rounded-full bg-gradient-to-br ${dotColor} flex-shrink-0 flex items-center justify-center mt-0.5 relative z-10`}
-      >
-        <div className="w-2.5 h-2.5 rounded-full bg-white/70" />
-      </div>
-      {/* Content */}
-      <div className="flex-1 pb-4">{children}</div>
-    </div>
-  );
-}
-
-
-
-function PipelineHistoryTab({ order }: { order: SalesOrder }) {
-  const logs = [...(order.salesPipelineLogs || [])].reverse();
-
-  return (
-    <div className="p-4 space-y-3">
-      {/* Header badge */}
-      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border border-violet-100 dark:border-violet-800/50">
-        <History size={14} className="text-violet-500" />
-        <span className="text-sm font-bold text-violet-700 dark:text-violet-300">
-          Pipeline History
-        </span>
-        <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">
-          {logs.length} events
-        </span>
-      </div>
-
-      {/* Timeline */}
-      {logs.length === 0 ? (
-        <div className="text-center py-10 text-gray-400 text-sm">
-          No pipeline history yet
-        </div>
-      ) : (
-        <div className="space-y-0 pt-2">
-          {logs.map((log, i) => {
-            const toS = SALES_STAGE_MAP[log.toStage];
-            const fromLabel = log.fromStage
-              ? SALES_STAGE_MAP[log.fromStage]?.label || log.fromStage
-              : "Start";
-            const dotColor = toS?.headerGrad || "from-gray-400 to-gray-500";
-
-            return (
-              <TimelineItem
-                key={i}
-                dotColor={dotColor}
-                isLast={i === logs.length - 1}
-              >
-                <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50 hover:shadow-sm transition-all">
-                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                    {log.fromStage
-                      ? `${fromLabel} → ${toS?.label || log.toStage}`
-                      : `Started at ${toS?.label || log.toStage}`}
-                  </p>
-                  <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-400 flex-wrap">
-                    <span>By {log.movedBy}</span>
-                    {log.handlerName && (
-                      <>
-                        <span>·</span>
-                        <span>Handler: {log.handlerName}</span>
-                      </>
-                    )}
-                    <span>·</span>
-                    <span>{fmtDatetime(log.movedAt)}</span>
-                  </div>
-                </div>
-              </TimelineItem>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ════════════════════════════════════════════════════════════════════════════
 // ── DOCUMENTS TAB ─────────────────────────────────────────────────────────────
@@ -1153,18 +1068,11 @@ export default function SalesDetailDrawer({
 
   const isPoStage = ["closedWon", "projectCodeCreation"].includes(order.salesPipelineStatus);
 
-  // const tabs: { key: Tab; label: string }[] = [
-  //   { key: "overview", label: "Overview" },
-  //   { key: "comments", label: "Comments" },
-  //   { key: "pipeline", label: "Pipeline History" },
-  //   { key: "documents",  label: isPoStage ? "PO Document": "" },
-  // ];
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: "Overview" },
     { key: "comments", label: "Comments" },
     { key: "pipeline", label: "Pipeline History" },
-    // { key: "codeCreation", label: "Code Creation" },
     { key: "documents", label: isPoStage ? "PO Document" : "" },
     ...(order.salesPipelineStatus === "projectCodeCreation"
       ? [{ key: "codeCreation" as Tab, label: "Code Creation" }]
@@ -1207,8 +1115,8 @@ export default function SalesDetailDrawer({
               <div className="flex items-center gap-2 text-[11px] text-gray-400 mt-0.5">
                 <span className="font-mono">{order.orderId}</span>
                 <span>·</span>
-                <Clock size={10} />
-                <span>{fmtDatetime(order.updatedAt)}</span>
+                {/* <Clock size={10} />
+                <span>{fmtDatetime(order.updatedAt)}</span> */}
               </div>
             </div>
 
@@ -1314,7 +1222,7 @@ export default function SalesDetailDrawer({
                     </div>
                   )}
                   {order.updatedAt && (
-                    <p className="text-[10px] text-gray-400 mt-2">
+                    <p className="text-[12px] text-gray-400 mt-2">
                       Updated On<br />
                       {fmtDatetime(order.updatedAt)} ({fmtRelative(order.updatedAt)})
                     </p>

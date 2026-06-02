@@ -920,3 +920,4 @@ function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
         </div>
     );
 }
+

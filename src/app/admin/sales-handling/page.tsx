@@ -58,7 +58,7 @@ export const SALES_STAGES = [
     color: "text-slate-700",
     bg: "bg-slate-100",
     dot: "bg-slate-500",
-    headerGrad: "from-slate-500 to-slate-600",
+    headerGrad: "from-slate-400 to-slate-400",
     icon: FiClipboard,
     step: 1,
   },
@@ -68,7 +68,7 @@ export const SALES_STAGES = [
     color: "text-blue-700",
     bg: "bg-blue-50",
     dot: "bg-blue-500",
-    headerGrad: "from-blue-500 to-blue-600",
+    headerGrad: "from-blue-400 to-blue-400",
     icon: FiSearch,
     step: 2,
   },
@@ -78,7 +78,7 @@ export const SALES_STAGES = [
     color: "text-violet-700",
     bg: "bg-violet-50",
     dot: "bg-violet-500",
-    headerGrad: "from-violet-500 to-violet-600",
+    headerGrad: "from-violet-400 to-violet-400",
     icon: FiFileText,
     step: 3,
   },
@@ -88,7 +88,7 @@ export const SALES_STAGES = [
     color: "text-amber-700",
     bg: "bg-amber-50",
     dot: "bg-amber-500",
-    headerGrad: "from-amber-500 to-amber-600",
+    headerGrad: "from-amber-400 to-amber-400",
     icon: FiRepeat,
     step: 4,
   },
@@ -98,7 +98,7 @@ export const SALES_STAGES = [
     color: "text-green-700",
     bg: "bg-green-50",
     dot: "bg-green-500",
-    headerGrad: "from-green-500 to-green-600",
+    headerGrad: "from-green-400 to-green-400",
     icon: FiCheckCircle,
     step: 5,
   },
@@ -108,7 +108,7 @@ export const SALES_STAGES = [
     color: "text-teal-700",
     bg: "bg-teal-50",
     dot: "bg-teal-500",
-    headerGrad: "from-teal-500 to-teal-600",
+    headerGrad: "from-teal-400 to-teal-400",
     icon: FiCode,
     step: 6,
   },
@@ -118,7 +118,7 @@ export const SALES_STAGES = [
     color: "text-rose-700",
     bg: "bg-rose-50",
     dot: "bg-rose-500",
-    headerGrad: "from-rose-500 to-rose-600",
+    headerGrad: "from-rose-400 to-rose-400",
     icon: FiXCircle,
     step: 7,
   },
@@ -156,7 +156,7 @@ function SalesOrderCard({
   const stage = SALES_STAGE_MAP[stageKey];
   const displayAmt = order.grandTotal;
 
-  const { date, time } = fmtDate(order.updatedAt);
+  const { date, time } = fmtDate(order.createdAt);
 
   const custBadge =
     order.customerType === 1
@@ -198,16 +198,7 @@ function SalesOrderCard({
         {fmt(displayAmt)}
       </p>
 
-      {/* Negotiated badge 
-      {totalNegotiated > 0 && (
-        <div className="flex items-center gap-1 mb-2">
-          <TrendingUp size={11} className="text-amber-500" />
-          <span className="text-[10px] text-amber-600 font-medium">
-            -{fmt(totalNegotiated)} negotiated
-          </span>
-        </div>
-      )}
-        */}
+
 
       {/* Footer */}
       <div className="flex items-center justify-between">
@@ -220,11 +211,11 @@ function SalesOrderCard({
           <span />
         )}
         <div className="flex flex-col items-end shrink-0 ml-2">
-          <span className="text-[10px] text-gray-400 leading-none mb-0.5">
-            Updated
+          <span className="text-[12px] text-gray-400 leading-none mb-0.5">
+            Created At
           </span>
-          <span className="text-[10px] text-gray-500 whitespace-nowrap">{date}</span>
-          <span className="text-[10px] text-gray-500 flex items-center gap-1 whitespace-nowrap">
+          <span className="text-[11px] text-gray-500 whitespace-nowrap">{date}</span>
+          <span className="text-[11px] text-gray-500 flex items-center gap-1 whitespace-nowrap">
             <Clock size={10} />
             {time}
           </span>
@@ -249,6 +240,11 @@ function SalesStageColumn({
   onCardClick: (order: SalesOrder) => void;
 }) {
   const StageIcon = stage.icon;
+
+  const stageTotal = orders.reduce((sum, o) => sum + (o.grandTotal || 0), 0);
+  const fmtTotal = stageTotal > 0
+    ? `₹${stageTotal.toLocaleString("en-IN")}`
+    : null;
   return (
     <div
       className="flex flex-col w-56 flex-shrink-0"
@@ -266,9 +262,19 @@ function SalesStageColumn({
             {stage.label}
           </span>
         </div>
-        <span className="ml-1 flex-shrink-0 text-xs font-bold px-1.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
-          {orders.length}
-        </span>
+
+
+        <div className="flex items-center gap-1.5 flex-shrink-0 ml-1">
+          {fmtTotal && (
+            <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+              {fmtTotal}
+            </span>
+          )}
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+            {orders.length}
+          </span>
+        </div>
+
       </div>
 
       {/* Cards */}
@@ -300,7 +306,9 @@ export default function SalesPipelineBoard() {
   const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState<number>(1);
   const [staffAdmins, setStaffAdmins] = useState<{ username: string }[]>([]);
   const [saving, setSaving] = useState(false);
- 
+
+  console.log("currentUserIsAdmin",currentUserIsAdmin)
+
   const [closedWonWarningModal, setClosedWonWarningModal] = useState<SalesOrder | null>(null);
   const [pendingProjectCodeOrder, setPendingProjectCodeOrder] = useState<SalesOrder | null>(null);
 
@@ -443,13 +451,13 @@ export default function SalesPipelineBoard() {
     //   return;
     // }
 
-  
+
     if (fromStage === "closedLost") {
       toast.error("This order is closed lost and cannot be moved.");
       return;
     }
 
-   
+
     if (fromStage === "closedWon" && toStage !== "projectCodeCreation") {
       toast.error("Closed Won order can only move to Project Code Creation.");
       return;
@@ -465,7 +473,19 @@ export default function SalesPipelineBoard() {
     }
 
 
+    // if (toStage === "needAnalysis" && !order.salesHandlerName) {
+    //   setHandlerName("");
+    //   setHandlerError("");
+    //   setHandlerModal(order);
+    //   return;
+    // }
+
     if (toStage === "needAnalysis" && !order.salesHandlerName) {
+      if (currentUserIsAdmin === 0) {
+        commitMove(order, "needAnalysis");
+        return;
+      }
+     
       setHandlerName("");
       setHandlerError("");
       setHandlerModal(order);
@@ -488,7 +508,7 @@ export default function SalesPipelineBoard() {
       return;
     }
 
-   
+
     if (
       toStage === "projectCodeCreation" &&
       ["needAnalysis", "proposalPriceQuote", "negotiationReview"].includes(fromStage)
@@ -498,7 +518,7 @@ export default function SalesPipelineBoard() {
       return;
     }
 
-    
+
     // if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
     //   setEmailFrom("");
     //   setEmailTo("");
@@ -507,10 +527,10 @@ export default function SalesPipelineBoard() {
     //   return;
     // }
 
-if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
-  commitMove(order, toStage);
-  return;
-}
+    if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
+      commitMove(order, toStage);
+      return;
+    }
 
     commitMove(order, toStage);
   };
@@ -833,7 +853,7 @@ if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
             <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-2">
               You need to complete the Closed Won stage
             </h2>
-            <p className="text-center text-xs text-gray-400 mb-5">
+            <p className="text-center text-sm text-gray-400 mb-5">
               Before moving to Project Code Creation, the Closed Won stage must be completed. Do you want to mark it as Closed Won now?
             </p>
             <div className="flex gap-3">
@@ -864,8 +884,8 @@ if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
       )}
 
 
-    
-  
+
+
       {/* ── Closed Lost Modal ── */}
       {closedLostModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
