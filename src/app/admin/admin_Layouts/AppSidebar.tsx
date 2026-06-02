@@ -63,7 +63,7 @@ const navItems: NavItem[] = [
     {
     icon: <GridIcon />,
     name: "Order Handling",
-    subItems: [{ name: "Order Handling", path: "/admin/order-handling", pro: false },{ name: "Sales Handling", path: "/admin/sales-handling", pro: false },{ name: "Operation Handling", path: "/admin/operation-handling", pro: false }],
+    subItems: [{ name: "Sales Handling", path: "/admin/sales-handling", pro: false },{ name: "Operation Handling", path: "/admin/operation-handling", pro: false }],
     
   },
   // {
