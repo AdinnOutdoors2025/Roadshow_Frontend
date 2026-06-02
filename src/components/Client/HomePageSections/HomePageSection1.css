@@ -1,0 +1,222 @@
+* {
+  font-family: Outfit;
+}
+
+.OffersHeading {
+  font-weight: 400;
+  font-size: 66px;
+  color: #000000;
+}
+
+.OffersHeadingMain {
+  background: #E8E8E8;
+  padding: 20px 80px;
+}
+
+.OffersCardsMain {
+  background: #161617;
+  padding: 20px 0;
+  width: 100%;
+}
+
+
+/* ══════════════════════════════
+   OFFERS SECTION
+══════════════════════════════ */
+.OffersSection {
+  font-family: Outfit;
+  padding: 40px 0;
+  overflow: hidden;
+}
+
+
+.OffersHeadImg {
+  width: 150px;
+  height: auto;
+  position: relative;
+}
+
+/* ── Spinning % badge ── */
+.OffersBadge {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #7057C3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.OffersHeadImgContainer {
+  position: relative;
+}
+
+.OffersBadgeContent {
+  position: absolute;
+  font-family: Rubik;
+  font-weight:bolder;
+  font-size: 40px;
+  color: #FFFFFF;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.OffersBadgeText {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-block;
+  animation: badgeTextCounter 3s linear infinite;
+  position: relative
+}
+
+
+
+@keyframes badgeTextCounter {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* ── Strip container — dark bg, full width ── */
+.OffersStrip {
+  width: 100%;
+  background: #1a1a1a;
+  padding: 16px 30px;
+  overflow: hidden;
+  /* Fade edges */
+  /* -webkit-mask-image: linear-gradient( 90deg,transparent 0%,#000 6%, #000 94%, transparent 100% );
+  mask-image: linear-gradient( 90deg, transparent 0%, #000 6%, #000 94%,transparent 100% ); */
+  align-items: center;
+  text-align: center;
+  align-content: center;
+}
+
+/* ── Marquee track — infinite left scroll ── */
+.OffersMarquee {
+  display: flex;
+  gap: 30px;
+  width: max-content;
+  animation: marqueeScroll 8s linear infinite;
+}
+
+/* Pause on hover */
+.OffersStrip:hover .OffersMarquee {
+  animation-play-state: paused;
+}
+
+@keyframes marqueeScroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-100% / 3));
+  }
+}
+
+/* ── City pill ── */
+.OffersPill {
+  /* display: flex; */
+  align-items: center;
+  /* gap: 10px; */
+  padding: 5px auto;
+  width: 180px;
+  /* height: 80px;
+  width: 180px; */
+  border-radius: 60px;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.25s ease;
+}
+
+/* Hover — pill turns red/pink */
+.OffersPill:hover {
+  background: linear-gradient(98.03deg, #C71A38 6.31%, #700A1C 92.14%);
+  border: 1px solid white;
+  transform: scale(1.06);
+}
+
+/* Icon — white tinted monument illustration */
+.OffersPillIcon {
+  width: 100%;
+  height: 50px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  /* makes png white */
+  /* transition: filter 0.3s ease; */
+}
+
+/* On hover keep icon white (already white on red) */
+.OffersPill:hover .OffersPillIcon {
+  filter: brightness(0) invert(1);
+}
+
+/* City name */
+.OffersPillName {
+  transition: color 0.3s ease;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 22px;
+  color: #FFFFFF;
+
+}
+
+.OffersPill:hover .OffersPillName {
+  color: #fff;
+  font-weight: 500;
+}
+
+/* ══════════════════════════════
+   RESPONSIVE
+══════════════════════════════ */
+@media (max-width: 768px) {
+  .OffersTitle {
+    font-size: 36px;
+  }
+
+  .OffersBadge {
+    width: 40px;
+    height: 40px;
+  }
+
+  .OffersBadgeText {
+    font-size: 18px;
+  }
+
+  .OffersPill {
+    padding: 8px 14px;
+  }
+
+  .OffersPillIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .OffersPillName {
+    font-size: 13px;
+  }
+
+  .OffersMarquee {
+    animation-duration: 14s;
+  }
+}
+
+@media (max-width: 480px) {
+  .OffersTitle {
+    font-size: 28px;
+  }
+}

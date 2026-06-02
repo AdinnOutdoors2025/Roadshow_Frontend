@@ -1,0 +1,172 @@
+/* * {
+    font-family: Outfit;
+}
+
+.HomeBannerContainer {
+    margin: 3% auto;
+}
+
+.HomeBannerText {
+    font-weight: 400;
+    font-style: Regular;
+    font-size: 70px;
+    text-align: center;
+}
+
+.HomeBannerTextSpan {
+    color: #7057C3;
+    font-weight: 700;
+}
+
+.HomeBannerTextImg {
+    margin-left: auto;
+    margin-right: 47%;
+}
+
+.HomeBannerImgContainer {
+    margin: auto;
+    margin-top: 50px;
+    width: 75%;
+}
+     */
+
+
+     * {
+    font-family: Outfit;
+}
+
+/* ── Container ── */
+.HomeBannerContainer {
+    margin: 3% auto;
+}
+
+/* ── Heading — YOUR original font-size kept exactly ── */
+.HomeBannerText {
+    font-weight: 400;
+    font-style: Regular;
+    font-size: 70px;
+    text-align: center;
+}
+
+.HomeBannerTextSpan {
+    color: #7057C3;
+    font-weight: 700;
+}
+
+/* ── Sub-text image — YOUR original margin kept ── */
+.HomeBannerTextImg {
+    margin-left: auto;
+    margin-right: 47%;
+}
+
+/* ── Image container — YOUR original width kept ── */
+.HomeBannerImgContainer {
+    margin: auto;
+    margin-top: 50px;
+    width: 75%;
+}
+
+/* ── Main image wrapper: relative so overlay works ── */
+.HomeBannerMainImgWrapper {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+/* ── Main image: fade-in animation triggered by React key change ── */
+.HomeBannerMainImg {
+    width: 100%;
+    display: block;
+    border-radius: 12px;
+    animation: bannerFadeIn 0.45s ease-in-out;
+}
+
+@keyframes bannerFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(1.03);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ── Sub images row ── */
+.HomeBannerSubImgRow {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+/* ── Sub image button wrapper ── */
+.HomeBannerSubImgBtn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    border-radius: 8px;
+    outline: 2px solid transparent;
+    outline-offset: 3px;
+    transition: outline-color 0.25s, transform 0.25s;
+}
+
+.HomeBannerSubImgBtn:hover {
+    transform: scale(1.05);
+    outline-color: #7057C3;
+}
+
+/* Active sub image — highlighted border */
+.HomeBannerSubImgBtn.active {
+    outline-color: #7057C3;
+    outline-width: 3px;
+}
+
+/* ── Sub image ── */
+.HomeBannerSubImg {
+    display: block;
+    border-radius: 8px;
+    width: 100%;
+    height: auto;
+    transition: opacity 0.2s;
+}
+
+.HomeBannerSubImgBtn:hover .HomeBannerSubImg {
+    opacity: 0.85;
+}
+
+/* ── Responsive ── */
+
+/* Tablet */
+@media (max-width: 1024px) {
+    .HomeBannerText {
+        font-size: 52px;
+    }
+    .HomeBannerImgContainer {
+        width: 90%;
+    }
+    .HomeBannerTextImg {
+        margin-right: 35%;
+    }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+    .HomeBannerText {
+        font-size: 34px;
+        padding: 0 5%;
+    }
+    .HomeBannerTextImg {
+        margin-right: auto;
+        margin-left: auto;
+        display: block;
+    }
+    .HomeBannerImgContainer {
+        width: 95%;
+    }
+    .HomeBannerSubImgRow {
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+}

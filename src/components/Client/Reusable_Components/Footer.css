@@ -1,0 +1,103 @@
+.FooterMain {
+    background: #000000;
+}
+
+.FooterCTAMain {
+    display: flex;
+    align-items: start;
+    justify-content: space-around;
+    padding: 40px 5%;
+    align-items: center;
+}
+
+.FooterCTAContent1 {
+    font-weight: 400;
+    font-size: 66px;
+}
+
+.FooterCTAContent2 {
+    font-weight: 400;
+    font-size: 46px;
+}
+
+.FooterCTAButton {
+    background: white;
+    color: black;
+    padding: 16px 40px;
+    border-radius: 50px;
+    transition: background-color 0.2s ease-in-out;
+    font-family: Outfit;
+    font-weight: 400;
+    font-size: 40px;
+
+}
+
+.FooterMainContentCol1 {}
+
+.FooterCol1Logo {
+    width: 150px;
+    height: auto;
+}
+
+.FooterCol1Social {
+    gap: 20px;
+}
+
+.FooterCol1SocialIcon {
+    height: 40px;
+    width: 40px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.FooterCol1Contact {
+    font-weight: 400;
+    font-size: 16px;
+    color: #FFFFFF;
+
+}
+
+.FooterCol1Newsletter {
+    color: #FFFFFF;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.FooterCol23Heading {
+    color: #FFFFFF;
+    font-weight: 600;
+    font-size: 20px;
+}
+
+.FooterCol23Contents {
+    color: #FFFFFF;
+    font-weight: 400;
+    font-size: 16px;
+    margin: 6px 0;
+}
+
+.FooterCol3LocationSpan {
+    font-weight: 600;
+}
+
+.FooterContentDivider {
+    width: 70%;
+    height: 1px;
+    border: none;
+    margin: 10px auto;
+    /* Creates the dashes (10px on, 10px off)  starting light center highlight*/
+    background-image: repeating-linear-gradient(90deg,
+            #636363 0px,
+            #636363 10px,
+            transparent 10px,
+            transparent 20px);
+
+    /* Fades both ends to transparent */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #fff 15%, #fff 85%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, #fff 15%, #fff 85%, transparent 100%);
+}
+
+.FooterBottomContents {
+    color: #FFFFFF;
+    font-weight: 300;
+    font-size: 16px;
+}
