@@ -1,4 +1,4 @@
-*{
+/* *{
     font-family: Outfit;
 }
 .RS_NavContents  {
@@ -13,4 +13,126 @@
 }
 .RS_NavIcon{
    width: 50px;
+} */
+
+
+* { font-family: Outfit; }
+
+.RS_Navbar { background: transparent; }
+
+/* ══ NAV LINKS — top-to-bottom red fill on hover ══
+   Two layers of the same text stacked.
+   Bottom layer: black (always visible).
+   Top layer  : red, clipped from bottom (hidden) → clips to 0 on hover (fully visible).
+   Result     : red wipes in from top → bottom.
+*/
+.RS_NavContents {
+  font-weight: 300;
+  font-size: 30px;          /* your original */
+  color: #000;
+  text-decoration: none;
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  line-height: 1.15;
 }
+
+/* Red clone — revealed top→bottom */
+.RS_NavLink::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: #D62839;
+  /* hidden: clip from bottom edge upward */
+  clip-path: inset(100% 0 0 0);
+  transition: clip-path 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Hover: reveal red by opening clip from top */
+.RS_NavLink:hover::after {
+  clip-path: inset(0% 0 0 0);
+}
+
+/* ══ HAMBURGER ══ */
+.RS_HamBtn {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.RS_L {
+  display: block;
+  width: 28px;
+  height: 2.5px;
+  background: #111;
+  border-radius: 2px;
+  transform-origin: center;
+  transition: transform 0.3s ease, opacity 0.25s ease, background 0.2s ease;
+}
+.RS_L1o { transform: translateY(7.5px) rotate(45deg); }
+.RS_L2o { opacity: 0; transform: scaleX(0); }
+.RS_L3o { transform: translateY(-7.5px) rotate(-45deg); }
+
+/* ══ DROPDOWN — slides down, right-anchored ══ */
+.RS_Drop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.13);
+  overflow: hidden;
+  /* collapsed */
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+  transition:
+    max-height 0.38s cubic-bezier(0.4,0,0.2,1),
+    opacity    0.28s ease,
+    transform  0.32s ease;
+  z-index: 200;
+}
+.RS_Drop--open {
+  max-height: 360px;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* Each row stagger-fades in */
+.RS_DropRow {
+  display: block;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 400;
+  color: #222;
+  text-decoration: none;
+  opacity: 0;
+  transform: translateX(10px);
+  transition:
+    opacity   0.25s ease,
+    transform 0.25s ease,
+    background 0.15s ease,
+    color      0.15s ease;
+  border-bottom: 0.5px solid #f2f2f2;
+}
+.RS_DropRow:last-child { border-bottom: none; }
+.RS_Drop--open .RS_DropRow {
+  opacity: 1;
+  transform: translateX(0);
+}
+.RS_DropRow:hover {
+  background: #fff1f2;
+  color: #D62839;
+}
+
+/* ══ RESPONSIVE ══ */
+@media (max-width: 1024px) { .RS_NavContents { font-size: 24px; } }
+@media (max-width: 768px)  { .RS_NavContents { font-size: 18px; } .RS_HamBtn { display: flex; } }

@@ -1,43 +1,9 @@
-// "use client";
-// import React, { useState, useEffect } from 'react';
-// import './HomeBanner.css';
-
-// function HomeBanner() {
-//     return (
-//         <div className='HomeBannerContainer'>
-//             <div className='HomeBannerText'> Take <span className='HomeBannerTextSpan'>Your Brand</span> to the Streets
-//             </div>
-//             <div >
-//                 <img src="./images/assets/BannerTextImg.png" alt="Roadshow Logo" className='HomeBannerTextImg' />
-//             </div>
-//             <div className='HomeBannerImgContainer'>
-//                 <div> <img src="./images/assets/BannerMainImg.png" alt="Roadshow Logo" /></div>
-//                 <div style={{ display: 'flex', gap: '20px', marginTop: '20px', justifyContent: 'center' }}>
-//                     <div>
-//                         <img src="./images/assets/BannerSubImg1.png" alt="Roadshow Logo" />
-//                     </div>
-//                     <div>
-//                         <img src="./images/assets/BannerSubImg2.png" alt="Roadshow Logo" />
-
-//                     </div> <div>
-//                         <img src="./images/assets/BannerSubImg3.png" alt="Roadshow Logo" />
-
-//                     </div> <div>
-//                         <img src="./images/assets/BannerSubImg4.png" alt="Roadshow Logo" />
-
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     )
-// }
-// export default HomeBanner;
-
-
+/* eslint-disable */
+// @ts-nocheck
 "use client";
 import React, { useState } from 'react';
 import './HomeBanner.css';
-import OffersSection from '../HomePageSections/HomePageSection1';
+// import OffersSection from '../HomePageSections/HomePageSection1';
 const subImages = [
     './images/assets/BannerSubImg1.png',
     './images/assets/BannerSubImg2.png',
@@ -46,7 +12,7 @@ const subImages = [
 ];
 
 function HomeBanner() {
-    const [mainImg, setMainImg] = useState('./images/assets/BannerMainImg.png');
+    const [mainImg, setMainImg] = useState('./images/assets/RS_HomeBannerImgMainNew.png');
     const [fadeKey, setFadeKey] = useState(0); // changing key re-triggers CSS animation
     const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
@@ -105,7 +71,6 @@ function HomeBanner() {
             </div>
         </div>
         {/* Offers section  */}
-        <OffersSection />
 
         </>
 

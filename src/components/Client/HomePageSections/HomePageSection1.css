@@ -20,12 +20,11 @@
 }
 
 
-/* ══════════════════════════════
-   OFFERS SECTION
-══════════════════════════════ */
+/* OFFERS SECTION*/
 .OffersSection {
   font-family: Outfit;
   padding: 40px 0;
+  padding-bottom: 0;
   overflow: hidden;
 }
 
@@ -55,7 +54,7 @@
 .OffersBadgeContent {
   position: absolute;
   font-family: Rubik;
-  font-weight:bolder;
+  font-weight: bolder;
   font-size: 40px;
   color: #FFFFFF;
   top: 50%;
@@ -85,7 +84,6 @@
   }
 }
 
-/* ── Strip container — dark bg, full width ── */
 .OffersStrip {
   width: 100%;
   background: #1a1a1a;
@@ -124,26 +122,19 @@
 
 /* ── City pill ── */
 .OffersPill {
-  /* display: flex; */
   align-items: center;
-  /* gap: 10px; */
   padding: 5px auto;
   width: 180px;
-  /* height: 80px;
-  width: 180px; */
   border-radius: 60px;
   background: #2a2a2a;
   border: 1px solid #3a3a3a;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition:
-    background 0.3s ease,
-    border-color 0.3s ease,
-    transform 0.25s ease;
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.25s ease;
 }
 
-/* Hover — pill turns red/pink */
+/* Hover — pill turns red */
 .OffersPill:hover {
   background: linear-gradient(98.03deg, #C71A38 6.31%, #700A1C 92.14%);
   border: 1px solid white;
@@ -156,11 +147,9 @@
   height: 50px;
   object-fit: contain;
   filter: brightness(0) invert(1);
-  /* makes png white */
-  /* transition: filter 0.3s ease; */
 }
 
-/* On hover keep icon white (already white on red) */
+/* On hover keep icon white */
 .OffersPill:hover .OffersPillIcon {
   filter: brightness(0) invert(1);
 }
@@ -180,9 +169,167 @@
   font-weight: 500;
 }
 
-/* ══════════════════════════════
-   RESPONSIVE
-══════════════════════════════ */
+/* OUR ROADSHOW VEHICLES SECTION */
+.RS_OurRdwMainSection {
+  background: #F5F5F7;
+  padding-bottom: 5%;
+  margin-bottom: 5%;
+}
+
+.RS_OurRdwHeading {
+  /* margin: 5% auto;
+  margin-top: 0; */
+  padding: 5% 0px;
+}
+
+.RS_OurRdwHeadingContent1 {
+  font-weight: 400;
+  font-size: 60px;
+  color: #000000;
+}
+
+.RS_OurRdwHeadingContent2 {
+  background: linear-gradient(180deg, #7D0008 0%, #E3000F 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.RS_VehicleCardMain {
+  background: #FFFFFF;
+  border-radius: 20px;
+  width: auto;
+  color: #000000;
+
+}
+
+.RS_VehicleDetailsMain {
+  padding: 15px;
+}
+
+.RS_VehicleImg {
+  height: 350px;
+  margin: auto;
+}
+
+.RS_VehicleName {
+  font-weight: 700;
+  font-size: 26px;
+}
+
+.RS_VehicleRate {
+  font-weight: 500;
+  font-size: 24px;
+}
+
+.RS_VehicleRatingMain {
+  background: #F3F3F3;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 10px;
+  margin: 4% 0px;
+}
+
+.RS_VehicleRatingValue {
+  background: linear-gradient(270deg, #7D1114 0%, #E31F25 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 500;
+  font-size: 18px;
+}
+
+.RS_VehicleRatingImg {
+  width: 30px;
+  height: 30px;
+}
+
+.RS_VehicleButton {
+  background: #E8E8E8;
+  border-radius: 50px;
+  padding: 15px 30px;
+  gap: 10px;
+  font-weight: 500;
+  font-size: 18px;
+}
+
+/* CAROUSEL WRAPPER */
+.RS_CarouselWrapper {
+  overflow: hidden;
+  position: relative;
+}
+
+.RS_OurRdwVehicleList {
+  display: flex;
+  transition: transform 0.4s ease;
+  gap: 18px;
+}
+
+.RS_VehicleCardFlex {
+  flex: 0 0 calc((100% - 60px) / 4);
+  min-width: 0;
+}
+
+/* Responsive visible count adjustments */
+@media (max-width: 1024px) {
+  .RS_VehicleCardFlex {
+    flex: 0 0 calc((100% - 40px) / 3);
+  }
+}
+
+@media (max-width: 768px) {
+  .RS_VehicleCardFlex {
+    flex: 0 0 calc((100% - 20px) / 2);
+  }
+}
+
+@media (max-width: 640px) {
+  .RS_VehicleCardFlex {
+    flex: 0 0 100%;
+  }
+}
+
+/* CAROUSEL NAV - bottom right, matching image */
+.RS_CarouselNavRow {
+  width: max-content;
+  display: flex;
+  justify-content: flex-end;
+  gap: 30px;
+  margin-top: 24px;
+  border: 0.5px solid #00000033;
+  border-radius: 40px;
+  border-width: 0.5px;
+  padding: 10px;
+  float: inline-end;
+}
+
+.RS_CarouselBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #DEDEE2;
+  border: 1.5px solid #D0D0D0;
+  font-size: 25px;
+  color: #616163;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
+  line-height: 1;
+}
+
+.RS_CarouselBtn:hover:not(:disabled) {
+  background: #F0F0F0;
+  border-color: #999;
+}
+
+.RS_CarouselBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* RESPONSIVE  */
 @media (max-width: 768px) {
   .OffersTitle {
     font-size: 36px;

@@ -84,14 +84,12 @@
     height: 1px;
     border: none;
     margin: 10px auto;
-    /* Creates the dashes (10px on, 10px off)  starting light center highlight*/
     background-image: repeating-linear-gradient(90deg,
             #636363 0px,
             #636363 10px,
             transparent 10px,
             transparent 20px);
 
-    /* Fades both ends to transparent */
     -webkit-mask-image: linear-gradient(90deg, transparent 0%, #fff 15%, #fff 85%, transparent 100%);
     mask-image: linear-gradient(90deg, transparent 0%, #fff 15%, #fff 85%, transparent 100%);
 }
@@ -100,4 +98,85 @@
     color: #FFFFFF;
     font-weight: 300;
     font-size: 16px;
+}
+
+
+/* RESPONSIVE ADDITIONS — FOOTER */
+
+/* ── 2XL: 1536px+ ── */
+@media (min-width: 1536px) {
+    .FooterCTAContent1 { font-size: 80px; }
+    .FooterCTAContent2 { font-size: 56px; }
+    .FooterCTAButton   { font-size: 48px; padding: 20px 52px; }
+    .FooterCol23Heading  { font-size: 24px; }
+    .FooterCol23Contents { font-size: 18px; }
+}
+
+/* ── XL: 1280px ── */
+@media (max-width: 1280px) {
+    .FooterCTAContent1 { font-size: 52px; }
+    .FooterCTAContent2 { font-size: 36px; }
+    .FooterCTAButton   { font-size: 32px; padding: 14px 32px; }
+}
+
+/* ── LG: 1024px ── */
+@media (max-width: 1024px) {
+    .FooterCTAContent1 { font-size: 42px; }
+    .FooterCTAContent2 { font-size: 28px; }
+    .FooterCTAButton   { font-size: 24px; padding: 12px 28px; }
+    .FooterCol23Heading  { font-size: 18px; }
+    .FooterCol23Contents { font-size: 15px; }
+}
+
+/* ── MD: 768px — stack CTA, 1-col grid ── */
+@media (max-width: 768px) {
+    .FooterCTAMain {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 32px 5%;
+    }
+    .FooterCTAContent1 { font-size: 34px; }
+    .FooterCTAContent2 { font-size: 22px; }
+    .FooterCTAButton   { font-size: 20px; padding: 12px 28px; align-self: flex-start; }
+
+    /* grid already handled by Tailwind md:grid-cols-3 → 1 col below md */
+    /* but override padding for content area */
+    .FooterMain .grid { padding-left: 5%; padding-right: 5%; }
+
+    .FooterCol1Logo        { width: 120px; }
+    .FooterCol1SocialIcon  { width: 34px; height: 34px; }
+    .FooterCol23Heading    { font-size: 17px; }
+    .FooterCol23Contents   { font-size: 14px; }
+    .FooterContentDivider  { width: 90%; }
+}
+
+/* ── SM: 640px ── */
+@media (max-width: 640px) {
+    .FooterCTAContent1 { font-size: 28px; }
+    .FooterCTAContent2 { font-size: 18px; }
+    .FooterCTAButton   { font-size: 17px; padding: 10px 22px; }
+    .FooterCol1Newsletter { font-size: 15px; }
+    .FooterBottomContents { font-size: 13px; }
+}
+
+/* ── XS: 480px ── */
+@media (max-width: 480px) {
+    .FooterCTAContent1 { font-size: 24px; }
+    .FooterCTAContent2 { font-size: 16px; }
+    .FooterCTAButton   { font-size: 15px; padding: 10px 20px; }
+    .FooterCol1Social  { gap: 12px; }
+    .FooterCol1SocialIcon { width: 30px; height: 30px; }
+}
+
+/* ── 2XS: 320px ── */
+@media (max-width: 320px) {
+    .FooterCTAContent1 { font-size: 20px; }
+    .FooterCTAContent2 { font-size: 14px; }
+    .FooterCTAButton   { font-size: 13px; padding: 8px 16px; width: 100%; text-align: center; }
+    .FooterCol23Heading  { font-size: 15px; }
+    .FooterCol23Contents { font-size: 13px; }
+    .FooterCol1Logo      { width: 100px; }
+    .FooterBottomContents { font-size: 11px; }
+    .FooterContentDivider { width: 95%; }
 }
