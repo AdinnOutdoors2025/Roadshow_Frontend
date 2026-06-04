@@ -98,6 +98,8 @@
     gap: 20px;
     margin-top: 20px;
     justify-content: center;
+    /* width: 100px;
+    height: 100px; */
 }
 
 /* ── Sub image button wrapper ── */
@@ -127,7 +129,7 @@
 .HomeBannerSubImg {
     display: block;
     border-radius: 8px;
-    width: 100%;
+    width: 100px;
     height: auto;
     transition: opacity 0.2s;
 }

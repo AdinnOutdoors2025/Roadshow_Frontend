@@ -9,10 +9,12 @@ const subImages = [
     './images/assets/BannerSubImg2.png',
     './images/assets/BannerSubImg3.png',
     './images/assets/BannerSubImg4.png',
+    './images/assets/HomeBanner_MainPageFinal.png',
+    './images/assets/tata ultra - 2.png',
 ];
 
 function HomeBanner() {
-    const [mainImg, setMainImg] = useState('./images/assets/RS_HomeBannerImgMainNew.png');
+    const [mainImg, setMainImg] = useState('./images/assets/tata ultra - 2.png');
     const [fadeKey, setFadeKey] = useState(0); // changing key re-triggers CSS animation
     const [activeIdx, setActiveIdx] = useState<number | null>(null);
 

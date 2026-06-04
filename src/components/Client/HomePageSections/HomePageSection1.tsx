@@ -1,12 +1,10 @@
 /* eslint-disable */
 // @ts-nocheck
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Image from "next/image";
 import './HomePageSection1.css';
-
-
-
+import HomePageSection2 from './HomePageSection2';
 export default function HomePageSection1() {
 
     //OFFER SECTION CITY MARQUEE GRADIENT ANIMATION
@@ -71,7 +69,6 @@ export default function HomePageSection1() {
         return () => cancelAnimationFrame(raf);
     }, []);
 
-    //OFFER SECTION CITY MARQUEE GRADIENT ANIMATION
     // Our Roadshow Vehicles data
     const ourRS_Vehicles = [
         // { name: 'Roadshow Main Img', image: './images/assets/BannerMainImg.png', rate: 25000, rating:'4.3', },
@@ -100,24 +97,122 @@ export default function HomePageSection1() {
         window.addEventListener('resize', update);
         return () => window.removeEventListener('resize', update);
     }, []);
+
+    // Why Adinn Roadshows (Works Best) data — add image per item
+    const whyAdinn_WorksBest = [
+        {
+            name: 'GPS Support',
+            desc: 'Live location tracking for vehicles with route visibility and movement updates throughout the campaign.',
+            image: './images/assets/BannerSubImg1.png', // ← use different images per item
+        },
+        {
+            name: 'RTO Certified',
+            desc: 'Fully approved vehicles complying with road regulations for smooth and hassle-free campaign execution.',
+            image: './images/assets/BannerSubImg2.png',
+        },
+        {
+            name: 'One-Stop Solution',
+            desc: 'From planning to execution, everything managed in one place for a seamless roadshow campaign.',
+            image: './images/assets/BannerSubImg3.png',
+        },
+        {
+            name: '24/7 Support',
+            desc: 'Dedicated team available anytime to monitor, coordinate, and assist throughout the campaign.',
+            image: './images/assets/BannerSubImg4.png',
+        },
+    ];
+
+    // // State — activeIndex controls which item is expanded AND which image shows
+    // const [activeIndex, setActiveIndex] = useState(0);
+
+    // const handlePrev = () => setActiveIndex((prev) => Math.max(prev - 1, 0));
+    // const handleNext = () => setActiveIndex((prev) => Math.min(prev + 1, whyAdinn_WorksBest.length - 1));
+
+    // const handleItemClick = (idx) => {
+    //     // Clicking same item again collapses it (optional — remove if you don't want toggle)
+    //     setActiveIndex(idx === activeIndex ? -1 : idx);
+    // };
+
+
+
+
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    // ✅ NEW: track previous index to determine slide direction
+    const prevIndexRef = useRef(0);
+    // ✅ NEW: track which image is "exiting" with a direction class
+    const [exitIndex, setExitIndex] = useState(null);
+    const [exitDirection, setExitDirection] = useState('exit-left'); // 'exit-left' | 'exit-right'
+    const [enterFromLeft, setEnterFromLeft] = useState(false);
+
+    const handlePrev = () => {
+        if (activeIndex <= 0) return;
+        const newIndex = activeIndex - 1;
+        triggerTransition(newIndex, 'backward');
+    };
+
+    const handleNext = () => {
+        if (activeIndex >= whyAdinn_WorksBest.length - 1) return;
+        const newIndex = activeIndex + 1;
+        triggerTransition(newIndex, 'forward');
+    };
+
+    const handleItemClick = (idx) => {
+        if (idx === activeIndex) {
+            setActiveIndex(-1); // collapse
+            return;
+        }
+        const direction = idx > activeIndex ? 'forward' : 'backward';
+        triggerTransition(idx, direction);
+    };
+
+    // ✅ NEW: smooth directional transition logic
+    const triggerTransition = (newIndex, direction) => {
+        const outDir = direction === 'forward' ? 'exit-left' : 'exit-right';
+        setExitIndex(activeIndex);      // mark current as exiting
+        setExitDirection(outDir);       // slide out to left or right
+        setEnterFromLeft(direction === 'backward'); // incoming comes from left if going backward
+
+        // After exit animation completes, switch the active index
+        setTimeout(() => {
+            prevIndexRef.current = activeIndex;
+            setActiveIndex(newIndex);
+            setExitIndex(null); // clear exit state
+            setEnterFromLeft(false);
+        }, 420); // match your CSS transition duration (0.45s = 450ms, slight buffer)
+    };
+
+    // ✅ Helper: compute className for each image
+    const getImageClass = (idx) => {
+        if (idx === exitIndex) return exitDirection;             // sliding out
+        if (idx === activeIndex && enterFromLeft) return 'enter-from-left visible'; // entering from left
+        if (idx === activeIndex) return 'visible';              // entering from right (default)
+        return '';                                              // hidden
+    };
+
+
+    //OUR CLIENTS
+    const ourClients = [
+
+        { name: 'Philips', logo: './images/assets/RS_Client_philips_logo.png', size: 'text' },
+        { name: 'Kelloggs', logo: './images/assets/RS_Client_kelloggs_logo.png', size: 'text-lg' },
+        { name: 'Kelloggs', logo: './images/assets/RS_Client_kelloggs_logo.png', size: 'text-lg' },
+        { name: 'Thangamayil', logo: './images/assets/RS_Client_Thangamayil.png', size: 'text' },
+        { name: 'Kelloggs', logo: './images/assets/RS_Client_kelloggs_logo.png', size: 'text-lg' },
+        { name: 'Thangamayil', logo: './images/assets/RS_Client_Thangamayil.png', size: 'text' },
+        { name: 'Airtel', logo: './images/assets/RS_Client_Bharti_Airtel_Logo.png', size: 'md' },
+        { name: 'Philips', logo: './images/assets/RS_Client_philips_logo.png', size: 'text' },
+        { name: 'Airtel', logo: './images/assets/RS_Client_Bharti_Airtel_Logo.png', size: 'md' },
+        { name: 'Kelloggs', logo: './images/assets/RS_Client_kelloggs_logo.png', size: 'text-lg' },
+
+
+    ];
+
     return (
         <>
             {/* Offers Section */}
             <div>
                 <section className="OffersSection flex">
-
-                    {/* ── Header row: "Offers" + spinning % badge ── */}
-                    {/* <div className='flex items-center justify-center gap-4  OffersHeadingMain'>
-                <div className='OffersHeading'>Offers</div>
-                <div className="OffersHeadImgContainer">
-                  <img
-                        src="/images/assets/OffersHeadImgFinal.svg"
-                        alt="Offers"
-                        className=" OffersHeadImg OffersBadgeText" style={{ color: 'blue' }} /> 
-                    
-                    <span className="OffersBadgeContent">%</span>
-                </div>
-            </div> */}
 
                     <div className="flex items-center justify-center gap-4 OffersHeadingMain">
                         <div className="OffersHeading">Offers</div>
@@ -166,7 +261,7 @@ export default function HomePageSection1() {
 
                 </section>
             </div>
-            
+
             {/* Our Roadshow Vehicles List section */}
             <div className='px-20 mx-auto RS_OurRdwMainSection'>
                 <div className="RS_OurRdwHeading">
@@ -176,8 +271,7 @@ export default function HomePageSection1() {
                 <div className="RS_CarouselWrapper">
                     <div
                         className="RS_OurRdwVehicleList"
-                        style={{ transform: `translateX(-${currentIndex * (100 / visibleCount)}%)` }}
-                    >
+                        style={{ transform: `translateX(-${currentIndex * (100 / visibleCount)}%)` }}>
                         {ourRS_Vehicles.map((veh, idx) => (
                             <div key={idx} className="RS_VehicleCardMain RS_VehicleCardFlex">
                                 <div><img src={veh.image} alt={veh.name} className="RS_VehicleImg" /></div>
@@ -202,7 +296,7 @@ export default function HomePageSection1() {
                             disabled={currentIndex === 0}
                             aria-label="Previous"
                         >
-                            <i class="fa-solid fa-chevron-left"></i>
+                            <i className="fa-solid fa-chevron-left"></i>
                         </button>
                         <button
                             className="RS_CarouselBtn"
@@ -210,12 +304,231 @@ export default function HomePageSection1() {
                             disabled={currentIndex >= ourRS_Vehicles.length - visibleCount}
                             aria-label="Next"
                         >
-                            <i class="fa-solid fa-chevron-right"></i>
+                            <i className="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
                 </div>
             </div>
 
+            {/* Why Adinn Roadshows section (works best) */}
+            {/* <div className='px-20 mx-auto'>
+                <div className="RS_OurRdwHeading">
+                    <div className="RS_OurRdwHeadingContent1">Why Adinn Roadshows </div>
+                    <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2">Works Best</div>
+                </div>
+                <div className='RS_WhyAdRSMain'>
+                    <div>
+                        <div className="RS_WhyAdRSContentLeft">
+                            <button
+                                className="RS_CarouselBtn RS_WhyAdRS_RS_CarouselBtn"
+                                onClick={() => setCurrentIndex((prev) => Math.max(prev - 1, 0))}
+                                disabled={currentIndex === 0}
+                                aria-label="Previous"
+                            >
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button
+                                className="RS_CarouselBtn RS_WhyAdRS_RS_CarouselBtn"
+                                onClick={() => setCurrentIndex((prev) => Math.min(prev + 1, ourRS_Vehicles.length - visibleCount))}
+                                disabled={currentIndex >= ourRS_Vehicles.length - visibleCount}
+                                aria-label="Next"
+                            >
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div>
+                            {whyAdinn_WorksBest.map((AWB, idx) => (
+                                <div key={idx} className='RS_WhyAdRSContentHeading'>
+                                    <div className='RS_WhyAdRSContentIcon'><i class="fa-solid fa-plus"></i> </div>
+                                    <div>
+                                        <div className=''>{AWB.name}</div>
+                                        <div className='RS_WhyAdRSContentDesc'>{AWB.desc}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+
+
+                    </div>
+                    <div>
+                        <img src='./images/assets/BannerMainImg.png'></img>
+                    </div>
+                </div>
+            </div> */}
+
+            {/* Why Adinn Roadshows section */}
+            {/* <div className='px-20 mx-auto'>
+
+                <div className="RS_OurRdwHeading">
+                    <div className="RS_OurRdwHeadingContent1">Why Adinn Roadshows</div>
+                    <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2">Works Best</div>
+                </div>
+
+                <div className='RS_WhyAdRSMain'>
+
+                    <div className='RS_WhyAdRS_Left'>
+
+                        <div className='RS_WhyAdRSNavRow'>
+                            <button
+                                className="RS_CarouselBtn"
+                                onClick={handlePrev}
+                                disabled={activeIndex <= 0}
+                                aria-label="Previous"
+                            >
+                                <i className="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button
+                                className="RS_CarouselBtn"
+                                onClick={handleNext}
+                                disabled={activeIndex >= whyAdinn_WorksBest.length - 1}
+                                aria-label="Next"
+                            >
+                                <i className="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        {whyAdinn_WorksBest.map((AWB, idx) => (
+                            <div
+                                key={idx}
+                                className={`RS_WhyAdRSItem ${activeIndex === idx ? 'active' : ''}`}
+                                onClick={() => handleItemClick(idx)}
+                            >
+                                <div className='RS_WhyAdRSContentIcon'>
+                                    <i className="fa-solid fa-plus"></i>
+                                </div>
+                                <div className='RS_WhyAdRS_ItemText'>
+                                    <div className='RS_WhyAdRS_ItemName'>{AWB.name}</div>
+                                    <div className='RS_WhyAdRS_ItemDesc'>{AWB.desc}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div>
+
+                    </div>
+
+                    <div className='RS_WhyAdRS_Right'>
+                        {whyAdinn_WorksBest.map((AWB, idx) => (
+                            <img
+                                key={idx}
+                                src={AWB.image}
+                                alt={AWB.name}
+                                className={activeIndex === idx ? 'visible' : ''}
+                            />
+                        ))}
+                    </div>
+
+                </div>
+            </div> */}
+
+            {/* Why Adinn Roadshows section */}
+            <div className='px-30 mx-auto'>
+                <div className="RS_OurRdwHeading">
+                    <div className="RS_OurRdwHeadingContent1">Our Roadshow </div>
+                    <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2">Vehicles</div>
+                </div>
+                <div className='RS_WhyAdRSMain'>
+                    {/* LEFT — nav + accordion items */}
+                    <div className='RS_WhyAdRS_Left'>
+                        {/* Arrow nav */}
+                        <div className='RS_WhyAdRSNavRow'>
+                            <button
+                                className="RS_CarouselBtn"
+                                onClick={handlePrev}
+                                disabled={activeIndex <= 0}
+                                aria-label="Previous"
+                            >
+                                <i className="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button
+                                className="RS_CarouselBtn"
+                                onClick={handleNext}
+                                disabled={activeIndex >= whyAdinn_WorksBest.length - 1}
+                                aria-label="Next"
+                            >
+                                <i className="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        {/* Accordion items — NO CHANGES HERE */}
+                        {whyAdinn_WorksBest.map((AWB, idx) => (
+                            <div
+                                key={idx}
+                                className={`RS_WhyAdRSItem ${activeIndex === idx ? 'active' : ''}`}
+                                onClick={() => handleItemClick(idx)}
+                            >
+                                <div className='RS_WhyAdRSContentIcon'>
+                                    <i className="fa-solid fa-plus"></i>
+                                </div>
+                                <div className='RS_WhyAdRS_ItemText'>
+                                    <div className='RS_WhyAdRS_ItemName'>{AWB.name}</div>
+                                    <div className='RS_WhyAdRS_ItemDesc'>{AWB.desc}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div></div>
+                    {/* RIGHT — ✅ Only this className logic changes */}
+                    <div className='RS_WhyAdRS_Right'>
+                        {whyAdinn_WorksBest.map((AWB, idx) => (
+                            <img
+                                key={idx}
+                                src={AWB.image}
+                                alt={AWB.name}
+                                className={getImageClass(idx)}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+
+            {/* Some Of Our Clients Section */}
+            <div className='px-30 mx-auto'>
+                <div className="RS_ClientsSection">
+                    {/* Heading — no change */}
+                    <div className="RS_OurRdwHeading">
+                        <div className="RS_OurRdwHeadingContent1">Some of Our</div>
+                        <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2">Clients</div>
+                    </div>
+
+                    {/* Orbit area — no change */}
+                    <div className="RS_ClientsOrbitArea">
+
+                        {/* Center bubble — no change */}
+                        <div className="RS_ClientCenterBubble">
+                            <span>Clients</span>
+                        </div>
+
+                        {/* ✅ ONLY CHANGE HERE: added RS_ClientLogo class + RS_TextLogo for Philips */}
+                        {ourClients.map((client, idx) => (
+                            <div
+                                key={idx}
+                                className={`RS_ClientBubble RS_Bubble_${idx} ${client.size === 'text' ? 'RS_TextLogo' : ''}  ${client.size === 'text-lg' ? 'RS_TextLgLogo' : ''}`}
+                            >
+                                <img
+                                    src={client.logo}
+                                    alt={client.name}
+                                    className="RS_ClientLogo"
+                                />
+                            </div>
+                        ))}
+
+                    </div>
+
+                    {/* View All button — no change */}
+                    <div className="RS_ClientsBtnRow">
+                        <button className="RS_ViewAllClientsBtn">View All Clients</button>
+                    </div>
+
+                </div>
+            </div>
+
+
+            {/* REMAINING SECTION FROM HOME PAGE SECTION 2 TSX  */}
+
+<HomePageSection2/>
         </>
     );
 }
