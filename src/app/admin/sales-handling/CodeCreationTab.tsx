@@ -4,7 +4,7 @@ import { CheckCircle2, Mail, RefreshCw, Clock, Send } from "lucide-react";
 import { toast } from "react-toastify";
 import API_BASE from "../../../../baseurl";
 import { useState } from "react";
-import { SALES_STAGE_MAP, SALES_STAGES, SalesOrder } from "./page";
+import { SalesOrder } from "./page";
 import axios from "axios";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -82,9 +82,13 @@ export default function CodeCreationTab({
   const gstAmt = Math.floor(taxable * 0.18);
   const finalAmt = taxable + gstAmt;
 
+
+  const hasProjectCode = ((order as any).projectCodeArray || []).length > 0;
   const hasPoDoc = (order.closedWonArray || []).some(
     (i: any) => i.salesPoDocument
   );
+
+
   const senderName = order.salesHandlerName || "Team";
 
   const isValidEmail = (email: string) =>
@@ -98,7 +102,7 @@ export default function CodeCreationTab({
     return emails.every((e) => isValidEmail(e));
   };
 
-  // ── Send / Resend handler ────────────────────────────────────────────────
+ 
   const handleSendMail = async () => {
     setToError("");
     setCcError("");
@@ -176,25 +180,25 @@ export default function CodeCreationTab({
 
   return (
     <div className="h-full flex flex-col">
-      {/* ── Page Header ── */}
+   
       <div className="flex-shrink-0 flex items-start justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
         <div>
-          <p className="text-[10px] font-bold text-red-600 uppercase tracking-widest mb-0.5">
+          <p className="text-[13px] font-bold text-red-600 uppercase tracking-widest mb-0.5">
             Zoho Project Mail
           </p>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
             Project Code Creation
           </h2>
-          {/* Mail sent count badge */}
+       
           {updatedHasSent && (
-            <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-[10px] font-bold">
+            <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-[12px] font-bold">
               <CheckCircle2 size={9} />
               Mail sent {updatedLogs.length} time{updatedLogs.length > 1 ? "s" : ""}
             </span>
           )}
         </div>
 
-        {/* Mobile toggle */}
+    
         <div className="flex sm:hidden gap-2">
           <button
             onClick={() => setMobileView("form")}
@@ -207,47 +211,96 @@ export default function CodeCreationTab({
           </button>
         </div>
 
-        {/* Desktop send button */}
+      
         <div className="hidden sm:flex items-center gap-2">
 
 
-          {(mailSentSuccess || updatedHasSent) && (
-            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl p-1 gap-1">
-              <button
-                onClick={() => setRightPanel("preview")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${rightPanel === "preview"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-                  }`}
-              >
-                <Mail size={12} /> Mail Preview
-              </button>
-              <button
-                onClick={() => setRightPanel("codeForm")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${rightPanel === "codeForm"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-                  }`}
-              >
-                Enter Project Code
-              </button>
+          {(mailSentSuccess || updatedHasSent) && !hasProjectCode && (
+            <div className="flex-shrink-0 flex items-center justify-end px-5 py-2.5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
+              <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl p-1 gap-1">
+                <button
+                  onClick={() => setRightPanel("preview")}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${rightPanel === "preview"
+                    ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
+                >
+                  <Mail size={12} /> Mail Preview
+                </button>
+                <button
+                  onClick={() => setRightPanel("codeForm")}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${rightPanel === "codeForm"
+                    ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
+                >
+                  Enter Project Code
+                </button>
+              </div>
             </div>
           )}
         </div>
       </div>
 
       {/* ── Two-column layout ── */}
-      <div className="flex-1 overflow-hidden flex flex-col sm:flex-row gap-0">
-        {/* ── LEFT: Mail Form ── */}
+      <div className="flex-1 min-h-0 flex flex-col sm:flex-row gap-0">
+      
 
         <div
           className={`sm:flex-1 overflow-y-auto p-5 space-y-4 bg-white dark:bg-gray-950 ${mobileView === "preview" ? "hidden sm:block" : "block"
             }`}
         >
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 space-y-4 shadow-sm">
+
+            {hasProjectCode &&
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                Project Code  Details
+              </h3>
+            }
+
+
+            {hasProjectCode && (() => {
+
+
+              const codes = [...((order as any).projectCodeArray || [])].reverse();
+              const latest = codes[0];
+              return (
+                <div className="rounded-xl border border-teal-200 dark:border-teal-700 bg-teal-50 dark:bg-teal-900/20 p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-teal-600 shrink-0" />
+                    <p className="text-xs font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wider">
+                      Zoho Project Code — Saved
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[12px] font-semibold text-teal-500 uppercase tracking-wider mb-0.5">
+                        Project Code
+                      </p>
+                      <p className="text-sm font-bold text-teal-800 dark:text-teal-200">
+                        {latest?.projectCode || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[12px] font-semibold text-teal-500 uppercase tracking-wider mb-0.5">
+                        Estimation Code
+                      </p>
+                      <p className="text-sm font-bold text-teal-800 dark:text-teal-200">
+                        {latest?.estimationCode || "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-[14px] text-teal-600/70 dark:text-teal-400/70">
+                    Saved by {latest?.savedBy} · {latest?.savedAt ? formatDateTime(latest.savedAt) : "—"}
+                  </p>
+                </div>
+              );
+            })()}
+
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
               Mail Details
             </h3>
+
 
             {/* ── Last sent info banner ── */}
             {updatedLastSent && (
@@ -257,18 +310,27 @@ export default function CodeCreationTab({
                   className="text-green-600 mt-0.5 shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-green-700 dark:text-green-300">
+                  {/* <p className="text-xs font-bold text-green-700 dark:text-green-300">
+                   Last Updated 
+                  </p> */}
+                  <p className="text-sm font-bold text-green-700 dark:text-green-300">
                     {updatedLastSent.isResend
                       ? "Mail Resent Successfully"
                       : "Mail Sent Successfully"}
                   </p>
-                  <p className="text-[11px] text-green-600/80 dark:text-green-400/80 mt-0.5">
+                  <p className="text-[13px] text-green-600/80 dark:text-green-400/80 mt-0.5">
                     {formatDateTime(updatedLastSent.sentAt)} · by{" "}
                     {updatedLastSent.sentBy}
                   </p>
-                  <p className="text-[11px] text-green-600/80 dark:text-green-400/80 truncate">
+
+                  <p className="text-[13px] text-green-600/80 dark:text-green-400/80 truncate">
                     To: {updatedLastSent.sentTo}
                   </p>
+                  {updatedLastSent.sentCc && (
+                    <p className="text-[13px] text-green-600/80 dark:text-green-400/80 truncate">
+                      CC: {updatedLastSent.sentCc}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -292,7 +354,7 @@ export default function CodeCreationTab({
                   <RefreshCw size={14} /> Resend Project Creation Mail
                 </button>
               </div>
-            ) : (
+            ) : hasProjectCode ? null : (
               <>
 
                 {/* To */}
@@ -403,9 +465,9 @@ export default function CodeCreationTab({
               )}
             </button>
 
-            {/* ── Send button (desktop — bottom of form) ── */}
+          
 
-            {!mailSentSuccess && (
+            {!mailSentSuccess && !hasProjectCode && (
               <button
                 onClick={handleSendMail}
                 disabled={sending}
@@ -429,12 +491,12 @@ export default function CodeCreationTab({
             )}
           </div>
 
-          {/* ── Mail History Section ── */}
+         
           {updatedLogs.length > 0 && (
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <Clock size={13} className="text-gray-400" />
-                <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                <h3 className="text-md font-bold text-gray-700 dark:text-gray-300">
                   Mail History ({updatedLogs.length})
                 </h3>
               </div>
@@ -449,27 +511,27 @@ export default function CodeCreationTab({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                           {log.isResend ? "Resent" : "Sent"}
                         </span>
-                        <span className="text-[10px] text-gray-400">
+                        <span className="text-[13px] text-gray-400">
                           {formatDateTime(log.sentAt)}
                         </span>
                         {idx === 0 && (
-                          <span className="px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[9px] font-bold">
+                          <span className="px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[11px] font-bold">
                             Latest
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                      <p className="text-[13px] text-gray-500 truncate mt-0.5">
                         To: {log.sentTo}
                       </p>
                       {log.sentCc && (
-                        <p className="text-[11px] text-gray-400 truncate">
+                        <p className="text-[13px] text-gray-400 truncate">
                           CC: {log.sentCc}
                         </p>
                       )}
-                      <p className="text-[11px] text-gray-400">
+                      <p className="text-[13px] text-gray-400">
                         By: {log.sentBy}
                       </p>
                     </div>
@@ -492,7 +554,7 @@ export default function CodeCreationTab({
                 Mail Preview
               </h3>
               {hasPoDoc && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-[11px] font-bold">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-[12px] font-bold">
                   <CheckCircle2 size={10} /> PO Attached
                 </span>
               )}
@@ -501,7 +563,7 @@ export default function CodeCreationTab({
 
             {/* Subject — bordered card */}
             <div className="mx-4 mt-4 mb-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+              <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
                 Subject
               </p>
               <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
@@ -511,7 +573,7 @@ export default function CodeCreationTab({
 
             {/* Hi Team intro */}
             <div className="px-4 pb-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Hi Team,</p>
+              <p className="text-md text-gray-600 dark:text-gray-400">Hi Team,</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Please create a Zoho project code for the below confirmed roadshow campaign.
               </p>
@@ -528,29 +590,25 @@ export default function CodeCreationTab({
                     alt="Adinn Logo"
                     className="h-12 object-contain"
                   />
-                  {/* <p className="text-2xl font-black text-gray-900 dark:text-white mt-3 leading-tight">
-                  Order
-                  <br />
-                  Summary
-                </p> */}
+                 
                 </div>
                 <img
                   src="/images/vehiclesnew.png"
                   alt="Vehicles"
-                  className="absolute right-7 top-5 h-46 object-contain"
+                  className="absolute right-7 h-46 object-contain"
                 />
               </div>
 
               {/* Customer Details */}
               <div className="rounded-none border-b border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50">
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">
                     Customer Details
                   </span>
                 </div>
                 <div className="p-4 grid grid-cols-2 gap-x-6 gap-y-3">
                   <div>
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                    <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
                       Order ID
                     </p>
                     <p className="text-sm font-bold text-gray-900 dark:text-white">
@@ -558,7 +616,7 @@ export default function CodeCreationTab({
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                    <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
                       Customer Name
                     </p>
                     <p className="text-sm font-bold text-gray-900 dark:text-white">
@@ -566,7 +624,7 @@ export default function CodeCreationTab({
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                    <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
                       Customer Type
                     </p>
                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
@@ -578,7 +636,7 @@ export default function CodeCreationTab({
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                    <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
                       Phone
                     </p>
                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
@@ -587,7 +645,7 @@ export default function CodeCreationTab({
                   </div>
                   {order.email && (
                     <div>
-                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                      <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
                         Email
                       </p>
                       <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">
@@ -597,7 +655,7 @@ export default function CodeCreationTab({
                   )}
                   {order.address && (
                     <div className="col-span-2">
-                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                      <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
                         Address
                       </p>
                       <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -607,7 +665,7 @@ export default function CodeCreationTab({
                   )}
                   {order.companyName && (
                     <div>
-                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                      <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
                         Company
                       </p>
                       <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
@@ -617,7 +675,7 @@ export default function CodeCreationTab({
                   )}
                   {order.gstNumber && (
                     <div>
-                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                      <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
                         GST Number
                       </p>
                       <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
@@ -711,7 +769,7 @@ export default function CodeCreationTab({
 
                   <div className="px-4 pb-4 space-y-1">
                     {v.rentalCost > 0 && (
-                      <div className="flex justify-between text-xs">
+                      <div className="flex justify-between text-sm">
                         <span className="text-gray-500">
                           Rental ({v.totalDays}D × ₹
                           {v.perDayRentalCost?.toLocaleString("en-IN")} ×{" "}
@@ -723,7 +781,7 @@ export default function CodeCreationTab({
                       </div>
                     )}
                     {(v.promoterCost ?? 0) > 0 && (
-                      <div className="flex justify-between text-xs">
+                      <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Promoter</span>
                         <span className="font-semibold text-gray-800 dark:text-gray-200">
                           ₹{v.promoterCost?.toLocaleString("en-IN")}
@@ -731,7 +789,7 @@ export default function CodeCreationTab({
                       </div>
                     )}
                     {(v.rtoCost ?? 0) > 0 && (
-                      <div className="flex justify-between text-xs">
+                      <div className="flex justify-between text-sm">
                         <span className="text-gray-500">RTO</span>
                         <span className="font-semibold text-gray-800 dark:text-gray-200">
                           ₹{v.rtoCost?.toLocaleString("en-IN")}
@@ -739,7 +797,7 @@ export default function CodeCreationTab({
                       </div>
                     )}
                     {(v.extraKmCost ?? 0) > 0 && (
-                      <div className="flex justify-between text-xs">
+                      <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Extra KM</span>
                         <span className="font-semibold text-gray-800 dark:text-gray-200">
                           ₹{v.extraKmCost?.toLocaleString("en-IN")}
@@ -747,7 +805,7 @@ export default function CodeCreationTab({
                       </div>
                     )}
                     {(v.extraHourCost ?? 0) > 0 && (
-                      <div className="flex justify-between text-xs">
+                      <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Extra Hours</span>
                         <span className="font-semibold text-gray-800 dark:text-gray-200">
                           ₹{v.extraHourCost?.toLocaleString("en-IN")}
@@ -819,7 +877,7 @@ export default function CodeCreationTab({
 
 
 
-              {/* Additional Notes + Signoff */}
+           
               {additionalNotes && (
                 <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
                   <p className="text-xs font-semibold text-gray-400 uppercase mb-1">
@@ -858,7 +916,7 @@ export default function CodeCreationTab({
                 </p>
               </div>
 
-              {/* Already saved codes — order-ல் இருந்தா show பண்ணு */}
+            
               {((order as any).projectCodeArray || []).length > 0 && (
                 <div className="px-6 py-3 bg-teal-50 dark:bg-teal-900/20 border-b border-teal-100 dark:border-teal-800">
                   {[...(order as any).projectCodeArray].reverse().slice(0, 1).map((c: any, i: number) => (
@@ -869,9 +927,9 @@ export default function CodeCreationTab({
                           Last Saved Code
                         </p>
                         <p className="text-[14px] text-teal-700/80 mt-0.5">
-                         <span className="text-[14px]">Project Code:</span>  <span className="font-semibold">{c.projectCode}</span>
+                          <span className="text-[14px]">Project Code:</span>  <span className="font-semibold">{c.projectCode}</span>
                           &nbsp;·&nbsp;
-                         <span className="text-[14px]">Estimation Code:</span>  <span className="font-semibold">{c.estimationCode}</span>
+                          <span className="text-[14px]">Estimation Code:</span>  <span className="font-semibold">{c.estimationCode}</span>
                         </p>
                         <p className="text-[13px] mt-0.5">
                           By {c.savedBy} · {formatDateTime(c.savedAt)}
@@ -882,9 +940,9 @@ export default function CodeCreationTab({
                 </div>
               )}
 
-              {/* Form Body */}
+            
               {codeSavedSuccess ? (
-                /* ── Success Screen ── */
+              
                 <div className="flex flex-col items-center justify-center py-12 px-6 gap-3">
                   <div className="w-14 h-14 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
                     <CheckCircle2 size={28} className="text-teal-600" />
@@ -895,88 +953,81 @@ export default function CodeCreationTab({
                   <p className="text-xs text-gray-400 text-center">
                     Project code and estimation code have been saved successfully.
                   </p>
-                  <button
-                    onClick={() => {
-                      setCodeSavedSuccess(false);
-                      setProjectCode("");
-                      setEstimationCode("");
-                    }}
-                    className="mt-2 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold transition-all"
-                  >
-                    <RefreshCw size={14} /> Update Code
-                  </button>
+
                 </div>
               ) : (
-                /* ── Input Form ── */
-                <div className="p-6 space-y-4">
-                  {/* Project Code */}
-                  <div>
-                    <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
-                      Project Code <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      value={projectCode}
-                      placeholder="e.g. PROJ-2024-001"
-                      onChange={(e) => {
-                        setProjectCode(e.target.value);
-                        if (!e.target.value.trim()) setProjectCodeError("Project code is required");
-                        else setProjectCodeError("");
-                      }}
-                      className={`w-full border rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 transition-all ${projectCodeError
+                ((order as any).projectCodeArray || []).length === 0 && (
+                  /* ── Input Form ── */
+                  <div className="p-6 space-y-4">
+                  
+                    <div>
+                      <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                        Project Code <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        value={projectCode}
+                        placeholder="e.g. PROJ-2024-001"
+                        onChange={(e) => {
+                          setProjectCode(e.target.value);
+                          if (!e.target.value.trim()) setProjectCodeError("Project code is required");
+                          else setProjectCodeError("");
+                        }}
+                        className={`w-full border rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 transition-all ${projectCodeError
                           ? "border-red-400 focus:ring-red-400"
                           : "border-gray-200 dark:border-gray-700 focus:ring-teal-400"
-                        }`}
-                    />
-                    {projectCodeError && (
-                      <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                       {projectCodeError}
-                      </p>
-                    )}
-                  </div>
+                          }`}
+                      />
+                      {projectCodeError && (
+                        <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                          {projectCodeError}
+                        </p>
+                      )}
+                    </div>
 
-                  {/* Estimation Code */}
-                  <div>
-                    <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
-                      Estimation Code <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      value={estimationCode}
-                      placeholder="e.g. EST-2024-001"
-                      onChange={(e) => {
-                        setEstimationCode(e.target.value);
-                        if (!e.target.value.trim()) setEstimationCodeError("Estimation code is required");
-                        else setEstimationCodeError("");
-                      }}
-                      className={`w-full border rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 transition-all ${estimationCodeError
+                  
+                    <div>
+                      <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                        Estimation Code <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        value={estimationCode}
+                        placeholder="e.g. EST-2024-001"
+                        onChange={(e) => {
+                          setEstimationCode(e.target.value);
+                          if (!e.target.value.trim()) setEstimationCodeError("Estimation code is required");
+                          else setEstimationCodeError("");
+                        }}
+                        className={`w-full border rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 transition-all ${estimationCodeError
                           ? "border-red-400 focus:ring-red-400"
                           : "border-gray-200 dark:border-gray-700 focus:ring-teal-400"
-                        }`}
-                    />
-                    {estimationCodeError && (
-                      <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                      {estimationCodeError}
-                      </p>
-                    )}
-                  </div>
+                          }`}
+                      />
+                      {estimationCodeError && (
+                        <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                          {estimationCodeError}
+                        </p>
+                      )}
+                    </div>
 
-                  {/* Save Button */}
-                  <button
-                    onClick={handleSaveProjectCode}
-                    disabled={codeSaving}
-                    className="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-bold transition-all flex items-center justify-center gap-2 mt-2"
-                  >
-                    {codeSaving ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 size={15} /> Save Project Code
-                      </>
-                    )}
-                  </button>
-                </div>
+                  
+                    <button
+                      onClick={handleSaveProjectCode}
+                      disabled={codeSaving}
+                      className="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-bold transition-all flex items-center justify-center gap-2 mt-2"
+                    >
+                      {codeSaving ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 size={15} /> Save Project Code
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )
               )}
             </div>
           </div>

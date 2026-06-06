@@ -18,11 +18,11 @@ export default function PipelineHistoryTab({ order }: { order: SalesOrder }) {
         <div className="p-4 space-y-3">
             {/* Header badge */}
             <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border border-violet-100 dark:border-violet-800/50">
-                <History size={14} className="text-violet-500" />
-                <span className="text-sm font-bold text-violet-700 dark:text-violet-300">
+                <History size={19} className="text-violet-500" />
+                <span className="text-md font-bold text-violet-700 dark:text-violet-300">
                     Pipeline History
                 </span>
-                <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">
+                <span className="ml-auto px-2 py-0.5 rounded-full text-[13px] font-semibold bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">
                     {logs.length} events
                 </span>
             </div>
@@ -53,7 +53,7 @@ export default function PipelineHistoryTab({ order }: { order: SalesOrder }) {
                                             ? `${fromLabel} → ${toS?.label || log.toStage}`
                                             : `Started at ${toS?.label || log.toStage}`}
                                     </p>
-                                    <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-400 flex-wrap">
+                                    <div className="flex items-center gap-1.5 mt-1 text-sm text-gray-400 flex-wrap">
                                         <span>By {log.movedBy}</span>
                                         {log.handlerName && (
                                             <>
