@@ -137,8 +137,8 @@ export default function OnRoadSubmitModal({ isOpen, onClose, orderId, onSuccess 
 
      
       formData.append("driverName", driverName.trim());
-      formData.append("driverPhone", `+91${driverPhone.trim()}`);
-      formData.append("driverAlternatePhone", driverAlternatePhone ? `+91${driverAlternatePhone.trim()}` : "");
+      formData.append("driverPhone", `${driverPhone.trim()}`);
+      formData.append("driverAlternatePhone", driverAlternatePhone ? `${driverAlternatePhone.trim()}` : "");
       formData.append("vehicleRegistrationNumber", vehicleRegNo.trim().toUpperCase());
 
     

@@ -47,6 +47,7 @@ interface Order {
     todoArray?: any[];
     todoUploadedBy?: string;
     projectMailLogs?: any[];
+    OnRoadTab?:any[];
     isAdminCreated?: boolean;
     companyName?: string;
     clientName?: string;
@@ -376,7 +377,7 @@ function OverviewTab({ order, onRefresh, onStageMove }: {
         }
     };
 
-   
+
     useEffect(() => {
         if (tabsContainerRef.current) {
             const activeTabElement = tabsContainerRef.current.children[activeVehicleTab] as HTMLElement;
@@ -491,9 +492,9 @@ function OverviewTab({ order, onRefresh, onStageMove }: {
             {/* Order Details */}
 
             <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-             
+
                 <div className="relative flex items-center bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                  
+
                     <button
                         onClick={() => scrollTabs('left')}
                         className="absolute left-0 z-10 flex items-center justify-center w-8 h-full bg-gradient-to-r from-gray-50 dark:from-gray-800/50 to-transparent hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all disabled:opacity-30"
@@ -502,7 +503,7 @@ function OverviewTab({ order, onRefresh, onStageMove }: {
                         <ChevronLeft size={18} className="text-gray-600 dark:text-gray-400" />
                     </button>
 
-                  
+
                     <div
                         ref={tabsContainerRef}
                         className="flex overflow-x-auto scrollbar-hide gap-1 px-8"
@@ -552,10 +553,10 @@ function OverviewTab({ order, onRefresh, onStageMove }: {
                     </button>
                 </div>
 
-              
+
                 {currentVehicle && (
                     <div className="p-4 space-y-3">
-                      
+
                         <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">
                             {(
                                 [
@@ -754,7 +755,7 @@ function CommentsTab({ order, onRefresh }: { order: Order; onRefresh: () => Prom
     const isTodo = order.pipelineStatus === "todo";
     const stageLabel = STAGE_MAP[order.pipelineStatus]?.label || order.pipelineStatus;
 
-   
+
     const allComments: Array<{
         text: string; by: string; at: string; stage: string; docPath?: string;
     }> = [];
@@ -868,8 +869,8 @@ function CommentsTab({ order, onRefresh }: { order: Order; onRefresh: () => Prom
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4">
                         <div className="flex items-center gap-3">
-                            
-                           
+
+
                         </div>
                         <input
                             type="text"
@@ -910,7 +911,7 @@ function CommentsTab({ order, onRefresh }: { order: Order; onRefresh: () => Prom
                     <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
                         Add a comment · <span className="text-gray-400">{stageLabel}</span>
                     </p>
-                  
+
                     {isTodo && uploaderName && (
                         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50">
                             <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
@@ -1302,7 +1303,7 @@ export default function DetailDrawer({
                                             <span className="text-gray-500 text-sm">Last Updated At</span>
                                             <span className="font-bold text-gray-800 dark:text-gray-200 text-xs">{fmtRelative(order.updatedAt)}</span>
                                         </div>
-                                       
+
                                     </div>
                                 </div>
                             </div>
@@ -1318,7 +1319,7 @@ export default function DetailDrawer({
                     )}
 
                     {activeTab === "onRoad" && (
-                        <OnRoadTab order={order} />
+                        <OnRoadTab order={order} onRefresh={onRefresh} />
                     )}
 
                 </div>

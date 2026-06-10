@@ -1,7 +1,8 @@
 
-
+'use client'
 import { useState } from "react";
-import { X, User, Truck, Camera, UserCheck, MapPin, Clock, FileText, Eye, ZoomIn, AlertCircle, CheckCircle, Shield, Navigation } from "lucide-react";
+import { X, User, Truck, Camera, UserCheck, MapPin, Clock, FileText, Eye, ZoomIn, AlertCircle, CheckCircle, Shield, Navigation, Pencil, History } from "lucide-react";
+import EditOnRoadModal from "./EditOnRoadModal";
 
 interface Order {
     _id: string;
@@ -25,6 +26,7 @@ interface Order {
     projectExecutionArray?: any[];
     onRoadExecutionArray?: any[];
     projectMailLogs?: any[];
+    onRoadHistory?:any[];
     isAdminCreated?: boolean;
     companyName?: string;
     clientName?: string;
@@ -34,6 +36,9 @@ interface Order {
 }
 
 
+
+
+
 const getFileUrl = (p: string) => {
     if (!p) return "";
     if (p.startsWith("http")) return p;
@@ -41,8 +46,12 @@ const getFileUrl = (p: string) => {
 };
 
 
-export default function OnRoadTab({ order }: { order: Order }) {
+export default function OnRoadTab({ order, onRefresh }: { order: Order; onRefresh: () => Promise<void>; }) {
     const entries = order.onRoadExecutionArray || [];
+    const history = order.onRoadHistory || [];
+    const [editEntry, setEditEntry] = useState<any>(null);
+
+
 
     if (entries.length === 0) {
         return (
@@ -65,6 +74,7 @@ export default function OnRoadTab({ order }: { order: Order }) {
         );
     }
 
+
     return (
         <div className="p-6 space-y-6">
             {/* Header Stats */}
@@ -74,7 +84,7 @@ export default function OnRoadTab({ order }: { order: Order }) {
                         <Truck className="w-5 h-5 text-sky-500" />
                         Vehicle Records
                     </h3>
-                 
+
                 </div>
             </div>
 
@@ -83,10 +93,10 @@ export default function OnRoadTab({ order }: { order: Order }) {
                     key={entry._id || idx}
                     className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
                 >
-                  
+
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-500 to-blue-600" />
 
-                 
+
                     <div className="flex items-center justify-between px-6 py-4 bg-gray-50/50 dark:bg-gray-800/30 border-b border-gray-100 dark:border-gray-800">
                         <div className="flex items-center gap-3">
                             <div className="relative">
@@ -109,6 +119,7 @@ export default function OnRoadTab({ order }: { order: Order }) {
                             </div> */}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <span>Uploaded At</span>
                             <Clock className="w-4 h-4" />
                             <span>{new Date(entry.uploadedAt).toLocaleString("en-IN", {
                                 day: "2-digit",
@@ -118,13 +129,21 @@ export default function OnRoadTab({ order }: { order: Order }) {
                                 minute: "2-digit",
                             })}</span>
                         </div>
+
+                    
+                        <button
+                            onClick={() => setEditEntry(entry)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 text-blue-600 text-base font-semibold transition-all"
+                        >
+                            <Pencil size={15} /> Edit
+                        </button>
                     </div>
 
-                  
+
                     <div className="p-6">
-                      
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          
+
                             <div className="bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/30 rounded-xl p-4 border border-sky-200 dark:border-sky-800">
                                 <div className="flex items-center gap-2 mb-3">
                                     <User className="w-5 h-5 text-sky-600 dark:text-sky-400" />
@@ -156,7 +175,7 @@ export default function OnRoadTab({ order }: { order: Order }) {
                                 </div>
                             </div>
 
-                         
+
                             <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
                                 <div className="flex items-center gap-2 mb-3">
                                     <Truck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
@@ -175,7 +194,7 @@ export default function OnRoadTab({ order }: { order: Order }) {
                             </div>
                         </div>
 
-                       
+
                         <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
                             <UserCheck className="w-4 h-4 text-gray-400" />
                             <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -183,45 +202,140 @@ export default function OnRoadTab({ order }: { order: Order }) {
                             </span>
                         </div>
 
-                      
+
                         {(entry.gatepassPhoto ||
                             entry.vehicleFrontPhoto ||
                             entry.vehicleBackPhoto ||
                             entry.vehicleLeftPhoto ||
                             entry.vehicleRightPhoto) && (
-                            <div>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Camera className="w-4 h-4 text-gray-500" />
-                                    <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                                        Vehicle Documentation
-                                    </span>
-                                    <span className="text-[13px] text-gray-400">({[
-                                        entry.gatepassPhoto, entry.vehicleFrontPhoto, entry.vehicleBackPhoto,
-                                        entry.vehicleLeftPhoto, entry.vehicleRightPhoto
-                                    ].filter(Boolean).length} photos)</span>
+                                <div>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <Camera className="w-4 h-4 text-gray-500" />
+                                        <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                                            Vehicle Documentation
+                                        </span>
+                                        <span className="text-[13px] text-gray-400">({[
+                                            entry.gatepassPhoto, entry.vehicleFrontPhoto, entry.vehicleBackPhoto,
+                                            entry.vehicleLeftPhoto, entry.vehicleRightPhoto
+                                        ].filter(Boolean).length} photos)</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                        {entry.gatepassPhoto && (
+                                            <PhotoCard url={getFileUrl(entry.gatepassPhoto)} label="Gate Pass" icon={<FileText className="w-4 h-4" />} />
+                                        )}
+                                        {entry.vehicleFrontPhoto && (
+                                            <PhotoCard url={getFileUrl(entry.vehicleFrontPhoto)} label="Front View" icon={<Navigation className="w-4 h-4" />} />
+                                        )}
+                                        {entry.vehicleBackPhoto && (
+                                            <PhotoCard url={getFileUrl(entry.vehicleBackPhoto)} label="Rear View" icon={<Shield className="w-4 h-4" />} />
+                                        )}
+                                        {entry.vehicleLeftPhoto && (
+                                            <PhotoCard url={getFileUrl(entry.vehicleLeftPhoto)} label="Left Side" icon={<Truck className="w-4 h-4" />} />
+                                        )}
+                                        {entry.vehicleRightPhoto && (
+                                            <PhotoCard url={getFileUrl(entry.vehicleRightPhoto)} label="Right Side" icon={<Truck className="w-4 h-4" />} />
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                    {entry.gatepassPhoto && (
-                                        <PhotoCard url={getFileUrl(entry.gatepassPhoto)} label="Gate Pass" icon={<FileText className="w-4 h-4" />} />
-                                    )}
-                                    {entry.vehicleFrontPhoto && (
-                                        <PhotoCard url={getFileUrl(entry.vehicleFrontPhoto)} label="Front View" icon={<Navigation className="w-4 h-4" />} />
-                                    )}
-                                    {entry.vehicleBackPhoto && (
-                                        <PhotoCard url={getFileUrl(entry.vehicleBackPhoto)} label="Rear View" icon={<Shield className="w-4 h-4" />} />
-                                    )}
-                                    {entry.vehicleLeftPhoto && (
-                                        <PhotoCard url={getFileUrl(entry.vehicleLeftPhoto)} label="Left Side" icon={<Truck className="w-4 h-4" />} />
-                                    )}
-                                    {entry.vehicleRightPhoto && (
-                                        <PhotoCard url={getFileUrl(entry.vehicleRightPhoto)} label="Right Side" icon={<Truck className="w-4 h-4" />} />
-                                    )}
-                                </div>
-                            </div>
-                        )}
+                            )}
                     </div>
                 </div>
             ))}
+
+            {history.length > 0 && (
+  <div className="mt-6">
+    <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border border-violet-100 dark:border-violet-800/50 mb-4">
+      <History size={16} className="text-violet-500" />
+      <span className="text-sm font-bold text-violet-700 dark:text-violet-300">On Road History</span>
+      <span className="ml-auto px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-100 dark:bg-violet-900/40 text-violet-700">
+        {history.length} events
+      </span>
+    </div>
+
+    <div className="space-y-3">
+      {[...history].reverse().map((h: any, i: number) => (
+        <div key={h._id || i} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50">
+          
+          {/* Action Badge */}
+          <div className="flex items-center justify-between mb-3">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold ${
+              h.action === "created"
+                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+            }`}>
+              {h.action === "created" ? <CheckCircle size={11} /> : <Pencil size={11} />}
+              {h.action === "created" ? "Added" : "Edited"}
+            </span>
+            <span className="text-sm text-gray-400">
+              {new Date(h.changedAt).toLocaleString("en-IN", {
+                day: "2-digit", month: "short", year: "numeric",
+                hour: "2-digit", minute: "2-digit"
+              })}
+            </span>
+          </div>
+
+          {/* Changed Fields (only for edited) */}
+          {h.action === "edited" && Object.keys(h.changedFields || {}).length > 0 && (
+            <div className="mb-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 space-y-2">
+              <p className="text-sm font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">Changes Made:</p>
+              {Object.entries(h.changedFields).map(([field, val]: any) => (
+                <div key={field} className="flex items-center gap-2 text-xs">
+                  <span className="font-medium text-base text-gray-600 dark:text-gray-400 capitalize w-28">
+                    {field === "driverName" ? "Driver Name"
+                      : field === "driverPhone" ? "Driver Phone"
+                      : field === "driverAlternatePhone" ? "Alt. Phone"
+                      : field === "vehicleRegistrationNumber" ? "Reg. Number"
+                      : field}:
+                  </span>
+                  {/* <span className="line-through text-red-500">{val.old || "—"}</span>
+                  <span className="text-gray-400">→</span> */}
+                  <span className="text-green-600 text-base font-semibold">{val.new}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Snapshot */}
+          <div className="grid grid-cols-2 gap-2 text-base">
+            <div>
+              <span className="text-gray-600">Driver</span>
+              <p className=" text-sm font-semibold  text-gray-800 dark:text-gray-200">{h.driverName}</p>
+            </div>
+            <div>
+              <span className=" text-gray-400">Phone</span>
+              <p className="font-semibold text-gray-800 dark:text-gray-200">{h.driverPhone}</p>
+            </div>
+            <div>
+              <span className="text-gray-400">Reg. Number</span>
+              <p className="font-semibold text-gray-800 dark:text-gray-200">{h.vehicleRegistrationNumber}</p>
+            </div>
+            {h.driverAlternatePhone && (
+              <div>
+                <span className="text-gray-400">Alt. Phone</span>
+                <p className="font-semibold text-gray-800 dark:text-gray-200">{h.driverAlternatePhone}</p>
+              </div>
+            )}
+          </div>
+
+          <p className="text-sm text-gray-400 mt-2">By {h.changedBy}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+            {/* Edit Modal */}
+{editEntry && (
+  <EditOnRoadModal
+    entry={editEntry}
+    orderId={order._id}
+    onClose={() => setEditEntry(null)}
+    onSuccess={async () => {
+      setEditEntry(null);
+      await onRefresh();
+    }}
+  />
+)}
         </div>
     );
 }
@@ -277,8 +391,8 @@ function PhotoCard({ url, label, icon }: { url: string; label: string; icon?: Re
                         {label}
                     </span>
                 </div>
-                
-               
+
+
                 {showTooltip && !hasError && (
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3">
                         <button
@@ -301,7 +415,7 @@ function PhotoCard({ url, label, icon }: { url: string; label: string; icon?: Re
                         </a>
                     </div>
                 )}
-                
+
                 {/* Tooltip text */}
                 {showTooltip && !hasError && (
                     <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap pointer-events-none z-10">
@@ -310,7 +424,7 @@ function PhotoCard({ url, label, icon }: { url: string; label: string; icon?: Re
                 )}
             </div>
 
-          
+
             {isOpen && (
                 <div
                     onClick={() => setIsOpen(false)}
