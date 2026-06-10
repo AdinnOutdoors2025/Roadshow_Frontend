@@ -227,7 +227,7 @@ export default function OnRoadSubmitModal({ isOpen, onClose, orderId, onSuccess 
                   </div>
                   {errors.driverName && (
                     <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" /> {errors.driverName}
+                      {errors.driverName}
                     </p>
                   )}
                 </div>
@@ -251,7 +251,7 @@ export default function OnRoadSubmitModal({ isOpen, onClose, orderId, onSuccess 
                   </div>
                   {errors.driverPhone && (
                     <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" /> {errors.driverPhone}
+                      {errors.driverPhone}
                     </p>
                   )}
                 </div>
@@ -275,7 +275,7 @@ export default function OnRoadSubmitModal({ isOpen, onClose, orderId, onSuccess 
                   </div>
                   {errors.driverAlternatePhone && (
                     <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" /> {errors.driverAlternatePhone}
+                      {errors.driverAlternatePhone}
                     </p>
                   )}
                 </div>

@@ -64,6 +64,7 @@ export interface VehicleConfig {
   promoterLanguage: string[];
   promoterQuantity: number;
   dailyKmcharges: any;
+  campaignName: string;
 }
 
 export interface GstDetail {
@@ -159,6 +160,7 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
           gstNumber: v.gstNumber || "",
           campaignType: v.campaignType,
           otherCampaignType: v.otherCampaignType,
+          campaignName: v.campaignName,
           fromDate: v.fromDate,
           toDate: v.toDate,
           state: v.state,
@@ -289,69 +291,12 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {/* {step === 0 && (
-            <CustomerDetailsStep
-
-              gstDetails={order.gstDetails}
-              onGstVerified={(detail) =>
-                setOrder((p) => ({
-                  ...p,
-                  gstDetails: [
-                    ...p.gstDetails.filter(g => g.gst_number !== detail.gst_number),
-                    detail,
-                  ],
-                }))
-              }
-              data={order.customerForm}
-              customerSelection={order.customerSelection}
-              onChange={(d) =>
-                setOrder((p) => ({ ...p, customerForm: { ...p.customerForm, ...d } }))
-              }
-              onCustomerChange={(d) =>
-                setOrder((p) => ({ ...p, customerSelection: { ...p.customerSelection, ...d } }))
-              }
-              onNext={next}
-              customerCategory={order.customerCategory}
-
-              onCategoryChange={(cat) =>
-                setOrder((p) => {
-                  const updatedIndividual =
-                    p.customerCategory === "individual" ? p.customerForm : p.individualForm;
-                  const updatedOrganization =
-                    p.customerCategory === "organization" ? p.customerForm : p.organizationForm;
-
-
-                  const nextForm =
-                    cat === "individual" ? updatedIndividual : updatedOrganization;
-
-                  return {
-                    ...p,
-                    customerCategory: cat,
-                    customerForm: nextForm,
-                    individualForm: updatedIndividual,
-                    organizationForm: updatedOrganization,
-                    customerSelection: { type: "", customer: null },
-                  };
-                })
-
-                
-              }
-            />
-
-          )} */}
+        
 
           {step === 0 && (
             <CustomerDetailsStep
               gstDetails={order.gstDetails}
-              // onGstVerified={(detail) =>
-              //   setOrder((p) => ({
-              //     ...p,
-              //     gstDetails: [
-              //       ...p.gstDetails.filter(g => g.gst_number !== detail.gst_number),
-              //       detail,
-              //     ],
-              //   }))
-              // }
+            
               onGstVerified={(detail) =>
                 setOrder((p) => ({
                   ...p,

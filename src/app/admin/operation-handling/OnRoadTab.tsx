@@ -274,7 +274,7 @@ export default function OnRoadTab({ order, onRefresh }: { order: Order; onRefres
             </span>
           </div>
 
-          {/* Changed Fields (only for edited) */}
+          
           {h.action === "edited" && Object.keys(h.changedFields || {}).length > 0 && (
             <div className="mb-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 space-y-2">
               <p className="text-sm font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">Changes Made:</p>
@@ -287,8 +287,8 @@ export default function OnRoadTab({ order, onRefresh }: { order: Order; onRefres
                       : field === "vehicleRegistrationNumber" ? "Reg. Number"
                       : field}:
                   </span>
-                  {/* <span className="line-through text-red-500">{val.old || "—"}</span>
-                  <span className="text-gray-400">→</span> */}
+                  <span className="line-through text-red-500">{val.old || "—"}</span>
+                  <span className="text-gray-400">→</span>
                   <span className="text-green-600 text-base font-semibold">{val.new}</span>
                 </div>
               ))}
