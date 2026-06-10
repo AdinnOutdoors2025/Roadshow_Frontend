@@ -1265,7 +1265,7 @@ export default function DetailDrawer({
                                     </div>
                                 )}
 
-                                {/* Quick Actions */}
+                            
                                 <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
                                     <p className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Quick Actions</p>
                                     <div className="space-y-2">
