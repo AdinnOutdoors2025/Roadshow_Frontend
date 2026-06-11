@@ -173,12 +173,9 @@
 .RS_OurRdwMainSection {
   background: #F5F5F7;
   padding-bottom: 5%;
-  /* margin-bottom: 5%; */
 }
 
 .RS_OurRdwHeading {
-  /* margin: 5% auto;
-  margin-top: 0; */
   padding: 5% 0px;
 }
 
@@ -200,7 +197,6 @@
   border-radius: 20px;
   width: auto;
   color: #000000;
-
 }
 
 .RS_VehicleDetailsMain {
@@ -329,89 +325,7 @@
   cursor: not-allowed;
 }
 
-/* Why Adinn Roadshows section (works best) */
-/* .RS_WhyAdRSMain {
-  width: 800px;
-  height: 800px;
-  border-radius: 70px;
-  background: #EEEDF0;
-  margin: auto;
-  margin-bottom: 5%;
-display: flex;
-justify-content: space-around;
-}
-
-.RS_WhyAdRSContentLeft {
-  display: flex;
-  gap: 20px;
-  margin-top: 24px;
-
-}
-
-.RS_WhyAdRS_RS_CarouselBtn {
-  width: 20px;
-  height: 20px;
-  font-size: 10px;
-}
-
-.RS_WhyAdRSContentHeading {
-  background: #D7D7DE;
-  padding: 10px;
-  border-radius: 40px;
-  display: flex;
-  gap: 20px;
-  width: max-content;
-  color: #000000;
-  font-family: Outfit;
-  font-weight: 500;
-  font-size: 22px;
-  line-height: 100%;
-  letter-spacing: 0%;
-
-}
-
-.RS_WhyAdRSContentIcon {
-  background: #FFFFFF;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  align-content: center;
-  text-align: center;
-
-}
-
-.RS_WhyAdRSContentDesc {
-  color: #000000;
-  font-weight: 400;
-  font-size: 18px;
-  leading-trim: NONE;
-  line-height: 100%;
-  letter-spacing: 0%;
-
-}
-
- */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* === Why Adinn Roadshows — Updated Styles === */
-/* Existing classes are kept, only additions/changes below */
-
+/* Why Adinn Roadshows */
 .RS_WhyAdRSMain {
   width: 60%;
   height: 800px;
@@ -467,13 +381,13 @@ justify-content: space-around;
 /* Each accordion item */
 .RS_WhyAdRSItem {
   background: #D7D7DE;
-  border-radius: 40px;
-  padding: 12px 16px;
+  border-radius: 50px;
+  padding:25px 30px;
   display: flex;
-  gap: 14px;
+  gap: 20px;
   align-items: flex-start;
   cursor: pointer;
-  transition: background 0.25s ease, border-radius 0.25s ease;
+  transition: background 1.25s ease, border-radius 1.25s ease;
   width: 320px;
 }
 
@@ -483,21 +397,22 @@ justify-content: space-around;
 
 .RS_WhyAdRSItem.active {
   background: #D7D7DE;
-  border-radius: 24px;
+  border-radius: 50px;
+  width: 400px;
 }
 
 /* Toggle icon circle */
 .RS_WhyAdRSContentIcon {
   background: #FFFFFF;
-  min-width: 32px;
-  height: 32px;
+  min-width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 25px;
   flex-shrink: 0;
-  transition: transform 0.3s ease;
+  transition: transform 1.3s ease;
 }
 
 .RS_WhyAdRSItem.active .RS_WhyAdRSContentIcon {
@@ -535,16 +450,10 @@ justify-content: space-around;
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transition: max-height 0.4s ease, opacity 0.35s ease, margin-top 0.3s ease;
+  transition: max-height 1.4s ease, opacity 1.35s ease, margin-top 1.3s ease;
   margin-top: 0;
 }
 
-.RS_WhyAdRSItem.active .RS_WhyAdRS_ItemDesc {
-  max-height: max-content;
-  /* enough for 3–4 lines */
-  opacity: 1;
-  margin-top: 6px;
-}
 
 /* Right side image area */
 .RS_WhyAdRS_Right {
@@ -559,18 +468,227 @@ justify-content: space-around;
 
 .RS_WhyAdRS_Right img {
   width: 100%;
-  max-width: 360px;
+  max-width: 660px;
   object-fit: contain;
   position: absolute;
-  transition: opacity 0.4s ease, transform 0.4s ease;
   opacity: 0;
-  transform: translateX(20px);
+  transform: translateX(100%);  
+  pointer-events: none;
+  transition: none;            
 }
 
-.RS_WhyAdRS_Right img.visible {
-  opacity: 1;
-  transform: translateX(0);
+/* ─── Keyframe animations ─── */
+
+/* Entering from RIGHT (Next click) */
+@keyframes enterFromRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
 }
+
+/* Entering from LEFT (Prev click) */
+@keyframes enterFromLeft {
+  from { opacity: 0; transform: translateX(-100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Exiting to LEFT (Next click — current image leaves) */
+@keyframes exitToLeft {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-100%); }
+}
+
+/* Exiting to RIGHT (Prev click — current image leaves) */
+@keyframes exitToRight {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(100%); }
+}
+
+/* Active classes */
+.RS_WhyAdRS_Right img.enter-from-right {
+  animation: enterFromRight 1.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.RS_WhyAdRS_Right img.enter-from-left {
+  animation: enterFromLeft 1.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.RS_WhyAdRS_Right img.exit-left {
+  animation: exitToLeft 0.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.RS_WhyAdRS_Right img.exit-right {
+  animation: exitToRight 0.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+
+/* ─── Accordion desc — smooth width + height expansion ─── */
+.RS_WhyAdRS_ItemDesc {
+  font-family: Outfit, sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  color: #333;
+  line-height: 1.5;
+  max-height: 0;
+  max-width: 0;            /* ← ADD THIS for the width expansion effect */
+  overflow: hidden;
+  opacity: 0;
+  transition: 
+    max-height 1.4s ease,
+    max-width 1.2s ease,   /* ← ADD THIS */
+    opacity 1.35s ease,
+    margin-top 1.3s ease;
+  margin-top: 0;
+}
+
+.RS_WhyAdRSItem.active .RS_WhyAdRS_ItemDesc {
+  max-height:200px;
+  /* border: 1px solid red; */
+  max-width: 500px;        /* ← expands outward like in the video */
+  opacity: 1;
+  margin-top: 6px;
+       /* ← allow wrap once fully expanded */
+}
+
+
+/* ─── Why Adinn RS — RIGHT PANEL ─── */
+.RS_WhyAdRS_Right {
+  width: 440px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Base state — hidden, small, off to the bottom-right */
+.RS_WhyAdRS_Right img {
+  width: 100%;
+  max-width: 660px;
+  object-fit: contain;
+  position: absolute;
+  opacity: 0;
+  transform: translateX(120%) translateY(40%) scale(0.35);
+  pointer-events: none;
+  transition: none;
+}
+
+/* ─── Keyframes: Next (→) — enters from bottom-right corner ─── */
+@keyframes enterFromBottomRight {
+  from { opacity: 0; transform: translateX(120%) translateY(40%) scale(0.35); }
+  to   { opacity: 1; transform: translateX(0)   translateY(0)   scale(2);    }
+}
+
+/* ─── Keyframes: Next (→) — exits to bottom-left corner ─── */
+@keyframes exitToBottomLeft {
+  from { opacity: 1; transform: translateX(0)     translateY(0)   scale(1);    }
+  to   { opacity: 0; transform: translateX(-120%) translateY(40%) scale(0.35); }
+}
+
+/* ─── Keyframes: Prev (←) — enters from bottom-left corner ─── */
+@keyframes enterFromBottomLeft {
+  from { opacity: 0; transform: translateX(-120%) translateY(40%) scale(0.35); }
+  to   { opacity: 1; transform: translateX(0)     translateY(0)   scale(2);    }
+}
+
+/* ─── Keyframes: Prev (←) — exits to bottom-right corner ─── */
+@keyframes exitToBottomRight {
+  from { opacity: 1; transform: translateX(0)    translateY(0)   scale(1);    }
+  to   { opacity: 0; transform: translateX(120%) translateY(40%) scale(0.35); }
+}
+
+/* Active animation classes */
+.RS_WhyAdRS_Right img.enter-from-right {
+  animation: enterFromBottomRight 2.72s cubic-bezier(0.42, 1, 0.36, 1) forwards;
+}
+.RS_WhyAdRS_Right img.enter-from-left {
+  animation: enterFromBottomLeft 1.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.RS_WhyAdRS_Right img.exit-left {
+  animation: exitToBottomLeft 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.RS_WhyAdRS_Right img.exit-right {
+  animation: exitToBottomRight 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+
+/* ─── Why Adinn RS — ACCORDION ITEM (same pattern as RA section) ─── */
+.RS_WhyAdRSItem {
+  background: #D7D7DE;
+  border-radius: 50px;
+  padding: 25px 30px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  cursor: pointer;
+  /* Width expands like RA section */
+  width: 320px;
+  overflow: hidden;
+  transition: background 0.3s ease, width 1.4s ease;
+  margin-bottom: 12px;
+}
+
+.RS_WhyAdRSItem:hover {
+  background: #cbcbd2;
+}
+
+.RS_WhyAdRSItem.active {
+  background: #D7D7DE;
+  border-radius: 50px;
+  width: 400px; /* expands width on active */
+}
+
+/* Toggle icon circle */
+.RS_WhyAdRSContentIcon {
+  background: #FFFFFF;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 25px;
+  flex-shrink: 0;
+  transition: transform 1.3s ease;
+}
+
+.RS_WhyAdRSItem.active .RS_WhyAdRSContentIcon {
+  transform: rotate(45deg);
+}
+
+/* Item name */
+.RS_WhyAdRS_ItemName {
+  font-family: Outfit;
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  color: #000;
+  padding-top: 4px;
+}
+
+/* ─── DESC: collapse wrapper — SAME pattern as RA's .RA_collapseWrapper ─── */
+/* REMOVE the old .RS_WhyAdRS_ItemDesc max-width/max-height rules and use this instead */
+.RS_WhyAdRS_CollapseWrapper {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 1.4s ease, opacity 1.35s ease, padding 1.3s ease;
+  padding: 0;
+}
+
+.RS_WhyAdRS_CollapseWrapper.open {
+  max-height: 200px;
+  opacity: 1;
+  padding: 6px 0 0 0;
+}
+
+.RS_WhyAdRS_ItemDesc {
+  font-family: Outfit, sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  color: #333;
+  line-height: 1.5;
+  width: 280px; /* fixed width so text wraps cleanly once visible */
+}
+
 
 /* RESPONSIVE  */
 @media (max-width: 768px) {
@@ -612,13 +730,12 @@ justify-content: space-around;
 }
 
 
-
-
-
+/* OUR CLIENT SECTION  */
 .RS_ClientsSection {
   width: 100%;
   position: relative;
   overflow: hidden;
+  padding-bottom: 5%;
 }
 
 .RS_ClientsOrbitArea {
@@ -626,10 +743,6 @@ justify-content: space-around;
   width: 100%;
   height: 380px;
 }
-
-
-
-
 
 .RS_ClientCenterBubble {
   position: absolute;
@@ -831,4 +944,5 @@ justify-content: space-around;
 .RS_ViewAllClientsBtn:hover {
   background: #c5c5cc;
   transform: scale(1.03);
-}
+} 
+

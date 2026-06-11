@@ -6,7 +6,7 @@
     display: flex;
     align-items: start;
     justify-content: space-around;
-    padding: 40px 5%;
+    padding: 5% 5%;
     align-items: center;
 }
 
@@ -105,11 +105,11 @@
 
 /* ── 2XL: 1536px+ ── */
 @media (min-width: 1536px) {
-    .FooterCTAContent1 { font-size: 80px; }
+    /* .FooterCTAContent1 { font-size: 80px; }
     .FooterCTAContent2 { font-size: 56px; }
     .FooterCTAButton   { font-size: 48px; padding: 20px 52px; }
     .FooterCol23Heading  { font-size: 24px; }
-    .FooterCol23Contents { font-size: 18px; }
+    .FooterCol23Contents { font-size: 18px; } */
 }
 
 /* ── XL: 1280px ── */

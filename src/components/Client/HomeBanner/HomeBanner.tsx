@@ -5,12 +5,20 @@ import React, { useState } from 'react';
 import './HomeBanner.css';
 // import OffersSection from '../HomePageSections/HomePageSection1';
 const subImages = [
-    './images/assets/BannerSubImg1.png',
-    './images/assets/BannerSubImg2.png',
-    './images/assets/BannerSubImg3.png',
-    './images/assets/BannerSubImg4.png',
-    './images/assets/HomeBanner_MainPageFinal.png',
-    './images/assets/tata ultra - 2.png',
+    // './images/assets/BannerSubImg1.png',
+    // './images/assets/BannerSubImg2.png',
+    // './images/assets/BannerSubImg3.png',
+    // './images/assets/BannerSubImg4.png',
+    './images/assets/HomeBanner_MainPageFinal.png', // 2 sided led - ok
+    './images/assets/tata ultra - 2.png', // 3 sided 17ft (with door) - ok
+    './images/assets/full side LED.png',  // 3 sided 19ft () - ok
+    './images/assets/single side.png', // 19ft single side - ok
+    './images/assets/full side LED edited.png', // OKAY BUT BACKGROUND SHADOWN REMOVE
+    // './images/assets/WhatsApp Image 2026-06-09 at 6.53.18 PM.jpeg',
+    // './images/assets/WhatsApp Image 2026-06-09 at 6.53.23 PM.jpeg',
+    './images/assets/fab led edited.png', // fabricated (hybrid flex) 7 X 5 - ok
+
+
 ];
 
 function HomeBanner() {
