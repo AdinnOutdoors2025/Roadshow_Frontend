@@ -310,9 +310,7 @@ export default function CodeCreationTab({
                   className="text-green-600 mt-0.5 shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  {/* <p className="text-xs font-bold text-green-700 dark:text-green-300">
-                   Last Updated 
-                  </p> */}
+
                   <p className="text-sm font-bold text-green-700 dark:text-green-300">
                     {updatedLastSent.isResend
                       ? "Mail Resent Successfully"
@@ -347,12 +345,14 @@ export default function CodeCreationTab({
                 <p className="text-xs text-gray-400 text-center">
                   Your project creation mail has been sent to the team.
                 </p>
+                  {!hasProjectCode &&
                 <button
                   onClick={() => setMailSentSuccess(false)}
                   className="mt-2 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold transition-all"
                 >
                   <RefreshCw size={14} /> Resend Project Creation Mail
                 </button>
+                 }
               </div>
             ) : hasProjectCode ? null : (
               <>

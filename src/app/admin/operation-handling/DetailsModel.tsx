@@ -47,7 +47,7 @@ interface Order {
     todoArray?: any[];
     todoUploadedBy?: string;
     projectMailLogs?: any[];
-    OnRoadTab?:any[];
+    OnRoadTab?: any[];
     isAdminCreated?: boolean;
     companyName?: string;
     clientName?: string;
@@ -698,6 +698,8 @@ import {
 } from "react-icons/fi";
 import CommentsTab from "./CommentsTab";
 import PipelineHistoryTab from "./PipelineHistoryTab";
+import ProjectExecutionTab from "./ProjectExecutionTab";
+import ProjectExecutionHistoryTab from "./ProjectExecutionHistoryTab";
 export default function DetailDrawer({
     order, onClose, onRefresh, staffAdmins = [], currentUserIsAdmin = 1,
     onStageMove, saving,
@@ -729,21 +731,30 @@ export default function DetailDrawer({
     const hasProjectCode = projectCodes.length > 0;
 
 
-    const tabs: { key: Tab; label: string }[] = [
+    const tabs = [
         { key: "overview", label: "Overview" },
         { key: "comments", label: "Comments" },
         { key: "pipeline", label: "Pipeline History" },
-
-        ...(order.pipelineStatus === "onRoad"
-            ? [{ key: "onRoad" as Tab, label: "On Road" }]
+        ...(order.pipelineStatus === "projectExecution" || order.pipelineStatus === "onRoad"
+            ? [{ key: "Executionpipeline", label: "Execution History" }]
             : []),
-
+        ...(order.pipelineStatus === "projectExecution" || order.pipelineStatus === "onRoad"
+            ? [{ key: "projectExecution", label: "Project Execution" }]
+            : []),
+        ...(order.pipelineStatus === "onRoad"
+            ? [{ key: "onRoad", label: "On Road" }]
+            : []),
     ];
+
+
+
 
 
     useEffect(() => {
         if (order.pipelineStatus === "onRoad") {
             setActiveTab("onRoad");
+        } else if (order.pipelineStatus === "projectExecution") {
+            setActiveTab("projectExecution");
         }
     }, [order.pipelineStatus, order._id]);
 
@@ -909,7 +920,7 @@ export default function DetailDrawer({
                                     </div>
                                 )}
 
-                            
+
                                 <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
                                     <p className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Quick Actions</p>
                                     <div className="space-y-2">
@@ -964,6 +975,15 @@ export default function DetailDrawer({
 
                     {activeTab === "onRoad" && (
                         <OnRoadTab order={order} onRefresh={onRefresh} />
+                    )}
+
+                    {activeTab === "Executionpipeline" && (
+                        <ProjectExecutionHistoryTab order={order} />
+                    )}
+
+
+                    {activeTab === "projectExecution" && (
+                        <ProjectExecutionTab order={order} onRefresh={onRefresh} />
                     )}
 
                 </div>

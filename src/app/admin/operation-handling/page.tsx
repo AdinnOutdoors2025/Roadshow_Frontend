@@ -11,7 +11,7 @@ import { jwtDecode } from "jwt-decode";
 import { toast, Toaster } from "react-hot-toast";
 import { User, Clock } from "lucide-react";
 import DetailDrawer from "./DetailsModel";
-import OnRoadSubmitModal from "./OnRoadSubmitModal";
+import OnRoadSubmitModal from "./DriverForm";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Order {
@@ -224,7 +224,7 @@ export default function PipelineBoard() {
   const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState<number>(1);
   const [staffAdmins, setStaffAdmins] = useState<{ username: string }[]>([]);
   const [saving, setSaving] = useState(false);
-  const [onRoadModalOrder, setOnRoadModalOrder] = useState<Order | null>(null);
+ 
 
   const dragOrder = useRef<Order | null>(null);
   const dragFrom = useRef<string>("");
@@ -356,10 +356,11 @@ export default function PipelineBoard() {
       return;
     }
 
+
     if (fromStage === "projectExecution" && toStage === "onRoad") {
-      setOnRoadModalOrder(order);
-      return;
-    }
+  commitMove(order, toStage); 
+  return;
+}
 
   
     if (fromStage === "todo" && toStage === "projectExecution") {
@@ -560,31 +561,7 @@ export default function PipelineBoard() {
       )}
 
    
-{onRoadModalOrder && (
-    <OnRoadSubmitModal
-        isOpen={!!onRoadModalOrder}
-        onClose={() => setOnRoadModalOrder(null)}
-        orderId={onRoadModalOrder._id}
-        onSuccess={async () => {
-          
-            const token = getToken();
-            const { data } = await axios.get(`${API_BASE}admin/pipeline`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setGrouped(data.data.grouped);
-            
-            const updatedOrder = Object.values(data.data.grouped)
-                .flat()
-                .find((o: any) => o._id === onRoadModalOrder._id) as Order | undefined;
-            
-            if (updatedOrder) {
-                setDrawerOrder(updatedOrder);
-            }
-            
-            setOnRoadModalOrder(null);
-        }}
-    />
-)}
+
 
     </div>
   );
