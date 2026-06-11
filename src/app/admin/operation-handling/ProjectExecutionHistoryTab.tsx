@@ -77,16 +77,16 @@ function TimelineItem({
 
   return (
     <div className="flex gap-4">
-    
+
       <div className="flex flex-col items-center flex-shrink-0">
         <div className={`w-3 h-3 rounded-full ${color.dot} ring-2 ring-white dark:ring-gray-900 shadow-sm mt-1`} />
         {!isLast && <div className="w-0.5 flex-1 bg-gray-100 dark:bg-gray-800 mt-1" />}
       </div>
 
-  
+
       <div className={`pb-5 flex-1 min-w-0 ${isLast ? "pb-0" : ""}`}>
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-700 p-4 shadow-sm hover:shadow-md transition-all">
-       
+
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-2 flex-wrap">
               {log.fromStage && (
@@ -103,7 +103,7 @@ function TimelineItem({
             </div>
           </div>
 
-      
+
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">
               {(log.movedBy || "?").charAt(0).toUpperCase()}
@@ -118,7 +118,7 @@ function TimelineItem({
             )}
           </div>
 
-         
+
           {log.toStage === "onRoad" && driverDetails && driverDetails.length > 0 && (
             <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
@@ -134,11 +134,10 @@ function TimelineItem({
                       <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{d.driverName}</p>
                       <p className="text-[11px] text-gray-500">{d.driverPhone} · <span className="font-mono text-sky-700 dark:text-sky-400">{d.vehicleRegistrationNumber}</span></p>
                     </div>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                      d.onRoadStatus === 1
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500"
-                    }`}>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${d.onRoadStatus === 1
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-500"
+                      }`}>
                       {d.onRoadStatus === 1 ? "🟢" : "⏸"}
                     </span>
                   </div>
@@ -159,7 +158,6 @@ function TimelineItem({
 }
 
 
-
 function DriverStatusSummary({ entries, bookingItems }: { entries: any[]; bookingItems: any[] }) {
   if (!entries || entries.length === 0) return null;
 
@@ -175,102 +173,81 @@ function DriverStatusSummary({ entries, bookingItems }: { entries: any[]; bookin
   };
 
   return (
-    <div className="rounded-xl border border-teal-200 dark:border-teal-800/50 overflow-hidden shadow-sm">
-      <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-teal-500 to-emerald-500 dark:from-teal-600 dark:to-emerald-600">
-        <Truck size={16} className="text-white" />
-        <h3 className="text-sm font-bold text-white uppercase tracking-wide">Driver Status Summary</h3>
-        <span className="ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-semibold">
+    <div>
+      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20 border border-teal-100 dark:border-teal-800/50 mb-4">
+        <Truck size={16} className="text-teal-500" />
+        <span className="text-md font-bold text-teal-700 dark:text-teal-300">Driver Status Summary</span>
+        <span className="ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-teal-100 dark:bg-teal-900/40 text-teal-700">
           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
           {entries.filter(e => e.onRoadStatus === 1).length} Active
         </span>
       </div>
-      <div className="p-4 space-y-3 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900/50 dark:to-gray-900">
-        {entries.map((entry: any, i: number) => {
-          const isActive = entry.onRoadStatus === 1;
-          
-          return (
-            <div 
-              key={entry._id || i} 
-              className={`group relative flex items-start gap-3 p-3 rounded-xl transition-all duration-200 hover:shadow-md ${
-                isActive 
-                  ? "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border border-green-200 dark:border-green-800/50" 
-                  : "bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/50 hover:border-gray-300"
-              }`}
-            >
-              {/* Vehicle Number Badge */}
-              <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white shadow-md ${
-                isActive 
-                  ? "bg-gradient-to-br from-green-500 to-emerald-600" 
-                  : "bg-gradient-to-br from-gray-400 to-gray-500"
-              }`}>
-                {isActive && <Truck size={14} className="mr-0.5" />}
-                {(entry.vehicleIndex ?? i) + 1}
-              </div>
 
-              {/* Main Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-base font-bold text-gray-800 dark:text-gray-200 truncate">
-                    {entry.driverName}
-                  </h4>
-                  <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    isActive
+      <div className="space-y-0">
+        {entries.map((entry: any, i: number, arr: any[]) => {
+          const isActive = entry.onRoadStatus === 1;
+          const isLast = i === arr.length - 1;
+          const dotGradient = isActive
+            ? "from-green-400 to-emerald-600"
+            : "from-gray-400 to-gray-500";
+
+          return (
+            <div key={entry._id || i} className="flex items-start gap-3 relative">
+              {!isLast && (
+                <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-gray-100 dark:bg-gray-700" />
+              )}
+              <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${dotGradient} flex-shrink-0 flex items-center justify-center mt-0.5 relative z-10`}>
+                <span className="text-[10px] font-bold text-white">V{(entry.vehicleIndex ?? i) + 1}</span>
+              </div>
+              <div className="flex-1 pb-4">
+                <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-md font-semibold text-gray-800 dark:text-gray-200">
+                      {entry.driverName}
+                    </p>
+                    <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-sm font-semibold ${isActive
                       ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400"
                       : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-                  }`}>
-                    {isActive ? (
-                      <>
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                        </span>
-                        On Road
-                      </>
-                    ) : (
-                      <>
-                        <Clock size={10} />
-                        Off Road
-                      </>
-                    )}
+                      }`}>
+                      {isActive ? (
+                        <>
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                          </span>
+                          On Road
+                        </>
+                      ) : (
+                        <>
+                          <Clock size={10} />
+                          Off Road
+                        </>
+                      )}
+                    </span>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
                     <Phone size={15} className="text-gray-400" />
-                    <span className="font-medium text-gray-700 dark:text-gray-300">{entry.driverPhone}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{entry.driverPhone}</span>
+                    <span>·</span>
                     <Truck size={15} className="text-gray-400" />
-                    <span className="font-mono text-sm font-semibold text-teal-600 dark:text-teal-400">
+                    <span className="text-sm  font-mono font-semibold text-teal-600 dark:text-teal-400">
                       {entry.vehicleRegistrationNumber}
                     </span>
                   </div>
-                </div>
 
-                {/* Upload Details */}
-                {(entry.uploadedBy || entry.uploadedAt) && (
-                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700/50">
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                  {(entry.uploadedBy || entry.uploadedAt) && (
+                    <div className="flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
                       {entry.uploadedBy && (
-                        <div className="flex items-center gap-1.5 ">
-                          <User size={15} className="text-gray-400" />
-                          <span className="text-gray-600 text-[13px] dark:text-gray-400">
-                            Uploaded by: <span className="font-semibold text-gray-700 dark:text-gray-300">{entry.uploadedBy}</span>
-                          </span>
-                        </div>
+                        <>
+                          <span>Uploaded by {entry.uploadedBy}</span>
+                          <span>·</span>
+                        </>
                       )}
-                      {entry.uploadedAt && (
-                        <div className="flex items-center gap-1.5">
-                          <Clock size={12} className="text-gray-400" />
-                          <span className="text-gray-500 text-[13px]">
-                            Updated at: <span className="font-medium text-gray-700 dark:text-gray-300">{formatUploadTime(entry.uploadedAt)}</span>
-                          </span>
-                        </div>
-                      )}
+                      {entry.uploadedAt && <span>{formatUploadTime(entry.uploadedAt)}</span>}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -306,7 +283,7 @@ export default function ProjectExecutionHistoryTab({ order }: { order: Order }) 
 
 
 
-   
+
       {onRoadHistory.length > 0 && (
         <div>
           <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/20 border border-sky-100 dark:border-sky-800/50 mb-4">
@@ -317,56 +294,72 @@ export default function ProjectExecutionHistoryTab({ order }: { order: Order }) 
             </span>
           </div>
 
-          <div className="space-y-3">
-            {[...onRoadHistory].reverse().map((h: any, i: number) => (
-              <div key={h._id || i} className="p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                    h.action === "created"
-                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                      : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                  }`}>
-                    {h.action === "created" ? "✅ Driver Added" : "✏️ Edited"}
-                  </span>
-                  <span className="text-xs text-gray-400">{fmtDatetime(h.changedAt)}</span>
-                </div>
+          <div className="space-y-0">
+            {[...onRoadHistory].reverse().map((h: any, i: number, arr: any[]) => {
+              const isLast = i === arr.length - 1;
+              const isCreated = h.action === "created";
+              const dotGradient = isCreated
+                ? "from-green-400 to-emerald-600"
+                : "from-amber-400 to-orange-500";
 
-                {h.action === "edited" && Object.keys(h.changedFields || {}).length > 0 && (
-                  <div className="mb-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 space-y-1.5">
-                    <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Changed:</p>
-                    {Object.entries(h.changedFields).map(([field, val]: any) => (
-                      <div key={field} className="flex items-center gap-2 text-xs">
-                        <span className="text-gray-500 w-24 capitalize">
-                          {field === "driverName" ? "Driver Name"
-                            : field === "driverPhone" ? "Phone"
-                            : field === "vehicleRegistrationNumber" ? "Reg. No"
-                            : field}:
-                        </span>
-                        <span className="line-through text-red-500">{val.old || "—"}</span>
-                        <span className="text-gray-400">→</span>
-                        <span className="text-green-600 font-semibold">{val.new}</span>
+              return (
+                <div key={h._id || i} className="flex items-start gap-3 relative">
+                  {!isLast && (
+                    <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-gray-100 dark:bg-gray-700" />
+                  )}
+                  <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${dotGradient} flex-shrink-0 flex items-center justify-center mt-0.5 relative z-10`}>
+                    <div className="w-2.5 h-2.5 rounded-full bg-white/70" />
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                          Vehicle {(h.vehicleIndex ?? 0) + 1} —{" "}
+                          {isCreated ? "On Road status added" : "Details edited"}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                )}
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <p className="text-gray-400 mb-0.5">Driver</p>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">{h.driverName}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 mb-0.5">Phone</p>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">{h.driverPhone}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 mb-0.5">Reg. Number</p>
-                    <p className="font-semibold font-mono text-sky-700 dark:text-sky-400">{h.vehicleRegistrationNumber}</p>
+                      {h.action === "edited" && Object.keys(h.changedFields || {}).length > 0 && (
+                        <div className="mb-2 space-y-1">
+                          {Object.entries(h.changedFields).map(([field, val]: any) => (
+                            <div key={field} className="flex items-center gap-2 text-xs">
+                              <span className="text-gray-500 w-20 capitalize">
+                                {field === "driverName" ? "Driver Name"
+                                  : field === "driverPhone" ? "Phone"
+                                    : field === "vehicleRegistrationNumber" ? "Reg. No"
+                                      : field === "onRoadStatus" ? "Status"
+                                        : field}:
+                              </span>
+                              <span className="line-through text-red-500">
+                                {field === "onRoadStatus" ? (val.old === 1 ? "On Road" : "Off Road") : (val.old || "—")}
+                              </span>
+                              <span className="text-gray-400">→</span>
+                              <span className="text-green-600 font-semibold">
+                                {field === "onRoadStatus" ? (val.new === 1 ? "On Road" : "Off Road") : val.new}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+                        <span className="font-semibold text-gray-700 dark:text-gray-300">{h.driverName}</span>
+                        <span>·</span>
+                        <span>{h.driverPhone}</span>
+                        <span>·</span>
+                        <span className="font-mono text-sky-700 dark:text-sky-400">{h.vehicleRegistrationNumber}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
+                        <span>By {h.changedBy || "—"}</span>
+                        <span>·</span>
+                        <span>{fmtDatetime(h.changedAt)}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <p className="text-[11px] text-gray-400 mt-2">By {h.changedBy}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

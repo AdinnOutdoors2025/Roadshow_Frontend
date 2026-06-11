@@ -700,6 +700,7 @@ import CommentsTab from "./CommentsTab";
 import PipelineHistoryTab from "./PipelineHistoryTab";
 import ProjectExecutionTab from "./ProjectExecutionTab";
 import ProjectExecutionHistoryTab from "./ProjectExecutionHistoryTab";
+import CombinedHistoryTab from "./CombinedHistoryTab";
 export default function DetailDrawer({
     order, onClose, onRefresh, staffAdmins = [], currentUserIsAdmin = 1,
     onStageMove, saving,
@@ -734,10 +735,7 @@ export default function DetailDrawer({
     const tabs = [
         { key: "overview", label: "Overview" },
         { key: "comments", label: "Comments" },
-        { key: "pipeline", label: "Pipeline History" },
-        ...(order.pipelineStatus === "projectExecution" || order.pipelineStatus === "onRoad"
-            ? [{ key: "Executionpipeline", label: "Execution History" }]
-            : []),
+        { key: "history", label: "History" },
         ...(order.pipelineStatus === "projectExecution" || order.pipelineStatus === "onRoad"
             ? [{ key: "projectExecution", label: "Project Execution" }]
             : []),
@@ -745,8 +743,6 @@ export default function DetailDrawer({
             ? [{ key: "onRoad", label: "On Road" }]
             : []),
     ];
-
-
 
 
 
@@ -780,7 +776,7 @@ export default function DetailDrawer({
                             <p className="text-[13px] font-mono text-gray-400 mt-0.5">{order.projectCodeArray[0].projectCode}</p>
                         </div>
 
-                        {/* Move to next */}
+                    
                         {nextLabel && (
                             <button
                                 onClick={() => onStageMove(order, nextStageKey)}
@@ -969,17 +965,16 @@ export default function DetailDrawer({
                         <CommentsTab order={order} onRefresh={onRefresh} />
                     )}
 
-                    {activeTab === "pipeline" && (
-                        <PipelineHistoryTab order={order} />
-                    )}
+
 
                     {activeTab === "onRoad" && (
                         <OnRoadTab order={order} onRefresh={onRefresh} />
                     )}
 
-                    {activeTab === "Executionpipeline" && (
-                        <ProjectExecutionHistoryTab order={order} />
+                    {activeTab === "history" && (
+                        <CombinedHistoryTab order={order} />
                     )}
+
 
 
                     {activeTab === "projectExecution" && (
