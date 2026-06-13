@@ -1,5 +1,5 @@
 /* VOICES FROM THE ROAD  */
-.VFRContentMainGrid {
+/* .VFRContentMainGrid {
     display: grid;
     grid-template-columns: 1fr 1fr 2fr 1fr 1fr;
     gap: 20px;
@@ -16,7 +16,63 @@
 .VFRCardMain {
     background: #D7D7D733;
     backdrop-filter: blur(50px)
+} */
+
+
+
+
+
+
+/* VOICES FROM THE ROAD */
+
+.VFRCarouselViewport {
+    width: 100%;
+    overflow: hidden;
 }
+
+.VFRContentMainGrid {
+    display: grid;
+    align-items: stretch;
+    will-change: transform, grid-template-columns;
+}
+
+.RS_VFRHeading {
+    font-weight: 500;
+    background: linear-gradient(180deg, #DF2D2D 0%, #791818 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.VFRCardMain {
+    background: #D7D7D733;
+    backdrop-filter: blur(50px);
+    min-width: 0;
+    overflow: hidden;
+    transform-origin: center;
+    transition:
+        transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 520ms ease,
+        box-shadow 520ms ease;
+}
+
+.VFRCardCenter {
+    transform: scale(1.02);
+}
+
+.VFRReviewText {
+    font-size: 16px;
+    line-height: 1.6;
+    transition:
+        font-size 520ms cubic-bezier(0.22, 1, 0.36, 1),
+        line-height 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.VFRReviewTextCenter {
+    font-size: 24px;
+    line-height: 1.45;
+}
+
 
 /* Roadshow advantages section  */
 

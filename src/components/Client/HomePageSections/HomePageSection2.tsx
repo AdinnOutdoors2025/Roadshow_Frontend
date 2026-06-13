@@ -613,7 +613,7 @@
 /* eslint-disable */
 // @ts-nocheck
 "use client";
-import React, { useEffect, useState, useRef, useId } from 'react';
+import React, { useEffect, useState, useRef, useId, useLayoutEffect, useMemo } from 'react';
 import Image from "next/image";
 import './HomePageSection1.css';
 import './HomePageSection2.css';
@@ -669,88 +669,234 @@ function StarRating({ rating, size = 20 }) {
 }
 
 
-// ─── Smooth Carousel Hook ────────────────────────────────────────────────────
+// // ─── Smooth Carousel Hook ────────────────────────────────────────────────────
+// function useCarousel(length) {
+//     const [startIndex, setStartIndex] = useState(0);
+//     const [pendingIndex, setPendingIndex] = useState(null);
+//     const [phase, setPhase] = useState('idle');
+//     const [direction, setDirection] = useState(null);
+//     const DURATION = 420;
+
+//     const navigate = (dir) => {
+//         if (phase !== 'idle') return;
+//         const next = dir === 'next'
+//             ? (startIndex + 1) % length
+//             : (startIndex - 1 + length) % length;
+//         setDirection(dir);
+//         setPendingIndex(next);
+//         setPhase('sliding');
+//         setTimeout(() => {
+//             setStartIndex(next);
+//             setPendingIndex(null);
+//             setPhase('idle');
+//         }, DURATION);
+//     };
+
+//     return { startIndex, pendingIndex, phase, direction, navigate };
+// }
+
+
+
+
+// ─── Smooth Expanding Carousel Hook ─────────────────────────────────────────
 function useCarousel(length) {
+    const viewportRef = useRef(null);
+
     const [startIndex, setStartIndex] = useState(0);
-    const [pendingIndex, setPendingIndex] = useState(null);
-    const [phase, setPhase] = useState('idle');
-    const [direction, setDirection] = useState(null);
-    const DURATION = 420;
+    const [containerWidth, setContainerWidth] = useState(0);
+
+    const [animation, setAnimation] = useState(null);
+    // animation = { dir: "next" | "prev", stage: "from" | "to" }
+
+    const DURATION = 520;
+    const GAP = 20;
+
+    useLayoutEffect(() => {
+        if (!viewportRef.current) return;
+
+        const updateWidth = () => {
+            setContainerWidth(viewportRef.current.offsetWidth);
+        };
+
+        updateWidth();
+
+        const observer = new ResizeObserver(updateWidth);
+        observer.observe(viewportRef.current);
+
+        return () => observer.disconnect();
+    }, []);
+
+    const normalize = (index) => {
+        return (index + length) % length;
+    };
 
     const navigate = (dir) => {
-        if (phase !== 'idle') return;
-        const next = dir === 'next'
-            ? (startIndex + 1) % length
-            : (startIndex - 1 + length) % length;
-        setDirection(dir);
-        setPendingIndex(next);
-        setPhase('sliding');
+        if (animation || length <= 1) return;
+
+        setAnimation({ dir, stage: "from" });
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                setAnimation({ dir, stage: "to" });
+            });
+        });
+
         setTimeout(() => {
-            setStartIndex(next);
-            setPendingIndex(null);
-            setPhase('idle');
+            setStartIndex((prev) => {
+                if (dir === "next") return normalize(prev + 1);
+                return normalize(prev - 1);
+            });
+
+            setAnimation(null);
         }, DURATION);
     };
 
-    return { startIndex, pendingIndex, phase, direction, navigate };
+    const isAnimating = Boolean(animation);
+
+    const displayStartIndex =
+        animation?.dir === "prev"
+            ? normalize(startIndex - 1)
+            : startIndex;
+
+    const displayCount = isAnimating ? 6 : 5;
+
+    const cardUnit = containerWidth > 0
+        ? (containerWidth - GAP * 4) / 6
+        : 0;
+
+    const step = cardUnit + GAP;
+
+    const small = `${cardUnit}px`;
+    const big = `${cardUnit * 2}px`;
+
+    let gridTemplateColumns = "1fr 1fr 2fr 1fr 1fr";
+    let transform = "translateX(0px)";
+    let transition = "none";
+
+    if (containerWidth > 0) {
+        if (!animation) {
+            gridTemplateColumns = `${small} ${small} ${big} ${small} ${small}`;
+            transform = "translateX(0px)";
+        }
+
+        if (animation?.dir === "next") {
+            if (animation.stage === "from") {
+                gridTemplateColumns = `${small} ${small} ${big} ${small} ${small} ${small}`;
+                transform = "translateX(0px)";
+                transition = "none";
+            } else {
+                gridTemplateColumns = `${small} ${small} ${small} ${big} ${small} ${small}`;
+                transform = `translateX(-${step}px)`;
+                transition = `transform ${DURATION}ms cubic-bezier(0.22, 1, 0.36, 1), grid-template-columns ${DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+            }
+        }
+
+        if (animation?.dir === "prev") {
+            if (animation.stage === "from") {
+                gridTemplateColumns = `${small} ${small} ${small} ${big} ${small} ${small}`;
+                transform = `translateX(-${step}px)`;
+                transition = "none";
+            } else {
+                gridTemplateColumns = `${small} ${small} ${big} ${small} ${small} ${small}`;
+                transform = "translateX(0px)";
+                transition = `transform ${DURATION}ms cubic-bezier(0.22, 1, 0.36, 1), grid-template-columns ${DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+            }
+        }
+    }
+
+    const centerSlot = useMemo(() => {
+        if (!animation) return 2;
+
+        if (animation.dir === "next") {
+            return animation.stage === "to" ? 3 : 2;
+        }
+
+        return animation.stage === "to" ? 2 : 3;
+    }, [animation]);
+
+    const trackStyle = {
+        gap: `${GAP}px`,
+        gridTemplateColumns,
+        transform,
+        transition,
+    };
+
+    return {
+        viewportRef,
+        startIndex,
+        displayStartIndex,
+        displayCount,
+        centerSlot,
+        isAnimating,
+        navigate,
+        trackStyle,
+    };
 }
+
+
+
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 function HomePageSection2() {
+  
+// VOICES FROM THE ROAD SECTION 
     const testimonials = [
-        {
-            id: 1,
-            name: "KARTHIK",
-            rating: 4.8,
-            userIcon: './images/assets/ReviewRatingMaleIcon.png',
-            review:
-                "Boosted visibility across cities, attracted strong attention, and increased inquiries through the LED roadshow campaign.",
-        },
-        {
-            id: 2,
-            name: "ABINAYA",
-            rating: 3.5,
-            userIcon: './images/assets/ReviewRatingFemaleIcon.png',
-            review:
-                "2 Attracted strong attention, and increased inquiries through the LED roadshow campaign.",
-        },
-        {
-            id: 3,
-            name: "MANI",
-            rating: 5.0,
-            userIcon: './images/assets/ReviewRatingMaleIcon.png',
-            review:
-                "3 Across cities, attracted strong attention, and increased inquiries through the LED roadshow campaign.",
-            featured: true,
-        },
-        {
-            id: 4,
-            name: "MONIKA",
-            rating: 4.3,
-            userIcon: './images/assets/ReviewRatingFemaleIcon.png',
-            review:
-                " 4 Boosted visibility across cities, attracted strong attention, and increased inquiries through the LED roadshow campaign.",
-        },
-        {
-            id: 5,
-            name: "ARUN",
-            rating: 3.0,
-            userIcon: './images/assets/ReviewRatingMaleIcon.png',
-            review:
-                " 5 Visibility across cities, attracted strong attention, and increased inquiries through the LED roadshow campaign.",
-        },
-    ];
+    {
+        id: 1,
+        name: "KARTHIK",
+        rating: 4.8,
+        userIcon: "./images/assets/ReviewRatingMaleIcon.png",
+        review:
+            "Boosted visibility across cities, attracted strong attention, and increased inquiries through the LED roadshow campaign.",
+    },
+    {
+        id: 2,
+        name: "ABINAYA",
+        rating: 3.5,
+        userIcon: "./images/assets/ReviewRatingFemaleIcon.png",
+        review:
+            "2 Attracted strong attention, and increased inquiries through the LED roadshow campaign.",
+    },
+    {
+        id: 3,
+        name: "MANI",
+        rating: 5.0,
+        userIcon: "./images/assets/ReviewRatingMaleIcon.png",
+        review:
+            "3 Across cities, attracted strong attention, and increased inquiries through the LED roadshow campaign.",
+        featured: true,
+    },
+    {
+        id: 4,
+        name: "MONIKA",
+        rating: 4.3,
+        userIcon: "./images/assets/ReviewRatingFemaleIcon.png",
+        review:
+            "4 Boosted visibility across cities, attracted strong attention, and increased inquiries through the LED roadshow campaign.",
+    },
+    {
+        id: 5,
+        name: "ARUN",
+        rating: 3.0,
+        userIcon: "./images/assets/ReviewRatingMaleIcon.png",
+        review:
+            "5 Visibility across cities, attracted strong attention, and increased inquiries through the LED roadshow campaign.",
+    },
+];
 
-    const { startIndex, animating, direction, navigate } = useCarousel(testimonials.length);
+const {
+    viewportRef,
+    displayStartIndex,
+    displayCount,
+    centerSlot,
+    isAnimating,
+    navigate,
+    trackStyle,
+} = useCarousel(testimonials.length);
 
-    const visibleCards = testimonials
-        .slice(startIndex)
-        .concat(testimonials.slice(0, startIndex))
-        .slice(0, 5);
-
-    const translateX = animating
-        ? direction === 'next' ? '-8%' : '8%'
-        : '0%';
+const visibleCards = Array.from({ length: displayCount }, (_, index) => {
+    return testimonials[(displayStartIndex + index) % testimonials.length];
+});
 
     // Roadshow Advantages section
     const roadshow_Advantages = [
@@ -810,88 +956,106 @@ function HomePageSection2() {
 
     return (
         <>
-            <section className="w-full px-10 lg:px-20 py-12 bg-[#f8f8f8]">
-                <div className="RS_OurRdwHeading">
-                    <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2 RS_VFRHeading text-3xl lg:text-5xl">
-                        Voices From The Road
-                    </div>
-                </div>
+             <section className="w-full px-10 lg:px-20 py-12 bg-[#f8f8f8]">
+        <div className="RS_OurRdwHeading">
+            <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2 RS_VFRHeading text-3xl lg:text-5xl">
+                Voices From The Road
+            </div>
+        </div>
 
-                {/* ── Desktop Carousel ── */}
-                <div
-                    style={{ overflow: 'hidden' }}
-                    className="hidden lg:block"
-                >
-                    <div
-                    //  grid grid-cols-[1fr_1fr_2fr_1fr_1fr] gap-6
-                        className="VFRContentMainGrid "
-                        style={{
-                            transform: `translateX(${translateX})`,
-                            opacity: animating ? 0.45 : 1,
-                            transition: animating
-                                ? 'transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease'
-                                : 'transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease',
-                        }}
-                    >
-                        {visibleCards.map((item, index) => (
-                            <div
-                                key={item.id}
-                                className={`VFRCardMain bg-[#D7D7D733] rounded-[20px] p-5 shadow-sm flex flex-col justify-between
-                                    ${index === 2 ? "min-h-[400px] scale-[1.02]" : "min-h-[400px]"}`}
-                            >
-                                <div>
-                                    <div className={`text-[#000000] leading-relaxed ${index === 2 ? "text-[24px]" : "text-[16px]"}`}>
-                                        {item.review}
-                                    </div>
-                                    <div className="mt-6">
-                                        <StarRating rating={item.rating} size={index === 2 ? 22 : 18} />
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 mt-10">
-                                    <span>
-                                        <img src={item.userIcon} className="h-10 w-10" />
-                                    </span>
-                                    <span className="tracking-wide font-medium">{item.name}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+        {/* ── Desktop Carousel ── */}
+        <div
+            ref={viewportRef}
+            className="hidden lg:block VFRCarouselViewport"
+        >
+            <div
+                className="VFRContentMainGrid"
+                style={trackStyle}
+            >
+                {visibleCards.map((item, index) => {
+                    const isCenter = index === centerSlot;
 
-                {/* ── Mobile Slider ── */}
-                <div className="lg:hidden flex overflow-x-auto gap-4 snap-x">
-                    {testimonials.map((item) => (
+                    return (
                         <div
-                            key={item.id}
-                            className="min-w-[300px] bg-white rounded-[24px] p-5 shadow-sm snap-center">
-                            <p className="text-sm leading-relaxed">{item.review}</p>
-                            <div className="mt-4">
-                                <StarRating rating={item.rating} size={16} />
+                            key={`${item.id}-${index}-${displayStartIndex}`}
+                            className={`VFRCardMain bg-[#D7D7D733] rounded-[20px] p-5 shadow-sm flex flex-col justify-between min-h-[400px]
+                                ${isCenter ? "VFRCardCenter" : ""}`}
+                        >
+                            <div>
+                                <div
+                                    className={`VFRReviewText text-[#000000] leading-relaxed ${
+                                        isCenter ? "VFRReviewTextCenter" : ""
+                                    }`}
+                                >
+                                    {item.review}
+                                </div>
+
+                                <div className="mt-6">
+                                    <StarRating
+                                        rating={item.rating}
+                                        size={isCenter ? 22 : 18}
+                                    />
+                                </div>
                             </div>
-                            <div className="flex items-center gap-3 mt-8">
-                                <UserCircle2 size={36} />
-                                <span>{item.name}</span>
+
+                            <div className="flex items-center gap-3 mt-10">
+                                <span>
+                                    <img
+                                        src={item.userIcon}
+                                        className="h-10 w-10"
+                                        alt={item.name}
+                                    />
+                                </span>
+                                <span className="tracking-wide font-medium">
+                                    {item.name}
+                                </span>
                             </div>
                         </div>
-                    ))}
-                </div>
+                    );
+                })}
+            </div>
+        </div>
 
-                {/* ── Controls ── */}
-                <div className="flex justify-end gap-4 mt-8">
-                    <button
-                        onClick={() => navigate('prev')}
-                        className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition"
-                    >
-                        <ChevronLeft />
-                    </button>
-                    <button
-                        onClick={() => navigate('next')}
-                        className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition"
-                    >
-                        <ChevronRight />
-                    </button>
+        {/* ── Mobile Slider ── */}
+        <div className="lg:hidden flex overflow-x-auto gap-4 snap-x">
+            {testimonials.map((item) => (
+                <div
+                    key={item.id}
+                    className="min-w-[300px] bg-white rounded-[24px] p-5 shadow-sm snap-center"
+                >
+                    <p className="text-sm leading-relaxed">{item.review}</p>
+
+                    <div className="mt-4">
+                        <StarRating rating={item.rating} size={16} />
+                    </div>
+
+                    <div className="flex items-center gap-3 mt-8">
+                        <UserCircle2 size={36} />
+                        <span>{item.name}</span>
+                    </div>
                 </div>
-            </section>
+            ))}
+        </div>
+
+        {/* ── Controls ── */}
+        <div className="flex justify-end gap-4 mt-8">
+            <button
+                onClick={() => navigate("prev")}
+                disabled={isAnimating}
+                className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+                <ChevronLeft />
+            </button>
+
+            <button
+                onClick={() => navigate("next")}
+                disabled={isAnimating}
+                className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+                <ChevronRight />
+            </button>
+        </div>
+    </section>
 
             {/* Roadshow Advantages */}
             <div className='RA_Main px-30 mx-auto'>
