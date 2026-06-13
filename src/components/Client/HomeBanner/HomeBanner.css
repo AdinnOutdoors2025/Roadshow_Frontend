@@ -1,37 +1,4 @@
-/* * {
-    font-family: Outfit;
-}
-
-.HomeBannerContainer {
-    margin: 3% auto;
-}
-
-.HomeBannerText {
-    font-weight: 400;
-    font-style: Regular;
-    font-size: 70px;
-    text-align: center;
-}
-
-.HomeBannerTextSpan {
-    color: #7057C3;
-    font-weight: 700;
-}
-
-.HomeBannerTextImg {
-    margin-left: auto;
-    margin-right: 47%;
-}
-
-.HomeBannerImgContainer {
-    margin: auto;
-    margin-top: 50px;
-    width: 75%;
-}
-     */
-
-
-     * {
+* {
     font-family: Outfit;
 }
 
@@ -86,6 +53,7 @@
         opacity: 0;
         transform: scale(1.03);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -103,6 +71,10 @@
     height: 100px; */
 }
 
+.HomeBannerSubImgMain {
+    height: 100px;
+}
+
 /* ── Sub image button wrapper ── */
 .HomeBannerSubImgBtn {
     background: none;
@@ -113,6 +85,7 @@
     outline: 2px solid transparent;
     outline-offset: 3px;
     transition: outline-color 0.25s, transform 0.25s;
+    height: 100%;
 }
 
 .HomeBannerSubImgBtn:hover {
@@ -123,7 +96,7 @@
 /* Active sub image — highlighted border */
 .HomeBannerSubImgBtn.active {
     outline-color: #7057C3;
-    outline-width: 3px;
+    outline-width: 2px;
 }
 
 /* ── Sub image ── */
@@ -139,6 +112,13 @@
     opacity: 0.85;
 }
 
+.HomeBannerSubImgTitle {
+    color: #000000;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 100%;
+}
+
 /* ── Responsive ── */
 
 /* Tablet */
@@ -146,9 +126,11 @@
     .HomeBannerText {
         font-size: 52px;
     }
+
     .HomeBannerImgContainer {
         width: 90%;
     }
+
     .HomeBannerTextImg {
         margin-right: 35%;
     }
@@ -160,14 +142,17 @@
         font-size: 34px;
         padding: 0 5%;
     }
+
     .HomeBannerTextImg {
         margin-right: auto;
         margin-left: auto;
         display: block;
     }
+
     .HomeBannerImgContainer {
         width: 95%;
     }
+
     .HomeBannerSubImgRow {
         gap: 10px;
         flex-wrap: wrap;

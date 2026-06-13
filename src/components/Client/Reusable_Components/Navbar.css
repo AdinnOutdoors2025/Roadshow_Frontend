@@ -1,21 +1,3 @@
-/* *{
-    font-family: Outfit;
-}
-.RS_NavContents  {
-    font-weight: 300;
-    font-style: Light;
-    font-size: 30px;
-    border:'1px solid red'
-}
-.RS_NavContents:hover {
-    color: #7B61FF;
-    transition: color 0.2s ease-in-out;
-}
-.RS_NavIcon{
-   width: 50px;
-} */
-
-
 * { font-family: Outfit; }
 
 .RS_Navbar { background: transparent; }

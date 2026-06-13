@@ -1,3 +1,10 @@
+/* VOICES FROM THE ROAD  */
+.VFRContentMainGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr 1fr 1fr;
+    gap: 20px;
+}
+
 .RS_VFRHeading {
     font-weight: 500;
     background: linear-gradient(180deg, #DF2D2D 0%, #791818 100%);
@@ -227,3 +234,52 @@
 .HC_FAQ_Question_Arrow.open {
     transform: rotate(180deg);
 }
+
+
+
+
+
+
+
+/* RESPONSIVE  */
+
+
+/* Responsive Media Queries */
+/* Extra Large Screens (2560px and above) ✅ Large Screens (4K Screens)  */
+@media (min-width: 2560px) {
+}
+
+/* Large Screens (1400px - 2559px) ✅ Large Desktop Screens 1440*/
+@media (min-width: 1440px) and (max-width: 2559px) {
+}
+
+
+@media (min-width: 1024px) and (max-width: 1280px) {
+    .VFRContentMainGrid {
+    display: grid;
+    grid-template-columns:  1fr 2fr 1fr;
+    gap: 20px;
+}
+}
+/* Laptops & Small Desktops (992px - 1024px)  ✅ Tablets (Landscape Mode) */
+@media (min-width: 992px) and (max-width: 1023px) {
+}
+/* Tablets (768px - 991px) ✅ Tablets (Portrait Mode) */
+@media (min-width: 768px) and (max-width: 991px) {
+}
+/* Mobile Large Screens (480px - 767px) ✅ Small Tablets & Large Phones */
+@media (min-width: 480px) and (max-width: 767px) {
+}
+/* Mobile Medium Screens (425px - 479px) ✅ Medium Phones (iPhone XR, Galaxy S20) */
+@media (min-width: 425px) and (max-width: 479px) {
+}
+/* Mobile Small Screens (375px - 424px) ✅ Small Phones (iPhone SE, Pixel 4) */
+@media (min-width: 375px) and (max-width: 424px) {
+}
+/* Extra Small Screens (360px - 374px) ✅ Extra Small Phones */
+@media (min-width: 360px) and (max-width: 374px) {
+}
+@media (min-width: 320px) and (max-width: 359px) {
+}
+
+

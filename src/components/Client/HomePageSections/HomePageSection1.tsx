@@ -5,6 +5,67 @@ import React, { useEffect, useState, useRef } from 'react';
 import Image from "next/image";
 import './HomePageSection1.css';
 import HomePageSection2 from './HomePageSection2';
+import { ButtonHover as ViewlAllClientsButton } from '../Reusable_Components/ButtonHover';
+import { ButtonHover as VehicleBookNowButton } from '../Reusable_Components/ButtonHover';
+
+// function VehicleButton({ label = "Book Now", onClick }) {
+//   const btnRef = useRef(null);
+
+//   useEffect(() => {
+//     const btn = btnRef.current;
+//     if (!btn) return;
+//     const bubble = btn.querySelector(".RS_BtnBubble");
+
+//     const setBubble = (e) => {
+//       const rect = btn.getBoundingClientRect();
+//       const x = e.clientX - rect.left;
+//       const y = e.clientY - rect.top;
+//       const size = Math.max(rect.width, rect.height) * 2.2;
+//       bubble.style.width = size + "px";
+//       bubble.style.height = size + "px";
+//       bubble.style.left = x - size / 2 + "px";
+//       bubble.style.top = y - size / 2 + "px";
+//     };
+
+//     const onEnter = (e) => {
+//       setBubble(e);
+//       bubble.style.transition =
+//         "transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.55s ease";
+//       bubble.style.transform = "scale(0)";
+//       bubble.style.opacity = "0";
+//       requestAnimationFrame(() =>
+//         requestAnimationFrame(() => {
+//           bubble.style.transform = "scale(1)";
+//           bubble.style.opacity = "1";
+//         })
+//       );
+//     };
+
+//     const onLeave = (e) => {
+//       setBubble(e);
+//       bubble.style.transition =
+//         "transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.55s ease";
+//       bubble.style.transform = "scale(0)";
+//       bubble.style.opacity = "0";
+//     };
+
+//     btn.addEventListener("mouseenter", onEnter);
+//     btn.addEventListener("mouseleave", onLeave);
+//     return () => {
+//       btn.removeEventListener("mouseenter", onEnter);
+//       btn.removeEventListener("mouseleave", onLeave);
+//     };
+//   }, []);
+
+//   return (
+//     <button className="RS_VehicleButton" ref={btnRef} onClick={onClick}>
+//       <span>{label}</span>
+//       <span className="RS_BtnBubble"></span>
+//     </button>
+//   );
+// }
+
+
 export default function HomePageSection1() {
 
     //OFFER SECTION CITY MARQUEE GRADIENT ANIMATION
@@ -98,21 +159,20 @@ export default function HomePageSection1() {
         return () => window.removeEventListener('resize', update);
     }, []);
 
-    // Why Adinn Roadshows (Works Best) data — add image per item
     const whyAdinn_WorksBest = [
         {
             name: 'GPS Support',
             desc: 'Live location tracking for vehicles with route visibility and movement updates throughout the campaign.',
-            image: './images/assets/HomeBanner_MainPageFinal.png', // ← use different images per item
+            image: './images/assets/HomeBanner_MainPageFinal.png',
         },
         {
             name: 'RTO Certified',
-            desc: 'Fully approved vehicles complying with road regulations for smooth and hassle-free campaign execution.',
+            desc: 'Fully approved vehicles complying with road regulations for smooth & hassle-free campaign execution.',
             image: './images/assets/tata ultra - 2.png',
         },
         {
             name: 'One-Stop Solution',
-            desc: 'From planning to execution, everything managed in one place for a seamless roadshow campaign.Live location tracking for vehicles.',
+            desc: 'From planning to execution, everything managed in one place for a roadshow campaign',
             image: './images/assets/full side LED.png',
         },
         {
@@ -121,90 +181,95 @@ export default function HomePageSection1() {
             image: './images/assets/HomeBanner_MainPageFinal.png',
         },
     ];
-    // Replace useState(0) with this:
-    const [activeIndex, setActiveIndex] = useState(0);
-    const [isFirstRender, setIsFirstRender] = useState(true);
 
+    type ExitDirection = 'exit-right' | 'exit-left';
 
+    const IMAGE_ANIMATION_MS = 1100;
 
-    const prevIndexRef = useRef(0);
-    const [exitIndex, setExitIndex] = useState(null);
-    const [exitDirection, setExitDirection] = useState('exit-left'); // 'exit-left' | 'exit-right'
-    const [enterFromLeft, setEnterFromLeft] = useState(false);
+    const [activeIndex, setActiveIndex] = useState<number>(0);
+    const [exitIndex, setExitIndex] = useState<number | null>(null);
+    const [exitDirection, setExitDirection] = useState<ExitDirection>('exit-left');
+    const [enterFromLeft, setEnterFromLeft] = useState<boolean>(false);
+    const [isFirstRender, setIsFirstRender] = useState<boolean>(true);
+    const [isAnimating, setIsAnimating] = useState<boolean>(false);
+
+    const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (animationTimerRef.current) {
+                clearTimeout(animationTimerRef.current);
+            }
+        };
+    }, []);
+
+    const finishImageAnimation = () => {
+        if (animationTimerRef.current) {
+            clearTimeout(animationTimerRef.current);
+        }
+
+        animationTimerRef.current = setTimeout(() => {
+            setExitIndex(null);
+            setIsAnimating(false);
+        }, IMAGE_ANIMATION_MS);
+    };
+
+    const triggerTransition = (newIndex: number, direction: 'forward' | 'backward') => {
+        if (isAnimating || newIndex === activeIndex) return;
+
+        setIsFirstRender(false);
+
+        if (activeIndex >= 0) {
+            setExitIndex(activeIndex);
+            setExitDirection(direction === 'forward' ? 'exit-left' : 'exit-right');
+        } else {
+            setExitIndex(null);
+        }
+
+        setEnterFromLeft(direction === 'backward');
+        setActiveIndex(newIndex);
+        setIsAnimating(true);
+
+        finishImageAnimation();
+    };
 
     const handlePrev = () => {
-        if (activeIndex <= 0) return;
-        const newIndex = activeIndex - 1;
-        triggerTransition(newIndex, 'backward');
+        if (isAnimating || activeIndex <= 0) return;
+
+        triggerTransition(activeIndex - 1, 'backward');
     };
 
     const handleNext = () => {
-        if (activeIndex >= whyAdinn_WorksBest.length - 1) return;
-        const newIndex = activeIndex + 1;
-        triggerTransition(newIndex, 'forward');
+        if (isAnimating || activeIndex >= whyAdinn_WorksBest.length - 1) return;
+
+        triggerTransition(activeIndex + 1, 'forward');
     };
 
-    const handleItemClick = (idx) => {
+    const handleItemClick = (idx: number) => {
+        if (isAnimating) return;
+
         if (idx === activeIndex) {
-            setActiveIndex(-1); // collapse
+            setIsFirstRender(false);
+            setExitIndex(activeIndex);
+            setExitDirection('exit-left');
+            setActiveIndex(-1);
+            setIsAnimating(true);
+            finishImageAnimation();
             return;
         }
+
         const direction = idx > activeIndex ? 'forward' : 'backward';
         triggerTransition(idx, direction);
     };
 
-    // const triggerTransition = (newIndex, direction) => {
-    //     setIsFirstRender(false);
-    //     const outDir = direction === 'forward' ? 'exit-left' : 'exit-right';
-    //     setExitIndex(activeIndex);      // mark current as exiting
-    //     setExitDirection(outDir);       // slide out to left or right
-    //     setEnterFromLeft(direction === 'backward'); // incoming comes from left if going backward
+    const getImageClass = (idx: number) => {
+        if (idx === exitIndex) return exitDirection;
 
-    //     // After exit animation completes, switch the active index
-    //     setTimeout(() => {
-    //         prevIndexRef.current = activeIndex;
-    //         setActiveIndex(newIndex);
-    //         setExitIndex(null); // clear exit state
-    //         setEnterFromLeft(false);
-    //     }, 420); // match your CSS transition duration (0.45s = 450ms, slight buffer)
-    // };
-
-    // const getImageClass = (idx) => {
-    //     if (idx === exitIndex) return exitDirection;
-    //     if (idx === activeIndex) {
-    //         if (isFirstRender) return 'enter-from-right'; // shows image 0 on load
-    //         if (enterFromLeft) return 'enter-from-left';
-    //         return 'enter-from-right';
-    //     }
-    //     return '';
-    // };
-
-    //OUR CLIENTS
-
-    const triggerTransition = (newIndex, direction) => {
-        setIsFirstRender(false);
-        const outDir = direction === 'forward' ? 'exit-left' : 'exit-right';
-        const inFromLeft = direction === 'backward'; // ← capture BEFORE timeout
-
-        setExitIndex(activeIndex);
-        setExitDirection(outDir);
-        setEnterFromLeft(inFromLeft); // ← set BEFORE timeout, not reset inside it
-
-        setTimeout(() => {
-            prevIndexRef.current = activeIndex;
-            setActiveIndex(newIndex);
-            setExitIndex(null);
-            // ✅ DO NOT reset enterFromLeft here — let getImageClass use it for the entering image
-        }, 420);
-    };
-
-    // ✅ Reset enterFromLeft AFTER the enter animation completes (not during)
-    const getImageClass = (idx) => {
-        if (idx === exitIndex) return exitDirection;  // current image exits
         if (idx === activeIndex) {
             if (isFirstRender) return 'enter-from-right';
-            return enterFromLeft ? 'enter-from-left' : 'enter-from-right'; // ← uses correct direction
+            return enterFromLeft ? 'enter-from-left' : 'enter-from-right';
         }
+
         return '';
     };
 
@@ -298,7 +363,11 @@ export default function HomePageSection1() {
                                         <div className="RS_VehicleRatingValue">{veh.rating}</div>
                                         <div><img src='./images/assets/RS_VehicleRateStar.svg' className='RS_VehicleRatingImg' alt="Rating" /></div>
                                     </div>
-                                    <div><button className="RS_VehicleButton">Book Now</button></div>
+                                    {/* <div><button className="RS_VehicleButton">Book Now</button></div> */}
+                                    <div>
+                                        <VehicleBookNowButton label="Book Now" className="RS_VehicleButton" />
+
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -326,86 +395,85 @@ export default function HomePageSection1() {
                 </div>
             </div>
 
-            {/* Why Adinn Roadshows section (works best) */}
-            <div className='px-30 mx-auto'>
+
+            {/* Why Adinn Roadshows section */}
+            <div className="px-30 mx-auto">
                 <div className="RS_OurRdwHeading">
                     <div className="RS_OurRdwHeadingContent1">Why Adinn Roadshows </div>
-                    <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2">Works Best</div>
+                    <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2">
+                        Works Best
+                    </div>
                 </div>
-                <div className='RS_WhyAdRSMain'>
+
+                <div className="RS_WhyAdRSMain">
                     {/* LEFT — nav + accordion items */}
-                    <div className='RS_WhyAdRS_Left'>
-                        {/* Arrow nav */}
-                        <div className='RS_WhyAdRSNavRow'>
+                    <div className="RS_WhyAdRS_Left">
+                        <div className="RS_WhyAdRSNavRow">
                             <button
                                 className="RS_CarouselBtn"
                                 onClick={handlePrev}
-                                disabled={activeIndex <= 0}
+                                disabled={isAnimating || activeIndex <= 0}
                                 aria-label="Previous"
                             >
                                 <i className="fa-solid fa-chevron-left"></i>
                             </button>
+
                             <button
                                 className="RS_CarouselBtn"
                                 onClick={handleNext}
-                                disabled={activeIndex >= whyAdinn_WorksBest.length - 1}
+                                disabled={isAnimating || activeIndex >= whyAdinn_WorksBest.length - 1}
                                 aria-label="Next"
                             >
                                 <i className="fa-solid fa-chevron-right"></i>
                             </button>
                         </div>
-                        {/* Accordion items — NO CHANGES HERE */}
-                        {/* {whyAdinn_WorksBest.map((AWB, idx) => (
-                            <div
-                                key={idx}
-                                className={`RS_WhyAdRSItem ${activeIndex === idx ? 'active' : ''}`}
-                                onClick={() => handleItemClick(idx)}
-                            >
-                                <div className='RS_WhyAdRSContentIcon'>
-                                    <i className="fa-solid fa-plus"></i>
-                                </div>
-                                <div className='RS_WhyAdRS_ItemText'>
-                                    <div className='RS_WhyAdRS_ItemName'>{AWB.name}</div>
-                                    <div className='RS_WhyAdRS_ItemDesc'>{AWB.desc}</div>
-                                </div>
-                            </div>
-                        ))} */}
+
                         {whyAdinn_WorksBest.map((AWB, idx) => (
                             <div
                                 key={idx}
                                 className={`RS_WhyAdRSItem ${activeIndex === idx ? 'active' : ''}`}
                                 onClick={() => handleItemClick(idx)}
                             >
-                                <div className='RS_WhyAdRSContentIcon'>
+                                <div className="RS_WhyAdRSContentIcon">
                                     <i className="fa-solid fa-plus"></i>
                                 </div>
-                                <div className='RS_WhyAdRS_ItemText'>
-                                    <div className='RS_WhyAdRS_ItemName'>{AWB.name}</div>
 
-                                    {/* ✅ CHANGE: wrap desc in collapse wrapper — same as RA section */}
-                                    <div className={`RS_WhyAdRS_CollapseWrapper ${activeIndex === idx ? 'open' : ''}`}>
-                                        <div className='RS_WhyAdRS_ItemDesc'>{AWB.desc}</div>
+                                <div className="RS_WhyAdRS_ItemText">
+                                    <div className="RS_WhyAdRS_ItemName">{AWB.name}</div>
+
+                                    <div
+                                        className={`RS_WhyAdRS_CollapseWrapper ${activeIndex === idx ? 'open' : ''
+                                            }`}
+                                    >
+                                        <div className="RS_WhyAdRS_ItemDesc">{AWB.desc}</div>
                                     </div>
-
                                 </div>
                             </div>
                         ))}
                     </div>
+
                     <div></div>
-                    {/* RIGHT — ✅ Only this className logic changes */}
-                    <div className='RS_WhyAdRS_Right'>
+
+                    {/* RIGHT — image animation */}
+                    <div className="RS_WhyAdRS_Right">
                         {whyAdinn_WorksBest.map((AWB, idx) => (
-                            <img
+                            // <img
+                            //     key={idx}
+                            //     src={AWB.image}
+                            //     alt={AWB.name}
+                            //     className={getImageClass(idx)}
+                            // />
+
+                            <div
                                 key={idx}
-                                src={AWB.image}
-                                alt={AWB.name}
-                                className={getImageClass(idx)}
-                            />
+                                className={`RS_WhyAdRS_ImageLayer ${getImageClass(idx)}`}
+                            >
+                                <img src={AWB.image} alt={AWB.name} />
+                            </div>
                         ))}
                     </div>
                 </div>
             </div>
-
             {/* Some Of Our Clients Section */}
             <div className='px-30 mx-auto'>
                 <div className="RS_ClientsSection">
@@ -441,7 +509,9 @@ export default function HomePageSection1() {
 
                     {/* View All button — no change */}
                     <div className="RS_ClientsBtnRow">
-                        <button className="RS_ViewAllClientsBtn">View All Clients</button>
+                        {/* <button className="RS_ViewAllClientsBtn">View All Clients</button> */}
+                        <ViewlAllClientsButton label="View All Clients" className="RS_ViewAllClientsBtn" />
+
                     </div>
 
                 </div>

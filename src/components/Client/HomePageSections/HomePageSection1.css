@@ -131,7 +131,7 @@
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: background 0.3s ease, border-color 0.3s ease, transform 0.25s ease;
+  transition: background 1.3s ease, border-color 1.3s ease, transform 0.25s ease;
 }
 
 /* Hover — pill turns red */
@@ -249,6 +249,44 @@
   font-size: 18px;
 }
 
+
+/* ALL BUTTON HOVER WITH BUBBLE ANIMATIONS   */
+.RS_VehicleButton,
+.RS_ViewAllClientsBtn {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  cursor: pointer;
+  transition: color 0.4s ease;
+  z-index: 0;
+}
+
+.RS_VehicleButton:hover,
+.RS_ViewAllClientsBtn:hover {
+  color: #fff;
+}
+
+/* The bubble itself — shared across all buttons */
+.RS_BtnBubble {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #FF0000 0%, #990000 100%);
+  transform: scale(0);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 0;
+}
+
+/* Keep text above the bubble */
+.RS_VehicleButton>span:not(.RS_BtnBubble),
+.RS_ViewAllClientsBtn>span:not(.RS_BtnBubble) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ALL BUTTON HOVER WITH BUBBLE ANIMATIONS   */
+
+
 /* CAROUSEL WRAPPER */
 .RS_CarouselWrapper {
   overflow: hidden;
@@ -325,8 +363,20 @@
   cursor: not-allowed;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 /* Why Adinn Roadshows */
-.RS_WhyAdRSMain {
+/* .RS_WhyAdRSMain {
   width: 60%;
   height: 800px;
   border-radius: 70px;
@@ -339,12 +389,164 @@
   overflow: hidden;
 }
 
+.RS_WhyAdRS_Left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 30px 20px;
+}
+
+.RS_WhyAdRSNavRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.RS_CarouselBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #D7D7DE;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.RS_CarouselBtn:hover:not(:disabled) {
+  background: #c5c5cc;
+  transform: scale(1.08);
+}
+
+.RS_CarouselBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.RS_WhyAdRSItem {
+  background: #D7D7DE;
+  border-radius: 50px;
+  padding:25px 30px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  cursor: pointer;
+  transition: background 1.25s ease, border-radius 1.25s ease;
+  width: 320px;
+}
+
+.RS_WhyAdRSItem:hover {
+  background: #cbcbd2;
+}
+
+.RS_WhyAdRSItem.active {
+  background: #D7D7DE;
+  border-radius: 50px;
+  width: 400px;
+}
+
+.RS_WhyAdRSContentIcon {
+  background: #FFFFFF;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 25px;
+  flex-shrink: 0;
+  transition: transform 1.3s ease;
+}
+
+.RS_WhyAdRSItem.active .RS_WhyAdRSContentIcon {
+  transform: rotate(45deg);
+}
+
+.RS_WhyAdRS_ItemText {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+.RS_WhyAdRS_ItemName {
+  font-family: Outfit;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 22px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  color: #000;
+  padding-top: 4px;
+} */
+
+/* Desc — hidden by default, expands on active */
+/* .RS_WhyAdRS_ItemDesc {
+  font-family: Outfit, sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  color: #333;
+  line-height: 1.5;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 1.4s ease, opacity 1.35s ease, margin-top 1.3s ease;
+  margin-top: 0;
+} */
+
+
+
+
+
+
+
+
+/* Why Adinn Roadshows */
+.RS_WhyAdRSMain {
+  width: 60%;
+  height: 800px;
+  border-radius: 70px;
+  background: #EEEDF0;
+  margin: auto;
+  margin-bottom: 5%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Soft bottom / left fade layer for exiting image */
+.RS_WhyAdRSMain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background:
+    linear-gradient(to right,
+      rgba(238, 237, 240, 0.95) 0%,
+      rgba(238, 237, 240, 0.65) 4%,
+      rgba(238, 237, 240, 0) 18%),
+    linear-gradient(to bottom,
+      rgba(238, 237, 240, 0) 72%,
+      rgba(238, 237, 240, 0.55) 88%,
+      #EEEDF0 100%);
+}
+
 /* Left panel */
 .RS_WhyAdRS_Left {
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 30px 20px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 8;
 }
 
 /* Nav arrows row */
@@ -378,17 +580,30 @@
   cursor: not-allowed;
 }
 
-/* Each accordion item */
+/* Accordion item */
 .RS_WhyAdRSItem {
   background: #D7D7DE;
   border-radius: 50px;
-  padding:25px 30px;
+  padding: 25px 30px;
   display: flex;
   gap: 20px;
   align-items: flex-start;
   cursor: pointer;
-  transition: background 1.25s ease, border-radius 1.25s ease;
   width: 320px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 9;
+
+  transition:
+    background 0.35s ease,
+    width 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+
+  will-change: width;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .RS_WhyAdRSItem:hover {
@@ -405,6 +620,7 @@
 .RS_WhyAdRSContentIcon {
   background: #FFFFFF;
   min-width: 40px;
+  width: 40px;
   height: 40px;
   border-radius: 50%;
   display: flex;
@@ -412,12 +628,12 @@
   justify-content: center;
   font-size: 25px;
   flex-shrink: 0;
-  transition: transform 1.3s ease;
+  transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: rotate(0deg);
 }
 
 .RS_WhyAdRSItem.active .RS_WhyAdRSContentIcon {
   transform: rotate(45deg);
-  /* + becomes × visually */
 }
 
 /* Item text wrapper */
@@ -426,128 +642,63 @@
   flex-direction: column;
   gap: 0;
   overflow: hidden;
+  min-width: 0;
+  flex: 1;
 }
 
-/* Item name / heading */
+/* Item name */
 .RS_WhyAdRS_ItemName {
-  font-family: Outfit;
+  font-family: Outfit, sans-serif;
   font-weight: 500;
-  font-style: Medium;
   font-size: 22px;
   line-height: 100%;
   letter-spacing: 0%;
   color: #000;
   padding-top: 4px;
+  white-space: nowrap;
 }
 
-/* Desc — hidden by default, expands on active */
+/* Smooth accordion collapse wrapper */
+.RS_WhyAdRS_CollapseWrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  padding-top: 0;
+  overflow: hidden;
+  transform: translateY(-5px);
+
+  transition:
+    grid-template-rows 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.3s ease,
+    padding-top 0.4s ease,
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+
+  will-change: grid-template-rows, opacity, transform;
+}
+
+/* Delay desc opening until item width almost finishes */
+.RS_WhyAdRS_CollapseWrapper.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  padding-top: 6px;
+  transform: translateY(0);
+  transition-delay: 0.22s;
+}
+
 .RS_WhyAdRS_ItemDesc {
   font-family: Outfit, sans-serif;
   font-weight: 400;
   font-size: 18px;
   color: #333;
   line-height: 1.5;
-  max-height: 0;
+  width: 280px;
+  max-width: 100%;
+  min-height: 0;
   overflow: hidden;
-  opacity: 0;
-  transition: max-height 1.4s ease, opacity 1.35s ease, margin-top 1.3s ease;
-  margin-top: 0;
+  transform: translateZ(0);
 }
-
 
 /* Right side image area */
-.RS_WhyAdRS_Right {
-  width: 380px;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.RS_WhyAdRS_Right img {
-  width: 100%;
-  max-width: 660px;
-  object-fit: contain;
-  position: absolute;
-  opacity: 0;
-  transform: translateX(100%);  
-  pointer-events: none;
-  transition: none;            
-}
-
-/* ─── Keyframe animations ─── */
-
-/* Entering from RIGHT (Next click) */
-@keyframes enterFromRight {
-  from { opacity: 0; transform: translateX(100%); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-/* Entering from LEFT (Prev click) */
-@keyframes enterFromLeft {
-  from { opacity: 0; transform: translateX(-100%); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-/* Exiting to LEFT (Next click — current image leaves) */
-@keyframes exitToLeft {
-  from { opacity: 1; transform: translateX(0); }
-  to   { opacity: 0; transform: translateX(-100%); }
-}
-
-/* Exiting to RIGHT (Prev click — current image leaves) */
-@keyframes exitToRight {
-  from { opacity: 1; transform: translateX(0); }
-  to   { opacity: 0; transform: translateX(100%); }
-}
-
-/* Active classes */
-.RS_WhyAdRS_Right img.enter-from-right {
-  animation: enterFromRight 1.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-.RS_WhyAdRS_Right img.enter-from-left {
-  animation: enterFromLeft 1.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-.RS_WhyAdRS_Right img.exit-left {
-  animation: exitToLeft 0.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-.RS_WhyAdRS_Right img.exit-right {
-  animation: exitToRight 0.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-
-/* ─── Accordion desc — smooth width + height expansion ─── */
-.RS_WhyAdRS_ItemDesc {
-  font-family: Outfit, sans-serif;
-  font-weight: 400;
-  font-size: 18px;
-  color: #333;
-  line-height: 1.5;
-  max-height: 0;
-  max-width: 0;            /* ← ADD THIS for the width expansion effect */
-  overflow: hidden;
-  opacity: 0;
-  transition: 
-    max-height 1.4s ease,
-    max-width 1.2s ease,   /* ← ADD THIS */
-    opacity 1.35s ease,
-    margin-top 1.3s ease;
-  margin-top: 0;
-}
-
-.RS_WhyAdRSItem.active .RS_WhyAdRS_ItemDesc {
-  max-height:200px;
-  /* border: 1px solid red; */
-  max-width: 500px;        /* ← expands outward like in the video */
-  opacity: 1;
-  margin-top: 6px;
-       /* ← allow wrap once fully expanded */
-}
-
-
-/* ─── Why Adinn RS — RIGHT PANEL ─── */
 .RS_WhyAdRS_Right {
   width: 440px;
   height: 100%;
@@ -555,179 +706,146 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  flex-shrink: 0;
+  z-index: 1;
+  pointer-events: none;
+  --rs-img-small-scale: 0.5;
+  --rs-img-active-scale: 2;
+  --rs-img-enter-time: 1.45s;
+  --rs-img-exit-time: 1.25s;
+  --rs-img-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Base state — hidden, small, off to the bottom-right */
-.RS_WhyAdRS_Right img {
+/* Image layer */
+.RS_WhyAdRS_ImageLayer {
   width: 100%;
   max-width: 660px;
-  object-fit: contain;
   position: absolute;
+  left: 50%;
+  top: 50%;
   opacity: 0;
-  transform: translateX(120%) translateY(40%) scale(0.35);
   pointer-events: none;
-  transition: none;
+  transform-origin: center center;
+
+  transform:
+    translate(-50%, -50%) translate3d(135%, 48%, 0) scale(var(--rs-img-small-scale));
+
+  filter: blur(12px);
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+  -webkit-mask-image: radial-gradient(ellipse 86% 74% at 50% 52%,
+      #000 0%,
+      #000 58%,
+      rgba(0, 0, 0, 0.72) 76%,
+      transparent 100%);
+  mask-image: radial-gradient(ellipse 86% 74% at 50% 52%,
+      #000 0%,
+      #000 58%,
+      rgba(0, 0, 0, 0.72) 76%,
+      transparent 100%);
 }
 
-/* ─── Keyframes: Next (→) — enters from bottom-right corner ─── */
+.RS_WhyAdRS_ImageLayer img {
+  width: 100%;
+  display: block;
+  object-fit: contain;
+}
+
 @keyframes enterFromBottomRight {
-  from { opacity: 0; transform: translateX(120%) translateY(40%) scale(0.35); }
-  to   { opacity: 1; transform: translateX(0)   translateY(0)   scale(2);    }
+  0% {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate(-50%, -50%) translate3d(150%, 55%, 0) scale(var(--rs-img-small-scale));
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(var(--rs-img-active-scale));
+  }
 }
 
-/* ─── Keyframes: Next (→) — exits to bottom-left corner ─── */
-@keyframes exitToBottomLeft {
-  from { opacity: 1; transform: translateX(0)     translateY(0)   scale(1);    }
-  to   { opacity: 0; transform: translateX(-120%) translateY(40%) scale(0.35); }
-}
-
-/* ─── Keyframes: Prev (←) — enters from bottom-left corner ─── */
 @keyframes enterFromBottomLeft {
-  from { opacity: 0; transform: translateX(-120%) translateY(40%) scale(0.35); }
-  to   { opacity: 1; transform: translateX(0)     translateY(0)   scale(2);    }
+  0% {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate(-50%, -50%) translate3d(-150%, 55%, 0)scale(var(--rs-img-small-scale));
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate(-50%, -50%) translate3d(0, 0, 0)scale(var(--rs-img-active-scale));
+  }
 }
 
-/* ─── Keyframes: Prev (←) — exits to bottom-right corner ─── */
+@keyframes exitToBottomLeft {
+  0% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(var(--rs-img-active-scale));
+  }
+
+  100% {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate(-50%, -50%) translate3d(-150%, 55%, 0) scale(var(--rs-img-small-scale));
+  }
+}
+
 @keyframes exitToBottomRight {
-  from { opacity: 1; transform: translateX(0)    translateY(0)   scale(1);    }
-  to   { opacity: 0; transform: translateX(120%) translateY(40%) scale(0.35); }
-}
-
-/* Active animation classes */
-.RS_WhyAdRS_Right img.enter-from-right {
-  animation: enterFromBottomRight 2.72s cubic-bezier(0.42, 1, 0.36, 1) forwards;
-}
-.RS_WhyAdRS_Right img.enter-from-left {
-  animation: enterFromBottomLeft 1.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.RS_WhyAdRS_Right img.exit-left {
-  animation: exitToBottomLeft 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-.RS_WhyAdRS_Right img.exit-right {
-  animation: exitToBottomRight 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-
-/* ─── Why Adinn RS — ACCORDION ITEM (same pattern as RA section) ─── */
-.RS_WhyAdRSItem {
-  background: #D7D7DE;
-  border-radius: 50px;
-  padding: 25px 30px;
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-  cursor: pointer;
-  /* Width expands like RA section */
-  width: 320px;
-  overflow: hidden;
-  transition: background 0.3s ease, width 1.4s ease;
-  margin-bottom: 12px;
-}
-
-.RS_WhyAdRSItem:hover {
-  background: #cbcbd2;
-}
-
-.RS_WhyAdRSItem.active {
-  background: #D7D7DE;
-  border-radius: 50px;
-  width: 400px; /* expands width on active */
-}
-
-/* Toggle icon circle */
-.RS_WhyAdRSContentIcon {
-  background: #FFFFFF;
-  min-width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 25px;
-  flex-shrink: 0;
-  transition: transform 1.3s ease;
-}
-
-.RS_WhyAdRSItem.active .RS_WhyAdRSContentIcon {
-  transform: rotate(45deg);
-}
-
-/* Item name */
-.RS_WhyAdRS_ItemName {
-  font-family: Outfit;
-  font-weight: 500;
-  font-size: 22px;
-  line-height: 100%;
-  letter-spacing: 0%;
-  color: #000;
-  padding-top: 4px;
-}
-
-/* ─── DESC: collapse wrapper — SAME pattern as RA's .RA_collapseWrapper ─── */
-/* REMOVE the old .RS_WhyAdRS_ItemDesc max-width/max-height rules and use this instead */
-.RS_WhyAdRS_CollapseWrapper {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height 1.4s ease, opacity 1.35s ease, padding 1.3s ease;
-  padding: 0;
-}
-
-.RS_WhyAdRS_CollapseWrapper.open {
-  max-height: 200px;
-  opacity: 1;
-  padding: 6px 0 0 0;
-}
-
-.RS_WhyAdRS_ItemDesc {
-  font-family: Outfit, sans-serif;
-  font-weight: 400;
-  font-size: 18px;
-  color: #333;
-  line-height: 1.5;
-  width: 280px; /* fixed width so text wraps cleanly once visible */
-}
-
-
-/* RESPONSIVE  */
-@media (max-width: 768px) {
-  .OffersTitle {
-    font-size: 36px;
+  0% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(var(--rs-img-active-scale));
   }
 
-  .OffersBadge {
-    width: 40px;
-    height: 40px;
-  }
-
-  .OffersBadgeText {
-    font-size: 18px;
-  }
-
-  .OffersPill {
-    padding: 8px 14px;
-  }
-
-  .OffersPillIcon {
-    width: 28px;
-    height: 28px;
-  }
-
-  .OffersPillName {
-    font-size: 13px;
-  }
-
-  .OffersMarquee {
-    animation-duration: 14s;
+  100% {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate(-50%, -50%) translate3d(150%, 55%, 0) scale(var(--rs-img-small-scale));
   }
 }
 
-@media (max-width: 480px) {
-  .OffersTitle {
-    font-size: 28px;
+.RS_WhyAdRS_ImageLayer.enter-from-right {
+  z-index: 2;
+  animation: enterFromBottomRight var(--rs-img-enter-time) var(--rs-img-ease) forwards;
+}
+
+.RS_WhyAdRS_ImageLayer.enter-from-left {
+  z-index: 2;
+  animation: enterFromBottomLeft var(--rs-img-enter-time) var(--rs-img-ease) forwards;
+}
+
+.RS_WhyAdRS_ImageLayer.exit-left {
+  z-index: 1;
+  animation: exitToBottomLeft var(--rs-img-exit-time) var(--rs-img-ease) forwards;
+}
+
+.RS_WhyAdRS_ImageLayer.exit-right {
+  z-index: 1;
+  animation: exitToBottomRight var(--rs-img-exit-time) var(--rs-img-ease) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .RS_WhyAdRSItem,
+  .RS_WhyAdRSContentIcon,
+  .RS_WhyAdRS_CollapseWrapper,
+  .RS_WhyAdRS_ImageLayer {
+    transition: none;
+    animation-duration: 0.01ms !important;
   }
 }
+
+
+
+
+
+
+
+
 
 
 /* OUR CLIENT SECTION  */
@@ -822,7 +940,6 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: 65px;
-  /* max-width: 160%; */
   object-fit: contain;
   filter: grayscale(100%);
   opacity: 0.6;
@@ -944,5 +1061,177 @@
 .RS_ViewAllClientsBtn:hover {
   background: #c5c5cc;
   transform: scale(1.03);
-} 
+}
 
+
+
+
+
+
+/* RESPONSIVE  */
+@media (max-width: 768px) {
+  .OffersTitle {
+    font-size: 36px;
+  }
+
+  .OffersBadge {
+    width: 40px;
+    height: 40px;
+  }
+
+  .OffersBadgeText {
+    font-size: 18px;
+  }
+
+  .OffersPill {
+    padding: 8px 14px;
+  }
+
+  .OffersPillIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .OffersPillName {
+    font-size: 13px;
+  }
+
+  .OffersMarquee {
+    animation-duration: 14s;
+  }
+}
+
+/* Responsive Media Queries */
+/* Extra Large Screens (2560px and above) ✅ Large Screens (4K Screens)  */
+@media (min-width: 2560px) {}
+
+/* Large Screens (1400px - 2559px) ✅ Large Desktop Screens 1440*/
+@media (min-width: 1440px) and (max-width: 2559px) {
+  .RS_ClientsSection {
+    /* border: 2px solid red; */
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1280px) {
+/* WHY ADINN ROADSHOWS   */
+  .RS_WhyAdRSMain {
+    width: 100%;
+  }
+
+/* OUR CLIENTS SECTION  */
+  .RS_ClientsOrbitArea {
+    height: 450px;
+  }
+
+  .RS_ClientCenterBubble {
+    top: 30%;
+    left: 50%;
+  }
+
+  .RS_ClientBubble.RS_TextLogo .RS_ClientLogo {
+    width: 120px;
+    max-width: 120px;
+  }
+
+  /* left philip */
+  .RS_Bubble_0 {
+    width: 70px;
+    height: 70px;
+    top: 33%;
+    left: 5%;
+  }
+
+  /* top left philip  */
+  .RS_Bubble_1 {
+    width: 110px;
+    height: 110px;
+    top: -17%;
+    left: 33%;
+  }
+
+  /* right top kelloggs  */
+  .RS_Bubble_2 {
+    width: 110px;
+    height: 110px;
+    top: -20%;
+    left: 58%;
+  }
+
+  /* left thangamayil  */
+  .RS_Bubble_3 {
+    width: 90px;
+    height: 90px;
+    top: 55%;
+    left: 17%;
+  }
+
+  /* left kelloggs  */
+  .RS_Bubble_4 {
+    width: 115px;
+    height: 115px;
+    top: 14%;
+    left: 24%;
+  }
+
+  /* right top thangamayil  */
+  .RS_Bubble_5 {
+    width: 120px;
+    height: 120px;
+    top: 0%;
+    left: 73%;
+  }
+
+  /* airtel right bottom  */
+  .RS_Bubble_6 {
+    width: 110px;
+    height: 110px;
+    top: 38%;
+    left: 64%;
+  }
+
+  /* right bottom philip  */
+  .RS_Bubble_7 {
+    width: 75px;
+    height: 75px;
+    top: 52%;
+    left: 82%;
+  }
+
+  /* left airtel  */
+  .RS_Bubble_8 {
+    width: 90px;
+    height: 90px;
+    top: -4%;
+    left: 13%;
+  }
+
+  /* right bottom kelloggs  */
+  .RS_Bubble_9 {
+    width: 115px;
+    height: 115px;
+    top: 15%;
+    left: 87%;
+  }
+
+
+}
+
+/* Laptops & Small Desktops (992px - 1024px)  ✅ Tablets (Landscape Mode) */
+@media (min-width: 992px) and (max-width: 1023px) {}
+
+/* Tablets (768px - 991px) ✅ Tablets (Portrait Mode) */
+@media (min-width: 768px) and (max-width: 991px) {}
+
+/* Mobile Large Screens (480px - 767px) ✅ Small Tablets & Large Phones */
+@media (min-width: 480px) and (max-width: 767px) {}
+
+/* Mobile Medium Screens (425px - 479px) ✅ Medium Phones (iPhone XR, Galaxy S20) */
+@media (min-width: 425px) and (max-width: 479px) {}
+
+/* Mobile Small Screens (375px - 424px) ✅ Small Phones (iPhone SE, Pixel 4) */
+@media (min-width: 375px) and (max-width: 424px) {}
+
+/* Extra Small Screens (360px - 374px) ✅ Extra Small Phones */
+@media (min-width: 360px) and (max-width: 374px) {}
+
+@media (min-width: 320px) and (max-width: 359px) {}

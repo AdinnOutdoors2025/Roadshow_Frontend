@@ -823,7 +823,8 @@ function HomePageSection2() {
                     className="hidden lg:block"
                 >
                     <div
-                        className="grid grid-cols-[1fr_1fr_2fr_1fr_1fr] gap-6"
+                    //  grid grid-cols-[1fr_1fr_2fr_1fr_1fr] gap-6
+                        className="VFRContentMainGrid "
                         style={{
                             transform: `translateX(${translateX})`,
                             opacity: animating ? 0.45 : 1,
