@@ -1,5 +1,4 @@
 
-
 /* eslint-disable */
 // @ts-nocheck
 "use client";
@@ -31,7 +30,7 @@ const fmtDatetime = (s?: string) => {
   });
 };
 
-// ─── Driver Form ──────────────────────────────────────────────────────────────
+
 function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }) {
   const [driverName, setDriverName] = useState(existingEntry?.driverName || "");
   const [driverPhone, setDriverPhone] = useState(existingEntry?.driverPhone || "");
@@ -96,7 +95,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
         : "border-dashed border-gray-200 dark:border-gray-700"
     }`}>
 
-      {/* Saved timestamp */}
+     
       {isSaved && (
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-1 text-[13px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
@@ -106,7 +105,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
         </div>
       )}
 
-      {/* Form Fields */}
+     
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
         {/* Driver Name */}
@@ -115,21 +114,21 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
             Driver Name <span className="text-red-400">*</span>
           </label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-300" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400" />
             <input
               type="text"
               value={driverName}
               onChange={e => setDriverName(e.target.value)}
               disabled={isSaved}
-              className={`w-full border rounded-lg pl-9 pr-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-300 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${
+              className={`w-full border rounded-lg pl-9 pr-3 py-2.5 text-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${
                 errors.driverName ? "border-red-300" : "border-gray-200 dark:border-gray-600"
               }`}
               placeholder="Enter driver name"
             />
           </div>
           {errors.driverName && (
-            <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
-              <AlertCircle size={10} /> {errors.driverName}
+            <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+              {errors.driverName}
             </p>
           )}
         </div>
@@ -141,22 +140,22 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">+91</span>
-            <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
+            {/* <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" /> */}
             <input
               type="tel"
               value={driverPhone}
               onChange={e => setDriverPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
               disabled={isSaved}
               maxLength={10}
-              className={`w-full border rounded-lg pl-10 pr-9 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-300 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${
+              className={`w-full border rounded-lg pl-10 pr-9 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${
                 errors.driverPhone ? "border-red-300" : "border-gray-200 dark:border-gray-600"
               }`}
               placeholder="9876543210"
             />
           </div>
           {errors.driverPhone && (
-            <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
-              <AlertCircle size={10} /> {errors.driverPhone}
+            <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+             {errors.driverPhone}
             </p>
           )}
         </div>
@@ -167,21 +166,21 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
             Vehicle Reg. No <span className="text-red-400">*</span>
           </label>
           <div className="relative">
-            <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
+            <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
               value={regNo}
               onChange={e => setRegNo(e.target.value.toUpperCase())}
               disabled={isSaved}
-              className={`w-full border rounded-lg pl-9 pr-3 py-2.5 text-sm uppercase bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-300 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${
+              className={`w-full border rounded-lg pl-9 pr-3 py-2.5 text-sm uppercase bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${
                 errors.regNo ? "border-red-300" : "border-gray-200 dark:border-gray-600"
               }`}
               placeholder="TN01AB1234"
             />
           </div>
           {errors.regNo && (
-            <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
-              <AlertCircle size={10} /> {errors.regNo}
+            <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+              {errors.regNo}
             </p>
           )}
         </div>
@@ -195,9 +194,9 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
             <a
               href={existingEntry.gatepassPhoto.startsWith("http") ? existingEntry.gatepassPhoto : `http://localhost:3001${existingEntry.gatepassPhoto}`}
               target="_blank" rel="noreferrer"
-              className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 text-xs font-medium hover:bg-gray-100 transition-all"
+              className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-all"
             >
-              <Eye size={12} className="text-gray-400" /> View Gatepass
+              <Eye size={15} className="text-gray-400" /> View Gatepass
             </a>
           ) : isSaved ? (
             <div className="px-3 py-2.5 rounded-lg border border-gray-200 text-xs text-gray-400 bg-gray-50 dark:bg-gray-800">
@@ -218,8 +217,8 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
               ) : (
                 <label className="cursor-pointer block">
                   <div className="border border-dashed border-gray-200 rounded-lg p-3 hover:border-gray-300 hover:bg-gray-50 transition-all text-center">
-                    <Upload className="w-4 h-4 text-gray-300 mx-auto mb-1" />
-                    <span className="text-xs text-gray-400">Click to upload</span>
+                    <Upload className="w-4 h-4 text-gray-400 mx-auto mb-1" />
+                    <span className="text-sm text-gray-500">Click to upload</span>
                   </div>
                   <input type="file" accept="image/*" ref={fileRef} onChange={e => handleFileChange(e.target.files?.[0] || null)} className="hidden" />
                 </label>
@@ -234,7 +233,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
         <button
           onClick={handleSave}
           disabled={loading}
-          className="w-full py-2.5 rounded-lg bg-gray-900 hover:bg-gray-800 disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 dark:bg-gray-700 dark:hover:bg-gray-600"
+          className="w-full py-2.5 rounded-lg bg-gray-400 hover:bg-gray-450 disabled:opacity-40 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 dark:bg-gray-700 dark:hover:bg-gray-600"
         >
           {loading ? (
             <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
@@ -256,13 +255,11 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
 }
 
 // ─── Vehicle Execution Card ───────────────────────────────────────────────────
-function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh }) {
+function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh ,vehicleTypes }) {
   const [open, setOpen] = useState(false);
   const [activeDriverTab, setActiveDriverTab] = useState(0);
   const [toggling, setToggling] = useState(false);
-  const { vehicleTypes, fetchVehicleTypes } = useVehicle();
 
-  useEffect(() => { fetchVehicleTypes(); }, []);
 
   const getVehicleTypeName = (vehicleTypeId) => {
     if (!vehicleTypeId || !vehicleTypes) return "";
@@ -283,7 +280,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh }) {
     await onRefresh();
   };
 
-  // once on road, off பண்ண disable
+
   const handleVehicleToggle = async () => {
     if (!allDriversSaved || isVehicleOnRoad) return;
     setToggling(true);
@@ -362,7 +359,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh }) {
 
         {/* Right side - amount style like image + drivers count */}
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+          <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${
             allDriversSaved
               ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
               : savedCount > 0
@@ -433,7 +430,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh }) {
                   </p>
                 </div>
 
-                {/* iOS style toggle */}
+              
                 <button
                   type="button"
                   onClick={handleVehicleToggle}
@@ -460,7 +457,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh }) {
                 </span>
               </div>
             ) : savedCount > 0 ? (
-              /* Partial - disabled locked */
+              
               <div className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 opacity-40">
                 <div className="flex-1">
                   <p className="text-md font-semibold text-gray-500">On Road Status</p>
@@ -481,12 +478,18 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh }) {
   );
 }
 
-// ─── Main Export ──────────────────────────────────────────────────────────────
+
 export default function ProjectExecutionTab({ order, onRefresh }) {
   const vehicles = order.bookingItems || [];
   const allEntries = order.onRoadExecutionArray || [];
   const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
+
+    const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+
+     useEffect(() => {
+        fetchVehicleTypes()
+    }, [])
 
   if (vehicles.length === 0) {
     return (
@@ -517,7 +520,7 @@ export default function ProjectExecutionTab({ order, onRefresh }) {
         )}
       </div>
 
-      {/* Vehicle Cards */}
+     
       {vehicles.map((vehicle, idx) => (
         <VehicleExecutionCard
           key={idx}
@@ -525,6 +528,7 @@ export default function ProjectExecutionTab({ order, onRefresh }) {
           vehicleIndex={idx}
           order={order}
           onRefresh={onRefresh}
+          vehicleTypes={vehicleTypes}
         />
       ))}
     </div>
