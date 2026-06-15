@@ -179,9 +179,9 @@ function SalesOrderCard({
     >
       {/* Top row */}
       <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] font-mono text-gray-400">{order.orderId}</p>
+        <p className="text-[13px] font-mono text-gray-400">{order.orderId}</p>
         <span
-          className="text-[12px] font-medium px-2 py-0.5 rounded-full"
+          className="text-[13px] font-medium px-2 py-0.5 rounded-full"
           style={{ background: custBadge.bg, color: custBadge.color }}
         >
           {custBadge.label}
@@ -189,7 +189,7 @@ function SalesOrderCard({
       </div>
 
       {/* Name */}
-      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight mb-1 truncate">
+      <p className="text-md font-semibold text-gray-900 dark:text-gray-100 leading-tight mb-1 truncate">
         {order.name}
       </p>
 
@@ -203,19 +203,19 @@ function SalesOrderCard({
       {/* Footer */}
       <div className="flex items-center justify-between">
         {order.salesHandlerName ? (
-          <span className="text-[11px] font-medium text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 rounded-full flex items-center gap-1 max-w-[120px] truncate">
-            <User size={11} className="flex-shrink-0" />
+          <span className="text-[13px] font-medium text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 rounded-full flex items-center gap-1 max-w-[120px] truncate">
+            <User size={12} className="flex-shrink-0" />
             {order.salesHandlerName}
           </span>
         ) : (
           <span />
         )}
         <div className="flex flex-col items-end shrink-0 ml-2">
-          <span className="text-[12px] text-gray-400 leading-none mb-0.5">
+          <span className="text-[13px] text-gray-400 leading-none mb-0.5">
             Created At
           </span>
-          <span className="text-[11px] text-gray-500 whitespace-nowrap">{date}</span>
-          <span className="text-[11px] text-gray-500 flex items-center gap-1 whitespace-nowrap">
+          <span className="text-[13px] text-gray-500 whitespace-nowrap">{date}</span>
+          <span className="text-[13px] text-gray-500 flex items-center gap-1 whitespace-nowrap">
             <Clock size={10} />
             {time}
           </span>
@@ -225,7 +225,7 @@ function SalesOrderCard({
   );
 }
 
-// ── Stage Column ──────────────────────────────────────────────────────────────
+
 function SalesStageColumn({
   stage,
   orders,
@@ -258,7 +258,7 @@ function SalesStageColumn({
       >
         <div className="flex items-center gap-2 min-w-0">
           <StageIcon size={16} className="text-white flex-shrink-0" />
-          <span className="text-xs font-bold text-white truncate">
+          <span className="text-sm font-bold text-white truncate">
             {stage.label}
           </span>
         </div>
@@ -266,7 +266,7 @@ function SalesStageColumn({
 
         <div className="flex items-center gap-1.5 flex-shrink-0 ml-1">
           {fmtTotal && (
-            <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+            <span className="text-[13px] font-semibold px-1.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
               {fmtTotal}
             </span>
           )}
@@ -277,7 +277,7 @@ function SalesStageColumn({
 
       </div>
 
-      {/* Cards */}
+ 
       <div className="flex flex-col gap-2 overflow-y-auto flex-1 pr-0.5 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
         {orders.map((order) => (
           <SalesOrderCard
@@ -298,7 +298,7 @@ function SalesStageColumn({
   );
 }
 
-// ── Main Board ────────────────────────────────────────────────────────────────
+
 export default function SalesPipelineBoard() {
   const [grouped, setGrouped] = useState<Record<string, SalesOrder[]>>({});
   const [loading, setLoading] = useState(true);
@@ -307,7 +307,7 @@ export default function SalesPipelineBoard() {
   const [staffAdmins, setStaffAdmins] = useState<{ username: string }[]>([]);
   const [saving, setSaving] = useState(false);
 
-  console.log("currentUserIsAdmin",currentUserIsAdmin)
+ 
 
   const [closedWonWarningModal, setClosedWonWarningModal] = useState<SalesOrder | null>(null);
   const [pendingProjectCodeOrder, setPendingProjectCodeOrder] = useState<SalesOrder | null>(null);
@@ -446,14 +446,27 @@ export default function SalesPipelineBoard() {
     }
 
 
-    // if (fromStage === "closedWon" || fromStage === "closedLost") {
-    //   toast.error("This order is already closed and cannot be moved.");
-    //   return;
-    // }
-
-
     if (fromStage === "closedLost") {
       toast.error("This order is closed lost and cannot be moved.");
+      return;
+    }
+
+      const STAGE_ORDER_LIST = [
+      "enquiry",
+      "needAnalysis",
+      "proposalPriceQuote",
+      "negotiationReview",
+      "closedWon",
+      "projectCodeCreation",
+      "closedLost",
+    ];
+    const LOCKED_BACK_STAGES = ["enquiry", "needAnalysis"];
+    const fromIndex = STAGE_ORDER_LIST.indexOf(fromStage);
+    const toIndex = STAGE_ORDER_LIST.indexOf(toStage);
+
+    if (LOCKED_BACK_STAGES.includes(toStage) && toIndex < fromIndex) {
+      const stageLabel = toStage === "enquiry" ? "Enquiry" : "Need Analysis";
+     toast.error(`Cannot move back to the "${stageLabel}" stage!`);
       return;
     }
 
@@ -473,19 +486,12 @@ export default function SalesPipelineBoard() {
     }
 
 
-    // if (toStage === "needAnalysis" && !order.salesHandlerName) {
-    //   setHandlerName("");
-    //   setHandlerError("");
-    //   setHandlerModal(order);
-    //   return;
-    // }
-
     if (toStage === "needAnalysis" && !order.salesHandlerName) {
       if (currentUserIsAdmin === 0) {
         commitMove(order, "needAnalysis");
         return;
       }
-     
+
       setHandlerName("");
       setHandlerError("");
       setHandlerModal(order);
@@ -518,14 +524,6 @@ export default function SalesPipelineBoard() {
       return;
     }
 
-
-    // if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
-    //   setEmailFrom("");
-    //   setEmailTo("");
-    //   setEmailCC("");
-    //   setEmailModal(order);
-    //   return;
-    // }
 
     if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
       commitMove(order, toStage);
@@ -735,6 +733,8 @@ export default function SalesPipelineBoard() {
                     </option>
                   ))}
                 </select>
+
+               
               </div>
             ) : (
               <div className="mb-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2.5">
@@ -841,7 +841,7 @@ export default function SalesPipelineBoard() {
       )}
 
 
-      {/* ── Closed Won Warning Modal ── */}
+     
       {closedWonWarningModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6">

@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { VehicleConfig, AdditionalCharge } from "./AdminOrderForm";
-import { PricingPreview, getPackagesForOrder} from "../../utils/Adminorderapi";
+import { PricingPreview, getPackagesForOrder } from "../../utils/Adminorderapi";
 import FormField, { inputClass } from "../../../components/reusableFormField";
 import { HiOutlinePlus, HiOutlineTrash } from "react-icons/hi2";
 import { IoMdClose } from "react-icons/io";
@@ -71,7 +71,8 @@ function defaultForm(): Omit<VehicleConfig, "id"> {
     promoterGender: "",
     promoterLanguage: [],
     promoterQuantity: 0,
-    dailyKmcharges: 0
+    dailyKmcharges: 0,
+    campaignName: "",
 
   };
 }
@@ -548,12 +549,8 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     if (!form.campaignType) e.campaignType = "Select campaign type";
 
     if (form.campaignType === "Other" && !form.otherCampaignType) e.otherCampaignType = "Required";
-    // if (form.bookingFor === "Agency") {
-    //   if (!form.gstNumber.trim()) e.gstNumber = "GST number required for Agency";
-    //   else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(form.gstNumber))
-    //     e.gstNumber = "Enter valid GST number";
-    // }
 
+if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
     if (!form.fromDate) e.fromDate = "Select start date";
     if (!form.toDate) e.toDate = "Select end date";
     if (form.fromDate && form.toDate && new Date(form.fromDate) >= new Date(form.toDate))
@@ -1170,20 +1167,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                 </FormField>
               </div> */}
 
-              {form.bookingFor === "Agency" && (
-                <div id="field-gstNumber">
-                  <FormField label="GST Number" required error={errors.gstNumber}>
-                    <input
-                      type="text"
-                      value={form.gstNumber}
-                      onChange={(e) => set("gstNumber", e.target.value.toUpperCase())}
-                      placeholder="e.g. 22AAAAA0000A1Z5"
-                      maxLength={15}
-                      className={inputClass(!!errors.gstNumber)}
-                    />
-                  </FormField>
-                </div>
-              )}
+
 
 
               <div id="field-campaignType">
@@ -1195,6 +1179,22 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                     ))}
                     <option value="Other">Other</option>
                   </select>
+                </FormField>
+              </div>
+
+             
+              <div id="field-campaignName">
+                <FormField label="Campaign Name" error={errors.campaignName} required>
+                  <input
+                    type="text"
+                    value={form.campaignName}
+                    onChange={(e) => {
+                      const onlyLetters = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                      set("campaignName", onlyLetters);
+                    }}
+                    placeholder="Enter campaign name"
+                    className={inputClass(!!errors.campaignName)}
+                  />
                 </FormField>
               </div>
             </div>
@@ -1289,7 +1289,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
                     onAddCity={(newCity) => {
                       setLocationData(prev => {
                         const existing = prev[form.state] || [];
-                        if (existing.includes(newCity)) return prev; 
+                        if (existing.includes(newCity)) return prev;
                         return { ...prev, [form.state]: [...existing, newCity] };
                       });
                       setCityOptions(prev =>

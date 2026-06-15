@@ -80,10 +80,10 @@ const getFileUrl = (p: string) => {
 
 const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
-// ── Tab type ──────────────────────────────────────────────────────────────────
+
 type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation";
 
-// ── Document Viewer Modal ─────────────────────────────────────────────────────
+
 function DocPreviewModal({ url, label, onClose }: { url: string; label: string; onClose: () => void }) {
   const img = isImage(url);
   return (
@@ -116,7 +116,7 @@ function DocPreviewModal({ url, label, onClose }: { url: string; label: string; 
   );
 }
 
-// ── Doc Item Card ─────────────────────────────────────────────────────────────
+
 function DocItem({ docPath, label, notes, by, at }: {
   docPath: string; label: string; notes?: string; by?: string; at?: string;
 }) {
@@ -133,7 +133,7 @@ function DocItem({ docPath, label, notes, by, at }: {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{label}</p>
           {notes && <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1"><StickyNote size={15} /> {notes}</p>}
-          {by && <p className="text-[11px] text-gray-400 mt-0.5">By {by} · {fmtDatetime(at)}</p>}
+          {by && <p className="text-[13px] text-gray-400 mt-0.5">By {by} · {fmtDatetime(at)}</p>}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button onClick={() => setPreview(true)}
@@ -150,7 +150,7 @@ function DocItem({ docPath, label, notes, by, at }: {
   );
 }
 
-// ── Drag-drop file input ──────────────────────────────────────────────────────
+
 function DragDropFile({ file, onFile, onRemove, accept = ".pdf,.jpg,.jpeg,.png", label }: {
   file: File | null; onFile: (f: File | null) => void;
   onRemove: () => void; accept?: string; label?: string;
@@ -192,7 +192,7 @@ function DragDropFile({ file, onFile, onRemove, accept = ".pdf,.jpg,.jpeg,.png",
   );
 }
 
-// ── Stage Upload Form ─────────────────────────────────────────────────────────
+
 function StageUploadForm({
   order, stage, onRefresh,
   docFieldName, notesFieldName, amountFieldName,
@@ -275,7 +275,7 @@ function StageUploadForm({
   );
 }
 
-// ── VehicleItemCard ───────────────────────────────────────────────────────────
+
 function VehicleItemCard({ item, index }: { item: any; index: number }) {
   const [open, setOpen] = useState(false);
   const fmtDate = (s: string) =>
@@ -367,6 +367,8 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
 
 import { useVehicle } from '../../../context/vehicletypecontext';
 import PipelineHistoryTab from "./PipelineHistoryTab";
+import { ChevronLeft } from "lucide-react";
+
 
 function OverviewTab({
   order, onRefresh, onStageMove,
@@ -375,17 +377,12 @@ function OverviewTab({
   onStageMove: (order: SalesOrder, toStage: string) => void;
 }) {
   const { vehicleTypes, fetchVehicleTypes } = useVehicle();
-
-  const [openItems, setOpenItems] = useState<Record<number, boolean>>({});
-
-  const toggleItem = (idx: number) => {
-  setOpenItems(prev => ({ ...prev, [idx]: !prev[idx] }));
-};
+  const [activeVehicleTab, setActiveVehicleTab] = useState<number>(0);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchVehicleTypes()
   }, [])
-
 
   const stageIdx = SALES_STAGES.findIndex((s) => s.key === order.salesPipelineStatus);
   const stage = SALES_STAGE_MAP[order.salesPipelineStatus];
@@ -395,145 +392,196 @@ function OverviewTab({
   const gstAmt = Math.floor(taxable * 0.18);
   const finalAmt = taxable + gstAmt;
 
-  const stageReached = (key: string) => {
-    const idx = SALES_STAGES.findIndex((s) => s.key === key);
-    return idx <= stageIdx;
-  };
-
   const getVehicleTypeName = (vehicleTypeId: string) => {
     if (!vehicleTypeId || !vehicleTypes) return "";
     const vehicle = vehicleTypes.find((vt: any) => vt._id === vehicleTypeId);
     return vehicle?.typeName || vehicleTypeId;
   };
 
+
+  const currentVehicle = order.bookingItems[activeVehicleTab];
+
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    if (tabsContainerRef.current) {
+      const scrollAmount = 200;
+      const newScrollLeft = tabsContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+      tabsContainerRef.current.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+
+  useEffect(() => {
+    if (tabsContainerRef.current) {
+      const activeTabElement = tabsContainerRef.current.children[activeVehicleTab] as HTMLElement;
+      if (activeTabElement) {
+        activeTabElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        });
+      }
+    }
+  }, [activeVehicleTab]);
+
   return (
     <div className="p-4 space-y-4">
-      {/* Customer Details */}
+ 
       <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-          <User size={13} className="text-gray-400" />
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Customer Details</h3>
+          <User size={16} className="text-gray-400" />
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Customer Details</h3>
         </div>
         <div className="p-4">
           <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <div>
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Order ID</p>
+              <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Order ID</p>
               <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.orderId}</p>
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Customer Name</p>
+              <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Customer Name</p>
               <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.name}</p>
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Customer Type</p>
+              <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Customer Type</p>
               <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {order.customerType === 1 ? "Organization" : order.customerType === 0 ? "Individual" : "—"}
               </p>
             </div>
 
             <div>
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Phone</p>
+              <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Phone</p>
               <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">+91 {order.phone}</p>
             </div>
             {order.email && (
               <div>
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Email</p>
+                <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Email</p>
                 <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">{order.email}</p>
               </div>
             )}
             {order.address && (
               <div className="col-span-2">
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Address</p>
+                <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Address</p>
                 <p className="text-sm text-gray-700 dark:text-gray-300">{order.address}</p>
               </div>
             )}
             {order.companyName && (
               <div>
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Company Name</p>
+                <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Company Name</p>
                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.companyName}</p>
               </div>
             )}
             {order.gstNumber && (
               <div>
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Gst Number</p>
+                <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Gst Number</p>
                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.gstNumber}</p>
               </div>
             )}
             {order.designation && (
               <div>
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Designation</p>
+                <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Designation</p>
                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.designation}</p>
               </div>
             )}
             <div>
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Order Created At</p>
+              <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Order Created At</p>
               <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{fmtDatetime(order.createdAt)}</p>
             </div>
-
-
           </div>
         </div>
       </div>
 
-      {/* Order Details */}
+   
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+     
+        <div className="relative flex items-center bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+      
+          <button
+            onClick={() => scrollTabs('left')}
+            className="absolute left-0 z-10 flex items-center justify-center w-8 h-full bg-gradient-to-r from-gray-50 dark:from-gray-800/50 to-transparent hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all disabled:opacity-30"
+            style={{ left: 0 }}
+          >
+            <ChevronLeft size={18} className="text-gray-600 dark:text-gray-400" />
+          </button>
 
-      {order.bookingItems.map((v, idx) => {
-        const p = v.pricing;
-        const totalVehicleCount = v.quantity;
+       
+          <div
+            ref={tabsContainerRef}
+            className="flex overflow-x-auto scrollbar-hide gap-1 px-8"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            <style jsx>{`
+        div::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+            {order.bookingItems.map((vehicle: any, idx: number) => {
+              const vehicleCount = vehicle.quantity;
+              const vehicleName = getVehicleTypeName(vehicle.vehicleType);
+              const campaignName = vehicle.campaignType === "Other" ? vehicle.otherCampaignType : vehicle.campaignType;
 
-    return (
-          <div key={idx} className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              return (
+                <button
+                  key={idx}
+                  onClick={() => setActiveVehicleTab(idx)}
+                  className={`
+              flex-shrink-0 flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all whitespace-nowrap
+              ${activeVehicleTab === idx
+                      ? "bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 border-b-2 border-blue-500"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    }
+            `}
+                >
+                  <span className="flex items-center justify-center w-10 h-6 text-sm font-bold text-blue-600">
+                    {idx + 1} vehicle
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+       
+          <button
+            onClick={() => scrollTabs('right')}
+            className="absolute right-0 z-10 flex items-center justify-center w-8 h-full bg-gradient-to-l from-gray-50 dark:from-gray-800/50 to-transparent hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all"
+            style={{ right: 0 }}
+          >
+            <ChevronRight size={18} className="text-gray-600 dark:text-gray-400" />
+          </button>
+        </div>
+
+    
+        {currentVehicle && (
+          <div className="p-4 space-y-3">
            
-            <button
-              type="button"
-              onClick={() => setOpenItems(prev => ({ ...prev, [idx]: !prev[idx] }))}
-              className="w-full flex items-center gap-3 p-4 bg-white dark:bg-gray-900 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all"
-            >
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600 flex-shrink-0">
-                {idx + 1}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                  {getVehicleTypeName(v.vehicleType)}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {v.campaignType === "Other" ? v.otherCampaignType : v.campaignType}
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
-                <span className="text-sm font-bold text-blue-700 dark:text-blue-300">{totalVehicleCount}</span>
-                <span className="text-xs text-blue-600 dark:text-blue-400">
-                  {totalVehicleCount === 1 ? "Vehicle" : "Vehicles"}
-                </span>
-              </div>
-              <ChevronDown
-                size={16}
-                className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openItems[idx] ? "rotate-180" : ""}`}
-              />
-            </button>
-
-            {openItems[idx] && (
-            <div className="border-t border-gray-100 dark:border-gray-700 p-4 space-y-3">
-
-            <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">              {(
+            <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">
+              {(
                 [
+                  ["Vehicle Model", getVehicleTypeName(currentVehicle.vehicleType)], // Fixed: changed 'vehicle' to 'currentVehicle'
                   ["Booking For", order.customerCategory],
-                  ["Campaign", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType],
-                  ["Duration", v.fromDate && v.toDate
-                    ? `${new Date(v.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(v.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000)}D base${v.extraDays > 0 ? ` +${v.extraDays} D = ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + v.extraDays}D total` : ""})`
+                  ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType],
+                  ["Duration", currentVehicle.fromDate && currentVehicle.toDate
+                    ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000)}D base${currentVehicle.extraDays > 0 ? ` +${currentVehicle.extraDays} D = ${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000) + currentVehicle.extraDays}D total` : ""})`
                     : "—"],
-                  ["Driving route", `${v.fromLocation} → ${v.toLocation}`],
-                  ["State / City", `${v.state} / ${v.city}`],
-                  ["Vehicle Count", `${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"}`],
-                  v.extraKm > 0 ? ["Extra KM", `${v.extraKm} km`] : null,
-                  v.extraHours > 0 ? ["Extra Hours", `${v.extraHours} hours`] : null,
-                  v.needPromoter ? ["Promoter", `${v.promoterType === "Other" ? v.otherPromoterType : v.promoterType} · ${v.promoterGender} · ${v.promoterLanguage} · Qty ${v.promoterQuantity}`] : null,
-                  v.gstNumber ? ["GST", v.gstNumber] : null,
+                  ["Driving route", `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
+                  ["State / City", `${currentVehicle.state} / ${currentVehicle.city}`],
+                  ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
+                  currentVehicle.extraKm > 0 ? ["Extra KM", `${currentVehicle.extraKm} km`] : null,
+                  currentVehicle.extraHours > 0 ? ["Extra Hours", `${currentVehicle.extraHours} hours`] : null,
+                  currentVehicle.needPromoter ? ["Promoter", `${currentVehicle.promoterType === "Other" ? currentVehicle.otherPromoterType : currentVehicle.promoterType} · ${currentVehicle.promoterGender} · ${currentVehicle.promoterLanguage} · Qty ${currentVehicle.promoterQuantity}`] : null,
+                  currentVehicle.gstNumber ? ["GST", currentVehicle.gstNumber] : null,
                 ] as ([string, string] | null)[]
               )
                 .filter((item): item is [string, string] => item !== null)
                 .map(([label, value], i) => (
-                  <div key={i} className="flex justify-between text-sm gap-4">
+                  <div key={i} className="flex justify-between text-md gap-4">
                     <span className="text-gray-500 shrink-0">{label}</span>
                     <span className="text-gray-800 dark:text-gray-200 font-medium text-right">{value}</span>
                   </div>
@@ -541,76 +589,69 @@ function OverviewTab({
               }
             </div>
 
-            {/* Pricing Breakdown */}
-
+         
             <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+              <p className="text-md font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                 <IndianRupee size={14} />
                 Price Breakdown
               </p>
               <div className="space-y-2">
-
-                {v.rentalCost > 0 && (
+                {currentVehicle.rentalCost > 0 && (
                   <div className="flex justify-between items-center py-1">
-                    <span className="text-gray-600 dark:text-gray-400 text-sm">
-                      Rental ({v.totalDays}D × {formatINR(v.perDayRentalCost)} × {v.quantity})
+                    <span className="text-gray-600 dark:text-gray-400 text-md">
+                      Rental ({currentVehicle.totalDays}D × {formatINR(currentVehicle.perDayRentalCost)} × {currentVehicle.quantity})
                     </span>
                     <span className="text-gray-800 dark:text-gray-200 font-medium">
-                      {formatINR(v.rentalCost)}
+                      {formatINR(currentVehicle.rentalCost)}
                     </span>
                   </div>
                 )}
 
-           
-                {(v.promoterCost ?? 0) > 0 && (
+                {(currentVehicle.promoterCost ?? 0) > 0 && (
                   <div className="flex justify-between items-center py-1">
-                    <span className="text-gray-600 dark:text-gray-400 text-sm">
-                      Promoter Charges ({v.totalDays}D × {formatINR(v.promoterChargePerDay)} × {v.promoterQuantity})
+                    <span className="text-gray-600 dark:text-gray-400 text-md">
+                      Promoter Charges ({currentVehicle.totalDays}D × {formatINR(currentVehicle.promoterChargePerDay)} × {currentVehicle.promoterQuantity})
                     </span>
                     <span className="text-gray-800 dark:text-gray-200 font-medium">
-                      {formatINR(v.promoterCost)}
+                      {formatINR(currentVehicle.promoterCost)}
                     </span>
                   </div>
                 )}
 
-         
-                {(v.rtoCost ?? 0) > 0 && (
+                {(currentVehicle.rtoCost ?? 0) > 0 && (
                   <div className="flex justify-between items-center py-1">
-                    <span className="text-gray-600 dark:text-gray-400 text-sm">RTO Charges</span>
+                    <span className="text-gray-600 dark:text-gray-400 text-md">RTO Charges</span>
                     <span className="text-gray-800 dark:text-gray-200 font-medium">
-                      {formatINR(v.rtoCost)}
+                      {formatINR(currentVehicle.rtoCost)}
                     </span>
                   </div>
                 )}
 
-              
-                {(v.extraKmCost ?? 0) > 0 && (
+                {(currentVehicle.extraKmCost ?? 0) > 0 && (
                   <div className="flex justify-between items-center py-1">
-                    <span className="text-gray-600 dark:text-gray-400 text-sm">
-                      Extra KM Charges ({v.extraKm} km × {formatINR(v.dailyKmcharges)})
+                    <span className="text-gray-600 dark:text-gray-400 text-md">
+                      Extra KM Charges ({currentVehicle.extraKm} km × {formatINR(currentVehicle.dailyKmcharges)})
                     </span>
                     <span className="text-gray-800 dark:text-gray-200 font-medium">
-                      {formatINR(v.extraKmCost)}
+                      {formatINR(currentVehicle.extraKmCost)}
                     </span>
                   </div>
                 )}
 
-             
-                {(v.extraHourCost ?? 0) > 0 && (
+                {(currentVehicle.extraHourCost ?? 0) > 0 && (
                   <div className="flex justify-between items-center py-1">
-                    <span className="text-gray-600 dark:text-gray-400 text-sm">
-                      Extra Hours Charges ({v.extraHours} hrs × {formatINR(v.additionalHourCharges)})
+                    <span className="text-gray-600 dark:text-gray-400 text-md">
+                      Extra Hours Charges ({currentVehicle.extraHours} hrs × {formatINR(currentVehicle.additionalHourCharges)})
                     </span>
                     <span className="text-gray-800 dark:text-gray-200 font-medium">
-                      {formatINR(v.extraHourCost)}
+                      {formatINR(currentVehicle.extraHourCost)}
                     </span>
                   </div>
                 )}
 
-             
-                {(v.additionalCharges || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
+                {(currentVehicle.additionalCharges || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
                   <div key={fIdx} className="flex justify-between items-center py-1">
-                    <span className={c.mode === "-" ? "text-red-500 text-sm" : "text-gray-600 dark:text-gray-400 text-sm"}>
+                    <span className={c.mode === "-" ? "text-red-500 text-md" : "text-gray-600 dark:text-gray-400 text-md"}>
                       {c.label}
                     </span>
                     <span className={c.mode === "-" ? "text-red-600 font-medium" : "text-gray-800 dark:text-gray-200 font-medium"}>
@@ -620,64 +661,37 @@ function OverviewTab({
                   </div>
                 ))}
 
-             
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
                   <div className="flex justify-between items-center py-1">
-                    <span className="text-gray-700 dark:text-gray-300 font-semibold text-sm">Subtotal</span>
+                    <span className="text-gray-700 dark:text-gray-300 font-semibold text-md">Subtotal</span>
                     <span className="text-gray-900 dark:text-white font-bold text-base">
-                      {formatINR(v.subtotal)}
+                      {formatINR(currentVehicle.subtotal)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-1">
-                    <span className="text-gray-900 dark:text-white font-bold text-sm">Total (excl. GST)</span>
+                    <span className="text-gray-900 dark:text-white font-bold text-md">Total (excl. GST)</span>
                     <span className="text-blue-600 dark:text-blue-400 font-bold text-lg">
-                      {formatINR(v.totalAmount)}
+                      {formatINR(currentVehicle.totalAmount)}
                     </span>
                   </div>
                 </div>
-
               </div>
             </div>
-
-
-        </div>
-            )}
           </div>
-        );
-      })}
+        )}
+      </div>
 
-      {/* Price Breakdown */}
+      {/* Overall Price Breakdown */}
       <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
           <IndianRupee size={13} className="text-gray-400" />
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Price Breakdown</h3>
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider"> Price Breakdown</h3>
         </div>
         <div className="p-4">
-          <table className="w-full text-sm">
-            {/* <thead>
-              <tr className="text-gray-400 text-xs border-b border-gray-100 dark:border-gray-700">
-                <th className="text-left pb-2">#</th>
-                <th className="text-left pb-2">Description</th>
-                <th className="text-right pb-2">Amount (₹)</th>
-              </tr>
-            </thead> */}
+          <table className="w-full text-md">
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {/* {order.bookingItems.map((item: any, i: number) => (
-                <tr key={i} className="text-gray-700 dark:text-gray-300">
-                  <td className="py-1.5 text-gray-400">{i + 1}</td>
-                  <td className="py-1.5">Rental Charges ({order.bookingItems.length} Vehicles)</td>
-                  <td className="py-1.5 text-right font-medium">{fmt(item.rentalCost || item.totalAmount)}</td>
-                </tr>
-              ))} */}
-              {/* {order.bookingItems.map((item: any, i: number) => item.rtoCost > 0 && (
-                <tr key={`rto-${i}`} className="text-gray-700 dark:text-gray-300">
-                  <td className="py-1.5 text-gray-400">{order.bookingItems.length + i + 1}</td>
-                  <td className="py-1.5">RTO Charges</td>
-                  <td className="py-1.5 text-right font-medium">{fmt(item.rtoCost)}</td>
-                </tr>
-              ))} */}
-              <tr className="border-t border-gray-200 dark:border-gray-700">
-                <td colSpan={2} className="py-2 text-gray-500 font-medium">Subtotal (Excl. GST)</td>
+              <tr className=" border-t border-gray-200 dark:border-gray-700">
+                <td colSpan={2} className="py-2 text-gray-500 font-medium ">Subtotal (Excl. GST)</td>
                 <td className="py-2 text-right font-bold text-gray-800 dark:text-gray-200">{fmt(subtotal)}</td>
               </tr>
               <tr>
@@ -722,21 +736,39 @@ function OverviewTab({
   );
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// ── COMMENTS TAB ─────────────────────────────────────────────────────────────
-// ════════════════════════════════════════════════════════════════════════════
+
 function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () => Promise<void> }) {
   const [comment, setComment] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Collect all comments from all stage arrays
+  // ── Enquiry Name Modal state ───────────────────────────────────────────
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [enquiryName, setEnquiryName] = useState(order.enquiryName || "");
+  const [nameInput, setNameInput] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  const isEnquiry = order.salesPipelineStatus === "enquiry";
+
+ 
   const allComments: Array<{
     text: string; by: string; at: string; stage: string; docPath?: string;
   }> = [];
 
-  // needAnalysisArray notes
+  (order.enquiryArray || []).forEach((item) => {
+    if (item.notes || item.document) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Enquiry",
+        docPath: item.document,
+      });
+    }
+  });
+
   (order.needAnalysisArray || []).forEach((item) => {
     if (item.notes || item.analysisDocument) {
       allComments.push({
@@ -748,6 +780,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
       });
     }
   });
+
   (order.proposalArray || []).forEach((item) => {
     if (item.notes || item.proposalDocument) {
       allComments.push({
@@ -759,6 +792,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
       });
     }
   });
+
   (order.salesNegotiationArray || []).forEach((item) => {
     if (item.notes || item.document) {
       allComments.push({
@@ -770,6 +804,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
       });
     }
   });
+
   (order.closedWonArray || []).forEach((item) => {
     if (item.salesPoNotes || item.salesPoDocument) {
       allComments.push({
@@ -781,6 +816,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
       });
     }
   });
+
   (order.closedLostArray || []).forEach((item) => {
     if (item.reason) {
       allComments.push({
@@ -792,37 +828,77 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
       });
     }
   });
-  // Sort by date desc
+
   allComments.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
-  const handleAddComment = async () => {
-    if (!comment.trim() && !file) return;
+  // ── Enquiry name confirm & save ────────────────────────────────────────
+  const handleNameConfirm = async () => {
+    if (!nameInput.trim()) {
+      setNameError("Name is required");
+      return;
+    }
+    const name = nameInput.trim();
+    setSavingName(true);
+    try {
+      const token = getToken();
+      await axios.patch(
+        `${API_BASE}sales/pipeline/${order._id}/enquiry-name`,
+        { enquiryName: name },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setEnquiryName(name);
+      setShowNameModal(false);
+      await onRefresh();
+      await submitComment(name);
+    } catch (e: any) {
+      setNameError(e?.response?.data?.message || "Save failed, try again");
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+ 
+  const submitComment = async (uploadedByName: string) => {
     setSaving(true);
     try {
       const token = getToken();
       const fd = new FormData();
       fd.append("stage", order.salesPipelineStatus);
+
       const notesFieldMap: Record<string, string> = {
+        enquiry: "enquiryNotes",
         needAnalysis: "analysisNotes",
         proposalPriceQuote: "proposalNotes",
         negotiationReview: "negotiationNotes",
         closedWon: "salesPoNotes",
       };
       const docFieldMap: Record<string, string> = {
+        enquiry: "enquiryDocument",
         needAnalysis: "analysisDocument",
         proposalPriceQuote: "proposalDocument",
         negotiationReview: "negotiationDocument",
         closedWon: "salesPoDocument",
       };
+
       const notesField = notesFieldMap[order.salesPipelineStatus] || "analysisNotes";
       const docField = docFieldMap[order.salesPipelineStatus] || "analysisDocument";
+
       fd.append(notesField, comment.trim());
+
+    
+      if (isEnquiry) {
+        fd.append("enquiryName", uploadedByName);
+      }
+
       if (file) fd.append(docField, file);
+
       await axios.post(`${API_BASE}sales/pipeline/${order._id}/documents`, fd, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       toast.success("Comment added!");
-      setComment(""); setFile(null);
+      setComment("");
+      setFile(null);
       if (fileRef.current) fileRef.current.value = "";
       await onRefresh();
     } catch (e: any) {
@@ -832,16 +908,78 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
     }
   };
 
+ 
+  const handleAddComment = async () => {
+    if (!comment.trim() && !file) return;
+  
+    if (isEnquiry && !enquiryName) {
+      setNameInput("");
+      setNameError("");
+      setShowNameModal(true);
+      return;
+    }
+    await submitComment(isEnquiry ? enquiryName : "");
+  };
+
   const stageLabel = SALES_STAGE_MAP[order.salesPipelineStatus]?.label || order.salesPipelineStatus;
 
   return (
     <div className="p-4 space-y-4">
-      {/* Add Comment Box */}
+
+    
+      {showNameModal && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4">
+           
+          
+            <input
+              type="text"
+              value={nameInput}
+              onChange={(e) => { setNameInput(e.target.value); setNameError(""); }}
+              onKeyDown={(e) => e.key === "Enter" && handleNameConfirm()}
+              placeholder="Please Enter Your Name"
+              autoFocus
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            {nameError && (
+              <p className="text-xs text-red-500 flex items-center gap-1">
+                <AlertCircle size={12} /> {nameError}
+              </p>
+            )}
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setShowNameModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleNameConfirm}
+                disabled={savingName}
+                className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-sm font-semibold text-white transition-all"
+              >
+                {savingName ? "Saving..." : "Confirm & Upload"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+   
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
           <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-            Add a comment for this stage ({stageLabel})
+            Add a comment · <span className="text-gray-400">{stageLabel}</span>
           </p>
+        
+          {isEnquiry && enquiryName && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50">
+              <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
+                {enquiryName.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">{enquiryName}</span>
+            </div>
+          )}
         </div>
         <div className="p-4 space-y-3">
           <textarea
@@ -854,12 +992,21 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-500 hover:bg-gray-50 cursor-pointer transition-all">
               <Upload size={13} /> {file ? file.name : "Attach File"}
-              <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
-                onChange={(e) => setFile(e.target.files?.[0] || null)} />
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                className="hidden"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+              />
             </label>
             {file && (
-              <button onClick={() => { setFile(null); if (fileRef.current) fileRef.current.value = ""; }}
-                className="text-red-400 hover:text-red-600 text-xs">Remove</button>
+              <button
+                onClick={() => { setFile(null); if (fileRef.current) fileRef.current.value = ""; }}
+                className="text-red-400 hover:text-red-600 text-xs"
+              >
+                Remove
+              </button>
             )}
             <button
               onClick={handleAddComment}
@@ -872,7 +1019,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         </div>
       </div>
 
-      {/* Comments History */}
+    
       <div>
         <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Comments History</h3>
         {allComments.length === 0 ? (
@@ -884,14 +1031,17 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
               const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500"];
               const color = colors[c.by.charCodeAt(0) % colors.length];
               return (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:hover:bg-gray-800/30 transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700/50">
+                <div
+                  key={i}
+                  className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-transparent hover:border-gray-100 dark:hover:border-gray-700/50 transition-all"
+                >
                   <div className={`w-9 h-9 rounded-full ${color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
                     {initials}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
                       <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{c.by}</span>
-                      <span className="text-xs text-gray-400 px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700">
+                      <span className="text-sm text-gray-400 px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700">
                         {c.stage}
                       </span>
                     </div>
@@ -901,7 +1051,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
                         <DocItem docPath={c.docPath} label="Attached Document" />
                       </div>
                     )}
-                    <p className="text-[11px] text-gray-400 mt-1">{fmtDatetime(c.at)}</p>
+                    <p className="text-[13px] text-gray-400 mt-1">{fmtDatetime(c.at)}</p>
                   </div>
                 </div>
               );
@@ -914,9 +1064,6 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
 }
 
 
-// ════════════════════════════════════════════════════════════════════════════
-// ── DOCUMENTS TAB ─────────────────────────────────────────────────────────────
-// ════════════════════════════════════════════════════════════════════════════
 function DocumentsTab({
   order, onRefresh, onPoUploadSuccess,
 }: {
@@ -951,7 +1098,7 @@ function DocumentsTab({
     }
   };
 
-  // Collect all documents
+
   const sections = [
 
     {
@@ -972,14 +1119,14 @@ function DocumentsTab({
     rose: "text-rose-700 bg-rose-50 border-rose-100",
   };
 
- 
+
   const canUploadPO = ["closedWon", "projectCodeCreation"].includes(order.salesPipelineStatus);
 
   return (
     <div className="p-4 space-y-4">
 
 
-      {/* Documents list */}
+     
       {sections.length === 0 ? (
         <div className="text-center py-10 text-gray-400">
           <FileText size={32} className="mx-auto mb-2 opacity-30" />
@@ -989,7 +1136,7 @@ function DocumentsTab({
         sections.map((section, si) => (
           <div key={si} className={`rounded-xl border overflow-hidden ${colorMap[section.color]?.split(" ").slice(2).join(" ") || "border-gray-100"}`}>
             <div className={`px-4 py-2.5 border-b ${colorMap[section.color]?.split(" ").slice(1).join(" ") || ""}`}>
-              <h3 className={`text-xs font-bold uppercase tracking-wider ${colorMap[section.color]?.split(" ")[0] || "text-gray-500"}`}>
+              <h3 className={`text-sm font-bold uppercase tracking-wider ${colorMap[section.color]?.split(" ")[0] || "text-gray-500"}`}>
                 {section.label}
               </h3>
             </div>
@@ -1011,9 +1158,7 @@ function DocumentsTab({
   );
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// ── MAIN DRAWER ────────────────────────────────────────────────────────────
-// ════════════════════════════════════════════════════════════════════════════
+
 export default function SalesDetailDrawer({
   order, onClose, onRefresh, onStageMove, staffAdmins, currentUserIsAdmin, saving,
 }: {
@@ -1060,7 +1205,7 @@ export default function SalesDetailDrawer({
   const nextLabel = getNextLabel();
   const nextShort = getNextStageShortLabel();
 
-  // Stage progress pills (for the header bar)
+
   const stageReached = (key: string) => {
     const idx = SALES_STAGES.findIndex((s) => s.key === key);
     return idx <= stageIdx;
@@ -1079,7 +1224,15 @@ export default function SalesDetailDrawer({
       : []),
   ];
 
-  // Summary calculations
+
+  useEffect(() => {
+
+    if (order.salesPipelineStatus === "projectCodeCreation") {
+      setActiveTab("codeCreation");
+    }
+  }, [order.salesPipelineStatus]);
+
+ 
   const subtotal = order.bookingItems.reduce((s: number, i: any) => s + (i.totalAmount || 0), 0);
   const totalNegotiated = (order.salesNegotiationArray || []).reduce((s, n) => s + (n.amount || 0), 0);
   const taxable = subtotal - totalNegotiated;
@@ -1095,24 +1248,24 @@ export default function SalesDetailDrawer({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
       <div className="bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300">
 
-        {/* ── TOP HEADER BAR ── */}
+      
         <div className="flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
-          {/* Title row */}
+    
           <div className="flex items-center gap-3 px-4 py-3">
-            {/* Stage icon */}
+      
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${stage?.headerGrad || "from-gray-500 to-gray-600"}`}>
               <StageIcon size={15} className="text-white" />
             </div>
 
-            {/* Title + meta */}
+        
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-base font-bold text-gray-900 dark:text-white">Sales Order</span>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${stage?.bg || "bg-gray-100"} ${stage?.color || "text-gray-700"}`}>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[13px] font-semibold ${stage?.bg || "bg-gray-100"} ${stage?.color || "text-gray-700"}`}>
                   {stage?.label || order.salesPipelineStatus}
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-[11px] text-gray-400 mt-0.5">
+              <div className="flex items-center gap-2 text-[13px] text-gray-400 mt-0.5">
                 <span className="font-mono">{order.orderId}</span>
                 <span>·</span>
                 {/* <Clock size={10} />
@@ -1125,7 +1278,7 @@ export default function SalesDetailDrawer({
               <button
                 onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
                 disabled={saving}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-semibold transition-all whitespace-nowrap"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold transition-all whitespace-nowrap"
               >
                 {saving
                   ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -1134,7 +1287,7 @@ export default function SalesDetailDrawer({
               </button>
             )}
 
-            {/* Handler avatar */}
+       
             {order.salesHandlerName && (
               <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
                 <div className={`w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-[10px] font-bold text-white`}>
@@ -1144,14 +1297,14 @@ export default function SalesDetailDrawer({
               </div>
             )}
 
-            {/* More / Close */}
+       
             <button onClick={onClose}
               className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
               <X size={16} />
             </button>
           </div>
 
-          {/* Mobile: next stage row */}
+       
           {nextShort && (
             <div className="sm:hidden flex items-center gap-2 px-4 pb-3">
               <button
@@ -1176,7 +1329,7 @@ export default function SalesDetailDrawer({
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-3 py-2.5 text-sm font-medium border-b-2 transition-all -mb-px whitespace-nowrap ${activeTab === tab.key
+                className={`px-3 py-2.5 text-md font-medium border-b-2 transition-all -mb-px whitespace-nowrap ${activeTab === tab.key
                   ? "border-red-500 text-red-600 dark:text-red-400"
                   : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   }`}
@@ -1187,23 +1340,23 @@ export default function SalesDetailDrawer({
           </div>
         </div>
 
-        {/* ── SCROLLABLE BODY ── */}
+       
         <div className="flex-1 overflow-y-auto">
 
 
           {activeTab === "overview" && (
             <div className="flex flex-col sm:flex-row h-full min-h-0">
-              {/* Left: main content — scrollable */}
+            
               <div className="flex-1 overflow-y-auto sm:border-r border-gray-100 dark:border-gray-800">
                 <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} />
               </div>
 
-              {/* Right: sticky sidebar */}
+           
               <div className="w-full sm:w-[260px] flex-shrink-0 overflow-y-auto p-4 space-y-3 bg-gray-50/50 dark:bg-gray-900/40">
-                {/* Current Stage Card */}
+          
                 <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Current Stage</p>
+                    <p className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Current Stage</p>
                     <MoreHorizontal size={14} className="text-gray-300" />
                   </div>
                   <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-bold ${stage?.bg || "bg-gray-100"} ${stage?.color || "text-gray-700"} mb-2`}>
@@ -1222,7 +1375,7 @@ export default function SalesDetailDrawer({
                     </div>
                   )}
                   {order.updatedAt && (
-                    <p className="text-[12px] text-gray-400 mt-2">
+                    <p className="text-[13px] text-gray-400 mt-2">
                       Updated On<br />
                       {fmtDatetime(order.updatedAt)} ({fmtRelative(order.updatedAt)})
                     </p>
@@ -1237,25 +1390,18 @@ export default function SalesDetailDrawer({
                       <button
                         onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
                         disabled={saving}
-                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 disabled:opacity-60 text-white dark:text-gray-900 text-xs font-semibold transition-all"
+                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 disabled:opacity-60 text-white dark:text-gray-900 text-sm font-medium transition-all"
                       >
                         <ChevronRight size={13} /> Move to Next Stage
                       </button>
                     )}
                     <button
                       onClick={() => setActiveTab("comments")}
-                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
                     >
                       <MessageSquare size={13} /> Add Comment
                     </button>
-                    {/* <button
-                      onClick={() => setActiveTab("documents")}
-                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
-                    >
-                      <Upload size={13} /> Upload Documents
-                    </button> */}
-                    {/* closedWon / projectCodeCreation-ல் "PO Document" காட்டு, மற்றதில் "Upload Documents" */}
-                    {/* closedWon / projectCodeCreation-ல் "PO Document" காட்டு, மற்றதில் "Upload Documents" */}
+                   
                     {["closedWon", "projectCodeCreation"].includes(order.salesPipelineStatus) && (
                       <button
                         onClick={() => setActiveTab("documents")}
@@ -1278,23 +1424,23 @@ export default function SalesDetailDrawer({
 
                 {/* Summary */}
                 <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Summary</p>
+                  <p className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Summary</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500 text-xs">Total Vehicles</span>
+                      <span className="text-gray-500 text-sm">Total Vehicles</span>
                       <span className="font-bold text-gray-800 dark:text-gray-200">{order.bookingItems.length}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500 text-xs">Final Amount</span>
+                      <span className="text-gray-500 text-sm">Final Amount</span>
                       <span className="font-bold text-gray-800 dark:text-gray-200 text-xs">{fmt(finalAmt)}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500 text-xs">Stage Since</span>
+                      <span className="text-gray-500 text-sm">Last Updated At</span>
                       <span className="font-bold text-gray-800 dark:text-gray-200 text-xs">{fmtRelative(order.updatedAt)}</span>
                     </div>
                     {lastComment && (
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-500 text-xs">Last Comment</span>
+                        <span className="text-gray-500 text-sm">Last updated Comment</span>
                         <span className="font-bold text-gray-800 dark:text-gray-200 text-xs">{fmtRelative(lastComment.uploadedAt)}</span>
                       </div>
                     )}
@@ -1330,3 +1476,81 @@ export default function SalesDetailDrawer({
     </div>
   );
 }
+
+
+function EnquiryCommentModal({
+  onClose,
+  onSubmit,
+  saving,
+}: {
+  onClose: () => void;
+  onSubmit: (enquiryName: string, notes: string, file: File | null) => Promise<void>;
+  saving: boolean;
+}) {
+  const [enquiryName, setEnquiryName] = useState("");
+  const [notes, setNotes] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async () => {
+    if (!enquiryName.trim()) { setError("Enquiry name is required"); return; }
+    if (!notes.trim() && !file) { setError("Please add notes or a document"); return; }
+    setError("");
+    await onSubmit(enquiryName, notes, file);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h3 className="text-base font-bold text-gray-800 dark:text-gray-200">Add Enquiry Comment</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">
+              Enquiry Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={enquiryName}
+              onChange={(e) => setEnquiryName(e.target.value)}
+              placeholder="Enter enquiry person name..."
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Notes</label>
+            <textarea
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Type your comment here..."
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+            />
+          </div>
+          <DragDropFile file={file} onFile={setFile} onRemove={() => setFile(null)} />
+          {error && (
+            <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2 flex items-center gap-1.5">
+              <AlertCircle size={12} /> {error}
+            </p>
+          )}
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-bold transition-all flex items-center justify-center gap-2"
+          >
+            {saving ? (
+              <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</>
+            ) : (
+              <><CheckCircle2 size={14} /> Save Comment</>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

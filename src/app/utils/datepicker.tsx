@@ -176,7 +176,7 @@ export default function DatePicker({
             ))}
           </div>
 
-          {/* Day cells — compact */}
+        
           <div className="grid grid-cols-7 gap-0.5">
             {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
             {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
@@ -223,11 +223,10 @@ export default function DatePicker({
             <button
               type="button"
               onClick={() => {
-                // Calculate max allowed date (minAge years ago)
+              
                 const maxAllowedDate = new Date();
                 maxAllowedDate.setFullYear(maxAllowedDate.getFullYear() - minAge);
                 
-                // If today is beyond max allowed, adjust to max allowed
                 const targetDate = new Date();
                 if (targetDate > maxAllowedDate) {
                   targetDate.setTime(maxAllowedDate.getTime());
