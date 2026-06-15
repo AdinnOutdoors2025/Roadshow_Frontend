@@ -41,12 +41,12 @@ function Footer() {
                     {/* Social Icons */}
                     <div className="flex items-center FooterCol1Social">
                         {[
-                            { src: './images/assets/RS_Footer_Insta.png', alt: 'Instagram' },
-                            { src: './images/assets/RS_Footer_FB.png', alt: 'Facebook' },
-                            { src: './images/assets/RS_Footer_Twitter.png', alt: 'Twitter' },
-                            { src: './images/assets/RS_Footer_LinkedIn.png', alt: 'LinkedIn' },
-                        ].map(({ src, alt }) => (
-                            <a key={alt} href="#" aria-label={alt}>
+                            { src: './images/assets/RS_Footer_Insta.png', alt: 'Instagram', link :'https://www.instagram.com/adinnroadshows_/' },
+                            { src: './images/assets/RS_Footer_FB.png', alt: 'Facebook', link : "https://www.facebook.com/adinnroadshow" },
+                            { src: './images/assets/RS_Footer_Twitter.png', alt: 'Twitter', link : "https://x.com/AdinnRoadshow" },
+                            { src: './images/assets/RS_Footer_LinkedIn.png', alt: 'LinkedIn', link : "https://www.linkedin.com/company/adinn-roadshows/" },
+                        ].map(({ src, alt, link }) => (
+                            <a key={alt} href={link} aria-label={alt} target='_blank'>
                                 <img src={src} alt={alt} className="FooterCol1SocialIcon" />
                             </a>
                         ))}
@@ -55,11 +55,19 @@ function Footer() {
                     {/* Phone & Email */}
                     <div className="FooterCol1Contact">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <span>7373785057</span>
+
+                            <a href='tel:7373785057' style={{ textDecoration: 'none' }}>
+                                        +91 73737 85057
+                                    </a>
                             <span>|</span>
-                            <span>9626987861</span>
+                            <a href='tel:9626987861' style={{ textDecoration: 'none' }}>
+                                        +91 96269 87861
+                                    </a>
                         </div>
-                        <div>ba@adinn.co.in</div>
+                       
+                        <a href='mailto:ba@adinn.co.in' style={{ textDecoration: 'none' }}>
+                                    ba@adinn.co.in
+                                </a>
                     </div>
 
                     {/* Newsletter */}
