@@ -1,0 +1,446 @@
+/* VOICES FROM THE ROAD */
+
+.VFRCarouselViewport {
+    width: 100%;
+    overflow: hidden;
+}
+
+.VFRContentMainGrid {
+    display: flex;
+    align-items: stretch;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+}
+
+.RS_VFRHeading {
+    font-weight: 500;
+    background: linear-gradient(180deg, #DF2D2D 0%, #791818 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.VFRCardMain {
+    background: #D7D7D733;
+    backdrop-filter: blur(50px);
+    min-width: 0;
+    overflow: hidden;
+    transform-origin: center;
+    backface-visibility: hidden;
+    transform: translate3d(0, 0, 0) scale(1);
+    will-change: width, flex-basis, transform;
+    transition:
+        transform var(--vfr-duration, 950ms) cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow var(--vfr-duration, 950ms) ease;
+}
+
+.VFRCardCenter {
+    transform: translate3d(0, 0, 0) scale(1.012);
+}
+
+.VFRCardContent {
+    width: 100%;
+    min-width: 0;
+}
+
+.VFRReviewOuter {
+    width: 100%;
+    min-height: 175px;
+    overflow: visible;
+}
+
+.VFRReviewScaleBox {
+    width: 100%;
+    transform: scale(1);
+    transform-origin: left top;
+    will-change: transform, width;
+    transition:
+        transform var(--vfr-duration, 950ms) cubic-bezier(0.22, 1, 0.36, 1),
+        width var(--vfr-duration, 950ms) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.VFRReviewText {
+    font-size: 16px;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    color: #000000;
+    overflow-wrap: break-word;
+    word-break: normal;
+    text-wrap: pretty;
+}
+
+/* Desktop center text */
+.VFRMode-desktop .VFRReviewScaleBoxCenter {
+    width: 70.5%;
+    transform: scale(1.42);
+}
+
+/* Tablet center text */
+.VFRMode-tablet .VFRReviewScaleBoxCenter {
+    width: 82%;
+    transform: scale(1.22);
+}
+
+/* Mobile center text */
+.VFRMode-mobile .VFRReviewScaleBoxCenter {
+    width: 100%;
+    transform: scale(1);
+}
+
+.VFRStarWrap {
+    transform: scale(1);
+    transform-origin: left center;
+    transition:
+        transform var(--vfr-duration, 950ms) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.VFRStarWrapCenter {
+    transform: scale(1.22);
+}
+
+.VFRUserInfo {
+    transform: translateY(0);
+    transition:
+        transform var(--vfr-duration, 950ms) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.VFRCardCenter .VFRUserInfo {
+    transform: translateY(-2px);
+}
+
+.VFRCarouselMoving .VFRCardMain {
+    pointer-events: none;
+}
+
+/* Tablet responsive card */
+.VFRMode-tablet .VFRCardMain {
+    min-height: 360px;
+    border-radius: 22px;
+}
+
+.VFRMode-tablet .VFRReviewOuter {
+    min-height: 150px;
+}
+
+.VFRMode-tablet .VFRReviewText {
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* Mobile responsive card */
+.VFRMode-mobile .VFRCarouselViewport {
+    overflow: hidden;
+}
+
+.VFRMode-mobile .VFRCardMain {
+    min-height: 320px;
+    border-radius: 24px;
+    padding: 20px;
+    background: #ffffff;
+}
+
+.VFRMode-mobile .VFRReviewOuter {
+    min-height: 125px;
+}
+
+.VFRMode-mobile .VFRReviewText {
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.VFRMode-mobile .VFRStarWrapCenter {
+    transform: scale(1);
+}
+
+.VFRMode-mobile .VFRCardCenter {
+    transform: translate3d(0, 0, 0) scale(1);
+}
+
+/* Small mobile */
+@media (max-width: 420px) {
+    .VFRMode-mobile .VFRCardMain {
+        min-height: 300px;
+        padding: 18px;
+    }
+
+    .VFRMode-mobile .VFRReviewOuter {
+        min-height: 120px;
+    }
+
+    .VFRMode-mobile .VFRReviewText {
+        font-size: 13.5px;
+    }
+}
+
+/* Reduce motion support */
+@media (prefers-reduced-motion: reduce) {
+    .VFRContentMainGrid,
+    .VFRCardMain,
+    .VFRReviewScaleBox,
+    .VFRStarWrap,
+    .VFRUserInfo {
+        transition-duration: 1ms !important;
+    }
+}
+
+/* Roadshow advantages section  */
+
+.RA_Main {
+    background: #D7D7D733;
+}
+
+.RA_LeftRightMain {
+    padding-bottom: 8%;
+    height: 700px;
+}
+
+.RA_leftMain {
+    align-content: center;
+    width: 20%;
+}
+
+.RA_leftContentMain {
+    background: #FFFFFF;
+    padding: 30px;
+    border-radius: 60px;
+    align-items: center;
+    align-content: center;
+    text-align: center;
+    width: 100%;
+}
+
+.RA_leftContentHeading {
+    color: #000000;
+    font-weight: 400;
+    font-size: 40px;
+    leading-trim: NONE;
+    line-height: 100%;
+}
+
+.RA_leftContentDesc {
+    width: 500px;
+    font-size: 24px;
+    padding: 14px 0px;
+}
+
+.RA_leftContentIcon {
+    border: 2px solid black;
+    border-radius: 50%;
+    font-size: 35px;
+    width: 55px;
+    height: 55px;
+    align-items: center;
+    align-content: center;
+    text-align: center;
+    transition: transform 1.3s ease;
+}
+
+.RS_RA_Item.active .RA_leftContentIcon {
+    transform: rotate(45deg);
+    /* + becomes × visually */
+}
+
+
+.RA_RightMain {}
+
+.RA_RightContent1 {
+    color: #000000;
+    font-weight: 400;
+    font-size: 50px;
+    line-height: 100%;
+}
+
+.RA_RightSecondContentInsideMain {
+    margin: 8% auto;
+}
+
+.RA_RightSecondContent1 {
+    margin: 5px auto;
+}
+
+.RA_RightSecondContent1 {
+    color: #ACACAC;
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 100%;
+}
+
+.RA_RightContent2Input {
+    height: 40px;
+}
+
+.RA_RightContent2InpBtn {
+    color: #FFFFFF;
+    background: linear-gradient(270deg, #E3000F 0%, #7D0008 100%);
+    padding: 8px 30px;
+    font-size: 25px;
+
+}
+
+/*  SMOOTH ANIMATION RULES  */
+.RS_RA_Item {
+    overflow: hidden;
+    border-radius: 60px;
+    margin-bottom: 5%;
+    background: #FFFFFF;
+    cursor: pointer;
+    width: 400px;
+    transition: width 1.4s ease;
+}
+
+.RS_RA_Item.active {
+    width: 500px;
+}
+
+.RA_collapseWrapper {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 1.4s ease, padding 1.4s ease, opacity 1.4s ease;
+    opacity: 0;
+    padding: 0 20px;
+}
+
+.RA_collapseWrapper.open {
+    max-height: 200px;
+    opacity: 1;
+    padding: 0 20px 20px 20px;
+}
+
+
+/* HELP Center  */
+.HC_Main {
+    background: url('/images/assets/HelpCenterFAQImg.png');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    height: 1000px;
+    padding: 3% 0px;
+}
+
+.HC_HeadingContent1,
+.HC_HeadingContent2 {
+    color: #FFFFFF;
+    font-weight: 400;
+    font-size: 70px;
+    leading-trim: NONE;
+    line-height: 100px;
+
+}
+
+.HC_HeadingContent2 {
+    font-weight: 300;
+    font-size: 30px;
+    line-height: 100%;
+}
+
+.HC_FAQMain {
+    color: #FFFFFF;
+    margin: 8% auto;
+}
+
+.HC_FAQ_QnAnsMain {
+    border-bottom: 1px solid white;
+    width: 70%;
+    margin: auto;
+    padding: 20px 0px;
+    align-items: center;
+    align-content: center;
+}
+
+.HC_FAQ_Question {
+    font-weight: 500;
+    font-style: Medium;
+    font-size: 24px;
+    leading-trim: NONE;
+    line-height: 100%;
+    letter-spacing: 0%;
+}
+
+.HC_FAQ_Question_Arrow {
+    font-size: 30px;
+}
+
+
+/* FAQ accordion */
+.HC_FAQ_TopRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+}
+
+.HC_FAQ_Answer_Wrapper {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 1.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.4s ease;
+    opacity: 0;
+}
+
+.HC_FAQ_Answer_Wrapper.open {
+    max-height: 300px;
+    opacity: 1;
+}
+
+.HC_FAQ_Answer {
+    padding-top: 12px;
+    font-size: 16px;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.6;
+}
+
+.HC_FAQ_Question_Arrow {
+    font-size: 30px;
+    transition: transform 1.3s ease;
+    flex-shrink: 0;
+}
+
+.HC_FAQ_Question_Arrow.open {
+    transform: rotate(180deg);
+}
+
+
+
+
+
+
+
+/* RESPONSIVE  */
+
+
+/* Responsive Media Queries */
+/* Extra Large Screens (2560px and above) ✅ Large Screens (4K Screens)  */
+@media (min-width: 2560px) {
+}
+
+/* Large Screens (1400px - 2559px) ✅ Large Desktop Screens 1440*/
+@media (min-width: 1440px) and (max-width: 2559px) {
+}
+
+
+@media (min-width: 1024px) and (max-width: 1280px) {
+ 
+}
+/* Laptops & Small Desktops (992px - 1024px)  ✅ Tablets (Landscape Mode) */
+@media (min-width: 992px) and (max-width: 1023px) {
+}
+/* Tablets (768px - 991px) ✅ Tablets (Portrait Mode) */
+@media (min-width: 768px) and (max-width: 991px) {
+}
+/* Mobile Large Screens (480px - 767px) ✅ Small Tablets & Large Phones */
+@media (min-width: 480px) and (max-width: 767px) {
+}
+/* Mobile Medium Screens (425px - 479px) ✅ Medium Phones (iPhone XR, Galaxy S20) */
+@media (min-width: 425px) and (max-width: 479px) {
+}
+/* Mobile Small Screens (375px - 424px) ✅ Small Phones (iPhone SE, Pixel 4) */
+@media (min-width: 375px) and (max-width: 424px) {
+}
+/* Extra Small Screens (360px - 374px) ✅ Extra Small Phones */
+@media (min-width: 360px) and (max-width: 374px) {
+}
+@media (min-width: 320px) and (max-width: 359px) {
+}
+
+
