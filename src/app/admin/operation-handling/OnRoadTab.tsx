@@ -55,18 +55,16 @@ const getImageUrl = (url) => {
 
 
 
-function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes }) {
+function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes ,gpsData, gpsLoading, onRefreshGps  }) {
   const [open, setOpen] = useState(false);
   const [activeDriverTab, setActiveDriverTab] = useState(0);
   const [toggling, setToggling] = useState(false);
-  const [gpsData, setGpsData] = useState<any[]>([]);
-  const [gpsLoading, setGpsLoading] = useState(false);
+  // const [gpsData, setGpsData] = useState<any[]>([]);
+  // const [gpsLoading, setGpsLoading] = useState(false);
   const [routeTrackId, setRouteTrackId] = useState<string | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
 
   console.log("vehicle", vehicle)
-
-
 
 
   const fetchRouteTrackId = async (vehicleRegNo: string) => {
@@ -103,37 +101,37 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   };
 
 
-  const fetchGpsData = async () => {
-    setGpsLoading(true);
+  // const fetchGpsData = async () => {
+  //   setGpsLoading(true);
 
-    try {
-      const { data } = await axios.get(
-        "http://api.vamosys.com/apiMobile/getVehicleLocations",
-        {
-          params: {
-            apiKey: "76b6bf01d4b3aa5768a5ee7f4707360f",
-            userId: "ADINN12",
-            groupId: "ADINN12",
-          },
-        }
-      );
+  //   try {
+  //     const { data } = await axios.get(
+  //       "http://api.vamosys.com/apiMobile/getVehicleLocations",
+  //       {
+  //         params: {
+  //           apiKey: "76b6bf01d4b3aa5768a5ee7f4707360f",
+  //           userId: "ADINN12",
+  //           groupId: "ADINN12",
+  //         },
+  //       }
+  //     );
 
-      const locations = data?.[0]?.vehicleLocations ?? [];
+  //     const locations = data?.[0]?.vehicleLocations ?? [];
 
-      console.log("Vehicle Locations:", locations);
+  //     console.log("Vehicle Locations:", locations);
 
-      setGpsData(locations);
-    } catch (error) {
-      console.error("GPS API Error:", error);
-      setGpsData([]);
-    } finally {
-      setGpsLoading(false);
-    }
-  };
+  //     setGpsData(locations);
+  //   } catch (error) {
+  //     console.error("GPS API Error:", error);
+  //     setGpsData([]);
+  //   } finally {
+  //     setGpsLoading(false);
+  //   }
+  // };
 
-  useEffect(() => {
-    fetchGpsData();
-  }, []);
+  // useEffect(() => {
+  //   fetchGpsData();
+  // }, []);
 
 
 
@@ -147,10 +145,21 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
   console.log("vehicle", vehicle)
   // const vehicles = order.bookingItems || [];
-  const vehicles = (order.bookingItems || []).filter((_, idx) => {
-  const entries = (order.onRoadExecutionArray || []).filter(e => e.vehicleIndex === idx);
-  return entries.some(e => e.onRoadStatus === 1);
-});
+
+
+  // const vehicles = (order.bookingItems || []).filter((_, idx) => {
+  //   const entries = (order.onRoadExecutionArray || []).filter(e => e.vehicleIndex === idx);
+  //   return entries.some(e => e.onRoadStatus === 1);
+  // });
+
+  // vehicles array-ஐ இப்படி மாத்துங்க:
+  const vehicles = (order.bookingItems || [])
+    .map((item, originalIdx) => ({ item, originalIdx }))  // original index save
+    .filter(({ item, originalIdx }) => {
+      const entries = (order.onRoadExecutionArray || [])
+        .filter(e => e.vehicleIndex === originalIdx);
+      return entries.some(e => e.onRoadStatus === 1);
+    });
   const allEntries = order.onRoadExecutionArray || [];
   const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
@@ -205,7 +214,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
       : "border-gray-200 dark:border-gray-700"
       } bg-white dark:bg-gray-900`}>
 
-   
+
       <div
         className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all"
         onClick={() => setOpen(!open)}
@@ -306,12 +315,12 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{state}</p>
                 </div>
 
-              
+
                 <div className="flex items-center">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      fetchGpsData();
+                      onRefreshGps();
                     }}
                     disabled={gpsLoading}
                     className="flex items-center text-[12px] gap-2 px-3 py-1.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all disabled:opacity-50"
@@ -330,13 +339,13 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   </button>
                 </div>
 
-              </div> 
-            </div>   
-          </div>   
+              </div>
+            </div>
+          </div>
 
           {/* ── Stats Row ── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
-           
+
 
             <StatCard
               icon={Truck}
@@ -387,7 +396,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
             />
           </div>
 
-        
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
 
@@ -415,7 +424,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     vehicle={vehicle}
                     gpsData={gpsData}
                     onTrackIdFetched={(regNo) => fetchRouteTrackId(regNo)}
-
+                    correctVehicleIndex={vehicleIndex}
                   />
                 ))}
                 {vehicleEntries.length === 0 && (
@@ -426,7 +435,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               </div>
             </div>
 
-         
+
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
               {/* <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Today's route progress</h3>
@@ -437,7 +446,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                   Today's route progress
                 </h3>
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   {routeTrackId && (
                     <button
                       onClick={() => {
@@ -455,24 +464,21 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                         : <RefreshCw size={13} className="text-gray-400" />}
                     </button>
                   )}
-                </div>
+                </div> */}
               </div>
 
               Flow Summary:
 
-
-
-            
               <div className="border-b border-gray-100 dark:border-gray-800 relative overflow-hidden"
                 style={{ height: "280px" }}>
                 {routeLoading ? (
-                
+
                   <div className="w-full h-full flex flex-col items-center justify-center gap-2">
                     <Loader2 size={24} className="animate-spin text-blue-400" />
                     <p className="text-xs text-gray-400">Loading route map...</p>
                   </div>
                 ) : routeTrackId ? (
-                 
+
                   <iframe
                     key={routeTrackId}
                     src={`https://gpsvts.vamosys.com/gps/public/track?vehicleId=${routeTrackId}&maps=track&userID=ADINN12`}
@@ -494,10 +500,10 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                       </svg>
                     </div>
                     <Navigation size={28} className="text-gray-300 relative z-10" />
-                  
+
                   </div>
-                )} 
-                  </div>
+                )}
+              </div>
               <div className="divide-y divide-gray-50 dark:divide-gray-800">
                 {[
                   { label: "Anna Nagar", time: "09:00 AM – 10:30 AM", status: "completed" },
@@ -557,7 +563,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
             </div> */}
           </div>
 
-       
+
           {/* ── Bottom Row ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
@@ -670,7 +676,7 @@ function StatCard({ icon: Icon, iconBg, iconColor, label, value, sub, subColor }
 
 
 
-function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTrackIdFetched }) {
+function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTrackIdFetched, correctVehicleIndex }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [commentPhoto, setCommentPhoto] = useState(null);
@@ -678,6 +684,8 @@ function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTr
   const [callModalOpen, setCallModalOpen] = useState(false);
 
   console.log("entry", entry)
+
+  console.log("vehicle", vehicle)
 
   const isOnRoad = entry.onRoadStatus === 1;
 
@@ -726,8 +734,9 @@ function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTr
     setSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append("vehicleIndex", entry.vehicleIndex);
+      formData.append("vehicleIndex", correctVehicleIndex);
       formData.append("issueDescription", commentText.trim());
+      formData.append("vehicleRegistrationNumber", entry.vehicleRegistrationNumber);
       if (commentPhoto) formData.append("issuePhoto", commentPhoto);
 
       await axios.post(
@@ -756,21 +765,21 @@ function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTr
       toast.error("Vehicle registration number not found");
       return;
     }
-   
+
     onTrackIdFetched(entry.vehicleRegistrationNumber);
   };
 
 
   return (
     <>
-     
+
       <div
         className={`p-4 border-b border-gray-100 dark:border-gray-800 last:border-0 ${!isOnRoad ? "bg-red-50/30 dark:bg-red-900/5" : ""
           }`}
       >
         <div className="flex gap-4 items-start">
 
-         
+
           <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
             <div className="w-20 h-14 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               {entry.vehicleImage ? (
@@ -788,10 +797,10 @@ function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTr
             </span>
           </div>
 
-        
+
           <div className="flex-1 min-w-0 space-y-2">
 
-          
+
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                 Vehicle {String(index + 1).padStart(2, "0")}
@@ -808,7 +817,7 @@ function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTr
               )}
             </div>
 
-          
+
             <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
               <MapPin size={11} className="flex-shrink-0" />
               <span className="font-medium text-gray-700 dark:text-gray-300">
@@ -821,7 +830,7 @@ function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTr
               )}
             </div>
 
-           
+
             <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
               <span className="flex items-center gap-1">
                 <User size={11} />
@@ -834,14 +843,14 @@ function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTr
                 <Users size={11} />
                 <span>
                   {
-                    (entry.promoterCost > 0
+                    (vehicle.promoterCost === 0
                       ? "No Promoter"
                       : "Promoter Available")}
                 </span>
               </span>
             </div>
 
-           
+
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-400 dark:text-gray-500">Route progress</span>
@@ -894,7 +903,7 @@ function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTr
               )}
             </div>
 
-          
+
             <div className="flex flex-col gap-1.5">
               <button
                 onClick={handleViewRoute}
@@ -917,7 +926,7 @@ function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTr
                 Call Driver
               </button>
 
-            
+
               <button
                 onClick={() => setModalOpen(true)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${openCount > 0
@@ -1012,7 +1021,7 @@ function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTr
                   disabled={submitting || !commentText.trim()}
                   className="px-4 py-1.5 rounded-lg bg-gray-700 dark:bg-gray-600 text-white text-xs font-semibold hover:bg-gray-800 disabled:opacity-40 transition-all"
                 >
-                  {submitting ? "Submitting..." : "Add Comment"}
+                  {submitting ? "Submitting..." : "Add Issues"}
                 </button>
               </div>
             </div>
@@ -1184,11 +1193,48 @@ function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTr
 
 export default function OnRoadTab({ order, onRefresh }) {
 
- const vehicles = (order.bookingItems || []).filter((_, idx) => { 
-    const entries = (order.onRoadExecutionArray || []).filter(e => e.vehicleIndex === idx);
-    return entries.some(e => e.onRoadStatus === 1);
-  });
-  // const vehicles = order.bookingItems || [];
+  const [gpsData, setGpsData] = useState<any[]>([]);
+  const [gpsLoading, setGpsLoading] = useState(false);
+
+
+
+  const fetchGpsData = async () => {
+    setGpsLoading(true);
+    try {
+      const { data } = await axios.get(
+        "http://api.vamosys.com/apiMobile/getVehicleLocations",
+        {
+          params: {
+            apiKey: "76b6bf01d4b3aa5768a5ee7f4707360f",
+            userId: "ADINN12",
+            groupId: "ADINN12",
+          },
+        }
+      );
+      const locations = data?.[0]?.vehicleLocations ?? [];
+      setGpsData(locations);
+    } catch (error) {
+      console.error("GPS API Error:", error);
+      setGpsData([]);
+    } finally {
+      setGpsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGpsData();
+  }, []);
+
+
+  const vehicles = (order.bookingItems || [])
+    .map((item, originalIdx) => ({ item, originalIdx }))
+    .filter(({ item, originalIdx }) => {
+      const entries = (order.onRoadExecutionArray || [])
+        .filter(e => e.vehicleIndex === originalIdx);
+      return entries.some(e => e.onRoadStatus === 1);
+    });
+
+
   const allEntries = order.onRoadExecutionArray || [];
   const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
@@ -1241,14 +1287,17 @@ export default function OnRoadTab({ order, onRefresh }) {
           )}
         </div>
         <div className="p-4 space-y-3">
-          {vehicles.map((vehicle, idx) => (
+          {vehicles.map(({ item: vehicle, originalIdx }) => (
             <VehicleExecutionCard
-              key={idx}
+              key={originalIdx}
               vehicle={vehicle}
-              vehicleIndex={idx}
+              vehicleIndex={originalIdx} 
               order={order}
               onRefresh={onRefresh}
               vehicleTypes={vehicleTypes}
+              gpsData={gpsData}
+              gpsLoading={gpsLoading}
+              onRefreshGps={fetchGpsData}
             />
           ))}
         </div>
