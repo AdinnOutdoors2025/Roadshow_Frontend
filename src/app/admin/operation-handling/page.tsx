@@ -560,9 +560,7 @@ export default function PipelineBoard() {
         </div>
       )}
 
-   
-
-
+  
     </div>
   );
 }

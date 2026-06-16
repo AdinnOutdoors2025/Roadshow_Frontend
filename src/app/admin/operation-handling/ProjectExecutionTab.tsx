@@ -261,6 +261,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh ,vehicle
   const [toggling, setToggling] = useState(false);
 
 
+ 
+
   const getVehicleTypeName = (vehicleTypeId) => {
     if (!vehicleTypeId || !vehicleTypes) return "";
     const v = vehicleTypes.find((vt) => vt._id === vehicleTypeId);
@@ -522,6 +524,7 @@ export default function ProjectExecutionTab({ order, onRefresh }) {
 
      
       {vehicles.map((vehicle, idx) => (
+        
         <VehicleExecutionCard
           key={idx}
           vehicle={vehicle}
@@ -530,6 +533,8 @@ export default function ProjectExecutionTab({ order, onRefresh }) {
           onRefresh={onRefresh}
           vehicleTypes={vehicleTypes}
         />
+
+        
       ))}
     </div>
   );
