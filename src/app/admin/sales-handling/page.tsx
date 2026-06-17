@@ -437,101 +437,116 @@ export default function SalesPipelineBoard() {
     handleStageMove(order, toStage);
   };
 
-  const handleStageMove = (order: SalesOrder, toStage: string) => {
-    const fromStage = order.salesPipelineStatus;
 
-    if (!fromStage) {
-      toast.error("Invalid order stage. Please refresh.");
-      return;
-    }
+const handleStageMove = (order: SalesOrder, toStage: string) => {
+  const fromStage = order.salesPipelineStatus;
 
+  if (!fromStage) {
+    toast.error("Invalid order stage. Please refresh.");
+    return;
+  }
 
-    if (fromStage === "closedLost") {
-      toast.error("This order is closed lost and cannot be moved.");
-      return;
-    }
-
-      const STAGE_ORDER_LIST = [
-      "enquiry",
-      "needAnalysis",
-      "proposalPriceQuote",
-      "negotiationReview",
-      "closedWon",
-      "projectCodeCreation",
-      "closedLost",
-    ];
-    const LOCKED_BACK_STAGES = ["enquiry", "needAnalysis"];
-    const fromIndex = STAGE_ORDER_LIST.indexOf(fromStage);
-    const toIndex = STAGE_ORDER_LIST.indexOf(toStage);
-
-    if (LOCKED_BACK_STAGES.includes(toStage) && toIndex < fromIndex) {
-      const stageLabel = toStage === "enquiry" ? "Enquiry" : "Need Analysis";
-     toast.error(`Cannot move back to the "${stageLabel}" stage!`);
-      return;
-    }
+ 
+  if (fromStage === "closedLost") {
+    toast.error("This order is closed lost and cannot be moved.");
+    return;
+  }
 
 
-    if (fromStage === "closedWon" && toStage !== "projectCodeCreation") {
-      toast.error("Closed Won order can only move to Project Code Creation.");
-      return;
-    }
-
-
+  if (fromStage === "projectCodeCreation") {
     if (toStage === "closedLost") {
+      const mailLogsCount = (order.projectMailLogs || []).length;
+      if (mailLogsCount > 0) {
+        toast.error(
+          "Mail already sent for this order. Cannot move to Closed Lost!"
+        );
+        return;
+      }
+
       setLostReason("");
       setLostFile(null);
       setLostError("");
       setClosedLostModal(order);
       return;
     }
+    
+    toast.error("Cannot move back from Project Code Creation stage!");
+    return;
+  }
 
+  const STAGE_ORDER_LIST = [
+    "enquiry",
+    "needAnalysis",
+    "proposalPriceQuote",
+    "negotiationReview",
+    "closedWon",
+    "projectCodeCreation",
+    "closedLost",
+  ];
+  const LOCKED_BACK_STAGES = ["enquiry", "needAnalysis"];
+  const fromIndex = STAGE_ORDER_LIST.indexOf(fromStage);
+  const toIndex = STAGE_ORDER_LIST.indexOf(toStage);
 
-    if (toStage === "needAnalysis" && !order.salesHandlerName) {
-      if (currentUserIsAdmin === 0) {
-        commitMove(order, "needAnalysis");
-        return;
-      }
+  if (LOCKED_BACK_STAGES.includes(toStage) && toIndex < fromIndex) {
+    const stageLabel = toStage === "enquiry" ? "Enquiry" : "Need Analysis";
+    toast.error(`Cannot move back to the "${stageLabel}" stage!`);
+    return;
+  }
 
-      setHandlerName("");
-      setHandlerError("");
-      setHandlerModal(order);
+  if (fromStage === "closedWon" && toStage !== "projectCodeCreation") {
+    toast.error("Closed Won order can only move to Project Code Creation.");
+    return;
+  }
+
+  if (toStage === "closedLost") {
+    setLostReason("");
+    setLostFile(null);
+    setLostError("");
+    setClosedLostModal(order);
+    return;
+  }
+
+  if (toStage === "needAnalysis" && !order.salesHandlerName) {
+    if (currentUserIsAdmin === 0) {
+      commitMove(order, "needAnalysis");
       return;
     }
+    setHandlerName("");
+    setHandlerError("");
+    setHandlerModal(order);
+    return;
+  }
 
+  if (!order.salesHandlerName && fromStage === "enquiry") {
+    toast.error("Please move to Need Analysis first before proceeding!");
+    return;
+  }
 
+  if (toStage === "closedWon") {
+    setPoFile(null);
+    setPoNotes("");
+    setPoError("");
+    setClosedWonModal(order);
+    return;
+  }
 
-    if (!order.salesHandlerName && fromStage === "enquiry") {
-      toast.error("Please move to Need Analysis first before proceeding!");
-      return;
-    }
+  if (
+    toStage === "projectCodeCreation" &&
+    ["needAnalysis", "proposalPriceQuote", "negotiationReview"].includes(fromStage)
+  ) {
+    setPendingProjectCodeOrder(order);
+    setClosedWonWarningModal(order);
+    return;
+  }
 
-
-    if (toStage === "closedWon") {
-      setPoFile(null);
-      setPoNotes("");
-      setPoError("");
-      setClosedWonModal(order);
-      return;
-    }
-
-
-    if (
-      toStage === "projectCodeCreation" &&
-      ["needAnalysis", "proposalPriceQuote", "negotiationReview"].includes(fromStage)
-    ) {
-      setPendingProjectCodeOrder(order);
-      setClosedWonWarningModal(order);
-      return;
-    }
-
-
-    if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
-      commitMove(order, toStage);
-      return;
-    }
-
+  if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
     commitMove(order, toStage);
-  };
+    return;
+  }
+
+  commitMove(order, toStage);
+};
+
 
   const submitHandlerModal = async () => {
     if (!handlerModal) return;

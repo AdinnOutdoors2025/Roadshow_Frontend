@@ -1,3 +1,5 @@
+
+
 /* eslint-disable */
 // @ts-nocheck
 "use client";
@@ -175,7 +177,7 @@ function DriverStatusSummary({ entries, bookingItems }: { entries: any[]; bookin
   return (
     <div>
       <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20 border border-teal-100 dark:border-teal-800/50 mb-4">
-        <Truck size={16} className="text-teal-500" />
+        <Truck size={18} className="text-teal-500" />
         <span className="text-md font-bold text-teal-700 dark:text-teal-300">Driver Status Summary</span>
         <span className="ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-teal-100 dark:bg-teal-900/40 text-teal-700">
           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
@@ -202,9 +204,13 @@ function DriverStatusSummary({ entries, bookingItems }: { entries: any[]; bookin
               <div className="flex-1 pb-4">
                 <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-md font-semibold text-gray-800 dark:text-gray-200">
-                      {entry.driverName}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <User size={16} className="text-blue-500" />
+                      <p className="text-md font-semibold text-gray-800 dark:text-gray-200">
+                        {entry.driverName}
+                      </p>
+                      <span className="text-sm text-gray-400 font-normal">(Driver)</span>
+                    </div>
                     <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-sm font-semibold ${isActive
                       ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400"
                       : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
@@ -230,23 +236,23 @@ function DriverStatusSummary({ entries, bookingItems }: { entries: any[]; bookin
                     <Phone size={15} className="text-gray-400" />
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{entry.driverPhone}</span>
                     <span>·</span>
-                    <Truck size={15} className="text-gray-400" />
-                    <span className="text-sm  font-mono font-semibold text-teal-600 dark:text-teal-400">
+                    <Truck size={16} className="text-gray-400" />
+                    <span className="text-sm font-mono font-semibold text-teal-600 dark:text-teal-400">
                       {entry.vehicleRegistrationNumber}
                     </span>
                   </div>
 
-                  {(entry.uploadedBy || entry.uploadedAt) && (
-                    <div className="flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
-                      {entry.uploadedBy && (
-                        <>
-                          <span>Uploaded by {entry.uploadedBy}</span>
-                          <span>·</span>
-                        </>
-                      )}
-                      {entry.uploadedAt && <span>{formatUploadTime(entry.uploadedAt)}</span>}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                    <Clock size={13} className="text-gray-400" />
+                    <span>Created at: {formatUploadTime(entry.uploadedAt)}</span>
+                    {entry.uploadedBy && (
+                      <>
+                        <span>·</span>
+                        <User size={14} className="text-gray-400" />
+                        <span>Created By {entry.uploadedBy}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -280,9 +286,6 @@ export default function ProjectExecutionHistoryTab({ order }: { order: Order }) 
       {driverEntries.length > 0 && (
         <DriverStatusSummary entries={driverEntries} bookingItems={order.bookingItems} />
       )}
-
-
-
 
       {onRoadHistory.length > 0 && (
         <div>
@@ -350,10 +353,12 @@ export default function ProjectExecutionHistoryTab({ order }: { order: Order }) 
                         <span className="font-mono text-sky-700 dark:text-sky-400">{h.vehicleRegistrationNumber}</span>
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
-                        <span>By {h.changedBy || "—"}</span>
-                        <span>·</span>
+                      <div className="flex items-center gap-1.5 text-xs text-gray-400 flex-wrap">
+                        <Clock size={12} className="text-gray-400" />
                         <span>{fmtDatetime(h.changedAt)}</span>
+                        <span>·</span>
+                        <User size={12} className="text-gray-400" />
+                        <span>By {h.changedBy || "—"}</span>
                       </div>
                     </div>
                   </div>

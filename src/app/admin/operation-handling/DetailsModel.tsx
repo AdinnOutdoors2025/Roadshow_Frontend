@@ -238,10 +238,10 @@ export default function DetailDrawer({
 
                         {order.handlerName && (
                             <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-[10px] font-bold text-white">
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-[11px] font-bold text-white">
                                     {order.handlerName.charAt(0).toUpperCase()}
                                 </div>
-                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{order.handlerName}</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{order.handlerName}</span>
                             </div>
                         )}
 
@@ -351,7 +351,7 @@ export default function DetailDrawer({
                                                                 {code.estimationCode}
                                                             </span>
                                                         </div>
-                                                        <p className="text-[13px] text-gray-500 mt-0.5">
+                                                        <p className="text-sm text-gray-500 mt-0.5">
                                                             {code.savedBy} · {fmtDatetime(code.savedAt)}
                                                         </p>
                                                     </div>

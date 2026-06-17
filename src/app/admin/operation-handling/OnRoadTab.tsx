@@ -19,6 +19,7 @@ import {
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 import { useVehicle } from "../../../context/vehicletypecontext";
+import LiveVehicleRow from "./LiveVehicleRow";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmtDate = (s) => {
@@ -55,17 +56,15 @@ const getImageUrl = (url) => {
 
 
 
-function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes ,gpsData, gpsLoading, onRefreshGps  }) {
+function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, gpsData, gpsLoading, onRefreshGps }) {
   const [open, setOpen] = useState(false);
   const [activeDriverTab, setActiveDriverTab] = useState(0);
   const [toggling, setToggling] = useState(false);
-  // const [gpsData, setGpsData] = useState<any[]>([]);
-  // const [gpsLoading, setGpsLoading] = useState(false);
+  const issueRef = useRef(null);
+  const [activeIssueEntryId, setActiveIssueEntryId] = useState<string | null>(null);
   const [routeTrackId, setRouteTrackId] = useState<string | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
-
-  console.log("vehicle", vehicle)
-
+  const [kmPage, setKmPage] = useState(0);
 
   const fetchRouteTrackId = async (vehicleRegNo: string) => {
     setRouteLoading(true);
@@ -81,7 +80,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
         },
       });
 
-      console.log("Route API response:", res.data);
+
 
       const trackId =
         res.data
@@ -101,40 +100,6 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   };
 
 
-  // const fetchGpsData = async () => {
-  //   setGpsLoading(true);
-
-  //   try {
-  //     const { data } = await axios.get(
-  //       "http://api.vamosys.com/apiMobile/getVehicleLocations",
-  //       {
-  //         params: {
-  //           apiKey: "76b6bf01d4b3aa5768a5ee7f4707360f",
-  //           userId: "ADINN12",
-  //           groupId: "ADINN12",
-  //         },
-  //       }
-  //     );
-
-  //     const locations = data?.[0]?.vehicleLocations ?? [];
-
-  //     console.log("Vehicle Locations:", locations);
-
-  //     setGpsData(locations);
-  //   } catch (error) {
-  //     console.error("GPS API Error:", error);
-  //     setGpsData([]);
-  //   } finally {
-  //     setGpsLoading(false);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   fetchGpsData();
-  // }, []);
-
-
-
   const vehicleIssues = (order.onRoadIssues || []).filter(
     (iss) => iss.vehicleIndex === vehicleIndex
   );
@@ -142,19 +107,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const resolvedIssues = vehicleIssues.filter((iss) => iss.status === "resolved");
 
 
-
-  console.log("vehicle", vehicle)
-  // const vehicles = order.bookingItems || [];
-
-
-  // const vehicles = (order.bookingItems || []).filter((_, idx) => {
-  //   const entries = (order.onRoadExecutionArray || []).filter(e => e.vehicleIndex === idx);
-  //   return entries.some(e => e.onRoadStatus === 1);
-  // });
-
-  // vehicles array-ஐ இப்படி மாத்துங்க:
   const vehicles = (order.bookingItems || [])
-    .map((item, originalIdx) => ({ item, originalIdx }))  // original index save
+    .map((item, originalIdx) => ({ item, originalIdx }))
     .filter(({ item, originalIdx }) => {
       const entries = (order.onRoadExecutionArray || [])
         .filter(e => e.vehicleIndex === originalIdx);
@@ -228,39 +182,39 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+            <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">
               {getVehicleTypeName(vehicle.vehicleType)}
             </p>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">
+            <span className="text-[15px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">
               {vehicle.campaignType || "—"}
             </span>
             {isVehicleOnRoad && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
+              <span className="text-[14px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
                 On Road
               </span>
             )}
           </div>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            <span className="flex items-center gap-1 text-xs text-gray-400">
-              <Clock size={12} />
+            <span className="flex items-center gap-1 text-sm text-gray-400">
+              <Clock size={14} />
               {fmtDate(vehicle.fromDate)} → {fmtDate(vehicle.toDate)}
             </span>
-            <span className="text-xs text-gray-300">·</span>
-            <span className="text-xs text-gray-400">{vehicle.totalDays}d</span>
-            <span className="text-xs text-gray-300">·</span>
-            <span className="flex items-center gap-1 text-xs text-gray-400">
-              <Truck size={12} />
+            <span className="text-sm text-gray-300">·</span>
+            <span className="text-sm text-gray-400">{vehicle.totalDays}d</span>
+            <span className="text-sm text-gray-300">·</span>
+            <span className="flex items-center gap-1 text-sm text-gray-400">
+              <Truck size={14} />
               {quantity} {quantity === 1 ? "vehicle" : "vehicles"}
             </span>
           </div>
           {vehicle.campaignName && (
-            <p className="text-xs text-gray-400 mt-0.5">{vehicle.campaignName}</p>
+            <p className="text-md text-gray-400 mt-0.5">{vehicle.campaignName}</p>
           )}
         </div>
 
         {/* Right */}
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${driverBadgeClass}`}>
+          <span className={`text-sm font-bold px-2 py-0.5 rounded-full border ${driverBadgeClass}`}>
             {savedCount}/{quantity} drivers
           </span>
           {open
@@ -283,8 +237,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
               {/* Name & client */}
               <div className="flex-shrink-0">
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{campaignName}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{clientName}</p>
+                <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">{campaignName}</p>
+                <p className="text-sm text-gray-400 mt-0.5">{clientName}</p>
               </div>
 
               {/* Divider */}
@@ -293,26 +247,26 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               {/* Meta grid */}
               <div className="flex gap-6 flex-wrap flex-1 min-w-0">
                 <div>
-                  <p className="text-xs text-gray-400">Campaign type</p>
-                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{campaignType}</p>
+                  <p className="text-sm text-gray-400">Campaign type</p>
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{campaignType}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Start date</p>
-                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{fmtDate(startDate)}</p>
-                  <p className="text-xs text-gray-400">End · {fmtDate(endDate)}</p>
+                  <p className="text-sm text-gray-400">Start date</p>
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{fmtDate(startDate)}</p>
+                  <p className="text-sm text-gray-400">End · {fmtDate(endDate)}</p>
                 </div>
                 <div>
 
-                  <p className="text-xs text-gray-400">City</p>
-                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{city}</p>
+                  <p className="text-sm text-gray-400">City</p>
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{city}</p>
 
                   {/* <p className="text-xs text-gray-400">Vehicles · {totalVehicles}</p> */}
                 </div>
 
 
                 <div>
-                  <p className="text-xs text-gray-400">State</p>
-                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{state}</p>
+                  <p className="text-sm text-gray-400">State</p>
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{state}</p>
                 </div>
 
 
@@ -323,7 +277,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                       onRefreshGps();
                     }}
                     disabled={gpsLoading}
-                    className="flex items-center text-[12px] gap-2 px-3 py-1.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all disabled:opacity-50"
+                    className="flex items-center text-[13px] gap-2 px-3 py-1.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all disabled:opacity-50"
                   >
                     {gpsLoading ? (
                       <>
@@ -375,35 +329,101 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               iconColor="text-red-500"
               label="Open issues"
               value={<span className="text-red-500">{openIssues.length}</span>}
-              sub={<span className="text-blue-500 cursor-pointer">View issues</span>}
+              // sub={<span className="text-blue-500 cursor-pointer">View issues</span>}
+              sub={
+                <span
+                  className="text-blue-500 cursor-pointer"
+                  onClick={() => issueRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                >
+                  View issues
+                </span>
+              }
             />
 
 
-            <StatCard
+            {/* <StatCard
               icon={Navigation}
               label="KM covered"
               value={`${totalKm.toFixed(1)} km`}
               sub={
-                <>
+                <div className="flex flex-col gap-0.5 max-h-[52px] overflow-y-auto w-full">
                   {vehicleEntries.map((e, i) => {
                     const gps = gpsData.find(g => g.vehicleId === e.vehicleRegistrationNumber);
                     return (
-                      <span key={i}>V{i + 1}: {(gps?.distanceCovered || 0).toFixed(1)}km</span>
+                      <span key={i} className="text-xs text-gray-400">
+                        V{i + 1}: {(gps?.distanceCovered || 0).toFixed(1)}km
+                      </span>
                     );
                   })}
-                </>
+                </div>
               }
-            />
+            /> */}
+
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3.5 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-50 dark:bg-gray-800">
+                  <Navigation size={15} className="text-gray-500" />
+                </div>
+                <span className="text-md text-gray-400">KM covered</span>
+              </div>
+
+              <div className="text-xl font-semibold text-gray-800 dark:text-gray-100 leading-tight">
+                {totalKm.toFixed(1)} km
+              </div>
+
+              {/* Carousel Row */}
+              <div className="flex items-center gap-2">
+                {/* Left Arrow */}
+                <button
+                  onClick={() => setKmPage(p => Math.max(0, p - 1))}
+                  disabled={kmPage === 0}
+                  className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 hover:bg-gray-200 disabled:opacity-30 transition-all flex-shrink-0"
+                >
+                  <ChevronDown size={12} className="rotate-90" />
+                </button>
+
+                {/* Vehicle KM display */}
+                <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+                  {vehicleEntries.slice(kmPage * 2, kmPage * 2 + 2).map((e, i) => {
+                    const gps = gpsData.find(g => g.vehicleId === e.vehicleRegistrationNumber);
+                    const actualIdx = kmPage * 2 + i;
+                    return (
+                      <span key={actualIdx} className="text-xs text-gray-400 truncate">
+                        V{actualIdx + 1}: {(gps?.distanceCovered || 0).toFixed(1)}km
+                      </span>
+                    );
+                  })}
+                </div>
+
+                {/* Right Arrow */}
+                <button
+                  onClick={() => setKmPage(p => Math.min(Math.ceil(vehicleEntries.length / 2) - 1, p + 1))}
+                  disabled={kmPage >= Math.ceil(vehicleEntries.length / 2) - 1}
+                  className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 hover:bg-gray-200 disabled:opacity-30 transition-all flex-shrink-0"
+                >
+                  <ChevronDown size={12} className="-rotate-90" />
+                </button>
+              </div>
+
+              {/* Dot indicators */}
+              {vehicleEntries.length > 2 && (
+                <div className="flex items-center justify-center gap-1">
+                  {Array.from({ length: Math.ceil(vehicleEntries.length / 2) }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`rounded-full transition-all ${i === kmPage ? "w-3 h-1.5 bg-blue-400" : "w-1.5 h-1.5 bg-gray-200 dark:bg-gray-700"}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-
-
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
                   Live vehicle status ({vehicleEntries.length}/{quantity} drivers)
                 </h3>
                 {vehicleEntries.filter(e => e.onRoadStatus === 1).length > 0 && (
@@ -413,7 +433,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 )}
               </div>
 
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[520px] overflow-y-auto">
                 {vehicleEntries.map((entry, idx) => (
                   <LiveVehicleRow
                     key={entry._id || idx}
@@ -425,6 +445,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     gpsData={gpsData}
                     onTrackIdFetched={(regNo) => fetchRouteTrackId(regNo)}
                     correctVehicleIndex={vehicleIndex}
+                    forceOpen={activeIssueEntryId === entry.vehicleRegistrationNumber}
+                    onForceOpenHandled={() => setActiveIssueEntryId(null)}
                   />
                 ))}
                 {vehicleEntries.length === 0 && (
@@ -437,34 +459,12 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
 
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-              {/* <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Today's route progress</h3>
-                <button className="text-xs text-blue-500 hover:underline">View route map</button>
-              </div> */}
 
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
                   Today's route progress
                 </h3>
-                {/* <div className="flex items-center gap-2">
-                  {routeTrackId && (
-                    <button
-                      onClick={() => {
-                        const firstEntry = vehicleEntries[0];
-                        if (firstEntry?.vehicleRegistrationNumber) {
-                          fetchRouteTrackId(firstEntry.vehicleRegistrationNumber);
-                        }
-                      }}
-                      disabled={routeLoading}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
-                      title="Refresh map"
-                    >
-                      {routeLoading
-                        ? <Loader2 size={13} className="animate-spin text-gray-400" />
-                        : <RefreshCw size={13} className="text-gray-400" />}
-                    </button>
-                  )}
-                </div> */}
+
               </div>
 
               Flow Summary:
@@ -566,18 +566,18 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
           {/* ── Bottom Row ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+            <div ref={issueRef} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
                   Issue / escalation
                 </h3>
                 <div className="flex items-center gap-2">
                   {openIssues.length > 0 && (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-200">
+                    <span className="text-sm font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-200">
                       {openIssues.length} open
                     </span>
                   )}
-                  <span className="text-xs text-gray-400">{vehicleIssues.length} total</span>
+                  <span className="text-sm text-gray-400">{vehicleIssues.length} total</span>
                 </div>
               </div>
 
@@ -585,60 +585,14 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 {vehicleIssues.length === 0 && (
                   <p className="text-xs text-gray-400 text-center py-4">No issues reported</p>
                 )}
+
+
                 {[...vehicleIssues].reverse().map((iss) => (
-                  <div
+                  <IssueHistoryCard
                     key={iss._id}
-                    className={`rounded-xl border p-3 ${iss.status === "open"
-                      ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10"
-                      : "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10"
-                      }`}
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <p className={`text-xs font-semibold ${iss.status === "open" ? "text-red-700 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}>
-                        {iss.driverName} — {iss.vehicleRegNo}
-                      </p>
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${iss.status === "open"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-emerald-100 text-emerald-700"
-                        }`}>
-                        {iss.status === "open" ? "Open" : "Resolved"}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                      <span className="font-medium">Issue:</span> {iss.issueDescription}
-                    </p>
-
-                    {/* Issue photo */}
-                    {iss.issuePhoto && (
-                      <a href={getImageUrl(iss.issuePhoto)} target="_blank" rel="noreferrer">
-                        <img
-                          src={getImageUrl(iss.issuePhoto)} className="w-14 h-12 rounded-lg object-cover border mb-1 hover:opacity-80" alt="issue" />
-                      </a>
-                    )}
-
-                    <p className="text-xs text-gray-400">
-                      Reported by {iss.reportedBy} · {fmtDatetime(iss.reportedAt)}
-                    </p>
-
-                    {/* Resolved section */}
-                    {iss.status === "resolved" && (
-                      <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800">
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
-                          <span className="font-medium">Resolution:</span> {iss.resolveDescription}
-                        </p>
-                        {iss.resolvePhoto && (
-                          <a href={getImageUrl(iss.resolvePhoto)} target="_blank" rel="noreferrer" className="ml-8 inline-block">
-                            <img
-                              src={getImageUrl(iss.resolvePhoto)} className="w-14 h-12 rounded-lg object-cover border border-emerald-200 mt-1 hover:opacity-80" alt="resolve" />
-                          </a>
-                        )}
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          Resolved by {iss.resolvedBy} · {fmtDatetime(iss.resolvedAt)}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                    iss={iss}
+                    onOpenModal={() => setActiveIssueEntryId(iss.vehicleRegNo)}
+                  />
                 ))}
               </div>
             </div>
@@ -655,6 +609,103 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   );
 }
 
+
+function IssueHistoryCard({ iss, onOpenModal }) {
+  const [showResolved, setShowResolved] = useState(false);
+
+  return (
+    <div
+      className={`rounded-xl border p-3 ${iss.status === "open"
+        ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10"
+        : "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10"
+        }`}
+
+
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <p
+          className={`text-sm font-semibold  ${iss.status === "open"
+            ? "text-red-700 dark:text-red-400"
+            : "text-emerald-700 dark:text-emerald-400"
+            }`}
+
+        >
+          {iss.driverName} — {iss.vehicleRegNo}
+        </p>
+        <span
+          className={`text-xs font-semibold cursor-pointer px-2 py-0.5 rounded-full flex-shrink-0 ${iss.status === "open"
+            ? "bg-amber-100 text-amber-700"
+            : "bg-emerald-100 text-emerald-700"
+            }`}
+
+          onClick={onOpenModal}
+        >
+          {iss.status === "open" ? "Open" : "Resolved"}
+        </span>
+      </div>
+
+      {/* Issue description */}
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+        <span className="font-medium">Issue:</span> {iss.issueDescription}
+      </p>
+
+      {/* Issue photo */}
+      {iss.issuePhoto && (
+        <a href={getImageUrl(iss.issuePhoto)} target="_blank" rel="noreferrer">
+          <img
+            src={getImageUrl(iss.issuePhoto)}
+            className="w-14 h-12 rounded-lg object-cover border mb-1 hover:opacity-80"
+            alt="issue"
+          />
+        </a>
+      )}
+
+      <p className="text-sm text-gray-400">
+        Reported by {iss.reportedBy} · {fmtDatetime(iss.reportedAt)}
+      </p>
+
+      {/* Resolved section — toggle button */}
+      {iss.status === "resolved" && (
+        <div className="mt-2">
+          <button
+            onClick={() => setShowResolved(!showResolved)}
+            className="flex items-center gap-1 text-sm font-medium text-emerald-600 hover:underline"
+          >
+            <CheckCircle size={13} />
+            {showResolved ? "Hide resolution" : "View resolution"}
+          </button>
+
+          {showResolved && (
+            <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                <span className="font-medium">Resolution:</span>{" "}
+                {iss.resolveDescription}
+              </p>
+              {iss.resolvePhoto && (
+                <a
+                  href={getImageUrl(iss.resolvePhoto)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <img
+                    src={getImageUrl(iss.resolvePhoto)}
+                    className="w-14 h-12 rounded-lg object-cover border border-emerald-200 mt-1 hover:opacity-80"
+                    alt="resolve"
+                  />
+                </a>
+              )}
+              <p className="text-xs text-gray-400 mt-0.5">
+                Resolved by {iss.resolvedBy} · {fmtDatetime(iss.resolvedAt)}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({ icon: Icon, iconBg, iconColor, label, value, sub, subColor }) {
   return (
@@ -663,11 +714,11 @@ function StatCard({ icon: Icon, iconBg, iconColor, label, value, sub, subColor }
         <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBg}`}>
           <Icon size={15} className={iconColor} />
         </div>
-        <span className="text-xs text-gray-400">{label}</span>
+        <span className="text-md text-gray-400">{label}</span>
       </div>
       <div className="text-xl font-semibold text-gray-800 dark:text-gray-100 leading-tight">{value}</div>
       {sub && (
-        <div className={`text-xs flex items-center gap-1 ${subColor || "text-gray-400"}`}>{sub}</div>
+        <div className={`text-sm flex items-center gap-1 flex-wrap overflow-x-auto scrollbar-hide max-h-[48px] overflow-y-auto ${subColor || "text-gray-400"}`}>{sub}</div>
       )}
     </div>
   );
@@ -676,526 +727,11 @@ function StatCard({ icon: Icon, iconBg, iconColor, label, value, sub, subColor }
 
 
 
-function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTrackIdFetched, correctVehicleIndex }) {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [commentText, setCommentText] = useState("");
-  const [commentPhoto, setCommentPhoto] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [callModalOpen, setCallModalOpen] = useState(false);
-
-  console.log("entry", entry)
-
-  console.log("vehicle", vehicle)
-
-  const isOnRoad = entry.onRoadStatus === 1;
-
-
-  const gpsVehicle = gpsData.find(
-    (g) => g.vehicleId === entry.vehicleRegistrationNumber
-  );
-
-  const lastSeen = gpsVehicle
-    ? new Date(gpsVehicle.lastComunicationTime).toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-      timeZone: "Asia/Kolkata",
-    })
-    : "—";
-
-  const isIgnitionOn = gpsVehicle?.ignitionStatus === "ON";
-  const distanceCovered = gpsVehicle?.distanceCovered ?? 0;
-
-  const vehicleIssues = (order.onRoadIssues || []).filter(
-    (iss) =>
-      iss.vehicleIndex === entry.vehicleIndex &&
-      iss.vehicleRegNo === entry.vehicleRegistrationNumber
-  );
-  const openCount = vehicleIssues.filter((i) => i.status === "open").length;
-
-  // Last updated "X mins ago" helper
-  const timeAgo = (dateStr) => {
-    if (!dateStr) return "—";
-    const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
-    if (diff < 1) return "just now";
-    if (diff < 60) return `${diff} min${diff > 1 ? "s" : ""} ago`;
-    const hrs = Math.floor(diff / 60);
-    return `${hrs} hr${hrs > 1 ? "s" : ""} ago`;
-  };
-
-  const routeProgress = entry.routeProgress ?? 0;
-
-  const handleSubmit = async () => {
-    if (!commentText.trim()) return toast.error("Issue description required");
-    setSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append("vehicleIndex", correctVehicleIndex);
-      formData.append("issueDescription", commentText.trim());
-      formData.append("vehicleRegistrationNumber", entry.vehicleRegistrationNumber);
-      if (commentPhoto) formData.append("issuePhoto", commentPhoto);
-
-      await axios.post(
-        `${API_BASE}admin/pipeline/${order._id}/onroad-issue`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${getToken()}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      toast.success("Issue reported!");
-      setCommentText("");
-      setCommentPhoto(null);
-      onRefresh();
-    } catch (e) {
-      toast.error(e?.response?.data?.message || "Failed to report issue");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleViewRoute = async () => {
-    if (!entry.vehicleRegistrationNumber) {
-      toast.error("Vehicle registration number not found");
-      return;
-    }
-
-    onTrackIdFetched(entry.vehicleRegistrationNumber);
-  };
-
-
-  return (
-    <>
-
-      <div
-        className={`p-4 border-b border-gray-100 dark:border-gray-800 last:border-0 ${!isOnRoad ? "bg-red-50/30 dark:bg-red-900/5" : ""
-          }`}
-      >
-        <div className="flex gap-4 items-start">
-
-
-          <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-            <div className="w-20 h-14 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              {entry.vehicleImage ? (
-                <img
-                  src={getImageUrl(entry.vehicleImage)}
-                  alt="vehicle"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Truck size={28} className="text-gray-400" />
-              )}
-            </div>
-            <span className="text-xs font-semibold tracking-wide text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded-md">
-              {entry.vehicleRegistrationNumber || "—"}
-            </span>
-          </div>
-
-
-          <div className="flex-1 min-w-0 space-y-2">
-
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                Vehicle {String(index + 1).padStart(2, "0")}
-              </span>
-              {isIgnitionOn ? (
-                <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Running
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700">
-                  Offline
-                </span>
-              )}
-            </div>
-
-
-            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-              <MapPin size={11} className="flex-shrink-0" />
-              <span className="font-medium text-gray-700 dark:text-gray-300">
-                {entry.currentLocation || (isOnRoad ? "On Road" : "Last seen: En route")}
-              </span>
-              {(vehicle.fromLocation || vehicle.toLocation) && (
-                <span className="text-gray-400">
-                  — {vehicle.fromLocation} → {vehicle.toLocation}
-                </span>
-              )}
-            </div>
-
-
-            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
-              <span className="flex items-center gap-1">
-                <User size={11} />
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {entry.driverName || "—"}
-                </span>
-              </span>
-              <span className="text-gray-300 dark:text-gray-600">·</span>
-              <span className="flex items-center gap-1">
-                <Users size={11} />
-                <span>
-                  {
-                    (vehicle.promoterCost === 0
-                      ? "No Promoter"
-                      : "Promoter Available")}
-                </span>
-              </span>
-            </div>
-
-
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-400 dark:text-gray-500">Route progress</span>
-                <span className="font-semibold text-gray-700 dark:text-gray-300">
-                  {routeProgress}%
-                </span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${routeProgress >= 80
-                    ? "bg-emerald-500"
-                    : routeProgress >= 40
-                      ? "bg-blue-500"
-                      : "bg-amber-400"
-                    }`}
-                  style={{ width: `${routeProgress}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Last update */}
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              Last update · {lastSeen}
-            </p>
-            <span className="text-xs text-gray-500">
-              {distanceCovered.toFixed(2)} km covered
-            </span>
-          </div>
-
-          {/* ── Col 3: GPS + Buttons ── */}
-          <div className="flex flex-col items-end gap-2.5 flex-shrink-0">
-
-            {/* GPS status */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-400">GPS</span>
-              {isOnRoad ? (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                    Live
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-red-500" />
-                  <span className="text-xs font-semibold text-red-500">
-                    Offline
-                  </span>
-                </>
-              )}
-            </div>
-
-
-            <div className="flex flex-col gap-1.5">
-              <button
-                onClick={handleViewRoute}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all whitespace-nowrap"
-              >
-                <Navigation size={11} />
-                View Route
-              </button>
-
-              {/* <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all whitespace-nowrap">
-                <Phone size={11} />
-                Call Driver
-              </button> */}
-
-              <button
-                onClick={() => setCallModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all whitespace-nowrap"
-              >
-                <Phone size={11} />
-                Call Driver
-              </button>
-
-
-              <button
-                onClick={() => setModalOpen(true)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${openCount > 0
-                  ? "border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30"
-                  : "border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
-                  }`}
-              >
-                {openCount > 0 ? (
-                  <>
-                    <AlertCircle size={11} />
-                    Resolve Issue
-                    <span className="ml-0.5 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
-                      {openCount}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Plus size={11} />
-                    Add Issues
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Issues Modal (unchanged) ── */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                  Issues · {entry.driverName}
-                </h3>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {entry.vehicleRegistrationNumber}
-                </p>
-              </div>
-              <button onClick={() => setModalOpen(false)}>
-                <XCircle size={18} className="text-gray-400 hover:text-gray-600" />
-              </button>
-            </div>
-
-            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                Add a comment ·{" "}
-                <span className="text-orange-500">Issue Report</span>
-              </p>
-              <textarea
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
-                rows={3}
-                placeholder="Type your issue description here..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-              />
-              <div className="flex items-center justify-between mt-2">
-                {commentPhoto ? (
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={URL.createObjectURL(commentPhoto)}
-                      className="w-8 h-8 rounded-lg object-cover border border-gray-200"
-                      alt="preview"
-                    />
-                    <span className="text-xs text-gray-500 truncate max-w-[120px]">
-                      {commentPhoto.name}
-                    </span>
-                    <button
-                      onClick={() => setCommentPhoto(null)}
-                      className="text-xs text-red-400 hover:text-red-600"
-                    >
-                      <XCircle size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer hover:bg-gray-50 transition-all">
-                    <Upload size={12} className="text-gray-400" />
-                    <span className="text-xs text-gray-500">Attach File</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) =>
-                        setCommentPhoto(e.target.files?.[0] || null)
-                      }
-                    />
-                  </label>
-                )}
-                <button
-                  onClick={handleSubmit}
-                  disabled={submitting || !commentText.trim()}
-                  className="px-4 py-1.5 rounded-lg bg-gray-700 dark:bg-gray-600 text-white text-xs font-semibold hover:bg-gray-800 disabled:opacity-40 transition-all"
-                >
-                  {submitting ? "Submitting..." : "Add Issues"}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-3">
-                Issues History
-              </p>
-              {vehicleIssues.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-6">
-                  No issues reported yet
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {[...vehicleIssues].reverse().map((iss, i) => (
-                    <div key={iss._id || i} className="flex gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold ${iss.status === "open"
-                          ? "bg-orange-500"
-                          : "bg-emerald-500"
-                          }`}
-                      >
-                        {(iss.reportedBy || "U")[0].toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                            {iss.reportedBy}
-                          </span>
-                          <span
-                            className={`text-xs px-1.5 py-0.5 rounded font-medium ${iss.status === "open"
-                              ? "bg-orange-100 text-orange-600"
-                              : "bg-emerald-100 text-emerald-600"
-                              }`}
-                          >
-                            {iss.status === "open" ? "Open Issue" : "Resolved"}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-700 dark:text-gray-300 mb-1">
-                          {iss.issueDescription}
-                        </p>
-                        {iss.issuePhoto && (
-                          <a
-                            href={getImageUrl(iss.issuePhoto)}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            <img
-                              src={getImageUrl(iss.issuePhoto)}
-                              className="w-14 h-12 rounded-lg object-cover border mb-1 hover:opacity-80"
-                              alt="issue"
-                            />
-                          </a>
-                        )}
-                        <p className="text-xs text-gray-400">
-                          {fmtDatetime(iss.reportedAt)}
-                        </p>
-                        {iss.status === "open" && (
-                          <ResolveInlineForm
-                            iss={iss}
-                            order={order}
-                            onRefresh={onRefresh}
-                          />
-                        )}
-                        {iss.status === "resolved" && (
-                          <div className="mt-2 pl-3 border-l-2 border-emerald-300">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                {(iss.resolvedBy || "U")[0].toUpperCase()}
-                              </div>
-                              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                {iss.resolvedBy}
-                              </span>
-                              <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-600 font-medium">
-                                Resolution
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1 ml-8">
-                              {iss.resolveDescription}
-                            </p>
-                            {iss.resolvePhoto && (
-                              <a
-                                href={getImageUrl(iss.resolvePhoto)}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                <img
-                                  src={getImageUrl(iss.resolvePhoto)}
-                                  className="w-14 h-12 rounded-lg object-cover border border-emerald-200 mt-1 hover:opacity-80"
-                                  alt="resolve"
-                                />
-                              </a>
-                            )}
-                            <p className="text-xs text-gray-400 ml-8">
-                              {fmtDatetime(iss.resolvedAt)}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Call Driver Modal ── */}
-      {callModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-xs p-6 flex flex-col items-center gap-4">
-
-            {/* Close button */}
-            <div className="w-full flex justify-end">
-              <button onClick={() => setCallModalOpen(false)}>
-                <XCircle size={18} className="text-gray-400 hover:text-gray-600" />
-              </button>
-            </div>
-
-            {/* Avatar */}
-            <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
-              <Phone size={24} className="text-blue-500" />
-            </div>
-
-            {/* Driver info */}
-            <div className="text-center">
-              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                {entry.driverName || "Driver"}
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {entry.vehicleRegistrationNumber}
-              </p>
-            </div>
-
-            {/* Phone number */}
-            <div className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-center">
-              <p className="text-xs text-gray-400 mb-1">Phone number</p>
-              <p className="text-lg font-semibold text-gray-800 dark:text-gray-100 tracking-wide">
-                {entry.driverPhone || "—"}
-              </p>
-            </div>
-
-            {/* Call button */}
-            <a
-
-              href={`tel:${entry.driverPhone}`}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-all"
-            >
-              <Phone size={15} />
-              Call Now
-            </a>
-
-            {/* Cancel */}
-            <button
-              onClick={() => setCallModalOpen(false)}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-all"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-
-
-export default function OnRoadTab({ order, onRefresh ,vehicleTypes }) {
+export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
 
   const [gpsData, setGpsData] = useState<any[]>([]);
   const [gpsLoading, setGpsLoading] = useState(false);
-const hasFetched = useRef(false); 
+  const hasFetched = useRef(false);
 
 
   const fetchGpsData = async () => {
@@ -1221,12 +757,10 @@ const hasFetched = useRef(false);
     }
   };
 
-  // useEffect(() => {
-  //   fetchGpsData();
-  // }, []);
 
-    useEffect(() => {
-    if (hasFetched.current) return; 
+
+  useEffect(() => {
+    if (hasFetched.current) return;
     hasFetched.current = true;
     fetchGpsData();
   }, []);
@@ -1246,11 +780,7 @@ const hasFetched = useRef(false);
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 
-  // const { vehicleTypes, fetchVehicleTypes } = useVehicle();
 
-  // useEffect(() => {
-  //   fetchVehicleTypes();
-  // }, []);
 
   // Campaign info from order
   const campaignName = order.campaignName || order.bookingItems?.[0]?.campaignName || "Campaign";
@@ -1281,8 +811,8 @@ const hasFetched = useRef(false);
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
           <div>
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">On Road</h3>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">On Road</h3>
+            <p className="text-sm text-gray-400 mt-0.5">
               {vehicles.length} booking item{vehicles.length > 1 ? "s" : ""} · {totalVehicles} total vehicles
             </p>
           </div>
@@ -1297,7 +827,7 @@ const hasFetched = useRef(false);
             <VehicleExecutionCard
               key={originalIdx}
               vehicle={vehicle}
-              vehicleIndex={originalIdx} 
+              vehicleIndex={originalIdx}
               order={order}
               onRefresh={onRefresh}
               vehicleTypes={vehicleTypes}
@@ -1313,86 +843,3 @@ const hasFetched = useRef(false);
   );
 }
 
-
-function ResolveInlineForm({ iss, order, onRefresh }) {
-  const [showForm, setShowForm] = useState(false);
-  const [desc, setDesc] = useState("");
-  const [photo, setPhoto] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleResolve = async () => {
-    if (!desc.trim()) return toast.error("Resolution description required");
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append("resolveDescription", desc.trim());
-      if (photo) formData.append("resolvePhoto", photo);
-
-      await axios.patch(
-        `${API_BASE}admin/pipeline/${order._id}/onroad-issue/${iss._id}/resolve`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${getToken()}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      toast.success("Issue resolved!");
-      setShowForm(false);
-      setDesc("");
-      setPhoto(null);
-      onRefresh();
-    } catch (e) {
-      toast.error(e?.response?.data?.message || "Failed to resolve");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!showForm) {
-    return (
-      <button
-        onClick={() => setShowForm(true)}
-        className="mt-1.5 flex items-center gap-1 px-2 py-1 rounded-lg border border-emerald-200 text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all"
-      >
-        <CheckCircle size={11} /> Mark as Resolved
-      </button>
-    );
-  }
-
-  return (
-    <div className="mt-2 pl-3 border-l-2 border-emerald-300 space-y-2">
-      <textarea
-        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-2 text-xs bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400"
-        rows={2}
-        placeholder="How was this resolved?"
-        value={desc}
-        onChange={(e) => setDesc(e.target.value)}
-      />
-      {photo ? (
-        <div className="flex items-center gap-2">
-          <img src={URL.createObjectURL(photo)} className="w-8 h-8 rounded object-cover border" alt="" />
-          <span className="text-xs text-gray-500 truncate max-w-[100px]">{photo.name}</span>
-          <button onClick={() => setPhoto(null)}><XCircle size={13} className="text-red-400" /></button>
-        </div>
-      ) : (
-        <label className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dashed border-emerald-300 bg-white cursor-pointer hover:bg-emerald-50 w-fit">
-          <Upload size={11} className="text-emerald-400" />
-          <span className="text-xs text-emerald-600">Attach photo</span>
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
-        </label>
-      )}
-      <div className="flex gap-2">
-        <button onClick={() => setShowForm(false)} className="px-3 py-1 rounded-lg border border-gray-200 text-xs text-gray-500 hover:bg-gray-50">Cancel</button>
-        <button
-          onClick={handleResolve}
-          disabled={loading}
-          className="px-3 py-1 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 disabled:opacity-50"
-        >
-          {loading ? "Resolving..." : "Submit"}
-        </button>
-      </div>
-    </div>
-  );
-}
