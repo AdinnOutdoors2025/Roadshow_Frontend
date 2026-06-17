@@ -56,12 +56,12 @@ interface Order {
     customerCategory?: string;
 }
 
-export default function OverviewTab({ order, onRefresh, onStageMove }: {
+export default function OverviewTab({ order, onRefresh, onStageMove ,vehicleTypes }: {
     order: Order; onRefresh: () => Promise<void>;
     onStageMove: (order: Order, toStage: string) => void;
 }) {
 
-    const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+    // const { vehicleTypes, fetchVehicleTypes } = useVehicle();
     const [openItems, setOpenItems] = useState<Record<number, boolean>>({});
     const [activeVehicleTab, setActiveVehicleTab] = useState<number>(0);
     const tabsContainerRef = useRef<HTMLDivElement>(null);
@@ -90,9 +90,9 @@ const fmtRelative = (s?: string) => {
     return `${Math.floor(hrs / 24)}d ago`;
 };
 
-    useEffect(() => {
-        fetchVehicleTypes()
-    }, [])
+    // useEffect(() => {
+    //     fetchVehicleTypes()
+    // }, [])
 
 
     const currentVehicle = order.bookingItems[activeVehicleTab];

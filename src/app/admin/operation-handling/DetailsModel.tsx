@@ -32,6 +32,7 @@ import ProjectExecutionHistoryTab from "./ProjectExecutionHistoryTab";
 import CombinedHistoryTab from "./CombinedHistoryTab";
 import OverviewTab from "./OverviewTab";
 import OnRoadTab from "./OnRoadTab";
+import { useVehicle } from "../../../context/vehicletypecontext";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -165,6 +166,13 @@ export default function DetailDrawer({
     const finalAmt = taxable + gstAmt;
 
 
+      const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+
+//   useEffect(() => {
+//     fetchVehicleTypes();
+//   }, []);
+
+
     const projectCodes = order.projectCodeArray || [];
     const hasProjectCode = projectCodes.length > 0;
 
@@ -279,7 +287,7 @@ export default function DetailDrawer({
                         <div className="flex flex-col sm:flex-row h-full min-h-0">
                             {/* Main content */}
                             <div className="flex-1 overflow-y-auto sm:border-r border-gray-100 dark:border-gray-800">
-                                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} />
+                                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} vehicleTypes={vehicleTypes} />
                             </div>
 
 
@@ -405,7 +413,7 @@ export default function DetailDrawer({
 
 
                     {activeTab === "onRoad" && (
-                        <OnRoadTab order={order} onRefresh={onRefresh} />
+                        <OnRoadTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
                     )}
 
                     {activeTab === "history" && (
@@ -415,7 +423,7 @@ export default function DetailDrawer({
 
 
                     {activeTab === "projectExecution" && (
-                        <ProjectExecutionTab order={order} onRefresh={onRefresh} />
+                        <ProjectExecutionTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
                     )}
 
                 </div>

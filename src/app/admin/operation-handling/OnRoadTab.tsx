@@ -1191,11 +1191,11 @@ function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTr
 
 
 
-export default function OnRoadTab({ order, onRefresh }) {
+export default function OnRoadTab({ order, onRefresh ,vehicleTypes }) {
 
   const [gpsData, setGpsData] = useState<any[]>([]);
   const [gpsLoading, setGpsLoading] = useState(false);
-
+const hasFetched = useRef(false); 
 
 
   const fetchGpsData = async () => {
@@ -1221,7 +1221,13 @@ export default function OnRoadTab({ order, onRefresh }) {
     }
   };
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   fetchGpsData();
+  // }, []);
+
+    useEffect(() => {
+    if (hasFetched.current) return; 
+    hasFetched.current = true;
     fetchGpsData();
   }, []);
 
@@ -1240,11 +1246,11 @@ export default function OnRoadTab({ order, onRefresh }) {
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 
-  const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+  // const { vehicleTypes, fetchVehicleTypes } = useVehicle();
 
-  useEffect(() => {
-    fetchVehicleTypes();
-  }, []);
+  // useEffect(() => {
+  //   fetchVehicleTypes();
+  // }, []);
 
   // Campaign info from order
   const campaignName = order.campaignName || order.bookingItems?.[0]?.campaignName || "Campaign";

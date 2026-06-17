@@ -481,17 +481,17 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh ,vehicle
 }
 
 
-export default function ProjectExecutionTab({ order, onRefresh }) {
+export default function ProjectExecutionTab({ order, onRefresh ,vehicleTypes }) {
   const vehicles = order.bookingItems || [];
   const allEntries = order.onRoadExecutionArray || [];
   const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
 
-    const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+    // const { vehicleTypes, fetchVehicleTypes } = useVehicle();
 
-     useEffect(() => {
-        fetchVehicleTypes()
-    }, [])
+    //  useEffect(() => {
+    //     fetchVehicleTypes()
+    // }, [])
 
   if (vehicles.length === 0) {
     return (
