@@ -33,6 +33,7 @@ import CombinedHistoryTab from "./CombinedHistoryTab";
 import OverviewTab from "./OverviewTab";
 import OnRoadTab from "./OnRoadTab";
 import { useVehicle } from "../../../context/vehicletypecontext";
+import VehicleUnavailable from "./VehicleUnavailableTab";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -187,6 +188,7 @@ export default function DetailDrawer({
         ...(order.pipelineStatus === "onRoad"
             ? [{ key: "onRoad", label: "On Road" }]
             : []),
+             { key: "VehicleUnavailable", label: "VehicleUnavailable" },
     ];
 
 
@@ -417,13 +419,17 @@ export default function DetailDrawer({
                     )}
 
                     {activeTab === "history" && (
-                        <CombinedHistoryTab order={order} />
+                        <CombinedHistoryTab order={order} vehicleTypes={vehicleTypes} />
                     )}
 
 
 
                     {activeTab === "projectExecution" && (
                         <ProjectExecutionTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
+                    )}
+
+                      {activeTab === "VehicleUnavailable" && (
+                        <VehicleUnavailable order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
                     )}
 
                 </div>

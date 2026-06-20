@@ -30,26 +30,58 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
   const [commentPhoto, setCommentPhoto] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [callModalOpen, setCallModalOpen] = useState(false);
+  const [updateDriverOpen, setUpdateDriverOpen] = useState(false);
+  const [updDriverName, setUpdDriverName] = useState(entry.driverName || "");
+  const [updDriverPhone, setUpdDriverPhone] = useState(entry.driverPhone || "");
+  const [updRegNo, setUpdRegNo] = useState(entry.vehicleRegistrationNumber || "");
+  const [updating, setUpdating] = useState(false);
+  const [unavailableOpen, setUnavailableOpen] = useState(false);
+  const [unavailableReason, setUnavailableReason] = useState("");
+  const [unavailablePhoto, setUnavailablePhoto] = useState(null);
+  const [unavailableSubmitting, setUnavailableSubmitting] = useState(false);
 
 
+  const handleUpdateDriver = async () => {
+    if (!updDriverName.trim()) return toast.error("Driver name required");
+    if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
+    if (!updRegNo.trim()) return toast.error("Reg number required");
+    setUpdating(true);
+    try {
+      await axios.patch(
+        `${API_BASE}admin/pipeline/${order._id}/onroad-driver/${entry._id}`,
+        {
+          driverName: updDriverName.trim(),
+          driverPhone: updDriverPhone.trim(),
+          vehicleRegistrationNumber: updRegNo.trim().toUpperCase(),
+        },
+        { headers: { Authorization: `Bearer ${getToken()}` } }
+      );
+      toast.success("Driver details updated!");
+      setUpdateDriverOpen(false);
+      onRefresh();
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Failed to update");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const fmtDatetime = (s) => {
+    if (!s) return "—";
+    return new Date(s).toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  };
 
 
-const fmtDatetime = (s) => {
-  if (!s) return "—";
-  return new Date(s).toLocaleString("en-IN", {
-    day: "2-digit", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
-};
+  const getImageUrl = (url) => {
+    if (!url) return null;
 
+    if (url.startsWith("http")) return url;
 
-const getImageUrl = (url) => {
-  if (!url) return null;
-
-  if (url.startsWith("http")) return url;
-
-  return `${API_BASE.replace("/api", "")}${url}`;
-};
+    return `${API_BASE.replace("/api", "")}${url}`;
+  };
 
 
 
@@ -95,6 +127,7 @@ const getImageUrl = (url) => {
 
 
   const routeProgress = entry.routeProgress ?? 0;
+  const isUnavailable = entry.unavailableStatus === true;
 
   const handleSubmit = async () => {
     if (!commentText.trim()) return toast.error("Issue description required");
@@ -136,6 +169,40 @@ const getImageUrl = (url) => {
     onTrackIdFetched(entry.vehicleRegistrationNumber);
   };
 
+  const handleMarkUnavailable = async () => {
+    if (!unavailableReason.trim()) return toast.error("Reason is required");
+    setUnavailableSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("vehicleIndex", correctVehicleIndex);
+      formData.append("vehicleRegistrationNumber", entry.vehicleRegistrationNumber);
+      formData.append("reason", unavailableReason.trim());
+      if (unavailablePhoto) formData.append("unavailablePhoto", unavailablePhoto);
+
+      await axios.post(
+        `${API_BASE}admin/pipeline/${order._id}/onroad-unavailable`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      toast.success("Vehicle marked as unavailable!");
+      setUnavailableOpen(false);
+      setUnavailableReason("");
+      setUnavailablePhoto(null);
+      onRefresh();
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Failed to mark unavailable");
+    } finally {
+      setUnavailableSubmitting(false);
+    }
+  };
+
+
+
 
   return (
     <>
@@ -162,6 +229,12 @@ const getImageUrl = (url) => {
             <span className="text-xs font-semibold tracking-wide text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded-md">
               {entry.vehicleRegistrationNumber || "—"}
             </span>
+            {isUnavailable && (
+              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md bg-red-100 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 text-center leading-tight">
+                <XCircle size={10} />
+                Unavailable
+              </span>
+            )}
           </div>
 
 
@@ -271,23 +344,20 @@ const getImageUrl = (url) => {
             </div>
 
 
-            <div className="flex flex-col gap-1.5">
+            <div className={`flex flex-col gap-1.5 ${isUnavailable ? "cursor-no-drop" : ""}`}>
               <button
                 onClick={handleViewRoute}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all whitespace-nowrap"
+                disabled={isUnavailable}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
               >
                 <Navigation size={11} />
                 View Route
               </button>
 
-              {/* <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all whitespace-nowrap">
-                <Phone size={11} />
-                Call Driver
-              </button> */}
-
               <button
-                onClick={() => setCallModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all whitespace-nowrap"
+                onClick={() => !isUnavailable && setCallModalOpen(true)}
+                disabled={isUnavailable}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
               >
                 <Phone size={11} />
                 Call Driver
@@ -295,8 +365,9 @@ const getImageUrl = (url) => {
 
 
               <button
-                onClick={() => setModalOpen(true)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${openCount > 0
+                onClick={() => !isUnavailable && setModalOpen(true)}
+                disabled={isUnavailable}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none border-gray-200 text-gray-400 bg-gray-50" : openCount > 0
                   ? "border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30"
                   : "border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
                   }`}
@@ -316,6 +387,37 @@ const getImageUrl = (url) => {
                   </>
                 )}
               </button>
+
+              <button
+                disabled={isUnavailable}
+                onClick={() => {
+                  if (isUnavailable) return;
+                  setUpdDriverName(entry.driverName || "");
+                  setUpdDriverPhone(entry.driverPhone || "");
+                  setUpdRegNo(entry.vehicleRegistrationNumber || "");
+                  setUpdateDriverOpen(true);
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none border-gray-200 text-gray-400 bg-gray-50 dark:bg-gray-800 dark:border-gray-700" : "border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30"}`}
+              >
+                <User size={11} />
+                Update Driver
+              </button>
+
+              {isUnavailable ? (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 whitespace-nowrap">
+                  <XCircle size={11} />
+                  Unavailable
+                </div>
+              ) : (
+                <button
+                  onClick={() => setUnavailableOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-800 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all whitespace-nowrap"
+                >
+                  <AlertTriangle size={11} />
+                  Unavailable
+                </button>
+              )}
+
             </div>
           </div>
         </div>
@@ -552,9 +654,146 @@ const getImageUrl = (url) => {
           </div>
         </div>
       )}
+
+
+      {/* ── Update Driver Modal ── */}
+      {updateDriverOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Update Driver</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{entry.vehicleRegistrationNumber}</p>
+              </div>
+              <button onClick={() => setUpdateDriverOpen(false)}>
+                <XCircle size={18} className="text-gray-400 hover:text-gray-600" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Driver Name</label>
+                <input
+                  type="text"
+                  value={updDriverName}
+                  onChange={e => setUpdDriverName(e.target.value)}
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  placeholder="Driver name"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Phone</label>
+                <input
+                  type="tel"
+                  value={updDriverPhone}
+                  onChange={e => setUpdDriverPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  placeholder="9876543210"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Reg. No</label>
+                <input
+                  type="text"
+                  value={updRegNo}
+                  disabled
+                  onChange={e => setUpdRegNo(e.target.value.toUpperCase())}
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm uppercase bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  placeholder="TN01AB1234"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleUpdateDriver}
+              disabled={updating}
+              className="w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all disabled:opacity-40"
+            >
+              {updating ? "Updating..." : "Save Changes"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Unavailable Modal ── */}
+      {unavailableOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                  Mark Unavailable · {entry.driverName}
+                </h3>
+                <p className="text-sm text-gray-400 mt-0.5">
+                  {entry.vehicleRegistrationNumber}
+                </p>
+              </div>
+              <button onClick={() => setUnavailableOpen(false)}>
+                <XCircle size={18} className="text-gray-400 hover:text-gray-600" />
+              </button>
+            </div>
+
+            <div className="px-5 py-4 flex flex-col gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                  Add a comment ·{" "}
+                  <span className="text-orange-500">Unavailable Report</span>
+                </p>
+                <textarea
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  rows={3}
+                  placeholder="Type your reason here..."
+                  value={unavailableReason}
+                  onChange={(e) => setUnavailableReason(e.target.value)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                {unavailablePhoto ? (
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={URL.createObjectURL(unavailablePhoto)}
+                      className="w-8 h-8 rounded-lg object-cover border border-gray-200"
+                      alt="preview"
+                    />
+                    <span className="text-xs text-gray-500 truncate max-w-[120px]">
+                      {unavailablePhoto.name}
+                    </span>
+                    <button
+                      onClick={() => setUnavailablePhoto(null)}
+                      className="text-xs text-red-400 hover:text-red-600"
+                    >
+                      <XCircle size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer hover:bg-gray-50 transition-all">
+                    <Upload size={12} className="text-gray-400" />
+                    <span className="text-xs text-gray-500">Attach File (Optional)</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => setUnavailablePhoto(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                )}
+                <button
+                  onClick={handleMarkUnavailable}
+                  disabled={unavailableSubmitting || !unavailableReason.trim()}
+                  className="px-4 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold hover:bg-orange-600 disabled:opacity-40 transition-all"
+                >
+                  {unavailableSubmitting ? "Submitting..." : "Mark Unavailable"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
+
 
 
 

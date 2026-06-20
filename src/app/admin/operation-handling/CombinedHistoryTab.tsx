@@ -1,6 +1,7 @@
 import { useState } from "react";
 import PipelineHistoryTab from "./PipelineHistoryTab";
 import ProjectExecutionHistoryTab from "./ProjectExecutionHistoryTab";
+import UnavailableHistoryTab from "./UnavailableHistoryTab";
 
 interface Order {
     _id: string;
@@ -32,13 +33,16 @@ interface Order {
     designation?: string;
     gstNumber?: string;
     customerCategory?: string;
+    onRoadUnavailableHistory?:any;
 }
 
-export default function CombinedHistoryTab({ order }: { order: Order }) {
-    const [activeHistoryTab, setActiveHistoryTab] = useState<"pipeline" | "execution">("pipeline");
+export default function CombinedHistoryTab({ order ,vehicleTypes }: { order: Order , vehicleTypes:string[]}) {
+    const [activeHistoryTab, setActiveHistoryTab] = useState<"pipeline" | "execution" | "unavailable">("pipeline");
 
-    const showExecution =
+   const showExecution =
         order.pipelineStatus === "projectExecution" || order.pipelineStatus === "onRoad";
+
+    const showUnavailable = (order.onRoadUnavailableHistory || []).length > 0;
 
     return (
         <div className="flex flex-col h-full">
@@ -66,13 +70,30 @@ export default function CombinedHistoryTab({ order }: { order: Order }) {
                         Execution History
                     </button>
                 )}
+
+                {showUnavailable && (
+                    <button
+                        onClick={() => setActiveHistoryTab("unavailable")}
+                        className={`px-4 py-2 text-md font-medium border-b-2 transition-all -mb-px ${
+                            activeHistoryTab === "unavailable"
+                                ? "border-red-500 text-red-600 dark:text-red-400"
+                                : "border-transparent text-gray-400 hover:text-gray-600"
+                        }`}
+                    >
+                        Unavailable History
+                    </button>
+                )}
             </div>
 
          
+    
             <div className="flex-1 overflow-y-auto">
                 {activeHistoryTab === "pipeline" && <PipelineHistoryTab order={order} />}
                 {activeHistoryTab === "execution" && showExecution && (
-                    <ProjectExecutionHistoryTab order={order} />
+                    <ProjectExecutionHistoryTab order={order} vehicleTypes={vehicleTypes} />
+                )}
+                {activeHistoryTab === "unavailable" && showUnavailable && (
+                    <UnavailableHistoryTab order={order} vehicleTypes={vehicleTypes} />
                 )}
             </div>
         </div>

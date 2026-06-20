@@ -20,6 +20,7 @@ import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 import { useVehicle } from "../../../context/vehicletypecontext";
 import LiveVehicleRow from "./LiveVehicleRow";
+import AttendanceSummaryCard from "./AttendanceSummaryCard";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmtDate = (s) => {
@@ -65,6 +66,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const [routeTrackId, setRouteTrackId] = useState<string | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [kmPage, setKmPage] = useState(0);
+  const [liveTab, setLiveTab] = useState<"status" | "history">("status");
 
   const fetchRouteTrackId = async (vehicleRegNo: string) => {
     setRouteLoading(true);
@@ -426,6 +428,27 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
                   Live vehicle status ({vehicleEntries.length}/{quantity} drivers)
                 </h3>
+                {/* {vehicleEntries.filter(e => e.onRoadStatus === 1).length > 0 && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+                    {vehicleEntries.filter(e => e.onRoadStatus === 1).length} On Road
+                  </span>
+                )} */}
+              </div>
+               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
+                  <button
+                    onClick={() => setLiveTab("status")}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${liveTab === "status" ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+                  >
+                    Vehicle Status
+                  </button>
+                  <button
+                    onClick={() => setLiveTab("history")}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${liveTab === "history" ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+                  >
+                    Driver History
+                  </button>
+                </div>
                 {vehicleEntries.filter(e => e.onRoadStatus === 1).length > 0 && (
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
                     {vehicleEntries.filter(e => e.onRoadStatus === 1).length} On Road
@@ -433,26 +456,37 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 )}
               </div>
 
-              <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[520px] overflow-y-auto">
-                {vehicleEntries.map((entry, idx) => (
-                  <LiveVehicleRow
-                    key={entry._id || idx}
-                    entry={entry}
-                    index={idx}
-                    order={order}
-                    onRefresh={onRefresh}
-                    vehicle={vehicle}
-                    gpsData={gpsData}
-                    onTrackIdFetched={(regNo) => fetchRouteTrackId(regNo)}
-                    correctVehicleIndex={vehicleIndex}
-                    forceOpen={activeIssueEntryId === entry.vehicleRegistrationNumber}
-                    onForceOpenHandled={() => setActiveIssueEntryId(null)}
+
+               <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[520px] overflow-y-auto">
+                {liveTab === "status" ? (
+                  <>
+                    {vehicleEntries.map((entry, idx) => (
+                      <LiveVehicleRow
+                        key={entry._id || idx}
+                        entry={entry}
+                        index={idx}
+                        order={order}
+                        onRefresh={onRefresh}
+                        vehicle={vehicle}
+                        gpsData={gpsData}
+                        onTrackIdFetched={(regNo) => fetchRouteTrackId(regNo)}
+                        correctVehicleIndex={vehicleIndex}
+                        forceOpen={activeIssueEntryId === entry.vehicleRegistrationNumber}
+                        onForceOpenHandled={() => setActiveIssueEntryId(null)}
+                      />
+                    ))}
+                    {vehicleEntries.length === 0 && (
+                      <div className="p-6 text-center text-gray-400 text-sm">
+                        No drivers assigned.
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <DriverHistoryPanel
+                    vehicleEntries={vehicleEntries}
+                    driverHistory={order.onRoadDriverHistory || []}
+                    vehicleIndex={vehicleIndex}
                   />
-                ))}
-                {vehicleEntries.length === 0 && (
-                  <div className="p-6 text-center text-gray-400 text-sm">
-                    No drivers assigned. Please add driver details below.
-                  </div>
                 )}
               </div>
             </div>
@@ -596,6 +630,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 ))}
               </div>
             </div>
+
+               <AttendanceSummaryCard vehicleEntries={vehicleEntries} order={order} vehicleIndex={vehicleIndex} />
           </div>
 
         </div>
@@ -609,6 +645,118 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   );
 }
 
+
+function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
+  const [activeVehicleTab, setActiveVehicleTab] = useState(0);
+
+  const fmtDt = (s) => {
+    if (!s) return "—";
+    return new Date(s).toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  };
+
+
+  const activeEntry = vehicleEntries[activeVehicleTab];
+
+  const filteredHistory = driverHistory.filter(h => {
+    if (h.vehicleIndex !== vehicleIndex) return false;
+    if (!activeEntry) return false;
+  
+    // updated history la changed reg no match or current reg no match
+    return (
+      h.vehicleRegistrationNumber === activeEntry.vehicleRegistrationNumber ||
+      (h.changedFields?.vehicleRegistrationNumber?.old === activeEntry.vehicleRegistrationNumber) ||
+      (h.changedFields?.vehicleRegistrationNumber?.new === activeEntry.vehicleRegistrationNumber)
+    );
+  });
+
+  return (
+    <div>
+     
+      {vehicleEntries.length > 1 && (
+        <div className="flex gap-1 px-3 pt-3 pb-0 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
+          {vehicleEntries.map((entry, i) => (
+            <button
+              key={entry._id || i}
+              onClick={() => setActiveVehicleTab(i)}
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${
+                activeVehicleTab === i
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                  : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              }`}
+            >
+              <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white" style={{ fontSize: "9px" }}>
+                V{i + 1}
+              </div>
+              <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Active entry info */}
+      {activeEntry && (
+        <div className="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            V{activeVehicleTab + 1}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{activeEntry.driverName || "—"}</p>
+            <p className="text-xs text-gray-400 font-mono">{activeEntry.vehicleRegistrationNumber} · {activeEntry.driverPhone}</p>
+          </div>
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+            activeEntry.onRoadStatus === 1
+              ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+              : "bg-gray-100 text-gray-400"
+          }`}>
+            {activeEntry.onRoadStatus === 1 ? "On Road" : "Off Road"}
+          </span>
+        </div>
+      )}
+
+      {/* History list */}
+      <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[380px] overflow-y-auto">
+        {filteredHistory.length === 0 ? (
+          <div className="p-6 text-center text-gray-400 text-sm">
+            No history for this vehicle
+          </div>
+        ) : (
+          [...filteredHistory].reverse().map((h, i) => (
+            <div key={h._id || i} className="p-4 flex gap-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold ${h.action === "created" ? "bg-blue-500" : "bg-amber-500"}`}>
+                {h.action === "created" ? <Plus size={14} /> : <RefreshCw size={13} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${h.action === "created" ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600"}`}>
+                    {h.action === "created" ? "Driver added" : "Driver updated"}
+                  </span>
+                  <span className="text-xs text-gray-400">{fmtDt(h.changedAt)}</span>
+                </div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{h.driverName}</p>
+                <p className="text-xs text-gray-500">{h.driverPhone} · <span className="font-mono">{h.vehicleRegistrationNumber}</span></p>
+                <p className="text-xs text-gray-400 mt-0.5">By {h.changedBy}</p>
+                {h.action === "updated" && h.changedFields && Object.keys(h.changedFields).length > 0 && (
+                  <div className="mt-1.5 space-y-0.5 pt-1.5 border-t border-gray-100 dark:border-gray-800">
+                    {Object.entries(h.changedFields).map(([field, val]: any) => (
+                      <p key={field} className="text-xs text-gray-500">
+                        <span className="font-medium capitalize">{field}:</span>{" "}
+                        <span className="line-through text-red-400">{val.old}</span>{" → "}
+                        <span className="text-emerald-600 font-medium">{val.new}</span>
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
 
 function IssueHistoryCard({ iss, onOpenModal }) {
   const [showResolved, setShowResolved] = useState(false);

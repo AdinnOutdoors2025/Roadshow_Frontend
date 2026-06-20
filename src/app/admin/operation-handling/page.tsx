@@ -174,7 +174,8 @@ function StageColumn({ stage, orders, onDrop, onDragStart, onCardClick }: {
   return (
     <div
       className="flex flex-col w-56 flex-shrink-0"
-      style={{ height: "calc(88vh - 80px)" }}
+      // style={{ height: "calc(88vh - 80px)" }}
+      style={{ height: "calc(100vh - 130px)" }}
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => onDrop(stage.key)}
     >
@@ -412,7 +413,8 @@ export default function PipelineBoard() {
     );
 
   return (
-    <div className="flex flex-col h-full">
+    // <div className="flex flex-col h-full">
+  <div className="flex flex-col h-full overflow-hidden w-full">
       <Toaster position="top-right" />
 
      
