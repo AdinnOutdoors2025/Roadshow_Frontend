@@ -34,6 +34,7 @@ import OverviewTab from "./OverviewTab";
 import OnRoadTab from "./OnRoadTab";
 import { useVehicle } from "../../../context/vehicletypecontext";
 import VehicleUnavailable from "./VehicleUnavailableTab";
+import OrderReportPDF from "./OrderReportPDF";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -167,11 +168,11 @@ export default function DetailDrawer({
     const finalAmt = taxable + gstAmt;
 
 
-      const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+    const { vehicleTypes, fetchVehicleTypes } = useVehicle();
 
-//   useEffect(() => {
-//     fetchVehicleTypes();
-//   }, []);
+    //   useEffect(() => {
+    //     fetchVehicleTypes();
+    //   }, []);
 
 
     const projectCodes = order.projectCodeArray || [];
@@ -188,7 +189,7 @@ export default function DetailDrawer({
         ...(order.pipelineStatus === "onRoad"
             ? [{ key: "onRoad", label: "On Road" }]
             : []),
-             { key: "VehicleUnavailable", label: "VehicleUnavailable" },
+        { key: "VehicleUnavailable", label: "VehicleUnavailable" },
     ];
 
 
@@ -223,7 +224,7 @@ export default function DetailDrawer({
                             <p className="text-[13px] font-mono text-gray-400 mt-0.5">{order.projectCodeArray[0].projectCode}</p>
                         </div>
 
-                    
+
                         {nextLabel && (
                             <button
                                 onClick={() => onStageMove(order, nextStageKey)}
@@ -247,6 +248,15 @@ export default function DetailDrawer({
                             </div>
                         )}
 
+                        {/* <button onClick={onClose}
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                            <X size={16} />
+                        </button> */}
+                        {/* <OrderReportPDF
+                            order={order}
+                            vehicleTypes={vehicleTypes}
+                            gpsData={[]}
+                        /> */}
                         <button onClick={onClose}
                             className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
                             <X size={16} />
@@ -428,7 +438,7 @@ export default function DetailDrawer({
                         <ProjectExecutionTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
                     )}
 
-                      {activeTab === "VehicleUnavailable" && (
+                    {activeTab === "VehicleUnavailable" && (
                         <VehicleUnavailable order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
                     )}
 

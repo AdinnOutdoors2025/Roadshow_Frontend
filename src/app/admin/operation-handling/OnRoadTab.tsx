@@ -21,6 +21,7 @@ import { getToken } from "../../utils/auth";
 import { useVehicle } from "../../../context/vehicletypecontext";
 import LiveVehicleRow from "./LiveVehicleRow";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
+import OrderReportPDF from "./OrderReportPDF";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmtDate = (s) => {
@@ -434,7 +435,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   </span>
                 )} */}
               </div>
-               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
                   <button
                     onClick={() => setLiveTab("status")}
@@ -457,7 +458,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               </div>
 
 
-               <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[520px] overflow-y-auto">
+              <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[520px] overflow-y-auto">
                 {liveTab === "status" ? (
                   <>
                     {vehicleEntries.map((entry, idx) => (
@@ -631,7 +632,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               </div>
             </div>
 
-               <AttendanceSummaryCard vehicleEntries={vehicleEntries} order={order} vehicleIndex={vehicleIndex} />
+            <AttendanceSummaryCard vehicleEntries={vehicleEntries} order={order} vehicleIndex={vehicleIndex} />
           </div>
 
         </div>
@@ -663,7 +664,7 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
   const filteredHistory = driverHistory.filter(h => {
     if (h.vehicleIndex !== vehicleIndex) return false;
     if (!activeEntry) return false;
-  
+
     // updated history la changed reg no match or current reg no match
     return (
       h.vehicleRegistrationNumber === activeEntry.vehicleRegistrationNumber ||
@@ -674,18 +675,17 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
 
   return (
     <div>
-     
+
       {vehicleEntries.length > 1 && (
         <div className="flex gap-1 px-3 pt-3 pb-0 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
           {vehicleEntries.map((entry, i) => (
             <button
               key={entry._id || i}
               onClick={() => setActiveVehicleTab(i)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${
-                activeVehicleTab === i
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                  : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${activeVehicleTab === i
+                ? "border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                }`}
             >
               <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white" style={{ fontSize: "9px" }}>
                 V{i + 1}
@@ -706,11 +706,10 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{activeEntry.driverName || "—"}</p>
             <p className="text-xs text-gray-400 font-mono">{activeEntry.vehicleRegistrationNumber} · {activeEntry.driverPhone}</p>
           </div>
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-            activeEntry.onRoadStatus === 1
-              ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-              : "bg-gray-100 text-gray-400"
-          }`}>
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${activeEntry.onRoadStatus === 1
+            ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+            : "bg-gray-100 text-gray-400"
+            }`}>
             {activeEntry.onRoadStatus === 1 ? "On Road" : "Off Road"}
           </span>
         </div>
@@ -957,19 +956,61 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
 
       {/* ── Project Execution (Vehicle Cards with Driver Forms) ── */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+        {/* <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
           <div>
             <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">On Road</h3>
             <p className="text-sm text-gray-400 mt-0.5">
               {vehicles.length} booking item{vehicles.length > 1 ? "s" : ""} · {totalVehicles} total vehicles
             </p>
+
           </div>
+
+          <span>
+            <OrderReportPDF
+              order={order}
+              vehicleTypes={vehicleTypes}
+              gpsData={[]}
+            /></span>
+
           {totalOnRoad > 0 && (
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
               {totalOnRoad} On Road
             </span>
           )}
+
+
+
+        </div> */}
+
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+          {/* Left side */}
+          <div>
+            <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
+              On Road
+            </h3>
+            <p className="text-sm text-gray-400 mt-0.5">
+              {vehicles.length} booking item{vehicles.length > 1 ? "s" : ""} · {totalVehicles} total vehicles
+            </p>
+          </div>
+
+          {/* Right side */}
+          <div className="flex items-center gap-2">
+            <span>
+              <OrderReportPDF
+                order={order}
+                vehicleTypes={vehicleTypes}
+                gpsData={[]}
+              />
+            </span>
+
+            {totalOnRoad > 0 && (
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
+                {totalOnRoad} On Road
+              </span>
+            )}
+          </div>
         </div>
+
         <div className="p-4 space-y-3">
           {vehicles.map(({ item: vehicle, originalIdx }) => (
             <VehicleExecutionCard

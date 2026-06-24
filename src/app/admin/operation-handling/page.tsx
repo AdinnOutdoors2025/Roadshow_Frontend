@@ -90,7 +90,7 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
       date: d.toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
       time: d.toLocaleString("en-IN", { hour: "2-digit", minute: "2-digit" }),
     };
-  };
+  };  
  
   const { date, time } = fmtDate(order.projectCodeArray[0].savedAt);
   const custBadge =

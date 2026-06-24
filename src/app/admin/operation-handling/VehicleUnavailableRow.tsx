@@ -60,7 +60,7 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
 
 
     const handleMarkAvailable = async () => {
-        if (!availableReason.trim()) return toast.error("Resolution reason is required");
+        // if (!availableReason.trim()) return toast.error("Resolution reason is required");
         setAvailableSubmitting(true);
         try {
             const unavailableHistory = (order.onRoadUnavailableHistory || [])
@@ -424,6 +424,7 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
                                 <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
                                     Add a comment ·{" "}
                                     <span className="text-emerald-500">Resolution</span>
+                                     <span className="text-xs text-gray-400 font-normal ml-1">(Optional)</span>
                                 </p>
                                 <textarea
                                     className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-300"
@@ -468,7 +469,7 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
 
                                 <button
                                     onClick={handleMarkAvailable}
-                                    disabled={availableSubmitting || !availableReason.trim()}
+                                    // disabled={availableSubmitting || !availableReason.trim()}
                                     className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-40 transition-all"
                                 >
                                     {availableSubmitting ? "Processing..." : "Mark as Available"}

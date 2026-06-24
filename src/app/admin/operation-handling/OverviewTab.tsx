@@ -56,7 +56,7 @@ interface Order {
     customerCategory?: string;
 }
 
-export default function OverviewTab({ order, onRefresh, onStageMove ,vehicleTypes }: {
+export default function OverviewTab({ order, onRefresh, onStageMove, vehicleTypes }: {
     order: Order; onRefresh: () => Promise<void>;
     onStageMove: (order: Order, toStage: string) => void;
 }) {
@@ -70,25 +70,25 @@ export default function OverviewTab({ order, onRefresh, onStageMove ,vehicleType
     };
 
     const fmt = (n?: number | null) =>
-    n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
+        n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
 
-const fmtDatetime = (s?: string) =>
-    s
-        ? new Date(s).toLocaleString("en-IN", {
-            day: "2-digit", month: "short", year: "numeric",
-            hour: "2-digit", minute: "2-digit",
-        })
-        : "—";
+    const fmtDatetime = (s?: string) =>
+        s
+            ? new Date(s).toLocaleString("en-IN", {
+                day: "2-digit", month: "short", year: "numeric",
+                hour: "2-digit", minute: "2-digit",
+            })
+            : "—";
 
-const fmtRelative = (s?: string) => {
-    if (!s) return "";
-    const diff = Date.now() - new Date(s).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-};
+    const fmtRelative = (s?: string) => {
+        if (!s) return "";
+        const diff = Date.now() - new Date(s).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 60) return `${mins}m ago`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `${hrs}h ago`;
+        return `${Math.floor(hrs / 24)}d ago`;
+    };
 
     // useEffect(() => {
     //     fetchVehicleTypes()
