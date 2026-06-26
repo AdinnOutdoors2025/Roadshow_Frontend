@@ -420,7 +420,12 @@
 
 
 @media (min-width: 1024px) and (max-width: 1280px) {
- 
+    .RA_leftMain {
+        align-content: center;
+        width: 70%;
+        height: 78%;
+        /* border: 1px solid red; */
+    }
 }
 /* Laptops & Small Desktops (992px - 1024px)  ✅ Tablets (Landscape Mode) */
 @media (min-width: 992px) and (max-width: 1023px) {
