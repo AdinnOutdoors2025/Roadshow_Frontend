@@ -128,6 +128,25 @@ export const SALES_STAGE_MAP = Object.fromEntries(
   SALES_STAGES.map((s) => [s.key, s])
 );
 
+// ── File size limits ──────────────────────────────────────────────────────────
+const IMAGE_MIMES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const IMAGE_MAX_MB = 5;
+const DOC_MAX_MB = 10;
+
+const validateFileSize = (file: File): string | null => {
+  const isImage = IMAGE_MIMES.includes(file.type);
+  const maxMB = isImage ? IMAGE_MAX_MB : DOC_MAX_MB;
+  const fileMB = file.size / (1024 * 1024);
+  if (fileMB > maxMB) {
+    return isImage
+      ? `Image size ${fileMB.toFixed(2)} MB exceeds the ${IMAGE_MAX_MB} MB limit`
+      : `Document size ${fileMB.toFixed(2)} MB exceeds the ${DOC_MAX_MB} MB limit`;
+  }
+  return null;
+};
+
+
+
 // ── Formatters ────────────────────────────────────────────────────────────────
 const fmt = (n?: number | null) =>
   n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
@@ -277,7 +296,7 @@ function SalesStageColumn({
 
       </div>
 
- 
+
       <div className="flex flex-col gap-2 overflow-y-auto flex-1 pr-0.5 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
         {orders.map((order) => (
           <SalesOrderCard
@@ -307,7 +326,7 @@ export default function SalesPipelineBoard() {
   const [staffAdmins, setStaffAdmins] = useState<{ username: string }[]>([]);
   const [saving, setSaving] = useState(false);
 
- 
+
 
   const [closedWonWarningModal, setClosedWonWarningModal] = useState<SalesOrder | null>(null);
   const [pendingProjectCodeOrder, setPendingProjectCodeOrder] = useState<SalesOrder | null>(null);
@@ -438,114 +457,114 @@ export default function SalesPipelineBoard() {
   };
 
 
-const handleStageMove = (order: SalesOrder, toStage: string) => {
-  const fromStage = order.salesPipelineStatus;
+  const handleStageMove = (order: SalesOrder, toStage: string) => {
+    const fromStage = order.salesPipelineStatus;
 
-  if (!fromStage) {
-    toast.error("Invalid order stage. Please refresh.");
-    return;
-  }
-
- 
-  if (fromStage === "closedLost") {
-    toast.error("This order is closed lost and cannot be moved.");
-    return;
-  }
+    if (!fromStage) {
+      toast.error("Invalid order stage. Please refresh.");
+      return;
+    }
 
 
-  if (fromStage === "projectCodeCreation") {
-    if (toStage === "closedLost") {
-      const mailLogsCount = (order.projectMailLogs || []).length;
-      if (mailLogsCount > 0) {
-        toast.error(
-          "Mail already sent for this order. Cannot move to Closed Lost!"
-        );
+    if (fromStage === "closedLost") {
+      toast.error("This order is closed lost and cannot be moved.");
+      return;
+    }
+
+
+    if (fromStage === "projectCodeCreation") {
+      if (toStage === "closedLost") {
+        const mailLogsCount = (order.projectMailLogs || []).length;
+        if (mailLogsCount > 0) {
+          toast.error(
+            "Mail already sent for this order. Cannot move to Closed Lost!"
+          );
+          return;
+        }
+
+        setLostReason("");
+        setLostFile(null);
+        setLostError("");
+        setClosedLostModal(order);
         return;
       }
 
+      toast.error("Cannot move back from Project Code Creation stage!");
+      return;
+    }
+
+    const STAGE_ORDER_LIST = [
+      "enquiry",
+      "needAnalysis",
+      "proposalPriceQuote",
+      "negotiationReview",
+      "closedWon",
+      "projectCodeCreation",
+      "closedLost",
+    ];
+    const LOCKED_BACK_STAGES = ["enquiry", "needAnalysis"];
+    const fromIndex = STAGE_ORDER_LIST.indexOf(fromStage);
+    const toIndex = STAGE_ORDER_LIST.indexOf(toStage);
+
+    if (LOCKED_BACK_STAGES.includes(toStage) && toIndex < fromIndex) {
+      const stageLabel = toStage === "enquiry" ? "Enquiry" : "Need Analysis";
+      toast.error(`Cannot move back to the "${stageLabel}" stage!`);
+      return;
+    }
+
+    if (fromStage === "closedWon" && toStage !== "projectCodeCreation") {
+      toast.error("Closed Won order can only move to Project Code Creation.");
+      return;
+    }
+
+    if (toStage === "closedLost") {
       setLostReason("");
       setLostFile(null);
       setLostError("");
       setClosedLostModal(order);
       return;
     }
-    
-    toast.error("Cannot move back from Project Code Creation stage!");
-    return;
-  }
 
-  const STAGE_ORDER_LIST = [
-    "enquiry",
-    "needAnalysis",
-    "proposalPriceQuote",
-    "negotiationReview",
-    "closedWon",
-    "projectCodeCreation",
-    "closedLost",
-  ];
-  const LOCKED_BACK_STAGES = ["enquiry", "needAnalysis"];
-  const fromIndex = STAGE_ORDER_LIST.indexOf(fromStage);
-  const toIndex = STAGE_ORDER_LIST.indexOf(toStage);
-
-  if (LOCKED_BACK_STAGES.includes(toStage) && toIndex < fromIndex) {
-    const stageLabel = toStage === "enquiry" ? "Enquiry" : "Need Analysis";
-    toast.error(`Cannot move back to the "${stageLabel}" stage!`);
-    return;
-  }
-
-  if (fromStage === "closedWon" && toStage !== "projectCodeCreation") {
-    toast.error("Closed Won order can only move to Project Code Creation.");
-    return;
-  }
-
-  if (toStage === "closedLost") {
-    setLostReason("");
-    setLostFile(null);
-    setLostError("");
-    setClosedLostModal(order);
-    return;
-  }
-
-  if (toStage === "needAnalysis" && !order.salesHandlerName) {
-    if (currentUserIsAdmin === 0) {
-      commitMove(order, "needAnalysis");
+    if (toStage === "needAnalysis" && !order.salesHandlerName) {
+      if (currentUserIsAdmin === 0) {
+        commitMove(order, "needAnalysis");
+        return;
+      }
+      setHandlerName("");
+      setHandlerError("");
+      setHandlerModal(order);
       return;
     }
-    setHandlerName("");
-    setHandlerError("");
-    setHandlerModal(order);
-    return;
-  }
 
-  if (!order.salesHandlerName && fromStage === "enquiry") {
-    toast.error("Please move to Need Analysis first before proceeding!");
-    return;
-  }
+    if (!order.salesHandlerName && fromStage === "enquiry") {
+      toast.error("Please move to Need Analysis first before proceeding!");
+      return;
+    }
 
-  if (toStage === "closedWon") {
-    setPoFile(null);
-    setPoNotes("");
-    setPoError("");
-    setClosedWonModal(order);
-    return;
-  }
+    if (toStage === "closedWon") {
+      setPoFile(null);
+      setPoNotes("");
+      setPoError("");
+      setClosedWonModal(order);
+      return;
+    }
 
-  if (
-    toStage === "projectCodeCreation" &&
-    ["needAnalysis", "proposalPriceQuote", "negotiationReview"].includes(fromStage)
-  ) {
-    setPendingProjectCodeOrder(order);
-    setClosedWonWarningModal(order);
-    return;
-  }
+    if (
+      toStage === "projectCodeCreation" &&
+      ["needAnalysis", "proposalPriceQuote", "negotiationReview"].includes(fromStage)
+    ) {
+      setPendingProjectCodeOrder(order);
+      setClosedWonWarningModal(order);
+      return;
+    }
 
-  if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
+    if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
+      commitMove(order, toStage);
+      return;
+    }
+
     commitMove(order, toStage);
-    return;
-  }
-
-  commitMove(order, toStage);
-};
+  };
 
 
   const submitHandlerModal = async () => {
@@ -749,7 +768,7 @@ const handleStageMove = (order: SalesOrder, toStage: string) => {
                   ))}
                 </select>
 
-               
+
               </div>
             ) : (
               <div className="mb-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2.5">
@@ -807,7 +826,14 @@ const handleStageMove = (order: SalesOrder, toStage: string) => {
               <input
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => setPoFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  const f = e.target.files?.[0] || null;
+                  if (f) {
+                    const err = validateFileSize(f);
+                    if (err) { toast.error(err); e.target.value = ""; return; }
+                  }
+                  setPoFile(f);
+                }}
                 className="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 file:font-medium hover:file:bg-green-100 transition-all"
               />
             </div>
@@ -856,7 +882,7 @@ const handleStageMove = (order: SalesOrder, toStage: string) => {
       )}
 
 
-     
+
       {closedWonWarningModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6">
@@ -939,7 +965,14 @@ const handleStageMove = (order: SalesOrder, toStage: string) => {
               <input
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => setLostFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  const f = e.target.files?.[0] || null;
+                  if (f) {
+                    const err = validateFileSize(f);
+                    if (err) { toast.error(err); e.target.value = ""; return; }
+                  }
+                  setLostFile(f);
+                }}
                 className="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-rose-50 file:text-rose-700 file:font-medium hover:file:bg-rose-100 transition-all"
               />
             </div>

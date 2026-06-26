@@ -34,9 +34,10 @@ const S = {
   reportMeta: { textAlign: "right" as const },
   reportTitle: { fontSize: "16px", fontWeight: 700, color: "#1e3a5f" } as React.CSSProperties,
   reportSub: { fontSize: "13px", color: "#9ca3af", marginTop: "2px" } as React.CSSProperties,
-  codeBadge: { display: "inline-block", background: "#eff6ff", color: "#1d4ed8", fontFamily: "monospace", fontSize: "12px", fontWeight: 700, paddingBottom:"10px", paddingLeft:"10px",paddingRight:"10px", borderRadius: "6px", border: "1px solid #bfdbfe", marginTop: "10px" } as React.CSSProperties,
+  codeBadge: { display: "inline-block", background: "#eff6ff", color: "#1d4ed8", fontFamily: "monospace", fontSize: "12px", fontWeight: 700, paddingBottom: "10px", paddingLeft: "10px", paddingRight: "10px", borderRadius: "6px", border: "1px solid #bfdbfe", marginTop: "10px" } as React.CSSProperties,
 
-  section: { marginBottom: "22px" } as React.CSSProperties,
+  // section: { marginBottom: "22px" } as React.CSSProperties,
+  section: { marginBottom: "22px", pageBreakInside: "avoid", breakInside: "avoid" } as React.CSSProperties,
   sectionTitleBase: { display: "flex", alignItems: "center", gap: "8px", fontSize: "11px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.8px", color: "#fff", padding: "8px 14px", borderRadius: "8px 8px 0 0" } as React.CSSProperties,
   sectionBody: { border: "1px solid #e5e7eb", borderTop: "none", borderRadius: "0 0 8px 8px", padding: "14px" } as React.CSSProperties,
 
@@ -54,7 +55,8 @@ const S = {
 
   divider: { border: "none", borderTop: "1px solid #e5e7eb", margin: "12px 0" } as React.CSSProperties,
 
-  vehicleCard: { border: "1px solid #e5e7eb", borderRadius: "8px", marginBottom: "12px", overflow: "hidden" } as React.CSSProperties,
+  // vehicleCard: { border: "1px solid #e5e7eb", borderRadius: "8px", marginBottom: "12px", overflow: "hidden" } as React.CSSProperties,
+  vehicleCard: { border: "1px solid #e5e7eb", borderRadius: "8px", marginBottom: "12px", overflow: "hidden", pageBreakInside: "avoid", breakInside: "avoid" } as React.CSSProperties,
   vehicleCardHeader: { background: "#f0f9ff", padding: "8px 12px", borderBottom: "1px solid #bae6fd", display: "flex", alignItems: "center", justifyContent: "space-between" } as React.CSSProperties,
   vehicleCardTitle: { fontWeight: 700, fontSize: "12px", color: "#075985" } as React.CSSProperties,
   vehicleCardBody: { padding: "12px" } as React.CSSProperties,
@@ -65,7 +67,7 @@ const S = {
   statSub: { fontSize: "9.5px", color: "#6b7280", marginTop: "2px" } as React.CSSProperties,
 
   timelineItem: { display: "flex", gap: "12px", marginBottom: "10px" } as React.CSSProperties,
-  timelineDot: { width: "28px", height: "28px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: 800, color: "#fff", flexShrink: 0, marginTop: "1px" , paddingBottom:"10px" } as React.CSSProperties,
+  timelineDot: { width: "28px", height: "28px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: 800, color: "#fff", flexShrink: 0, marginTop: "1px", paddingBottom: "10px" } as React.CSSProperties,
   timelineContent: { flex: 1, background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "8px 12px", marginBottom: "2px" } as React.CSSProperties,
   timelineStage: { fontSize: "11px", fontWeight: 700, color: "#111827" } as React.CSSProperties,
   timelineMeta: { fontSize: "10px", color: "#9ca3af", marginTop: "2px" } as React.CSSProperties,
@@ -135,6 +137,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
         scrollY: 0,
       });
 
+
       const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: "a4" });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -143,22 +146,85 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
       const ratio = pdfWidth / canvasWidth;
       const sliceHeight = Math.floor(pdfHeight / ratio);
 
+
+      const avoidBreakEls = content.querySelectorAll<HTMLElement>("[data-avoid-break]");
+      const contentRect = content.getBoundingClientRect();
+      const scale = canvas.width / content.offsetWidth;
+
+     
+
+      const getSmartBreaks = () => {
+        const breaks: number[] = [];
+        let y = sliceHeight;
+        const maxIterations = 200;
+        let iterations = 0;
+
+        while (y < canvasHeight && iterations < maxIterations) {
+          iterations++;
+          let nudge = 0;
+
+          avoidBreakEls.forEach((el) => {
+            const r = el.getBoundingClientRect();
+            const elTop = (r.top - contentRect.top) * scale;
+            const elBot = (r.bottom - contentRect.top) * scale;
+            const elHeight = elBot - elTop;
+
+            if (elHeight >= sliceHeight) return;
+            if (y > elTop && y < elBot) {
+              nudge = Math.max(nudge, y - elTop);
+            }
+          });
+
+
+          const proposedBreak = nudge > 0 ? y - nudge : y;
+          const safeBreak = proposedBreak > (breaks[breaks.length - 1] ?? 0) + 20
+            ? proposedBreak
+            : y;
+
+          breaks.push(safeBreak);
+          y = safeBreak + sliceHeight;
+        }
+        return breaks;
+      };
+
+      const pageBreaks = getSmartBreaks();
+      const allBreaks = [...pageBreaks, canvasHeight];
       let yOffset = 0;
       let pageNum = 0;
 
-      while (yOffset < canvasHeight) {
+   
+
+      const topPaddingPx = 40;
+
+      for (const breakY of allBreaks) {
+        const height = Math.min(breakY - yOffset, canvasHeight - yOffset);
+        if (height <= 0) continue;
         if (pageNum > 0) pdf.addPage();
+
+        const isFirstPage = pageNum === 0;
+        const extraTop = isFirstPage ? 0 : topPaddingPx;
+
         const pageCanvas = document.createElement("canvas");
         pageCanvas.width = canvasWidth;
-        pageCanvas.height = Math.min(sliceHeight, canvasHeight - yOffset);
+        pageCanvas.height = height + extraTop;
+
         const ctx = pageCanvas.getContext("2d");
         if (ctx) {
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          ctx.drawImage(canvas, 0, yOffset, canvasWidth, pageCanvas.height, 0, 0, canvasWidth, pageCanvas.height);
+
+          ctx.drawImage(canvas, 0, yOffset, canvasWidth, height, 0, extraTop, canvasWidth, height);
         }
-        pdf.addImage(pageCanvas.toDataURL("image/png"), "PNG", 0, 0, pdfWidth, pageCanvas.height * ratio);
-        yOffset += sliceHeight;
+
+        pdf.addImage(
+          pageCanvas.toDataURL("image/png"),
+          "PNG",
+          0, 0,
+          pdfWidth,
+          pageCanvas.height * ratio
+        );
+
+        yOffset = breakY;
         pageNum++;
       }
 
@@ -198,11 +264,11 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
           {/* ══ HEADER ══ */}
           <div style={S.header}>
             <div>
-               <img
-                    src="/images/logo.png"
-                    alt="Adinn Logo"
-                    className="h-12 object-contain"
-                  />
+              <img
+                src="/images/logo.png"
+                alt="Adinn Logo"
+                className="h-12 object-contain"
+              />
               {/* <div style={S.brandName}>Adinn Outdoors</div>
               <div style={S.brandSub}>RoadshowAdinn — Operations Report</div> */}
             </div>
@@ -278,7 +344,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
             <SectionTitle bg="#0f766e">Booking Items & Pricing</SectionTitle>
             <div style={S.sectionBody}>
               {order.bookingItems.map((item: any, idx: number) => (
-                <div key={idx} style={S.vehicleCard}>
+                <div key={idx} style={S.vehicleCard} data-avoid-break="true">
                   <div style={S.vehicleCardHeader}>
                     <div style={S.vehicleCardTitle}>
                       Vehicle {idx + 1} — {getVehicleTypeName(item.vehicleType, vehicleTypes)}
@@ -287,24 +353,11 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                   </div>
                   <div style={S.vehicleCardBody}>
                     <div style={{ ...S.grid3, marginBottom: 10 }}>
-                      {/* {([
-                        ["Campaign", item.campaignType === "Other" ? item.otherCampaignType : item.campaignType],
-                        ["Duration", `${fmtDate(item.fromDate)} → ${fmtDate(item.toDate)}`],
-                        ["Total Days", `${item.totalDays}D${item.extraDays > 0 ? ` + ${item.extraDays}D` : ""}`],
-                        ["Route", `${item.fromLocation} → ${item.toLocation}`],
-                        ["City / State", `${item.city || ""} / ${item.state || ""}`],
-                        ["Quantity", `${item.quantity} Vehicle${item.quantity > 1 ? "s" : ""}`],
-                          item.extraKm > 0 ? ["Extra KM", `${item.extraKm || ""} km`] : "",
-                           item.extraHours > 0 ? ["Extra Hours", `${item.extraHours || ""} hours `] : "",
-                        item.needPromoter ? ["Promoter", `${item.promoterType === "Other" ? item.otherPromoterType : item.promoterType} · ${item.promoterGender} · ${item.promoterLanguage} · Qty ${item.promoterQuantity}`] : null,
-                      ] as [string, string][]).map(([l, v], i) => (
-                        <div key={i}>
-                          <div style={S.fieldLabel}>{l}</div>
-                          <div style={{ ...S.fieldValue, fontSize: "11px" }}>{v}</div>
-                        </div>
-                      ))} */}
+                    
                       {([
-                        ["Campaign", item.campaignType === "Other"
+                        ["Campaign Name", item.campaignName],
+
+                        ["Campaign Type", item.campaignType === "Other"
                           ? item.otherCampaignType
                           : item.campaignType],
 
@@ -372,7 +425,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                             <td style={S.tdRight}>{fmt(item.extraKmCost)}</td>
                           </tr>
                         )}
-                          {(item.extraHourCost ?? 0) > 0 && (
+                        {(item.extraHourCost ?? 0) > 0 && (
                           <tr>
                             <td style={S.td}>Extra Hours ({item.extraHours}hrs × ₹{item.additionalHourCharges})</td>
                             <td style={S.tdRight}>{fmt(item.extraHourCost)}</td>
@@ -419,61 +472,6 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
               <SectionTitle bg="#0284c7">Execution — Driver HISTORY</SectionTitle>
               <div style={S.sectionBody}>
 
-                {/* {gpsData.length > 0 && (
-                  <>
-                    <div style={{ ...S.fieldLabel, marginBottom: 8 }}>Live GPS Summary</div>
-                    <div style={{ ...S.grid4, marginBottom: 16 }}>
-                      {[
-                        { label: "Total Vehicles", value: driverEntries.length, color: "#111827", sub: "" },
-                        { label: "On Road", value: driverEntries.filter((e: any) => e.onRoadStatus === 1).length, color: "#16a34a", sub: "" },
-                        { label: "Ignition ON", value: gpsData.filter((g: any) => g.ignitionStatus === "ON").length, color: "#2563eb", sub: "" },
-                        { label: "Total KM", value: gpsData.reduce((s: number, g: any) => s + (g.distanceCovered || 0), 0).toFixed(1), color: "#111827", sub: "km covered" },
-                      ].map((s, i) => (
-                        <div key={i} style={S.statCard}>
-                          <div style={S.statLabel}>{s.label}</div>
-                          <div style={{ ...S.statValue, color: s.color }}>{s.value}</div>
-                          {s.sub && <div style={S.statSub}>{s.sub}</div>}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )} */}
-
-                {/* <table style={S.table}>
-                  <thead>
-                    <tr>
-                      {["#", "Vehicle", "Driver", "Phone", "Reg. No", "Status", "GPS", "KM", "Last Seen"].map(h => (
-                        <th key={h} style={S.th}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {driverEntries.map((entry: any, i: number) => {
-                      const gps = gpsData.find((g: any) => g.vehicleId === entry.vehicleRegistrationNumber);
-                      const bookingItem = order.bookingItems[entry.vehicleIndex];
-                      return (
-                        <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
-                          <td style={S.td}>{i + 1}</td>
-                          <td style={S.td}>{getVehicleTypeName(bookingItem?.vehicleType, vehicleTypes)}</td>
-                          <td style={{ ...S.td, fontWeight: 700 }}>{entry.driverName}</td>
-                          <td style={S.td}>{entry.driverPhone}</td>
-                          <td style={{ ...S.td, fontFamily: "monospace" }}>{entry.vehicleRegistrationNumber}</td>
-                          <td style={S.td}><Badge color={entry.onRoadStatus === 1 ? "green" : "gray"}>{entry.onRoadStatus === 1 ? "On Road" : "Off Road"}</Badge></td>
-                          <td style={S.td}><Badge color={gps?.ignitionStatus === "ON" ? "green" : "red"}>{gps?.ignitionStatus || "—"}</Badge></td>
-                          <td style={S.td}>{gps ? `${(gps.distanceCovered || 0).toFixed(2)} km` : "—"}</td>
-                          <td style={{ ...S.td, fontSize: "10px" }}>
-                            {gps?.lastComunicationTime
-                              ? new Date(gps.lastComunicationTime).toLocaleString("en-IN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
-                              : "—"}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table> */}
-
-
-
                 {driverHistory.length > 0 && (
                   <>
                     {/* <hr style={S.divider} /> */}
@@ -481,14 +479,14 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                       Driver Change History ({driverHistory.length} records)
                     </div>
 
-                   
+
                     {order.bookingItems.map((bookingItem: any, bIdx: number) => {
                       const entriesForBooking = driverEntries.filter((e: any) => e.vehicleIndex === bIdx);
                       const historyForBooking = driverHistory.filter((h: any) => h.vehicleIndex === bIdx);
                       if (historyForBooking.length === 0) return null;
 
                       return (
-                        <div key={bIdx} style={{ marginBottom: 16 }}>
+                        <div key={bIdx} data-avoid-break="true" style={{ marginBottom: 16 }}>
                           {/* Booking item header */}
                           <div style={{
                             display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
@@ -526,7 +524,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
 
 
 
-                         
+
                           {entriesForBooking.map((entry: any, eIdx: number) => {
                             const regHistory = [...historyForBooking].reverse().filter((h: any) =>
                               h.vehicleRegistrationNumber === entry.vehicleRegistrationNumber ||
@@ -536,13 +534,13 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                             if (regHistory.length === 0) return null;
 
                             return (
-                              <div key={eIdx} style={{
+                              <div key={eIdx} data-avoid-break="true" style={{
                                 marginBottom: 12,
                                 border: "1px solid #e0f2fe",
                                 borderRadius: "8px",
                                 overflow: "hidden",
                               }}>
-                               
+
                                 {/* Reg No header — full card header */}
                                 <div style={{
                                   display: "flex", alignItems: "center", gap: 10,
@@ -708,19 +706,19 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                 <SectionTitle bg="#6d28d9">Comments History ({allComments.length} comments)</SectionTitle>
                 <div style={S.sectionBody}>
                   {allComments.map((c: any, i: number) => (
-                    <div key={i} style={{
+                    <div key={i} data-avoid-break="true" style={{
                       display: "flex", gap: 10, padding: "10px 0",
                       borderBottom: i < allComments.length - 1 ? "1px solid #f3f4f6" : "none"
                     }}>
-                     
+
                       <div style={{
                         width: 32, height: 32, borderRadius: "50%", background: "#4f46e5",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: "11px", fontWeight: 800, color: "#fff", flexShrink: 0, paddingBottom:"10px"
+                        fontSize: "11px", fontWeight: 800, color: "#fff", flexShrink: 0, paddingBottom: "10px"
                       }}>
                         {(c.by || "?").charAt(0).toUpperCase()}
                       </div>
-                    
+
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
                           <span style={{ fontSize: "11px", fontWeight: 700, color: "#111827" }}>{c.by}</span>
@@ -756,7 +754,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
               ) : (
                 <div>
                   {pipelineLogs.map((log: any, i: number) => (
-                    <div key={i} style={S.timelineItem}>
+                    <div key={i} style={S.timelineItem} data-avoid-break="true">
                       <div style={{ ...S.timelineDot, background: "#7c3aed" }}>{i + 1}</div>
                       <div style={S.timelineContent}>
                         <div style={S.timelineStage}>
@@ -788,7 +786,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
               <SectionTitle bg="#dc2626">Vehicle Unavailable History ({unavailHistory.length} records)</SectionTitle>
               <div style={S.sectionBody}>
                 {[...unavailHistory].reverse().map((h: any, i: number) => (
-                  <div key={i} style={h.status === "unavailable" ? S.unavailCard : S.availCard}>
+                  <div key={i} data-avoid-break="true" style={h.status === "unavailable" ? S.unavailCard : S.availCard}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                       <div>
                         <span style={{ fontWeight: 700, fontSize: "12px" }}>
@@ -818,10 +816,10 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
 
           {/* ══ SECTION 6: ISSUES ══ */}
           {allIssues.length > 0 && (
-            <div style={S.section}>
+            <div data-avoid-break="true" style={S.section}>
               <SectionTitle bg="#d97706">Issue / Escalation History ({allIssues.length} total)</SectionTitle>
               <div style={S.sectionBody}>
-                <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+                <div data-avoid-break="true" style={{ display: "flex", gap: 12, marginBottom: 14 }}>
                   {[
                     { label: "Issue", value: allIssues.filter((i: any) => i.status === "open").length, color: "#dc2626" },
                     { label: "Resolved", value: allIssues.filter((i: any) => i.status === "resolved").length, color: "#16a34a" },
@@ -834,7 +832,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                   ))}
                 </div>
                 {[...allIssues].reverse().map((iss: any, i: number) => (
-                  <div key={i} style={iss.status === "open" ? S.issueCardOpen : S.issueCardResolved}>
+                  <div key={i} data-avoid-break="true" style={iss.status === "open" ? S.issueCardOpen : S.issueCardResolved}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div style={{ fontSize: "11px", fontWeight: 700, color: iss.status === "open" ? "#c2410c" : "#15803d" }}>
                         {iss.driverName} — <span style={{ fontFamily: "monospace" }}>{iss.vehicleRegNo}</span>

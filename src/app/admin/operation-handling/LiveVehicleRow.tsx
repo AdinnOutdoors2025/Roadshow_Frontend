@@ -24,7 +24,7 @@ import { useVehicle } from "../../../context/vehicletypecontext";
 
 
 
-export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTrackIdFetched, correctVehicleIndex, forceOpen, onForceOpenHandled }) {
+export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTrackIdFetched, correctVehicleIndex, forceOpen, onForceOpenHandled,onViewDriverRoute  }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [commentPhoto, setCommentPhoto] = useState(null);
@@ -167,6 +167,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
     }
 
     onTrackIdFetched(entry.vehicleRegistrationNumber);
+     onViewDriverRoute?.(entry.vehicleRegistrationNumber);
   };
 
   const handleMarkUnavailable = async () => {

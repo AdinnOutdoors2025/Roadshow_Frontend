@@ -364,7 +364,7 @@ export default function CodeCreationTab({
                   </label>
                   <input
                     value={to}
-                    placeholder="adinn@gmail.com"
+                    placeholder="adinn@gmail.com,adinn1@gmail.com"
                     onChange={(e) => {
                       setTo(e.target.value);
                       if (!e.target.value.trim()) {
@@ -392,7 +392,7 @@ export default function CodeCreationTab({
                   </label>
                   <input
                     value={cc}
-                    placeholder="adinn1@gmail.com"
+                    placeholder="adinn1@gmail.com,adinn2@gmail.com"
                     onChange={(e) => {
                       setCc(e.target.value);
                       if (!e.target.value.trim()) {

@@ -12,6 +12,7 @@ import API_BASE from "../../../../baseurl";
 import DatePicker from "@/components/form/date-picker";
 import { languages } from "../../utils/collection.json";
 import CitySelect from "./cityselect";
+import { toast, Toaster } from "react-hot-toast";
 
 interface PackageOption {
   _id: string;
@@ -37,6 +38,7 @@ interface Props {
 
 
 const uid = () => Math.random().toString(36).slice(2, 9);
+
 
 const BOOKING_FOR_OPTIONS = ["Individual Customer", "Agency"];
 const PROMOTER_TYPE_OPTIONS = ["Brand Promotion", "Election Campaign", "Other"];
@@ -254,7 +256,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [packageslist, setPackageslist] = useState<PackageOption[]>([]);
   const [campaignTypes, setCampaignTypes] = useState<{ _id: string, name: string }[]>([]);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
-  console.log("selectedPackage", selectedPackage)
+
 
   const [editablePackage, setEditablePackage] = useState<Record<string, string>>({});
   const [savingPkg, setSavingPkg] = useState(false);
@@ -268,10 +270,27 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [addCityLoading, setAddCityLoading] = useState(false);
   const [addCityError, setAddCityError] = useState("");
 
-  console.log("locationData", locationData)
+
 
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
+
+
+
+  
+const IMAGE_MAX_MB = 5;
+const VIDEO_MAX_MB = 50;
+
+const validateFileSize = (file: File): string | null => {
+  const isVideo = file.type.startsWith("video/");
+  const fileMB = file.size / (1024 * 1024);
+  if (isVideo && fileMB > VIDEO_MAX_MB)
+    return `Video upload only 50 MB allowed. "${file.name}" is ${fileMB.toFixed(2)} MB`;
+  if (!isVideo && fileMB > IMAGE_MAX_MB)
+    return `Image upload only 5 MB allowed. "${file.name}" is ${fileMB.toFixed(2)} MB`;
+  return null;
+};
+
 
 
   useEffect(() => {
@@ -760,6 +779,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
   };
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-2">
+        <Toaster position="top-right" />
       <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
 
 
@@ -1320,7 +1340,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
 
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                Campaign Images <span className="text-gray-400">(max 10)</span>
+                Campaign Images <span className="text-gray-400">(max 5MB)</span>
               </label>
               <label className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 py-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors">
                 <HiOutlinePlus className="h-4 w-4 text-gray-400" />
@@ -1330,8 +1350,14 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                   accept="image/*"
                   multiple
                   className="hidden"
-                  onChange={(e) => {
+                 onChange={(e) => {
                     const files = Array.from(e.target.files || []);
+                    const invalid = files.find(f => validateFileSize(f));
+                    if (invalid) {
+                      toast.error(validateFileSize(invalid)!);
+                      e.target.value = "";
+                      return;
+                    }
                     set("campaignImages", [...form.campaignImages, ...files].slice(0, 10) as any);
                     e.target.value = "";
                   }}
@@ -1370,7 +1396,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
 
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                Campaign Videos <span className="text-gray-400">(max 5)</span>
+                Campaign Videos <span className="text-gray-400">(max 50MB)</span>
               </label>
               <label className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 py-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors">
                 <HiOutlinePlus className="h-4 w-4 text-gray-400" />
@@ -1380,8 +1406,14 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                   accept="video/*"
                   multiple
                   className="hidden"
-                  onChange={(e) => {
+                onChange={(e) => {
                     const files = Array.from(e.target.files || []);
+                    const invalid = files.find(f => validateFileSize(f));
+                    if (invalid) {
+                      toast.error(validateFileSize(invalid)!);
+                      e.target.value = "";
+                      return;
+                    }
                     set("campaignVideos", [...form.campaignVideos, ...files].slice(0, 5) as any);
                     e.target.value = "";
                   }}

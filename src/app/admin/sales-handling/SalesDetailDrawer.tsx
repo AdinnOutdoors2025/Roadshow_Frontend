@@ -29,6 +29,25 @@ import {
 import CodeCreationTab from "./CodeCreationTab";
 
 
+// ── File size limits ──────────────────────────────────────────────────────────
+const IMAGE_MIMES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const IMAGE_MAX_MB = 5;
+const DOC_MAX_MB = 10;
+
+const validateFileSize = (file: File): string | null => {
+  const isImage = IMAGE_MIMES.includes(file.type);
+  const maxMB = isImage ? IMAGE_MAX_MB : DOC_MAX_MB;
+  const fileMB = file.size / (1024 * 1024);
+  if (fileMB > maxMB) {
+    return isImage
+      ? `Image size ${fileMB.toFixed(2)} MB exceeds the ${IMAGE_MAX_MB} MB limit`
+      : `Document size ${fileMB.toFixed(2)} MB exceeds the ${DOC_MAX_MB} MB limit`;
+  }
+  return null;
+};
+
+
+
 // ── Formatters ────────────────────────────────────────────────────────────────
 const fmt = (n?: number | null) =>
   n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
@@ -159,10 +178,20 @@ function DragDropFile({ file, onFile, onRemove, accept = ".pdf,.jpg,.jpeg,.png",
   const [dragging, setDragging] = useState(false);
   const ext = file?.name.split(".").pop()?.toLowerCase();
 
+  // const onDrop = useCallback((e: React.DragEvent) => {
+  //   e.preventDefault(); setDragging(false);
+  //   const f = e.dataTransfer.files?.[0];
+  //   if (f) onFile(f);
+  // }, [onFile]);
+
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragging(false);
     const f = e.dataTransfer.files?.[0];
-    if (f) onFile(f);
+    if (f) {
+      const err = validateFileSize(f);
+      if (err) { toast.error(err); return; }
+      onFile(f);
+    }
   }, [onFile]);
 
   return !file ? (
@@ -173,7 +202,15 @@ function DragDropFile({ file, onFile, onRemove, accept = ".pdf,.jpg,.jpeg,.png",
       <p className="text-xs text-gray-400">{label || "Click or drag to upload"}</p>
       <p className="text-[10px] text-gray-300 mt-0.5">PDF, JPG, PNG</p>
       <input ref={ref} type="file" accept={accept} className="hidden"
-        onChange={(e) => onFile(e.target.files?.[0] || null)} />
+        // onChange={(e) => onFile(e.target.files?.[0] || null)} />
+        onChange={(e) => {
+          const f = e.target.files?.[0] || null;
+          if (f) {
+            const err = validateFileSize(f);
+            if (err) { toast.error(err); e.target.value = ""; return; }
+          }
+          onFile(f);
+        }} />
     </label>
   ) : (
     <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200">
@@ -997,7 +1034,14 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
                 className="hidden"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+              onChange={(e) => {
+                const f = e.target.files?.[0] || null;
+                if (f) {
+                  const err = validateFileSize(f);
+                  if (err) { toast.error(err); e.target.value = ""; return; }
+                }
+                setFile(f);
+              }}
               />
             </label>
             {file && (
@@ -1076,7 +1120,9 @@ function DocumentsTab({
   const [showPoForm, setShowPoForm] = useState(false);
 
   const handlePoUpload = async () => {
-    if (!poFile) { toast.error("Please select a PO document"); return; }
+  if (!poFile) { toast.error("Please select a PO document"); return; }
+    const sizeErr = validateFileSize(poFile);
+    if (sizeErr) { toast.error(sizeErr); return; }
     setPoSaving(true);
     try {
       const token = getToken();

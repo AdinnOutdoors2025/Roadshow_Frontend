@@ -15,7 +15,9 @@ import {
   FileText, Shield,
   RefreshCw,
   Loader2,
+  MapPinIcon,
 } from "lucide-react";
+import { FaLocationDot } from "react-icons/fa6";
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 import { useVehicle } from "../../../context/vehicletypecontext";
@@ -58,7 +60,7 @@ const getImageUrl = (url) => {
 
 
 
-function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, gpsData, gpsLoading, onRefreshGps }) {
+function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, gpsData, gpsLoading, onRefreshGps, driverLocations }) {
   const [open, setOpen] = useState(false);
   const [activeDriverTab, setActiveDriverTab] = useState(0);
   const [toggling, setToggling] = useState(false);
@@ -68,6 +70,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const [routeLoading, setRouteLoading] = useState(false);
   const [kmPage, setKmPage] = useState(0);
   const [liveTab, setLiveTab] = useState<"status" | "history">("status");
+  const [selectedVehicleRegNo, setSelectedVehicleRegNo] = useState<string | null>(null);
 
   const fetchRouteTrackId = async (vehicleRegNo: string) => {
     setRouteLoading(true);
@@ -474,6 +477,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                         correctVehicleIndex={vehicleIndex}
                         forceOpen={activeIssueEntryId === entry.vehicleRegistrationNumber}
                         onForceOpenHandled={() => setActiveIssueEntryId(null)}
+                        onViewDriverRoute={(regNo) => setSelectedVehicleRegNo(regNo)}
                       />
                     ))}
                     {vehicleEntries.length === 0 && (
@@ -495,11 +499,16 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
 
+
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                 <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
                   Today's route progress
                 </h3>
-
+                {selectedVehicleRegNo && (
+                  <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+                    {selectedVehicleRegNo}
+                  </span>
+                )}
               </div>
 
               Flow Summary:
@@ -539,63 +548,72 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   </div>
                 )}
               </div>
-              <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                {[
-                  { label: "Anna Nagar", time: "09:00 AM – 10:30 AM", status: "completed" },
-                  { label: "T Nagar", time: "10:45 AM – 01:00 PM", status: "inprogress" },
-                  { label: "Velachery", time: "02:00 PM – 03:30 PM", status: "pending" },
-                  { label: "Adyar", time: "04:00 PM – 06:00 PM", status: "pending" },
-                ].map((stop, i) => (
-                  <div key={i} className="flex items-center gap-3 px-4 py-3">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${stop.status === "completed" ? "bg-blue-500" :
-                      stop.status === "inprogress" ? "bg-amber-400" : "bg-gray-300"
-                      }`}>
-                      <span className="text-xs text-white font-semibold">{i + 1}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">{stop.label}</p>
-                      <p className="text-xs text-gray-400">{stop.time}</p>
-                    </div>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${stop.status === "completed"
-                      ? "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
-                      : stop.status === "inprogress"
-                        ? "bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
-                        : "bg-gray-100 text-gray-400 border border-gray-200 dark:bg-gray-800 dark:border-gray-700"
-                      }`}>
-                      {stop.status === "completed" ? "Completed" : stop.status === "inprogress" ? "In progress" : "Pending"}
-                    </span>
-                  </div>
-                ))}
+             
+              <div className="divide-y-0">
+                {(() => {
+                  const regNo = selectedVehicleRegNo || vehicleEntries[0]?.vehicleRegistrationNumber;
+                  const locations = driverLocations[regNo] || [];
+
+                  if (locations.length === 0) {
+                    return (
+                      <div className="p-6 text-center text-gray-400 text-sm">
+                        No location history found
+                      </div>
+                    );
+                  }
+
+                  return locations.map((loc, i) => {
+                    const isLast = i === locations.length - 1;
+                    const status = isLast ? "inprogress" : "completed";
+                    const shortAddress = loc.address?.split(",").slice(0, 2).join(", ") || "Unknown";
+                    const time = new Date(loc.updatedAt).toLocaleTimeString("en-IN", {
+                      hour: "2-digit", minute: "2-digit", hour12: true,
+                    });
+
+                    return (
+                      <div key={loc._id} className="flex items-start gap-3 px-4 py-3 relative">
+                        {/* Left: icon + vertical line */}
+                        <div className="flex flex-col items-center flex-shrink-0">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${status === "completed"
+                              ? "bg-emerald-500"
+                              : "bg-amber-400"
+                            }`}>
+                            {status === "completed"
+                              ? <FaLocationDot size={15} className="text-white fill-white" />
+                              : <Navigation size={15} className="text-white" />
+                            }
+                          </div>
+
+                          {/* vertical connector — hidden on last item */}
+                          {i < locations.length - 1 && (
+                            <div className="w-0.5 bg-gray-200 dark:bg-gray-700 flex-1 min-h-[20px] mt-1" />
+                          )}
+                        </div>
+
+                        {/* Right: text + badge */}
+                        <div className="flex-1 min-w-0 flex items-start justify-between gap-2 pt-1">
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-400">{time}</p>
+                            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate">
+                              {shortAddress}
+                            </p>
+                          </div>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${status === "completed"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
+                              : "bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400"
+                            }`}>
+                            {status === "completed" ? "Visited" : "Current"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
+
             </div>
 
-            {/* ── Col 3: Timeline ── */}
-            {/* <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Timeline / activity feed</h3>
-                <button className="text-xs text-blue-500 hover:underline">View all</button>
-              </div>
-              <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                {[
-                  { icon: Truck, bg: "bg-blue-50 dark:bg-blue-900/20", color: "text-blue-500", text: "Vehicle 01 started route from depot", time: "10:05 AM" },
-                  { icon: MapPin, bg: "bg-emerald-50 dark:bg-emerald-900/20", color: "text-emerald-500", text: "Anna Nagar route completed", time: "10:30 AM" },
-                  { icon: Activity, bg: "bg-purple-50 dark:bg-purple-900/20", color: "text-purple-500", text: "T Nagar route 50% completed", time: "11:20 AM" },
-                  { icon: Camera, bg: "bg-amber-50 dark:bg-amber-900/20", color: "text-amber-500", text: "14 photos uploaded by field team", time: "12:10 PM" },
-                  { icon: AlertTriangle, bg: "bg-red-50 dark:bg-red-900/20", color: "text-red-500", text: "Vehicle 03 GPS offline issue reported", time: "01:30 PM" },
-                  { icon: Users, bg: "bg-amber-50 dark:bg-amber-900/20", color: "text-amber-500", text: "Issue assigned to operations team", time: "01:45 PM" },
-                ].map((item, i) => (
-                  <div key={i} className="flex gap-3 px-4 py-3 items-start">
-                    <div className={`w-7 h-7 rounded-full ${item.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                      <item.icon size={13} className={item.color} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{item.text}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{item.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div> */}
+          
           </div>
 
 
@@ -879,6 +897,34 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
   const [gpsData, setGpsData] = useState<any[]>([]);
   const [gpsLoading, setGpsLoading] = useState(false);
   const hasFetched = useRef(false);
+  const [driverLocations, setDriverLocations] = useState<Record<string, any[]>>({});
+  const [locLoading, setLocLoading] = useState(false);
+
+
+  const fetchDriverLocations = async () => {
+    setLocLoading(true);
+    try {
+      const { data } = await axios.get(
+        `${API_BASE}api/orders/${order._id}/driver-location`
+      );
+      setDriverLocations(data.data || {});
+    } catch (err) {
+      console.error("Driver location fetch error:", err);
+    } finally {
+      setLocLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+    fetchGpsData();
+    fetchDriverLocations();
+  }, []);
+
+
+
 
 
   const fetchGpsData = async () => {
@@ -956,31 +1002,7 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
 
       {/* ── Project Execution (Vehicle Cards with Driver Forms) ── */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-        {/* <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-          <div>
-            <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">On Road</h3>
-            <p className="text-sm text-gray-400 mt-0.5">
-              {vehicles.length} booking item{vehicles.length > 1 ? "s" : ""} · {totalVehicles} total vehicles
-            </p>
 
-          </div>
-
-          <span>
-            <OrderReportPDF
-              order={order}
-              vehicleTypes={vehicleTypes}
-              gpsData={[]}
-            /></span>
-
-          {totalOnRoad > 0 && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
-              {totalOnRoad} On Road
-            </span>
-          )}
-
-
-
-        </div> */}
 
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
           {/* Left side */}
@@ -1023,6 +1045,7 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
               gpsData={gpsData}
               gpsLoading={gpsLoading}
               onRefreshGps={fetchGpsData}
+              driverLocations={driverLocations}
             />
           ))}
         </div>

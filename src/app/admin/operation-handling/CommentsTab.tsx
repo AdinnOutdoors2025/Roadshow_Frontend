@@ -56,6 +56,22 @@ interface Order {
     customerCategory?: string;
 }
 
+const IMAGE_MIMES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const IMAGE_MAX_MB = 5;
+const DOC_MAX_MB = 10;
+
+const validateFileSize = (file: File): string | null => {
+    const isImage = IMAGE_MIMES.includes(file.type);
+    const fileMB = file.size / (1024 * 1024);
+    if (isImage && fileMB > IMAGE_MAX_MB)
+        return `Image upload only 5 MB allowed. "${file.name}" is ${fileMB.toFixed(2)} MB`;
+    if (!isImage && fileMB > DOC_MAX_MB)
+        return `PDF document upload only 10 MB allowed. "${file.name}" is ${fileMB.toFixed(2)} MB`;
+    return null;
+};
+
+
+
 const STAGE_MAP: Record<string, { label: string; gradient: string; color: string; bg: string }> = {
 
     todo: { label: "To-Do", gradient: "from-slate-400 to-slate-500", color: "text-slate-700", bg: "bg-slate-100" },
@@ -339,7 +355,11 @@ function DragDropFile({ file, onFile, onRemove, accept = ".pdf,.jpg,.jpeg,.png",
     const onDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault(); setDragging(false);
         const f = e.dataTransfer.files?.[0];
-        if (f) onFile(f);
+        if (f) {
+            const err = validateFileSize(f);
+            if (err) { toast.error(err); return; }
+            onFile(f);
+        }
     }, [onFile]);
 
     return !file ? (
@@ -353,7 +373,14 @@ function DragDropFile({ file, onFile, onRemove, accept = ".pdf,.jpg,.jpeg,.png",
             <p className="text-xs text-gray-400">{label || "Click or drag to upload"}</p>
             <p className="text-[11px] text-gray-300 mt-0.5">PDF, JPG, PNG</p>
             <input ref={ref} type="file" accept={accept} className="hidden"
-                onChange={(e) => onFile(e.target.files?.[0] || null)} />
+                onChange={(e) => {
+                    const f = e.target.files?.[0] || null;
+                    if (f) {
+                        const err = validateFileSize(f);
+                        if (err) { toast.error(err); e.target.value = ""; return; }
+                    }
+                    onFile(f);
+                }} />
         </label>
     ) : (
         <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200">
@@ -383,17 +410,17 @@ function DocItem({ docPath, label, notes, by, at }: {
 }) {
 
     const getFileUrl = (p: string) => {
-    if (!p) return "";
-    if (p.startsWith("http")) return p;
-    return `http://localhost:3001${p.startsWith("/") ? p : `/${p}`}`;
-};
+        if (!p) return "";
+        if (p.startsWith("http")) return p;
+        return `http://localhost:3001${p.startsWith("/") ? p : `/${p}`}`;
+    };
 
-const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
+    const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
     const [preview, setPreview] = useState(false);
     const url = getFileUrl(docPath);
     if (!docPath) return null;
-    return (        
+    return (
         <>
             {preview && <DocPreviewModal url={url} label={label} onClose={() => setPreview(false)} />}
             <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50 hover:shadow-sm transition-all">
