@@ -9,7 +9,7 @@ import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 import { jwtDecode } from "jwt-decode";
 import { toast, Toaster } from "react-hot-toast";
-import { User, Clock } from "lucide-react";
+import { User, Clock, XCircle, CheckCircle2 } from "lucide-react";
 import DetailDrawer from "./DetailsModel";
 import OnRoadSubmitModal from "./DriverForm";
 
@@ -83,6 +83,15 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
   const finalNet = taxable + gstAmt;
   const hasProjectCode = (order.projectCodeArray || []).length > 0;
 
+
+  const unavailableVehicles = (order.onRoadExecutionArray || []).filter(
+    e => e.unavailableStatus === true
+  );
+  const totalVehicles = (order.onRoadExecutionArray || []).length;
+  const unavailableCount = unavailableVehicles.length;
+  const availableCount = totalVehicles - unavailableCount;
+
+
   const fmtDate = (s?: string) => {
     if (!s) return { date: "—", time: "" };
     const d = new Date(s);
@@ -90,8 +99,8 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
       date: d.toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
       time: d.toLocaleString("en-IN", { hour: "2-digit", minute: "2-digit" }),
     };
-  };  
- 
+  };
+
   const { date, time } = fmtDate(order.projectCodeArray[0].savedAt);
   const custBadge =
     order.customerType === 1
@@ -125,15 +134,6 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
         {fmt(finalNet)}
       </p>
 
-      {/* FIX 2: Project Code badge */}
-      {/* {hasProjectCode && (
-        <div className="mb-2">
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300">
-            {order.projectCodeArray![0].projectCode}
-          </span>
-        </div>
-      )} */}
-
       <div className="flex items-center justify-between">
         {order.handlerName ? (
           <span className="text-[13px] font-medium text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 rounded-full flex items-center gap-1 max-w-[130px] truncate">
@@ -153,7 +153,24 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
             {time}
           </span>
         </div>
+
+
       </div>
+
+
+      {stageKey === "vehicleUnavailable" && (
+        <div className="flex items-center gap-2 mt-2">
+          <span className="flex items-center gap-1 p-1 text-xs font-semibold rounded-full bg-red-50 text-red-600 border border-red-200">
+           {/* <span><XCircle className="w-4 h-4" /></span> */}
+            {unavailableCount} Unavailable
+          </span>
+
+          <span className="flex items-center gap-1 p-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+            {/* <CheckCircle2 className="w-4 h-4" /> */}
+            {availableCount} Available
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -225,7 +242,7 @@ export default function PipelineBoard() {
   const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState<number>(1);
   const [staffAdmins, setStaffAdmins] = useState<{ username: string }[]>([]);
   const [saving, setSaving] = useState(false);
- 
+
 
   const dragOrder = useRef<Order | null>(null);
   const dragFrom = useRef<string>("");
@@ -236,7 +253,7 @@ export default function PipelineBoard() {
   const [handlerError, setHandlerError] = useState("");
 
   const [superAdminUsername, setSuperAdminUsername] = useState("Admin");
- 
+
   const [pendingToStage, setPendingToStage] = useState<string>("projectExecution");
 
   const fetchPipeline = async () => {
@@ -246,7 +263,16 @@ export default function PipelineBoard() {
       const { data } = await axios.get(`${API_BASE}admin/pipeline`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setGrouped(data.data.grouped);
+      // setGrouped(data.data.grouped);
+      const rawGrouped = data.data.grouped;
+      const onRoadOrders = rawGrouped["onRoad"] || [];
+      const unavailableOrders = onRoadOrders.filter(order =>
+        (order.onRoadExecutionArray || []).some(e => e.unavailableStatus === true)
+      );
+      setGrouped({
+        ...rawGrouped,
+        vehicleUnavailable: unavailableOrders,
+      });
     } catch (err) {
       console.error(err);
       toast.error("Failed to load pipeline");
@@ -254,6 +280,9 @@ export default function PipelineBoard() {
       setLoading(false);
     }
   };
+
+
+
 
   const fetchStaffList = async () => {
     try {
@@ -297,12 +326,21 @@ export default function PipelineBoard() {
       });
       toast.success("Order moved successfully!");
 
-   
+
       if (drawerOrder?._id === order._id) {
         const { data } = await axios.get(`${API_BASE}admin/pipeline`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setGrouped(data.data.grouped);
+        // setGrouped(data.data.grouped);
+        const rawGrouped2 = data.data.grouped;
+        const onRoadOrders2 = rawGrouped2["onRoad"] || [];
+        const unavailableOrders2 = onRoadOrders2.filter(order =>
+          (order.onRoadExecutionArray || []).some(e => e.unavailableStatus === true)
+        );
+        setGrouped({
+          ...rawGrouped2,
+          vehicleUnavailable: unavailableOrders2,
+        });
         const updated = Object.values(data.data.grouped)
           .flat()
           .find((o: any) => o._id === order._id) as Order | undefined;
@@ -326,7 +364,7 @@ export default function PipelineBoard() {
     handleStageMove(order, toStage);
   };
 
- 
+
   const handleStageMove = (order: Order, toStage: string) => {
     const fromStage = order.pipelineStatus;
 
@@ -335,7 +373,7 @@ export default function PipelineBoard() {
       return;
     }
 
-      const PIPELINE_STAGE_ORDER = [
+    const PIPELINE_STAGE_ORDER = [
       "todo",
       "projectExecution",
       "onRoad",
@@ -353,20 +391,20 @@ export default function PipelineBoard() {
 
     if (LOCKED_BACK_STAGES.includes(toStage) && toIndex < fromIndex) {
       const stageLabel = toStage === "todo" ? "To-Do" : "Project Execution";
-     toast.error(`Cannot move back to the "${stageLabel}" stage!`);
+      toast.error(`Cannot move back to the "${stageLabel}" stage!`);
       return;
     }
 
 
     if (fromStage === "projectExecution" && toStage === "onRoad") {
-  commitMove(order, toStage); 
-  return;
-}
+      commitMove(order, toStage);
+      return;
+    }
 
-  
+
     if (fromStage === "todo" && toStage === "projectExecution") {
       if (currentUserIsAdmin === 0) {
-      
+
         commitMove(order, toStage);
         return;
       }
@@ -377,7 +415,7 @@ export default function PipelineBoard() {
       return;
     }
 
-   
+
     if (fromStage === "todo" && toStage === "closedLost") {
       commitMove(order, toStage);
       return;
@@ -414,10 +452,10 @@ export default function PipelineBoard() {
 
   return (
     // <div className="flex flex-col h-full">
-  <div className="flex flex-col h-full overflow-hidden w-full">
+    <div className="flex flex-col h-full overflow-hidden w-full">
       <Toaster position="top-right" />
 
-     
+
       <div className="flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4 pb-2">
         <div className="flex gap-3" style={{ minWidth: "max-content" }}>
           {STAGES.map((stage) => (
@@ -436,7 +474,7 @@ export default function PipelineBoard() {
         </div>
       </div>
 
-      
+
       {drawerOrder && (
         <DetailDrawer
           order={drawerOrder}
@@ -450,7 +488,16 @@ export default function PipelineBoard() {
             const { data } = await axios.get(`${API_BASE}admin/pipeline`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-            setGrouped(data.data.grouped);
+            // setGrouped(data.data.grouped);
+            const rawGrouped3 = data.data.grouped;
+            const onRoadOrders3 = rawGrouped3["onRoad"] || [];
+            const unavailableOrders3 = onRoadOrders3.filter(order =>
+              (order.onRoadExecutionArray || []).some(e => e.unavailableStatus === true)
+            );
+            setGrouped({
+              ...rawGrouped3,
+              vehicleUnavailable: unavailableOrders3,
+            });
             const updatedOrder = Object.values(data.data.grouped)
               .flat()
               .find((o: any) => o._id === drawerOrder._id) as Order | undefined;
@@ -459,7 +506,7 @@ export default function PipelineBoard() {
         />
       )}
 
-    
+
       {handlerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6">
@@ -471,7 +518,7 @@ export default function PipelineBoard() {
               </div>
             </div>
 
-    
+
             <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-1">
               Move to {pendingToStage === "projectCodeCreation" ? "Project Code Creation" : "Project Execution"}?
             </h2>
@@ -479,27 +526,27 @@ export default function PipelineBoard() {
               {handlerModal.orderId}
             </p>
 
-          
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Assign Handler <span className="text-red-500">*</span>
               </label>
 
-            
+
               <button
                 type="button"
                 onClick={() =>
                   setHandlerName(handlerName === superAdminUsername ? "" : superAdminUsername)
                 }
                 className={`w-full mb-3 flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${handlerName === superAdminUsername
-                    ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300"
-                    : "border-gray-200 dark:border-gray-700 text-gray-500 hover:border-teal-300 hover:bg-teal-50/40"
+                  ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300"
+                  : "border-gray-200 dark:border-gray-700 text-gray-500 hover:border-teal-300 hover:bg-teal-50/40"
                   }`}
               >
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${handlerName === superAdminUsername
-                      ? "bg-teal-500 text-white"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                    ? "bg-teal-500 text-white"
+                    : "bg-gray-200 dark:bg-gray-700 text-gray-500"
                     }`}
                 >
                   {superAdminUsername.charAt(0).toUpperCase()}
@@ -522,7 +569,7 @@ export default function PipelineBoard() {
                 <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
               </div>
 
-             
+
               <select
                 value={staffAdmins.some((s) => s.username === handlerName) ? handlerName : ""}
                 onChange={(e) => setHandlerName(e.target.value)}
@@ -562,7 +609,7 @@ export default function PipelineBoard() {
         </div>
       )}
 
-  
+
     </div>
   );
 }

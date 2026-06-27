@@ -170,9 +170,6 @@ export default function DetailDrawer({
 
     const { vehicleTypes, fetchVehicleTypes } = useVehicle();
 
-    //   useEffect(() => {
-    //     fetchVehicleTypes();
-    //   }, []);
 
 
     const projectCodes = order.projectCodeArray || [];
