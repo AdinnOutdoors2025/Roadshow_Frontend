@@ -35,6 +35,7 @@ import OnRoadTab from "./OnRoadTab";
 import { useVehicle } from "../../../context/vehicletypecontext";
 import VehicleUnavailable from "./VehicleUnavailableTab";
 import OrderReportPDF from "./OrderReportPDF";
+import ClientClosureTab from "./ClientClosureTab";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -92,8 +93,7 @@ const NEXT_STAGE: Record<string, string> = {
     todo: "projectExecution",
     projectCodeCreation: "projectExecution",
     projectExecution: "onRoad",
-    onRoad: "campaignRunning",
-    campaignRunning: "clientClosure",
+    onRoad: "clientClosure",
     clientClosure: "invoiceGeneration",
     invoiceGeneration: "paymentStage2",
     paymentStage2: "closedWon",
@@ -103,8 +103,7 @@ const NEXT_LABEL: Record<string, string> = {
     todo: "Move to Project Execution ⚙️",
     projectCodeCreation: "Move to Project Execution ⚙️",
     projectExecution: "Move to On Road 🚗",
-    onRoad: "Move to Campaign Running 📣",
-    campaignRunning: "Move to Client Closure 📝",
+    onRoad: "Move to Client Closure 📝",
     clientClosure: "Move to Invoice Generation 🧾",
     invoiceGeneration: "Move to Payment Stage 2 💰",
     paymentStage2: "Move to Closed Won 🎉",
@@ -143,7 +142,7 @@ const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
 export default function DetailDrawer({
     order, onClose, onRefresh, staffAdmins = [], currentUserIsAdmin = 1,
-    onStageMove, saving,
+    onStageMove, saving, defaultTab = "overview",
 }: {
     order: Order;
     onClose: () => void;
@@ -153,6 +152,22 @@ export default function DetailDrawer({
     onStageMove: (order: Order, toStage: string) => void;
     saving: boolean;
 }) {
+
+
+    const STAGE_ORDER = [
+        "todo",
+        "projectCodeCreation",
+        "projectExecution",
+        "onRoad",
+        "campaignRunning",
+        "vehicleUnavailable",
+        "clientClosure",
+        "invoiceGeneration",
+        "paymentStage2",
+        "closedWon",
+        "closedLost",
+    ];
+
 
     const [activeTab, setActiveTab] = useState<Tab>("overview");
     const stage = STAGE_MAP[order.pipelineStatus];
@@ -170,34 +185,59 @@ export default function DetailDrawer({
 
     const { vehicleTypes, fetchVehicleTypes } = useVehicle();
 
+    const hasPendingFoc = (order.campaignClosureArray || []).some(
+        (c: any) => c.type === "foc" && (c.status === "pending" || !c.status)
+    );
+
 
 
     const projectCodes = order.projectCodeArray || [];
     const hasProjectCode = projectCodes.length > 0;
+    const currentStageIndex = STAGE_ORDER.indexOf(order.pipelineStatus);
+    const projectExecutionIndex = STAGE_ORDER.indexOf("projectExecution");
+    const onRoadIndex = STAGE_ORDER.indexOf("onRoad");
 
+
+    const hasReachedProjectExecution =
+        currentStageIndex >= 0 && currentStageIndex >= projectExecutionIndex;
+
+    
+    const hasReachedOnRoad =
+        currentStageIndex >= 0 && currentStageIndex >= onRoadIndex;
 
     const tabs = [
         { key: "overview", label: "Overview" },
         { key: "comments", label: "Comments" },
         { key: "history", label: "History" },
-        ...(order.pipelineStatus === "projectExecution" || order.pipelineStatus === "onRoad"
+        ...(hasReachedProjectExecution
             ? [{ key: "projectExecution", label: "Project Execution" }]
             : []),
-        ...(order.pipelineStatus === "onRoad"
+        ...(hasReachedOnRoad
             ? [{ key: "onRoad", label: "On Road" }]
             : []),
-        { key: "VehicleUnavailable", label: "VehicleUnavailable" },
+
+        ...(defaultTab === "VehicleUnavailable"
+            ? [{ key: "VehicleUnavailable", label: "VehicleUnavailable" }]
+            : []),
+        ...(order.pipelineStatus === "clientClosure"
+            ? [{ key: "clientClosure", label: "Client Closure" }]
+            : []),
     ];
 
 
 
     useEffect(() => {
-        if (order.pipelineStatus === "onRoad") {
+        if (defaultTab !== "overview") {
+            setActiveTab(defaultTab);
+        } else if (order.pipelineStatus === "clientClosure") {
+            setActiveTab("clientClosure");
+        } else if (order.pipelineStatus === "onRoad") {
             setActiveTab("onRoad");
         } else if (order.pipelineStatus === "projectExecution") {
             setActiveTab("projectExecution");
         }
-    }, [order.pipelineStatus, order._id]);
+    }, [order.pipelineStatus, order._id, defaultTab]);
+
 
 
     return (
@@ -245,20 +285,20 @@ export default function DetailDrawer({
                             </div>
                         )}
 
-                        {/* <button onClick={onClose}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-                            <X size={16} />
-                        </button> */}
-                        {/* <OrderReportPDF
-                            order={order}
-                            vehicleTypes={vehicleTypes}
-                            gpsData={[]}
-                        /> */}
+                        {hasPendingFoc && (
+                            <div className="mt-2">
+                                <span className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-200 animate-pulse">
+                                     Waiting for FOC
+                                </span>
+                            </div>
+                        )}
                         <button onClick={onClose}
                             className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
                             <X size={16} />
                         </button>
                     </div>
+
+
 
 
                     {nextLabel && (
@@ -287,6 +327,8 @@ export default function DetailDrawer({
                                 {tab.label}
                             </button>
                         ))}
+
+
                     </div>
                 </div>
 
@@ -439,8 +481,14 @@ export default function DetailDrawer({
                         <VehicleUnavailable order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
                     )}
 
+
+                    {activeTab === "clientClosure" && (
+                        <ClientClosureTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} isAdmin={currentUserIsAdmin} />
+                    )}
+
                 </div>
             </div>
         </div>
     );
 }
+

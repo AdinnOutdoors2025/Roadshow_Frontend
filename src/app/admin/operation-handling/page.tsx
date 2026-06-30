@@ -12,6 +12,8 @@ import { toast, Toaster } from "react-hot-toast";
 import { User, Clock, XCircle, CheckCircle2 } from "lucide-react";
 import DetailDrawer from "./DetailsModel";
 import OnRoadSubmitModal from "./DriverForm";
+import ClosedLostModal from "./ClosedLostModal";
+import ClosedWonModal from "./ClosedWonModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Order {
@@ -36,6 +38,7 @@ interface Order {
   projectExecutionArray?: any[];
   createdAt: string;
   updatedAt?: string;
+  projectCodeArray?:any[];
 }
 
 // ─── Stage Config ─────────────────────────────────────────────────────────────
@@ -43,7 +46,6 @@ const STAGES = [
   { key: "todo", label: "To-Do", color: "text-slate-700", bg: "bg-slate-100", dot: "bg-slate-400", headerGrad: "from-slate-400 to-slate-500" },
   { key: "projectExecution", label: "Project Execution", color: "text-teal-700", bg: "bg-teal-50", dot: "bg-teal-500", headerGrad: "from-teal-400 to-teal-600" },
   { key: "onRoad", label: "On Road", color: "text-sky-700", bg: "bg-sky-50", dot: "bg-sky-500", headerGrad: "from-sky-400 to-sky-600" },
-  { key: "campaignRunning", label: "Campaign Running", color: "text-indigo-700", bg: "bg-indigo-50", dot: "bg-indigo-500", headerGrad: "from-indigo-400 to-indigo-600" },
   { key: "vehicleUnavailable", label: "Vehicle Unavailable", color: "text-red-700", bg: "bg-red-50", dot: "bg-red-400", headerGrad: "from-red-400 to-red-500" },
   { key: "clientClosure", label: "Client Closure & Feedback", color: "text-pink-700", bg: "bg-pink-50", dot: "bg-pink-500", headerGrad: "from-pink-400 to-pink-600" },
   { key: "invoiceGeneration", label: "Invoice Generation", color: "text-fuchsia-700", bg: "bg-fuchsia-50", dot: "bg-fuchsia-500", headerGrad: "from-fuchsia-400 to-fuchsia-600" },
@@ -74,7 +76,6 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
   onClick: () => void;
 }) {
 
-
   const stage = STAGE_MAP[stageKey];
   const subtotal = order.bookingItems.reduce((s, i) => s + (i.totalAmount || 0), 0);
   const totalDiscount = (order.negotiationLogs || []).reduce((s, l) => s + (l.discountAmount || 0), 0);
@@ -83,6 +84,9 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
   const finalNet = taxable + gstAmt;
   const hasProjectCode = (order.projectCodeArray || []).length > 0;
 
+  const hasPendingFoc = (order.campaignClosureArray || []).some(
+    (c: any) => c.type === "foc" && (c.status === "pending" || !c.status)
+  );
 
   const unavailableVehicles = (order.onRoadExecutionArray || []).filter(
     e => e.unavailableStatus === true
@@ -90,7 +94,6 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
   const totalVehicles = (order.onRoadExecutionArray || []).length;
   const unavailableCount = unavailableVehicles.length;
   const availableCount = totalVehicles - unavailableCount;
-
 
   const fmtDate = (s?: string) => {
     if (!s) return { date: "—", time: "" };
@@ -153,21 +156,23 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
             {time}
           </span>
         </div>
-
-
       </div>
-
 
       {stageKey === "vehicleUnavailable" && (
         <div className="flex items-center gap-2 mt-2">
           <span className="flex items-center gap-1 p-1 text-xs font-semibold rounded-full bg-red-50 text-red-600 border border-red-200">
-           {/* <span><XCircle className="w-4 h-4" /></span> */}
             {unavailableCount} Unavailable
           </span>
-
           <span className="flex items-center gap-1 p-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
-            {/* <CheckCircle2 className="w-4 h-4" /> */}
             {availableCount} Available
+          </span>
+        </div>
+      )}
+
+      {hasPendingFoc && (
+        <div className="mt-2">
+          <span className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-200 animate-pulse">
+            ⏳ Waiting for FOC
           </span>
         </div>
       )}
@@ -242,11 +247,12 @@ export default function PipelineBoard() {
   const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState<number>(1);
   const [staffAdmins, setStaffAdmins] = useState<{ username: string }[]>([]);
   const [saving, setSaving] = useState(false);
-
+  const [defaultTab, setDefaultTab] = useState("overview");
 
   const dragOrder = useRef<Order | null>(null);
   const dragFrom = useRef<string>("");
-
+const [closedWonModalOrder, setClosedWonModalOrder] = useState<Order | null>(null);
+const [closedLostModalOrder, setClosedLostModalOrder] = useState<Order | null>(null);
 
   const [handlerModal, setHandlerModal] = useState<Order | null>(null);
   const [handlerName, setHandlerName] = useState("");
@@ -365,7 +371,9 @@ export default function PipelineBoard() {
   };
 
 
-  const handleStageMove = (order: Order, toStage: string) => {
+
+
+const handleStageMove = (order: Order, toStage: string) => {
     const fromStage = order.pipelineStatus;
 
     if (fromStage === "closedLost") {
@@ -396,15 +404,24 @@ export default function PipelineBoard() {
     }
 
 
+    if (toStage === "closedWon") {
+      setClosedWonModalOrder(order);
+      return;
+    }
+
+    
+    if (toStage === "closedLost") {
+      setClosedLostModalOrder(order);
+      return;
+    }
+
     if (fromStage === "projectExecution" && toStage === "onRoad") {
       commitMove(order, toStage);
       return;
     }
 
-
     if (fromStage === "todo" && toStage === "projectExecution") {
       if (currentUserIsAdmin === 0) {
-
         commitMove(order, toStage);
         return;
       }
@@ -415,19 +432,13 @@ export default function PipelineBoard() {
       return;
     }
 
-
-    if (fromStage === "todo" && toStage === "closedLost") {
-      commitMove(order, toStage);
-      return;
-    }
-
     if (fromStage === "todo") {
       toast.error("Please move to Project Execution first!");
       return;
     }
 
     commitMove(order, toStage);
-  };
+};
 
   const submitHandlerModal = async () => {
     if (!handlerModal) return;
@@ -468,7 +479,25 @@ export default function PipelineBoard() {
                 dragOrder.current = order;
                 dragFrom.current = key;
               }}
-              onCardClick={setDrawerOrder}
+             
+
+              onCardClick={(order) => {
+                const hasPendingFoc = (order.campaignClosureArray || []).some(
+                  (c: any) => c.type === "foc" && (c.status === "pending" || !c.status)
+                );
+                if (hasPendingFoc) {
+                  setDefaultTab("clientClosure");
+                } else if (stage.key === "vehicleUnavailable") {
+                  setDefaultTab("VehicleUnavailable");
+                } else if (stage.key === "onRoad") {
+                  setDefaultTab("onRoad");
+                } else if (stage.key === "clientClosure") {
+                  setDefaultTab("clientClosure");
+                } else {
+                  setDefaultTab("overview");
+                }
+                setDrawerOrder(order);
+              }}
             />
           ))}
         </div>
@@ -479,6 +508,7 @@ export default function PipelineBoard() {
         <DetailDrawer
           order={drawerOrder}
           onClose={() => setDrawerOrder(null)}
+          defaultTab={defaultTab}
           staffAdmins={staffAdmins}
           currentUserIsAdmin={currentUserIsAdmin}
           onStageMove={handleStageMove}
@@ -505,6 +535,60 @@ export default function PipelineBoard() {
           }}
         />
       )}
+
+      {closedWonModalOrder && (
+  <ClosedWonModal
+    order={closedWonModalOrder}
+    onClose={() => setClosedWonModalOrder(null)}
+    onSuccess={async () => {
+      if (drawerOrder?._id === closedWonModalOrder._id) {
+        const token = getToken();
+        const { data } = await axios.get(`${API_BASE}admin/pipeline`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const rawGrouped = data.data.grouped;
+        const onRoadOrders = rawGrouped["onRoad"] || [];
+        const unavailableOrders = onRoadOrders.filter((o: any) =>
+          (o.onRoadExecutionArray || []).some((e: any) => e.unavailableStatus === true)
+        );
+        setGrouped({ ...rawGrouped, vehicleUnavailable: unavailableOrders });
+        const updated = Object.values(data.data.grouped)
+          .flat()
+          .find((o: any) => o._id === closedWonModalOrder._id) as Order | undefined;
+        if (updated) setDrawerOrder(updated);
+      } else {
+        await fetchPipeline();
+      }
+    }}
+  />
+)}
+
+{closedLostModalOrder && (
+  <ClosedLostModal
+    order={closedLostModalOrder}
+    onClose={() => setClosedLostModalOrder(null)}
+    onSuccess={async () => {
+      if (drawerOrder?._id === closedLostModalOrder._id) {
+        const token = getToken();
+        const { data } = await axios.get(`${API_BASE}admin/pipeline`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const rawGrouped = data.data.grouped;
+        const onRoadOrders = rawGrouped["onRoad"] || [];
+        const unavailableOrders = onRoadOrders.filter((o: any) =>
+          (o.onRoadExecutionArray || []).some((e: any) => e.unavailableStatus === true)
+        );
+        setGrouped({ ...rawGrouped, vehicleUnavailable: unavailableOrders });
+        const updated = Object.values(data.data.grouped)
+          .flat()
+          .find((o: any) => o._id === closedLostModalOrder._id) as Order | undefined;
+        if (updated) setDrawerOrder(updated);
+      } else {
+        await fetchPipeline();
+      }
+    }}
+  />
+)}
 
 
       {handlerModal && (

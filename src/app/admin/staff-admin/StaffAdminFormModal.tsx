@@ -11,6 +11,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 export interface StaffAdmin {
   _id?: string;
   username: string;
+  email: string;
   password?: string;
   phone: string;
   status: "active" | "inactive";
@@ -24,6 +25,7 @@ interface Props {
 
 const defaultForm: StaffAdmin = {
   username: "",
+  email: "",
   password: "",
   phone: "",
   status: "active",
@@ -50,11 +52,14 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof StaffAdmin, string>> = {};
     if (!form.username.trim()) newErrors.username = "Username is required";
+    if (!form.email.trim()) newErrors.email = "Email is required";
+    else if (!EMAIL_REGEX.test(form.email.trim())) newErrors.email = "Enter a valid email";
     if (!isEdit && !form.password) newErrors.password = "Password is required";
-    // if (form.password && form.password.length < 6) newErrors.password = "Min 6 characters";
     if (form.password && form.password !== confirmPassword)
       newErrors.password = "Passwords do not match";
     setErrors(newErrors);
@@ -69,6 +74,7 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
 
       const payload: any = {
         username: form.username.trim(),
+        email: form.email.trim(),
         phone: form.phone.trim(),
         status: form.status,
       };
@@ -190,6 +196,17 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
               placeholder="e.g. 9876543210"
               maxLength={10}
               className={inputClass(false)}
+            />
+          </FormField>
+
+
+          <FormField label="Email" error={errors.email} required>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => handleChange("email", e.target.value)}
+              placeholder="e.g. staffjohn@example.com"
+              className={inputClass(!!errors.email)}
             />
           </FormField>
 

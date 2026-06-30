@@ -11,7 +11,7 @@ import DeleteConfirmModal from "./DeleteModal";
 import { getToken } from "../../utils/auth";
 
 
-const HEADERS = ["S.NO", "Username", "Phone", "Role", "Status", "Actions"];
+const HEADERS = ["S.NO", "Username", "Email", "Phone", "Role", "Status", "Actions"];
 const ITEMS_PER_PAGE = 10;
 
 export default function StaffAdminTable() {
@@ -21,7 +21,7 @@ export default function StaffAdminTable() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [showFormModal, setShowFormModal] = useState(false);
-  const [editingStaffAdmin, setEditingStaffAdmin] = useState<any| null>(null);
+  const [editingStaffAdmin, setEditingStaffAdmin] = useState<any | null>(null);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export default function StaffAdminTable() {
     try {
       setLoading(true);
       setError(null);
-      const token = getToken(); 
+      const token = getToken();
       const res = await fetch(`${API_BASE}staff-admins`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -132,12 +132,12 @@ export default function StaffAdminTable() {
                     currentItems.map((sa, idx) => (
                       <tr
                         key={sa._id}
-                        className={`group transition-colors hover:bg-blue-50/40 dark:hover:bg-blue-900/10 ${
-                          idx % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50/50 dark:bg-gray-800/20"
-                        }`}
+                        className={`group transition-colors hover:bg-blue-50/40 dark:hover:bg-blue-900/10 ${idx % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50/50 dark:bg-gray-800/20"
+                          }`}
                       >
                         <td className="px-5 py-4 text-gray-600 dark:text-gray-300">{startIndex + idx + 1}</td>
                         <td className="px-5 py-4 font-medium text-gray-800 dark:text-gray-200">{sa.username}</td>
+                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300">{sa.email || "—"}</td>
                         <td className="px-5 py-4 text-gray-600 dark:text-gray-300">{sa.phone || "—"}</td>
                         <td className="px-5 py-4">
                           <span className="inline-flex items-center rounded-lg bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">

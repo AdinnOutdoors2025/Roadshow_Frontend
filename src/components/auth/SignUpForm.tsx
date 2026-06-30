@@ -9,6 +9,7 @@ import API_BASE from "../../../baseurl";
 
 interface FormState {
   username: string;
+  email: string;
   password: string;
   confirmPassword: string;
 }
@@ -20,13 +21,17 @@ interface ApiResponse {
   user?: {
     id: string;
     username: string;
+    email: string;
     role: string;
   };
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
   USERNAME_ALREADY_EXISTS: "Username already taken. Try another.",
+  EMAIL_ALREADY_EXISTS: "Email already registered. Try logging in instead.",
 };
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const inputClass =
   "h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800";
@@ -41,6 +46,7 @@ export default function SignUpForm() {
 
   const [form, setForm] = useState<FormState>({
     username: "",
+    email: "",
     password: "",
     confirmPassword: "",
   });
@@ -55,8 +61,13 @@ export default function SignUpForm() {
     e.preventDefault();
     setError("");
 
-    if (!form.username || !form.password || !form.confirmPassword) {
+    if (!form.username || !form.email || !form.password || !form.confirmPassword) {
       setError("All fields are required.");
+      return;
+    }
+
+    if (!EMAIL_REGEX.test(form.email.trim())) {
+      setError("Please enter a valid email address.");
       return;
     }
 
@@ -84,6 +95,7 @@ export default function SignUpForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: form.username.trim(),
+          email: form.email.trim(),
           password: form.password,
         }),
       });
@@ -129,6 +141,18 @@ export default function SignUpForm() {
                   name="username"
                   placeholder="Enter your username (4–20 chars)"
                   value={form.username}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <Label>Email <span className="text-error-500">*</span></Label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Enter your email"
+                  value={form.email}
                   onChange={handleChange}
                   className={inputClass}
                 />
