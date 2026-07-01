@@ -59,9 +59,9 @@ const getImageUrl = (url) => {
 
 
 
-function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, gpsData, gpsLoading, isAdmin ,autoOpenFoc }) {
+function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, gpsData, gpsLoading, isAdmin, autoOpenFoc }) {
     // const [open, setOpen] = useState(false);
-     const [open, setOpen] = useState(autoOpenFoc ?? false);
+    const [open, setOpen] = useState(autoOpenFoc ?? false);
     const [activeDriverTab, setActiveDriverTab] = useState(0);
     const [toggling, setToggling] = useState(false);
     const issueRef = useRef(null);
@@ -82,6 +82,21 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
     const vehicles = (order.bookingItems || [])
         .map((item, originalIdx) => ({ item, originalIdx }));
 
+
+    const vehicleIdStr = vehicle._id?.$oid
+        || vehicle._id?.toString?.()
+        || String(vehicle._id ?? "");
+
+    const vehicleFocEntries = (order.campaignClosureArray || []).filter((c: any) => {
+        if (c.type !== "foc") return false;
+        const cId = (typeof c.bookingItemId === "object" && c.bookingItemId !== null)
+            ? (c.bookingItemId.$oid || c.bookingItemId._id || c.bookingItemId.toString())
+            : String(c.bookingItemId ?? "");
+        return cId === vehicleIdStr;
+    });
+
+    const vehiclePendingFoc = vehicleFocEntries.find((c: any) => c.status === "pending" || !c.status);
+    const vehicleHasApprovedFoc = vehicleFocEntries.some((c: any) => c.status === "approved");
 
     const allEntries = order.onRoadExecutionArray || [];
     const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
@@ -163,6 +178,16 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                         <span className="text-[15px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">
                             {vehicle.campaignType || "—"}
                         </span>
+                          {vehiclePendingFoc && (
+                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-200 animate-pulse">
+                            Waiting for FOC
+                        </span>
+                    )}
+                    {!vehiclePendingFoc && vehicleHasApprovedFoc && (
+                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+                            FOC Approved
+                        </span>
+                    )}
 
                     </div>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -181,6 +206,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     {vehicle.campaignName && (
                         <p className="text-md text-gray-400 mt-0.5">{vehicle.campaignName}</p>
                     )}
+                   
                 </div>
 
 
@@ -239,8 +265,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     <div>
 
 
-                        {/* <ClientClosureTabSecond order={order} onRefresh={onRefresh} bookingItemId={String(vehicle._id)} /> */}
-                        <ClientClosureTabSecond order={order} onRefresh={onRefresh} bookingItemId={vehicle._id?.toString?.() ?? String(vehicle._id)} isAdmin={isAdmin}  autoOpenFoc={autoOpenFoc} />
+
+                        <ClientClosureTabSecond order={order} onRefresh={onRefresh} bookingItemId={vehicle._id?.toString?.() ?? String(vehicle._id)} isAdmin={isAdmin} autoOpenFoc={autoOpenFoc} />
 
                     </div>
 
@@ -271,7 +297,7 @@ export default function ClientClosureTab({ order, onRefresh, vehicleTypes, isAdm
         .map((item, originalIdx) => ({ item, originalIdx }));
 
 
-            const pendingFocEntry = (order.campaignClosureArray || []).find(
+    const pendingFocEntry = (order.campaignClosureArray || []).find(
         (c) => c.type === "foc" && (c.status === "pending" || !c.status)
     );
     const pendingFocBookingItemId = pendingFocEntry?.bookingItemId?.$oid
@@ -333,7 +359,7 @@ export default function ClientClosureTab({ order, onRefresh, vehicleTypes, isAdm
                             || String(vehicle._id ?? "");
 
                         const autoOpenFoc =
-                            isAdmin === 1 &&              
+                            isAdmin === 1 &&
                             pendingFocBookingItemId !== "" &&
                             vehicleIdStr === pendingFocBookingItemId;
 

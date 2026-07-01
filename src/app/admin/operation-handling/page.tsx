@@ -172,7 +172,7 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
       {hasPendingFoc && (
         <div className="mt-2">
           <span className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-200 animate-pulse">
-            ⏳ Waiting for FOC
+             Waiting for FOC
           </span>
         </div>
       )}
