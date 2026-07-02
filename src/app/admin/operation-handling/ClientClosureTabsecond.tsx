@@ -376,8 +376,18 @@ export default function ClientClosureTabSecond({
         return fbId === String(bookingItemId);
     });
 
+    // useEffect(() => {
+    //     if (focDoc && focDoc.type.startsWith("image/")) {
+    //         const url = URL.createObjectURL(focDoc);
+    //         setLocalPreviewUrl(url);
+    //         return () => URL.revokeObjectURL(url);
+    //     } else {
+    //         setLocalPreviewUrl("");
+    //     }
+    // }, [focDoc]);
+
     useEffect(() => {
-        if (focDoc && focDoc.type.startsWith("image/")) {
+        if (focDoc) {
             const url = URL.createObjectURL(focDoc);
             setLocalPreviewUrl(url);
             return () => URL.revokeObjectURL(url);
@@ -517,7 +527,7 @@ export default function ClientClosureTabSecond({
                 </div>
             )}
 
-            {/* ── Campaign Status Tab ──────────────────────────────── */}
+
             {mainTab === "campaignStatus" && (
                 <div className="flex-1 min-h-0 overflow-y-auto">
 
@@ -539,12 +549,12 @@ export default function ClientClosureTabSecond({
                         ))}
                     </div>
 
-                    <div className="flex flex-row gap-4">
+                    <div className="flex flex-col lg:flex-row gap-4">
 
                         {/* FOC Form */}
                         {extendedTab === "foc" && (
                             <>
-                                <div className="max-w-lg flex-1">
+                                <div className="w-full lg:max-w-lg lg:flex-1 min-w-0">
                                     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
                                         <div className="flex items-center gap-2 mb-4">
                                             <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
@@ -564,9 +574,9 @@ export default function ClientClosureTabSecond({
                                             )}
                                         </div>
 
-                                        {/* Super admin with nothing pending → nothing to review */}
+                                  
                                         <>
-                                            {/* ── Editable for staff, super admin reviewing pending, AND super admin creating fresh ── */}
+                                          
                                             <div className="mb-3">
                                                 <label className="block text-sm font-medium text-gray-500 mb-1">
                                                     Reason <span className="text-red-500">*</span>
@@ -580,7 +590,7 @@ export default function ClientClosureTabSecond({
                                                 />
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-500 mb-1">
                                                         From Date <span className="text-red-500">*</span>
@@ -717,7 +727,7 @@ export default function ClientClosureTabSecond({
                                     </div>
                                 </div>
 
-                                <div className="w-[500px] flex-shrink-0 flex flex-col h-[500px]">
+                                <div className="w-full lg:w-[500px] flex-shrink-0 min-w-0 flex flex-col h-[420px] lg:h-[500px]">
                                     <div className="flex items-center gap-3 mb-3 sticky top-0 bg-white dark:bg-gray-800 z-10 py-2">
                                         <button
                                             onClick={() => setHistoryPanelTab("history")}
@@ -803,7 +813,7 @@ export default function ClientClosureTabSecond({
 
                         {/* Paid Extension */}
                         {extendedTab === "paid" && (
-                            <div className="max-w-lg">
+                            <div className="w-full lg:max-w-lg">
                                 <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
                                     <div className="flex items-center gap-2 mb-4">
                                         <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
@@ -812,7 +822,7 @@ export default function ClientClosureTabSecond({
                                         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Paid Extension</h3>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                                         <div>
                                             <label className="block text-xs font-medium text-gray-500 mb-1">
                                                 From Date <span className="text-xs text-gray-400">(campaign end)</span>
@@ -907,33 +917,35 @@ function FocHistoryCard({
             ? "border-emerald-100 dark:border-emerald-800/30"
             : "border-orange-100 dark:border-orange-800/30"
             }`}>
-            <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+            <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
+                <span className="text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
                     <Gift size={11} /> FOC #{index}
                 </span>
 
-                {hasChat && (
-                    <button
-                        onClick={() => onOpenComments(foc._id)}
-                        className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-colors"
-                    >
-                        <MessageSquare size={11} />
-                        Comments {messages.length > 0 ? `(${messages.length})` : ""}
-                    </button>
-                )}
-                {status === "approved" ? (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1">
-                        <CheckCircle2 size={11} /> Approved
-                    </span>
-                ) : (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-200">
-                        Pending
-                    </span>
-                )}
+                <div className="flex items-center gap-2 flex-wrap">
+                    {hasChat && (
+                        <button
+                            onClick={() => onOpenComments(foc._id)}
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-colors shrink-0"
+                        >
+                            <MessageSquare size={11} />
+                            Comments {messages.length > 0 ? `(${messages.length})` : ""}
+                        </button>
+                    )}
+                    {status === "approved" ? (
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1 shrink-0">
+                            <CheckCircle2 size={11} /> Approved
+                        </span>
+                    ) : (
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-200 shrink-0">
+                            Pending
+                        </span>
+                    )}
+                </div>
             </div>
 
-            <p className="text-md text-gray-700 dark:text-gray-300 mb-2">{foc.reason || "—"}</p>
-            <div className="flex items-center gap-2 text-sm text-gray-400">
+            <p className="text-md text-gray-700 dark:text-gray-300 mb-2 break-words">{foc.reason || "—"}</p>
+            <div className="flex items-center gap-2 text-sm text-gray-400 flex-wrap">
                 <Clock size={10} />
                 {fromDateStr} → {toDateStr}
             </div>
@@ -986,7 +998,7 @@ function FocHistoryCard({
                         <div className="mt-2 space-y-2">
                             {[...history].reverse().map((h: any, i: number) => (
                                 <div key={h._id || i} className="text-[11px] bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2">
-                                    <div className="flex text-sm items-center justify-between mb-1">
+                                    <div className="flex text-sm items-center justify-between mb-1 flex-wrap gap-1">
                                         <span className={`font-semibold capitalize ${h.action === "approved"
                                             ? "text-emerald-600"
                                             : h.action === "created"
@@ -1015,5 +1027,3 @@ function FocHistoryCard({
         </div>
     );
 }
-
-

@@ -26,16 +26,26 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const mainContentMargin = isMobileOpen
     ? "ml-0"
     : isExpanded || isHovered
-    ? "lg:ml-[290px]"
-    : "lg:ml-[90px]";
+      ? "lg:ml-[290px]"
+      : "lg:ml-[90px]";
 
   return (
-    <div className="min-h-screen xl:flex">
+    // <div className="min-h-screen xl:flex">
+    //   <AppSidebar />
+    //   <Backdrop />
+    //   <div className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
+    //     <AppHeader />
+    //     <div className="p-2 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+    //       {children}
+    //     </div>
+    //   </div>
+    // </div>
+    <div className="min-h-screen xl:flex overflow-x-hidden">
       <AppSidebar />
       <Backdrop />
-      <div className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
+      <div className={`flex-1 min-w-0 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
         <AppHeader />
-        <div className="p-2 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+        <div className="p-2 mx-auto max-w-(--breakpoint-2xl) md:p-6 min-w-0">
           {children}
         </div>
       </div>
@@ -48,11 +58,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <ThemeProvider>
       <SidebarProvider>
         <VehicleProvider>
-        <SearchProvider>
-          <AdminShell>{children}</AdminShell>
-        </SearchProvider>
-      </VehicleProvider>
-    </SidebarProvider>
-  </ThemeProvider>
+          <SearchProvider>
+            <AdminShell>{children}</AdminShell>
+          </SearchProvider>
+        </VehicleProvider>
+      </SidebarProvider>
+    </ThemeProvider>
   );
 }

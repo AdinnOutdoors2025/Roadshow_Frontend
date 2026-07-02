@@ -1,5 +1,4 @@
 
-
 // @ts-nocheck
 
 import axios from "axios";
@@ -100,31 +99,10 @@ export default function FocSingleCommentsPanel({
     };
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full min-w-0">
              <Toaster position="top-right" />
             {/* ── FOC chip selector row ─────────────────────────────── */}
-            {/* {focEntries.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 mb-2 pb-2 border-b border-gray-100 dark:border-gray-800">
-                    {focEntries.map((foc: any, idx: number) => {
-                        const isSelected = foc._id === activeFocId;
-                        return (
-                            <button
-                                key={foc._id}
-                                onClick={() => onSelectFoc(foc._id)}
-                                className={`flex items-center gap-1.5 text-[11px] font-semibold px-2 py-1 rounded-full border transition-colors ${isSelected
-                                    ? "bg-indigo-600 text-white border-indigo-600"
-                                    : "bg-white dark:bg-gray-900 text-gray-500 border-gray-200 dark:border-gray-700 hover:border-indigo-300"
-                                    }`}
-                            >
-                                <Gift size={10} />
-                                FOC #{idx + 1}
-                                <span className={`w-1.5 h-1.5 rounded-full ${foc.status === "approved" ? "bg-emerald-400" : "bg-orange-400"
-                                    }`} />
-                            </button>
-                        );
-                    })}
-                </div>
-            )} */}
+           
 
             {focEntries.length > 0 && (
 <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-gray-100 dark:border-gray-800 min-w-0">
@@ -135,7 +113,7 @@ export default function FocSingleCommentsPanel({
                     <button
                         key={foc._id}
                         onClick={() => onSelectFoc(foc._id)}
-                        className={`flex items-center gap-1.5 text-[11px] font-semibold px-2 py-1 rounded-full border transition-colors ${isSelected
+                        className={`flex items-center gap-1.5 text-[11px] font-semibold px-2 py-1 rounded-full border transition-colors shrink-0 ${isSelected
                             ? "bg-indigo-600 text-white border-indigo-600"
                             : "bg-white dark:bg-gray-900 text-gray-500 border-gray-200 dark:border-gray-700 hover:border-indigo-300"
                             }`}
@@ -149,7 +127,7 @@ export default function FocSingleCommentsPanel({
         </div>
         <button
             onClick={onRefresh}
-            className="ml-auto flex items-center gap-1 text-[11px] text-gray-400 hover:text-indigo-500 transition-colors px-2 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+            className="ml-auto flex items-center gap-1 text-[11px] text-gray-400 hover:text-indigo-500 transition-colors px-2 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 shrink-0"
             title="Refresh comments"
         >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -185,19 +163,20 @@ export default function FocSingleCommentsPanel({
                                 <MessageSquare size={28} className="mb-2 opacity-30" />
                                 <p className="text-sm">No comments yet</p>
                             </div>
+                            
                         ) : (
                             messages.map((m: any) => {
                                 const isSelf = m.senderUsername === currentUsername;
                                 return (
                                     <div key={m._id} className={`flex ${isSelf ? "justify-end" : "justify-start"}`}>
-                                        <div className={`max-w-[75%] rounded-xl px-3 py-2 ${isSelf
+                                        <div className={`max-w-[85%] sm:max-w-[75%] rounded-xl px-3 py-2 ${isSelf
                                             ? "bg-indigo-600 text-white rounded-br-sm"
                                             : "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-sm"
                                             }`}>
                                             <p className="text-[12px] font-semibold mb-0.5 opacity-80">
                                                 {m.senderUsername} · {m.senderRole === "admin" ? "Admin" : "Staff"}
                                             </p>
-                                            {m.message && <p className="text-xs whitespace-pre-wrap">{m.message}</p>}
+                                            {m.message && <p className="text-xs whitespace-pre-wrap break-words">{m.message}</p>}
                                             {m.attachment && (
                                                 isImageUrl(getDocUrl(m.attachment)) ? (
                                                     <button
@@ -264,7 +243,7 @@ export default function FocSingleCommentsPanel({
                                     value={chatMessage}
                                     onChange={(e) => setChatMessage(e.target.value)}
                                     placeholder="Type a message..."
-                                    className="flex-1 border border-gray-200 dark:border-gray-700 rounded-full px-3 py-1.5 text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                    className="flex-1 min-w-0 border border-gray-200 dark:border-gray-700 rounded-full px-3 py-1.5 text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                     onKeyDown={(e) => { if (e.key === "Enter") sendChatMessage(); }}
                                 />
                                 <button

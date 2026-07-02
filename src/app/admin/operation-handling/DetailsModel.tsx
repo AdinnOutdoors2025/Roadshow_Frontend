@@ -224,19 +224,27 @@ export default function DetailDrawer({
             : []),
     ];
 
+    const appliedDefaultTabRef = useRef<string | null>(null);
 
-
-    useEffect(() => {
+useEffect(() => {
+  
+    if (appliedDefaultTabRef.current !== order._id) {
+        appliedDefaultTabRef.current = order._id;
         if (defaultTab !== "overview") {
             setActiveTab(defaultTab);
-        } else if (order.pipelineStatus === "clientClosure") {
-            setActiveTab("clientClosure");
-        } else if (order.pipelineStatus === "onRoad") {
-            setActiveTab("onRoad");
-        } else if (order.pipelineStatus === "projectExecution") {
-            setActiveTab("projectExecution");
+            return;
         }
-    }, [order.pipelineStatus, order._id, defaultTab]);
+    }
+
+ 
+    if (order.pipelineStatus === "clientClosure") {
+        setActiveTab("clientClosure");
+    } else if (order.pipelineStatus === "onRoad") {
+        setActiveTab("onRoad");
+    } else if (order.pipelineStatus === "projectExecution") {
+        setActiveTab("projectExecution");
+    }
+}, [order.pipelineStatus, order._id, defaultTab]);
 
 
 
