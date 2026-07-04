@@ -177,9 +177,9 @@
 //         </div>
 //       </div>
 
-     
 
-     
+
+
 //     </div>
 //   );
 // }
@@ -432,7 +432,7 @@
 //       return;
 //     }
 
-    
+
 //     if (toStage === "closedLost") {
 //       setClosedLostModalOrder(order);
 //       return;
@@ -505,7 +505,7 @@
 //                 dragOrder.current = order;
 //                 dragFrom.current = key;
 //               }}
-             
+
 
 //               onCardClick={(order) => {
 //                 const hasPendingFoc = (order.campaignClosureArray || []).some(
@@ -875,7 +875,7 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
         {fmt(finalNet)}
       </p>
 
-       {stageKey === "vehicleUnavailable" && (
+      {stageKey === "vehicleUnavailable" && (
         <div className="flex items-center gap-2 mt-2 mb-2">
           <span className="flex items-center gap-1 p-1 text-xs font-semibold rounded-full bg-red-50 text-red-600 border border-red-200">
             {unavailableCount} Unavailable
@@ -886,10 +886,10 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
         </div>
       )}
 
-       {hasPendingFoc && (
+      {hasPendingFoc && (
         <div className="mt-2">
           <span className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-200 animate-pulse">
-             Waiting for FOC
+            Waiting for FOC
           </span>
         </div>
       )}
@@ -1039,11 +1039,10 @@ function FilterBar({
             <button
               key={opt.key}
               onClick={() => setCustomerTypeFilter(opt.key)}
-              className={`text-xs font-medium px-2.5 py-1.5 rounded-md transition-all ${
-                customerTypeFilter === opt.key
+              className={`text-xs font-medium px-2.5 py-1.5 rounded-md transition-all ${customerTypeFilter === opt.key
                   ? "bg-blue-500 text-white"
                   : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-              }`}
+                }`}
             >
               {opt.label}
             </button>
@@ -1053,11 +1052,10 @@ function FilterBar({
         {/* FOC toggle */}
         <button
           onClick={() => setFocOnly(!focOnly)}
-          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border transition-all ${
-            focOnly
+          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border transition-all ${focOnly
               ? "bg-orange-500 text-white border-orange-500"
               : "bg-white dark:bg-gray-800 text-orange-600 border-orange-200 hover:bg-orange-50"
-          }`}
+            }`}
         >
           Waiting for FOC
         </button>
@@ -1065,11 +1063,10 @@ function FilterBar({
         {/* More filters toggle */}
         <button
           onClick={() => setShowMore((p) => !p)}
-          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border transition-all ${
-            showMore
+          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border transition-all ${showMore
               ? "bg-indigo-500 text-white border-indigo-500"
               : "bg-white dark:bg-gray-800 text-gray-600 border-gray-200 hover:bg-gray-50"
-          }`}
+            }`}
         >
           <SlidersHorizontal size={13} />
           More Filters
@@ -1310,6 +1307,11 @@ export default function PipelineBoard() {
 
     if (fromStage === "closedLost") {
       toast.error("This order is closed lost and cannot be moved.");
+      return;
+    }
+
+    if (fromStage === "closedWon") {
+      toast.error("Not Move the Stage");
       return;
     }
 

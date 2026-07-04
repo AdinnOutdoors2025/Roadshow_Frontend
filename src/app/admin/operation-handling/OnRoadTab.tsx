@@ -60,7 +60,9 @@ const getImageUrl = (url) => {
 
 
 
-function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, gpsData, gpsLoading, onRefreshGps, driverLocations }) {
+function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, driverLocations }) {
+  const [gpsData, setGpsData] = useState([]);
+  const [gpsLoading, setGpsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [activeDriverTab, setActiveDriverTab] = useState(0);
   const [toggling, setToggling] = useState(false);
@@ -146,6 +148,36 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const vehicleEntries = (order.onRoadExecutionArray || []).filter(
     (e) => e.vehicleIndex === vehicleIndex
   );
+
+
+
+const fetchGpsData = async () => {
+  setGpsLoading(true);
+  try {
+    const { data } = await axios.get(
+      `${API_BASE}admin/vamosys/vehicle-locations`
+    );
+    const locations = data?.data?.data?.[0]?.vehicleLocations ?? [];
+    setGpsData(locations);
+  } catch (error) {
+    console.error(`GPS API Error (vehicleIndex ${vehicleIndex}):`, error);
+    setGpsData([]);
+  } finally {
+    setGpsLoading(false);
+  }
+};
+  
+
+ 
+
+const hasFetchedGps = useRef(false);
+
+useEffect(() => {
+  if (open && !hasFetchedGps.current) {
+    hasFetchedGps.current = true;
+    fetchGpsData();
+  }
+}, [open]);
 
   const totalKm = vehicleEntries.reduce((sum, e) => {
     const gps = gpsData.find(g => g.vehicleId === e.vehicleRegistrationNumber);
@@ -280,7 +312,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onRefreshGps();
+                      fetchGpsData();
                     }}
                     disabled={gpsLoading}
                     className="flex items-center text-[13px] gap-2 px-3 py-1.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all disabled:opacity-50"
@@ -346,24 +378,6 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               }
             />
 
-
-            {/* <StatCard
-              icon={Navigation}
-              label="KM covered"
-              value={`${totalKm.toFixed(1)} km`}
-              sub={
-                <div className="flex flex-col gap-0.5 max-h-[52px] overflow-y-auto w-full">
-                  {vehicleEntries.map((e, i) => {
-                    const gps = gpsData.find(g => g.vehicleId === e.vehicleRegistrationNumber);
-                    return (
-                      <span key={i} className="text-xs text-gray-400">
-                        V{i + 1}: {(gps?.distanceCovered || 0).toFixed(1)}km
-                      </span>
-                    );
-                  })}
-                </div>
-              }
-            /> */}
 
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3.5 flex flex-col gap-2">
               <div className="flex items-center gap-2">
@@ -548,7 +562,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   </div>
                 )}
               </div>
-             
+
               <div className="divide-y-0">
                 {(() => {
                   const regNo = selectedVehicleRegNo || vehicleEntries[0]?.vehicleRegistrationNumber;
@@ -575,8 +589,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                         {/* Left: icon + vertical line */}
                         <div className="flex flex-col items-center flex-shrink-0">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${status === "completed"
-                              ? "bg-emerald-500"
-                              : "bg-amber-400"
+                            ? "bg-emerald-500"
+                            : "bg-amber-400"
                             }`}>
                             {status === "completed"
                               ? <FaLocationDot size={15} className="text-white fill-white" />
@@ -599,8 +613,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                             </p>
                           </div>
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${status === "completed"
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
-                              : "bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
+                            : "bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400"
                             }`}>
                             {status === "completed" ? "Visited" : "Current"}
                           </span>
@@ -613,7 +627,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
             </div>
 
-          
+
           </div>
 
 
@@ -894,8 +908,8 @@ function StatCard({ icon: Icon, iconBg, iconColor, label, value, sub, subColor }
 
 export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
 
-  const [gpsData, setGpsData] = useState<any[]>([]);
-  const [gpsLoading, setGpsLoading] = useState(false);
+  // const [gpsData, setGpsData] = useState<any[]>([]);
+  // const [gpsLoading, setGpsLoading] = useState(false);
   const hasFetched = useRef(false);
   const [driverLocations, setDriverLocations] = useState<Record<string, any[]>>({});
   const [locLoading, setLocLoading] = useState(false);
@@ -919,44 +933,10 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
   useEffect(() => {
     if (hasFetched.current) return;
     hasFetched.current = true;
-    fetchGpsData();
+    // fetchGpsData();
     fetchDriverLocations();
   }, []);
 
-
-
-
-
-  const fetchGpsData = async () => {
-    setGpsLoading(true);
-    try {
-      const { data } = await axios.get(
-        "http://api.vamosys.com/apiMobile/getVehicleLocations",
-        {
-          params: {
-            apiKey: "024faf95a3e00fab49c6c5f29958d3d2",
-            userId: "ADINN12",
-            groupId: "ADINN12",
-          },
-        }
-      );
-      const locations = data?.[0]?.vehicleLocations ?? [];
-      setGpsData(locations);
-    } catch (error) {
-      console.error("GPS API Error:", error);
-      setGpsData([]);
-    } finally {
-      setGpsLoading(false);
-    }
-  };
-
-
-
-  useEffect(() => {
-    if (hasFetched.current) return;
-    hasFetched.current = true;
-    fetchGpsData();
-  }, []);
 
 
   const vehicles = (order.bookingItems || [])
@@ -1035,18 +1015,16 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
 
         <div className="p-4 space-y-3">
           {vehicles.map(({ item: vehicle, originalIdx }) => (
+           
             <VehicleExecutionCard
-              key={originalIdx}
-              vehicle={vehicle}
-              vehicleIndex={originalIdx}
-              order={order}
-              onRefresh={onRefresh}
-              vehicleTypes={vehicleTypes}
-              gpsData={gpsData}
-              gpsLoading={gpsLoading}
-              onRefreshGps={fetchGpsData}
-              driverLocations={driverLocations}
-            />
+  key={originalIdx}
+  vehicle={vehicle}
+  vehicleIndex={originalIdx}
+  order={order}
+  onRefresh={onRefresh}
+  vehicleTypes={vehicleTypes}
+  driverLocations={driverLocations}
+/>
           ))}
         </div>
       </div>

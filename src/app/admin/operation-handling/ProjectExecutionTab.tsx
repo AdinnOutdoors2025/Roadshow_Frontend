@@ -31,10 +31,147 @@ const fmtDatetime = (s?: string) => {
 };
 
 
-function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }) {
+
+function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }) {
+  const [query, setQuery] = useState(value || "");
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [vehicles, setVehicles] = useState([]); 
+  const [fetched, setFetched] = useState(false);
+  const wrapperRef = useRef(null);
+
+
+  useEffect(() => {
+    setQuery(value || "");
+  }, [value]);
+
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const fetchVehicles = async () => {
+    if (!vehicleTypeId || loading) return;
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE}api/getNewVehicles`, {
+        params: { vehicleType: vehicleTypeId },
+      });
+      const docs = res?.data?.data || [];
+      const flat = [];
+      docs.forEach((doc) => {
+        (doc.registrationVehicles || []).forEach((rv) => {
+          if (
+            rv?.statusAvailability?.currentStatus === "Available" &&
+            rv.registrationNumber
+          ) {
+            flat.push({
+              _id: rv._id,
+              vehicleId: rv.vehicleId,
+              registrationNumber: rv.registrationNumber,
+              city: rv.city,
+              vehicleDescription: doc.vehicleDescription,
+              vehicleDocId: doc._id,
+            });
+          }
+        });
+      });
+      setVehicles(flat);
+      setFetched(true);
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Failed to load vehicles");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFocus = () => {
+    if (disabled) return;
+    setOpen(true);
+    if (!fetched) fetchVehicles();
+  };
+
+  const normalize = (s) => (s || "").replace(/\s+/g, "").toUpperCase();
+
+
+  const filtered = query.trim()
+    ? vehicles.filter((v) => normalize(v.registrationNumber).includes(normalize(query)))
+    : vehicles;
+
+  const handleSelect = (v) => {
+    onChange(v.registrationNumber, v.vehicleDocId);
+    setQuery(v.registrationNumber);
+    setOpen(false);
+  };
+
+  const handleInputChange = (e) => {
+    const val = e.target.value.toUpperCase();
+    setQuery(val);
+    onChange(val, null);
+    if (!open) setOpen(true);
+  };
+
+  return (
+    <div className="relative" ref={wrapperRef}>
+      <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+      <input
+        type="text"
+        value={query}
+        onChange={handleInputChange}
+        onFocus={handleFocus}
+        disabled={disabled}
+        className={`w-full border rounded-lg pl-9 pr-3 py-2.5 text-sm uppercase bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${hasError ? "border-red-300" : "border-gray-200 dark:border-gray-600"
+          }`}
+        placeholder="Type or search reg. no (e.g. 3057)"
+        autoComplete="off"
+      />
+
+      {open && !disabled && (
+        <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
+          {loading ? (
+            <div className="px-3 py-3 text-sm text-gray-400 flex items-center gap-2">
+              <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+              Loading available vehicles...
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="px-3 py-3 text-sm text-gray-400">
+              {vehicles.length === 0 ? "No available vehicles found" : "No match found"}
+            </div>
+          ) : (
+            filtered.map((v) => (
+              <button
+                type="button"
+                key={v._id}
+                onClick={() => handleSelect(v)}
+                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between gap-2"
+              >
+                <span className="font-semibold text-gray-700 dark:text-gray-200">
+                  {v.registrationNumber}
+                </span>
+                {v.city && (
+                  <span className="text-[11px] text-gray-400 truncate max-w-[110px]">{v.city}</span>
+                )}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, vehicleTypeId }) {
   const [driverName, setDriverName] = useState(existingEntry?.driverName || "");
   const [driverPhone, setDriverPhone] = useState(existingEntry?.driverPhone || "");
   const [regNo, setRegNo] = useState(existingEntry?.vehicleRegistrationNumber || "");
+  const [vehicleDocId, setVehicleDocId] = useState(existingEntry?.vehicleDocId || "");
   const [gatepassFile, setGatepassFile] = useState(null);
   const [gatepassPreview, setGatepassPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -49,6 +186,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
     if (!driverPhone.trim()) e.driverPhone = "Phone required";
     else if (!/^\d{10}$/.test(driverPhone)) e.driverPhone = "Enter valid 10-digit number";
     if (!regNo.trim()) e.regNo = "Registration number required";
+    if (!vehicleDocId) e.regNo = "Select a vehicle from the list (don't type manually)";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -58,17 +196,33 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
     setLoading(true);
     try {
       const token = getToken();
+     
+      const cleanReg = regNo.trim().toUpperCase().replace(/\s+/g, "");
+
       const fd = new FormData();
       fd.append("vehicleIndex", String(vehicleIndex));
       fd.append("driverName", driverName.trim());
       fd.append("driverPhone", driverPhone.trim());
-      fd.append("vehicleRegistrationNumber", regNo.trim().toUpperCase());
+      fd.append("vehicleRegistrationNumber", cleanReg);
       fd.append("onRoadStatus", "0");
       if (gatepassFile) fd.append("gatepassPhoto", gatepassFile);
 
+    
       await axios.post(`${API_BASE}admin/pipeline/${orderId}/onroad-details`, fd, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+    
+      try {
+        await axios.put(
+          `${API_BASE}api/updateRegistrationVehicle/${vehicleDocId}/${cleanReg}`,
+          { currentStatus: "Booked" },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (statusErr) {
+        toast.error("Driver saved, but vehicle status update failed. Please update manually.");
+      }
+
       toast.success(`Driver ${slotIndex + 1} details saved!`);
       onSaved();
     } catch (e) {
@@ -89,13 +243,12 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
   };
 
   return (
-    <div className={`rounded-xl border p-4 space-y-3 transition-all bg-white dark:bg-gray-900 ${
-      isSaved
+    <div className={`rounded-xl border p-4 space-y-3 transition-all bg-white dark:bg-gray-900 ${isSaved
         ? "border-gray-200 dark:border-gray-700"
         : "border-dashed border-gray-200 dark:border-gray-700"
-    }`}>
+      }`}>
 
-     
+
       {isSaved && (
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-1 text-[13px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
@@ -105,7 +258,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
         </div>
       )}
 
-     
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
         {/* Driver Name */}
@@ -120,9 +273,8 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
               value={driverName}
               onChange={e => setDriverName(e.target.value)}
               disabled={isSaved}
-              className={`w-full border rounded-lg pl-9 pr-3 py-2.5 text-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${
-                errors.driverName ? "border-red-300" : "border-gray-200 dark:border-gray-600"
-              }`}
+              className={`w-full border rounded-lg pl-9 pr-3 py-2.5 text-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${errors.driverName ? "border-red-300" : "border-gray-200 dark:border-gray-600"
+                }`}
               placeholder="Enter driver name"
             />
           </div>
@@ -147,37 +299,32 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
               onChange={e => setDriverPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
               disabled={isSaved}
               maxLength={10}
-              className={`w-full border rounded-lg pl-10 pr-9 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${
-                errors.driverPhone ? "border-red-300" : "border-gray-200 dark:border-gray-600"
-              }`}
+              className={`w-full border rounded-lg pl-10 pr-9 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${errors.driverPhone ? "border-red-300" : "border-gray-200 dark:border-gray-600"
+                }`}
               placeholder="9876543210"
             />
           </div>
           {errors.driverPhone && (
             <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-             {errors.driverPhone}
+              {errors.driverPhone}
             </p>
           )}
         </div>
 
-        {/* Reg Number */}
         <div>
           <label className="block text-base font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
             Vehicle Reg. No <span className="text-red-400">*</span>
           </label>
-          <div className="relative">
-            <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={regNo}
-              onChange={e => setRegNo(e.target.value.toUpperCase())}
-              disabled={isSaved}
-              className={`w-full border rounded-lg pl-9 pr-3 py-2.5 text-sm uppercase bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${
-                errors.regNo ? "border-red-300" : "border-gray-200 dark:border-gray-600"
-              }`}
-              placeholder="TN01AB1234"
-            />
-          </div>
+          <VehicleRegSelect
+            vehicleTypeId={vehicleTypeId}
+            value={regNo}
+            onChange={(val, docId) => {
+              setRegNo(val);
+              if (docId) setVehicleDocId(docId);
+            }}
+            disabled={isSaved}
+            hasError={!!errors.regNo}
+          />
           {errors.regNo && (
             <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
               {errors.regNo}
@@ -185,7 +332,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
           )}
         </div>
 
-        {/* Gatepass Photo */}
+    
         <div>
           <label className="block text-base font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
             Gatepass Photo <span className="text-gray-600 text-[14px] font-normal">(Optional)</span>
@@ -254,14 +401,14 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved }
   );
 }
 
-// ─── Vehicle Execution Card ───────────────────────────────────────────────────
-function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh ,vehicleTypes }) {
+
+function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes }) {
   const [open, setOpen] = useState(false);
   const [activeDriverTab, setActiveDriverTab] = useState(0);
   const [toggling, setToggling] = useState(false);
 
 
- 
+
 
   const getVehicleTypeName = (vehicleTypeId) => {
     if (!vehicleTypeId || !vehicleTypes) return "";
@@ -305,25 +452,23 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh ,vehicle
   };
 
   return (
-    <div className={`rounded-xl border overflow-hidden transition-all ${
-      isVehicleOnRoad
+    <div className={`rounded-xl border overflow-hidden transition-all ${isVehicleOnRoad
         ? "border-emerald-200 dark:border-emerald-800"
         : "border-gray-200 dark:border-gray-700"
-    } bg-white dark:bg-gray-900 shadow-sm hover:shadow-md`}>
+      } bg-white dark:bg-gray-900 shadow-sm hover:shadow-md`}>
 
       {/* ── Card Header ── */}
       <div
         className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all"
         onClick={() => setOpen(!open)}
       >
-        {/* Vehicle number badge - image style */}
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${
-          isVehicleOnRoad
+     
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${isVehicleOnRoad
             ? "bg-emerald-500"
             : allDriversSaved
-            ? "bg-blue-500"
-            : "bg-gray-400"
-        }`}>
+              ? "bg-blue-500"
+              : "bg-gray-400"
+          }`}>
           V{vehicleIndex + 1}
         </div>
 
@@ -333,7 +478,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh ,vehicle
             <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">
               {getVehicleTypeName(vehicle.vehicleType)}
             </p>
-            
+
             <span className="text-[15px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">
               {vehicle.campaignType || "—"}
             </span>
@@ -361,13 +506,12 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh ,vehicle
 
         {/* Right side - amount style like image + drivers count */}
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${
-            allDriversSaved
+          <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${allDriversSaved
               ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
               : savedCount > 0
-              ? "bg-orange-50 text-orange-500 dark:bg-orange-900/20 dark:text-orange-400"
-              : "bg-gray-100 text-gray-400 dark:bg-gray-800"
-          }`}>
+                ? "bg-orange-50 text-orange-500 dark:bg-orange-900/20 dark:text-orange-400"
+                : "bg-gray-100 text-gray-400 dark:bg-gray-800"
+            }`}>
             {savedCount}/{quantity} drivers
           </span>
           {open
@@ -390,11 +534,10 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh ,vehicle
                 <button
                   key={i}
                   onClick={() => setActiveDriverTab(i)}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 text-base font-semibold border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${
-                    isActive
+                  className={`flex items-center gap-1.5 px-4 py-2.5 text-base font-semibold border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${isActive
                       ? "border-gray-800 text-gray-800 dark:border-gray-200 dark:text-gray-200 bg-white dark:bg-gray-900"
                       : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  }`}
+                    }`}
                 >
                   Driver {i + 1}
                   {saved ? (
@@ -407,7 +550,6 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh ,vehicle
             })}
           </div>
 
-          {/* ── Active Driver Form ── */}
           <div className="p-4">
             <DriverForm
               key={`${vehicleIndex}-${activeDriverTab}`}
@@ -416,10 +558,11 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh ,vehicle
               orderId={order._id}
               existingEntry={vehicleEntries[activeDriverTab] || null}
               onSaved={handleDriverSaved}
+              vehicleTypeId={vehicle.vehicleType}
             />
           </div>
 
-          {/* ── On Road Toggle ── */}
+       
           <div className="px-4 pb-4">
             {allDriversSaved ? (
               <div className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3">
@@ -432,34 +575,31 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh ,vehicle
                   </p>
                 </div>
 
-              
+
                 <button
                   type="button"
                   onClick={handleVehicleToggle}
                   disabled={toggling || isVehicleOnRoad}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 disabled:cursor-not-allowed flex-shrink-0 ${
-                    isVehicleOnRoad
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 disabled:cursor-not-allowed flex-shrink-0 ${isVehicleOnRoad
                       ? "bg-emerald-500"
                       : "bg-gray-300 dark:bg-gray-600"
-                  }`}
+                    }`}
                 >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
-                    isVehicleOnRoad ? "translate-x-6" : "translate-x-1"
-                  }`} />
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${isVehicleOnRoad ? "translate-x-6" : "translate-x-1"
+                    }`} />
                 </button>
 
-                <span className={`text-sm font-semibold min-w-[60px] ${
-                  isVehicleOnRoad
+                <span className={`text-sm font-semibold min-w-[60px] ${isVehicleOnRoad
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-gray-400"
-                }`}>
+                  }`}>
                   {toggling ? (
                     <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
                   ) : isVehicleOnRoad ? "On Road" : "Off Road"}
                 </span>
               </div>
             ) : savedCount > 0 ? (
-              
+
               <div className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 opacity-40">
                 <div className="flex-1">
                   <p className="text-md font-semibold text-gray-500">On Road Status</p>
@@ -481,17 +621,13 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh ,vehicle
 }
 
 
-export default function ProjectExecutionTab({ order, onRefresh ,vehicleTypes }) {
+export default function ProjectExecutionTab({ order, onRefresh, vehicleTypes }) {
   const vehicles = order.bookingItems || [];
   const allEntries = order.onRoadExecutionArray || [];
   const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
 
-    // const { vehicleTypes, fetchVehicleTypes } = useVehicle();
 
-    //  useEffect(() => {
-    //     fetchVehicleTypes()
-    // }, [])
 
   if (vehicles.length === 0) {
     return (
@@ -522,9 +658,9 @@ export default function ProjectExecutionTab({ order, onRefresh ,vehicleTypes }) 
         )}
       </div>
 
-     
+
       {vehicles.map((vehicle, idx) => (
-        
+
         <VehicleExecutionCard
           key={idx}
           vehicle={vehicle}
@@ -533,8 +669,6 @@ export default function ProjectExecutionTab({ order, onRefresh ,vehicleTypes }) 
           onRefresh={onRefresh}
           vehicleTypes={vehicleTypes}
         />
-
-        
       ))}
     </div>
   );
