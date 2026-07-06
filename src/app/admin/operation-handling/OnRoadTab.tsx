@@ -1,4 +1,5 @@
 
+
 /* eslint-disable */
 // @ts-nocheck
 "use client";
@@ -60,10 +61,9 @@ const getImageUrl = (url) => {
 
 
 
-function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, driverLocations }) {
+function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, driverLocations, isOpen, onToggle }) {
   const [gpsData, setGpsData] = useState([]);
   const [gpsLoading, setGpsLoading] = useState(false);
-  const [open, setOpen] = useState(false);
   const [activeDriverTab, setActiveDriverTab] = useState(0);
   const [toggling, setToggling] = useState(false);
   const issueRef = useRef(null);
@@ -173,11 +173,11 @@ const fetchGpsData = async () => {
 const hasFetchedGps = useRef(false);
 
 useEffect(() => {
-  if (open && !hasFetchedGps.current) {
+  if (isOpen && !hasFetchedGps.current) {
     hasFetchedGps.current = true;
     fetchGpsData();
   }
-}, [open]);
+}, [isOpen]);
 
   const totalKm = vehicleEntries.reduce((sum, e) => {
     const gps = gpsData.find(g => g.vehicleId === e.vehicleRegistrationNumber);
@@ -209,7 +209,7 @@ useEffect(() => {
 
       <div
         className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all"
-        onClick={() => setOpen(!open)}
+        onClick={onToggle}
       >
         {/* V badge */}
         <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${isVehicleOnRoad ? "bg-emerald-500" : allDriversSaved ? "bg-blue-500" : "bg-gray-400"
@@ -255,14 +255,14 @@ useEffect(() => {
           <span className={`text-sm font-bold px-2 py-0.5 rounded-full border ${driverBadgeClass}`}>
             {savedCount}/{quantity} drivers
           </span>
-          {open
+          {isOpen
             ? <ChevronUp size={14} className="text-gray-300" />
             : <ChevronDown size={14} className="text-gray-300" />}
         </div>
       </div>
 
       {/* ── Expanded Section ── */}
-      {open && (
+      {isOpen && (
         <div className="border-t border-gray-100 dark:border-gray-800">
 
           {/* ── Campaign Header ── */}
@@ -446,11 +446,7 @@ useEffect(() => {
                 <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
                   Live vehicle status ({vehicleEntries.length}/{quantity} drivers)
                 </h3>
-                {/* {vehicleEntries.filter(e => e.onRoadStatus === 1).length > 0 && (
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
-                    {vehicleEntries.filter(e => e.onRoadStatus === 1).length} On Road
-                  </span>
-                )} */}
+              
               </div>
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
@@ -913,6 +909,22 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
   const hasFetched = useRef(false);
   const [driverLocations, setDriverLocations] = useState<Record<string, any[]>>({});
   const [locLoading, setLocLoading] = useState(false);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  const handleToggle = (idx: number) => {
+    const willOpen = openIndex !== idx; 
+
+    setOpenIndex(willOpen ? idx : null);
+
+    if (willOpen) {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          cardRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 120);
+      });
+    }
+  };
 
 
   const fetchDriverLocations = async () => {
@@ -953,9 +965,6 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 
-
-
-  // Campaign info from order
   const campaignName = order.campaignName || order.bookingItems?.[0]?.campaignName || "Campaign";
   const clientName = order.clientName || order.client?.name || "—";
   const startDate = order.startDate || order.bookingItems?.[0]?.fromDate;
@@ -977,10 +986,6 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
 
   return (
     <div className="p-4 space-y-4">
-
-
-
-      {/* ── Project Execution (Vehicle Cards with Driver Forms) ── */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
 
 
@@ -1015,16 +1020,22 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
 
         <div className="p-4 space-y-3">
           {vehicles.map(({ item: vehicle, originalIdx }) => (
-           
-            <VehicleExecutionCard
-  key={originalIdx}
-  vehicle={vehicle}
-  vehicleIndex={originalIdx}
-  order={order}
-  onRefresh={onRefresh}
-  vehicleTypes={vehicleTypes}
-  driverLocations={driverLocations}
-/>
+
+            <div
+              key={originalIdx}
+              ref={(el) => { cardRefs.current[originalIdx] = el; }}
+            >
+              <VehicleExecutionCard
+                vehicle={vehicle}
+                vehicleIndex={originalIdx}
+                order={order}
+                onRefresh={onRefresh}
+                vehicleTypes={vehicleTypes}
+                driverLocations={driverLocations}
+                isOpen={openIndex === originalIdx}
+                onToggle={() => handleToggle(originalIdx)}
+              />
+            </div>
           ))}
         </div>
       </div>
@@ -1032,4 +1043,3 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
     </div>
   );
 }
-

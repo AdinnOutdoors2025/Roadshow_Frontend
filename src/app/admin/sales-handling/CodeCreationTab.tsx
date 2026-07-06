@@ -89,6 +89,17 @@ export default function CodeCreationTab({
   );
 
 
+  const formatINR = (value: string | number) => {
+  const num = parseFloat(String(value).replace(/[^0-9.]/g, ""));
+  if (isNaN(num) || value === "" || value === undefined) return "";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(num);
+};
+
+
   const senderName = order.salesHandlerName || "Team";
 
   const isValidEmail = (email: string) =>
@@ -812,6 +823,18 @@ export default function CodeCreationTab({
                         </span>
                       </div>
                     )}
+
+                     {(v.additionalFields || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
+                  <div key={fIdx} className="flex justify-between items-center py-1 text-sm">
+                    <span className={c.mode === "-" ? "text-red-500 text-md" : "text-gray-600 dark:text-gray-400 text-sm"}>
+                      {c.label}
+                    </span>
+                    <span className={c.mode === "-" ? "text-red-600 font-medium" : "font-semibold text-gray-800 dark:text-gray-200"}>
+                      {c.mode === "-" ? "-" : "+"}
+                      {formatINR(c.amount)}
+                    </span>
+                  </div>
+                ))}
                     <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-100 dark:border-gray-700 mt-1">
                       <span className="text-gray-700 dark:text-gray-300">
                         Vehicle {idx + 1} Total

@@ -1,4 +1,5 @@
 
+
 /* eslint-disable */
 // @ts-nocheck
 "use client";
@@ -402,8 +403,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
 }
 
 
-function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes }) {
-  const [open, setOpen] = useState(false);
+function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, isOpen, onToggle }) {
   const [activeDriverTab, setActiveDriverTab] = useState(0);
   const [toggling, setToggling] = useState(false);
 
@@ -460,7 +460,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
       {/* ── Card Header ── */}
       <div
         className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all"
-        onClick={() => setOpen(!open)}
+        onClick={onToggle}
       >
      
         <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${isVehicleOnRoad
@@ -514,7 +514,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
             }`}>
             {savedCount}/{quantity} drivers
           </span>
-          {open
+          {isOpen
             ? <ChevronUp size={14} className="text-gray-300" />
             : <ChevronDown size={14} className="text-gray-300" />
           }
@@ -522,7 +522,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
       </div>
 
       {/* ── Expanded Section ── */}
-      {open && (
+      {isOpen && (
         <div className="border-t border-gray-100 dark:border-gray-800">
 
           {/* ── Driver Tabs ── */}
@@ -627,6 +627,12 @@ export default function ProjectExecutionTab({ order, onRefresh, vehicleTypes }) 
   const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
 
+  // Ondrey oru card open-a irukum padi (accordion). null = ellam close.
+  const [openIndex, setOpenIndex] = useState(null);
+
+  const handleToggle = (idx) => {
+    setOpenIndex((prev) => (prev === idx ? null : idx));
+  };
 
 
   if (vehicles.length === 0) {
@@ -668,6 +674,8 @@ export default function ProjectExecutionTab({ order, onRefresh, vehicleTypes }) 
           order={order}
           onRefresh={onRefresh}
           vehicleTypes={vehicleTypes}
+          isOpen={openIndex === idx}
+          onToggle={() => handleToggle(idx)}
         />
       ))}
     </div>

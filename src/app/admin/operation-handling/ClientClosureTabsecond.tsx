@@ -376,15 +376,6 @@ export default function ClientClosureTabSecond({
         return fbId === String(bookingItemId);
     });
 
-    // useEffect(() => {
-    //     if (focDoc && focDoc.type.startsWith("image/")) {
-    //         const url = URL.createObjectURL(focDoc);
-    //         setLocalPreviewUrl(url);
-    //         return () => URL.revokeObjectURL(url);
-    //     } else {
-    //         setLocalPreviewUrl("");
-    //     }
-    // }, [focDoc]);
 
     useEffect(() => {
         if (focDoc) {
@@ -623,7 +614,7 @@ export default function ClientClosureTabSecond({
                                                 </div>
                                             </div>
 
-                                            {/* Document / Image - editable by both roles */}
+                                        
                                             <div className="mb-4">
                                                 <label className="block text-sm font-medium text-gray-500 mb-1">
                                                     Document / Image <span className="text-gray-400">(optional)</span>

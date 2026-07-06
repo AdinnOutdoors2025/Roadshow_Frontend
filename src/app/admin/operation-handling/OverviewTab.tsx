@@ -376,7 +376,7 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                                     </div>
                                 )}
 
-                                {(currentVehicle.additionalCharges || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
+                                {(currentVehicle.additionalFields || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
                                     <div key={fIdx} className="flex justify-between items-center py-1">
                                         <span className={c.mode === "-" ? "text-red-500 text-md" : "text-gray-600 dark:text-gray-400 text-md"}>
                                             {c.label}
