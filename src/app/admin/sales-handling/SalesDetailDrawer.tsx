@@ -91,10 +91,22 @@ const fmtStageDuration = (s?: string) => {
   return `${Math.floor(hrs / 24)}d ${hrs % 24}h in Current Stage`;
 };
 
+// const getFileUrl = (p: string) => {
+//   if (!p) return "";
+//   if (p.startsWith("http")) return p;
+//   return `http://localhost:3001${p.startsWith("/") ? p : `/${p}`}`;
+// };
+
 const getFileUrl = (p: string) => {
   if (!p) return "";
   if (p.startsWith("http")) return p;
-  return `http://localhost:3001${p.startsWith("/") ? p : `/${p}`}`;
+  const path = p.startsWith("/") ? p : `/${p}`;
+ 
+  const encodedPath = path
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `http://localhost:3001${encodedPath}`;
 };
 
 const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
@@ -323,11 +335,17 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
   const drivingRoute = item.fromLocation && item.toLocation
     ? `${item.fromLocation} → ${item.toLocation}` : null;
   const locationLabel = [item.state, item.city].filter(Boolean).join(" / ") || "—";
-  const getImageUrl = (path: string) => {
-    if (!path) return '';
-    if (path.startsWith('http')) return path;
-    return `http://localhost:3001${path.startsWith('/') ? path : `/${path}`}`;
-  };
+
+const getImageUrl = (path: string) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  const p = path.startsWith('/') ? path : `/${path}`;
+  const encodedPath = p
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+  return `http://localhost:3001${encodedPath}`;
+};
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -762,7 +780,7 @@ function OverviewTab({
                   <AlertTriangle size={12} /> Reason:
                 </p>
                 <p className="text-sm text-gray-700 dark:text-gray-300">{item.reason}</p>
-                <p className="text-[11px] text-gray-400 mt-1">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
+                <p className="text-xs text-gray-400 mt-1">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
                 {item.document && <div className="mt-2"><DocItem docPath={item.document} label="Supporting Document" /></div>}
               </div>
             ))}
@@ -780,7 +798,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // ── Enquiry Name Modal state ───────────────────────────────────────────
+
   const [showNameModal, setShowNameModal] = useState(false);
   const [enquiryName, setEnquiryName] = useState(order.enquiryName || "");
   const [nameInput, setNameInput] = useState("");

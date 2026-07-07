@@ -117,18 +117,6 @@ export default function CustomerDetailsStep({
   };
 
 
-
-
-  // const handleCategorySwitch = (cat: "individual" | "organization") => {
-  //   if (cat === customerCategory) return;
-  //   onCategoryChange(cat);
-  //   setErrors({});
-  //   setGlobalError("");
-  //   setGstStatus("idle");
-  //   setGstMessage("");
-  //   onCustomerChange({ customer: null, type: "" });
-  // };
-
   const handleCategorySwitch = (cat: "individual" | "organization") => {
     if (cat === customerCategory) return;
     onCategoryChange(cat);
@@ -154,27 +142,7 @@ export default function CustomerDetailsStep({
     return Object.keys(e).length === 0;
   };
 
-  // const validateOrganization = (): boolean => {
-  //   const e: FormErrors = {};
-  //   if (!data.companyName?.trim()) e.companyName = "Company name is required";
-  //   if (!data.clientName?.trim()) e.clientName = "Client name is required";
-  //   if (!data.designation?.trim()) e.designation = "Designation is required";
-  //   if (!data.phone?.trim()) e.phone = "Phone number is required";
-  //   else if (!/^[6-9]\d{9}$/.test(data.phone.trim()))
-  //     e.phone = "Enter a valid 10-digit mobile number";
-  //   if (!data.email?.trim()) e.email = "Email is required";
-  //   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim()))
-  //     e.email = "Enter a valid email address";
-  //   if (!data.gstNumber?.trim()) e.gstNumber = "GST number is required";
-  //   else if (
-  //     !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(
-  //       data.gstNumber.trim()
-  //     )
-  //   )
-  //     e.gstNumber = "Enter a valid GST number (e.g. 22AAAAA0000A1Z5)";
-  //   setErrors(e);
-  //   return Object.keys(e).length === 0;
-  // };
+
 
   const validateOrganization = (): boolean => {
     const e: FormErrors = {};

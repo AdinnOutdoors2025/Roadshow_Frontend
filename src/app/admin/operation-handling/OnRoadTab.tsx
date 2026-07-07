@@ -853,7 +853,7 @@ function IssueHistoryCard({ iss, onOpenModal }) {
 
           {showResolved && (
             <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800">
-              <p className="text-xs text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 <span className="font-medium">Resolution:</span>{" "}
                 {iss.resolveDescription}
               </p>
@@ -870,7 +870,7 @@ function IssueHistoryCard({ iss, onOpenModal }) {
                   />
                 </a>
               )}
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-sm text-gray-400 mt-0.5">
                 Resolved by {iss.resolvedBy} · {fmtDatetime(iss.resolvedAt)}
               </p>
             </div>

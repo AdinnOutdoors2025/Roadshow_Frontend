@@ -181,16 +181,28 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
 
   const isSaved = !!existingEntry?._id;
 
+  // const validate = () => {
+  //   const e = {};
+  //   if (!driverName.trim()) e.driverName = "Driver name required";
+  //   if (!driverPhone.trim()) e.driverPhone = "Phone required";
+  //   else if (!/^\d{10}$/.test(driverPhone)) e.driverPhone = "Enter valid 10-digit number";
+  //   if (!regNo.trim()) e.regNo = "Registration number required";
+  //   if (!vehicleDocId) e.regNo = "Select a vehicle from the list (don't type manually)";
+  //   setErrors(e);
+  //   return Object.keys(e).length === 0;
+  // };
+
   const validate = () => {
-    const e = {};
-    if (!driverName.trim()) e.driverName = "Driver name required";
-    if (!driverPhone.trim()) e.driverPhone = "Phone required";
-    else if (!/^\d{10}$/.test(driverPhone)) e.driverPhone = "Enter valid 10-digit number";
-    if (!regNo.trim()) e.regNo = "Registration number required";
-    if (!vehicleDocId) e.regNo = "Select a vehicle from the list (don't type manually)";
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
+  const e = {};
+  if (!driverName.trim()) e.driverName = "Driver name required";
+  else if (!/^[a-zA-Z\s]+$/.test(driverName.trim())) e.driverName = "Only letters allowed";
+  if (!driverPhone.trim()) e.driverPhone = "Phone required";
+  else if (!/^\d{10}$/.test(driverPhone)) e.driverPhone = "Enter valid 10-digit number";
+  if (!regNo.trim()) e.regNo = "Registration number required";
+  if (!vehicleDocId) e.regNo = "Select a vehicle from the list (don't type manually)";
+  setErrors(e);
+  return Object.keys(e).length === 0;
+};
 
   const handleSave = async () => {
     if (!validate()) return;
@@ -272,7 +284,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
             <input
               type="text"
               value={driverName}
-              onChange={e => setDriverName(e.target.value)}
+              onChange={e => setDriverName(e.target.value.replace(/[^a-zA-Z\s]/g, ""))}
               disabled={isSaved}
               className={`w-full border rounded-lg pl-9 pr-3 py-2.5 text-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${errors.driverName ? "border-red-300" : "border-gray-200 dark:border-gray-600"
                 }`}

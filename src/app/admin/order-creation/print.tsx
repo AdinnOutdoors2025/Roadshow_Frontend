@@ -748,7 +748,7 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                       <div className="pdf-stat-value primary">₹{fmt(grandTotal)}</div>
                     </div>
                     <div className="pdf-stat-card">
-                      <div className="pdf-stat-label">Total Vehicles</div>
+                      <div className="pdf-stat-label">Total Vehicle Models</div>
                       <div className="pdf-stat-value">{bookingItems.length}</div>
                     </div>
                     <div className="pdf-stat-card">

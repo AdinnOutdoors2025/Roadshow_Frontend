@@ -244,7 +244,7 @@ export default function OrderDetailDrawer({
                                     <div className="flex items-start gap-3 text-sm">
                                         <HiOutlineUser className="w-5 h-5 text-gray-400 mt-0.5" />
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-gray-500 block text-xs mb-0.5">Full Name</span>
+                                            <span className="text-gray-500 block text-sm mb-0.5">Full Name</span>
                                             <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
                                                 {order.name}
                                             </span>
@@ -256,7 +256,7 @@ export default function OrderDetailDrawer({
                                     <div className="flex items-start gap-3 text-sm">
                                         <HiOutlineOfficeBuilding className="w-5 h-5 text-gray-400 mt-0.5" />
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-gray-500 block text-xs mb-0.5">Company Name</span>
+                                            <span className="text-gray-500 block text-sm mb-0.5">Company Name</span>
                                             <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
                                                 {order.companyName}
                                             </span>
@@ -268,7 +268,7 @@ export default function OrderDetailDrawer({
                                     <div className="flex items-start gap-3 text-sm">
                                         <HiOutlineBriefcase className="w-5 h-5 text-gray-400 mt-0.5" />
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-gray-500 block text-xs mb-0.5">Designation</span>
+                                            <span className="text-gray-500 block text-sm mb-0.5">Designation</span>
                                             <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
                                                 {order.designation}
                                             </span>
@@ -280,7 +280,7 @@ export default function OrderDetailDrawer({
                                     <div className="flex items-start gap-3 text-sm">
                                         <HiOutlineDocumentText className="w-5 h-5 text-gray-400 mt-0.5" />
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-gray-500 block text-xs mb-0.5">GST Number</span>
+                                            <span className="text-gray-500 block text-sm mb-0.5">GST Number</span>
                                             <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
                                                 {order.gstNumber}
                                             </span>
@@ -292,7 +292,7 @@ export default function OrderDetailDrawer({
                                     <div className="flex items-start gap-3 text-sm">
                                         <HiOutlinePhone className="w-5 h-5 text-gray-400 mt-0.5" />
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-gray-500 block text-xs mb-0.5">Phone Number</span>
+                                            <span className="text-gray-500 block text-sm mb-0.5">Phone Number</span>
                                             <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
                                                 {order.phone}
                                             </span>
@@ -304,7 +304,7 @@ export default function OrderDetailDrawer({
                                     <div className="flex items-start gap-3 text-sm">
                                         <HiOutlineMail className="w-5 h-5 text-gray-400 mt-0.5" />
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-gray-500 block text-xs mb-0.5">Email Address</span>
+                                            <span className="text-gray-500 block text-sm mb-0.5">Email Address</span>
                                             <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
                                                 {order.email}
                                             </span>
@@ -316,7 +316,7 @@ export default function OrderDetailDrawer({
                                     <div className="flex items-start gap-3 text-sm">
                                         <HiOutlineLocationMarker className="w-5 h-5 text-gray-400 mt-0.5" />
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-gray-500 block text-xs mb-0.5">Address</span>
+                                            <span className="text-gray-500 block text-sm mb-0.5">Address</span>
                                             <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
                                                 {order.address}
                                             </span>
@@ -328,7 +328,7 @@ export default function OrderDetailDrawer({
                                 <div className="flex items-start gap-3 text-sm">
                                     <HiOutlineTag className="w-5 h-5 text-gray-400 mt-0.5" />
                                     <div className="flex-1 min-w-0">
-                                        <span className="text-gray-500 block text-xs mb-0.5">Customer Type</span>
+                                        <span className="text-gray-500 block text-sm mb-0.5">Customer Type</span>
                                         <span
                                             className={`font-medium text-sm inline-flex items-center gap-2 ${order.customerType === 1
                                                 ? "text-green-600 dark:text-green-400"
@@ -349,7 +349,7 @@ export default function OrderDetailDrawer({
                                     <div className="flex items-start gap-3 text-sm">
                                         <HiOutlineUserGroup className="w-5 h-5 text-gray-400 mt-0.5" />
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-gray-500 block text-xs mb-0.5">Assigned Handler</span>
+                                            <span className="text-gray-500 block text-sm mb-0.5">Assigned Handler</span>
                                             <span className="font-medium text-gray-800 dark:text-gray-200 text-sm">
                                                 {order.handlername}
                                             </span>
@@ -362,7 +362,7 @@ export default function OrderDetailDrawer({
                                     <div className="flex items-start gap-3 text-sm">
                                         <HiOutlineBadgeCheck className="w-5 h-5 text-gray-400 mt-0.5" />
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-gray-500 block text-xs mb-0.5">Order Source</span>
+                                            <span className="text-gray-500 block text-sm mb-0.5">Order Source</span>
                                             <span className="text-xs font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 px-2 py-1 rounded inline-block">
                                                 Admin Created
                                             </span>
@@ -455,11 +455,11 @@ export default function OrderDetailDrawer({
                                                     </span>
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
+                                                    {/* <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
                                                         {item.vehicleModel || "Vehicle Details"}
-                                                    </p>
+                                                    </p> */}
                                                     {item.vehicleType && (
-                                                        <p className="text-sm text-gray-500 mt-0.5">
+                                                        <p className="text-md text-gray-500 mt-0.5">
                                                             {getVehicleTypeName(item.vehicleType)}
                                                         </p>
                                                     )}
@@ -664,9 +664,9 @@ export default function OrderDetailDrawer({
                                                     {item.rentalCost ? (
                                                         <div className="flex justify-between items-center py-1">
                                                             <span className="text-gray-600 dark:text-gray-400 text-sm">
-                                                                Rental & Driver Charges
+                                                                Rental
                                                             </span>
-                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
+                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-sm ">
                                                                 ₹{(item.rentalCost || 0).toLocaleString("en-IN")}
                                                             </span>
                                                         </div>
@@ -681,7 +681,7 @@ export default function OrderDetailDrawer({
                                                                 )}{" "}
                                                                 × {item.promoterQuantity})
                                                             </span>
-                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
+                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
                                                                 ₹{item.promoterCost.toLocaleString("en-IN")}
                                                             </span>
                                                         </div>
@@ -692,7 +692,7 @@ export default function OrderDetailDrawer({
                                                             <span className="text-gray-600 dark:text-gray-400 text-sm">
                                                                 RTO Charges
                                                             </span>
-                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
+                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
                                                                 ₹{item.rtoCost.toLocaleString("en-IN")}
                                                             </span>
                                                         </div>
@@ -704,7 +704,7 @@ export default function OrderDetailDrawer({
                                                                 Extra KM Charges ({item.extraKm} km × ₹
                                                                 {item.dailyKmcharges?.toLocaleString("en-IN")})
                                                             </span>
-                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
+                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
                                                                 ₹{item.extraKmCost.toLocaleString("en-IN")}
                                                             </span>
                                                         </div>
@@ -719,7 +719,7 @@ export default function OrderDetailDrawer({
                                                                 )}
                                                                 )
                                                             </span>
-                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
+                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
                                                                 ₹{item.extraHourCost.toLocaleString("en-IN")}
                                                             </span>
                                                         </div>
@@ -744,8 +744,8 @@ export default function OrderDetailDrawer({
                                                                 <span
                                                                     className={
                                                                         f.mode === "-"
-                                                                            ? "text-red-600 font-medium text-base"
-                                                                            : "text-gray-800 dark:text-gray-200 font-medium text-base"
+                                                                            ? "text-red-600 font-medium text-sm"
+                                                                            : "text-gray-800 dark:text-gray-200 font-medium text-sm"
                                                                     }
                                                                 >
                                                                     {f.mode === "-" ? "-" : "+"}₹
@@ -759,7 +759,7 @@ export default function OrderDetailDrawer({
                                                             <span className="text-gray-700 dark:text-gray-300 font-semibold text-sm">
                                                                 Subtotal
                                                             </span>
-                                                            <span className="text-gray-900 dark:text-white font-bold text-lg">
+                                                            <span className="text-gray-900 dark:text-white font-bold text-md">
                                                                 ₹{formatINR(item.subtotal || 0)}
                                                             </span>
                                                         </div>
@@ -767,7 +767,7 @@ export default function OrderDetailDrawer({
                                                             <span className="text-gray-900 dark:text-white font-bold text-base">
                                                                 Total (excl. GST)
                                                             </span>
-                                                            <span className="text-blue-600 dark:text-blue-400 font-bold text-xl">
+                                                            <span className="text-blue-600 dark:text-blue-400 font-bold text-md">
                                                                 ₹{formatINR(item.totalAmount || 0)}
                                                             </span>
                                                         </div>
@@ -928,7 +928,7 @@ export default function OrderDetailDrawer({
                                         <span className="text-xl font-bold text-gray-900 dark:text-white">
                                             Grand Total
                                         </span>
-                                        <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                        <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
                                             ₹{formatINR(grandTotal)}
                                         </span>
                                     </div>

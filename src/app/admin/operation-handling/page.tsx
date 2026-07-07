@@ -1315,6 +1315,11 @@ export default function PipelineBoard() {
       return;
     }
 
+      if (toStage === "vehicleUnavailable") {
+      toast.error("Cannot move to Vehicle Unavailable. This stage only displays unavailable vehicle history.");
+      return;
+    }
+
     const PIPELINE_STAGE_ORDER = [
       "todo",
       "projectExecution",
