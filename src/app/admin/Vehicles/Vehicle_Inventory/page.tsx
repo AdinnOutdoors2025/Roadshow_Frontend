@@ -912,6 +912,7 @@ import {
 import { baseUrl } from "../../../../BaseUrl";
 import AdminSelectOptionsData from "../../AdminSelectOptions.json";
 import { useAuthGuard } from "../../../utils/useAuthGuard";
+import OrderDatePicker from "@/app/utils/OrderDatePicker";
 
 // ── Native toggle — fully controlled, no external Switch dependency needed here
 const ToggleSwitch = ({ checked, onChange, colorOn = "bg-green-500", colorOff = "bg-gray-300", size = "md" }) => {
@@ -974,16 +975,29 @@ const StatusBadge = ({ status }) => {
 const RemarksModal = ({ isOpen, onClose, onConfirm, status, vehicleLabel, isBulk = false }) => {
   const [selectedRemark, setSelectedRemark] = useState("");
   const [customRemark, setCustomRemark] = useState("");
+  const [fromDate, setFromDate] = useState("");  
+  const [toDate, setToDate] = useState("");     
   const isRequired = REMARKS_REQUIRED.includes(status);
   const isOptional = REMARKS_OPTIONAL.includes(status);
+  const isBookedStatus = status === "Booked";     
 
   useEffect(() => {
-    if (isOpen) { setSelectedRemark(""); setCustomRemark(""); }
+    if (isOpen) {
+      setSelectedRemark("");
+      setCustomRemark("");
+      setFromDate("");  
+      setToDate("");    
+    }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const finalRemarks = customRemark.trim() || selectedRemark;
+
+  
+  const datesInvalid = isBookedStatus && (!fromDate || !toDate);
+  const dateRangeInvalid = isBookedStatus && fromDate && toDate && fromDate >= toDate;
+  const canConfirm = !(isRequired && !finalRemarks) && !datesInvalid && !dateRangeInvalid;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
@@ -1001,6 +1015,42 @@ const RemarksModal = ({ isOpen, onClose, onConfirm, status, vehicleLabel, isBulk
           {isBulk && (
             <p className="text-sm text-gray-500 mb-3">Applying to all selected vehicles.</p>
           )}
+
+         
+          {isBookedStatus && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Booking Dates <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">From Date</label>
+                  <OrderDatePicker
+                    value={fromDate}
+                    onChange={(val) => { setFromDate(val); if (toDate && val >= toDate) setToDate(""); }}
+                    placeholder="From date"
+                    maxDate={toDate || undefined}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">To Date</label>
+                  <OrderDatePicker
+                    value={toDate}
+                    onChange={setToDate}
+                    placeholder="To date"
+                    minDate={fromDate || undefined}
+                  />
+                </div>
+              </div>
+              {datesInvalid && (
+                <p className="text-xs text-red-500 mt-1">Both from and to dates are required.</p>
+              )}
+              {dateRangeInvalid && (
+                <p className="text-xs text-red-500 mt-1">To date must be after from date.</p>
+              )}
+            </div>
+          )}
+
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Remarks {isRequired ? <span className="text-red-500">*</span> : <span className="text-gray-400">(optional)</span>}
           </label>
@@ -1032,8 +1082,8 @@ const RemarksModal = ({ isOpen, onClose, onConfirm, status, vehicleLabel, isBulk
           </button>
           <button
             type="button"
-            disabled={isRequired && !finalRemarks}
-            onClick={() => { if (isRequired && !finalRemarks) return; onConfirm(finalRemarks); }}
+            disabled={!canConfirm}
+            onClick={() => { if (!canConfirm) return; onConfirm(finalRemarks, { fromDate, toDate }); }}
             className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">
             Confirm
           </button>
@@ -1043,7 +1093,8 @@ const RemarksModal = ({ isOpen, onClose, onConfirm, status, vehicleLabel, isBulk
   );
 };
 
-// ── FIX: LocationSelector — cascading state+city with toggle ─────────────────
+
+
 const LocationSelector = ({ vehicle, editingRows, handleEditField, locationData }) => {
   // Determine current displayed city (from editingRows or original vehicle)
   const currentCity = editingRows[vehicle.id]?.city !== undefined
@@ -1590,48 +1641,58 @@ export default function VehicleInventory() {
     }
   };
 
-  const handleRemarksConfirm = (remarks) => {
-    const { vehicleId, isBulk, status } = remarksModal;
-    if (isBulk) {
-      pendingBulkRemarksRef.current = remarks;
-      setRemarksModal({ open: false, status: "", vehicleId: null, isBulk: false });
-      executeBulkApply(bulkStatus, bulkCity, remarks);
-    } else {
-      setEditingRows(prev => ({
-        ...prev,
-        [vehicleId]: { ...prev[vehicleId], remarks },
-      }));
-      setRemarksModal({ open: false, status: "", vehicleId: null, isBulk: false });
-    }
-  };
+const handleRemarksConfirm = (remarks, dates = {}) => {   
+  const { vehicleId, isBulk, status } = remarksModal;
+  if (isBulk) {
+    pendingBulkRemarksRef.current = remarks;
+    setRemarksModal({ open: false, status: "", vehicleId: null, isBulk: false });
+    executeBulkApply(bulkStatus, bulkCity, remarks, dates);   
+  } else {
+    setEditingRows(prev => ({
+      ...prev,
+      [vehicleId]: {
+        ...prev[vehicleId],
+        remarks,
+        fromDate: dates.fromDate || undefined,  
+        toDate: dates.toDate || undefined,       
+      },
+    }));
+    setRemarksModal({ open: false, status: "", vehicleId: null, isBulk: false });
+  }
+};
+
 
   const pendingBulkRemarksRef = useRef("");
 
+
   const handleSaveRow = async (vehicle) => {
-    const updatedFields = editingRows[vehicle.id];
-    if (!updatedFields) return;
-    const newStatus = updatedFields.status !== undefined ? updatedFields.status : vehicle.status;
-    const remarks = updatedFields.remarks !== undefined ? updatedFields.remarks : vehicle.remarks;
-    const isReqRemarks = REMARKS_REQUIRED.includes(newStatus);
-    if (isReqRemarks && !remarks) {
-      toast.error("Please add remarks before saving.", { position: "bottom-right", autoClose: 3000 });
-      return;
-    }
-    const payload = {};
-    if (updatedFields.city !== undefined) payload.city = updatedFields.city;
-    // ── FIX: send gpsEnabled boolean to backend ──────────────────────────
-    if (updatedFields.gpsStatus !== undefined) payload.gpsEnabled = updatedFields.gpsStatus === "Active";
-    if (updatedFields.status !== undefined) {
-      payload.currentStatus = updatedFields.status;
-      payload.statusPriority = STATUS_PRIORITY[updatedFields.status] ?? 0;
-    }
-    if (updatedFields.remarks !== undefined) payload.remarks = updatedFields.remarks;
-    const success = await updateRegistrationVehicle(vehicle.groupId, vehicle.registrationNumber, payload);
-    if (success) {
-      setEditingRows(prev => { const s = { ...prev }; delete s[vehicle.id]; return s; });
-      toast.success("Vehicle updated successfully!", { position: "bottom-right", autoClose: 3000 });
-    }
-  };
+  const updatedFields = editingRows[vehicle.id];
+  if (!updatedFields) return;
+  const newStatus = updatedFields.status !== undefined ? updatedFields.status : vehicle.status;
+  const remarks = updatedFields.remarks !== undefined ? updatedFields.remarks : vehicle.remarks;
+  const isReqRemarks = REMARKS_REQUIRED.includes(newStatus);
+  if (isReqRemarks && !remarks) {
+    toast.error("Please add remarks before saving.", { position: "bottom-right", autoClose: 3000 });
+    return;
+  }
+  const payload = {};
+  if (updatedFields.city !== undefined) payload.city = updatedFields.city;
+  if (updatedFields.gpsStatus !== undefined) payload.gpsEnabled = updatedFields.gpsStatus === "Active";
+  if (updatedFields.status !== undefined) {
+    payload.currentStatus = updatedFields.status;
+    payload.statusPriority = STATUS_PRIORITY[updatedFields.status] ?? 0;
+  }
+  if (updatedFields.remarks !== undefined) payload.remarks = updatedFields.remarks;
+
+  if (updatedFields.fromDate !== undefined) payload.fromDate = updatedFields.fromDate;
+  if (updatedFields.toDate !== undefined) payload.toDate = updatedFields.toDate;
+
+  const success = await updateRegistrationVehicle(vehicle.groupId, vehicle.registrationNumber, payload);
+  if (success) {
+    setEditingRows(prev => { const s = { ...prev }; delete s[vehicle.id]; return s; });
+    toast.success("Vehicle updated successfully!", { position: "bottom-right", autoClose: 3000 });
+  }
+};
 
   const handleDeleteVehicle = async (vehicle) => {
     if (window.confirm(`Are you sure you want to delete vehicle ${vehicle.registrationNumber}?`)) {
@@ -1674,35 +1735,37 @@ export default function VehicleInventory() {
   };
 
   // ── FIX: executeBulkApply now also handles GPS ───────────────────────────
-  const executeBulkApply = async (status, city, remarks) => {
-    setIsBulkApplying(true);
-    const selectedVehicles = vehicles.filter(v => selectedRows.has(v.id));
-    let successCount = 0;
-    for (const vehicle of selectedVehicles) {
-      const payload = {};
-      if (status) {
-        payload.currentStatus = status;
-        payload.statusPriority = STATUS_PRIORITY[status] ?? 0;
-      }
-      if (city) payload.city = city;
-      if (remarks) payload.remarks = remarks;
-      else if (status === "Available") payload.remarks = "";
-      // ── FIX: send gpsEnabled boolean when bulkGps is set
-      if (bulkGps) payload.gpsEnabled = bulkGps === "Active";
-      const ok = await updateRegistrationVehicleRaw(vehicle.groupId, vehicle.registrationNumber, payload);
-      if (ok) successCount++;
-    }
-    await fetchVehiclesByType(selectedTypeId);
-    await fetchAllVehicles();
-    toast.success(`${successCount}/${selectedVehicles.length} vehicles updated`, { position: "bottom-right", autoClose: 3000 });
-    setSelectedRows(new Set());
-    setBulkStatus("");
-    setBulkCity("");
-    setBulkGps(""); // ── FIX: reset GPS bulk after apply
-    setIsBulkApplying(false);
-    setBulkResetKey(k => k + 1); // triggers BulkLocationSelector reset
 
-  };
+  const executeBulkApply = async (status, city, remarks, dates = {}) => {   
+  setIsBulkApplying(true);
+  const selectedVehicles = vehicles.filter(v => selectedRows.has(v.id));
+  let successCount = 0;
+  for (const vehicle of selectedVehicles) {
+    const payload = {};
+    if (status) {
+      payload.currentStatus = status;
+      payload.statusPriority = STATUS_PRIORITY[status] ?? 0;
+    }
+    if (city) payload.city = city;
+    if (remarks) payload.remarks = remarks;
+    else if (status === "Available") payload.remarks = "";
+    if (bulkGps) payload.gpsEnabled = bulkGps === "Active";
+    if (status === "Booked" && dates.fromDate) payload.fromDate = dates.fromDate;
+    if (status === "Booked" && dates.toDate) payload.toDate = dates.toDate;
+
+    const ok = await updateRegistrationVehicleRaw(vehicle.groupId, vehicle.registrationNumber, payload);
+    if (ok) successCount++;
+  }
+  await fetchVehiclesByType(selectedTypeId);
+  await fetchAllVehicles();
+  toast.success(`${successCount}/${selectedVehicles.length} vehicles updated`, { position: "bottom-right", autoClose: 3000 });
+  setSelectedRows(new Set());
+  setBulkStatus("");
+  setBulkCity("");
+  setBulkGps("");
+  setIsBulkApplying(false);
+  setBulkResetKey(k => k + 1);
+};
 
   const goToPage = (page) => { if (page >= 1 && page <= totalPages) setCurrentPage(page); };
   const handleRowsPerPageChange = (e) => { setRowsPerPage(parseInt(e.target.value)); setCurrentPage(1); };

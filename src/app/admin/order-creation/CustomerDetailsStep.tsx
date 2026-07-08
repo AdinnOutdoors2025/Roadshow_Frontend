@@ -7,7 +7,6 @@ import { CustomerFormData, CustomerSelection, GstDetail } from "./AdminOrderForm
 import FormField, { inputClass } from "../../../components/reusableFormField";
 import { HiOutlineUser, HiOutlineOfficeBuilding } from "react-icons/hi";
 import { designations } from "../../utils/collection.json";
-import { Customer, createCustomer, searchCustomers } from "../../utils/Adminorderapi";
 import API_BASE from "../../../../baseurl";
 
 interface Props {

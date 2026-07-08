@@ -42,7 +42,47 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
   const [unavailableSubmitting, setUnavailableSubmitting] = useState(false);
 
 
+  // const handleUpdateDriver = async () => {
+  //   if (!updDriverName.trim()) return toast.error("Driver name required");
+  //   if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
+  //   if (!updRegNo.trim()) return toast.error("Reg number required");
+  //   if (!updVehicleDocId) return toast.error("Select a vehicle from the list");
 
+  //   setUpdating(true);
+  //   try {
+
+  //     const cleanReg = updRegNo.trim().toUpperCase().replace(/\s+/g, "");
+
+
+  //     await axios.patch(
+  //       `${API_BASE}admin/pipeline/${order._id}/onroad-driver/${entry._id}`,
+  //       {
+  //         driverName: updDriverName.trim(),
+  //         driverPhone: updDriverPhone.trim(),
+  //         vehicleRegistrationNumber: cleanReg, 
+  //       },
+  //       { headers: { Authorization: `Bearer ${getToken()}` } }
+  //     );
+
+  //     try {
+  //       await axios.put(
+  //         `${API_BASE}api/updateRegistrationVehicle/${updVehicleDocId}/${cleanReg}`,
+  //         { currentStatus: "Booked" },
+  //         { headers: { Authorization: `Bearer ${getToken()}` } }
+  //       );
+  //     } catch (statusErr) {
+  //       toast.error("Driver updated, but vehicle status update failed. Please update manually.");
+  //     }
+
+  //     toast.success("Driver details updated!");
+  //     setUpdateDriverOpen(false);
+  //     onRefresh();
+  //   } catch (e) {
+  //     toast.error(e?.response?.data?.message || "Failed to update");
+  //   } finally {
+  //     setUpdating(false);
+  //   }
+  // };
 
 
   const handleUpdateDriver = async () => {
@@ -53,24 +93,52 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
 
     setUpdating(true);
     try {
-     
       const cleanReg = updRegNo.trim().toUpperCase().replace(/\s+/g, "");
+      const oldReg = (entry.vehicleRegistrationNumber || "").trim().toUpperCase().replace(/\s+/g, "");
+      const regChanged = oldReg && oldReg !== cleanReg;
 
-     
       await axios.patch(
         `${API_BASE}admin/pipeline/${order._id}/onroad-driver/${entry._id}`,
         {
           driverName: updDriverName.trim(),
           driverPhone: updDriverPhone.trim(),
-          vehicleRegistrationNumber: cleanReg, 
+          vehicleRegistrationNumber: cleanReg,
         },
         { headers: { Authorization: `Bearer ${getToken()}` } }
       );
 
+      const normalizeDate = (d) => {
+        if (!d) return null;
+        const dt = new Date(d);
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, "0");
+        const day = String(dt.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      };
+
+    
       try {
+      
+        if (regChanged) {
+          try {
+            await axios.put(
+              `${API_BASE}api/updateRegistrationVehicleByRegNo/${oldReg}`,
+              { currentStatus: "Available" },
+              { headers: { Authorization: `Bearer ${getToken()}` } }
+            );
+          } catch (oldVehicleErr) {
+            console.error("Failed to release old vehicle:", oldVehicleErr);
+          }
+        }
+
+     
         await axios.put(
-          `${API_BASE}api/updateRegistrationVehicle/${updVehicleDocId}/${cleanReg}`,
-          { currentStatus: "Booked" },
+          `${API_BASE}api/updateRegistrationVehicleByRegNo/${cleanReg}`,
+          {
+            currentStatus: "Booked",
+            fromDate: normalizeDate(vehicle.fromDate),
+            toDate: normalizeDate(vehicle.toDate),
+          },
           { headers: { Authorization: `Bearer ${getToken()}` } }
         );
       } catch (statusErr) {
@@ -86,6 +154,8 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
       setUpdating(false);
     }
   };
+
+
 
   const fmtDatetime = (s) => {
     if (!s) return "—";
@@ -741,7 +811,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
         </div>
       )}
 
-     
+
       {unavailableOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
@@ -825,7 +895,7 @@ function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }
   const [query, setQuery] = useState(value || "");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [vehicles, setVehicles] = useState([]); 
+  const [vehicles, setVehicles] = useState([]);
   const [fetched, setFetched] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -834,7 +904,7 @@ function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }
     setQuery(value || "");
   }, [value]);
 
- 
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
@@ -888,7 +958,7 @@ function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }
 
   const normalize = (s) => (s || "").replace(/\s+/g, "").toUpperCase();
 
- 
+
   const filtered = query.trim()
     ? vehicles.filter((v) => normalize(v.registrationNumber).includes(normalize(query)))
     : vehicles;
@@ -985,6 +1055,7 @@ function ResolveInlineForm({ iss, order, onRefresh }) {
       setShowForm(false);
       setDesc("");
       setPhoto(null);
+      
       onRefresh();
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to resolve");

@@ -88,8 +88,6 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
         },
       });
 
-
-
       const trackId =
         res.data
 

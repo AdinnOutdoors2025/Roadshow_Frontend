@@ -37,7 +37,7 @@ function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }
   const [query, setQuery] = useState(value || "");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [vehicles, setVehicles] = useState([]); 
+  const [vehicles, setVehicles] = useState([]);
   const [fetched, setFetched] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -168,7 +168,7 @@ function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }
 }
 
 
-function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, vehicleTypeId }) {
+function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, vehicleTypeId ,fromDate, toDate }) {
   const [driverName, setDriverName] = useState(existingEntry?.driverName || "");
   const [driverPhone, setDriverPhone] = useState(existingEntry?.driverPhone || "");
   const [regNo, setRegNo] = useState(existingEntry?.vehicleRegistrationNumber || "");
@@ -181,69 +181,73 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
 
   const isSaved = !!existingEntry?._id;
 
-  // const validate = () => {
-  //   const e = {};
-  //   if (!driverName.trim()) e.driverName = "Driver name required";
-  //   if (!driverPhone.trim()) e.driverPhone = "Phone required";
-  //   else if (!/^\d{10}$/.test(driverPhone)) e.driverPhone = "Enter valid 10-digit number";
-  //   if (!regNo.trim()) e.regNo = "Registration number required";
-  //   if (!vehicleDocId) e.regNo = "Select a vehicle from the list (don't type manually)";
-  //   setErrors(e);
-  //   return Object.keys(e).length === 0;
-  // };
+  
 
   const validate = () => {
-  const e = {};
-  if (!driverName.trim()) e.driverName = "Driver name required";
-  else if (!/^[a-zA-Z\s]+$/.test(driverName.trim())) e.driverName = "Only letters allowed";
-  if (!driverPhone.trim()) e.driverPhone = "Phone required";
-  else if (!/^\d{10}$/.test(driverPhone)) e.driverPhone = "Enter valid 10-digit number";
-  if (!regNo.trim()) e.regNo = "Registration number required";
-  if (!vehicleDocId) e.regNo = "Select a vehicle from the list (don't type manually)";
-  setErrors(e);
-  return Object.keys(e).length === 0;
-};
-
-  const handleSave = async () => {
-    if (!validate()) return;
-    setLoading(true);
-    try {
-      const token = getToken();
-     
-      const cleanReg = regNo.trim().toUpperCase().replace(/\s+/g, "");
-
-      const fd = new FormData();
-      fd.append("vehicleIndex", String(vehicleIndex));
-      fd.append("driverName", driverName.trim());
-      fd.append("driverPhone", driverPhone.trim());
-      fd.append("vehicleRegistrationNumber", cleanReg);
-      fd.append("onRoadStatus", "0");
-      if (gatepassFile) fd.append("gatepassPhoto", gatepassFile);
-
-    
-      await axios.post(`${API_BASE}admin/pipeline/${orderId}/onroad-details`, fd, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-    
-      try {
-        await axios.put(
-          `${API_BASE}api/updateRegistrationVehicle/${vehicleDocId}/${cleanReg}`,
-          { currentStatus: "Booked" },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } catch (statusErr) {
-        toast.error("Driver saved, but vehicle status update failed. Please update manually.");
-      }
-
-      toast.success(`Driver ${slotIndex + 1} details saved!`);
-      onSaved();
-    } catch (e) {
-      toast.error(e?.response?.data?.message || "Failed to save");
-    } finally {
-      setLoading(false);
-    }
+    const e = {};
+    if (!driverName.trim()) e.driverName = "Driver name required";
+    else if (!/^[a-zA-Z\s]+$/.test(driverName.trim())) e.driverName = "Only letters allowed";
+    if (!driverPhone.trim()) e.driverPhone = "Phone required";
+    else if (!/^\d{10}$/.test(driverPhone)) e.driverPhone = "Enter valid 10-digit number";
+    if (!regNo.trim()) e.regNo = "Registration number required";
+    if (!vehicleDocId) e.regNo = "Select a vehicle from the list (don't type manually)";
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
+
+const handleSave = async () => {
+  if (!validate()) return;
+  setLoading(true);
+  try {
+    const token = getToken();
+
+    const cleanReg = regNo.trim().toUpperCase().replace(/\s+/g, "");
+
+    const fd = new FormData();
+    fd.append("vehicleIndex", String(vehicleIndex));
+    fd.append("driverName", driverName.trim());
+    fd.append("driverPhone", driverPhone.trim());
+    fd.append("vehicleRegistrationNumber", cleanReg);
+    fd.append("onRoadStatus", "0");
+    if (gatepassFile) fd.append("gatepassPhoto", gatepassFile);
+
+    await axios.post(`${API_BASE}admin/pipeline/${orderId}/onroad-details`, fd, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    try {
+     
+      const normalizeDate = (d) => {
+        if (!d) return null;
+        const dt = new Date(d);
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, "0");
+        const day = String(dt.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      };
+
+      await axios.put(
+        `${API_BASE}api/updateRegistrationVehicle/${vehicleDocId}/${cleanReg}`,
+        {
+          currentStatus: "Booked",
+          fromDate: normalizeDate(fromDate),  
+          toDate: normalizeDate(toDate),      
+          
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (statusErr) {
+      toast.error("Driver saved, but vehicle status update failed. Please update manually.");
+    }
+
+    toast.success(`Driver ${slotIndex + 1} details saved!`);
+    onSaved();
+  } catch (e) {
+    toast.error(e?.response?.data?.message || "Failed to save");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleFileChange = (file) => {
     if (!file) return;
@@ -257,8 +261,8 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
 
   return (
     <div className={`rounded-xl border p-4 space-y-3 transition-all bg-white dark:bg-gray-900 ${isSaved
-        ? "border-gray-200 dark:border-gray-700"
-        : "border-dashed border-gray-200 dark:border-gray-700"
+      ? "border-gray-200 dark:border-gray-700"
+      : "border-dashed border-gray-200 dark:border-gray-700"
       }`}>
 
 
@@ -345,7 +349,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
           )}
         </div>
 
-    
+
         <div>
           <label className="block text-base font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
             Gatepass Photo <span className="text-gray-600 text-[14px] font-normal">(Optional)</span>
@@ -465,8 +469,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
   return (
     <div className={`rounded-xl border overflow-hidden transition-all ${isVehicleOnRoad
-        ? "border-emerald-200 dark:border-emerald-800"
-        : "border-gray-200 dark:border-gray-700"
+      ? "border-emerald-200 dark:border-emerald-800"
+      : "border-gray-200 dark:border-gray-700"
       } bg-white dark:bg-gray-900 shadow-sm hover:shadow-md`}>
 
       {/* ── Card Header ── */}
@@ -474,12 +478,12 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
         className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all"
         onClick={onToggle}
       >
-     
+
         <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${isVehicleOnRoad
-            ? "bg-emerald-500"
-            : allDriversSaved
-              ? "bg-blue-500"
-              : "bg-gray-400"
+          ? "bg-emerald-500"
+          : allDriversSaved
+            ? "bg-blue-500"
+            : "bg-gray-400"
           }`}>
           V{vehicleIndex + 1}
         </div>
@@ -519,10 +523,10 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
         {/* Right side - amount style like image + drivers count */}
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${allDriversSaved
-              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
-              : savedCount > 0
-                ? "bg-orange-50 text-orange-500 dark:bg-orange-900/20 dark:text-orange-400"
-                : "bg-gray-100 text-gray-400 dark:bg-gray-800"
+            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
+            : savedCount > 0
+              ? "bg-orange-50 text-orange-500 dark:bg-orange-900/20 dark:text-orange-400"
+              : "bg-gray-100 text-gray-400 dark:bg-gray-800"
             }`}>
             {savedCount}/{quantity} drivers
           </span>
@@ -547,8 +551,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   key={i}
                   onClick={() => setActiveDriverTab(i)}
                   className={`flex items-center gap-1.5 px-4 py-2.5 text-base font-semibold border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${isActive
-                      ? "border-gray-800 text-gray-800 dark:border-gray-200 dark:text-gray-200 bg-white dark:bg-gray-900"
-                      : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    ? "border-gray-800 text-gray-800 dark:border-gray-200 dark:text-gray-200 bg-white dark:bg-gray-900"
+                    : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     }`}
                 >
                   Driver {i + 1}
@@ -571,10 +575,12 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               existingEntry={vehicleEntries[activeDriverTab] || null}
               onSaved={handleDriverSaved}
               vehicleTypeId={vehicle.vehicleType}
+              fromDate={vehicle.fromDate}   
+              toDate={vehicle.toDate}
             />
           </div>
 
-       
+
           <div className="px-4 pb-4">
             {allDriversSaved ? (
               <div className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3">
@@ -593,8 +599,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   onClick={handleVehicleToggle}
                   disabled={toggling || isVehicleOnRoad}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 disabled:cursor-not-allowed flex-shrink-0 ${isVehicleOnRoad
-                      ? "bg-emerald-500"
-                      : "bg-gray-300 dark:bg-gray-600"
+                    ? "bg-emerald-500"
+                    : "bg-gray-300 dark:bg-gray-600"
                     }`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${isVehicleOnRoad ? "translate-x-6" : "translate-x-1"
@@ -602,8 +608,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 </button>
 
                 <span className={`text-sm font-semibold min-w-[60px] ${isVehicleOnRoad
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-gray-400"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-gray-400"
                   }`}>
                   {toggling ? (
                     <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />

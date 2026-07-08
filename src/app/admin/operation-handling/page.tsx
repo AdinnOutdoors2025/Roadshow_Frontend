@@ -1400,7 +1400,7 @@ export default function PipelineBoard() {
     const max = maxAmount !== "" ? Number(maxAmount) : null;
 
     const matches = (order: Order) => {
-      // Search: project code, client name, handler name
+  
       if (q) {
         const projectCode = order.projectCodeArray?.[0]?.projectCode?.toLowerCase() || "";
         const name = order.name?.toLowerCase() || "";
@@ -1416,16 +1416,14 @@ export default function PipelineBoard() {
         }
       }
 
-      // Handler dropdown
       if (handlerFilter && order.handlerName !== handlerFilter) return false;
 
-      // Customer type
+
       if (customerTypeFilter !== "" && String(order.customerType) !== customerTypeFilter) return false;
 
-      // FOC only
+
       if (focOnly && !orderHasPendingFoc(order)) return false;
 
-      // Date range (based on createdAt)
       if (from || to) {
         const created = order.createdAt ? new Date(order.createdAt) : null;
         if (!created) return false;
@@ -1433,7 +1431,7 @@ export default function PipelineBoard() {
         if (to && created > to) return false;
       }
 
-      // Amount range (based on computed final net)
+
       if (min !== null || max !== null) {
         const net = computeFinalNet(order);
         if (min !== null && net < min) return false;
