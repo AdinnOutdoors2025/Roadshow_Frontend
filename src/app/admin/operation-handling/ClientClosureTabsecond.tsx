@@ -525,7 +525,7 @@ export default function ClientClosureTabSecond({
                     <div className="flex gap-1 mb-4 border-b border-gray-100 dark:border-gray-800">
                         {[
                             { key: "foc", label: "FOC" },
-                            { key: "paid", label: "Paid Extended" },
+                            // { key: "paid", label: "Paid Extended" },
                         ].map((t) => (
                             <button
                                 key={t.key}

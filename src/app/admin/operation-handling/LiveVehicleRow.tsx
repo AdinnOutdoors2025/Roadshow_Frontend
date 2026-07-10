@@ -42,49 +42,6 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
   const [unavailableSubmitting, setUnavailableSubmitting] = useState(false);
 
 
-  // const handleUpdateDriver = async () => {
-  //   if (!updDriverName.trim()) return toast.error("Driver name required");
-  //   if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
-  //   if (!updRegNo.trim()) return toast.error("Reg number required");
-  //   if (!updVehicleDocId) return toast.error("Select a vehicle from the list");
-
-  //   setUpdating(true);
-  //   try {
-
-  //     const cleanReg = updRegNo.trim().toUpperCase().replace(/\s+/g, "");
-
-
-  //     await axios.patch(
-  //       `${API_BASE}admin/pipeline/${order._id}/onroad-driver/${entry._id}`,
-  //       {
-  //         driverName: updDriverName.trim(),
-  //         driverPhone: updDriverPhone.trim(),
-  //         vehicleRegistrationNumber: cleanReg, 
-  //       },
-  //       { headers: { Authorization: `Bearer ${getToken()}` } }
-  //     );
-
-  //     try {
-  //       await axios.put(
-  //         `${API_BASE}api/updateRegistrationVehicle/${updVehicleDocId}/${cleanReg}`,
-  //         { currentStatus: "Booked" },
-  //         { headers: { Authorization: `Bearer ${getToken()}` } }
-  //       );
-  //     } catch (statusErr) {
-  //       toast.error("Driver updated, but vehicle status update failed. Please update manually.");
-  //     }
-
-  //     toast.success("Driver details updated!");
-  //     setUpdateDriverOpen(false);
-  //     onRefresh();
-  //   } catch (e) {
-  //     toast.error(e?.response?.data?.message || "Failed to update");
-  //   } finally {
-  //     setUpdating(false);
-  //   }
-  // };
-
-
   const handleUpdateDriver = async () => {
     if (!updDriverName.trim()) return toast.error("Driver name required");
     if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
@@ -1055,7 +1012,7 @@ function ResolveInlineForm({ iss, order, onRefresh }) {
       setShowForm(false);
       setDesc("");
       setPhoto(null);
-      
+
       onRefresh();
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to resolve");

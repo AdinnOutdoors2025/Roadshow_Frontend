@@ -152,6 +152,28 @@ export default function CommentsTab({ order, onRefresh }: { order: Order; onRefr
         }
     });
 
+    (order.clientClosureCommentsArray || []).forEach((item: any) => {
+        if (item.notes || item.document) {
+            allComments.push({ text: item.notes || "", by: item.uploadedBy || "—", at: item.uploadedAt, stage: "Client Closure", docPath: item.document || undefined });
+        }
+    });
+    (order.closedWonCommentsArray || []).forEach((item: any) => {
+        if (item.notes || item.document) {
+            allComments.push({ text: item.notes || "", by: item.uploadedBy || "—", at: item.uploadedAt, stage: "Closed Won", docPath: item.document || undefined });
+        }
+    });
+    (order.closedLostCommentsArray || []).forEach((item: any) => {
+        if (item.notes || item.document) {
+            allComments.push({ text: item.notes || "", by: item.uploadedBy || "—", at: item.uploadedAt, stage: "Closed Lost", docPath: item.document || undefined });
+        }
+    });
+
+        (order.orderClosedWonArray || []).forEach((item: any) => {
+        if (item.notes || item.document) {
+            allComments.push({ text: item.notes || "", by: item.uploadedBy || "—", at: item.uploadedAt, stage: "Closed Won", docPath: item.document || undefined });
+        }
+    });
+
     allComments.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
     // ── Submit comment (actual API call) ───────────────────────────────────
@@ -416,16 +438,16 @@ function DocItem({ docPath, label, notes, by, at }: {
     // };
 
     const getFileUrl = (p: string) => {
-  if (!p) return "";
-  if (p.startsWith("http")) return p;
-  const path = p.startsWith("/") ? p : `/${p}`;
- 
-  const encodedPath = path
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-  return `http://localhost:3001${encodedPath}`;
-};
+        if (!p) return "";
+        if (p.startsWith("http")) return p;
+        const path = p.startsWith("/") ? p : `/${p}`;
+
+        const encodedPath = path
+            .split("/")
+            .map((segment) => encodeURIComponent(segment))
+            .join("/");
+        return `http://localhost:3001${encodedPath}`;
+    };
 
     const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 

@@ -162,8 +162,6 @@ export default function DetailDrawer({
         "campaignRunning",
         "vehicleUnavailable",
         "clientClosure",
-        "invoiceGeneration",
-        "paymentStage2",
         "closedWon",
         "closedLost",
     ];

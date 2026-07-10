@@ -1,5 +1,4 @@
 
-
 /* eslint-disable */
 // @ts-nocheck
 "use client";
@@ -25,6 +24,8 @@ import { useVehicle } from "../../../context/vehicletypecontext";
 import LiveVehicleRow from "./LiveVehicleRow";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import OrderReportPDF from "./OrderReportPDF";
+import CampaignHistoryPanel from "./CampaignHistoryPanel";
+import ExtraKmModal from "./ExtraKmModal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmtDate = (s) => {
@@ -71,8 +72,9 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const [routeTrackId, setRouteTrackId] = useState<string | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [kmPage, setKmPage] = useState(0);
-  const [liveTab, setLiveTab] = useState<"status" | "history">("status");
+  const [liveTab, setLiveTab] = useState<"status" | "history" | "campaign">("status");
   const [selectedVehicleRegNo, setSelectedVehicleRegNo] = useState<string | null>(null);
+  const [extraKmModalOpen, setExtraKmModalOpen] = useState(false);
 
   const fetchRouteTrackId = async (vehicleRegNo: string) => {
     setRouteLoading(true);
@@ -137,11 +139,15 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
 
 
+
+
   const getVehicleTypeName = (vehicleTypeId) => {
     if (!vehicleTypeId || !vehicleTypes) return "Vehicle";
     const v = vehicleTypes.find((vt) => vt._id === vehicleTypeId);
     return v?.typeName || "Vehicle";
   };
+
+
 
   const vehicleEntries = (order.onRoadExecutionArray || []).filter(
     (e) => e.vehicleIndex === vehicleIndex
@@ -149,33 +155,33 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
 
 
-const fetchGpsData = async () => {
-  setGpsLoading(true);
-  try {
-    const { data } = await axios.get(
-      `${API_BASE}admin/vamosys/vehicle-locations`
-    );
-    const locations = data?.data?.data?.[0]?.vehicleLocations ?? [];
-    setGpsData(locations);
-  } catch (error) {
-    console.error(`GPS API Error (vehicleIndex ${vehicleIndex}):`, error);
-    setGpsData([]);
-  } finally {
-    setGpsLoading(false);
-  }
-};
-  
+  const fetchGpsData = async () => {
+    setGpsLoading(true);
+    try {
+      const { data } = await axios.get(
+        `${API_BASE}admin/vamosys/vehicle-locations`
+      );
+      const locations = data?.data?.data?.[0]?.vehicleLocations ?? [];
+      setGpsData(locations);
+    } catch (error) {
+      console.error(`GPS API Error (vehicleIndex ${vehicleIndex}):`, error);
+      setGpsData([]);
+    } finally {
+      setGpsLoading(false);
+    }
+  };
 
- 
 
-const hasFetchedGps = useRef(false);
 
-useEffect(() => {
-  if (isOpen && !hasFetchedGps.current) {
-    hasFetchedGps.current = true;
-    fetchGpsData();
-  }
-}, [isOpen]);
+
+  const hasFetchedGps = useRef(false);
+
+  useEffect(() => {
+    if (isOpen && !hasFetchedGps.current) {
+      hasFetchedGps.current = true;
+      fetchGpsData();
+    }
+  }, [isOpen]);
 
   const totalKm = vehicleEntries.reduce((sum, e) => {
     const gps = gpsData.find(g => g.vehicleId === e.vehicleRegistrationNumber);
@@ -306,7 +312,7 @@ useEffect(() => {
                 </div>
 
 
-                <div className="flex items-center">
+                {/* <div className="flex items-center">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -326,6 +332,40 @@ useEffect(() => {
                         <span>Refresh</span>
                       </>
                     )}
+                  </button>
+                </div> */}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fetchGpsData();
+                    }}
+                    disabled={gpsLoading}
+                    className="flex items-center text-[13px] gap-2 px-3 py-1.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all disabled:opacity-50"
+                  >
+                    {gpsLoading ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        <span>Refreshing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw size={13} />
+                        <span>Refresh</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExtraKmModalOpen(true);
+                    }}
+                    className="flex items-center text-[13px] gap-2 px-3 py-1.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all"
+                  >
+                    <Navigation size={13} />
+                    <span>Extra KM</span>
                   </button>
                 </div>
 
@@ -444,7 +484,7 @@ useEffect(() => {
                 <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
                   Live vehicle status ({vehicleEntries.length}/{quantity} drivers)
                 </h3>
-              
+
               </div>
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
@@ -459,6 +499,12 @@ useEffect(() => {
                     className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${liveTab === "history" ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
                   >
                     Driver History
+                  </button>
+                  <button
+                    onClick={() => setLiveTab("campaign")}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${liveTab === "campaign" ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+                  >
+                    Campaign History
                   </button>
                 </div>
                 {vehicleEntries.filter(e => e.onRoadStatus === 1).length > 0 && (
@@ -494,13 +540,25 @@ useEffect(() => {
                       </div>
                     )}
                   </>
-                ) : (
+                ) : liveTab === "history" ? (
                   <DriverHistoryPanel
                     vehicleEntries={vehicleEntries}
                     driverHistory={order.onRoadDriverHistory || []}
                     vehicleIndex={vehicleIndex}
                   />
+                ) : (
+                  <CampaignHistoryPanel
+                    vehicleEntries={vehicleEntries}
+                    driverHistory={order.onRoadDriverHistory || []}
+                    issueHistory={order.onRoadIssues || []}
+                    unavailableHistory={order.onRoadUnavailableHistory || []}
+                    vehicleIndex={vehicleIndex}
+                    campaignFromDate={vehicle.fromDate}
+                    campaignToDate={vehicle.toDate}
+                  />
                 )}
+
+
               </div>
             </div>
 
@@ -656,12 +714,108 @@ useEffect(() => {
                   />
                 ))}
               </div>
+
+            
             </div>
 
             <AttendanceSummaryCard vehicleEntries={vehicleEntries} order={order} vehicleIndex={vehicleIndex} />
+              {/* ── Extra KM History ── */}
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                  <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
+                    Extra KM History
+                  </h3>
+                  <span className="text-sm text-gray-400">
+                    {(order.extraKmDetailsArray || []).filter((e) => e.vehicleIndex === vehicleIndex).length} entries
+                  </span>
+                </div>
+
+                <div className="p-4 space-y-3 max-h-72 overflow-y-auto">
+                  {(() => {
+                    const entries = (order.extraKmDetailsArray || []).filter(
+                      (e) => e.vehicleIndex === vehicleIndex
+                    );
+
+                    if (entries.length === 0) {
+                      return (
+                        <p className="text-xs text-gray-400 text-center py-4">
+                          No extra KM records
+                        </p>
+                      );
+                    }
+
+                   
+return [...entries].reverse().map((e) => (
+                      <div
+                        key={e._id}
+                        className="relative rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow p-3 pl-4 overflow-hidden"
+                      >
+                        {/* left accent bar */}
+                        <div className="absolute left-0 top-0 bottom-0 w-1 " />
+
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                              {e.driverName || "—"}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {e.vehicleRegistrationNumber || "—"}
+                            </p>
+                          </div>
+                          <span className="text-sm font-bold text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
+                            ₹{(e.totalCost || 0).toFixed(2)}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-gray-600 dark:text-gray-400 mb-2">
+                          <span className="flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                            </svg>
+                            Extra KM: <b className="text-gray-800 dark:text-gray-200">{e.extraKm} km</b>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Extra Hours: <b className="text-gray-800 dark:text-gray-200">{e.extraHours} hrs</b>
+                          </span>
+                          <span className="pl-4.5">KM cost: ₹{(e.extraKmCost || 0).toFixed(2)}</span>
+                          <span className="pl-4.5">Hour cost: ₹{(e.extraHourCost || 0).toFixed(2)}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between flex-wrap gap-1.5 pt-2 border-t border-gray-50 dark:border-gray-800">
+                          <span className="text-xs font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                           {fmtDate(e.fromDate)} → {fmtDate(e.toDate)}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {e.addedBy} · {new Date(e.addedAt).toLocaleString("en-IN", {
+                              day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    ));
+
+                  })()}
+                </div>
+              </div>
           </div>
 
         </div>
+
+
+      )}
+
+      {extraKmModalOpen && (
+        <ExtraKmModal
+          order={order}
+          vehicle={vehicle}
+          vehicleIndex={vehicleIndex}
+          vehicleEntries={vehicleEntries}
+          onClose={() => setExtraKmModalOpen(false)}
+          onRefresh={onRefresh}
+        />
       )}
 
     </div>
@@ -911,7 +1065,7 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   const handleToggle = (idx: number) => {
-    const willOpen = openIndex !== idx; 
+    const willOpen = openIndex !== idx;
 
     setOpenIndex(willOpen ? idx : null);
 
@@ -923,6 +1077,9 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
       });
     }
   };
+
+
+
 
 
   const fetchDriverLocations = async () => {

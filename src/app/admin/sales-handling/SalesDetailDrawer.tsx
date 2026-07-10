@@ -101,7 +101,7 @@ const getFileUrl = (p: string) => {
   if (!p) return "";
   if (p.startsWith("http")) return p;
   const path = p.startsWith("/") ? p : `/${p}`;
- 
+
   const encodedPath = path
     .split("/")
     .map((segment) => encodeURIComponent(segment))
@@ -336,16 +336,16 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
     ? `${item.fromLocation} → ${item.toLocation}` : null;
   const locationLabel = [item.state, item.city].filter(Boolean).join(" / ") || "—";
 
-const getImageUrl = (path: string) => {
-  if (!path) return '';
-  if (path.startsWith('http')) return path;
-  const p = path.startsWith('/') ? path : `/${path}`;
-  const encodedPath = p
-    .split('/')
-    .map((segment) => encodeURIComponent(segment))
-    .join('/');
-  return `http://localhost:3001${encodedPath}`;
-};
+  const getImageUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const p = path.startsWith('/') ? path : `/${path}`;
+    const encodedPath = p
+      .split('/')
+      .map((segment) => encodeURIComponent(segment))
+      .join('/');
+    return `http://localhost:3001${encodedPath}`;
+  };
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -484,7 +484,7 @@ function OverviewTab({
 
   return (
     <div className="p-4 space-y-4">
- 
+
       <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
           <User size={16} className="text-gray-400" />
@@ -549,11 +549,11 @@ function OverviewTab({
         </div>
       </div>
 
-   
+
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-     
+
         <div className="relative flex items-center bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-      
+
           <button
             onClick={() => scrollTabs('left')}
             className="absolute left-0 z-10 flex items-center justify-center w-8 h-full bg-gradient-to-r from-gray-50 dark:from-gray-800/50 to-transparent hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all disabled:opacity-30"
@@ -562,7 +562,7 @@ function OverviewTab({
             <ChevronLeft size={18} className="text-gray-600 dark:text-gray-400" />
           </button>
 
-       
+
           <div
             ref={tabsContainerRef}
             className="flex overflow-x-auto scrollbar-hide gap-1 px-8"
@@ -602,7 +602,7 @@ function OverviewTab({
             })}
           </div>
 
-       
+
           <button
             onClick={() => scrollTabs('right')}
             className="absolute right-0 z-10 flex items-center justify-center w-8 h-full bg-gradient-to-l from-gray-50 dark:from-gray-800/50 to-transparent hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all"
@@ -612,10 +612,10 @@ function OverviewTab({
           </button>
         </div>
 
-    
+
         {currentVehicle && (
           <div className="p-4 space-y-3">
-           
+
             <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">
               {(
                 [
@@ -644,7 +644,7 @@ function OverviewTab({
               }
             </div>
 
-         
+
             <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
               <p className="text-md font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                 <IndianRupee size={14} />
@@ -807,7 +807,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
 
   const isEnquiry = order.salesPipelineStatus === "enquiry";
 
- 
+
   const allComments: Array<{
     text: string; by: string; at: string; stage: string; docPath?: string;
   }> = [];
@@ -866,8 +866,45 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         text: item.salesPoNotes || "",
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
-        stage: "Closed Won",
+        stage: "Closed Won — PO Document",
         docPath: item.salesPoDocument,
+        isMandatoryPO: true,
+      });
+    }
+  });
+
+  (order.poCommentsArray || []).forEach((item) => {
+    if (item.notes || item.document) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "PO Comment",
+        docPath: item.document,
+      });
+    }
+  });
+
+  (order.projectCodeCommentsArray || []).forEach((item) => {
+    if (item.notes || item.document) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Project Code Creation",
+        docPath: item.document,
+      });
+    }
+  });
+
+  (order.closedLostCommentsArray || []).forEach((item) => {
+    if (item.notes || item.document) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Closed Lost",
+        docPath: item.document,
       });
     }
   });
@@ -912,7 +949,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
     }
   };
 
- 
+
   const submitComment = async (uploadedByName: string) => {
     setSaving(true);
     try {
@@ -920,19 +957,38 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
       const fd = new FormData();
       fd.append("stage", order.salesPipelineStatus);
 
+      // const notesFieldMap: Record<string, string> = {
+      //   enquiry: "enquiryNotes",
+      //   needAnalysis: "analysisNotes",
+      //   proposalPriceQuote: "proposalNotes",
+      //   negotiationReview: "negotiationNotes",
+      //   closedWon: "salesPoNotes",
+      // };
+      // const docFieldMap: Record<string, string> = {
+      //   enquiry: "enquiryDocument",
+      //   needAnalysis: "analysisDocument",
+      //   proposalPriceQuote: "proposalDocument",
+      //   negotiationReview: "negotiationDocument",
+      //   closedWon: "salesPoDocument",
+      // };
+
       const notesFieldMap: Record<string, string> = {
         enquiry: "enquiryNotes",
         needAnalysis: "analysisNotes",
         proposalPriceQuote: "proposalNotes",
         negotiationReview: "negotiationNotes",
-        closedWon: "salesPoNotes",
+        closedWon: "poCommentNotes",                    
+        projectCodeCreation: "projectCodeCommentNotes", 
+        closedLost: "closedLostCommentNotes",           
       };
       const docFieldMap: Record<string, string> = {
         enquiry: "enquiryDocument",
         needAnalysis: "analysisDocument",
         proposalPriceQuote: "proposalDocument",
         negotiationReview: "negotiationDocument",
-        closedWon: "salesPoDocument",
+        closedWon: "poCommentDocument",                    
+        projectCodeCreation: "projectCodeCommentDocument", 
+        closedLost: "closedLostCommentDocument",          
       };
 
       const notesField = notesFieldMap[order.salesPipelineStatus] || "analysisNotes";
@@ -940,7 +996,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
 
       fd.append(notesField, comment.trim());
 
-    
+
       if (isEnquiry) {
         fd.append("enquiryName", uploadedByName);
       }
@@ -963,10 +1019,10 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
     }
   };
 
- 
+
   const handleAddComment = async () => {
     if (!comment.trim() && !file) return;
-  
+
     if (isEnquiry && !enquiryName) {
       setNameInput("");
       setNameError("");
@@ -981,12 +1037,12 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
   return (
     <div className="p-4 space-y-4">
 
-    
+
       {showNameModal && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4">
-           
-          
+
+
             <input
               type="text"
               value={nameInput}
@@ -1020,13 +1076,13 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         </div>
       )}
 
-   
+
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
           <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
             Add a comment · <span className="text-gray-400">{stageLabel}</span>
           </p>
-        
+
           {isEnquiry && enquiryName && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50">
               <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
@@ -1052,14 +1108,14 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
                 className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0] || null;
-                if (f) {
-                  const err = validateFileSize(f);
-                  if (err) { toast.error(err); e.target.value = ""; return; }
-                }
-                setFile(f);
-              }}
+                onChange={(e) => {
+                  const f = e.target.files?.[0] || null;
+                  if (f) {
+                    const err = validateFileSize(f);
+                    if (err) { toast.error(err); e.target.value = ""; return; }
+                  }
+                  setFile(f);
+                }}
               />
             </label>
             {file && (
@@ -1081,14 +1137,14 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         </div>
       </div>
 
-    
+
       <div>
         <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Comments History</h3>
         {allComments.length === 0 ? (
           <div className="text-center py-8 text-gray-400 text-sm">No comments yet</div>
         ) : (
           <div className="space-y-3">
-            {allComments.map((c, i) => {
+            {/* {allComments.map((c, i) => {
               const initials = c.by.charAt(0).toUpperCase();
               const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500"];
               const color = colors[c.by.charCodeAt(0) % colors.length];
@@ -1117,6 +1173,38 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
                   </div>
                 </div>
               );
+            })} */}
+            {allComments.map((c, i) => {
+              const initials = c.by.charAt(0).toUpperCase();
+              const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500"];
+              const color = colors[c.by.charCodeAt(0) % colors.length];
+              return (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-transparent hover:border-gray-100 dark:hover:border-gray-700/50 transition-all">
+                  <div className={`w-9 h-9 rounded-full ${color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+                    {initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{c.by}</span>
+                      <span
+                        className={`text-sm px-1.5 py-0.5 rounded-full ${c.isMandatoryPO
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-semibold"
+                            : "text-gray-400 bg-gray-100 dark:bg-gray-700"
+                          }`}
+                      >
+                        {c.isMandatoryPO && "✓ "}{c.stage}
+                      </span>
+                    </div>
+                    {c.text && <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">{c.text}</p>}
+                    {c.docPath && (
+                      <div className="mt-1">
+                        <DocItem docPath={c.docPath} label={c.isMandatoryPO ? "Sales PO Document" : "Attached Document"} />
+                      </div>
+                    )}
+                    <p className="text-[13px] text-gray-400 mt-1">{fmtDatetime(c.at)}</p>
+                  </div>
+                </div>
+              );
             })}
           </div>
         )}
@@ -1138,7 +1226,7 @@ function DocumentsTab({
   const [showPoForm, setShowPoForm] = useState(false);
 
   const handlePoUpload = async () => {
-  if (!poFile) { toast.error("Please select a PO document"); return; }
+    if (!poFile) { toast.error("Please select a PO document"); return; }
     const sizeErr = validateFileSize(poFile);
     if (sizeErr) { toast.error(sizeErr); return; }
     setPoSaving(true);
@@ -1190,7 +1278,7 @@ function DocumentsTab({
     <div className="p-4 space-y-4">
 
 
-     
+
       {sections.length === 0 ? (
         <div className="text-center py-10 text-gray-400">
           <FileText size={32} className="mx-auto mb-2 opacity-30" />
@@ -1296,7 +1384,7 @@ export default function SalesDetailDrawer({
     }
   }, [order.salesPipelineStatus]);
 
- 
+
   const subtotal = order.bookingItems.reduce((s: number, i: any) => s + (i.totalAmount || 0), 0);
   const totalNegotiated = (order.salesNegotiationArray || []).reduce((s, n) => s + (n.amount || 0), 0);
   const taxable = subtotal - totalNegotiated;
@@ -1312,16 +1400,16 @@ export default function SalesDetailDrawer({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
       <div className="bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300">
 
-      
+
         <div className="flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
-    
+
           <div className="flex items-center gap-3 px-4 py-3">
-      
+
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${stage?.headerGrad || "from-gray-500 to-gray-600"}`}>
               <StageIcon size={15} className="text-white" />
             </div>
 
-        
+
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-base font-bold text-gray-900 dark:text-white">Sales Order</span>
@@ -1351,7 +1439,7 @@ export default function SalesDetailDrawer({
               </button>
             )}
 
-       
+
             {order.salesHandlerName && (
               <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
                 <div className={`w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-[10px] font-bold text-white`}>
@@ -1361,14 +1449,14 @@ export default function SalesDetailDrawer({
               </div>
             )}
 
-       
+
             <button onClick={onClose}
               className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
               <X size={16} />
             </button>
           </div>
 
-       
+
           {nextShort && (
             <div className="sm:hidden flex items-center gap-2 px-4 pb-3">
               <button
@@ -1404,20 +1492,20 @@ export default function SalesDetailDrawer({
           </div>
         </div>
 
-       
+
         <div className="flex-1 overflow-y-auto">
 
 
           {activeTab === "overview" && (
             <div className="flex flex-col sm:flex-row h-full min-h-0">
-            
+
               <div className="flex-1 overflow-y-auto sm:border-r border-gray-100 dark:border-gray-800">
                 <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} />
               </div>
 
-           
+
               <div className="w-full sm:w-[260px] flex-shrink-0 overflow-y-auto p-4 space-y-3 bg-gray-50/50 dark:bg-gray-900/40">
-          
+
                 <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Current Stage</p>
@@ -1465,7 +1553,7 @@ export default function SalesDetailDrawer({
                     >
                       <MessageSquare size={13} /> Add Comment
                     </button>
-                   
+
                     {["closedWon", "projectCodeCreation"].includes(order.salesPipelineStatus) && (
                       <button
                         onClick={() => setActiveTab("documents")}

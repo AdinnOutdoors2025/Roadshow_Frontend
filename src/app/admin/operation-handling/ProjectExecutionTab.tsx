@@ -15,6 +15,8 @@ import {
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 import { useVehicle } from '../../../context/vehicletypecontext';
+import { checkVehicleAvailability } from "@/app/utils/Adminorderapi";
+import { createPortal } from "react-dom";
 
 const fmtDate = (s?: string) => {
   if (!s) return "—";
@@ -168,7 +170,7 @@ function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }
 }
 
 
-function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, vehicleTypeId ,fromDate, toDate }) {
+function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, vehicleTypeId, fromDate, toDate }) {
   const [driverName, setDriverName] = useState(existingEntry?.driverName || "");
   const [driverPhone, setDriverPhone] = useState(existingEntry?.driverPhone || "");
   const [regNo, setRegNo] = useState(existingEntry?.vehicleRegistrationNumber || "");
@@ -181,7 +183,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
 
   const isSaved = !!existingEntry?._id;
 
-  
+
 
   const validate = () => {
     const e = {};
@@ -195,59 +197,59 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
     return Object.keys(e).length === 0;
   };
 
-const handleSave = async () => {
-  if (!validate()) return;
-  setLoading(true);
-  try {
-    const token = getToken();
-
-    const cleanReg = regNo.trim().toUpperCase().replace(/\s+/g, "");
-
-    const fd = new FormData();
-    fd.append("vehicleIndex", String(vehicleIndex));
-    fd.append("driverName", driverName.trim());
-    fd.append("driverPhone", driverPhone.trim());
-    fd.append("vehicleRegistrationNumber", cleanReg);
-    fd.append("onRoadStatus", "0");
-    if (gatepassFile) fd.append("gatepassPhoto", gatepassFile);
-
-    await axios.post(`${API_BASE}admin/pipeline/${orderId}/onroad-details`, fd, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
+  const handleSave = async () => {
+    if (!validate()) return;
+    setLoading(true);
     try {
-     
-      const normalizeDate = (d) => {
-        if (!d) return null;
-        const dt = new Date(d);
-        const y = dt.getFullYear();
-        const m = String(dt.getMonth() + 1).padStart(2, "0");
-        const day = String(dt.getDate()).padStart(2, "0");
-        return `${y}-${m}-${day}`;
-      };
+      const token = getToken();
 
-      await axios.put(
-        `${API_BASE}api/updateRegistrationVehicle/${vehicleDocId}/${cleanReg}`,
-        {
-          currentStatus: "Booked",
-          fromDate: normalizeDate(fromDate),  
-          toDate: normalizeDate(toDate),      
-          
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-    } catch (statusErr) {
-      toast.error("Driver saved, but vehicle status update failed. Please update manually.");
+      const cleanReg = regNo.trim().toUpperCase().replace(/\s+/g, "");
+
+      const fd = new FormData();
+      fd.append("vehicleIndex", String(vehicleIndex));
+      fd.append("driverName", driverName.trim());
+      fd.append("driverPhone", driverPhone.trim());
+      fd.append("vehicleRegistrationNumber", cleanReg);
+      fd.append("onRoadStatus", "0");
+      if (gatepassFile) fd.append("gatepassPhoto", gatepassFile);
+
+      await axios.post(`${API_BASE}admin/pipeline/${orderId}/onroad-details`, fd, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      try {
+
+        const normalizeDate = (d) => {
+          if (!d) return null;
+          const dt = new Date(d);
+          const y = dt.getFullYear();
+          const m = String(dt.getMonth() + 1).padStart(2, "0");
+          const day = String(dt.getDate()).padStart(2, "0");
+          return `${y}-${m}-${day}`;
+        };
+
+        await axios.put(
+          `${API_BASE}api/updateRegistrationVehicle/${vehicleDocId}/${cleanReg}`,
+          {
+            currentStatus: "Booked",
+            fromDate: normalizeDate(fromDate),
+            toDate: normalizeDate(toDate),
+
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (statusErr) {
+        toast.error("Driver saved, but vehicle status update failed. Please update manually.");
+      }
+
+      toast.success(`Driver ${slotIndex + 1} details saved!`);
+      onSaved();
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Failed to save");
+    } finally {
+      setLoading(false);
     }
-
-    toast.success(`Driver ${slotIndex + 1} details saved!`);
-    onSaved();
-  } catch (e) {
-    toast.error(e?.response?.data?.message || "Failed to save");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleFileChange = (file) => {
     if (!file) return;
@@ -422,8 +424,76 @@ const handleSave = async () => {
 function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, isOpen, onToggle }) {
   const [activeDriverTab, setActiveDriverTab] = useState(0);
   const [toggling, setToggling] = useState(false);
+  const [availability, setAvailability] = useState(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const checkedRef = useRef(false);
+
+  // useEffect(() => {
+  //   if (!isOpen || checkedRef.current) return;
+  //   checkedRef.current = true;
+
+  //   (async () => {
+  //     setCheckingAvailability(true);
+  //     try {
+  //       const result = await checkVehicleAvailability({
+  //         vehicleType: vehicle.vehicleType,
+  //         quantity: vehicle.quantity || 1,
+  //         fromDate: vehicle.fromDate,
+  //         toDate: vehicle.toDate,
+  //       });
+  //       setAvailability(result);
+  //       if (!result.available) {
+  //         toast.error(
+  //           `Required ${result.requiredQuantity} vehicle(s), only ${result.availableCount} available`
+  //         );
+  //       }
+  //     } catch (e) {
+  //       toast.error(e.message || "Failed to check vehicle availability");
+  //     } finally {
+  //       setCheckingAvailability(false);
+  //     }
+  //   })();
+  // }, [isOpen]);
 
 
+useEffect(() => {
+    if (!isOpen) {
+    
+      checkedRef.current = false;
+      return;
+    }
+    if (checkedRef.current) return;
+    checkedRef.current = true;
+
+    const isVehicleOnRoad = vehicleEntries.some((e) => e.onRoadStatus === 1);
+    if (isVehicleOnRoad) {
+      setAvailability({ available: true });
+      setCheckingAvailability(false);
+      return;
+    }
+
+    (async () => {
+      setCheckingAvailability(true);
+      try {
+        const result = await checkVehicleAvailability({
+          vehicleType: vehicle.vehicleType,
+          quantity: vehicle.quantity || 1,
+          fromDate: vehicle.fromDate,
+          toDate: vehicle.toDate,
+        });
+        setAvailability(result);
+        if (!result.available) {
+          toast.error(
+            `Required ${result.requiredQuantity} vehicle(s), only ${result.availableCount} available`
+          );
+        }
+      } catch (e) {
+        toast.error(e.message || "Failed to check vehicle availability");
+      } finally {
+        setCheckingAvailability(false);
+      }
+    })();
+  }, [isOpen]);
 
 
   const getVehicleTypeName = (vehicleTypeId) => {
@@ -540,98 +610,113 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
       {/* ── Expanded Section ── */}
       {isOpen && (
         <div className="border-t border-gray-100 dark:border-gray-800">
-
-          {/* ── Driver Tabs ── */}
-          <div className="flex border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-4 overflow-x-auto gap-0">
-            {Array.from({ length: quantity }).map((_, i) => {
-              const saved = !!vehicleEntries[i]?._id;
-              const isActive = activeDriverTab === i;
-              return (
-                <button
-                  key={i}
-                  onClick={() => setActiveDriverTab(i)}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 text-base font-semibold border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${isActive
-                    ? "border-gray-800 text-gray-800 dark:border-gray-200 dark:text-gray-200 bg-white dark:bg-gray-900"
-                    : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    }`}
-                >
-                  Driver {i + 1}
-                  {saved ? (
-                    <CheckCircle size={11} className="text-emerald-500 flex-shrink-0" />
-                  ) : (
-                    <span className="w-3.5 h-3.5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="p-4">
-            <DriverForm
-              key={`${vehicleIndex}-${activeDriverTab}`}
-              vehicleIndex={vehicleIndex}
-              slotIndex={activeDriverTab}
-              orderId={order._id}
-              existingEntry={vehicleEntries[activeDriverTab] || null}
-              onSaved={handleDriverSaved}
-              vehicleTypeId={vehicle.vehicleType}
-              fromDate={vehicle.fromDate}   
-              toDate={vehicle.toDate}
-            />
-          </div>
-
-
-          <div className="px-4 pb-4">
-            {allDriversSaved ? (
-              <div className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3">
-                <div className="flex-1">
-                  <p className="text-md font-semibold text-gray-700 dark:text-gray-300">On Road Status</p>
-                  <p className="text-md text-gray-400 mt-0.5">
-                    {isVehicleOnRoad
-                      ? `${quantity} vehicle${quantity > 1 ? "s" : ""} currently on road`
-                      : `Mark ${quantity} vehicle${quantity > 1 ? "s" : ""} as on road`}
-                  </p>
-                </div>
-
-
-                <button
-                  type="button"
-                  onClick={handleVehicleToggle}
-                  disabled={toggling || isVehicleOnRoad}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 disabled:cursor-not-allowed flex-shrink-0 ${isVehicleOnRoad
-                    ? "bg-emerald-500"
-                    : "bg-gray-300 dark:bg-gray-600"
-                    }`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${isVehicleOnRoad ? "translate-x-6" : "translate-x-1"
-                    }`} />
-                </button>
-
-                <span className={`text-sm font-semibold min-w-[60px] ${isVehicleOnRoad
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-gray-400"
-                  }`}>
-                  {toggling ? (
-                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                  ) : isVehicleOnRoad ? "On Road" : "Off Road"}
-                </span>
+          {checkingAvailability ? (
+            <div className="p-4 text-sm text-gray-400 flex items-center gap-2">
+              <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+              Checking vehicle availability...
+            </div>
+          ) : availability && !availability.available ? (
+            <div className="p-4">
+              <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 px-4 py-3 text-red-600 dark:text-red-400 text-sm font-medium">
+                <AlertCircle size={16} className="flex-shrink-0" />
+                Required {availability.requiredQuantity} vehicle(s), only {availability.availableCount} available. Cannot add drivers.
               </div>
-            ) : savedCount > 0 ? (
-
-              <div className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 opacity-40">
-                <div className="flex-1">
-                  <p className="text-md font-semibold text-gray-500">On Road Status</p>
-                  <p className="text-md text-gray-400 mt-0.5">
-                    {quantity - savedCount} more driver{quantity - savedCount > 1 ? "s" : ""} needed
-                  </p>
-                </div>
-                <button disabled className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-300 dark:bg-gray-600 cursor-not-allowed flex-shrink-0">
-                  <span className="inline-block h-4 w-4 translate-x-1 transform rounded-full bg-white shadow-md" />
-                </button>
-                <span className="text-sm text-gray-400 min-w-[60px]">Locked</span>
+            </div>
+          ) : (
+            <>
+              {/* ── Driver Tabs ── */}
+              <div className="flex border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-4 overflow-x-auto gap-0">
+                {Array.from({ length: quantity }).map((_, i) => {
+                  const saved = !!vehicleEntries[i]?._id;
+                  const isActive = activeDriverTab === i;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setActiveDriverTab(i)}
+                      className={`flex items-center gap-1.5 px-4 py-2.5 text-base font-semibold border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${isActive
+                        ? "border-gray-800 text-gray-800 dark:border-gray-200 dark:text-gray-200 bg-white dark:bg-gray-900"
+                        : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        }`}
+                    >
+                      Driver {i + 1}
+                      {saved ? (
+                        <CheckCircle size={11} className="text-emerald-500 flex-shrink-0" />
+                      ) : (
+                        <span className="w-3.5 h-3.5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-            ) : null}
-          </div>
+
+              <div className="p-4">
+                <DriverForm
+                  key={`${vehicleIndex}-${activeDriverTab}`}
+                  vehicleIndex={vehicleIndex}
+                  slotIndex={activeDriverTab}
+                  orderId={order._id}
+                  existingEntry={vehicleEntries[activeDriverTab] || null}
+                  onSaved={handleDriverSaved}
+                  vehicleTypeId={vehicle.vehicleType}
+                  fromDate={vehicle.fromDate}
+                  toDate={vehicle.toDate}
+                />
+              </div>
+
+
+              <div className="px-4 pb-4">
+                {allDriversSaved ? (
+                  <div className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3">
+                    <div className="flex-1">
+                      <p className="text-md font-semibold text-gray-700 dark:text-gray-300">On Road Status</p>
+                      <p className="text-md text-gray-400 mt-0.5">
+                        {isVehicleOnRoad
+                          ? `${quantity} vehicle${quantity > 1 ? "s" : ""} currently on road`
+                          : `Mark ${quantity} vehicle${quantity > 1 ? "s" : ""} as on road`}
+                      </p>
+                    </div>
+
+
+                    <button
+                      type="button"
+                      onClick={handleVehicleToggle}
+                      disabled={toggling || isVehicleOnRoad}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 disabled:cursor-not-allowed flex-shrink-0 ${isVehicleOnRoad
+                        ? "bg-emerald-500"
+                        : "bg-gray-300 dark:bg-gray-600"
+                        }`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${isVehicleOnRoad ? "translate-x-6" : "translate-x-1"
+                        }`} />
+                    </button>
+
+                    <span className={`text-sm font-semibold min-w-[60px] ${isVehicleOnRoad
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-gray-400"
+                      }`}>
+                      {toggling ? (
+                        <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                      ) : isVehicleOnRoad ? "On Road" : "Off Road"}
+                    </span>
+                  </div>
+                ) : savedCount > 0 ? (
+
+                  <div className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 opacity-40">
+                    <div className="flex-1">
+                      <p className="text-md font-semibold text-gray-500">On Road Status</p>
+                      <p className="text-md text-gray-400 mt-0.5">
+                        {quantity - savedCount} more driver{quantity - savedCount > 1 ? "s" : ""} needed
+                      </p>
+                    </div>
+                    <button disabled className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-300 dark:bg-gray-600 cursor-not-allowed flex-shrink-0">
+                      <span className="inline-block h-4 w-4 translate-x-1 transform rounded-full bg-white shadow-md" />
+                    </button>
+                    <span className="text-sm text-gray-400 min-w-[60px]">Locked</span>
+                  </div>
+                ) : null}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -644,9 +729,9 @@ export default function ProjectExecutionTab({ order, onRefresh, vehicleTypes }) 
   const allEntries = order.onRoadExecutionArray || [];
   const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
-
-  // Ondrey oru card open-a irukum padi (accordion). null = ellam close.
   const [openIndex, setOpenIndex] = useState(null);
+   const [availability, setAvailability] = useState(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   const handleToggle = (idx) => {
     setOpenIndex((prev) => (prev === idx ? null : idx));

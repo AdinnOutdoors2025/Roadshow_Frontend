@@ -1065,6 +1065,9 @@ export interface SalesOrder {
   salesPipelineLogs: any[];
   createdAt: string;
   updatedAt?: string;
+  poCommentsArray: any[];
+  projectCodeCommentsArray: any[];
+  closedLostCommentsArray: any[];
 }
 
 // ── Stage config ──────────────────────────────────────────────────────────────
@@ -1397,8 +1400,8 @@ function SalesFilterBar({
               key={opt.key}
               onClick={() => setCustomerTypeFilter(opt.key)}
               className={`text-xs font-medium px-2.5 py-1.5 rounded-md transition-all ${customerTypeFilter === opt.key
-                  ? "bg-blue-500 text-white"
-                  : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                ? "bg-blue-500 text-white"
+                : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
             >
               {opt.label}
@@ -1410,8 +1413,8 @@ function SalesFilterBar({
         <button
           onClick={() => setShowMore((p) => !p)}
           className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border transition-all ${showMore
-              ? "bg-indigo-500 text-white border-indigo-500"
-              : "bg-white dark:bg-gray-800 text-gray-600 border-gray-200 hover:bg-gray-50"
+            ? "bg-indigo-500 text-white border-indigo-500"
+            : "bg-white dark:bg-gray-800 text-gray-600 border-gray-200 hover:bg-gray-50"
             }`}
         >
           <SlidersHorizontal size={13} />
@@ -1749,8 +1752,14 @@ export default function SalesPipelineBoard() {
       return;
     }
 
-    if (fromStage === "closedWon" && toStage !== "projectCodeCreation") {
-      toast.error("Closed Won order can only move to Project Code Creation.");
+   
+
+    if (
+      fromStage === "closedWon" &&
+      toStage !== "projectCodeCreation" &&
+      toStage !== "closedLost"
+    ) {
+      toast.error("Closed Won order can only move to Project Code Creation or Closed Lost.");
       return;
     }
 
