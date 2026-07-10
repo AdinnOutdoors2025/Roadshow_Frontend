@@ -22,11 +22,11 @@ type PropsType = {
   minDate?: DateOption;
 };
 
-// ── Helper: safely converts any date value to "YYYY-MM-DD" string ──
+
 function toLocalDateString(val: DateOption | undefined): string | undefined {
   if (!val) return undefined;
   if (typeof val === "string") {
-    // Already a string like "2026-05-29" — use directly, no Date() parsing
+   
     return val;
   }
   if (val instanceof Date) {
@@ -51,23 +51,57 @@ export default function DatePicker({
   value,
 }: PropsType) {
 
+// useEffect(() => {
+//   const fp = flatpickr(`#${id}`, {
+//     mode: mode || "single",
+//     static: false,
+//     monthSelectorType: "static",
+//     dateFormat: "Y-m-d",
+//     defaultDate: value ?? defaultDate,  
+//     minDate: minDate,                   
+//     onChange,
+//     disableMobile: true,
+//     appendTo: document.body,
+//     positionElement: document.getElementById(id) ?? undefined,
+//   }) as flatpickr.Instance;
+
+//   return () => { if (fp) fp.destroy(); };
+// }, [mode, onChange, id, defaultDate, minDate, value]);
+
+
+// useEffect(() => {
+//   const fp = flatpickr(`#${id}`, {
+//     mode: mode || "single",
+//     static: true,
+//     monthSelectorType: "static",
+//     dateFormat: "Y-m-d",
+//     defaultDate: value ?? defaultDate,
+//     minDate: minDate,
+//     onChange,
+//     disableMobile: true,
+//     position: "below",   
+//   }) as flatpickr.Instance;
+
+//   return () => { if (fp) fp.destroy(); };
+// }, [mode, onChange, id, defaultDate, minDate, value]);
+  
 useEffect(() => {
   const fp = flatpickr(`#${id}`, {
     mode: mode || "single",
-    static: false,
     monthSelectorType: "static",
     dateFormat: "Y-m-d",
-    defaultDate: value ?? defaultDate,  
-    minDate: minDate,                   
+    defaultDate: value ?? defaultDate,
+    minDate: minDate,
     onChange,
     disableMobile: true,
-    appendTo: document.body,
-    positionElement: document.getElementById(id) ?? undefined,
+    appendTo: document.body,   
+    position: "auto",          
   }) as flatpickr.Instance;
 
   return () => { if (fp) fp.destroy(); };
 }, [mode, onChange, id, defaultDate, minDate, value]);
-  return (
+
+return (
     <div className="w-full">
       {label && (
         <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">

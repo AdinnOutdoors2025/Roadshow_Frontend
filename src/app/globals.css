@@ -488,7 +488,8 @@ span.flatpickr-weekday,
 }
 
 .flatpickr-calendar.static {
-  @apply right-0;
+  left: 0 !important;
+  right: auto !important;
 }
 
 .fc .fc-view-harness {

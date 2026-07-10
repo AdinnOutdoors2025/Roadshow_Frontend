@@ -1,5 +1,4 @@
 
-
 /* eslint-disable */
 // @ts-nocheck
 "use client";
@@ -58,10 +57,7 @@ const getImageUrl = (url) => {
 };
 
 
-
-function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, gpsData, gpsLoading, isAdmin, autoOpenFoc }) {
-    // const [open, setOpen] = useState(false);
-    const [open, setOpen] = useState(autoOpenFoc ?? false);
+function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, gpsData, gpsLoading, isAdmin, autoOpenFoc, isOpen, onToggle }) {
     const [activeDriverTab, setActiveDriverTab] = useState(0);
     const [toggling, setToggling] = useState(false);
     const issueRef = useRef(null);
@@ -161,7 +157,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
             <div
                 className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all"
-                onClick={() => setOpen(!open)}
+                onClick={onToggle}
             >
 
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${isVehicleOnRoad ? "bg-emerald-500" : allDriversSaved ? "bg-blue-500" : "bg-gray-400"
@@ -211,10 +207,17 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
 
 
+             
+                <div className="flex items-center flex-shrink-0">
+                    {isOpen
+                        ? <ChevronUp size={14} className="text-gray-300" />
+                        : <ChevronDown size={14} className="text-gray-300" />}
+                </div>
+
             </div>
 
 
-            {open && (
+            {isOpen && (
                 <div className="border-t border-gray-100 dark:border-gray-800">
 
 
@@ -291,10 +294,22 @@ export default function ClientClosureTab({ order, onRefresh, vehicleTypes, isAdm
     const [gpsLoading, setGpsLoading] = useState(false);
     const hasFetched = useRef(false);
 
+    const [openIndex, setOpenIndex] = useState<number | null>(null);
+    const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+    const autoOpenedRef = useRef(false);
 
 
-    const vehicles = (order.bookingItems || [])
-        .map((item, originalIdx) => ({ item, originalIdx }));
+
+
+
+     const vehicles = (order.bookingItems || [])
+    .map((item, originalIdx) => ({ item, originalIdx }))
+    .filter(({ item, originalIdx }) => {
+      const entries = (order.onRoadExecutionArray || [])
+        .filter(e => e.vehicleIndex === originalIdx);
+      return entries.some(e => e.onRoadStatus === 1);
+    });
 
 
     const pendingFocEntry = (order.campaignClosureArray || []).find(
@@ -303,6 +318,46 @@ export default function ClientClosureTab({ order, onRefresh, vehicleTypes, isAdm
     const pendingFocBookingItemId = pendingFocEntry?.bookingItemId?.$oid
         || pendingFocEntry?.bookingItemId?.toString?.()
         || String(pendingFocEntry?.bookingItemId ?? "");
+
+
+   
+    const handleToggle = (idx: number) => {
+        const willOpen = openIndex !== idx; 
+
+        setOpenIndex(willOpen ? idx : null);
+
+        if (willOpen) {
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    cardRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 120);
+            });
+        }
+    };
+
+
+   
+    useEffect(() => {
+        if (autoOpenedRef.current) return;
+        if (isAdmin !== 1 || !pendingFocBookingItemId) return;
+
+        const target = vehicles.find(({ item }) => {
+            const vehicleIdStr = item._id?.$oid
+                || item._id?.toString?.()
+                || String(item._id ?? "");
+            return vehicleIdStr === pendingFocBookingItemId;
+        });
+
+        if (target) {
+            autoOpenedRef.current = true;
+            setOpenIndex(target.originalIdx);
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    cardRefs.current[target.originalIdx]?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 150);
+            });
+        }
+    }, [vehicles, pendingFocBookingItemId, isAdmin]);
 
 
 
@@ -364,18 +419,24 @@ export default function ClientClosureTab({ order, onRefresh, vehicleTypes, isAdm
                             vehicleIdStr === pendingFocBookingItemId;
 
                         return (
-                            <VehicleExecutionCard
+                            <div
                                 key={originalIdx}
-                                vehicle={vehicle}
-                                vehicleIndex={originalIdx}
-                                order={order}
-                                onRefresh={onRefresh}
-                                vehicleTypes={vehicleTypes}
-                                gpsData={gpsData}
-                                gpsLoading={gpsLoading}
-                                isAdmin={isAdmin}
-                                autoOpenFoc={autoOpenFoc}
-                            />
+                                ref={(el) => { cardRefs.current[originalIdx] = el; }}
+                            >
+                                <VehicleExecutionCard
+                                    vehicle={vehicle}
+                                    vehicleIndex={originalIdx}
+                                    order={order}
+                                    onRefresh={onRefresh}
+                                    vehicleTypes={vehicleTypes}
+                                    gpsData={gpsData}
+                                    gpsLoading={gpsLoading}
+                                    isAdmin={isAdmin}
+                                    autoOpenFoc={autoOpenFoc}
+                                    isOpen={openIndex === originalIdx}
+                                    onToggle={() => handleToggle(originalIdx)}
+                                />
+                            </div>
                         );
                     })}
                 </div>
@@ -384,4 +445,3 @@ export default function ClientClosureTab({ order, onRefresh, vehicleTypes, isAdm
         </div>
     );
 }
-

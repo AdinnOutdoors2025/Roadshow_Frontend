@@ -2,6 +2,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
+import { useRef, useState } from "react";
 import {
     HiOutlineShoppingBag,
     HiOutlineEye,
@@ -26,6 +27,8 @@ import {
     HiOutlineOfficeBuilding,
     HiOutlineSparkles,
     HiOutlineInformationCircle,
+    HiOutlineBadgeCheck,
+    HiOutlineUserGroup,
 } from "react-icons/hi";
 import {
     HiOutlinePlus,
@@ -52,7 +55,7 @@ interface Order {
     campaignType?: number
     grandGst?: number
     dailyKmcharges?: number
-    customerType: number 
+    customerType: number
 
 }
 
@@ -125,6 +128,16 @@ export default function OrderDetailDrawer({
     onClose: () => void;
     vehicleTypes: any;
 }) {
+
+    const [activeVehicleTab, setActiveVehicleTab] = useState(0);
+    const tabScrollRef = useRef(null);
+
+    const scrollTabs = (dir) => {
+        if (tabScrollRef.current) {
+            tabScrollRef.current.scrollBy({ left: dir * 150, behavior: "smooth" });
+        }
+    };
+
     const pipeline = PIPELINE_CONFIG[order.pipelineStatus] || {
         label: order.pipelineStatus,
         color: "bg-gray-100 text-gray-500",
@@ -224,100 +237,182 @@ export default function OrderDetailDrawer({
                                 Customer Information
                             </p>
                         </div>
-                        <div className="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-5 space-y-3">
-                            {[
-                                {
-                                    label: "Full Name",
-                                    val: order.name,
-                                    icon: <HiOutlineUser className="w-5 h-5 text-gray-400" />,
-                                },
-                                {
-                                    label: "Phone Number",
-                                    val: order.phone,
-                                    icon: <HiOutlinePhone className="w-5 h-5 text-gray-400" />,
-                                },
-                                {
-                                    label: "Email Address",
-                                    val: order.email || "—",
-                                    icon: <HiOutlineMail className="w-5 h-5 text-gray-400" />,
-                                },
-                                {
-                                    label: "Address",
-                                    val: order.address || "—",
-                                    icon: (
-                                        <HiOutlineLocationMarker className="w-5 h-5 text-gray-400" />
-                                    ),
-                                },
-                            ].map(({ label, val, icon }) => (
-                                <div key={label} className="flex items-start gap-3 text-sm">
-                                    <span className="mt-0.5">{icon}</span>
-                                    <div className="flex-1">
-                                        <span className="text-gray-500 block text-sm mb-0.5">
-                                            {label}
-                                        </span>
-                                        <span className="font-medium text-gray-800 dark:text-gray-200 text-base">
-                                            {val}
-                                        </span>
+                        <div className="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Customer Information Fields - Only show if value exists */}
+                                {order.name && (
+                                    <div className="flex items-start gap-3 text-sm">
+                                        <HiOutlineUser className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-gray-500 block text-sm mb-0.5">Full Name</span>
+                                            <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
+                                                {order.name}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                )}
 
-                            {/* Customer Type */}
-                            <div className="flex items-start gap-3 text-sm">
-                                <HiOutlineTag className="w-5 h-5 text-gray-400 mt-0.5" />
-                                <div className="flex-1">
-                                    <span className="text-gray-500 block text-sm mb-0.5">
-                                        Customer Type
-                                    </span>
-                                    <span
-                                        className={`font-medium text-base inline-flex items-center gap-2 ${order.customerType === 1
-                                            ? "text-green-600 dark:text-green-400"
-                                            : "text-blue-600 dark:text-blue-400"
-                                            }`}
-                                    >
+                                {order.companyName && (
+                                    <div className="flex items-start gap-3 text-sm">
+                                        <HiOutlineOfficeBuilding className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-gray-500 block text-sm mb-0.5">Company Name</span>
+                                            <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
+                                                {order.companyName}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {order.designation && (
+                                    <div className="flex items-start gap-3 text-sm">
+                                        <HiOutlineBriefcase className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-gray-500 block text-sm mb-0.5">Designation</span>
+                                            <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
+                                                {order.designation}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {order.gstNumber && (
+                                    <div className="flex items-start gap-3 text-sm">
+                                        <HiOutlineDocumentText className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-gray-500 block text-sm mb-0.5">GST Number</span>
+                                            <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
+                                                {order.gstNumber}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {order.phone && (
+                                    <div className="flex items-start gap-3 text-sm">
+                                        <HiOutlinePhone className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-gray-500 block text-sm mb-0.5">Phone Number</span>
+                                            <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
+                                                {order.phone}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {order.email && (
+                                    <div className="flex items-start gap-3 text-sm">
+                                        <HiOutlineMail className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-gray-500 block text-sm mb-0.5">Email Address</span>
+                                            <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
+                                                {order.email}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {order.address && (
+                                    <div className="flex items-start gap-3 text-sm">
+                                        <HiOutlineLocationMarker className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-gray-500 block text-sm mb-0.5">Address</span>
+                                            <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
+                                                {order.address}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Customer Type - Always shown */}
+                                <div className="flex items-start gap-3 text-sm">
+                                    <HiOutlineTag className="w-5 h-5 text-gray-400 mt-0.5" />
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-gray-500 block text-sm mb-0.5">Customer Type</span>
                                         <span
-                                            className={`w-2 h-2 rounded-full ${order.customerType === 1
-                                                ? "bg-green-500"
-                                                : "bg-blue-500"
+                                            className={`font-medium text-sm inline-flex items-center gap-2 ${order.customerType === 1
+                                                ? "text-green-600 dark:text-green-400"
+                                                : "text-blue-600 dark:text-blue-400"
                                                 }`}
-                                        ></span>
-                                        {order.customerType === 1 ? "Organization" : "Individual"}
-                                    </span>
+                                        >
+                                            <span
+                                                className={`w-2 h-2 rounded-full ${order.customerType === 1 ? "bg-green-500" : "bg-blue-500"
+                                                    }`}
+                                            ></span>
+                                            {order.customerType === 1 ? "Organization" : "Individual"}
+                                        </span>
+                                    </div>
                                 </div>
+
+                                {/* Assigned Handler - Conditional */}
+                                {order.handlername && (
+                                    <div className="flex items-start gap-3 text-sm">
+                                        <HiOutlineUserGroup className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-gray-500 block text-sm mb-0.5">Assigned Handler</span>
+                                            <span className="font-medium text-gray-800 dark:text-gray-200 text-sm">
+                                                {order.handlername}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Order Source - Conditional */}
+                                {order.isAdminCreated && (
+                                    <div className="flex items-start gap-3 text-sm">
+                                        <HiOutlineBadgeCheck className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-gray-500 block text-sm mb-0.5">Order Source</span>
+                                            <span className="text-xs font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 px-2 py-1 rounded inline-block">
+                                                Admin Created
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-
-                            {order.handlername && (
-                                <div className="flex items-center gap-3">
-                                    <HiOutlineBriefcase className="w-5 h-5 text-gray-400" />
-                                    <div className="flex-1">
-                                        <span className="text-gray-500 block text-xs mb-0.5">
-                                            Assigned Handler
-                                        </span>
-                                        <span className="font-medium text-gray-800 dark:text-gray-200 text-base">
-                                            {order.handlername}
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
-
-                            {order.isAdminCreated && (
-                                <div className="flex items-center gap-3">
-                                    <HiOutlineTag className="w-5 h-5 text-gray-400" />
-                                    <div className="flex-1">
-                                        <span className="text-gray-500 block text-sm mb-0.5">
-                                            Order Source
-                                        </span>
-                                        <span className="text-sm font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 px-2 py-1 rounded inline-block">
-                                            Admin Created
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </section>
 
                     {/* Vehicles Section */}
                     <section>
+
+                        {/* Vehicle Tabs */}
+                        <div className="relative flex items-center border-b border-gray-200 dark:border-gray-700 mb-4">
+                            <button
+                                type="button"
+                                onClick={() => scrollTabs(-1)}
+                                className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                            >
+                                <HiOutlineChevronLeft className="w-4 h-4" />
+                            </button>
+
+                            <div
+                                ref={tabScrollRef}
+                                className="flex-1 flex items-center gap-6 overflow-x-auto scrollbar-hide scroll-smooth"
+                            >
+                                {(order.bookingItems || []).map((_, i) => (
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => setActiveVehicleTab(i)}
+                                        className={`whitespace-nowrap pb-2.5 pt-2 text-sm font-semibold transition-all border-b-2 -mb-px ${activeVehicleTab === i
+                                            ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                                            : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                            }`}
+                                    >
+                                        {i + 1} vehicle
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => scrollTabs(1)}
+                                className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                            >
+                                <HiOutlineChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
                         <div className="flex items-center gap-2 mb-3">
                             <div className="h-6 w-1 bg-green-500 rounded-full"></div>
                             <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">
@@ -325,7 +420,11 @@ export default function OrderDetailDrawer({
                             </p>
                         </div>
                         <div className="space-y-4">
-                            {(order.bookingItems || []).map((item: any, i) => {
+                            {(() => {
+                                const item = (order.bookingItems || [])[activeVehicleTab];
+                                const i = activeVehicleTab;
+                                if (!item) return null;
+
                                 const baseDays =
                                     item.fromDate && item.toDate
                                         ? Math.ceil(
@@ -356,11 +455,11 @@ export default function OrderDetailDrawer({
                                                     </span>
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
+                                                    {/* <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
                                                         {item.vehicleModel || "Vehicle Details"}
-                                                    </p>
+                                                    </p> */}
                                                     {item.vehicleType && (
-                                                        <p className="text-sm text-gray-500 mt-0.5">
+                                                        <p className="text-md text-gray-500 mt-0.5">
                                                             {getVehicleTypeName(item.vehicleType)}
                                                         </p>
                                                     )}
@@ -387,6 +486,14 @@ export default function OrderDetailDrawer({
                                                             item.campaignType === "Other"
                                                                 ? item.otherCampaignType || "Other"
                                                                 : item.campaignType || "—",
+                                                    },
+                                                    {
+                                                        icon: (
+                                                            <HiOutlineTag className="w-4 h-4 text-gray-400" />
+                                                        ),
+                                                        label: "Campaign Name",
+                                                        value:
+                                                            item.campaignName
                                                     },
                                                     {
                                                         icon: (
@@ -488,14 +595,7 @@ export default function OrderDetailDrawer({
                                                                 {item.promoterGender || "—"}
                                                             </span>
                                                         </div>
-                                                        {/* <div>
-                              <span className="text-gray-500 block text-sm">
-                                Language
-                              </span>
-                              <span className="text-gray-800 dark:text-gray-200 text-sm">
-                                {item.promoterLanguage || "—"}
-                              </span>
-                            </div> */} <div>
+                                                        <div>
                                                             <span className="text-gray-500 block text-sm pb-[4px]">
                                                                 Language
                                                             </span>
@@ -564,9 +664,9 @@ export default function OrderDetailDrawer({
                                                     {item.rentalCost ? (
                                                         <div className="flex justify-between items-center py-1">
                                                             <span className="text-gray-600 dark:text-gray-400 text-sm">
-                                                                Rental & Driver Charges
+                                                                Rental
                                                             </span>
-                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
+                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-sm ">
                                                                 ₹{(item.rentalCost || 0).toLocaleString("en-IN")}
                                                             </span>
                                                         </div>
@@ -581,7 +681,7 @@ export default function OrderDetailDrawer({
                                                                 )}{" "}
                                                                 × {item.promoterQuantity})
                                                             </span>
-                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
+                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
                                                                 ₹{item.promoterCost.toLocaleString("en-IN")}
                                                             </span>
                                                         </div>
@@ -592,7 +692,7 @@ export default function OrderDetailDrawer({
                                                             <span className="text-gray-600 dark:text-gray-400 text-sm">
                                                                 RTO Charges
                                                             </span>
-                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
+                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
                                                                 ₹{item.rtoCost.toLocaleString("en-IN")}
                                                             </span>
                                                         </div>
@@ -604,7 +704,7 @@ export default function OrderDetailDrawer({
                                                                 Extra KM Charges ({item.extraKm} km × ₹
                                                                 {item.dailyKmcharges?.toLocaleString("en-IN")})
                                                             </span>
-                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
+                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
                                                                 ₹{item.extraKmCost.toLocaleString("en-IN")}
                                                             </span>
                                                         </div>
@@ -619,7 +719,7 @@ export default function OrderDetailDrawer({
                                                                 )}
                                                                 )
                                                             </span>
-                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-base">
+                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
                                                                 ₹{item.extraHourCost.toLocaleString("en-IN")}
                                                             </span>
                                                         </div>
@@ -644,8 +744,8 @@ export default function OrderDetailDrawer({
                                                                 <span
                                                                     className={
                                                                         f.mode === "-"
-                                                                            ? "text-red-600 font-medium text-base"
-                                                                            : "text-gray-800 dark:text-gray-200 font-medium text-base"
+                                                                            ? "text-red-600 font-medium text-sm"
+                                                                            : "text-gray-800 dark:text-gray-200 font-medium text-sm"
                                                                     }
                                                                 >
                                                                     {f.mode === "-" ? "-" : "+"}₹
@@ -659,7 +759,7 @@ export default function OrderDetailDrawer({
                                                             <span className="text-gray-700 dark:text-gray-300 font-semibold text-sm">
                                                                 Subtotal
                                                             </span>
-                                                            <span className="text-gray-900 dark:text-white font-bold text-lg">
+                                                            <span className="text-gray-900 dark:text-white font-bold text-md">
                                                                 ₹{formatINR(item.subtotal || 0)}
                                                             </span>
                                                         </div>
@@ -667,7 +767,7 @@ export default function OrderDetailDrawer({
                                                             <span className="text-gray-900 dark:text-white font-bold text-base">
                                                                 Total (excl. GST)
                                                             </span>
-                                                            <span className="text-blue-600 dark:text-blue-400 font-bold text-xl">
+                                                            <span className="text-blue-600 dark:text-blue-400 font-bold text-md">
                                                                 ₹{formatINR(item.totalAmount || 0)}
                                                             </span>
                                                         </div>
@@ -738,7 +838,7 @@ export default function OrderDetailDrawer({
                                         </div>
                                     </div>
                                 );
-                            })}
+                            })()}
                         </div>
                     </section>
 
@@ -828,7 +928,7 @@ export default function OrderDetailDrawer({
                                         <span className="text-xl font-bold text-gray-900 dark:text-white">
                                             Grand Total
                                         </span>
-                                        <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                        <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
                                             ₹{formatINR(grandTotal)}
                                         </span>
                                     </div>

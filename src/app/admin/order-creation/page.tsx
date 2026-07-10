@@ -1083,7 +1083,7 @@ export default function OrdersPage() {
     setAppliedCreatedTo(filterCreatedTo);
     setCurrentPage(1);
   };
- 
+
   useEffect(() => {
     if (!successMsg) return;
     const t = setTimeout(() => setSuccessMsg(null), 4000);
@@ -1143,15 +1143,15 @@ export default function OrdersPage() {
     appliedCreatedTo,
   ]);
 
- 
+
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
 
- 
+
   const resetPage = () => setCurrentPage(1);
 
- 
+
   const hasActiveFilters =
     appliedSearch ||
     appliedPipeline !== "all" ||
@@ -1174,7 +1174,7 @@ export default function OrdersPage() {
     filterCreatedTo !== appliedCreatedTo;
 
   const resetAllFilters = () => {
- 
+
     setSearchQ("");
     setFilterPipeline("all");
     setFilterStatus("all");
@@ -1211,7 +1211,7 @@ export default function OrdersPage() {
   return (
     <div id="orders-table-top" className="w-full space-y-4">
 
-    
+
       {successMsg && (
         <div className="flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
           <svg className="h-4 w-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1221,7 +1221,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-  
+
       <div className="w-full rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
 
         {/* Header */}
@@ -1239,10 +1239,10 @@ export default function OrdersPage() {
               )}
             </div>
             <button
-              onClick={() => router.push("/admin/order-handling")}
+              onClick={() => router.push("/admin/sales-handling")}
               className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-95 transition-all duration-150"
             >
-              Order Handling
+              Sales Handling
               <HiOutlineArrowRight className="h-4 w-4 stroke-2" />
             </button>
           </div>
@@ -1255,7 +1255,7 @@ export default function OrdersPage() {
           </button>
         </div>
 
-       
+
         <div className="flex flex-wrap items-center gap-2 px-6 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
 
           {/* Search */}
@@ -1272,7 +1272,7 @@ export default function OrdersPage() {
             />
           </div>
 
-       
+
           <select
             value={filterVehicleType}
             onChange={(e) => { setFilterVehicleType(e.target.value); resetPage(); }}
@@ -1284,7 +1284,7 @@ export default function OrdersPage() {
             ))}
           </select>
 
-    
+
           <select
             value={itemsPerPage}
             onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
@@ -1332,10 +1332,10 @@ export default function OrdersPage() {
           </button>
         </div>
 
-     
+
         <div className="flex flex-wrap items-center gap-3 px-6 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/20">
 
-     
+
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
               Duration:
@@ -1361,7 +1361,7 @@ export default function OrdersPage() {
           {/* Divider */}
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
 
-       
+
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
               Created:
@@ -1387,10 +1387,10 @@ export default function OrdersPage() {
 
         </div>
 
-  
+
         <div className="p-4 sm:p-6">
 
-    
+
           {loading && (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-blue-200 border-t-blue-600" />
@@ -1398,7 +1398,7 @@ export default function OrdersPage() {
             </div>
           )}
 
-      
+
           {!loading && error && (
             <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
               <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -1510,7 +1510,7 @@ export default function OrdersPage() {
                           </td>
 
                           {/* Vehicles — stacked per bookingItem */}
-                          <td className="px-4 py-4">
+                          {/* <td className="px-4 py-4">
                             <div className="flex flex-col gap-1">
                              
                               {(order.bookingItems || []).map((item, i) => (
@@ -1530,11 +1530,48 @@ export default function OrdersPage() {
                                 </div>
                               ))}
                             </div>
+                          </td> */}
+
+                          {/* Vehicles — stacked per bookingItem */}
+                          <td className="px-4 py-4">
+                            <div className="flex flex-col gap-1 max-h-[72px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                              {(order.bookingItems || []).map((item, i) => (
+                                <div key={i} className="flex items-center gap-1.5">
+                                  <span
+                                    className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[130px]"
+                                    title={getVehicleTypeName(item.vehicleType)}
+                                  >
+                                    {i + 1}. {getVehicleTypeName(item.vehicleType)}
+                                  </span>
+                                  <span className="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold text-blue-600 dark:bg-blue-900/30 dark:text-blue-300 shrink-0">
+                                    ×{item.quantity}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
                           </td>
 
-                      
-                          <td className="px-4 py-4">
+
+                          {/* <td className="px-4 py-4">
                             <div className="flex flex-col gap-1.5">
+                              {(order.bookingItems || []).map((item, i) => (
+                                <div key={i} className="flex flex-col">
+                                  <span className="text-[12px] text-gray-400 leading-none mb-0.5">
+                                    Vehicle {i + 1}
+                                  </span>
+                                  <span className="text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                                    {formatDateShort(item.fromDate)} → {formatDateShort(item.toDate)}
+                                  </span>
+                                  <span className="text-[12px] text-gray-400">
+                                    {item.totalDays} day{item.totalDays !== 1 ? "s" : ""}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </td> */}
+
+                          <td className="px-4 py-4">
+                            <div className="flex flex-col gap-1.5 max-h-[100px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
                               {(order.bookingItems || []).map((item, i) => (
                                 <div key={i} className="flex flex-col">
                                   <span className="text-[12px] text-gray-400 leading-none mb-0.5">
@@ -1551,9 +1588,28 @@ export default function OrdersPage() {
                             </div>
                           </td>
 
-                       
-                          <td className="px-4 py-4">
+
+                          {/* <td className="px-4 py-4">
                             <div className="flex flex-col gap-1.5">
+                              {(order.bookingItems || []).map((item, i) => (
+                                <div key={i} className="flex flex-col">
+                                  <span className="text-[12px] text-gray-400 leading-none mb-0.5">
+                                    Vehicle {i + 1}
+                                  </span>
+                                  <span
+                                    className="text-xs text-gray-600 dark:text-gray-300 truncate max-w-[120px]"
+                                    title={`${item.city}${item.state ? ", " + item.state : ""}`}
+                                  >
+                                    {item.city || "—"}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </td> */}
+
+                          {/* Location */}
+                          <td className="px-4 py-4">
+                            <div className="flex flex-col gap-1.5 max-h-[100px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
                               {(order.bookingItems || []).map((item, i) => (
                                 <div key={i} className="flex flex-col">
                                   <span className="text-[12px] text-gray-400 leading-none mb-0.5">
@@ -1625,13 +1681,13 @@ export default function OrdersPage() {
                                   <HiOutlineDocumentText className="h-4 w-4" />
                                 </button>
                                 <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none dark:bg-gray-700">
-                                  PDF With History
+                                  PDF 
                                   <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700" />
                                 </span>
                               </div>
 
                               {/* PDF Without History */}
-                              <div className="relative group/tooltip">
+                              {/* <div className="relative group/tooltip">
                                 <button
                                   onClick={() => setSelectedpdfWithoutHistory(order)}
                                   className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
@@ -1642,7 +1698,7 @@ export default function OrdersPage() {
                                   PDF Without History
                                   <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700" />
                                 </span>
-                              </div>
+                              </div> */}
 
                             </div>
                           </td>

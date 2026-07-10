@@ -162,8 +162,6 @@ export default function DetailDrawer({
         "campaignRunning",
         "vehicleUnavailable",
         "clientClosure",
-        "invoiceGeneration",
-        "paymentStage2",
         "closedWon",
         "closedLost",
     ];
@@ -224,28 +222,72 @@ export default function DetailDrawer({
             : []),
     ];
 
-    const appliedDefaultTabRef = useRef<string | null>(null);
+
+
+//     const appliedDefaultTabRef = useRef<string | null>(null);
+
+// useEffect(() => {
+  
+//     if (appliedDefaultTabRef.current !== order._id) {
+//         appliedDefaultTabRef.current = order._id;
+//         if (defaultTab !== "overview") {
+//             setActiveTab(defaultTab);
+//             return;
+//         }
+//     }
+
+ 
+//     if (order.pipelineStatus === "clientClosure") {
+//         setActiveTab("clientClosure");
+//     } else if (order.pipelineStatus === "onRoad") {
+//         setActiveTab("onRoad");
+//     } else if (order.pipelineStatus === "projectExecution") {
+//         setActiveTab("projectExecution");
+//     }
+// }, [order.pipelineStatus, order._id, defaultTab]);
+
+const appliedDefaultTabRef = useRef<string | null>(null);   
+const lastPipelineStatusRef = useRef<string | null>(null);  
 
 useEffect(() => {
+    const isNewOrder = appliedDefaultTabRef.current !== order._id;
+
   
-    if (appliedDefaultTabRef.current !== order._id) {
+    if (isNewOrder) {
         appliedDefaultTabRef.current = order._id;
+        lastPipelineStatusRef.current = order.pipelineStatus;
+
         if (defaultTab !== "overview") {
             setActiveTab(defaultTab);
             return;
         }
+
+        if (order.pipelineStatus === "clientClosure") {
+            setActiveTab("clientClosure");
+        } else if (order.pipelineStatus === "onRoad") {
+            setActiveTab("onRoad");
+        } else if (order.pipelineStatus === "projectExecution") {
+            setActiveTab("projectExecution");
+        }
+        return;
     }
 
- 
-    if (order.pipelineStatus === "clientClosure") {
-        setActiveTab("clientClosure");
-    } else if (order.pipelineStatus === "onRoad") {
-        setActiveTab("onRoad");
-    } else if (order.pipelineStatus === "projectExecution") {
-        setActiveTab("projectExecution");
-    }
-}, [order.pipelineStatus, order._id, defaultTab]);
 
+    if (lastPipelineStatusRef.current !== order.pipelineStatus) {
+        lastPipelineStatusRef.current = order.pipelineStatus;
+
+        if (order.pipelineStatus === "clientClosure") {
+            setActiveTab("clientClosure");
+        } else if (order.pipelineStatus === "onRoad") {
+            setActiveTab("onRoad");
+        } else if (order.pipelineStatus === "projectExecution") {
+            setActiveTab("projectExecution");
+        } else if (order.pipelineStatus === "closedWon" || order.pipelineStatus === "closedLost") {
+            setActiveTab("overview");
+        }
+    }
+
+}, [order._id, order.pipelineStatus, defaultTab]);
 
 
     return (

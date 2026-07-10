@@ -1065,6 +1065,9 @@ export interface SalesOrder {
   salesPipelineLogs: any[];
   createdAt: string;
   updatedAt?: string;
+  poCommentsArray: any[];
+  projectCodeCommentsArray: any[];
+  closedLostCommentsArray: any[];
 }
 
 // ── Stage config ──────────────────────────────────────────────────────────────
@@ -1396,11 +1399,10 @@ function SalesFilterBar({
             <button
               key={opt.key}
               onClick={() => setCustomerTypeFilter(opt.key)}
-              className={`text-xs font-medium px-2.5 py-1.5 rounded-md transition-all ${
-                customerTypeFilter === opt.key
-                  ? "bg-blue-500 text-white"
-                  : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-              }`}
+              className={`text-xs font-medium px-2.5 py-1.5 rounded-md transition-all ${customerTypeFilter === opt.key
+                ? "bg-blue-500 text-white"
+                : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
             >
               {opt.label}
             </button>
@@ -1410,11 +1412,10 @@ function SalesFilterBar({
         {/* More filters toggle */}
         <button
           onClick={() => setShowMore((p) => !p)}
-          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border transition-all ${
-            showMore
-              ? "bg-indigo-500 text-white border-indigo-500"
-              : "bg-white dark:bg-gray-800 text-gray-600 border-gray-200 hover:bg-gray-50"
-          }`}
+          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border transition-all ${showMore
+            ? "bg-indigo-500 text-white border-indigo-500"
+            : "bg-white dark:bg-gray-800 text-gray-600 border-gray-200 hover:bg-gray-50"
+            }`}
         >
           <SlidersHorizontal size={13} />
           More Filters
@@ -1520,6 +1521,54 @@ export default function SalesPipelineBoard() {
   const [dateTo, setDateTo] = useState("");
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
+
+
+
+
+  const boardScrollRef = useRef<HTMLDivElement>(null);
+  const scrollAnimFrame = useRef<number | null>(null);
+
+
+  const handleBoardDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    const container = boardScrollRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const edgeSize = 80;
+    const maxSpeed = 20;
+
+    const distFromLeft = e.clientX - rect.left;
+    const distFromRight = rect.right - e.clientX;
+
+    if (scrollAnimFrame.current) {
+      cancelAnimationFrame(scrollAnimFrame.current);
+      scrollAnimFrame.current = null;
+    }
+
+    if (distFromLeft < edgeSize) {
+      const speed = Math.ceil((1 - distFromLeft / edgeSize) * maxSpeed);
+      const step = () => {
+        container.scrollLeft -= speed;
+        scrollAnimFrame.current = requestAnimationFrame(step);
+      };
+      scrollAnimFrame.current = requestAnimationFrame(step);
+    } else if (distFromRight < edgeSize) {
+      const speed = Math.ceil((1 - distFromRight / edgeSize) * maxSpeed);
+      const step = () => {
+        container.scrollLeft += speed;
+        scrollAnimFrame.current = requestAnimationFrame(step);
+      };
+      scrollAnimFrame.current = requestAnimationFrame(step);
+    }
+  };
+
+  const stopBoardAutoScroll = () => {
+    if (scrollAnimFrame.current) {
+      cancelAnimationFrame(scrollAnimFrame.current);
+      scrollAnimFrame.current = null;
+    }
+  };
 
   const activeFilterCount = [
     search.trim() !== "",
@@ -1703,8 +1752,14 @@ export default function SalesPipelineBoard() {
       return;
     }
 
-    if (fromStage === "closedWon" && toStage !== "projectCodeCreation") {
-      toast.error("Closed Won order can only move to Project Code Creation.");
+   
+
+    if (
+      fromStage === "closedWon" &&
+      toStage !== "projectCodeCreation" &&
+      toStage !== "closedLost"
+    ) {
+      toast.error("Closed Won order can only move to Project Code Creation or Closed Lost.");
       return;
     }
 
@@ -1906,7 +1961,32 @@ export default function SalesPipelineBoard() {
       />
 
       {/* ── Board ── */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4 pb-2">
+      {/* <div className="flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4 pb-2">
+        <div className="flex gap-3" style={{ minWidth: "max-content" }}>
+          {SALES_STAGES.map((stage) => (
+            <SalesStageColumn
+              key={stage.key}
+              stage={stage}
+              orders={filteredGrouped[stage.key] || []}
+              onDrop={onDrop}
+              onDragStart={(order, key) => {
+                dragOrder.current = order;
+                dragFrom.current = key;
+              }}
+              onCardClick={setDrawerOrder}
+            />
+          ))}
+        </div>
+      </div> */}
+
+      {/* ── Board ── */}
+      <div
+        ref={boardScrollRef}
+        className="flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4 pb-2"
+        onDragOver={handleBoardDragOver}
+        onDrop={stopBoardAutoScroll}
+        onDragEnd={stopBoardAutoScroll}
+      >
         <div className="flex gap-3" style={{ minWidth: "max-content" }}>
           {SALES_STAGES.map((stage) => (
             <SalesStageColumn

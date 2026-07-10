@@ -431,7 +431,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                             <td style={S.tdRight}>{fmt(item.extraHourCost)}</td>
                           </tr>
                         )}
-                        {(item.additionalCharges || []).filter((c: any) => c.label).map((c: any, i: number) => (
+                        {(item.additionalFields || []).filter((c: any) => c.label).map((c: any, i: number) => (
                           <tr key={i}>
                             <td style={{ ...S.td, color: c.mode === "-" ? "#dc2626" : undefined }}>{c.label}</td>
                             <td style={{ ...S.tdRight, color: c.mode === "-" ? "#dc2626" : undefined }}>
@@ -598,7 +598,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                                     {entry.driverPhone}
                                   </span>
 
-                                  {/* Status badge — pushed to right */}
+                                
                                   <div style={{ marginLeft: "auto" }}>
                                     <span style={{
                                       display: "inline-flex", alignItems: "center", gap: 5,

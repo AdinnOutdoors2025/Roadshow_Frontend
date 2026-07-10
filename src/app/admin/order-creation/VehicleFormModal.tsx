@@ -13,6 +13,7 @@ import DatePicker from "@/components/form/date-picker";
 import { languages } from "../../utils/collection.json";
 import CitySelect from "./cityselect";
 import { toast, Toaster } from "react-hot-toast";
+import { checkVehicleAvailability } from "../../utils/Adminorderapi";
 
 interface PackageOption {
   _id: string;
@@ -704,59 +705,147 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
   };
 
 
+  // const handleSave = async () => {
+  //   if (!validate()) {
+  //     setTimeout(() => {
+  //       const fieldOrder = [
+  //         "vehicleType", "vehicleModel", "bookingFor", "gstNumber",
+  //         "campaignType", "otherCampaignType", "fromDate", "toDate",
+  //         "state", "city", "fromLocation", "toLocation", "quantity",
+  //         "promoterType", "otherPromoterType", "promoterGender",
+  //         "promoterLanguage", "promoterQuantity", "packageUnsaved",
+  //       ];
+
+  //       const firstErrorKey = fieldOrder.find((key) =>
+  //         document.getElementById(`field-${key}`)
+  //       );
+
+  //       if (firstErrorKey && scrollContainerRef.current) {
+  //         const el = document.getElementById(`field-${firstErrorKey}`);
+  //         if (el) {
+  //           const container = scrollContainerRef.current;
+  //           const containerTop = container.getBoundingClientRect().top;
+  //           const elTop = el.getBoundingClientRect().top;
+  //           const offset = elTop - containerTop + container.scrollTop - 20;
+  //           container.scrollTo({ top: offset, behavior: "smooth" });
+  //         }
+  //       }
+  //     }, 50);
+  //     return;
+  //   }
+
+  //   let finalCampaignType = form.campaignType;
+  //   if (form.campaignType === "Other" && form.otherCampaignType.trim()) {
+  //     try {
+  //       const res = await fetch(`${API_BASE}admin/campaign-types`, {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify({ name: form.otherCampaignType.trim() }),
+  //       });
+  //       const data = await res.json();
+  //       if (data.success) {
+  //         finalCampaignType = data.type.name;
+  //         setCampaignTypes(prev =>
+  //           prev.find(c => c._id === data.type._id)
+  //             ? prev
+  //             : [...prev, data.type]
+  //         );
+  //       }
+  //     } catch (err: any) {
+  //       console.log(err)
+  //     }
+  //   }
+
+  //   onSave({ ...form, campaignType: finalCampaignType });
+  // };
+  
   const handleSave = async () => {
-    if (!validate()) {
-      setTimeout(() => {
-        const fieldOrder = [
-          "vehicleType", "vehicleModel", "bookingFor", "gstNumber",
-          "campaignType", "otherCampaignType", "fromDate", "toDate",
-          "state", "city", "fromLocation", "toLocation", "quantity",
-          "promoterType", "otherPromoterType", "promoterGender",
-          "promoterLanguage", "promoterQuantity", "packageUnsaved",
-        ];
-
-        const firstErrorKey = fieldOrder.find((key) =>
-          document.getElementById(`field-${key}`)
-        );
-
-        if (firstErrorKey && scrollContainerRef.current) {
-          const el = document.getElementById(`field-${firstErrorKey}`);
-          if (el) {
-            const container = scrollContainerRef.current;
-            const containerTop = container.getBoundingClientRect().top;
-            const elTop = el.getBoundingClientRect().top;
-            const offset = elTop - containerTop + container.scrollTop - 20;
-            container.scrollTo({ top: offset, behavior: "smooth" });
-          }
+  if (!validate()) {
+    setTimeout(() => {
+      const fieldOrder = [
+        "vehicleType", "vehicleModel", "bookingFor", "gstNumber",
+        "campaignType", "otherCampaignType", "fromDate", "toDate",
+        "state", "city", "fromLocation", "toLocation", "quantity",
+        "promoterType", "otherPromoterType", "promoterGender",
+        "promoterLanguage", "promoterQuantity", "packageUnsaved",
+      ];
+      const firstErrorKey = fieldOrder.find((key) =>
+        document.getElementById(`field-${key}`)
+      );
+      if (firstErrorKey && scrollContainerRef.current) {
+        const el = document.getElementById(`field-${firstErrorKey}`);
+        if (el) {
+          const container = scrollContainerRef.current;
+          const containerTop = container.getBoundingClientRect().top;
+          const elTop = el.getBoundingClientRect().top;
+          const offset = elTop - containerTop + container.scrollTop - 20;
+          container.scrollTo({ top: offset, behavior: "smooth" });
         }
-      }, 50);
+      }
+    }, 50);
+    return;
+  }
+
+
+  const vehicleTypeId =
+    typeof selectedPackage?.vehicleType === "object"
+      ? selectedPackage.vehicleType._id
+      : selectedPackage?.vehicleType;
+
+      console.log("vehicleTypeId",vehicleTypeId)
+
+  if (vehicleTypeId && form.fromDate && form.toDate && form.quantity > 0) {
+    try {
+      const availability = await checkVehicleAvailability({
+        vehicleType: vehicleTypeId,
+        quantity: form.quantity,
+        fromDate: form.fromDate,
+        toDate: form.toDate,
+      });
+
+      if (!availability.available) {
+        const typeName =
+          typeof selectedPackage?.vehicleType === "object"
+            ? selectedPackage.vehicleType.typeName
+            : form.vehicleModel;
+
+        toast.error(
+          `No availability: "${typeName}" has only ${availability.availableCount} vehicle(s) free for ${form.fromDate} to ${form.toDate}, but ${form.quantity} required.`
+        );
+        return; 
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to check vehicle availability");
       return;
     }
+  }
 
-    let finalCampaignType = form.campaignType;
-    if (form.campaignType === "Other" && form.otherCampaignType.trim()) {
-      try {
-        const res = await fetch(`${API_BASE}admin/campaign-types`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: form.otherCampaignType.trim() }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          finalCampaignType = data.type.name;
-          setCampaignTypes(prev =>
-            prev.find(c => c._id === data.type._id)
-              ? prev
-              : [...prev, data.type]
-          );
-        }
-      } catch (err: any) {
-        console.log(err)
+
+  let finalCampaignType = form.campaignType;
+  if (form.campaignType === "Other" && form.otherCampaignType.trim()) {
+    try {
+      const res = await fetch(`${API_BASE}admin/campaign-types`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: form.otherCampaignType.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        finalCampaignType = data.type.name;
+        setCampaignTypes(prev =>
+          prev.find(c => c._id === data.type._id)
+            ? prev
+            : [...prev, data.type]
+        );
       }
+    } catch (err: any) {
+      console.log(err)
     }
+  }
 
-    onSave({ ...form, campaignType: finalCampaignType });
-  };
+  onSave({ ...form, campaignType: finalCampaignType });
+};
+  
   const p = form.pricing;
 
 
@@ -832,112 +921,6 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                   </select>
                 </FormField>
               </div>
-
-
-
-              {/* {selectedPackage && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    {[
-                      { label: "Rental/day", key: "perDayRentalCost" },
-                      { label: "Driver/day", key: "driverCharges" },
-                      { label: "RTO", key: "rtoCharges" },
-                      { label: "KM Limit", key: "dailyKmLimit", disabled: false },
-                      { label: "Extra hours", key: "additionalHourCharges" },
-                      { label: "Promoter/day", key: "promoterChargePerDay", disabled: !selectedPackage.promoterAvailable },
-                    ].map(({ label, key, disabled }) => (
-                      <div
-                        key={key}
-                        className={`relative group rounded-lg bg-blue-50 dark:bg-blue-900/20 px-2 py-2 text-center
-      ${key === "dailyKmLimit" ? "cursor-not-allowed" : ""}`} >
-
-                        {key === "dailyKmLimit" && (
-                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-10
-        hidden group-hover:flex
-        items-center gap-1
-        bg-gray-800 text-white text-[10px] rounded-md px-2 py-1 whitespace-nowrap shadow-lg">
-                            <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                              <circle cx="12" cy="12" r="10" />
-                              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                            </svg>
-                            Read only — cannot be edited
-
-                            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
-                          </div>
-                        )}
-                        <p className="text-[9px] text-gray-400 uppercase leading-tight mb-1">{label}</p>
-
-                        {disabled ? (
-                          <p className="text-xs font-bold text-gray-400">N/A</p>
-                        ) : (
-                          <>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              disabled={key === "dailyKmLimit"}
-                              value={
-                                key === "dailyKmLimit"
-                                  ? formatWithCommas(editablePackage[key as keyof typeof editablePackage] as any)
-                                  : formatINR(editablePackage[key as keyof typeof editablePackage] as any)
-                              }
-                              onChange={(e) => {
-                                const raw = e.target.value.replace(/[^0-9]/g, "");
-                                setEditablePackage(prev => ({ ...prev, [key]: raw }));
-                                setPkgSaved(false);
-
-                                const originalVal = String(selectedPackage?.[key as keyof PackageOption] ?? "");
-                                setChangedKeys(prev => {
-                                  if (raw !== originalVal) {
-                                    return prev.includes(key) ? prev : [...prev, key];
-                                  } else {
-                                    return prev.filter(k => k !== key);
-                                  }
-                                });
-                              }}
-                              className={`w-full text-xs font-bold text-center bg-transparent 
-    border-b focus:outline-none focus:border-blue-600 transition-colors
-    ${changedKeys.includes(key)
-                                  ? "border-amber-400 text-amber-600 dark:text-amber-400"
-                                  : "border-blue-300 text-blue-700 dark:text-blue-300"}`}
-                            />
-
-
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-
-
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] text-gray-400">✏️ Edit charges above to override package defaults</p>
-                    <button
-                      type="button"
-                      disabled={savingPkg || pkgSaved}
-                      onClick={handleSavePackageChanges}
-                      className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors
-          ${pkgSaved
-                          ? "bg-green-100 text-green-700"
-                          : changedKeys.length > 0
-                            ? "bg-amber-500 text-white hover:bg-amber-600"
-                            : "bg-blue-600 text-white hover:bg-blue-700"}`}
-                    >
-                      {savingPkg ? "Saving..." : pkgSaved ? "✓ Saved" : changedKeys.length > 0 ? `Update Package (${changedKeys.length})` : "Update Package"}
-                    </button>
-                  </div>
-
-
-                  {errors.packageUnsaved && (
-                    <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 px-3 py-2">
-                      <svg className="h-4 w-4 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                      </svg>
-                      <p className="text-xs text-amber-700 dark:text-amber-400">{errors.packageUnsaved}</p>
-                    </div>
-                  )}
-                </div>
-              )} */}
 
 
               {selectedPackage && (

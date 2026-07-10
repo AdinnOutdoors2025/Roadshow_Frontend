@@ -22,10 +22,7 @@ export default function ClosedWonModal({ order, onClose, onSuccess }: Props) {
     const [error, setError] = useState("");
 
     const handleSubmit = async () => {
-        if (!comments.trim()) {
-            setError("Comments are required");
-            return;
-        }
+       
         setError("");
         setLoading(true);
         try {

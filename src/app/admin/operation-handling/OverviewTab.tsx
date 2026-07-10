@@ -376,7 +376,7 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                                     </div>
                                 )}
 
-                                {(currentVehicle.additionalCharges || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
+                                {(currentVehicle.additionalFields || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
                                     <div key={fIdx} className="flex justify-between items-center py-1">
                                         <span className={c.mode === "-" ? "text-red-500 text-md" : "text-gray-600 dark:text-gray-400 text-md"}>
                                             {c.label}
@@ -443,27 +443,143 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
             </div>
 
             {/* Closed Lost */}
-            {order.salesPipelineStatus === "closedLost" && (order.closedLostArray || []).length > 0 && (
-                <div className="rounded-xl border border-rose-100 dark:border-rose-800/50 overflow-hidden">
-                    <div className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border-b border-rose-100 dark:border-rose-800/50">
-                        <XCircle size={13} className="text-rose-500" />
-                        <h3 className="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider">Closed Lost — Reason</h3>
-                    </div>
-                    <div className="p-4 space-y-2">
-                        {order.closedLostArray.map((item, i) => (
-                            <div key={i} className="p-3 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200/50">
-                                <p className="text-sm font-semibold text-rose-700 flex items-center gap-1.5 mb-1">
-                                    <AlertTriangle size={12} /> Reason:
-                                </p>
-                                <p className="text-sm text-gray-700 dark:text-gray-300">{item.reason}</p>
-                                <p className="text-[11px] text-gray-400 mt-1">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
-                                {item.document && <div className="mt-2"><DocItem docPath={item.document} label="Supporting Document" /></div>}
-                            </div>
-                        ))}
-                    </div>
-                </div>
+           {order?.pipelineStatus === "closedLost" &&
+  order?.orderClosedLostArray?.length > 0 && (
+    <div className="rounded-xl border border-rose-100 dark:border-rose-800/50 overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border-b border-rose-100 dark:border-rose-800/50">
+        <XCircle size={13} className="text-rose-500" />
+        <h3 className="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider">
+          Closed Lost — Reason
+        </h3>
+      </div>
+
+      <div className="p-4 space-y-3">
+        {order.orderClosedLostArray.map((item, index) => (
+          <div
+            key={item._id || index}
+            className="p-3 rounded-lg border border-rose-200 bg-rose-50"
+          >
+            <div>
+              <span className="font-semibold">Reason:</span>
+              <p>{item.reason || "-"}</p>
+            </div>
+
+            <div className="mt-2 text-xs text-gray-500">
+              Uploaded By: {item.uploadedBy || "-"}
+            </div>
+
+            <div className="text-xs text-gray-500">
+              Uploaded At: {fmtDatetime(item.uploadedAt)}
+            </div>
+
+            {item.document ? (
+              <div className="mt-2">
+                <DocItem
+                  docPath={item.document}
+                  label="Supporting Document"
+                />
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-gray-400">
+                No document uploaded
+              </p>
             )}
+          </div>
+        ))}
+      </div>
+    </div>
+)}
         </div>
 
+    );
+}
+
+
+function DocItem({ docPath, label, notes, by, at }: {
+    docPath: string; label: string; notes?: string; by?: string; at?: string;
+}) {
+
+    // const getFileUrl = (p: string) => {
+    //     if (!p) return "";
+    //     if (p.startsWith("http")) return p;
+    //     return `http://localhost:3001${p.startsWith("/") ? p : `/${p}`}`;
+    // };
+
+    const getFileUrl = (p: string) => {
+        if (!p) return "";
+        if (p.startsWith("http")) return p;
+        const path = p.startsWith("/") ? p : `/${p}`;
+
+        const encodedPath = path
+            .split("/")
+            .map((segment) => encodeURIComponent(segment))
+            .join("/");
+        return `http://localhost:3001${encodedPath}`;
+    };
+
+    const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
+
+    const [preview, setPreview] = useState(false);
+    const url = getFileUrl(docPath);
+    if (!docPath) return null;
+    return (
+        <>
+            {preview && <DocPreviewModal url={url} label={label} onClose={() => setPreview(false)} />}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50 hover:shadow-sm transition-all">
+                <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                    {isImage(docPath)
+                        ? <ImageIcon size={16} className="text-blue-500" />
+                        : <FileText size={16} className="text-blue-500" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{label}</p>
+                    {notes && <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"><StickyNote size={12} /> {notes}</p>}
+                    {by && <p className="text-[11px] text-gray-400 mt-0.5">By {by} · {fmtDatetime(at)}</p>}
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => setPreview(true)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-sky-500 hover:bg-sky-50 transition-all">
+                        <Eye size={14} />
+                    </button>
+                    <a href={url} download target="_blank" rel="noreferrer"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-green-500 hover:bg-green-50 transition-all">
+                        <Download size={14} />
+                    </a>
+                </div>
+            </div>
+        </>
+    );
+}
+
+function DocPreviewModal({ url, label, onClose }: { url: string; label: string; onClose: () => void }) {
+    const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
+    const img = isImage(url);
+    return (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{label}</p>
+                    <div className="flex items-center gap-2">
+                        <a href={url} download target="_blank" rel="noreferrer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-sky-600 hover:bg-sky-50 transition-all">
+                            <Download size={13} /> Download
+                        </a>
+                        <button onClick={onClose}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-all">
+                            <X size={16} />
+                        </button>
+                    </div>
+                </div>
+                <div className="relative" style={{ height: "calc(90vh - 60px)" }}>
+                    {img ? (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-100 p-4">
+                            <img src={url} alt={label} className="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
+                        </div>
+                    ) : (
+                        <iframe src={url} className="w-full h-full" title={label} />
+                    )}
+                </div>
+            </div>
+        </div>
     );
 }

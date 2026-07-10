@@ -24,7 +24,7 @@ import { useVehicle } from "../../../context/vehicletypecontext";
 
 
 
-export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTrackIdFetched, correctVehicleIndex, forceOpen, onForceOpenHandled,onViewDriverRoute  }) {
+export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTrackIdFetched, correctVehicleIndex, forceOpen, onForceOpenHandled, onViewDriverRoute }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [commentPhoto, setCommentPhoto] = useState(null);
@@ -34,6 +34,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
   const [updDriverName, setUpdDriverName] = useState(entry.driverName || "");
   const [updDriverPhone, setUpdDriverPhone] = useState(entry.driverPhone || "");
   const [updRegNo, setUpdRegNo] = useState(entry.vehicleRegistrationNumber || "");
+  const [updVehicleDocId, setUpdVehicleDocId] = useState(entry.vehicleDocId || "");
   const [updating, setUpdating] = useState(false);
   const [unavailableOpen, setUnavailableOpen] = useState(false);
   const [unavailableReason, setUnavailableReason] = useState("");
@@ -45,17 +46,62 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
     if (!updDriverName.trim()) return toast.error("Driver name required");
     if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
     if (!updRegNo.trim()) return toast.error("Reg number required");
+    if (!updVehicleDocId) return toast.error("Select a vehicle from the list");
+
     setUpdating(true);
     try {
+      const cleanReg = updRegNo.trim().toUpperCase().replace(/\s+/g, "");
+      const oldReg = (entry.vehicleRegistrationNumber || "").trim().toUpperCase().replace(/\s+/g, "");
+      const regChanged = oldReg && oldReg !== cleanReg;
+
       await axios.patch(
         `${API_BASE}admin/pipeline/${order._id}/onroad-driver/${entry._id}`,
         {
           driverName: updDriverName.trim(),
           driverPhone: updDriverPhone.trim(),
-          vehicleRegistrationNumber: updRegNo.trim().toUpperCase(),
+          vehicleRegistrationNumber: cleanReg,
         },
         { headers: { Authorization: `Bearer ${getToken()}` } }
       );
+
+      const normalizeDate = (d) => {
+        if (!d) return null;
+        const dt = new Date(d);
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, "0");
+        const day = String(dt.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      };
+
+    
+      try {
+      
+        if (regChanged) {
+          try {
+            await axios.put(
+              `${API_BASE}api/updateRegistrationVehicleByRegNo/${oldReg}`,
+              { currentStatus: "Available" },
+              { headers: { Authorization: `Bearer ${getToken()}` } }
+            );
+          } catch (oldVehicleErr) {
+            console.error("Failed to release old vehicle:", oldVehicleErr);
+          }
+        }
+
+     
+        await axios.put(
+          `${API_BASE}api/updateRegistrationVehicleByRegNo/${cleanReg}`,
+          {
+            currentStatus: "Booked",
+            fromDate: normalizeDate(vehicle.fromDate),
+            toDate: normalizeDate(vehicle.toDate),
+          },
+          { headers: { Authorization: `Bearer ${getToken()}` } }
+        );
+      } catch (statusErr) {
+        toast.error("Driver updated, but vehicle status update failed. Please update manually.");
+      }
+
       toast.success("Driver details updated!");
       setUpdateDriverOpen(false);
       onRefresh();
@@ -65,6 +111,8 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
       setUpdating(false);
     }
   };
+
+
 
   const fmtDatetime = (s) => {
     if (!s) return "—";
@@ -167,7 +215,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
     }
 
     onTrackIdFetched(entry.vehicleRegistrationNumber);
-     onViewDriverRoute?.(entry.vehicleRegistrationNumber);
+    onViewDriverRoute?.(entry.vehicleRegistrationNumber);
   };
 
   const handleMarkUnavailable = async () => {
@@ -396,6 +444,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                   setUpdDriverName(entry.driverName || "");
                   setUpdDriverPhone(entry.driverPhone || "");
                   setUpdRegNo(entry.vehicleRegistrationNumber || "");
+                  setUpdVehicleDocId(entry.vehicleDocId || "");
                   setUpdateDriverOpen(true);
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none border-gray-200 text-gray-400 bg-gray-50 dark:bg-gray-800 dark:border-gray-700" : "border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30"}`}
@@ -692,14 +741,18 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                   placeholder="9876543210"
                 />
               </div>
+
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1">Reg. No</label>
-                <input
-                  type="text"
+                <VehicleRegSelect
+                  vehicleTypeId={vehicle.vehicleType}
                   value={updRegNo}
-                  onChange={e => setUpdRegNo(e.target.value.toUpperCase())}
-                  className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm uppercase bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  placeholder="TN01AB1234"
+                  onChange={(val, docId) => {
+                    setUpdRegNo(val);
+                    if (docId) setUpdVehicleDocId(docId);
+                  }}
+                  disabled={false}
+                  hasError={false}
                 />
               </div>
             </div>
@@ -715,7 +768,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
         </div>
       )}
 
-      {/* ── Unavailable Modal ── */}
+
       {unavailableOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
@@ -795,6 +848,140 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
 }
 
 
+function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }) {
+  const [query, setQuery] = useState(value || "");
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [vehicles, setVehicles] = useState([]);
+  const [fetched, setFetched] = useState(false);
+  const wrapperRef = useRef(null);
+
+
+  useEffect(() => {
+    setQuery(value || "");
+  }, [value]);
+
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const fetchVehicles = async () => {
+    if (!vehicleTypeId || loading) return;
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE}api/getNewVehicles`, {
+        params: { vehicleType: vehicleTypeId },
+      });
+      const docs = res?.data?.data || [];
+      const flat = [];
+      docs.forEach((doc) => {
+        (doc.registrationVehicles || []).forEach((rv) => {
+          if (
+            rv?.statusAvailability?.currentStatus === "Available" &&
+            rv.registrationNumber
+          ) {
+            flat.push({
+              _id: rv._id,
+              vehicleId: rv.vehicleId,
+              registrationNumber: rv.registrationNumber,
+              city: rv.city,
+              vehicleDescription: doc.vehicleDescription,
+              vehicleDocId: doc._id,
+            });
+          }
+        });
+      });
+      setVehicles(flat);
+      setFetched(true);
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Failed to load vehicles");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFocus = () => {
+    if (disabled) return;
+    setOpen(true);
+    if (!fetched) fetchVehicles();
+  };
+
+  const normalize = (s) => (s || "").replace(/\s+/g, "").toUpperCase();
+
+
+  const filtered = query.trim()
+    ? vehicles.filter((v) => normalize(v.registrationNumber).includes(normalize(query)))
+    : vehicles;
+
+  const handleSelect = (v) => {
+    onChange(v.registrationNumber, v.vehicleDocId);
+    setQuery(v.registrationNumber);
+    setOpen(false);
+  };
+
+  const handleInputChange = (e) => {
+    const val = e.target.value.toUpperCase();
+    setQuery(val);
+    onChange(val, null);
+    if (!open) setOpen(true);
+  };
+
+  return (
+    <div className="relative" ref={wrapperRef}>
+      <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+      <input
+        type="text"
+        value={query}
+        onChange={handleInputChange}
+        onFocus={handleFocus}
+        disabled={disabled}
+        className={`w-full border rounded-lg pl-9 pr-3 py-2.5 text-sm uppercase bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all ${hasError ? "border-red-300" : "border-gray-200 dark:border-gray-600"
+          }`}
+        placeholder="Type or search reg. no (e.g. 3057)"
+        autoComplete="off"
+      />
+
+      {open && !disabled && (
+        <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
+          {loading ? (
+            <div className="px-3 py-3 text-sm text-gray-400 flex items-center gap-2">
+              <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+              Loading available vehicles...
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="px-3 py-3 text-sm text-gray-400">
+              {vehicles.length === 0 ? "No available vehicles found" : "No match found"}
+            </div>
+          ) : (
+            filtered.map((v) => (
+              <button
+                type="button"
+                key={v._id}
+                onClick={() => handleSelect(v)}
+                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between gap-2"
+              >
+                <span className="font-semibold text-gray-700 dark:text-gray-200">
+                  {v.registrationNumber}
+                </span>
+                {v.city && (
+                  <span className="text-[11px] text-gray-400 truncate max-w-[110px]">{v.city}</span>
+                )}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 
 function ResolveInlineForm({ iss, order, onRefresh }) {
@@ -825,6 +1012,7 @@ function ResolveInlineForm({ iss, order, onRefresh }) {
       setShowForm(false);
       setDesc("");
       setPhoto(null);
+
       onRefresh();
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to resolve");

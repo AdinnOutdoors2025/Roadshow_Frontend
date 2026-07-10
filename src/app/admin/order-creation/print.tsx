@@ -748,7 +748,7 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                       <div className="pdf-stat-value primary">₹{fmt(grandTotal)}</div>
                     </div>
                     <div className="pdf-stat-card">
-                      <div className="pdf-stat-label">Total Vehicles</div>
+                      <div className="pdf-stat-label">Total Vehicle Models</div>
                       <div className="pdf-stat-value">{bookingItems.length}</div>
                     </div>
                     <div className="pdf-stat-card">
@@ -789,6 +789,25 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                         <div className="pdf-info-label">Email Address</div>
                         <div className="pdf-info-value">{order.email || "—"}</div>
                       </div>
+                           {order.companyName && (
+                       <div className="pdf-info-item">
+                        <div className="pdf-info-label">Company Name</div>
+                        <div className="pdf-info-value">{order.companyName}</div>
+                      </div>
+                         )}
+                          {order.designation && (
+                       <div className="pdf-info-item">
+                        <div className="pdf-info-label">Designation</div>
+                        <div className="pdf-info-value">{order.designation}</div>
+                      </div>
+                         )}
+                          {order.gstNumber && (
+                       <div className="pdf-info-item">
+                        <div className="pdf-info-label">GstNumber</div>
+                        <div className="pdf-info-value">{order.gstNumber}</div>
+                      </div>
+                         )}
+                         
                       <div className="pdf-info-item full-width">
                         <div className="pdf-info-label">Address</div>
                         <div className="pdf-info-value">{order.address || "—"}</div>
@@ -878,9 +897,19 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                                 <div className="detail-label">Campaign Type</div>
                                 <div className="detail-value">{campaignLabel}</div>
                               </div>
+                               <div className="detail-item">
+                                <div className="detail-label">Campaign Name</div>
+                                <div className="detail-value">{item.campaignName}</div>
+                              </div>
                               <div className="detail-item">
                                 <div className="detail-label">Location</div>
                                 <div className="detail-value">{location}</div>
+                              </div>
+                               <div className="detail-item">
+                                <div className="detail-label">Driving Route</div>
+                                <div className="detail-value">{item.fromLocation && item.toLocation
+                                                                ? `${item.fromLocation} → ${item.toLocation}`
+                                                                : "—"}</div>
                               </div>
                               <div className="detail-item" style={{ gridColumn: 'span 2' }}>
                                 <div className="detail-label">Duration</div>
@@ -888,13 +917,13 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                                   {fmtDate(item.fromDate)} → {fmtDate(item.toDate)} ({item.totalDays} days)
                                 </div>
                               </div>
-                              {item.extraKm && item.extraKm > 0 && (
+                              {item.extraKm > 0 && (
                                 <div className="detail-item">
                                   <div className="detail-label">Extra KM</div>
                                   <div className="detail-value">{item.extraKm} km</div>
                                 </div>
                               )}
-                              {item.extraHours && item.extraHours > 0 && (
+                              {item.extraHours > 0 && (
                                 <div className="detail-item">
                                   <div className="detail-label">Extra Hours</div>
                                   <div className="detail-value">{item.extraHours} hrs</div>
@@ -927,10 +956,7 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                                     <div className="detail-label">Gender</div>
                                     <div className="detail-value">{item.promoterGender || "—"}</div>
                                   </div>
-                                  {/* <div className="detail-item">
-                                    <div className="detail-label">Language</div>
-                                    <div className="detail-value">{item.promoterLanguage || "—"}</div>
-                                  </div> */}
+                                
 
                                   <div className="detail-item">
                                      <div className="detail-label">Language</div>
