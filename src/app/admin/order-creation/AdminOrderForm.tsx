@@ -6,7 +6,6 @@ import { HiOutlineUser, HiOutlineTruck, HiOutlineClipboardList, HiOutlinePhone }
 import CustomerDetailsStep from "./CustomerDetailsStep";
 import VehicleListStep from "./VehicleListStep";
 import OrderSummaryStep from "./OrderSummaryStep";
-import { Customer, PricingPreview } from "../../utils/Adminorderapi";
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 export interface CustomerFormData {
@@ -22,7 +21,7 @@ export interface CustomerFormData {
 
 export interface CustomerSelection {
   type: "existing" | "new" | "";
-  customer: Customer | null;
+  customer: any;
 }
 
 export interface AdditionalCharge {
@@ -57,7 +56,7 @@ export interface VehicleConfig {
   campaignImages: File[];
   campaignVideos: File[];
   additionalCharges: AdditionalCharge[];
-  pricing: PricingPreview | null;
+  pricing: any;
   gstNumber: string;
   extraHours: number;
   promoterGender: string;
@@ -80,6 +79,7 @@ export interface OrderState {
   individualForm: CustomerFormData;
   organizationForm: CustomerFormData;
   gstDetails: GstDetail[];
+  selectedClientOrder: any | null;
 }
 
 const STEPS = [
@@ -105,7 +105,10 @@ const defaultOrder: OrderState = {
   },
 
   gstDetails: [],
+  selectedClientOrder: null,
 };
+
+
 
 interface Props {
   onClose: () => void;
@@ -201,6 +204,19 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed");
+
+      if (order.selectedClientOrder?._id) {
+        try {
+          await fetch(`${API_BASE}client-requests/${order.selectedClientOrder._id}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: 2 }),
+          });
+        } catch (err) {
+          console.error("Failed to update client request status", err);
+        }
+      }
+
       onSuccess(data.data.orderId);
     } catch (err: any) {
       alert(err.message || "Failed to create order");
@@ -291,12 +307,16 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
-        
+
 
           {step === 0 && (
             <CustomerDetailsStep
               gstDetails={order.gstDetails}
-            
+              selectedClientOrder={order.selectedClientOrder}
+              onSelectClientOrder={(co) =>
+                setOrder((p) => ({ ...p, selectedClientOrder: co }))
+              }
+
               onGstVerified={(detail) =>
                 setOrder((p) => ({
                   ...p,
@@ -347,6 +367,7 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
               onChange={(vehicles) => setOrder((p) => ({ ...p, vehicles }))}
               onNext={next}
               onBack={back}
+              selectedClientOrder={order.selectedClientOrder}
             />
           )}
           {step === 2 && (

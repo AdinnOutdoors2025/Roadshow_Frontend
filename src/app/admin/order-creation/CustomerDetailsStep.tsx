@@ -21,7 +21,9 @@ interface Props {
   gstVerified: boolean;
   onGstVerified: (detail: GstDetail) => void;
   onGstVerifiedChange: (val: boolean) => void;
-   onGstDetailsReset: () => void;
+  onGstDetailsReset: () => void;
+  selectedClientOrder: any | null;
+  onSelectClientOrder: (co: any | null) => void;
 }
 
 
@@ -50,13 +52,58 @@ export default function CustomerDetailsStep({
   onGstVerifiedChange,
   onGstVerified,
   onGstDetailsReset,
+  selectedClientOrder,
+  onSelectClientOrder,
+
 }: Props) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [globalError, setGlobalError] = useState("");
   const [gstVerifying, setGstVerifying] = useState(false);
   const [gstStatus, setGstStatus] = useState<"idle" | "success" | "error">("idle");
   const [gstMessage, setGstMessage] = useState("");
+  const [clientOrders, setClientOrders] = useState<any[]>([]);
 
+
+  React.useEffect(() => {
+    fetch(`${API_BASE}client-requests`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.data)) {
+          setClientOrders(d.data.filter((c: any) => c.status === 0 || c.status === 1));
+        }
+      })
+      .catch(() => { });
+  }, []);
+
+  // const handleClientOrderSelect = (id: string) => {
+  //   if (!id) {
+  //     onSelectClientOrder(null);
+  //     return;
+  //   }
+  //   const co = clientOrders.find((c) => c._id === id);
+  //   if (!co) return;
+  //   onSelectClientOrder(co);
+  //   onCategoryChange("individual");
+  //   onChange({ name: co.name, email: co.email, phone: co.phone });
+  //   setErrors({});
+  // };
+
+
+  const handleClientOrderSelect = (id: string) => {
+    if (!id) {
+      onSelectClientOrder(null);
+      return;
+    }
+    const co = clientOrders.find((c) => c._id === id);
+    if (!co) return;
+    onSelectClientOrder(co);
+    if (customerCategory === "organization") {
+      onChange({ clientName: co.name, email: co.email, phone: co.phone });
+    } else {
+      onChange({ name: co.name, email: co.email, phone: co.phone });
+    }
+    setErrors({});
+  };
 
   const handleGstVerify = async () => {
     const gst = data.gstNumber?.trim();
@@ -116,6 +163,18 @@ export default function CustomerDetailsStep({
   };
 
 
+  // const handleCategorySwitch = (cat: "individual" | "organization") => {
+  //   if (cat === customerCategory) return;
+  //   onCategoryChange(cat);
+  //   setErrors({});
+  //   setGlobalError("");
+  //   setGstStatus("idle");
+  //   setGstMessage("");
+  //   onGstVerifiedChange(true);
+  //   onCustomerChange({ customer: null, type: "" });
+  // };
+
+
   const handleCategorySwitch = (cat: "individual" | "organization") => {
     if (cat === customerCategory) return;
     onCategoryChange(cat);
@@ -125,7 +184,24 @@ export default function CustomerDetailsStep({
     setGstMessage("");
     onGstVerifiedChange(true);
     onCustomerChange({ customer: null, type: "" });
+
+    if (selectedClientOrder) {
+      if (cat === "organization") {
+        onChange({
+          clientName: selectedClientOrder.name,
+          email: selectedClientOrder.email,
+          phone: selectedClientOrder.phone,
+        });
+      } else {
+        onChange({
+          name: selectedClientOrder.name,
+          email: selectedClientOrder.email,
+          phone: selectedClientOrder.phone,
+        });
+      }
+    }
   };
+
 
   const validateIndividual = (): boolean => {
     const e: FormErrors = {};
@@ -140,6 +216,9 @@ export default function CustomerDetailsStep({
     setErrors(e);
     return Object.keys(e).length === 0;
   };
+
+
+
 
 
 
@@ -161,6 +240,11 @@ export default function CustomerDetailsStep({
     setErrors(e);
     return Object.keys(e).length === 0;
   };
+
+
+
+
+
   const handleNext = () => {
     setGlobalError("");
     const valid =
@@ -169,19 +253,30 @@ export default function CustomerDetailsStep({
         : validateOrganization();
     if (!valid) return;
 
-    const customerPayload =
-      customerCategory === "individual"
+    let customerPayload;
+
+    if (selectedClientOrder) {
+      // Use client order data
+      customerPayload = {
+        name: selectedClientOrder.name,
+        phone: selectedClientOrder.phone,
+        email: selectedClientOrder.email,
+        address: data.address || "",
+      };
+    } else {
+      customerPayload = customerCategory === "individual"
         ? {
           name: data.name,
           phone: data.phone,
-          address: data.address,
           email: data.email,
+          address: data.address,
         }
         : {
           name: data.clientName,
           phone: data.phone,
           email: data.email,
         };
+    }
 
     onCustomerChange({
       customer: { ...customerPayload } as any,
@@ -191,12 +286,31 @@ export default function CustomerDetailsStep({
     onNext();
   };
 
-
-
-
   return (
     <div className="space-y-5">
 
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Client Order Request <span className="text-gray-400 font-normal">(Optional)</span>
+        </label>
+        <select
+          value={selectedClientOrder?._id || ""}
+          onChange={(e) => handleClientOrderSelect(e.target.value)}
+          className={inputClass(false)}
+        >
+          <option value="">-- Select Client Order --</option>
+          {clientOrders.map((co) => (
+            <option key={co._id} value={co._id}>
+              {co.clientOrderId}
+            </option>
+          ))}
+        </select>
+        {selectedClientOrder && (
+          <p className="mt-1.5 text-xs text-blue-600">
+            Client Order selected — Customer Type locked to Individual
+          </p>
+        )}
+      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -213,8 +327,10 @@ export default function CustomerDetailsStep({
               <button
                 key={cat}
                 type="button"
+                // disabled={!!selectedClientOrder}
                 onClick={() => handleCategorySwitch(cat)}
                 className={`rounded-xl border-2 px-4 py-4 text-sm font-medium transition-all text-left
+                
                   ${isActive
                     ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
                     : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
@@ -242,8 +358,8 @@ export default function CustomerDetailsStep({
       </div>
 
       {/* ── Individual Fields ── */}
-      {customerCategory === "individual" && (
-        <div className="space-y-4">
+      {/* {customerCategory === "individual" && (
+        <div className={`space-y-4`} >
           <FormField label="Customer Name" error={errors.name} required>
             <input
               type="text"
@@ -294,6 +410,74 @@ export default function CustomerDetailsStep({
             />
           </FormField>
         </div>
+      )} */}
+
+      {customerCategory === "individual" && (
+        <div className={`space-y-4`} >
+          <FormField
+            label="Customer Name"
+            error={errors.name}
+          // required={!selectedClientOrder} 
+          >
+            <input
+              type="text"
+              value={data.name || ""}
+              onChange={(e) => {
+                const lettersOnly = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                set("name", lettersOnly);
+              }}
+              placeholder="Enter full name"
+              className={inputClass(!!errors.name)}
+            // disabled={!!selectedClientOrder} 
+            />
+          </FormField>
+
+          <FormField
+            label="Email"
+            error={errors.email}
+          // required={!selectedClientOrder}
+          >
+            <input
+              type="email"
+              value={data.email || ""}
+              onChange={(e) => set("email", e.target.value)}
+              placeholder="customer@example.com"
+              className={inputClass(!!errors.email)}
+            // disabled={!!selectedClientOrder}
+            />
+          </FormField>
+
+          <FormField
+            label="Phone Number"
+            error={errors.phone}
+          // required={!selectedClientOrder}
+          >
+            <div className="flex">
+              <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400">
+                +91
+              </span>
+              <input
+                type="tel"
+                value={data.phone || ""}
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                placeholder="e.g. 9876543210"
+                className={inputClass(!!errors.phone) + " rounded-l-none"}
+              // disabled={!!selectedClientOrder}
+              />
+            </div>
+          </FormField>
+
+          <FormField label="Address" error={errors.address} required={false}>
+            <textarea
+              value={data.address || ""}
+              onChange={(e) => set("address", e.target.value)}
+              placeholder="Enter full address"
+              rows={3}
+              className={inputClass(!!errors.address) + " resize-none"}
+            // disabled={!!selectedClientOrder}
+            />
+          </FormField>
+        </div>
       )}
 
 
@@ -312,7 +496,7 @@ export default function CustomerDetailsStep({
                   setGstStatus("idle");
                   setGstMessage("");
                   onGstVerifiedChange(false);
-                    onGstDetailsReset(); 
+                  onGstDetailsReset();
 
                 }}
                 placeholder="e.g. 22AAAAA0000A1Z5"

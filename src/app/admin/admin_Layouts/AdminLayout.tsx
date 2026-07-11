@@ -57,11 +57,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <ThemeProvider>
       <SidebarProvider>
-        <VehicleProvider>
+      
           <SearchProvider>
-            <AdminShell>{children}</AdminShell>
+            <AdminShell>
+                <VehicleProvider>
+              {children}
+              </VehicleProvider>
+              </AdminShell>
           </SearchProvider>
-        </VehicleProvider>
+       
       </SidebarProvider>
     </ThemeProvider>
   );

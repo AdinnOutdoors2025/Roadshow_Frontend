@@ -11,9 +11,10 @@ interface Props {
   onChange: (vehicles: VehicleConfig[]) => void;
   onNext: () => void;
   onBack: () => void;
+  selectedClientOrder?: any;
 }
 
-export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: Props) {
+export default function VehicleListStep({ vehicles, onChange, onNext, onBack ,selectedClientOrder  }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editingV, setEditingV] = useState<VehicleConfig | null>(null);
   const [error, setError] = useState("");
@@ -212,7 +213,8 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack }: 
         </button>
       </div>
 
-      {showModal && <VehicleFormModal editing={editingV} onSave={handleSave} onClose={() => { setShowModal(false); setEditingV(null); }} />}
+      {/* {showModal && <VehicleFormModal editing={editingV} onSave={handleSave} onClose={() => { setShowModal(false); setEditingV(null); }} />} */}
+      {showModal && <VehicleFormModal editing={editingV} onSave={handleSave} onClose={() => { setShowModal(false); setEditingV(null); }} selectedClientOrder={selectedClientOrder} />}
     </div>
   );
 }

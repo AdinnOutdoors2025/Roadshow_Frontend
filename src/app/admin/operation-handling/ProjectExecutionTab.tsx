@@ -135,7 +135,7 @@ function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }
         autoComplete="off"
       />
 
-      {open && !disabled && (
+      {/* {open && !disabled && (
         <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
           {loading ? (
             <div className="px-3 py-3 text-sm text-gray-400 flex items-center gap-2">
@@ -164,7 +164,39 @@ function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }
             ))
           )}
         </div>
-      )}
+      )} */}
+
+      {open && !disabled && (
+  <div className="absolute z-20 mt-1 w-full max-h-30 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
+    {loading ? (
+      <div className="px-3 py-3 text-sm text-gray-400 flex items-center gap-2">
+        <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+        Loading available vehicles...
+      </div>
+    ) : filtered.length === 0 ? (
+      <div className="px-3 py-3 text-sm text-gray-400">
+        {vehicles.length === 0 ? "No available vehicles found" : "No match found"}
+      </div>
+    ) : (
+      // This is the container with scroll - already has max-h-56 and overflow-y-auto
+      filtered.map((v) => (
+        <button
+          type="button"
+          key={v._id}
+          onClick={() => handleSelect(v)}
+          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between gap-2"
+        >
+          <span className="font-semibold text-gray-700 dark:text-gray-200">
+            {v.registrationNumber}
+          </span>
+          {v.city && (
+            <span className="text-[11px] text-gray-400 truncate max-w-[110px]">{v.city}</span>
+          )}
+        </button>
+      ))
+    )}
+  </div>
+)}
     </div>
   );
 }

@@ -1072,6 +1072,7 @@ export default function OrdersPage() {
   useEffect(() => { fetchVehicleTypes(); }, []);
 
 
+
   const handleApplyFilters = () => {
     setAppliedSearch(searchQ);
     setAppliedPipeline(filterPipeline);
@@ -1804,7 +1805,7 @@ export default function OrdersPage() {
           onSuccess={(orderId) => {
             setShowForm(false);
             setSuccessMsg(`Order ${orderId} created successfully!`);
-            fetchOrders();
+            fetchOrders(); 
           }}
         />
       )}

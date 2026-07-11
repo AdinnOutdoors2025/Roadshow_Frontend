@@ -54,6 +54,11 @@ const navItems: NavItem[] = [
     icon: <HiOutlineUserGroup />,
     path: "/admin/staff-admin"
   },
+  {
+    name: "Client Request Order",
+    icon: <HiOutlineClipboardList />,
+    path: "/admin/client-request-order"
+  },
    {
     name: "Order Creation",
      icon: <HiOutlineClipboardList />,

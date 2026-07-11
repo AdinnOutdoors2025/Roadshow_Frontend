@@ -35,6 +35,7 @@ interface Props {
   editing: VehicleConfig | null;
   onSave: (v: VehicleConfig) => void;
   onClose: () => void;
+  selectedClientOrder?: any;
 }
 
 
@@ -107,9 +108,19 @@ function calcPricing(
   const rentalCost = pkg.perDayRentalCost * totalDays * quantity;
   const driverCost = pkg.driverCharges * totalDays * quantity;
 
+  const DEFAULT_PROMOTER_CHARGE = parseFloat(
+    process.env.NEXT_PUBLIC_DEFAULT_PROMOTER_CHARGE || "1000"
+  );
+
+  // const promoterCost = needPromoter
+  //   ? (pkg.promoterChargePerDay || 0) * totalDays * promoterQuantity
+  //   : 0;
+
   const promoterCost = needPromoter
-    ? (pkg.promoterChargePerDay || 0) * totalDays * promoterQuantity
+    ? DEFAULT_PROMOTER_CHARGE * totalDays * promoterQuantity
     : 0;
+
+
   const rtoCost = pkg.rtoCharges * quantity;
 
   const extraKmCost = extraKm > 0 ? pkg.perKmCharge * extraKm : 0;
@@ -153,7 +164,8 @@ function calcPricing(
     totalDays,
     perDayRentalCost: pkg.perDayRentalCost,
     driverCharges: pkg.driverCharges,
-    promoterChargePerDay: needPromoter ? pkg.promoterChargePerDay : 0,
+    // promoterChargePerDay: needPromoter ? pkg.promoterChargePerDay : 0,
+    promoterChargePerDay: needPromoter ? DEFAULT_PROMOTER_CHARGE : 0,
     rtoCharges: pkg.rtoCharges,
     additionalHourCharges: pkg.additionalHourCharges,
     dailyKmLimit: pkg.dailyKmLimit,
@@ -250,7 +262,7 @@ function VehicleTypeSelect({
 
 
 
-export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
+export default function VehicleFormModal({ editing, onSave, onClose, selectedClientOrder }: Props) {
   const [form, setForm] = useState<VehicleConfig>(editing ?? { id: uid(), ...defaultForm() });
   const [selectedPackage, setSelectedPackage] = useState<PackageOption | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -276,21 +288,21 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
 
+  console.log("selectedClientOrder", selectedClientOrder)
 
 
-  
-const IMAGE_MAX_MB = 5;
-const VIDEO_MAX_MB = 50;
+  const IMAGE_MAX_MB = 5;
+  const VIDEO_MAX_MB = 50;
 
-const validateFileSize = (file: File): string | null => {
-  const isVideo = file.type.startsWith("video/");
-  const fileMB = file.size / (1024 * 1024);
-  if (isVideo && fileMB > VIDEO_MAX_MB)
-    return `Video upload only 50 MB allowed. "${file.name}" is ${fileMB.toFixed(2)} MB`;
-  if (!isVideo && fileMB > IMAGE_MAX_MB)
-    return `Image upload only 5 MB allowed. "${file.name}" is ${fileMB.toFixed(2)} MB`;
-  return null;
-};
+  const validateFileSize = (file: File): string | null => {
+    const isVideo = file.type.startsWith("video/");
+    const fileMB = file.size / (1024 * 1024);
+    if (isVideo && fileMB > VIDEO_MAX_MB)
+      return `Video upload only 50 MB allowed. "${file.name}" is ${fileMB.toFixed(2)} MB`;
+    if (!isVideo && fileMB > IMAGE_MAX_MB)
+      return `Image upload only 5 MB allowed. "${file.name}" is ${fileMB.toFixed(2)} MB`;
+    return null;
+  };
 
 
 
@@ -342,22 +354,39 @@ const validateFileSize = (file: File): string | null => {
   };
 
 
+  // useEffect(() => {
+  //   if (selectedPackage) {
+  //     setEditablePackage({
+  //       perDayRentalCost: String(selectedPackage.perDayRentalCost),
+  //       driverCharges: String(selectedPackage.driverCharges),
+  //       rtoCharges: String(selectedPackage.rtoCharges),
+  //       dailyKmLimit: String(selectedPackage.dailyKmLimit),
+  //       additionalHourCharges: String(selectedPackage.additionalHourCharges),
+  //       promoterChargePerDay: String(selectedPackage.promoterChargePerDay),
+  //       perKmCharge: String(selectedPackage.perKmCharge || 0),
+  //     });
+  //     setPkgSaved(false);
+  //     setChangedKeys([]);
+  //   }
+  // }, [selectedPackage?._id]);
+
+
   useEffect(() => {
     if (selectedPackage) {
+      const DEFAULT_PROMOTER_CHARGE = process.env.NEXT_PUBLIC_DEFAULT_PROMOTER_CHARGE || "1000";
       setEditablePackage({
         perDayRentalCost: String(selectedPackage.perDayRentalCost),
         driverCharges: String(selectedPackage.driverCharges),
         rtoCharges: String(selectedPackage.rtoCharges),
         dailyKmLimit: String(selectedPackage.dailyKmLimit),
         additionalHourCharges: String(selectedPackage.additionalHourCharges),
-        promoterChargePerDay: String(selectedPackage.promoterChargePerDay),
+        promoterChargePerDay: DEFAULT_PROMOTER_CHARGE,   // ← selectedPackage.promoterChargePerDay ku badhilaa
         perKmCharge: String(selectedPackage.perKmCharge || 0),
       });
       setPkgSaved(false);
       setChangedKeys([]);
     }
   }, [selectedPackage?._id]);
-
 
   useEffect(() => {
     if (!selectedPackage) { setForm(f => ({ ...f, pricing: null })); return; }
@@ -480,7 +509,7 @@ const validateFileSize = (file: File): string | null => {
       // Update cityOptions so dropdown shows the new city
       setCityOptions(prev => [...prev, newCityName.trim()]);
 
-      // Auto-select the newly added city
+    
       set("city", newCityName.trim());
 
       setNewCityName("");
@@ -543,7 +572,16 @@ const validateFileSize = (file: File): string | null => {
     }));
   };
 
-
+  function formatDate(d: string) {
+    if (!d) return "—";
+    return new Date(d).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
 
 
   const updateCharge = (id: string, updates: Partial<AdditionalCharge>) => {
@@ -570,7 +608,7 @@ const validateFileSize = (file: File): string | null => {
 
     if (form.campaignType === "Other" && !form.otherCampaignType) e.otherCampaignType = "Required";
 
-if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
+    if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
     if (!form.fromDate) e.fromDate = "Select start date";
     if (!form.toDate) e.toDate = "Select end date";
     if (form.fromDate && form.toDate && new Date(form.fromDate) >= new Date(form.toDate))
@@ -604,50 +642,6 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
     promoterChargePerDay: "Promoter/day",
   };
 
-  // const handleSavePackageChanges = async () => {
-  //   if (!selectedPackage) return;
-
-
-  //   const emptyFields = Object.entries(editablePackage)
-  //     .filter(([_, v]) => v === "" || v === ".")
-  //     .map(([k]) => FIELD_LABELS[k] || k);
-
-  //   if (emptyFields.length > 0) {
-  //     alert(`Please fill: ${emptyFields.join(", ")}`);
-  //     return;
-  //   }
-
-  //   setSavingPkg(true);
-  //   try {
-  //     const numericPayload = Object.fromEntries(
-  //       Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
-  //     );
-
-  //     const res = await fetch(`${API_BASE}packages/${selectedPackage._id}`, {
-  //       method: "PUT",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify(numericPayload),
-  //     });
-  //     const data = await res.json();
-  //     if (!res.ok) throw new Error(data.message || "Update failed");
-
-
-  //     const summary = changedKeys
-  //       .map(k => `${FIELD_LABELS[k]}: ₹${selectedPackage[k as keyof PackageOption]} → ₹${editablePackage[k]}`)
-  //       .join("\n");
-
-  //     setSelectedPackage(prev => prev ? { ...prev, ...numericPayload } : prev);
-  //     setPkgSaved(true);
-  //     setChangedKeys([]);
-
-  //     if (summary) alert(`✅ Package updated!\n\n${summary}`);
-
-  //   } catch (err: any) {
-  //     alert(err.message || "Failed to update package");
-  //   } finally {
-  //     setSavingPkg(false);
-  //   }
-  // };
 
 
   const handleSavePackageChanges = async () => {
@@ -668,7 +662,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
         Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
       );
 
-      // ✅ Extract the vehicleType ID from selectedPackage
+     
       const vehicleTypeId =
         typeof selectedPackage.vehicleType === "object"
           ? selectedPackage.vehicleType._id
@@ -695,7 +689,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
       setPkgSaved(true);
       setChangedKeys([]);
 
-      if (summary) alert(`✅ Package updated!\n\n${summary}`);
+      if (summary) alert(` Package updated!\n\n${summary}`);
 
     } catch (err: any) {
       alert(err.message || "Failed to update package");
@@ -705,147 +699,93 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
   };
 
 
-  // const handleSave = async () => {
-  //   if (!validate()) {
-  //     setTimeout(() => {
-  //       const fieldOrder = [
-  //         "vehicleType", "vehicleModel", "bookingFor", "gstNumber",
-  //         "campaignType", "otherCampaignType", "fromDate", "toDate",
-  //         "state", "city", "fromLocation", "toLocation", "quantity",
-  //         "promoterType", "otherPromoterType", "promoterGender",
-  //         "promoterLanguage", "promoterQuantity", "packageUnsaved",
-  //       ];
-
-  //       const firstErrorKey = fieldOrder.find((key) =>
-  //         document.getElementById(`field-${key}`)
-  //       );
-
-  //       if (firstErrorKey && scrollContainerRef.current) {
-  //         const el = document.getElementById(`field-${firstErrorKey}`);
-  //         if (el) {
-  //           const container = scrollContainerRef.current;
-  //           const containerTop = container.getBoundingClientRect().top;
-  //           const elTop = el.getBoundingClientRect().top;
-  //           const offset = elTop - containerTop + container.scrollTop - 20;
-  //           container.scrollTo({ top: offset, behavior: "smooth" });
-  //         }
-  //       }
-  //     }, 50);
-  //     return;
-  //   }
-
-  //   let finalCampaignType = form.campaignType;
-  //   if (form.campaignType === "Other" && form.otherCampaignType.trim()) {
-  //     try {
-  //       const res = await fetch(`${API_BASE}admin/campaign-types`, {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({ name: form.otherCampaignType.trim() }),
-  //       });
-  //       const data = await res.json();
-  //       if (data.success) {
-  //         finalCampaignType = data.type.name;
-  //         setCampaignTypes(prev =>
-  //           prev.find(c => c._id === data.type._id)
-  //             ? prev
-  //             : [...prev, data.type]
-  //         );
-  //       }
-  //     } catch (err: any) {
-  //       console.log(err)
-  //     }
-  //   }
-
-  //   onSave({ ...form, campaignType: finalCampaignType });
-  // };
-  
   const handleSave = async () => {
-  if (!validate()) {
-    setTimeout(() => {
-      const fieldOrder = [
-        "vehicleType", "vehicleModel", "bookingFor", "gstNumber",
-        "campaignType", "otherCampaignType", "fromDate", "toDate",
-        "state", "city", "fromLocation", "toLocation", "quantity",
-        "promoterType", "otherPromoterType", "promoterGender",
-        "promoterLanguage", "promoterQuantity", "packageUnsaved",
-      ];
-      const firstErrorKey = fieldOrder.find((key) =>
-        document.getElementById(`field-${key}`)
-      );
-      if (firstErrorKey && scrollContainerRef.current) {
-        const el = document.getElementById(`field-${firstErrorKey}`);
-        if (el) {
-          const container = scrollContainerRef.current;
-          const containerTop = container.getBoundingClientRect().top;
-          const elTop = el.getBoundingClientRect().top;
-          const offset = elTop - containerTop + container.scrollTop - 20;
-          container.scrollTo({ top: offset, behavior: "smooth" });
-        }
-      }
-    }, 50);
-    return;
-  }
-
-
-  const vehicleTypeId =
-    typeof selectedPackage?.vehicleType === "object"
-      ? selectedPackage.vehicleType._id
-      : selectedPackage?.vehicleType;
-
-      console.log("vehicleTypeId",vehicleTypeId)
-
-  if (vehicleTypeId && form.fromDate && form.toDate && form.quantity > 0) {
-    try {
-      const availability = await checkVehicleAvailability({
-        vehicleType: vehicleTypeId,
-        quantity: form.quantity,
-        fromDate: form.fromDate,
-        toDate: form.toDate,
-      });
-
-      if (!availability.available) {
-        const typeName =
-          typeof selectedPackage?.vehicleType === "object"
-            ? selectedPackage.vehicleType.typeName
-            : form.vehicleModel;
-
-        toast.error(
-          `No availability: "${typeName}" has only ${availability.availableCount} vehicle(s) free for ${form.fromDate} to ${form.toDate}, but ${form.quantity} required.`
+    if (!validate()) {
+      setTimeout(() => {
+        const fieldOrder = [
+          "vehicleType", "vehicleModel", "bookingFor", "gstNumber",
+          "campaignType", "otherCampaignType", "fromDate", "toDate",
+          "state", "city", "fromLocation", "toLocation", "quantity",
+          "promoterType", "otherPromoterType", "promoterGender",
+          "promoterLanguage", "promoterQuantity", "packageUnsaved",
+        ];
+        const firstErrorKey = fieldOrder.find((key) =>
+          document.getElementById(`field-${key}`)
         );
-        return; 
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to check vehicle availability");
+        if (firstErrorKey && scrollContainerRef.current) {
+          const el = document.getElementById(`field-${firstErrorKey}`);
+          if (el) {
+            const container = scrollContainerRef.current;
+            const containerTop = container.getBoundingClientRect().top;
+            const elTop = el.getBoundingClientRect().top;
+            const offset = elTop - containerTop + container.scrollTop - 20;
+            container.scrollTo({ top: offset, behavior: "smooth" });
+          }
+        }
+      }, 50);
       return;
     }
-  }
 
 
-  let finalCampaignType = form.campaignType;
-  if (form.campaignType === "Other" && form.otherCampaignType.trim()) {
-    try {
-      const res = await fetch(`${API_BASE}admin/campaign-types`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: form.otherCampaignType.trim() }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        finalCampaignType = data.type.name;
-        setCampaignTypes(prev =>
-          prev.find(c => c._id === data.type._id)
-            ? prev
-            : [...prev, data.type]
-        );
+    const vehicleTypeId =
+      typeof selectedPackage?.vehicleType === "object"
+        ? selectedPackage.vehicleType._id
+        : selectedPackage?.vehicleType;
+
+    console.log("vehicleTypeId", vehicleTypeId)
+
+    if (vehicleTypeId && form.fromDate && form.toDate && form.quantity > 0) {
+      try {
+        const availability = await checkVehicleAvailability({
+          vehicleType: vehicleTypeId,
+          quantity: form.quantity,
+          fromDate: form.fromDate,
+          toDate: form.toDate,
+        });
+
+        if (!availability.available) {
+          const typeName =
+            typeof selectedPackage?.vehicleType === "object"
+              ? selectedPackage.vehicleType.typeName
+              : form.vehicleModel;
+
+          toast.error(
+            `No availability: "${typeName}" has only ${availability.availableCount} vehicle(s) free for ${form.fromDate} to ${form.toDate}, but ${form.quantity} required.`
+          );
+          return;
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to check vehicle availability");
+        return;
       }
-    } catch (err: any) {
-      console.log(err)
     }
-  }
 
-  onSave({ ...form, campaignType: finalCampaignType });
-};
-  
+
+    let finalCampaignType = form.campaignType;
+    if (form.campaignType === "Other" && form.otherCampaignType.trim()) {
+      try {
+        const res = await fetch(`${API_BASE}admin/campaign-types`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: form.otherCampaignType.trim() }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          finalCampaignType = data.type.name;
+          setCampaignTypes(prev =>
+            prev.find(c => c._id === data.type._id)
+              ? prev
+              : [...prev, data.type]
+          );
+        }
+      } catch (err: any) {
+        console.log(err)
+      }
+    }
+
+    onSave({ ...form, campaignType: finalCampaignType });
+  };
+
   const p = form.pricing;
 
 
@@ -868,7 +808,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
   };
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-2">
-        <Toaster position="top-right" />
+      <Toaster position="top-right" />
       <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
 
 
@@ -886,6 +826,113 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
           <section className="space-y-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Vehicle Selection</p>
+
+            {/* {selectedClientOrder && (
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 dark:border-indigo-900/30 dark:bg-indigo-900/10 p-4 space-y-2">
+                <p className="text-xs font-semibold text-indigo-500">
+                  Client Request · {selectedClientOrder.clientOrderId}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(selectedClientOrder.vehicleTypes || []).map((vt: any, idx: number) => {
+                    const match = vehicleTypes.find((t: any) => t._id === vt.vehicleType._id);
+                    return (
+                      <span
+                        key={idx}
+                        className="rounded-full bg-indigo-100 dark:bg-indigo-900/30 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300"
+                      >
+                        {match?.typeName || "Unknown Type"} × {vt.quantity}{" "}
+                        <span className="text-xs text-gray-500">
+                          {formatDate(vt.fromDate)?.slice(0, 10)} → {formatDate(vt.toDate)?.slice(0, 10)}
+                          {vt.totalDays ? ` · ${vt.totalDays} days` : ""}
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )} */}
+
+            {/* {selectedClientOrder && (
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 dark:border-indigo-900/30 dark:bg-indigo-900/10 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-indigo-500 flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Client Request · {selectedClientOrder.clientOrderId}
+                  </p>
+                  <span className="text-[10px] font-medium text-indigo-400 bg-white/60 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full">
+                    {(selectedClientOrder.vehicleTypes || []).length} vehicle{(selectedClientOrder.vehicleTypes || []).length > 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-2 max-h-[132px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-indigo-200 dark:scrollbar-thumb-indigo-800 scrollbar-track-transparent">
+                  {(selectedClientOrder.vehicleTypes || []).map((vt: any, idx: number) => {
+                    const match = vehicleTypes.find((t: any) => t._id === vt.vehicleType._id);
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-3 rounded-lg bg-white/70 dark:bg-indigo-950/30 border border-indigo-100/70 dark:border-indigo-900/30 px-3 py-2"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="shrink-0 rounded-full bg-indigo-600 text-white text-[10px] font-semibold h-5 w-5 flex items-center justify-center">
+                            {vt.quantity}
+                          </span>
+                          <span className="text-xs font-medium text-indigo-800 dark:text-indigo-300 truncate">
+                            {match?.typeName || "Unknown Type"}
+                          </span>
+                        </div>
+                        <span className="shrink-0 text-[11px] text-gray-500 dark:text-gray-400">
+                          {formatDate(vt.fromDate)?.slice(0, 10)} → {formatDate(vt.toDate)?.slice(0, 10)}
+                          {vt.totalDays ? ` · ${vt.totalDays}d` : ""}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )} */}
+            {selectedClientOrder && (
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 dark:border-indigo-900/30 dark:bg-indigo-900/10 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-indigo-500 flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Client Request · {selectedClientOrder.clientOrderId}
+                  </p>
+                  <span className="text-[10px] font-medium text-indigo-400 bg-white/60 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full">
+                    {(selectedClientOrder.vehicleTypes || []).length} vehicle{(selectedClientOrder.vehicleTypes || []).length > 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-2 max-h-[132px] overflow-y-auto pr-1">
+                  {(selectedClientOrder.vehicleTypes || []).map((vt: any, idx: number) => {
+                    const match = vehicleTypes.find((t: any) => t._id === vt.vehicleType._id);
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-3 rounded-lg bg-white/70 dark:bg-indigo-950/30 border border-indigo-100/70 dark:border-indigo-900/30 px-3 py-2"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                          <span className="text-xs font-medium text-indigo-800 dark:text-indigo-300 truncate">
+                            {match?.typeName || "Unknown Type"}
+                          </span>
+                          <span className="shrink-0 text-[11px] font-semibold text-indigo-500 bg-indigo-100 dark:bg-indigo-900/40 px-1.5 py-0.5 rounded">
+                            × {vt.quantity}
+                          </span>
+                        </div>
+                        <span className="shrink-0 text-[11px] text-gray-500 dark:text-gray-400">
+                          {formatDate(vt.fromDate)?.slice(0, 10)} → {formatDate(vt.toDate)?.slice(0, 10)}
+                          {vt.totalDays ? ` · ${vt.totalDays}d` : ""}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <>
               <div className="grid grid-cols-2 gap-4">
@@ -1185,7 +1232,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                 </FormField>
               </div>
 
-             
+
               <div id="field-campaignName">
                 <FormField label="Campaign Name" error={errors.campaignName} required>
                   <input
@@ -1333,7 +1380,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                   accept="image/*"
                   multiple
                   className="hidden"
-                 onChange={(e) => {
+                  onChange={(e) => {
                     const files = Array.from(e.target.files || []);
                     const invalid = files.find(f => validateFileSize(f));
                     if (invalid) {
@@ -1389,7 +1436,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                   accept="video/*"
                   multiple
                   className="hidden"
-                onChange={(e) => {
+                  onChange={(e) => {
                     const files = Array.from(e.target.files || []);
                     const invalid = files.find(f => validateFileSize(f));
                     if (invalid) {
@@ -1545,7 +1592,8 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                     />
                     {hasPromoter && (
                       <SummaryRow
-                        label={`Promoter (${p.totalDays}D × ${formatINR(selectedPackage.promoterChargePerDay)} × ${form.promoterQuantity} Promoter)`}
+                        // label={`Promoter (${p.totalDays}D × ${formatINR(selectedPackage.promoterChargePerDay)} × ${form.promoterQuantity} Promoter)`}
+                        label={`Promoter (${p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${form.promoterQuantity} Promoter)`}
                         val={p.promoterCost}
                         isLast={false}
                         hasCharges={form.additionalCharges.length > 0}

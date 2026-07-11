@@ -651,7 +651,7 @@ export default function CampaignHistoryPanel({
                 ) : (
                   <>
                    
-                    {dayView.segments.map((seg, segIdx) => {
+                   {[...dayView.segments].reverse().map((seg, segIdx) => {
                       const showUpdatedBadge = dayView.mode === "updated";
 
                       return (
