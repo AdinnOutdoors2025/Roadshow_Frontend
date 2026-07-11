@@ -1,43 +1,108 @@
-* { font-family: Outfit; }
+* {
+  font-family: Outfit;
+}
 
-.RS_Navbar { background: transparent; }
+.RS_Navbar {
+  background: transparent;
+}
 
-/* ══ NAV LINKS — top-to-bottom red fill on hover ══
-   Two layers of the same text stacked.
-   Bottom layer: black (always visible).
-   Top layer  : red, clipped from bottom (hidden) → clips to 0 on hover (fully visible).
-   Result     : red wipes in from top → bottom.
-*/
+/* ================================
+   NAV LINK SCROLL ANIMATION
+================================ */
+
 .RS_NavContents {
   font-weight: 300;
-  font-size: 30px;          /* your original */
+  font-size: 30px;
   color: #000;
   text-decoration: none;
   position: relative;
   display: inline-block;
   overflow: hidden;
   line-height: 1.15;
+  height: 1.15em;
 }
 
-/* Red clone — revealed top→bottom */
-.RS_NavLink::after {
-  content: attr(data-text);
-  position: absolute;
-  inset: 0;
-  color: #D62839;
-  /* hidden: clip from bottom edge upward */
-  clip-path: inset(100% 0 0 0);
-  transition: clip-path 0.38s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
+.RS_NavLink {
+  min-width: max-content;
+}
+
+.RS_NavText {
+  display: block;
   white-space: nowrap;
+  will-change: transform;
 }
 
-/* Hover: reveal red by opening clip from top */
-.RS_NavLink:hover::after {
-  clip-path: inset(0% 0 0 0);
+.RS_NavText--black {
+  color: #000;
+  transform: translateY(0%);
 }
 
-/* ══ HAMBURGER ══ */
+.RS_NavText--red {
+  color: #d62839;
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translateY(-115%);
+}
+
+/* Hover in: black goes down, red comes from top */
+.RS_NavLink--hover .RS_NavText--black {
+  animation: RS_BlackTextHoverIn 0.42s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+.RS_NavLink--hover .RS_NavText--red {
+  animation: RS_RedTextHoverIn 0.42s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+/* Hover out: red goes down, black comes from top */
+.RS_NavLink--leave .RS_NavText--black {
+  animation: RS_BlackTextHoverOut 0.42s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+.RS_NavLink--leave .RS_NavText--red {
+  animation: RS_RedTextHoverOut 0.42s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+@keyframes RS_BlackTextHoverIn {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(115%);
+  }
+}
+
+@keyframes RS_RedTextHoverIn {
+  0% {
+    transform: translateY(-115%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+@keyframes RS_BlackTextHoverOut {
+  0% {
+    transform: translateY(-115%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+@keyframes RS_RedTextHoverOut {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(115%);
+  }
+}
+
+/* ================================
+   HAMBURGER
+================================ */
+
 .RS_HamBtn {
   display: flex;
   flex-direction: column;
@@ -47,6 +112,7 @@
   border: none;
   cursor: pointer;
 }
+
 .RS_L {
   display: block;
   width: 28px;
@@ -54,67 +120,135 @@
   background: #111;
   border-radius: 2px;
   transform-origin: center;
-  transition: transform 0.3s ease, opacity 0.25s ease, background 0.2s ease;
+  transition:
+    transform 0.34s cubic-bezier(0.76, 0, 0.24, 1),
+    opacity 0.24s ease,
+    background 0.2s ease;
 }
-.RS_L1o { transform: translateY(7.5px) rotate(45deg); }
-.RS_L2o { opacity: 0; transform: scaleX(0); }
-.RS_L3o { transform: translateY(-7.5px) rotate(-45deg); }
 
-/* ══ DROPDOWN — slides down, right-anchored ══ */
+.RS_L1o {
+  transform: translateY(7.5px) rotate(45deg);
+}
+
+.RS_L2o {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.RS_L3o {
+  transform: translateY(-7.5px) rotate(-45deg);
+}
+
+/* ================================
+   DROPDOWN
+================================ */
+
 .RS_Drop {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 12px);
   right: 0;
-  min-width: 180px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.13);
+  min-width: 210px;
+  /* background: rgba(255, 255, 255, 0.96); */
+  /* border-radius: 16px; */
+  /* box-shadow: 0 14px 40px rgba(0, 0, 0, 0.14); */
   overflow: hidden;
-  /* collapsed */
-  max-height: 0;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-6px);
-  transition:
-    max-height 0.38s cubic-bezier(0.4,0,0.2,1),
-    opacity    0.28s ease,
-    transform  0.32s ease;
   z-index: 200;
-}
-.RS_Drop--open {
-  max-height: 360px;
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0);
+  /* padding: 7px; */
+  transform-origin: top right;
+  will-change: opacity, transform;
 }
 
-/* Each row stagger-fades in */
+.RS_Drop--open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  animation: RS_DropBoxOpen 0.32s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+.RS_Drop--closing {
+  pointer-events: none;
+  animation: RS_DropBoxClose 0.36s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+@keyframes RS_DropBoxOpen {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes RS_DropBoxClose {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+/* Row default */
 .RS_DropRow {
   display: block;
-  padding: 12px 20px;
+  padding: 6px 18px;
   font-size: 15px;
   font-weight: 400;
   color: #222;
   text-decoration: none;
+  border-radius: 11px;
   opacity: 0;
-  transform: translateX(10px);
+  transform: translateX(34px);
+  will-change: opacity, transform;
   transition:
-    opacity   0.25s ease,
-    transform 0.25s ease,
-    background 0.15s ease,
-    color      0.15s ease;
-  border-bottom: 0.5px solid #f2f2f2;
+    opacity 0.34s cubic-bezier(0.76, 0, 0.24, 1),
+    transform 0.34s cubic-bezier(0.76, 0, 0.24, 1),
+    background 0.2s ease,
+    color 0.2s ease;
 }
-.RS_DropRow:last-child { border-bottom: none; }
+
+/* Open: each item comes right to left */
 .RS_Drop--open .RS_DropRow {
   opacity: 1;
   transform: translateX(0);
 }
+
+/* Close: each item goes left to right */
+.RS_Drop--closing .RS_DropRow {
+  opacity: 0;
+  transform: translateX(34px);
+}
+/* 
 .RS_DropRow:hover {
   background: #fff1f2;
-  color: #D62839;
+  color: #d62839;
+} */
+
+/* ================================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 1024px) {
+  .RS_NavContents {
+    font-size: 24px;
+  }
 }
 
-/* ══ RESPONSIVE ══ */
-@media (max-width: 1024px) { .RS_NavContents { font-size: 24px; } }
-@media (max-width: 768px)  { .RS_NavContents { font-size: 18px; } .RS_HamBtn { display: flex; } }
+@media (max-width: 768px) {
+  .RS_NavContents {
+    font-size: 18px;
+  }
+
+  .RS_HamBtn {
+    display: flex;
+  }
+
+  .RS_Drop {
+    min-width: 190px;
+    right: 0;
+  }
+}
