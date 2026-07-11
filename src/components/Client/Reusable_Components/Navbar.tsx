@@ -5,14 +5,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./Navbar.css";
 import Image from 'next/image';
-
+// Login authentication 
+import { useAuth } from "@/context/AuthContext";
+// Login authentication
+import { useRouter } from "next/navigation";
 const navLinks = [
   { label: "Home", href: "/" },
-  { label: "Vehicle", href: "/vehicle" },
+  { label: "Vehicle", href: "/roadshow/VehicleDetails" },
   { label: "Contact Us", href: "/contact" },
 ];
 
 const menuItems = [
+  { label: "Sign In" },
   { label: "Name" },
   { label: "Email" },
   { label: "Phone Number" },
@@ -21,42 +25,66 @@ const menuItems = [
 ];
 
 function AnimatedNavLink({ label, href }) {
+
+  const router = useRouter();
+
   const [animState, setAnimState] = useState("idle");
-  const timerRef = useRef(null);
+  const timerRef = useRef<any>(null);
+
 
   const handleMouseEnter = () => {
     clearTimeout(timerRef.current);
     setAnimState("hover");
   };
 
+
   const handleMouseLeave = () => {
     clearTimeout(timerRef.current);
+
     setAnimState("leave");
 
     timerRef.current = setTimeout(() => {
       setAnimState("idle");
-    }, 420);
+    },420);
   };
 
+
   return (
-    <a
-      href={href}
-      className={`RS_NavContents RS_NavLink RS_NavLink--${animState}`}
+
+    <button
+      type="button"
+
+      onClick={()=>{
+        router.push(href);
+      }}
+
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      aria-label={label}
+
+      className={`RS_NavContents RS_NavLink RS_NavLink--${animState}`}
+
     >
-      <span className="RS_NavText RS_NavText--black">{label}</span>
-      <span className="RS_NavText RS_NavText--red">{label}</span>
-    </a>
+
+      <span className="RS_NavText RS_NavText--black">
+        {label}
+      </span>
+
+
+      <span className="RS_NavText RS_NavText--red">
+        {label}
+      </span>
+
+
+    </button>
+
   );
 }
-
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [dropVisible, setDropVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef(null);
+  const router = useRouter();
 
   const toggleDropdown = () => {
     clearTimeout(closeTimerRef.current);
@@ -101,6 +129,9 @@ export default function Navbar() {
       clearTimeout(closeTimerRef.current);
     };
   }, [open]);
+  // Login authentication 
+  const { openAuth } = useAuth();
+  // Login authentication 
 
   return (
     <nav className="RS_Navbar w-full">
@@ -111,8 +142,8 @@ export default function Navbar() {
           alt="Roadshow Logo"
           width={180}
           height={48}
-          className="h-12 w-auto object-contain"
-          priority
+          className="h-12 w-auto object-contain cursor-pointer"  onClick={() => router.push("/")}
+          priority 
         />
 
         {/* Desktop links */}
@@ -153,7 +184,10 @@ export default function Navbar() {
                   }}
                   onClick={(e) => {
                     e.preventDefault();
-                    closeDropdown();
+                    if (label === "Sign In") {
+                      openAuth();
+                      closeDropdown();
+                    }
                   }}
                 >
                   {label}

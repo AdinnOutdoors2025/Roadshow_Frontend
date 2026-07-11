@@ -3,6 +3,8 @@
 import { Outfit } from 'next/font/google';
 import './globals.css';
 import "flatpickr/dist/flatpickr.css";
+import {AuthProvider} from "@/context/AuthContext";
+import AuthModal from "@/components/auth/ClientAuthModal";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -34,6 +36,7 @@ export default function RootLayout({
         /> */}
       </head>
       <body className={`${outfit.className} dark:bg-gray-900`}>
+        <AuthProvider>
         {children}
 
         {/* Bootstrap JS Bundle (includes Popper) - placed before closing body */}
@@ -43,6 +46,8 @@ export default function RootLayout({
           crossOrigin="anonymous"
           async
         /> */}
+        <AuthModal/>
+        </AuthProvider>
       </body>
     </html>
   );
