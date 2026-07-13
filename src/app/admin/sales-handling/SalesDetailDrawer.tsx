@@ -112,8 +112,7 @@ const getFileUrl = (p: string) => {
 const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
 
-type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation";
-
+type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation" | "dateConflict";
 
 function DocPreviewModal({ url, label, onClose }: { url: string; label: string; onClose: () => void }) {
   const img = isImage(url);
@@ -423,6 +422,7 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
 import { useVehicle } from '../../../context/vehicletypecontext';
 import PipelineHistoryTab from "./PipelineHistoryTab";
 import { ChevronLeft } from "lucide-react";
+import DateConflictTab from "./DateConflictTab";
 
 
 function OverviewTab({
@@ -1310,15 +1310,17 @@ function DocumentsTab({
   );
 }
 
-
 export default function SalesDetailDrawer({
   order, onClose, onRefresh, onStageMove, staffAdmins, currentUserIsAdmin, saving,
+  onOpenConflictOrder, highlightOrderId,
 }: {
   order: SalesOrder; onClose: () => void; onRefresh: () => Promise<void>;
   onStageMove: (order: SalesOrder, toStage: string) => void;
   staffAdmins: { username: string }[];
   currentUserIsAdmin: number;
   saving: boolean;
+  onOpenConflictOrder?: (orderObjectId: string) => void;
+  highlightOrderId?: string | null;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const stage = SALES_STAGE_MAP[order.salesPipelineStatus];
@@ -1371,6 +1373,7 @@ export default function SalesDetailDrawer({
     { key: "comments", label: "Comments" },
     { key: "pipeline", label: "Pipeline History" },
     { key: "documents", label: isPoStage ? "PO Document" : "" },
+     { key: "dateConflict", label: "Date Conflict" },
     ...(order.salesPipelineStatus === "projectCodeCreation"
       ? [{ key: "codeCreation" as Tab, label: "Code Creation" }]
       : []),
@@ -1398,8 +1401,11 @@ export default function SalesDetailDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
-      <div className="bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300">
+      {/* <div className="bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300"> */}
 
+<div className={`bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300 transition-all ${
+        highlightOrderId === order._id ? "ring-4 ring-amber-400" : ""
+      }`}>
 
         <div className="flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
 
@@ -1425,7 +1431,7 @@ export default function SalesDetailDrawer({
               </div>
             </div>
 
-            {/* Move to next stage */}
+           
             {nextShort && (
               <button
                 onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
@@ -1476,17 +1482,20 @@ export default function SalesDetailDrawer({
           )}
 
           {/* Tabs */}
-          <div className="flex items-center border-b border-gray-100 dark:border-gray-800 px-4">
+         <div className="flex items-center border-b border-gray-100 dark:border-gray-800 px-4">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-3 py-2.5 text-md font-medium border-b-2 transition-all -mb-px whitespace-nowrap ${activeTab === tab.key
+                className={`flex items-center gap-1.5 px-3 py-2.5 text-md font-medium border-b-2 transition-all -mb-px whitespace-nowrap ${activeTab === tab.key
                   ? "border-red-500 text-red-600 dark:text-red-400"
                   : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   }`}
               >
                 {tab.label}
+                {tab.key === "dateConflict" && order.hasDateConflict && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                )}
               </button>
             ))}
           </div>
@@ -1621,6 +1630,10 @@ export default function SalesDetailDrawer({
           )}
           {activeTab === "codeCreation" && (
             <CodeCreationTab order={order} onRefresh={onRefresh} />
+          )}
+
+           {activeTab === "dateConflict" && (
+            <DateConflictTab order={order} onOpenConflictOrder={onOpenConflictOrder} />
           )}
 
         </div>

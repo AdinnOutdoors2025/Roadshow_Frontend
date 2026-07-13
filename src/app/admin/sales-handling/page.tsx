@@ -1066,6 +1066,7 @@ export interface SalesOrder {
   createdAt: string;
   updatedAt?: string;
   poCommentsArray: any[];
+  hasDateConflict?: boolean;
   projectCodeCommentsArray: any[];
   closedLostCommentsArray: any[];
 }
@@ -1231,6 +1232,13 @@ function SalesOrderCard({
       <p className="text-md font-semibold text-gray-900 dark:text-gray-100 leading-tight mb-1 truncate">
         {order.name}
       </p>
+
+       {order.hasDateConflict && (
+        <div className="flex items-center gap-1 mb-2 px-2 py-1 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 animate-pulse">
+          <AlertCircle size={11} className="text-red-500 flex-shrink-0" />
+          <span className="text-[11px] font-semibold text-red-600 dark:text-red-400">Date Conflict</span>
+        </div>
+      )}
 
       {/* Amount */}
       <p className={`text-base font-bold mb-2 ${stage.color}`}>
@@ -1487,7 +1495,8 @@ export default function SalesPipelineBoard() {
   const [drawerOrder, setDrawerOrder] = useState<SalesOrder | null>(null);
   const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState<number>(1);
   const [staffAdmins, setStaffAdmins] = useState<{ username: string }[]>([]);
-  const [saving, setSaving] = useState(false);
+ const [saving, setSaving] = useState(false);
+  const [highlightOrderId, setHighlightOrderId] = useState<string | null>(null);
 
 
 
@@ -1864,6 +1873,17 @@ export default function SalesPipelineBoard() {
     setLostFile(null);
   };
 
+  const handleOpenConflictOrder = (orderObjectId: string) => {
+    const target = Object.values(grouped).flat().find((o) => o._id === orderObjectId);
+    if (target) {
+      setDrawerOrder(target);
+      setHighlightOrderId(orderObjectId);
+      setTimeout(() => setHighlightOrderId(null), 3000);
+    } else {
+      toast.error("Order not found in current board view. Refresh to try.");
+    }
+  };
+
   const handleDrawerRefresh = async () => {
     const token = getToken();
     const { data } = await axios.get(`${API_BASE}sales/pipeline`, {
@@ -2005,7 +2025,7 @@ export default function SalesPipelineBoard() {
       </div>
 
       {/* ── Detail Drawer ── */}
-      {drawerOrder && (
+     {drawerOrder && (
         <SalesDetailDrawer
           order={drawerOrder}
           onClose={() => setDrawerOrder(null)}
@@ -2014,6 +2034,8 @@ export default function SalesPipelineBoard() {
           staffAdmins={staffAdmins}
           currentUserIsAdmin={currentUserIsAdmin}
           saving={saving}
+          onOpenConflictOrder={handleOpenConflictOrder}
+          highlightOrderId={highlightOrderId}
         />
       )}
 
