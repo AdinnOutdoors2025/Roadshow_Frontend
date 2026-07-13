@@ -401,6 +401,31 @@ export default function ClientClosureTabSecond({
         setPreviewOpen(true);
     };
 
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+    const MAX_DOC_SIZE = 10 * 1024 * 1024;
+
+    const handleFocFileChange = (file: File | null) => {
+        if (!file) {
+            setFocDoc(null);
+            return;
+        }
+
+        const isImage = file.type.startsWith("image/");
+
+        if (isImage && file.size > MAX_IMAGE_SIZE) {
+            toast.error("Image upload only 5 MB");
+            return;
+        }
+
+        if (!isImage && file.size > MAX_DOC_SIZE) {
+            toast.error("Document upload only 10 MB");
+            return;
+        }
+
+        setFocDoc(file);
+    };
+
+
     return (
         <div className="p-4 h-full flex flex-col">
 
@@ -565,9 +590,9 @@ export default function ClientClosureTabSecond({
                                             )}
                                         </div>
 
-                                  
+
                                         <>
-                                          
+
                                             <div className="mb-3">
                                                 <label className="block text-sm font-medium text-gray-500 mb-1">
                                                     Reason <span className="text-red-500">*</span>
@@ -614,7 +639,7 @@ export default function ClientClosureTabSecond({
                                                 </div>
                                             </div>
 
-                                        
+
                                             <div className="mb-4">
                                                 <label className="block text-sm font-medium text-gray-500 mb-1">
                                                     Document / Image <span className="text-gray-400">(optional)</span>
@@ -626,7 +651,8 @@ export default function ClientClosureTabSecond({
                                                         id="foc-doc"
                                                         key={fileInputKey}
                                                         className="hidden"
-                                                        onChange={(e) => setFocDoc(e.target.files?.[0] || null)}
+                                                        // onChange={(e) => setFocDoc(e.target.files?.[0] || null)}
+                                                        onChange={(e) => handleFocFileChange(e.target.files?.[0] || null)}
                                                     />
                                                     {displayDocUrl ? (
                                                         <div className="w-full">

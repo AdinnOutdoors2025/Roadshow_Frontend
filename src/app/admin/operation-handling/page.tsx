@@ -71,7 +71,7 @@ const fmtDatetimenew = (s?: string) => {
   };
 };
 
-// Helper: compute the final net amount for an order (used for search/amount filter/card display)
+
 const computeFinalNet = (order: Order) => {
   const subtotal = (order.bookingItems || []).reduce((s, i) => s + (i.totalAmount || 0), 0);
   const totalDiscount = (order.negotiationLogs || []).reduce((s, l) => s + (l.discountAmount || 0), 0);
@@ -313,8 +313,8 @@ function FilterBar({
               key={opt.key}
               onClick={() => setCustomerTypeFilter(opt.key)}
               className={`text-xs font-medium px-2.5 py-1.5 rounded-md transition-all ${customerTypeFilter === opt.key
-                  ? "bg-blue-500 text-white"
-                  : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                ? "bg-blue-500 text-white"
+                : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
             >
               {opt.label}
@@ -326,8 +326,8 @@ function FilterBar({
         <button
           onClick={() => setFocOnly(!focOnly)}
           className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border transition-all ${focOnly
-              ? "bg-orange-500 text-white border-orange-500"
-              : "bg-white dark:bg-gray-800 text-orange-600 border-orange-200 hover:bg-orange-50"
+            ? "bg-orange-500 text-white border-orange-500"
+            : "bg-white dark:bg-gray-800 text-orange-600 border-orange-200 hover:bg-orange-50"
             }`}
         >
           Waiting for FOC
@@ -337,8 +337,8 @@ function FilterBar({
         <button
           onClick={() => setShowMore((p) => !p)}
           className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border transition-all ${showMore
-              ? "bg-indigo-500 text-white border-indigo-500"
-              : "bg-white dark:bg-gray-800 text-gray-600 border-gray-200 hover:bg-gray-50"
+            ? "bg-indigo-500 text-white border-indigo-500"
+            : "bg-white dark:bg-gray-800 text-gray-600 border-gray-200 hover:bg-gray-50"
             }`}
         >
           <SlidersHorizontal size={13} />
@@ -588,7 +588,7 @@ export default function PipelineBoard() {
       return;
     }
 
-      if (toStage === "vehicleUnavailable") {
+    if (toStage === "vehicleUnavailable") {
       toast.error("Cannot move to Vehicle Unavailable. This stage only displays unavailable vehicle history.");
       return;
     }
@@ -597,11 +597,8 @@ export default function PipelineBoard() {
       "todo",
       "projectExecution",
       "onRoad",
-      "campaignRunning",
       "vehicleUnavailable",
       "clientClosure",
-      "invoiceGeneration",
-      "paymentStage2",
       "closedWon",
       "closedLost",
     ];
@@ -612,6 +609,11 @@ export default function PipelineBoard() {
     if (LOCKED_BACK_STAGES.includes(toStage) && toIndex < fromIndex) {
       const stageLabel = toStage === "todo" ? "To-Do" : "Project Execution";
       toast.error(`Cannot move back to the "${stageLabel}" stage!`);
+      return;
+    }
+
+    if (fromStage === "todo" && toStage !== "projectExecution" && toStage !== "closedLost") {
+      toast.error("Please move to Project Execution first!");
       return;
     }
 
@@ -673,7 +675,7 @@ export default function PipelineBoard() {
     const max = maxAmount !== "" ? Number(maxAmount) : null;
 
     const matches = (order: Order) => {
-  
+
       if (q) {
         const projectCode = order.projectCodeArray?.[0]?.projectCode?.toLowerCase() || "";
         const name = order.name?.toLowerCase() || "";

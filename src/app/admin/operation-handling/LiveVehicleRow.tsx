@@ -177,6 +177,16 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
   const routeProgress = entry.routeProgress ?? 0;
   const isUnavailable = entry.unavailableStatus === true;
 
+  // const handleSubmit = async () => {
+  //   if (!commentText.trim()) return toast.error("Issue description required");
+  //   setSubmitting(true);
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("vehicleIndex", correctVehicleIndex);
+  //     formData.append("issueDescription", commentText.trim());
+  //     formData.append("vehicleRegistrationNumber", entry.vehicleRegistrationNumber);
+  //     if (commentPhoto) formData.append("issuePhoto", commentPhoto);
+
   const handleSubmit = async () => {
     if (!commentText.trim()) return toast.error("Issue description required");
     setSubmitting(true);
@@ -185,6 +195,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
       formData.append("vehicleIndex", correctVehicleIndex);
       formData.append("issueDescription", commentText.trim());
       formData.append("vehicleRegistrationNumber", entry.vehicleRegistrationNumber);
+      formData.append("entryId", entry._id);
       if (commentPhoto) formData.append("issuePhoto", commentPhoto);
 
       await axios.post(

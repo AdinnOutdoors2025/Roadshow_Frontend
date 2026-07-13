@@ -11,9 +11,11 @@ interface Props {
   onBack: () => void;
   onSubmit: () => void;
   loading: boolean;
+  getVehicleTypeName?:any
+  editingOrder?:any
 }
 
-export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: Props) {
+export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,getVehicleTypeName,editingOrder }: Props) {
   const { customerSelection, vehicles } = order;
   const customer = customerSelection.customer;
   const [activeVehicleIndex, setActiveVehicleIndex] = useState(0);
@@ -129,9 +131,15 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
                   {activeVehicleIndex + 1}
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                  {/* <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                     {v.vehicleModel} · {v.vehicleType}
-                  </p>
+                  </p> */}
+
+                    {editingOrder ? (
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200"> {getVehicleTypeName(v.vehicleType)}</p>
+                    ) :(<p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p>)}
+
+
                   <p className="text-xs text-gray-400">
                     {v.city} · {v.fromDate} → {v.toDate}
                   </p>

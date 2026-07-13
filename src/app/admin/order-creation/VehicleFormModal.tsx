@@ -77,6 +77,8 @@ function defaultForm(): Omit<VehicleConfig, "id"> {
     promoterQuantity: 0,
     dailyKmcharges: 0,
     campaignName: "",
+    existingImages: [],
+    existingVideos: [],
 
   };
 }
@@ -509,7 +511,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
       // Update cityOptions so dropdown shows the new city
       setCityOptions(prev => [...prev, newCityName.trim()]);
 
-    
+
       set("city", newCityName.trim());
 
       setNewCityName("");
@@ -662,7 +664,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
         Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
       );
 
-     
+
       const vehicleTypeId =
         typeof selectedPackage.vehicleType === "object"
           ? selectedPackage.vehicleType._id
@@ -807,7 +809,8 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
     return new Intl.NumberFormat("en-IN").format(Number(raw));
   };
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-2">
+    // <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-2">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-2">
       <Toaster position="top-right" />
       <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
 
@@ -1393,6 +1396,27 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                   }}
                 />
               </label>
+              {(form.existingImages || []).length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] text-gray-400">Existing images</p>
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {(form.existingImages || []).map((url: string, idx: number) => (
+                      <div key={idx} className="relative group rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100"
+                        style={{ width: "60px", height: "60px" }}>
+                        <img src={url.startsWith("http") ? url : `http://localhost:3001${url}`} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => set("existingImages", (form.existingImages || []).filter((_: any, i: number) => i !== idx) as any)}
+                          className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <IoMdClose className="h-2.5 w-2.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {form.campaignImages.length > 0 && (
                 <div className="grid grid-cols-6 gap-1.5 mt-2">
                   {(form.campaignImages as File[]).map((file, idx) => {
@@ -1449,6 +1473,34 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                   }}
                 />
               </label>
+              {(form.existingVideos || []).length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] text-gray-400">Existing videos</p>
+                  <div className="space-y-2">
+                    {(form.existingVideos || []).map((url: string, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-3 py-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                            <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <span className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                            {url.split("/").pop()}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => set("existingVideos", (form.existingVideos || []).filter((_: any, i: number) => i !== idx) as any)}
+                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                        >
+                          <HiOutlineTrash className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {form.campaignVideos.length > 0 && (
                 <div className="space-y-2 mt-2">
                   {(form.campaignVideos as File[]).map((file, idx) => (

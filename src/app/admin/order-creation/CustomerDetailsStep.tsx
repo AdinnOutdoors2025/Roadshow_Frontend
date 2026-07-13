@@ -24,6 +24,7 @@ interface Props {
   onGstDetailsReset: () => void;
   selectedClientOrder: any | null;
   onSelectClientOrder: (co: any | null) => void;
+  editingOrder?:any
 }
 
 
@@ -54,6 +55,7 @@ export default function CustomerDetailsStep({
   onGstDetailsReset,
   selectedClientOrder,
   onSelectClientOrder,
+  editingOrder
 
 }: Props) {
   const [errors, setErrors] = useState<FormErrors>({});
@@ -288,11 +290,13 @@ export default function CustomerDetailsStep({
 
   return (
     <div className="space-y-5">
-
+  {!editingOrder && 
       <div>
+      
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Client Order Request <span className="text-gray-400 font-normal">(Optional)</span>
         </label>
+        
         <select
           value={selectedClientOrder?._id || ""}
           onChange={(e) => handleClientOrderSelect(e.target.value)}
@@ -311,6 +315,7 @@ export default function CustomerDetailsStep({
           </p>
         )}
       </div>
+      }
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">

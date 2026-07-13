@@ -12,9 +12,11 @@ interface Props {
   onNext: () => void;
   onBack: () => void;
   selectedClientOrder?: any;
+  getVehicleTypeName?:any;
+  editingOrder?:any
 }
 
-export default function VehicleListStep({ vehicles, onChange, onNext, onBack ,selectedClientOrder  }: Props) {
+export default function VehicleListStep({ vehicles, onChange, onNext, onBack, selectedClientOrder ,getVehicleTypeName ,editingOrder }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editingV, setEditingV] = useState<VehicleConfig | null>(null);
   const [error, setError] = useState("");
@@ -31,7 +33,7 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack ,se
     setError("");
   };
 
- 
+console.log("vehicles",vehicles)
 
 
   const formatDate = (dateStr: string) => {
@@ -103,7 +105,13 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack ,se
                 <div className="flex items-center gap-3">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600">V{idx + 1}</span>
                   <div>
-                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p>
+
+                    {editingOrder ? (
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200"> {getVehicleTypeName(v.vehicleType)}</p>
+                    ) :(<p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p>)}
+
+
+                    {/* <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p> */}
 
                     <p className="text-xs text-gray-400">
                       {v.fromDate && v.toDate
@@ -143,14 +151,14 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack ,se
                 )}
                 {v.quantity > 1 && <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">Qty: {v.quantity}</span>}
                 {!v.pricing && <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600">Pricing pending</span>}
-               
+
               </div>
-               {expandedId === v.id && v.pricing && (
-  <PricingBreakdown vehicle={v} formatINR={formatINR} />
-)}
+              {expandedId === v.id && v.pricing && (
+                <PricingBreakdown vehicle={v} formatINR={formatINR} />
+              )}
             </div>
 
-            
+
           ))}
 
 
@@ -195,10 +203,10 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack ,se
             </div>
           )}
         </div>
-        
+
       )}
 
-      
+
 
       {error && <p className="text-xs text-red-500">{error}</p>}
 
@@ -227,8 +235,8 @@ function PricingBreakdown({ vehicle: v, formatINR }: { vehicle: VehicleConfig; f
   //   { label: `Driver (${p.totalDays}D × ${formatINR(p.driverCharges)} × Qty ${v.quantity})`, amount: p.driverCost },
   // ];
   const rows: { label: string; amount: number }[] = [
-  { label: `Rental (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × Qty ${v.quantity})`, amount: p.rentalCost },
-];
+    { label: `Rental (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × Qty ${v.quantity})`, amount: p.rentalCost },
+  ];
   if (v.needPromoter && p.promoterCost > 0)
     rows.push({ label: `Promoter (${p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${v.promoterQuantity} promoter)`, amount: p.promoterCost });
   rows.push({ label: "RTO Charges", amount: p.rtoCost });

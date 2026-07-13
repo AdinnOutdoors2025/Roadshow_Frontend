@@ -27,6 +27,7 @@ import {
   FiCheckCircle, FiCode, FiXCircle,
 } from "react-icons/fi";
 import CodeCreationTab from "./CodeCreationTab";
+import { useVehicle } from '../../../context/vehicletypecontext';
 
 
 // ── File size limits ──────────────────────────────────────────────────────────
@@ -419,25 +420,25 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
 
 
 
-import { useVehicle } from '../../../context/vehicletypecontext';
+
 import PipelineHistoryTab from "./PipelineHistoryTab";
 import { ChevronLeft } from "lucide-react";
 import DateConflictTab from "./DateConflictTab";
+import AdminOrderForm from "../order-creation/AdminOrderForm";
 
 
 function OverviewTab({
-  order, onRefresh, onStageMove,
+  order, onRefresh, onStageMove,getVehicleTypeName
 }: {
   order: SalesOrder; onRefresh: () => Promise<void>;
   onStageMove: (order: SalesOrder, toStage: string) => void;
+  getVehicleTypeName:any
 }) {
-  const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+
   const [activeVehicleTab, setActiveVehicleTab] = useState<number>(0);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchVehicleTypes()
-  }, [])
+
 
   const stageIdx = SALES_STAGES.findIndex((s) => s.key === order.salesPipelineStatus);
   const stage = SALES_STAGE_MAP[order.salesPipelineStatus];
@@ -447,11 +448,7 @@ function OverviewTab({
   const gstAmt = Math.floor(taxable * 0.18);
   const finalAmt = taxable + gstAmt;
 
-  const getVehicleTypeName = (vehicleTypeId: string) => {
-    if (!vehicleTypeId || !vehicleTypes) return "";
-    const vehicle = vehicleTypes.find((vt: any) => vt._id === vehicleTypeId);
-    return vehicle?.typeName || vehicleTypeId;
-  };
+
 
 
   const currentVehicle = order.bookingItems[activeVehicleTab];
@@ -977,18 +974,18 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         needAnalysis: "analysisNotes",
         proposalPriceQuote: "proposalNotes",
         negotiationReview: "negotiationNotes",
-        closedWon: "poCommentNotes",                    
-        projectCodeCreation: "projectCodeCommentNotes", 
-        closedLost: "closedLostCommentNotes",           
+        closedWon: "poCommentNotes",
+        projectCodeCreation: "projectCodeCommentNotes",
+        closedLost: "closedLostCommentNotes",
       };
       const docFieldMap: Record<string, string> = {
         enquiry: "enquiryDocument",
         needAnalysis: "analysisDocument",
         proposalPriceQuote: "proposalDocument",
         negotiationReview: "negotiationDocument",
-        closedWon: "poCommentDocument",                    
-        projectCodeCreation: "projectCodeCommentDocument", 
-        closedLost: "closedLostCommentDocument",          
+        closedWon: "poCommentDocument",
+        projectCodeCreation: "projectCodeCommentDocument",
+        closedLost: "closedLostCommentDocument",
       };
 
       const notesField = notesFieldMap[order.salesPipelineStatus] || "analysisNotes";
@@ -1188,8 +1185,8 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
                       <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{c.by}</span>
                       <span
                         className={`text-sm px-1.5 py-0.5 rounded-full ${c.isMandatoryPO
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-semibold"
-                            : "text-gray-400 bg-gray-100 dark:bg-gray-700"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-semibold"
+                          : "text-gray-400 bg-gray-100 dark:bg-gray-700"
                           }`}
                       >
                         {c.isMandatoryPO && "✓ "}{c.stage}
@@ -1325,6 +1322,21 @@ export default function SalesDetailDrawer({
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const stage = SALES_STAGE_MAP[order.salesPipelineStatus];
   const stageIdx = SALES_STAGES.findIndex((s) => s.key === order.salesPipelineStatus);
+  const [showEditForm, setShowEditForm] = useState(false);
+ const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+
+   useEffect(() => {
+    fetchVehicleTypes()
+  }, [])
+
+    const getVehicleTypeName = (vehicleTypeId: string) => {
+    if (!vehicleTypeId || !vehicleTypes) return "";
+    const vehicle = vehicleTypes.find((vt: any) => vt._id === vehicleTypeId);
+    return vehicle?.typeName || vehicleTypeId;
+  };
+
+  const canEdit = !["closedWon", "projectCodeCreation", "closedLost"]
+    .includes(order.salesPipelineStatus);
 
   const getNextLabel = (): string | null => {
     const s = order.salesPipelineStatus;
@@ -1373,7 +1385,7 @@ export default function SalesDetailDrawer({
     { key: "comments", label: "Comments" },
     { key: "pipeline", label: "Pipeline History" },
     { key: "documents", label: isPoStage ? "PO Document" : "" },
-     { key: "dateConflict", label: "Date Conflict" },
+    { key: "dateConflict", label: "Date Conflict" },
     ...(order.salesPipelineStatus === "projectCodeCreation"
       ? [{ key: "codeCreation" as Tab, label: "Code Creation" }]
       : []),
@@ -1403,9 +1415,8 @@ export default function SalesDetailDrawer({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
       {/* <div className="bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300"> */}
 
-<div className={`bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300 transition-all ${
-        highlightOrderId === order._id ? "ring-4 ring-amber-400" : ""
-      }`}>
+      <div className={`bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300 transition-all ${highlightOrderId === order._id ? "ring-4 ring-amber-400" : ""
+        }`}>
 
         <div className="flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
 
@@ -1431,7 +1442,16 @@ export default function SalesDetailDrawer({
               </div>
             </div>
 
-           
+            {canEdit && (
+              <button
+                onClick={() => setShowEditForm(true)}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600 text-sm font-semibold transition-all whitespace-nowrap"
+              >
+                <FileEdit size={13} /> Edit
+              </button>
+            )}
+
+
             {nextShort && (
               <button
                 onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
@@ -1482,7 +1502,7 @@ export default function SalesDetailDrawer({
           )}
 
           {/* Tabs */}
-         <div className="flex items-center border-b border-gray-100 dark:border-gray-800 px-4">
+          <div className="flex items-center border-b border-gray-100 dark:border-gray-800 px-4">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -1509,7 +1529,7 @@ export default function SalesDetailDrawer({
             <div className="flex flex-col sm:flex-row h-full min-h-0">
 
               <div className="flex-1 overflow-y-auto sm:border-r border-gray-100 dark:border-gray-800">
-                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} />
+                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove}  getVehicleTypeName={getVehicleTypeName}/>
               </div>
 
 
@@ -1632,8 +1652,21 @@ export default function SalesDetailDrawer({
             <CodeCreationTab order={order} onRefresh={onRefresh} />
           )}
 
-           {activeTab === "dateConflict" && (
+          {activeTab === "dateConflict" && (
             <DateConflictTab order={order} onOpenConflictOrder={onOpenConflictOrder} />
+          )}
+
+          {showEditForm && (
+            <AdminOrderForm
+              editingOrder={order}
+              onClose={() => setShowEditForm(false)}
+              onSuccess={async () => {
+                setShowEditForm(false);
+                toast.success("Order updated successfully!");
+                await onRefresh();
+              }}
+              getVehicleTypeName={getVehicleTypeName}
+            />
           )}
 
         </div>

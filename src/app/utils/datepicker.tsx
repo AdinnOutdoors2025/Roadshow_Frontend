@@ -72,7 +72,7 @@
 //     const selectedDate = new Date(year, month, day);
 //     const minDate = new Date(today.getFullYear() - maxAge, today.getMonth(), today.getDate());
 //     const maxDate = new Date(today.getFullYear() - minAge, today.getMonth(), today.getDate());
-    
+
 //     return selectedDate <= maxDate && selectedDate >= minDate;
 //   };
 
@@ -84,7 +84,7 @@
 //       alert(`Please select a date between ${minDate.toLocaleDateString()} and ${maxDate.toLocaleDateString()}`);
 //       return;
 //     }
-    
+
 //     const iso = `${curYear}-${String(curMonth + 1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
 //     onChange(iso);
 //     setOpen(false);
@@ -176,7 +176,7 @@
 //             ))}
 //           </div>
 
-        
+
 //           <div className="grid grid-cols-7 gap-0.5">
 //             {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
 //             {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
@@ -187,7 +187,7 @@
 //                 curMonth === today.getMonth() &&
 //                 curYear === today.getFullYear();
 //               const selectable = isDaySelectable(d);
-              
+
 //               return (
 //                 <button
 //                   key={d}
@@ -223,15 +223,15 @@
 //             <button
 //               type="button"
 //               onClick={() => {
-              
+
 //                 const maxAllowedDate = new Date();
 //                 maxAllowedDate.setFullYear(maxAllowedDate.getFullYear() - minAge);
-                
+
 //                 const targetDate = new Date();
 //                 if (targetDate > maxAllowedDate) {
 //                   targetDate.setTime(maxAllowedDate.getTime());
 //                 }
-                
+
 //                 const iso = `${targetDate.getFullYear()}-${String(targetDate.getMonth()+1).padStart(2,"0")}-${String(targetDate.getDate()).padStart(2,"0")}`;
 //                 onChange(iso); 
 //                 setOpen(false);
@@ -277,8 +277,8 @@ export default function DatePicker({
   const ref = useRef<HTMLDivElement>(null);
 
   const months = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December",
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
   ];
   const today = new Date();
 
@@ -341,7 +341,7 @@ export default function DatePicker({
   const changeMonth = (dir: number) => {
     let m = curMonth + dir, y = curYear;
     if (m > 11) { m = 0; y++; }
-    if (m < 0)  { m = 11; y--; }
+    if (m < 0) { m = 11; y--; }
     setCurMonth(m); setCurYear(y);
   };
 
@@ -357,13 +357,13 @@ export default function DatePicker({
       );
       return;
     }
-    const iso = `${curYear}-${String(curMonth + 1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const iso = `${curYear}-${String(curMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     onChange(iso);
     setOpen(false);
   };
 
   const displayValue = selected
-    ? selected.toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" })
+    ? selected.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
     : "Select date";
 
   const isDaySelectable = (day: number): boolean => isDateValid(curYear, curMonth, day);
@@ -388,11 +388,19 @@ export default function DatePicker({
         />
       </button>
 
-      {open && (
+      {/* {open && (
         <div
           className={`absolute z-[100] left-0 right-0
             bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700
             rounded-xl shadow-lg p-3
+            ${openUpward ? "bottom-[calc(100%+4px)]" : "top-[calc(100%+4px)]"}`}
+        > */}
+
+      {open && (
+        <div
+          className={`absolute z-[100] left-0
+            bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700
+            rounded-xl shadow-lg p-3 w-[260px]
             ${openUpward ? "bottom-[calc(100%+4px)]" : "top-[calc(100%+4px)]"}`}
         >
 
@@ -406,7 +414,7 @@ export default function DatePicker({
               <ChevronLeft size={14} />
             </button>
 
-            <div className="flex gap-1">
+            {/* <div className="flex gap-1">
               <select
                 value={curMonth}
                 onChange={(e) => setCurMonth(Number(e.target.value))}
@@ -425,6 +433,27 @@ export default function DatePicker({
               >
                 {years.map((y) => <option key={y} value={y}>{y}</option>)}
               </select>
+            </div> */}
+
+            <div className="flex gap-1 min-w-0 flex-1 justify-center">
+              <select
+                value={curMonth}
+                onChange={(e) => setCurMonth(Number(e.target.value))}
+                className="text-xs font-semibold border border-gray-200 dark:border-gray-700
+                  rounded-lg px-1 py-1 bg-white dark:bg-gray-800 min-w-0 w-[72px]
+                  text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-orange-400"
+              >
+                {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+              </select>
+              <select
+                value={curYear}
+                onChange={(e) => setCurYear(Number(e.target.value))}
+                className="text-xs font-semibold border border-gray-200 dark:border-gray-700
+                  rounded-lg px-1 py-1 bg-white dark:bg-gray-800 min-w-0 w-[62px]
+                  text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-orange-400"
+              >
+                {years.map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
             </div>
 
             <button
@@ -438,7 +467,7 @@ export default function DatePicker({
           </div>
 
           <div className="grid grid-cols-7 mb-0.5">
-            {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d) => (
+            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
               <div key={d} className="text-center text-[10px] font-semibold
                 text-gray-400 dark:text-gray-500 py-1">{d}</div>
             ))}
@@ -447,7 +476,7 @@ export default function DatePicker({
           <div className="grid grid-cols-7 gap-0.5">
             {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
             {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
-              const isoD = `${curYear}-${String(curMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+              const isoD = `${curYear}-${String(curMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
               const isSel = value === isoD;
               const isToday =
                 d === today.getDate() &&
@@ -462,8 +491,8 @@ export default function DatePicker({
                   onClick={() => selectable && selectDay(d)}
                   disabled={!selectable}
                   className={`h-7 w-full rounded-lg text-xs font-medium transition-all
-                    ${!selectable 
-                      ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50" 
+                    ${!selectable
+                      ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50"
                       : isSel
                         ? "bg-orange-500 text-white"
                         : isToday
@@ -492,7 +521,7 @@ export default function DatePicker({
                 let target = new Date();
                 if (target > effectiveMaxDate) target = new Date(effectiveMaxDate);
                 if (target < effectiveMinDate) target = new Date(effectiveMinDate);
-                const iso = `${target.getFullYear()}-${String(target.getMonth()+1).padStart(2,"0")}-${String(target.getDate()).padStart(2,"0")}`;
+                const iso = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, "0")}-${String(target.getDate()).padStart(2, "0")}`;
                 onChange(iso);
                 setOpen(false);
               }}

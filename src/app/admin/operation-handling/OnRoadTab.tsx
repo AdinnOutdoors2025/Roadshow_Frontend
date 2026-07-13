@@ -73,6 +73,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const [routeLoading, setRouteLoading] = useState(false);
   const [kmPage, setKmPage] = useState(0);
   const [liveTab, setLiveTab] = useState<"status" | "history" | "campaign">("status");
+   const [activeExtraKmTab, setActiveExtraKmTab] = useState(0);
+    const [activeIssueVehicleTab, setActiveIssueVehicleTab] = useState(0);
   const [selectedVehicleRegNo, setSelectedVehicleRegNo] = useState<string | null>(null);
   const [extraKmModalOpen, setExtraKmModalOpen] = useState(false);
 
@@ -700,106 +702,243 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 </div>
               </div>
 
-              <div className="p-4 space-y-3 max-h-72 overflow-y-auto">
-                {vehicleIssues.length === 0 && (
-                  <p className="text-xs text-gray-400 text-center py-4">No issues reported</p>
-                )}
+                {vehicleEntries.length > 1 && (
+                <div className="flex gap-1 px-3 pt-3 pb-0 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
+                  {vehicleEntries.map((entry, i) => {
+                    const entryOpenCount = vehicleIssues.filter(
+                      (iss) =>
+                        (iss.entryId ? String(iss.entryId) === String(entry._id) : iss.vehicleRegNo === entry.vehicleRegistrationNumber) &&
+                        iss.status === "open"
+                    ).length;
+                    return (
+                      <button
+                        key={entry._id || i}
+                        onClick={() => setActiveIssueVehicleTab(i)}
+                        className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${activeIssueVehicleTab === i
+                          ? "border-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20"
+                          : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                          }`}
+                      >
+                        <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-white" style={{ fontSize: "9px" }}>
+                          V{i + 1}
+                        </div>
+                        <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
+                        {entryOpenCount > 0 && (
+                          <span className="ml-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                            {entryOpenCount}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+    
 
+              <div className="p-4 space-y-4 max-h-72 overflow-y-auto">
+                {(() => {
+                  const activeEntry = vehicleEntries[activeIssueVehicleTab];
+                  if (!activeEntry) {
+                    return (
+                      <p className="text-xs text-gray-400 text-center py-4">
+                        No issues reported
+                      </p>
+                    );
+                  }
+                  const tabIssues = vehicleIssues.filter((iss) => {
+                    if (iss.entryId) return String(iss.entryId) === String(activeEntry._id);
+                    return iss.vehicleRegNo === activeEntry.vehicleRegistrationNumber;
+                  });
 
-                {[...vehicleIssues].reverse().map((iss) => (
-                  <IssueHistoryCard
-                    key={iss._id}
-                    iss={iss}
-                    onOpenModal={() => setActiveIssueEntryId(iss.vehicleRegNo)}
-                  />
-                ))}
+                  if (tabIssues.length === 0) {
+                    return (
+                      <p className="text-xs text-gray-400 text-center py-4">
+                        No issues reported
+                      </p>
+                    );
+                  }
+
+                  const groups = {};
+                  tabIssues.forEach((iss) => {
+                    const key = iss.vehicleRegNo || "—";
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(iss);
+                  });
+
+                  return Object.keys(groups).map((regNo) => {
+                    const groupIssues = [...groups[regNo]].reverse();
+                    const isCurrentReg = regNo === activeEntry.vehicleRegistrationNumber;
+                    const groupOpenCount = groupIssues.filter((i) => i.status === "open").length;
+
+                    return (
+                      <div key={regNo} className="space-y-2">
+                        <div className="flex items-center justify-between px-1">
+                          <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${isCurrentReg
+                            ? "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
+                            : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400"
+                            }`}>
+                            {regNo} {isCurrentReg ? "(current)" : "(old)"}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {groupIssues.length} issues{groupOpenCount > 0 ? ` · ${groupOpenCount} open` : ""}
+                          </span>
+                        </div>
+
+                        {groupIssues.map((iss) => (
+                          <IssueHistoryCard
+                            key={iss._id}
+                            iss={iss}
+                            onOpenModal={() => setActiveIssueEntryId(iss.vehicleRegNo)}
+                          />
+                        ))}
+                      </div>
+                    );
+                  });
+                })()}
               </div>
 
-            
+
             </div>
 
             <AttendanceSummaryCard vehicleEntries={vehicleEntries} order={order} vehicleIndex={vehicleIndex} />
-              {/* ── Extra KM History ── */}
-              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                  <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
-                    Extra KM History
-                  </h3>
-                  <span className="text-sm text-gray-400">
-                    {(order.extraKmDetailsArray || []).filter((e) => e.vehicleIndex === vehicleIndex).length} entries
-                  </span>
+
+            {/* ── Extra KM History ── */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
+                  Extra KM History
+                </h3>
+                <span className="text-sm text-gray-400">
+                  {(order.extraKmDetailsArray || []).filter((e) => e.vehicleIndex === vehicleIndex).length} entries
+                </span>
+              </div>
+
+              {vehicleEntries.length > 1 && (
+                <div className="flex gap-1 px-3 pt-3 pb-0 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
+                  {vehicleEntries.map((entry, i) => (
+                    <button
+                      key={entry._id || i}
+                      onClick={() => setActiveExtraKmTab(i)}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${activeExtraKmTab === i
+                        ? "border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20"
+                        : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        }`}
+                    >
+                      <div className="w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center text-white" style={{ fontSize: "9px" }}>
+                        V{i + 1}
+                      </div>
+                      <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
+                    </button>
+                  ))}
                 </div>
+              )}
 
-                <div className="p-4 space-y-3 max-h-72 overflow-y-auto">
-                  {(() => {
-                    const entries = (order.extraKmDetailsArray || []).filter(
-                      (e) => e.vehicleIndex === vehicleIndex
+              <div className="p-4 space-y-4 max-h-72 overflow-y-auto">
+                {(() => {
+                  const activeEntry = vehicleEntries[activeExtraKmTab];
+
+                  const entries = (order.extraKmDetailsArray || []).filter((e) => {
+                    if (e.vehicleIndex !== vehicleIndex) return false;
+                    if (!activeEntry) return false;
+                    // entryId irundha adha vachu match pannu (reg no maari irundhalum sariya varum)
+                    if (e.entryId) return String(e.entryId) === String(activeEntry._id);
+                    // pazhaya entries la entryId illana reg no vachu match pannu
+                    return e.vehicleRegistrationNumber === activeEntry.vehicleRegistrationNumber;
+                  }).reverse();
+
+                  if (entries.length === 0) {
+                    return (
+                      <p className="text-xs text-gray-400 text-center py-4">
+                        No extra KM records
+                      </p>
                     );
+                  }
 
-                    if (entries.length === 0) {
-                      return (
-                        <p className="text-xs text-gray-400 text-center py-4">
-                          No extra KM records
-                        </p>
-                      );
-                    }
+               
+                  const groups = {};
+                  entries.forEach((e) => {
+                    const key = e.vehicleRegistrationNumber || "—";
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(e);
+                  });
 
-                   
-return [...entries].reverse().map((e) => (
-                      <div
-                        key={e._id}
-                        className="relative rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow p-3 pl-4 overflow-hidden"
-                      >
-                        {/* left accent bar */}
-                        <div className="absolute left-0 top-0 bottom-0 w-1 " />
+                  return Object.keys(groups).map((regNo) => {
+                    const groupEntries = [...groups[regNo]].reverse();
+                    const isCurrentReg = regNo === activeEntry.vehicleRegistrationNumber;
+                    const groupTotalKm = groupEntries.reduce((s, e) => s + (e.extraKm || 0), 0);
+                    const groupTotalHrs = groupEntries.reduce((s, e) => s + (e.extraHours || 0), 0);
+                    const groupTotalCost = groupEntries.reduce((s, e) => s + (e.totalCost || 0), 0);
 
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div>
-                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                              {e.driverName || "—"}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {e.vehicleRegistrationNumber || "—"}
-                            </p>
-                          </div>
-                          <span className="text-sm font-bold text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
-                            ₹{(e.totalCost || 0).toFixed(2)}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-gray-600 dark:text-gray-400 mb-2">
-                          <span className="flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                            </svg>
-                            Extra KM: <b className="text-gray-800 dark:text-gray-200">{e.extraKm} km</b>
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Extra Hours: <b className="text-gray-800 dark:text-gray-200">{e.extraHours} hrs</b>
-                          </span>
-                          <span className="pl-4.5">KM cost: ₹{(e.extraKmCost || 0).toFixed(2)}</span>
-                          <span className="pl-4.5">Hour cost: ₹{(e.extraHourCost || 0).toFixed(2)}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between flex-wrap gap-1.5 pt-2 border-t border-gray-50 dark:border-gray-800">
-                          <span className="text-xs font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-md">
-                           {fmtDate(e.fromDate)} → {fmtDate(e.toDate)}
+                    return (
+                      <div key={regNo} className="space-y-2">
+                        <div className="flex items-center justify-between px-1">
+                          <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${isCurrentReg
+                            ? "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
+                            : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400"
+                            }`}>
+                            {regNo} {isCurrentReg ? "(current)" : "(old)"}
                           </span>
                           <span className="text-xs text-gray-400">
-                            {e.addedBy} · {new Date(e.addedAt).toLocaleString("en-IN", {
-                              day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
-                            })}
+                            {groupTotalKm} km · {groupTotalHrs} hrs · ₹{groupTotalCost.toFixed(2)}
                           </span>
                         </div>
-                      </div>
-                    ));
 
-                  })()}
-                </div>
+                        {groupEntries.map((e) => (
+                          <div
+                            key={e._id}
+                            className="relative rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow p-3 pl-4 overflow-hidden"
+                          >
+                            <div className="absolute left-0 top-0 bottom-0 w-1 " />
+
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div>
+                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                  {e.driverName || "—"}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {e.vehicleRegistrationNumber || "—"}
+                                </p>
+                              </div>
+                              <span className="text-sm font-bold text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
+                                ₹{(e.totalCost || 0).toFixed(2)}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              <span className="flex items-center gap-1">
+                                <svg className="w-3.5 h-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                </svg>
+                                Extra KM: <b className="text-gray-800 dark:text-gray-200">{e.extraKm} km</b>
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <svg className="w-3.5 h-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Extra Hours: <b className="text-gray-800 dark:text-gray-200">{e.extraHours} hrs</b>
+                              </span>
+                              <span className="pl-4.5">KM cost: ₹{(e.extraKmCost || 0).toFixed(2)}</span>
+                              <span className="pl-4.5">Hour cost: ₹{(e.extraHourCost || 0).toFixed(2)}</span>
+                            </div>
+
+                            <div className="flex items-center justify-between flex-wrap gap-1.5 pt-2 border-t border-gray-50 dark:border-gray-800">
+                              <span className="text-xs font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                                {fmtDate(e.fromDate)} → {fmtDate(e.toDate)}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {e.addedBy} · {new Date(e.addedAt).toLocaleString("en-IN", {
+                                  day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  });
+                })()}
               </div>
+            </div>
           </div>
 
         </div>
@@ -845,7 +984,7 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
     if (h.vehicleIndex !== vehicleIndex) return false;
     if (!activeEntry) return false;
 
-    // updated history la changed reg no match or current reg no match
+   
     return (
       h.vehicleRegistrationNumber === activeEntry.vehicleRegistrationNumber ||
       (h.changedFields?.vehicleRegistrationNumber?.old === activeEntry.vehicleRegistrationNumber) ||
@@ -992,7 +1131,7 @@ function IssueHistoryCard({ iss, onOpenModal }) {
         Reported by {iss.reportedBy} · {fmtDatetime(iss.reportedAt)}
       </p>
 
-      {/* Resolved section — toggle button */}
+     
       {iss.status === "resolved" && (
         <div className="mt-2">
           <button

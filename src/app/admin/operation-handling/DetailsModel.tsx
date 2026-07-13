@@ -94,19 +94,18 @@ const NEXT_STAGE: Record<string, string> = {
     projectCodeCreation: "projectExecution",
     projectExecution: "onRoad",
     onRoad: "clientClosure",
-    clientClosure: "invoiceGeneration",
-    invoiceGeneration: "paymentStage2",
-    paymentStage2: "closedWon",
+    clientClosure: "closedWon",
+   
 };
 
 const NEXT_LABEL: Record<string, string> = {
-    todo: "Move to Project Execution ⚙️",
-    projectCodeCreation: "Move to Project Execution ⚙️",
-    projectExecution: "Move to On Road 🚗",
-    onRoad: "Move to Client Closure 📝",
-    clientClosure: "Move to Invoice Generation 🧾",
-    invoiceGeneration: "Move to Payment Stage 2 💰",
-    paymentStage2: "Move to Closed Won 🎉",
+    todo: "Move to Project Execution ",
+    projectCodeCreation: "Move to Project Execution ",
+    projectExecution: "Move to On Road ",
+    onRoad: "Move to Client Closure ",
+    clientClosure: "Move to Invoice Generation ",
+    invoiceGeneration: "Move to Payment Stage 2 ",
+    paymentStage2: "Move to Closed Won ",
 };
 
 // ─── Formatters ─────────────────────────────────────────────────────────────────
