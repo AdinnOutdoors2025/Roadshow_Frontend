@@ -1,0 +1,629 @@
+/*   AUTHENTICATION OVERLAY */
+.client-auth-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    background: rgba(10, 10, 12, 0.88);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+/*   MAIN AUTHENTICATION BOX */
+.client-auth-box {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(440px, 47%) minmax(0, 53%);
+    width: min(1220px, 92vw);
+    height: min(730px, 88vh);
+    min-height: 610px;
+    overflow: hidden;
+    background: #ffffff;
+    border: 5px solid rgba(255, 255, 255, 0.96);
+    border-radius: 44px;
+    box-shadow:
+        0 32px 100px rgba(0, 0, 0, 0.5),
+        0 8px 28px rgba(0, 0, 0, 0.22);
+    animation: clientAuthPopup 0.28s ease-out;
+}
+
+@keyframes clientAuthPopup {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/*   CLOSE BUTTON */
+.client-auth-close {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1;
+    padding: 5px;
+    background: rgba(20, 20, 22, 0.38);
+    border: 2px solid rgba(255, 255, 255, 0.92);
+    border-radius: 50%;
+    cursor: pointer;
+    transition:
+        background 160ms ease,
+        color 160ms ease,
+        transform 160ms ease;
+}
+
+.client-auth-close:hover {
+    color: #17171b;
+    background: #ffffff;
+    transform: scale(1.05);
+}
+
+.client-auth-close:focus-visible {
+    outline: 3px solid rgba(230, 0, 35, 0.35);
+    outline-offset: 3px;
+}
+
+/*   LEFT PANEL */
+
+.client-auth-left {
+    position: relative;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 70px 60px;
+    background: #ffffff;
+}
+
+.client-auth-logo {
+    position: absolute;
+    top: 34px;
+    left: 42px;
+    display: flex;
+    align-items: center;
+}
+
+.client-auth-logo img {
+    width: auto;
+    height: auto;
+    max-width: 150px;
+    object-fit: contain;
+}
+
+.client-auth-content {
+    width: 100%;
+    max-width: 330px;
+}
+
+/*   TITLE AND TEXT */
+.client-auth-title {
+    margin: 0 0 22px;
+    color: #17171b;
+    /* font-family: "Merienda", cursive; */
+    font-size: clamp(42px, 4vw, 54px);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -1.5px;
+}
+
+.client-auth-otp-title {
+    margin-bottom: 12px;
+}
+
+.client-auth-otp-information {
+    margin-bottom: 25px;
+}
+
+.client-auth-otp-information p {
+    margin: 0 0 5px;
+    color: #2B3333;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.client-auth-otp-information strong {
+    font-weight: 600;
+}
+
+.client-auth-otp-information button {
+    color: #1a24e8;
+    font-weight: 500;
+}
+
+/*   NORMAL INPUT FIELDS */
+.client-auth-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+
+    width: 100%;
+    margin-bottom: 18px;
+}
+
+.client-auth-fields input {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    color: #2B3333;
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 500;
+    background: #EFF3F6;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    outline: none;
+    box-sizing: border-box;
+    transition:
+        border-color 160ms ease,
+        background 160ms ease,
+        box-shadow 160ms ease;
+}
+
+.client-auth-fields input::placeholder {
+    color: #6f737a;
+    opacity: 1;
+    font-weight: 400;
+    font-size: 16px;
+
+}
+
+.client-auth-fields input:hover {
+    background: #eceff2;
+}
+
+.client-auth-fields input:focus {
+    background: #ffffff;
+    border-color: #1d1d21;
+
+    box-shadow: 0 0 0 3px rgba(23, 23, 27, 0.08);
+}
+
+/*   OTP INPUTS */
+.client-auth-otp {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 11px;
+
+    width: 100%;
+    margin: 2px 0 10px;
+}
+
+.client-auth-otp input {
+    width: 100%;
+    min-width: 0;
+    height: 43px;
+    padding: 0;
+    color: #2B3333;
+    font-family: inherit;
+    font-size: 22px;
+    font-weight: 500;
+    text-align: center;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #6f7075;
+    border-radius: 0;
+    outline: none;
+    box-sizing: border-box;
+    transition:
+        border-color 160ms ease,
+        transform 160ms ease;
+}
+
+.client-auth-otp input:focus {
+    border-bottom-color: #17171b;
+    transform: translateY(-2px);
+}
+
+.client-auth-otp.has-error input {
+    color: #E3000F;
+    border-bottom-color: #E3000F;
+
+}
+
+.client-auth-error {
+    margin: 8px 0 8px;
+    color: #E3000F;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/*   BUTTON */
+.client-auth-continue {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 48px;
+    margin: 8px 0 0;
+    padding: 0 20px;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 22px;
+    font-weight: 500;
+    background: #1d1d20;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(23, 23, 27, 0.12);
+    transition:
+        opacity 160ms ease,
+        transform 160ms ease,
+        background 160ms ease;
+}
+
+.client-auth-continue:hover:not(:disabled) {
+    background: #09090a;
+    transform: translateY(-1px);
+}
+
+.client-auth-continue:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.client-auth-continue:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+}
+
+/*   SWITCH AND RESEND TEXT */
+
+.client-auth-switch {
+    margin: 18px 0 0;
+    color: #2B3333;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.client-auth-switch button,
+.client-auth-resend button {
+    margin-left: 4px;
+    padding: 0;
+    color: #2B3333;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.client-auth-switch button:hover,
+.client-auth-resend button:hover {
+    color: #E3000F;
+    color: #1a24e8;
+}
+
+/* 
+.client-auth-resend {
+    margin: 10px 0 18px;
+    color: #2B3333;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+} */
+.client-auth-resend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 10px 0 18px;
+    color: #2B3333;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.client-auth-resend-timer {
+    color: #2B3333;
+    font-size: inherit;
+    font-weight: 500;
+}
+
+.client-auth-resend button {
+    color: #1a24e8;
+    font-weight: 600;
+}
+
+.client-auth-resend button:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+.client-auth-resend button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+/*   FOOTER */
+.client-auth-footer {
+    margin-top: 36px;
+    color: #2B3333;
+    font-size: 17px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+.client-auth-footer button {
+    margin: 0;
+    padding: 0;
+    color: #E3000F;
+    color: #1a24e8;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.client-auth-footer button:hover {
+    text-decoration: underline;
+}
+
+/*   RIGHT IMAGE PANEL */
+.client-auth-right {
+    position: relative;
+    min-width: 0;
+    min-height: 100%;
+    overflow: hidden;
+    background: linear-gradient(360deg,
+            rgba(113, 113, 118, 0.92) 0%,
+            rgba(55, 55, 59, 0.98) 80%,
+            #18181b 100%);
+    border-top-right-radius: 38px;
+    border-bottom-right-radius: 38px;
+}
+
+.client-auth-banner {
+    width: 100% !important;
+    height: 50% !important;
+    object-fit: cover;
+    object-position: center center;
+    margin: auto;
+}
+
+/*   MEDIUM DESKTOP / LAPTOP */
+
+@media (max-width: 1100px) {
+    .client-auth-box {
+        grid-template-columns: minmax(390px, 47%) minmax(0, 53%);
+        width: min(1000px, 94vw);
+        height: min(650px, 88vh);
+        min-height: 570px;
+        border-radius: 36px;
+    }
+
+    .client-auth-left {
+        padding: 110px 48px 48px;
+    }
+
+    .client-auth-logo {
+        top: 30px;
+        left: 34px;
+    }
+
+    .client-auth-content {
+        max-width: 310px;
+    }
+
+    .client-auth-footer {
+        margin-top: 28px;
+    }
+}
+
+/*   TABLET */
+@media (max-width: 860px) {
+    .client-auth-overlay {
+        padding: 22px;
+    }
+
+    .client-auth-box {
+        grid-template-columns: minmax(350px, 48%) minmax(0, 52%);
+        width: 96vw;
+        height: min(610px, 90vh);
+        min-height: 540px;
+        border-radius: 30px;
+    }
+
+    .client-auth-left {
+        padding: 100px 34px 38px;
+    }
+
+    .client-auth-logo {
+        top: 26px;
+        left: 28px;
+    }
+
+    .client-auth-logo img {
+        max-width: 125px;
+    }
+
+    .client-auth-title {
+        font-size: 43px;
+    }
+
+    .client-auth-close {
+        top: 18px;
+        right: 18px;
+    }
+}
+
+/*   MOBILE */
+
+@media (max-width: 720px) {
+    .client-auth-overlay {
+        align-items: center;
+        padding: 16px;
+    }
+
+    .client-auth-box {
+        display: block;
+
+        width: min(390px, 95vw);
+        height: auto;
+        min-height: 0;
+        max-height: 92vh;
+
+        overflow-y: auto;
+
+        border-width: 3px;
+        border-radius: 24px;
+    }
+
+    .client-auth-right {
+        display: none;
+    }
+
+    .client-auth-left {
+        min-height: 0;
+        padding: 96px 28px 36px;
+    }
+
+    .client-auth-logo {
+        top: 25px;
+        left: 28px;
+    }
+
+    .client-auth-logo img {
+        max-width: 115px;
+    }
+
+    .client-auth-content {
+        max-width: 100%;
+    }
+
+    .client-auth-title {
+        margin-bottom: 20px;
+        font-size: 39px;
+        letter-spacing: -1px;
+    }
+
+    .client-auth-close {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+
+        width: 31px;
+        height: 31px;
+
+        color: #17171b;
+        font-size: 22px;
+
+        background: #ffffff;
+        border: 1.5px solid #17171b;
+    }
+
+    .client-auth-close:hover {
+        color: #ffffff;
+        background: #17171b;
+    }
+
+    .client-auth-fields input {
+        height: 47px;
+    }
+
+    .client-auth-continue {
+        height: 47px;
+        font-size: 15px;
+    }
+
+    .client-auth-footer {
+        margin-top: 28px;
+        font-size: 12px;
+    }
+}
+
+/*   SMALL MOBILE */
+@media (max-width: 390px) {
+    .client-auth-left {
+        padding: 88px 22px 30px;
+    }
+
+    .client-auth-logo {
+        top: 23px;
+        left: 22px;
+    }
+
+    .client-auth-otp {
+        gap: 8px;
+    }
+
+    .client-auth-otp input {
+        height: 39px;
+        font-size: 18px;
+    }
+
+    .client-auth-title {
+        font-size: 36px;
+    }
+}
+
+/*   SHORT SCREEN HEIGHT */
+@media (max-height: 690px) and (min-width: 721px) {
+    .client-auth-box {
+        height: 92vh;
+        min-height: 520px;
+    }
+
+    .client-auth-left {
+        padding-top: 90px;
+        padding-bottom: 30px;
+    }
+
+    .client-auth-logo {
+        top: 24px;
+    }
+
+    .client-auth-title {
+        margin-bottom: 16px;
+        font-size: 43px;
+    }
+
+    .client-auth-fields {
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .client-auth-fields input {
+        height: 43px;
+    }
+
+    .client-auth-continue {
+        height: 44px;
+    }
+
+    .client-auth-footer {
+        margin-top: 20px;
+    }
+}
+
+/*   REDUCED MOTION */
+@media (prefers-reduced-motion: reduce) {
+    .client-auth-box {
+        animation: none;
+    }
+
+    .client-auth-close,
+    .client-auth-continue,
+    .client-auth-fields input,
+    .client-auth-otp input {
+        transition: none;
+    }
+}

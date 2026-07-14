@@ -221,7 +221,7 @@
     }
 
     .HomeBannerSubImgRow {
-        justify-content: flex-start;
+        /* justify-content: flex-start; */
         gap: 12px;
         overflow-x: auto;
         overflow-y: hidden;
