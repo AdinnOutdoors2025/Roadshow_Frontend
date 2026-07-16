@@ -8,7 +8,7 @@ import { toast } from "react-hot-toast";
 import { XCircle, Navigation } from "lucide-react";
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
-import DatePicker from "../../utils/datepicker"; 
+import DatePicker from "../../utils/datepicker";
 
 const toISODate = (d) => {
   if (!d) return "";
@@ -17,19 +17,38 @@ const toISODate = (d) => {
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
 };
 
-export default function ExtraKmModal({ order, vehicle, vehicleIndex, vehicleEntries, onClose, onRefresh }) {
-  const [selectedEntryId, setSelectedEntryId] = useState(vehicleEntries?.[0]?._id || "");
+export default function ExtraKmModal({ order, vehicle, vehicleIndex, vehicleEntries, bookingStatusMap, onClose, onRefresh }) {
+ const [selectedEntryId, setSelectedEntryId] = useState("");
   const [extraKm, setExtraKm] = useState("");
   const [extraHours, setExtraHours] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const campaignFromISO = toISODate(vehicle.fromDate);
+const campaignFromISO = toISODate(vehicle.fromDate);
   const campaignToISO = toISODate(vehicle.toDate);
 
-  const handleSubmit = async () => {
+  // ── NEW: booking mismatch check ──
+  const cleanRegForCheck = (r) => (r || "").replace(/\s+/g, "").toUpperCase();
+  const isEntryBookingValid = (entry) => {
+    const bs = bookingStatusMap?.[cleanRegForCheck(entry.vehicleRegistrationNumber)];
+    return !!(
+      bs &&
+      bs.currentStatus === "Booked" &&
+      String(bs.orderId) === String(order._id) &&
+      bs.orderDisplayId === order.orderId
+    );
+  };
+
+  const activeEntries = (vehicleEntries || []).filter((e) => e.entryStatus !== "removed");
+
+const handleSubmit = async () => {
     if (!selectedEntryId) return toast.error("Select a driver / vehicle");
+
+    const selectedEntry = activeEntries.find((e) => e._id === selectedEntryId);
+    if (selectedEntry && !isEntryBookingValid(selectedEntry)) {
+      return toast.error("This vehicle's registration doesn't match the booking. Please update driver first.");
+    }
 
     const km = Number(extraKm) || 0;
     const hrs = Number(extraHours) || 0;
@@ -64,6 +83,8 @@ export default function ExtraKmModal({ order, vehicle, vehicleIndex, vehicleEntr
     }
   };
 
+  const cleanReg = (r) => (r || "").replace(/\s+/g, "").toUpperCase();
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-md p-6 flex flex-col gap-4">
@@ -89,17 +110,21 @@ export default function ExtraKmModal({ order, vehicle, vehicleIndex, vehicleEntr
           {/* Driver / Reg No dropdown */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">Driver / Vehicle</label>
-            <select
+           <select
               value={selectedEntryId}
               onChange={(e) => setSelectedEntryId(e.target.value)}
               className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-300"
             >
               <option value="">Select driver / reg no</option>
-              {(vehicleEntries || []).map((entry) => (
-                <option key={entry._id} value={entry._id}>
-                  {entry.driverName || "—"} · {entry.vehicleRegistrationNumber || "—"}
-                </option>
-              ))}
+              {activeEntries.map((entry) => {
+                const isValid = isEntryBookingValid(entry);
+                return (
+                  <option key={entry._id} value={entry._id} disabled={!isValid}>
+                    {entry.driverName || "—"} · {entry.vehicleRegistrationNumber || "—"}
+                    {!isValid ? " (reg mismatch — cannot add)" : ""}
+                  </option>
+                );
+              })}
             </select>
           </div>
 

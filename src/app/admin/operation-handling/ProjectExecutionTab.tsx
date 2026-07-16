@@ -167,42 +167,42 @@ function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }
       )} */}
 
       {open && !disabled && (
-  <div className="absolute z-20 mt-1 w-full max-h-30 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
-    {loading ? (
-      <div className="px-3 py-3 text-sm text-gray-400 flex items-center gap-2">
-        <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
-        Loading available vehicles...
-      </div>
-    ) : filtered.length === 0 ? (
-      <div className="px-3 py-3 text-sm text-gray-400">
-        {vehicles.length === 0 ? "No available vehicles found" : "No match found"}
-      </div>
-    ) : (
-      // This is the container with scroll - already has max-h-56 and overflow-y-auto
-      filtered.map((v) => (
-        <button
-          type="button"
-          key={v._id}
-          onClick={() => handleSelect(v)}
-          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between gap-2"
-        >
-          <span className="font-semibold text-gray-700 dark:text-gray-200">
-            {v.registrationNumber}
-          </span>
-          {v.city && (
-            <span className="text-[11px] text-gray-400 truncate max-w-[110px]">{v.city}</span>
+        <div className="absolute z-20 mt-1 w-full max-h-30 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
+          {loading ? (
+            <div className="px-3 py-3 text-sm text-gray-400 flex items-center gap-2">
+              <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+              Loading available vehicles...
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="px-3 py-3 text-sm text-gray-400">
+              {vehicles.length === 0 ? "No available vehicles found" : "No match found"}
+            </div>
+          ) : (
+            // This is the container with scroll - already has max-h-56 and overflow-y-auto
+            filtered.map((v) => (
+              <button
+                type="button"
+                key={v._id}
+                onClick={() => handleSelect(v)}
+                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between gap-2"
+              >
+                <span className="font-semibold text-gray-700 dark:text-gray-200">
+                  {v.registrationNumber}
+                </span>
+                {v.city && (
+                  <span className="text-[11px] text-gray-400 truncate max-w-[110px]">{v.city}</span>
+                )}
+              </button>
+            ))
           )}
-        </button>
-      ))
-    )}
-  </div>
-)}
+        </div>
+      )}
     </div>
   );
 }
 
 
-function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, vehicleTypeId, fromDate, toDate }) {
+function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, vehicleTypeId, fromDate, toDate, orderDisplayId, customerName }) {
   const [driverName, setDriverName] = useState(existingEntry?.driverName || "");
   const [driverPhone, setDriverPhone] = useState(existingEntry?.driverPhone || "");
   const [regNo, setRegNo] = useState(existingEntry?.vehicleRegistrationNumber || "");
@@ -215,7 +215,12 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
 
   const isSaved = !!existingEntry?._id;
 
-
+  const fmtDate = (s?: string) => {
+    if (!s) return "—";
+    return new Date(s).toLocaleDateString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+    });
+  };
 
   const validate = () => {
     const e = {};
@@ -260,12 +265,18 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
           return `${y}-${m}-${day}`;
         };
 
+        const bookedRemarks = `Booked for Order ${orderDisplayId} - ${customerName || "Customer"} (${fmtDate(fromDate)} to ${fmtDate(toDate)})`;
+
         await axios.put(
           `${API_BASE}api/updateRegistrationVehicle/${vehicleDocId}/${cleanReg}`,
           {
             currentStatus: "Booked",
             fromDate: normalizeDate(fromDate),
             toDate: normalizeDate(toDate),
+            remarks: bookedRemarks,
+            orderId: orderId,
+            orderDisplayId: orderDisplayId || "",
+
 
           },
           { headers: { Authorization: `Bearer ${token}` } }
@@ -460,37 +471,12 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const checkedRef = useRef(false);
 
-  // useEffect(() => {
-  //   if (!isOpen || checkedRef.current) return;
-  //   checkedRef.current = true;
-
-  //   (async () => {
-  //     setCheckingAvailability(true);
-  //     try {
-  //       const result = await checkVehicleAvailability({
-  //         vehicleType: vehicle.vehicleType,
-  //         quantity: vehicle.quantity || 1,
-  //         fromDate: vehicle.fromDate,
-  //         toDate: vehicle.toDate,
-  //       });
-  //       setAvailability(result);
-  //       if (!result.available) {
-  //         toast.error(
-  //           `Required ${result.requiredQuantity} vehicle(s), only ${result.availableCount} available`
-  //         );
-  //       }
-  //     } catch (e) {
-  //       toast.error(e.message || "Failed to check vehicle availability");
-  //     } finally {
-  //       setCheckingAvailability(false);
-  //     }
-  //   })();
-  // }, [isOpen]);
 
 
-useEffect(() => {
+
+  useEffect(() => {
     if (!isOpen) {
-    
+
       checkedRef.current = false;
       return;
     }
@@ -499,6 +485,12 @@ useEffect(() => {
 
     const isVehicleOnRoad = vehicleEntries.some((e) => e.onRoadStatus === 1);
     if (isVehicleOnRoad) {
+      setAvailability({ available: true });
+      setCheckingAvailability(false);
+      return;
+    }
+
+    if (vehicleEntries.length > 0) {
       setAvailability({ available: true });
       setCheckingAvailability(false);
       return;
@@ -538,8 +530,13 @@ useEffect(() => {
     (e) => e.vehicleIndex === vehicleIndex
   );
 
+  const allVehicleEntriesIncludingRemoved = vehicleEntries;
+  const activeEntries = vehicleEntries.filter((e) => e.entryStatus !== "removed");
+  const releasedEntries = vehicleEntries.filter((e) => e.entryStatus === "removed");
+
   const quantity = vehicle.quantity || 1;
-  const savedCount = vehicleEntries.length;
+  // const savedCount = vehicleEntries.length;
+  const savedCount = activeEntries.length;
   const allDriversSaved = savedCount >= quantity;
   const isVehicleOnRoad = vehicleEntries.some((e) => e.onRoadStatus === 1);
 
@@ -574,6 +571,29 @@ useEffect(() => {
       ? "border-emerald-200 dark:border-emerald-800"
       : "border-gray-200 dark:border-gray-700"
       } bg-white dark:bg-gray-900 shadow-sm hover:shadow-md`}>
+
+         {releasedEntries.length > 0 && (
+        <div className="px-4 pt-3">
+          <p className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-1.5">
+            Released vehicles ({releasedEntries.length})
+          </p>
+          <div className="space-y-1.5">
+            {releasedEntries.map((e) => (
+              <div key={e._id} className="text-xs bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5 border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-semibold text-gray-700 dark:text-gray-300">
+                    {e.vehicleRegistrationNumber} · {e.driverName}
+                  </span>
+                  <span className="text-red-500 font-semibold px-2 py-0.5 rounded-full bg-red-50 border border-red-200">
+                    Released
+                  </span>
+                </div>
+                {e.removalReason && <p className="text-gray-400 mt-1">{e.removalReason}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Card Header ── */}
       <div
@@ -659,7 +679,8 @@ useEffect(() => {
               {/* ── Driver Tabs ── */}
               <div className="flex border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-4 overflow-x-auto gap-0">
                 {Array.from({ length: quantity }).map((_, i) => {
-                  const saved = !!vehicleEntries[i]?._id;
+                  // const saved = !!vehicleEntries[i]?._id;
+                  const saved = !!activeEntries[i]?._id;
                   const isActive = activeDriverTab === i;
                   return (
                     <button
@@ -687,11 +708,14 @@ useEffect(() => {
                   vehicleIndex={vehicleIndex}
                   slotIndex={activeDriverTab}
                   orderId={order._id}
-                  existingEntry={vehicleEntries[activeDriverTab] || null}
+                  // existingEntry={vehicleEntries[activeDriverTab] || null}
+                  existingEntry={activeEntries[activeDriverTab] || null}
                   onSaved={handleDriverSaved}
                   vehicleTypeId={vehicle.vehicleType}
                   fromDate={vehicle.fromDate}
                   toDate={vehicle.toDate}
+                  orderDisplayId={order.orderId}
+                  customerName={order.name}
                 />
               </div>
 
@@ -762,7 +786,7 @@ export default function ProjectExecutionTab({ order, onRefresh, vehicleTypes }) 
   const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const [openIndex, setOpenIndex] = useState(null);
-   const [availability, setAvailability] = useState(null);
+  const [availability, setAvailability] = useState(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   const handleToggle = (idx) => {
@@ -783,6 +807,9 @@ export default function ProjectExecutionTab({ order, onRefresh, vehicleTypes }) 
 
   return (
     <div className="p-4 space-y-3">
+
+    
+     
 
       {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">

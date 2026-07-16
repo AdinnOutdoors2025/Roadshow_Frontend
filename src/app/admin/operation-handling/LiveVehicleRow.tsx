@@ -1,6 +1,6 @@
 
 
-/* eslint-disable */
+
 // @ts-nocheck
 "use client";
 
@@ -24,7 +24,7 @@ import { useVehicle } from "../../../context/vehicletypecontext";
 
 
 
-export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTrackIdFetched, correctVehicleIndex, forceOpen, onForceOpenHandled, onViewDriverRoute }) {
+export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, bookingStatusMap, onBookingStatusRefresh, onTrackIdFetched, correctVehicleIndex, forceOpen, onForceOpenHandled, onViewDriverRoute }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [commentPhoto, setCommentPhoto] = useState(null);
@@ -42,24 +42,133 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
   const [unavailableSubmitting, setUnavailableSubmitting] = useState(false);
 
 
+  // const handleUpdateDriver = async () => {
+  //   if (!updDriverName.trim()) return toast.error("Driver name required");
+  //   if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
+  //   if (!updRegNo.trim()) return toast.error("Reg number required");
+  //   if (!updVehicleDocId) return toast.error("Select a vehicle from the list");
+
+  //   setUpdating(true);
+  //   try {
+  //     const cleanReg = (r) => (r || "").replace(/\s+/g, "").toUpperCase();
+
+  //     const isUnavailable = entry.unavailableStatus === true;
+
+  //     const bs = bookingStatusMap?.[cleanReg(entry.vehicleRegistrationNumber)];
+  //     const isBookingValid = !!(
+  //       bs &&
+  //       bs.currentStatus === "Booked" &&
+  //       String(bs.orderId) === String(order._id) &&
+  //       bs.orderDisplayId === order.orderId
+  //     );
+  //     const isBookingMismatch = !isBookingValid;
+  //     const oldReg = (entry.vehicleRegistrationNumber || "").trim().toUpperCase().replace(/\s+/g, "");
+  //     const regChanged = oldReg && oldReg !== cleanReg;
+
+  //     await axios.patch(
+  //       `${API_BASE}admin/pipeline/${order._id}/onroad-driver/${entry._id}`,
+  //       {
+  //         driverName: updDriverName.trim(),
+  //         driverPhone: updDriverPhone.trim(),
+  //         vehicleRegistrationNumber: cleanReg,
+  //       },
+  //       { headers: { Authorization: `Bearer ${getToken()}` } }
+  //     );
+
+  //     const normalizeDate = (d) => {
+  //       if (!d) return null;
+  //       const dt = new Date(d);
+  //       const y = dt.getFullYear();
+  //       const m = String(dt.getMonth() + 1).padStart(2, "0");
+  //       const day = String(dt.getDate()).padStart(2, "0");
+  //       return `${y}-${m}-${day}`;
+  //     };
+
+  //     // ── NEW: friendly date format for remarks text ──
+  //     const fmtDate = (d) => {
+  //       if (!d) return "—";
+  //       return new Date(d).toLocaleDateString("en-IN", {
+  //         day: "2-digit", month: "short", year: "numeric",
+  //       });
+  //     };
+
+  //     // ── NEW: booked remarks + order references ──
+  //     const bookedRemarks = `Booked for Order ${order.orderId} - ${order.name || "Customer"} (${fmtDate(vehicle.fromDate)} to ${fmtDate(vehicle.toDate)})`;
+
+  //     try {
+
+  //       if (regChanged) {
+  //         try {
+  //           await axios.put(
+  //             `${API_BASE}api/updateRegistrationVehicleByRegNo/${oldReg}`,
+  //             { currentStatus: "Available" },
+  //             { headers: { Authorization: `Bearer ${getToken()}` } }
+  //           );
+  //         } catch (oldVehicleErr) {
+  //           console.error("Failed to release old vehicle:", oldVehicleErr);
+  //         }
+  //       }
+
+
+  //       await axios.put(
+  //         `${API_BASE}api/updateRegistrationVehicleByRegNo/${cleanReg}`,
+  //         {
+  //           currentStatus: "Booked",
+  //           fromDate: normalizeDate(vehicle.fromDate),
+  //           toDate: normalizeDate(vehicle.toDate),
+  //           remarks: bookedRemarks,
+  //           orderId: order._id,
+  //           orderDisplayId: order.orderId || "",
+  //         },
+  //         { headers: { Authorization: `Bearer ${getToken()}` } }
+  //       );
+  //     } catch (statusErr) {
+  //       toast.error("Driver updated, but vehicle status update failed. Please update manually.");
+  //     }
+
+  //     toast.success("Driver details updated!");
+  //     setUpdateDriverOpen(false);
+  //     onRefresh();
+  //     onBookingStatusRefresh?.();
+  //   } catch (e) {
+  //     toast.error(e?.response?.data?.message || "Failed to update");
+  //   } finally {
+  //     setUpdating(false);
+  //   }
+  // };
+
+
   const handleUpdateDriver = async () => {
     if (!updDriverName.trim()) return toast.error("Driver name required");
     if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
-    if (!updRegNo.trim()) return toast.error("Reg number required");
-    if (!updVehicleDocId) return toast.error("Select a vehicle from the list");
+    if (!updRegNo.trim()) return toast.error("Vehicle Reg number required");
+    // if (!updVehicleDocId) return toast.error("Select a vehicle from the list");
 
     setUpdating(true);
     try {
-      const cleanReg = updRegNo.trim().toUpperCase().replace(/\s+/g, "");
-      const oldReg = (entry.vehicleRegistrationNumber || "").trim().toUpperCase().replace(/\s+/g, "");
-      const regChanged = oldReg && oldReg !== cleanReg;
+      const cleanReg = (r) => (r || "").replace(/\s+/g, "").toUpperCase();
+
+      const newReg = cleanReg(updRegNo);             
+      const oldReg = cleanReg(entry.vehicleRegistrationNumber); 
+
+      const isUnavailable = entry.unavailableStatus === true;
+
+      const bs = bookingStatusMap?.[oldReg];           
+      const isBookingValid = !!(
+        bs &&
+        bs.currentStatus === "Booked" &&
+        String(bs.orderId) === String(order._id) &&
+        bs.orderDisplayId === order.orderId
+      );
+      const isBookingMismatch = !isBookingValid;
+      const regChanged = oldReg && oldReg !== newReg; 
 
       await axios.patch(
         `${API_BASE}admin/pipeline/${order._id}/onroad-driver/${entry._id}`,
         {
           driverName: updDriverName.trim(),
           driverPhone: updDriverPhone.trim(),
-          vehicleRegistrationNumber: cleanReg,
+          vehicleRegistrationNumber: newReg,          
         },
         { headers: { Authorization: `Bearer ${getToken()}` } }
       );
@@ -73,13 +182,20 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
         return `${y}-${m}-${day}`;
       };
 
-    
+      const fmtDate = (d) => {
+        if (!d) return "—";
+        return new Date(d).toLocaleDateString("en-IN", {
+          day: "2-digit", month: "short", year: "numeric",
+        });
+      };
+
+      const bookedRemarks = `Booked for Order ${order.orderId} - ${order.name || "Customer"} (${fmtDate(vehicle.fromDate)} to ${fmtDate(vehicle.toDate)})`;
+
       try {
-      
         if (regChanged) {
           try {
             await axios.put(
-              `${API_BASE}api/updateRegistrationVehicleByRegNo/${oldReg}`,
+              `${API_BASE}api/updateRegistrationVehicleByRegNo/${oldReg}`,   
               { currentStatus: "Available" },
               { headers: { Authorization: `Bearer ${getToken()}` } }
             );
@@ -88,13 +204,15 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
           }
         }
 
-     
         await axios.put(
-          `${API_BASE}api/updateRegistrationVehicleByRegNo/${cleanReg}`,
+          `${API_BASE}api/updateRegistrationVehicleByRegNo/${newReg}`,    
           {
             currentStatus: "Booked",
             fromDate: normalizeDate(vehicle.fromDate),
             toDate: normalizeDate(vehicle.toDate),
+            remarks: bookedRemarks,
+            orderId: order._id,
+            orderDisplayId: order.orderId || "",
           },
           { headers: { Authorization: `Bearer ${getToken()}` } }
         );
@@ -105,13 +223,13 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
       toast.success("Driver details updated!");
       setUpdateDriverOpen(false);
       onRefresh();
+      onBookingStatusRefresh?.();
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to update");
     } finally {
       setUpdating(false);
     }
   };
-
 
 
   const fmtDatetime = (s) => {
@@ -176,6 +294,19 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
 
   const routeProgress = entry.routeProgress ?? 0;
   const isUnavailable = entry.unavailableStatus === true;
+
+  // ── NEW: booking mismatch check ──
+  const cleanRegForCheck = (r) => (r || "").replace(/\s+/g, "").toUpperCase();
+  const bs = bookingStatusMap?.[cleanRegForCheck(entry.vehicleRegistrationNumber)];
+  const isBookingValid = !!(
+    bs &&
+    bs.currentStatus === "Booked" &&
+    String(bs.orderId) === String(order._id) &&
+    bs.orderDisplayId === order.orderId
+  );
+  const isBookingMismatch = !isBookingValid;
+
+
 
   // const handleSubmit = async () => {
   //   if (!commentText.trim()) return toast.error("Issue description required");
@@ -295,6 +426,12 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                 Unavailable
               </span>
             )}
+            {isBookingMismatch && !isUnavailable && (
+              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 text-center leading-tight">
+                <AlertTriangle size={10} />
+                Reg Mismatch
+              </span>
+            )}
           </div>
 
 
@@ -407,17 +544,17 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
             <div className={`flex flex-col gap-1.5 ${isUnavailable ? "cursor-no-drop" : ""}`}>
               <button
                 onClick={handleViewRoute}
-                disabled={isUnavailable}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+                disabled={isUnavailable || isBookingMismatch}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${(isUnavailable || isBookingMismatch) ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
               >
                 <Navigation size={11} />
                 View Route
               </button>
 
               <button
-                onClick={() => !isUnavailable && setCallModalOpen(true)}
-                disabled={isUnavailable}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+                onClick={() => !(isUnavailable || isBookingMismatch) && setCallModalOpen(true)}
+                disabled={isUnavailable || isBookingMismatch}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${(isUnavailable || isBookingMismatch) ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
               >
                 <Phone size={11} />
                 Call Driver
@@ -425,9 +562,9 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
 
 
               <button
-                onClick={() => !isUnavailable && setModalOpen(true)}
-                disabled={isUnavailable}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none border-gray-200 text-gray-400 bg-gray-50" : openCount > 0
+                onClick={() => !(isUnavailable || isBookingMismatch) && setModalOpen(true)}
+                disabled={isUnavailable || isBookingMismatch}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${(isUnavailable || isBookingMismatch) ? "opacity-40 cursor-no-drop pointer-events-none border-gray-200 text-gray-400 bg-gray-50" : openCount > 0
                   ? "border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30"
                   : "border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
                   }`}
@@ -471,8 +608,9 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                 </div>
               ) : (
                 <button
-                  onClick={() => setUnavailableOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-800 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all whitespace-nowrap"
+                  onClick={() => !isBookingMismatch && setUnavailableOpen(true)}
+                  disabled={isBookingMismatch}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-800 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 transition-all whitespace-nowrap ${isBookingMismatch ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-orange-100 dark:hover:bg-orange-900/30"}`}
                 >
                   <AlertTriangle size={11} />
                   Unavailable

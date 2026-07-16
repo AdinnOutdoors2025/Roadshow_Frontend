@@ -113,7 +113,7 @@ const getFileUrl = (p: string) => {
 const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
 
-type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation" | "dateConflict";
+type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation" | "dateConflict" | "orderEditHistory";
 
 function DocPreviewModal({ url, label, onClose }: { url: string; label: string; onClose: () => void }) {
   const img = isImage(url);
@@ -425,6 +425,7 @@ import PipelineHistoryTab from "./PipelineHistoryTab";
 import { ChevronLeft } from "lucide-react";
 import DateConflictTab from "./DateConflictTab";
 import AdminOrderForm from "../order-creation/AdminOrderForm";
+import OrderEditHistoryTab from "./OrderEditHistoryTab";
 
 
 function OverviewTab({
@@ -1381,15 +1382,16 @@ export default function SalesDetailDrawer({
 
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: "overview", label: "Overview" },
-    { key: "comments", label: "Comments" },
-    { key: "pipeline", label: "Pipeline History" },
-    { key: "documents", label: isPoStage ? "PO Document" : "" },
-    { key: "dateConflict", label: "Date Conflict" },
-    ...(order.salesPipelineStatus === "projectCodeCreation"
-      ? [{ key: "codeCreation" as Tab, label: "Code Creation" }]
-      : []),
-  ];
+  { key: "overview", label: "Overview" },
+  { key: "comments", label: "Comments" },
+  { key: "pipeline", label: "Pipeline History" },
+  { key: "documents", label: isPoStage ? "PO Document" : "" },
+  { key: "dateConflict", label: "Date Conflict" },
+  { key: "orderEditHistory", label: "Edit History" },   
+  ...(order.salesPipelineStatus === "projectCodeCreation"
+    ? [{ key: "codeCreation" as Tab, label: "Code Creation" }]
+    : []),
+];
 
 
   useEffect(() => {
@@ -1651,10 +1653,14 @@ export default function SalesDetailDrawer({
           {activeTab === "codeCreation" && (
             <CodeCreationTab order={order} onRefresh={onRefresh} />
           )}
+{activeTab === "orderEditHistory" && (
+  <OrderEditHistoryTab order={order} getVehicleTypeName={getVehicleTypeName} />
+)}
 
           {activeTab === "dateConflict" && (
             <DateConflictTab order={order} onOpenConflictOrder={onOpenConflictOrder} />
           )}
+
 
           {showEditForm && (
             <AdminOrderForm
