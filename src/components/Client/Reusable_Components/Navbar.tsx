@@ -11,7 +11,9 @@ import { useRouter } from "next/navigation";
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "Vehicle", href: "/roadshow/VehicleDetails" },
-  { label: "Contact Us", href: "/contact" },
+  // { label: "Contact Us", href: "/contact" },
+  { label: "Contact Us", href: "#footer" },
+
 ];
 
 function AnimatedNavLink({ label, href }) {

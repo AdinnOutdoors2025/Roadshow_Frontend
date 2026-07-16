@@ -8,64 +8,6 @@ import HomePageSection2 from './HomePageSection2';
 import { ButtonHover as ViewlAllClientsButton } from '../Reusable_Components/ButtonHover';
 import { ButtonHover as VehicleBookNowButton } from '../Reusable_Components/ButtonHover';
 
-// function VehicleButton({ label = "Book Now", onClick }) {
-//   const btnRef = useRef(null);
-
-//   useEffect(() => {
-//     const btn = btnRef.current;
-//     if (!btn) return;
-//     const bubble = btn.querySelector(".RS_BtnBubble");
-
-//     const setBubble = (e) => {
-//       const rect = btn.getBoundingClientRect();
-//       const x = e.clientX - rect.left;
-//       const y = e.clientY - rect.top;
-//       const size = Math.max(rect.width, rect.height) * 2.2;
-//       bubble.style.width = size + "px";
-//       bubble.style.height = size + "px";
-//       bubble.style.left = x - size / 2 + "px";
-//       bubble.style.top = y - size / 2 + "px";
-//     };
-
-//     const onEnter = (e) => {
-//       setBubble(e);
-//       bubble.style.transition =
-//         "transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.55s ease";
-//       bubble.style.transform = "scale(0)";
-//       bubble.style.opacity = "0";
-//       requestAnimationFrame(() =>
-//         requestAnimationFrame(() => {
-//           bubble.style.transform = "scale(1)";
-//           bubble.style.opacity = "1";
-//         })
-//       );
-//     };
-
-//     const onLeave = (e) => {
-//       setBubble(e);
-//       bubble.style.transition =
-//         "transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.55s ease";
-//       bubble.style.transform = "scale(0)";
-//       bubble.style.opacity = "0";
-//     };
-
-//     btn.addEventListener("mouseenter", onEnter);
-//     btn.addEventListener("mouseleave", onLeave);
-//     return () => {
-//       btn.removeEventListener("mouseenter", onEnter);
-//       btn.removeEventListener("mouseleave", onLeave);
-//     };
-//   }, []);
-
-//   return (
-//     <button className="RS_VehicleButton" ref={btnRef} onClick={onClick}>
-//       <span>{label}</span>
-//       <span className="RS_BtnBubble"></span>
-//     </button>
-//   );
-// }
-
-
 export default function HomePageSection1() {
 
     //OFFER SECTION CITY MARQUEE GRADIENT ANIMATION

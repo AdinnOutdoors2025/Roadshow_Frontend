@@ -52,8 +52,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const loginUser = (user: User, token: string) => {
     setUser(user);
     setToken(token);
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("token", token);
+    localStorage.setItem("roadshow_user", JSON.stringify(user));
+    localStorage.setItem("roadshow_token", token);
     setOpen(false);
   };
 
