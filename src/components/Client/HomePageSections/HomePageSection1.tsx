@@ -7,6 +7,10 @@ import './HomePageSection1.css';
 import HomePageSection2 from './HomePageSection2';
 import { ButtonHover as ViewlAllClientsButton } from '../Reusable_Components/ButtonHover';
 import { ButtonHover as VehicleBookNowButton } from '../Reusable_Components/ButtonHover';
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+
+import { FALLBACK_VEHICLE_IMAGE, fetchAllRoadshowVehicles, type RoadshowVehicle, } from "@/lib/roadshowVehicles";
 
 export default function HomePageSection1() {
 
@@ -72,18 +76,76 @@ export default function HomePageSection1() {
         raf = requestAnimationFrame(tick);
         return () => cancelAnimationFrame(raf);
     }, []);
+    //OUR ROADSHOW VEHICLE API INTEGRATION
+    // // Our Roadshow Vehicles data
+    // const ourRS_Vehicles = [
+    //     // { name: 'Roadshow Main Img', image: './images/assets/BannerMainImg.png', rate: 25000, rating:'4.3', },
+    //     { name: '19 Feet Single Side LED', image: './images/assets/BannerSubImg1.png', rate: 25000, rating: '4.3', },
+    //     { name: '19 Feet Triple Side LED', image: './images/assets/BannerSubImg2.png', rate: 26000, rating: '4.4', },
+    //     { name: 'Fabricated LED', image: './images/assets/BannerSubImg3.png', rate: 27000, rating: '4.5', },
+    //     { name: 'L - Type Vehicle', image: './images/assets/BannerSubImg4.png', rate: 28000, rating: '4.2', },
+    //     { name: 'L - Type Vehicle', image: './images/assets/BannerSubImg4.png', rate: 28000, rating: '4.2', },
+    //     { name: 'L - Type Vehicle', image: './images/assets/BannerSubImg4.png', rate: 28000, rating: '4.2', },
+    // ];
 
-    // Our Roadshow Vehicles data
-    const ourRS_Vehicles = [
-        // { name: 'Roadshow Main Img', image: './images/assets/BannerMainImg.png', rate: 25000, rating:'4.3', },
-        { name: '19 Feet Single Side LED', image: './images/assets/BannerSubImg1.png', rate: 25000, rating: '4.3', },
-        { name: '19 Feet Triple Side LED', image: './images/assets/BannerSubImg2.png', rate: 26000, rating: '4.4', },
-        { name: 'Fabricated LED', image: './images/assets/BannerSubImg3.png', rate: 27000, rating: '4.5', },
-        { name: 'L - Type Vehicle', image: './images/assets/BannerSubImg4.png', rate: 28000, rating: '4.2', },
-        { name: 'L - Type Vehicle', image: './images/assets/BannerSubImg4.png', rate: 28000, rating: '4.2', },
-        { name: 'L - Type Vehicle', image: './images/assets/BannerSubImg4.png', rate: 28000, rating: '4.2', },
-    ];
+    const router = useRouter();
 
+    const [ourRS_Vehicles, setOurRSVehicles] = useState<RoadshowVehicle[]>([]);
+
+    const [loadingVehicles, setLoadingVehicles] = useState(true);
+
+    const [vehicleLoadError, setVehicleLoadError] = useState("");
+
+    const [openingVehicleId, setOpeningVehicleId] = useState<string | null>(null);
+    useEffect(() => {
+        const loadVehicles = async () => {
+            try {
+                setLoadingVehicles(true);
+                setVehicleLoadError("");
+
+                const vehicles =
+                    await fetchAllRoadshowVehicles();
+
+                setOurRSVehicles(vehicles);
+                setCurrentIndex(0);
+            } catch (error) {
+                const message =
+                    error instanceof Error
+                        ? error.message
+                        : "Unable to load vehicles.";
+
+                setVehicleLoadError(message);
+                setOurRSVehicles([]);
+
+                toast.error(message);
+            } finally {
+                setLoadingVehicles(false);
+            }
+        };
+
+        loadVehicles();
+    }, []);
+
+    const openVehicleDetails = (
+        vehicleId: string
+    ) => {
+        if (!vehicleId || openingVehicleId) {
+            return;
+        }
+
+        setOpeningVehicleId(vehicleId);
+
+        window.setTimeout(() => {
+            router.push(
+                `/roadshow/VehicleDetails/${encodeURIComponent(
+                    vehicleId
+                )}`
+            );
+        }, 250);
+    };
+
+
+    //OUR ROADSHOW VEHICLE API INTEGRATION
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [visibleCount, setVisibleCount] = useState(4);
@@ -296,19 +358,42 @@ export default function HomePageSection1() {
                         className="RS_OurRdwVehicleList"
                         style={{ transform: `translateX(-${currentIndex * (100 / visibleCount)}%)` }}>
                         {ourRS_Vehicles.map((veh, idx) => (
-                            <div key={idx} className="RS_VehicleCardMain RS_VehicleCardFlex">
+                            <div key={idx} className="RS_VehicleCardMain RS_VehicleCardFlex cursor-pointer"   onClick={() =>
+                                                openVehicleDetails(veh.id)
+                                            }>
                                 <div><img src={veh.image} alt={veh.name} className="RS_VehicleImg" /></div>
                                 <div className="RS_VehicleDetailsMain">
                                     <div className="RS_VehicleName">{veh.name}</div>
-                                    <div className="RS_VehicleRate">₹{veh.rate.toLocaleString()}/Per Day</div>
+                                    {/* <div className="RS_VehicleRate">₹{veh.rate.toLocaleString()}/Per Day</div> */}
+                                    <div className="RS_VehicleRate">
+                                        {veh.rate > 0 ? (
+                                            <>
+                                                ₹
+                                                {veh.rate.toLocaleString("en-IN" )} /Per Day
+                                            </>
+                                        ) : (
+                                            "Contact for price"
+                                        )}
+                                    </div>
                                     <div className="RS_VehicleRatingMain flex items-center gap-1">
                                         <div className="RS_VehicleRatingValue">{veh.rating}</div>
                                         <div><img src='./images/assets/RS_VehicleRateStar.svg' className='RS_VehicleRatingImg' alt="Rating" /></div>
                                     </div>
                                     {/* <div><button className="RS_VehicleButton">Book Now</button></div> */}
                                     <div>
-                                        <VehicleBookNowButton label="Book Now" className="RS_VehicleButton" />
-
+                                        {/* <VehicleBookNowButton label="Book Now" className="RS_VehicleButton" /> */}
+                                        <VehicleBookNowButton
+                                            label="Book Now"
+                                            loadingLabel="Opening..."
+                                            className="RS_VehicleButton"
+                                            loading={
+                                                openingVehicleId === veh.id
+                                            }
+                                            disabled={Boolean(openingVehicleId)}
+                                            onClick={() =>
+                                                openVehicleDetails(veh.id)
+                                            }
+                                        />
                                     </div>
                                 </div>
                             </div>

@@ -1,74 +1,221 @@
 /* eslint-disable */
 // @ts-nocheck
-import React, { useEffect, useRef } from 'react';
+"use client";
+
+import React, {
+  useEffect,
+  useRef,
+} from "react";
 
 interface ButtonHoverProps {
-  label?: string;
-  onClick?: () => void;
-  className?: string;        // pass your own CSS class
-  children?: React.ReactNode; // or pass children instead of label
-  type?: 'button' | 'submit' | 'reset';
+  label?: React.ReactNode;
+  children?: React.ReactNode;
+
+  onClick?: (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => void;
+
+  className?: string;
+
+  type?: "button" | "submit" | "reset";
+
+  disabled?: boolean;
+  loading?: boolean;
+  loadingLabel?: React.ReactNode;
+
+  ariaLabel?: string;
 }
 
 export function ButtonHover({
   label,
-  onClick,
-  className = 'RS_VehicleButton',
   children,
-  type = 'button',
+  onClick,
+  className = "RS_VehicleButton",
+  type = "button",
+  disabled = false,
+  loading = false,
+  loadingLabel = "Loading...",
+  ariaLabel,
 }: ButtonHoverProps) {
-  const btnRef = useRef<HTMLButtonElement>(null);
+  const btnRef =
+    useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const btn = btnRef.current;
+
     if (!btn) return;
-    const bubble = btn.querySelector<HTMLSpanElement>('.RS_BtnBubble');
+
+    const bubble =
+      btn.querySelector<HTMLSpanElement>(
+        ".RS_BtnBubble"
+      );
+
     if (!bubble) return;
 
-    const place = (e: MouseEvent) => {
-      const rect = btn.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const size = Math.max(rect.width, rect.height) * 2.4;
-      bubble.style.width  = size + 'px';
-      bubble.style.height = size + 'px';
-      bubble.style.left   = (x - size / 2) + 'px';
-      bubble.style.top    = (y - size / 2) + 'px';
+    const placeBubble = (
+      event: MouseEvent
+    ) => {
+      const rect =
+        btn.getBoundingClientRect();
+
+      const x =
+        event.clientX - rect.left;
+
+      const y =
+        event.clientY - rect.top;
+
+      const size =
+        Math.max(
+          rect.width,
+          rect.height
+        ) * 2.4;
+
+      bubble.style.width = `${size}px`;
+      bubble.style.height = `${size}px`;
+      bubble.style.left = `${
+        x - size / 2
+      }px`;
+      bubble.style.top = `${
+        y - size / 2
+      }px`;
     };
 
-    const onEnter = (e: MouseEvent) => {
-      place(e);
-      bubble.style.transition = 'none';
-      bubble.style.transform  = 'scale(0)';
-      bubble.style.opacity    = '0';
-      requestAnimationFrame(() =>
+    const handleMouseEnter = (
+      event: MouseEvent
+    ) => {
+      if (btn.disabled) return;
+
+      placeBubble(event);
+
+      bubble.style.transition = "none";
+      bubble.style.transform =
+        "scale(0)";
+      bubble.style.opacity = "0";
+
+      requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          bubble.style.transition = 'transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.55s ease';
-          bubble.style.transform  = 'scale(1)';
-          bubble.style.opacity    = '1';
-        })
-      );
+          bubble.style.transition =
+            "transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.55s ease";
+
+          bubble.style.transform =
+            "scale(1)";
+
+          bubble.style.opacity = "1";
+        });
+      });
     };
 
-    const onLeave = (e: MouseEvent) => {
-      place(e);
-      bubble.style.transition = 'transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.55s ease';
-      bubble.style.transform  = 'scale(0)';
-      bubble.style.opacity    = '0';
+    const handleMouseLeave = (
+      event: MouseEvent
+    ) => {
+      if (btn.disabled) {
+        bubble.style.transform =
+          "scale(0)";
+
+        bubble.style.opacity = "0";
+
+        return;
+      }
+
+      placeBubble(event);
+
+      bubble.style.transition =
+        "transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.55s ease";
+
+      bubble.style.transform =
+        "scale(0)";
+
+      bubble.style.opacity = "0";
     };
 
-    btn.addEventListener('mouseenter', onEnter);
-    btn.addEventListener('mouseleave', onLeave);
+    btn.addEventListener(
+      "mouseenter",
+      handleMouseEnter
+    );
+
+    btn.addEventListener(
+      "mouseleave",
+      handleMouseLeave
+    );
+
     return () => {
-      btn.removeEventListener('mouseenter', onEnter);
-      btn.removeEventListener('mouseleave', onLeave);
+      btn.removeEventListener(
+        "mouseenter",
+        handleMouseEnter
+      );
+
+      btn.removeEventListener(
+        "mouseleave",
+        handleMouseLeave
+      );
     };
   }, []);
 
+  useEffect(() => {
+    if (!disabled && !loading) return;
+
+    const btn = btnRef.current;
+
+    const bubble =
+      btn?.querySelector<HTMLSpanElement>(
+        ".RS_BtnBubble"
+      );
+
+    if (!bubble) return;
+
+    bubble.style.transform = "scale(0)";
+    bubble.style.opacity = "0";
+  }, [disabled, loading]);
+
+  const handleClick = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    if (disabled || loading) {
+      event.preventDefault();
+      return;
+    }
+
+    onClick?.(event);
+  };
+
+  const buttonContent =
+    loading
+      ? loadingLabel
+      : children ?? label;
+
   return (
-    <button type={type} className={className} ref={btnRef} onClick={onClick}>
-      <span>{children ?? label}</span>
-      <span className="RS_BtnBubble" />
+    <button
+      ref={btnRef}
+      type={type}
+      className={`${className} ${
+        loading ? "is-loading" : ""
+      }`}
+      onClick={handleClick}
+      disabled={disabled || loading}
+      aria-disabled={disabled || loading}
+      aria-busy={loading}
+      aria-label={
+        ariaLabel ||
+        (typeof label === "string"
+          ? label
+          : undefined)
+      }
+    >
+      <span className="relative z-[2] flex items-center justify-center gap-2">
+        {loading && (
+          <span
+            className="RS_BtnSpinner"
+            aria-hidden="true"
+          />
+        )}
+
+        <span>{buttonContent}</span>
+      </span>
+
+      <span
+        className="RS_BtnBubble"
+        aria-hidden="true"
+      />
     </button>
   );
 }
