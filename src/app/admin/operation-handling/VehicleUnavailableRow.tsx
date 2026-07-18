@@ -202,6 +202,11 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
                                     Offline
                                 </span>
                             )}
+                            {latestUnavailableHistory?.eventType === "replaced" && (
+                                <span className="flex items-center gap-1 text-sm font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
+                                    Replaced by {latestUnavailableHistory.replacementVehicleRegNo}
+                                </span>
+                            )}
                         </div>
 
 
@@ -302,13 +307,13 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
                                 Call Driver
                             </button>
 
-                            <button
+                            {/* <button
                                 onClick={() => setAvailableOpen(true)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all whitespace-nowrap"
                             >
                                 <CheckCircle size={11} />
                                 Available
-                            </button>
+                            </button> */}
 
                         </div>
                     </div>
@@ -416,6 +421,31 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
                                         Reported by {latestUnavailableHistory.reportedBy} ·{" "}
                                         {fmtDatetime(latestUnavailableHistory.reportedAt)}
                                     </p>
+
+                                    {latestUnavailableHistory.eventType === "replaced" && (
+                                        <div className="mt-3 pt-3 border-t border-orange-200 dark:border-orange-800/50">
+                                            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1.5">
+                                                Replacement Vehicle Assigned
+                                            </p>
+                                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                                <div>
+                                                    <p className="text-gray-400">Registration No</p>
+                                                    <p className="font-mono font-semibold text-gray-700 dark:text-gray-300">
+                                                        {latestUnavailableHistory.replacementVehicleRegNo}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-400">Driver</p>
+                                                    <p className="font-semibold text-gray-700 dark:text-gray-300">
+                                                        {latestUnavailableHistory.replacementDriverName} · {latestUnavailableHistory.replacementDriverPhone}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-gray-400 mt-1.5">
+                                                Replaced at {fmtDatetime(latestUnavailableHistory.replacedAt)}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

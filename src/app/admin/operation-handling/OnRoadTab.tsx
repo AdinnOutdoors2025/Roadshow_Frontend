@@ -60,6 +60,32 @@ const getImageUrl = (url) => {
   return `${API_BASE.replace("/api", "")}${url}`;
 };
 
+// Single source of truth for a registration-number's current status tag,
+// used across the Issue, Extra KM, Driver History and Campaign History
+// panels so chained replacements are never ambiguous.
+function getRegStatus(entry) {
+  if (!entry) return { label: "—", cls: "bg-gray-100 text-gray-400 border-gray-200" };
+  if (entry.entryStatus === "removed") {
+    return { label: "Released", cls: "bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600" };
+  }
+  if (entry.unavailableStatus) {
+    return { label: "Unavailable", cls: "bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800" };
+  }
+  if (entry.onRoadStatus === 1) {
+    return { label: "On Road", cls: "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" };
+  }
+  return { label: "Assigned", cls: "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800" };
+}
+
+function RegStatusBadge({ entry, className = "" }) {
+  const { label, cls } = getRegStatus(entry);
+  return (
+    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border leading-none ${cls} ${className}`}>
+      {label}
+    </span>
+  );
+}
+
 function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, driverLocations, isOpen, onToggle }) {
   const [gpsData, setGpsData] = useState([]);
   const [gpsLoading, setGpsLoading] = useState(false);
@@ -156,7 +182,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
       return entries.some(e => e.onRoadStatus === 1);
     });
   const allEntries = order.onRoadExecutionArray || [];
-  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
+  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus).length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 
@@ -178,6 +204,10 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const vehicleEntries = (order.onRoadExecutionArray || []).filter(
     (e) => e.vehicleIndex === vehicleIndex && e.entryStatus !== "removed"
   );
+
+  // Active + available — used for the On-Road live list. Vehicles flagged
+  // unavailable move out of On-Road and only show under Vehicle Unavailable.
+  const liveStatusEntries = vehicleEntries.filter((e) => !e.unavailableStatus);
 
   // All entries including removed — used for Driver History / Campaign History (so removed vehicles' history is visible)
   const allVehicleEntriesIncludingRemoved = (order.onRoadExecutionArray || []).filter(
@@ -221,16 +251,16 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
     }
   }, [isOpen, activeRegNosKey]);
 
-  const totalKm = vehicleEntries.reduce((sum, e) => {
+  const totalKm = liveStatusEntries.reduce((sum, e) => {
     const gps = gpsData.find(g => g.vehicleId === e.vehicleRegistrationNumber);
     return sum + (gps?.distanceCovered || 0);
   }, 0);
 
   const quantity = vehicle.quantity || 1;
-  const savedCount = vehicleEntries.length;
+  const savedCount = liveStatusEntries.length;
   const allDriversSaved = savedCount >= quantity;
-  const isVehicleOnRoad = vehicleEntries.some((e) => e.onRoadStatus === 1);
-  const liveCount = vehicleEntries.filter(e => {
+  const isVehicleOnRoad = liveStatusEntries.some((e) => e.onRoadStatus === 1);
+  const liveCount = liveStatusEntries.filter(e => {
     const gps = gpsData.find(g => g.vehicleId === e.vehicleRegistrationNumber);
     return gps?.ignitionStatus === "ON";
   }).length;
@@ -399,7 +429,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     <span>Release Vehicle</span>
                   </button>
 
-                  {savedCount < quantity && (
+                  {/* {savedCount < quantity && ( */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -410,7 +440,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                       <Plus size={13} />
                       <span>Add Vehicle</span>
                     </button>
-                  )}
+                  {/* )} */}
                 </div>
               </div>
             </div>
@@ -424,15 +454,6 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               iconColor="text-blue-500"
               label="Vehicles live"
               value={`${liveCount} / ${quantity}`}
-              sub={
-                mismatchVehicleCount > 0 ? (
-                  <span className="text-amber-600 dark:text-amber-400">
-                    {validVehicleCount}/{savedCount} valid · {mismatchVehicleCount} mismatch
-                  </span>
-                ) : (
-                  <><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />{Math.round((liveCount / quantity) * 100) || 0}% Active</>
-                )
-              }
               subColor={mismatchVehicleCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}
             />
 
@@ -487,7 +508,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
                 {/* Vehicle KM display */}
                 <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-                  {vehicleEntries.slice(kmPage * 2, kmPage * 2 + 2).map((e, i) => {
+                  {liveStatusEntries.slice(kmPage * 2, kmPage * 2 + 2).map((e, i) => {
                     const gps = gpsData.find(g => g.vehicleId === e.vehicleRegistrationNumber);
                     const actualIdx = kmPage * 2 + i;
                     return (
@@ -500,8 +521,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
                 {/* Right Arrow */}
                 <button
-                  onClick={() => setKmPage(p => Math.min(Math.ceil(vehicleEntries.length / 2) - 1, p + 1))}
-                  disabled={kmPage >= Math.ceil(vehicleEntries.length / 2) - 1}
+                  onClick={() => setKmPage(p => Math.min(Math.ceil(liveStatusEntries.length / 2) - 1, p + 1))}
+                  disabled={kmPage >= Math.ceil(liveStatusEntries.length / 2) - 1}
                   className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 hover:bg-gray-200 disabled:opacity-30 transition-all flex-shrink-0"
                 >
                   <ChevronDown size={12} className="-rotate-90" />
@@ -509,9 +530,9 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               </div>
 
               {/* Dot indicators */}
-              {vehicleEntries.length > 2 && (
+              {liveStatusEntries.length > 2 && (
                 <div className="flex items-center justify-center gap-1">
-                  {Array.from({ length: Math.ceil(vehicleEntries.length / 2) }).map((_, i) => (
+                  {Array.from({ length: Math.ceil(liveStatusEntries.length / 2) }).map((_, i) => (
                     <div
                       key={i}
                       className={`rounded-full transition-all ${i === kmPage ? "w-3 h-1.5 bg-blue-400" : "w-1.5 h-1.5 bg-gray-200 dark:bg-gray-700"}`}
@@ -526,7 +547,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                 <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
-                  Live vehicle status ({vehicleEntries.length}/{quantity} drivers)
+                  Live vehicle status ({liveStatusEntries.length}/{quantity} drivers)
                 </h3>
               </div>
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
@@ -550,9 +571,9 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     Campaign History
                   </button>
                 </div>
-                {vehicleEntries.filter(e => e.onRoadStatus === 1).length > 0 && (
+                {liveStatusEntries.filter(e => e.onRoadStatus === 1).length > 0 && (
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
-                    {vehicleEntries.filter(e => e.onRoadStatus === 1).length} On Road
+                    {liveStatusEntries.filter(e => e.onRoadStatus === 1).length} On Road
                   </span>
                 )}
               </div>
@@ -560,7 +581,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[520px] overflow-y-auto">
                 {liveTab === "status" ? (
                   <>
-                    {vehicleEntries.map((entry, idx) => (
+                    {liveStatusEntries.map((entry, idx) => (
                       <LiveVehicleRow
                         key={entry._id || idx}
                         entry={entry}
@@ -576,11 +597,14 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                         forceOpen={activeIssueEntryId === entry.vehicleRegistrationNumber}
                         onForceOpenHandled={() => setActiveIssueEntryId(null)}
                         onViewDriverRoute={(regNo) => setSelectedVehicleRegNo(regNo)}
+                        vehicleTypes={vehicleTypes}
                       />
                     ))}
-                    {vehicleEntries.length === 0 && (
+                    {liveStatusEntries.length === 0 && (
                       <div className="p-6 text-center text-gray-400 text-sm">
-                        No drivers assigned.
+                        {vehicleEntries.length > 0
+                          ? "All vehicles for this slot are currently marked Unavailable — see the Vehicle Unavailable tab."
+                          : "No drivers assigned."}
                       </div>
                     )}
 
@@ -795,9 +819,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                           V{i + 1}
                         </div>
                         <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-                        {isReleased && (
-                          <span className="text-[9px] font-semibold text-gray-500">(Released)</span>
-                        )}
+                        <RegStatusBadge entry={entry} />
                         {entryOpenCount > 0 && (
                           <span className="ml-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
                             {entryOpenCount}
@@ -924,9 +946,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                           V{i + 1}
                         </div>
                         <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-                        {isReleased && (
-                          <span className="text-[9px] font-semibold text-gray-500">(Released)</span>
-                        )}
+                        <RegStatusBadge entry={entry} />
                       </button>
                     );
                   })}
@@ -1047,7 +1067,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
           order={order}
           vehicle={vehicle}
           vehicleIndex={vehicleIndex}
-          vehicleEntries={vehicleEntries}
+          vehicleEntries={liveStatusEntries}
           bookingStatusMap={bookingStatusMap}
           onClose={() => setExtraKmModalOpen(false)}
           onRefresh={onRefresh}
@@ -1057,7 +1077,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
       {releaseModalOpen && (
         <ReleaseVehicleModal
           order={order}
-          vehicleEntries={vehicleEntries}
+          vehicleEntries={liveStatusEntries}
           onClose={() => setReleaseModalOpen(false)}
           onRefresh={onRefresh}
         />
@@ -1120,9 +1140,7 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
                 V{i + 1}
               </div>
               <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-              {entry.entryStatus === "removed" && (
-                <span className="text-[9px] font-semibold text-red-500">(Released)</span>
-              )}
+              <RegStatusBadge entry={entry} />
             </button>
           ))}
         </div>
@@ -1138,16 +1156,7 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{activeEntry.driverName || "—"}</p>
             <p className="text-xs text-gray-400 font-mono">{activeEntry.vehicleRegistrationNumber} · {activeEntry.driverPhone}</p>
           </div>
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${activeEntry.entryStatus === "removed"
-            ? "bg-red-50 text-red-500 border border-red-200"
-            : activeEntry.onRoadStatus === 1
-              ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-              : "bg-gray-100 text-gray-400"
-            }`}>
-            {activeEntry.entryStatus === "removed"
-              ? "Released"
-              : activeEntry.onRoadStatus === 1 ? "On Road" : "Off Road"}
-          </span>
+          <RegStatusBadge entry={activeEntry} className="!text-xs !px-2 !py-0.5 flex-shrink-0" />
         </div>
       )}
 
@@ -1405,7 +1414,7 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
     });
 
   const allEntries = order.onRoadExecutionArray || [];
-  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
+  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus).length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 

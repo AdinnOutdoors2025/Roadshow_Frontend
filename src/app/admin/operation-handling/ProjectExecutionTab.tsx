@@ -483,7 +483,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
     if (checkedRef.current) return;
     checkedRef.current = true;
 
-    const isVehicleOnRoad = vehicleEntries.some((e) => e.onRoadStatus === 1);
+    const isVehicleOnRoad = vehicleEntries.some((e) => e.onRoadStatus === 1 && !e.unavailableStatus);
     if (isVehicleOnRoad) {
       setAvailability({ available: true });
       setCheckingAvailability(false);
@@ -536,9 +536,9 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
   const quantity = vehicle.quantity || 1;
   // const savedCount = vehicleEntries.length;
-  const savedCount = activeEntries.length;
+  const savedCount = activeEntries.filter((e) => !e.unavailableStatus).length;
   const allDriversSaved = savedCount >= quantity;
-  const isVehicleOnRoad = vehicleEntries.some((e) => e.onRoadStatus === 1);
+  const isVehicleOnRoad = vehicleEntries.some((e) => e.onRoadStatus === 1 && !e.unavailableStatus);
 
   const handleDriverSaved = async () => {
     await onRefresh();
@@ -783,7 +783,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 export default function ProjectExecutionTab({ order, onRefresh, vehicleTypes }) {
   const vehicles = order.bookingItems || [];
   const allEntries = order.onRoadExecutionArray || [];
-  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
+  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus).length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const [openIndex, setOpenIndex] = useState(null);
   const [availability, setAvailability] = useState(null);

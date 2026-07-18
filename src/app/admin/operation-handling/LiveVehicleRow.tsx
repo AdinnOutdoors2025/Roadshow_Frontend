@@ -20,11 +20,12 @@ import {
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 import { useVehicle } from "../../../context/vehicletypecontext";
+import ReplaceVehicleModal from "./ReplaceVehicleModal";
 
 
 
 
-export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, bookingStatusMap, onBookingStatusRefresh, onTrackIdFetched, correctVehicleIndex, forceOpen, onForceOpenHandled, onViewDriverRoute }) {
+export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, bookingStatusMap, onBookingStatusRefresh, onTrackIdFetched, correctVehicleIndex, forceOpen, onForceOpenHandled, onViewDriverRoute, vehicleTypes }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [commentPhoto, setCommentPhoto] = useState(null);
@@ -40,6 +41,8 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
   const [unavailableReason, setUnavailableReason] = useState("");
   const [unavailablePhoto, setUnavailablePhoto] = useState(null);
   const [unavailableSubmitting, setUnavailableSubmitting] = useState(false);
+  const [choiceOpen, setChoiceOpen] = useState(false);
+  const [replaceOpen, setReplaceOpen] = useState(false);
 
 
   // const handleUpdateDriver = async () => {
@@ -298,13 +301,6 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
   // ── NEW: booking mismatch check ──
   const cleanRegForCheck = (r) => (r || "").replace(/\s+/g, "").toUpperCase();
   const bs = bookingStatusMap?.[cleanRegForCheck(entry.vehicleRegistrationNumber)];
-  const isBookingValid = !!(
-    bs &&
-    bs.currentStatus === "Booked" &&
-    String(bs.orderId) === String(order._id) &&
-    bs.orderDisplayId === order.orderId
-  );
-  const isBookingMismatch = !isBookingValid;
 
 
 
@@ -367,6 +363,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
       const formData = new FormData();
       formData.append("vehicleIndex", correctVehicleIndex);
       formData.append("vehicleRegistrationNumber", entry.vehicleRegistrationNumber);
+      formData.append("entryId", entry._id);
       formData.append("reason", unavailableReason.trim());
       if (unavailablePhoto) formData.append("unavailablePhoto", unavailablePhoto);
 
@@ -426,12 +423,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                 Unavailable
               </span>
             )}
-            {isBookingMismatch && !isUnavailable && (
-              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 text-center leading-tight">
-                <AlertTriangle size={10} />
-                Reg Mismatch
-              </span>
-            )}
+            
           </div>
 
 
@@ -544,17 +536,17 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
             <div className={`flex flex-col gap-1.5 ${isUnavailable ? "cursor-no-drop" : ""}`}>
               <button
                 onClick={handleViewRoute}
-                disabled={isUnavailable || isBookingMismatch}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${(isUnavailable || isBookingMismatch) ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+                disabled={isUnavailable}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${(isUnavailable) ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
               >
                 <Navigation size={11} />
                 View Route
               </button>
 
               <button
-                onClick={() => !(isUnavailable || isBookingMismatch) && setCallModalOpen(true)}
-                disabled={isUnavailable || isBookingMismatch}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${(isUnavailable || isBookingMismatch) ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+                onClick={() => !(isUnavailable) && setCallModalOpen(true)}
+                disabled={isUnavailable}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${(isUnavailable) ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
               >
                 <Phone size={11} />
                 Call Driver
@@ -562,9 +554,9 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
 
 
               <button
-                onClick={() => !(isUnavailable || isBookingMismatch) && setModalOpen(true)}
-                disabled={isUnavailable || isBookingMismatch}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${(isUnavailable || isBookingMismatch) ? "opacity-40 cursor-no-drop pointer-events-none border-gray-200 text-gray-400 bg-gray-50" : openCount > 0
+                onClick={() => !(isUnavailable ) && setModalOpen(true)}
+                disabled={isUnavailable}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${(isUnavailable) ? "opacity-40 cursor-no-drop pointer-events-none border-gray-200 text-gray-400 bg-gray-50" : openCount > 0
                   ? "border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30"
                   : "border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
                   }`}
@@ -608,9 +600,8 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                 </div>
               ) : (
                 <button
-                  onClick={() => !isBookingMismatch && setUnavailableOpen(true)}
-                  disabled={isBookingMismatch}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-800 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 transition-all whitespace-nowrap ${isBookingMismatch ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-orange-100 dark:hover:bg-orange-900/30"}`}
+                  onClick={() => setChoiceOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all whitespace-nowrap"
                 >
                   <AlertTriangle size={11} />
                   Unavailable
@@ -917,6 +908,74 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
         </div>
       )}
 
+
+      {/* ── Vehicle Unavailable: choice step ── */}
+      {choiceOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                Vehicle Unavailable · {entry.vehicleRegistrationNumber}
+              </h3>
+              <button onClick={() => setChoiceOpen(false)}>
+                <XCircle size={18} className="text-gray-400 hover:text-gray-600" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 -mt-1">Choose how to handle this vehicle</p>
+
+            <button
+              onClick={() => {
+                setChoiceOpen(false);
+                setReplaceOpen(true);
+              }}
+              className="flex items-start gap-3 p-3 rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20 transition-all text-left"
+            >
+              <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0">
+                <RefreshCw size={14} className="text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">Replace Vehicle</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Assign a replacement vehicle immediately and move this one to Vehicle Unavailable.
+                </p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
+                setChoiceOpen(false);
+                setUnavailableOpen(true);
+              }}
+              className="flex items-start gap-3 p-3 rounded-xl border border-orange-200 dark:border-orange-800/50 bg-orange-50 dark:bg-orange-900/10 hover:bg-orange-100 dark:hover:bg-orange-900/20 transition-all text-left"
+            >
+              <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={14} className="text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-orange-700 dark:text-orange-300">Mark as Unavailable</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  No replacement yet — just flag this vehicle as unavailable with a reason.
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Replace Vehicle Modal ── */}
+      {replaceOpen && (
+        <ReplaceVehicleModal
+          order={order}
+          vehicle={vehicle}
+          vehicleIndex={correctVehicleIndex}
+          entry={entry}
+          vehicleTypeName={
+            vehicleTypes?.find((vt: any) => vt._id === vehicle?.vehicleType)?.typeName
+          }
+          onClose={() => setReplaceOpen(false)}
+          onRefresh={onRefresh}
+        />
+      )}
 
       {unavailableOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">

@@ -260,6 +260,32 @@ function getImageUrlCH(url?: string): string | null {
   return `${(window as any).API_BASE?.replace("/api", "") || ""}${url}`;
 }
 
+// Mirrors the status tag logic in OnRoadTab.tsx so a registration number's
+// current state (On Road / Unavailable / Released / Assigned) is never
+// ambiguous, even after chained replacements.
+function getRegStatusCH(entry: any) {
+  if (!entry) return { label: "—", cls: "bg-gray-100 text-gray-400 border-gray-200" };
+  if (entry.entryStatus === "removed") {
+    return { label: "Released", cls: "bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600" };
+  }
+  if (entry.unavailableStatus) {
+    return { label: "Unavailable", cls: "bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800" };
+  }
+  if (entry.onRoadStatus === 1) {
+    return { label: "On Road", cls: "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" };
+  }
+  return { label: "Assigned", cls: "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800" };
+}
+
+function RegStatusBadgeCH({ entry }: { entry: any }) {
+  const { label, cls } = getRegStatusCH(entry);
+  return (
+    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border leading-none ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
 
 
 import React, { useState, useEffect } from "react";
@@ -389,9 +415,7 @@ export default function CampaignHistoryPanel({
                 V{i + 1}
               </div>
               <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-              {entry.entryStatus === "removed" && (
-                <span className="text-[9px] font-semibold text-red-500">(Released)</span>
-              )}
+              <RegStatusBadgeCH entry={entry} />
             </button>
           ))}
         </div>

@@ -34,6 +34,7 @@ import { useVehicle } from "../../../context/vehicletypecontext";
 import VehicleUnavailable from "./VehicleUnavailableTab";
 import OrderReportPDF from "./OrderReportPDF";
 import ClientClosureTab from "./ClientClosureTab";
+import CampaignCalculatorTab from "./CampaignCalculatorTab";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -209,6 +210,9 @@ export default function DetailDrawer({
             : []),
         ...(hasReachedOnRoad
             ? [{ key: "onRoad", label: "On Road" }]
+            : []),
+        ...(hasReachedProjectExecution
+            ? [{ key: "campaignCalculator", label: "Campaign Calculator" }]
             : []),
 
         ...(defaultTab === "VehicleUnavailable"
@@ -512,6 +516,10 @@ useEffect(() => {
 
                     {activeTab === "onRoad" && (
                         <OnRoadTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
+                    )}
+
+                    {activeTab === "campaignCalculator" && (
+                        <CampaignCalculatorTab order={order} />
                     )}
 
                     {activeTab === "history" && (

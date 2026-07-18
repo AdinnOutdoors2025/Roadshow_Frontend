@@ -119,9 +119,9 @@ const handleSubmit = async () => {
               {activeEntries.map((entry) => {
                 const isValid = isEntryBookingValid(entry);
                 return (
-                  <option key={entry._id} value={entry._id} disabled={!isValid}>
+                  <option key={entry._id} value={entry._id}>
                     {entry.driverName || "—"} · {entry.vehicleRegistrationNumber || "—"}
-                    {!isValid ? " (reg mismatch — cannot add)" : ""}
+                    
                   </option>
                 );
               })}

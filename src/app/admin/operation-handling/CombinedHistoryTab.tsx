@@ -2,6 +2,7 @@ import { useState } from "react";
 import PipelineHistoryTab from "./PipelineHistoryTab";
 import ProjectExecutionHistoryTab from "./ProjectExecutionHistoryTab";
 import UnavailableHistoryTab from "./UnavailableHistoryTab";
+import DayByDayHistoryTab from "./DayByDayHistoryTab";
 
 interface Order {
     _id: string;
@@ -37,12 +38,19 @@ interface Order {
 }
 
 export default function CombinedHistoryTab({ order ,vehicleTypes }: { order: Order , vehicleTypes:string[]}) {
-    const [activeHistoryTab, setActiveHistoryTab] = useState<"pipeline" | "execution" | "unavailable">("pipeline");
+    const [activeHistoryTab, setActiveHistoryTab] = useState<"pipeline" | "execution" | "unavailable" | "dayByDay">("pipeline");
 
    const showExecution =
         order.pipelineStatus === "projectExecution" || order.pipelineStatus === "onRoad";
 
     const showUnavailable = (order.onRoadUnavailableHistory || []).length > 0;
+
+    const showDayByDay =
+        order.pipelineStatus === "projectExecution" ||
+        order.pipelineStatus === "onRoad" ||
+        order.pipelineStatus === "clientClosure" ||
+        order.pipelineStatus === "closedWon" ||
+        order.pipelineStatus === "closedLost";
 
     return (
         <div className="flex flex-col h-full">
@@ -83,6 +91,19 @@ export default function CombinedHistoryTab({ order ,vehicleTypes }: { order: Ord
                         Unavailable History
                     </button>
                 )}
+
+                {showDayByDay && (
+                    <button
+                        onClick={() => setActiveHistoryTab("dayByDay")}
+                        className={`px-4 py-2 text-md font-medium border-b-2 transition-all -mb-px ${
+                            activeHistoryTab === "dayByDay"
+                                ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                                : "border-transparent text-gray-400 hover:text-gray-600"
+                        }`}
+                    >
+                        Day-by-Day History
+                    </button>
+                )}
             </div>
 
          
@@ -94,6 +115,9 @@ export default function CombinedHistoryTab({ order ,vehicleTypes }: { order: Ord
                 )}
                 {activeHistoryTab === "unavailable" && showUnavailable && (
                     <UnavailableHistoryTab order={order} vehicleTypes={vehicleTypes} />
+                )}
+                {activeHistoryTab === "dayByDay" && showDayByDay && (
+                    <DayByDayHistoryTab order={order} />
                 )}
             </div>
         </div>
