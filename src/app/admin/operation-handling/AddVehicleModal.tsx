@@ -197,7 +197,7 @@ export default function AddVehicleModal({ order, vehicle, vehicleIndex, onClose,
           <div>
             <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
               <Plus size={15} className="text-emerald-500" />
-              Add Replacement Vehicle
+              Add Vehicle
             </h3>
             <p className="text-xs text-gray-400 mt-0.5">
               Campaign range: {fmtDate(vehicle.fromDate)} → {fmtDate(vehicle.toDate)}

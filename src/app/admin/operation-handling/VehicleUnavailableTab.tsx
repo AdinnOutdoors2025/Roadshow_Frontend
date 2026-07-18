@@ -86,7 +86,7 @@ const vehicles = (order.bookingItems || [])
 
 
   const allEntries = order.onRoadExecutionArray || [];
-  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
+  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus && e.entryStatus !== "removed").length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 
@@ -456,7 +456,7 @@ const vehicles = (order.bookingItems || [])
 
 
   const allEntries = order.onRoadExecutionArray || [];
-  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
+  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus && e.entryStatus !== "removed").length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 

@@ -182,7 +182,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
       return entries.some(e => e.onRoadStatus === 1);
     });
   const allEntries = order.onRoadExecutionArray || [];
-  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus).length;
+  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus && e.entryStatus !== "removed").length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 
@@ -453,7 +453,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               iconBg="bg-blue-50 dark:bg-blue-900/20"
               iconColor="text-blue-500"
               label="Vehicles live"
-              value={`${liveCount} / ${quantity}`}
+              value={`${liveCount} / ${liveStatusEntries.length}`}
               subColor={mismatchVehicleCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}
             />
 
@@ -1414,7 +1414,7 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
     });
 
   const allEntries = order.onRoadExecutionArray || [];
-  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus).length;
+  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus && e.entryStatus !== "removed").length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 

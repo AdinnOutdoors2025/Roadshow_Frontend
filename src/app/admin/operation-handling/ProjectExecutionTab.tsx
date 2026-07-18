@@ -783,7 +783,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 export default function ProjectExecutionTab({ order, onRefresh, vehicleTypes }) {
   const vehicles = order.bookingItems || [];
   const allEntries = order.onRoadExecutionArray || [];
-  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus).length;
+  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus && e.entryStatus !== "removed").length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const [openIndex, setOpenIndex] = useState(null);
   const [availability, setAvailability] = useState(null);
