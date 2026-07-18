@@ -835,46 +835,14 @@
 // @ts-nocheck
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import {
-  addMonths,
-  differenceInCalendarDays,
-  eachDayOfInterval,
-  endOfMonth,
-  endOfWeek,
-  format,
-  isBefore,
-  isSameDay,
-  isSameMonth,
-  isValid,
-  parseISO,
-  startOfDay,
-  startOfMonth,
-  startOfWeek,
-} from "date-fns";
-import {
-  CalendarDays,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Minus,
-  Plus,
-  X,
-} from "lucide-react";
+import { useEffect, useMemo, useRef, useState, } from "react";
+import { addMonths, differenceInCalendarDays, eachDayOfInterval, endOfMonth, endOfWeek, format, isBefore, isSameDay, isSameMonth, isValid, parseISO, startOfDay, startOfMonth, startOfWeek, }from "date-fns";
+import { CalendarDays, Check, ChevronLeft, ChevronRight, Minus, Plus, X, } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { useAuth } from "@/context/AuthContext";
-import {
-  FALLBACK_VEHICLE_IMAGE,
-  fetchAllRoadshowVehicles,
-  type RoadshowVehicle,
-} from "@/lib/roadshowVehicles";
-
+import { FALLBACK_VEHICLE_IMAGE, fetchAllRoadshowVehicles, type RoadshowVehicle, } from "@/lib/roadshowVehicles";
+import './page.css';
 type SelectedVehicle = RoadshowVehicle & {
   startDate: Date | null;
   endDate: Date | null;
@@ -936,10 +904,7 @@ const getDateText = (
     : placeholder;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                             DATE RANGE CALENDAR                             */
-/* -------------------------------------------------------------------------- */
-
+/*   DATE RANGE CALENDA */
 function DateRangeCalendar({
   value,
   onChange,
@@ -1214,10 +1179,7 @@ function DateRangeCalendar({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                          CAMPAIGN REQUEST PAGE                              */
-/* -------------------------------------------------------------------------- */
-
+/* CAMPAIGN REQUEST PAGE */
 export default function CampaignRequestPage() {
   const { user, openAuth } = useAuth();
 
@@ -1757,24 +1719,19 @@ export default function CampaignRequestPage() {
       <section className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(320px,0.76fr)_minmax(0,1.28fr)] lg:items-start xl:gap-10">
           {/* Campaign request form */}
-          <aside className="rounded-[26px] bg-[#f7f7f8] p-5 sm:p-6 lg:sticky lg:top-24">
-            <div className="mb-7">
-              <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-[#1b1b1d]">
+          <aside className="rounded-[26px] bg-[#f7f7f8] p-5 sm:p-6 lg:sticky lg:top-24 rdsw_CrfLeftMain">
+            <div className="mb-7 rdsw_CrfLeftHeadingMain">
+              <div className="text-[20px] font-semibold tracking-[-0.02em] text-[#1b1b1d] rdsw_CrfLeftHeading1">
                 Campaign Request Form
-              </h1>
-
-              <p className="mt-1.5 text-[12px] leading-5 text-[#747474]">
-                Enter your campaign and
-                vehicle requirements.
-              </p>
+              </div>
             </div>
 
             <div className="space-y-5">
               <label className="block">
-                <span className="mb-2 block text-[11px] font-medium text-[#575757]">
+                {/* <span className="mb-2 block text-[11px] font-medium text-[#575757]">
                   Full Name / Company Name *
-                </span>
-
+                </span> */}
+ 
                 <input
                   type="text"
                   value={clientDetails.name}
@@ -1788,14 +1745,14 @@ export default function CampaignRequestPage() {
                     )
                   }
                   placeholder="Enter full name or company name"
-                  className="h-10 w-full border-b border-[#aaaaaa] bg-transparent px-0 text-[13px] text-black outline-none transition placeholder:text-[#a0a0a0] focus:border-black"
+                  className="rdw_crf_inputs h-10 w-full border-b border-[#aaaaaa] bg-transparent px-0 text-[13px] text-black outline-none transition placeholder:text-[#a0a0a0] focus:border-black"
                 />
               </label>
 
               <label className="block">
-                <span className="mb-2 block text-[11px] font-medium text-[#575757]">
+                {/* <span className="mb-2 block text-[11px] font-medium text-[#575757]">
                   Phone Number *
-                </span>
+                </span> */}
 
                 <input
                   type="tel"
@@ -1816,14 +1773,14 @@ export default function CampaignRequestPage() {
                     )
                   }
                   placeholder="Enter phone number"
-                  className="h-10 w-full border-b border-[#aaaaaa] bg-transparent px-0 text-[13px] text-black outline-none transition placeholder:text-[#a0a0a0] focus:border-black"
+                  className="rdw_crf_inputs h-10 w-full border-b border-[#aaaaaa] bg-transparent px-0 text-[13px] text-black outline-none transition placeholder:text-[#a0a0a0] focus:border-black"
                 />
               </label>
 
               <label className="block">
-                <span className="mb-2 block text-[11px] font-medium text-[#575757]">
+                {/* <span className="mb-2 block text-[11px] font-medium text-[#575757]">
                   Email Address *
-                </span>
+                </span> */}
 
                 <input
                   type="email"
@@ -1838,20 +1795,20 @@ export default function CampaignRequestPage() {
                     )
                   }
                   placeholder="Enter email address"
-                  className="h-10 w-full border-b border-[#aaaaaa] bg-transparent px-0 text-[13px] text-black outline-none transition placeholder:text-[#a0a0a0] focus:border-black"
+                  className="rdw_crf_inputs  h-10 w-full border-b border-[#aaaaaa] bg-transparent px-0 text-[13px] text-black outline-none transition placeholder:text-[#a0a0a0] focus:border-black"
                 />
               </label>
             </div>
 
-            <div className="mt-7 space-y-4">
+            <div className="rdsw_crfNoVehMain mt-7 space-y-4">
               {selectedVehicles.length ===
                 0 && (
                 <div className="rounded-[18px] border border-dashed border-[#d4d4d4] bg-white px-5 py-8 text-center">
-                  <p className="text-[13px] font-semibold text-[#444444]">
+                  <p className=" rdsw_crfNoVehMainHeading font-semibold text-[#444444]">
                     No vehicle added
                   </p>
 
-                  <p className="mt-1 text-[11px] leading-5 text-[#8b8b8b]">
+                  <p className=" rdsw_crfNoVehMainSubHeading mt-1  leading-5 text-[#8b8b8b]">
                     Choose a roadshow vehicle
                     from the product section.
                   </p>
@@ -1867,7 +1824,7 @@ export default function CampaignRequestPage() {
                         }
                       )
                     }
-                    className="mt-4 rounded-full bg-[#eeeeef] px-4 py-2 text-[11px] font-semibold text-[#222222]"
+                    className="rdsw_crfNoVehMainBtn mt-4 rounded-full bg-[#eeeeef] px-4 py-2 font-semibold text-[#222222]"
                   >
                     View Vehicles
                   </button>
@@ -1878,10 +1835,10 @@ export default function CampaignRequestPage() {
                 (vehicle, index) => (
                   <div
                     key={vehicle.id}
-                    className="rounded-[18px] border border-black/[0.04] bg-white p-4 shadow-[0_7px_25px_rgba(0,0,0,0.025)]"
+                    className="rdsw_crfAddedVehMain rounded-[18px] border border-black/[0.04] bg-white p-4 shadow-[0_7px_25px_rgba(0,0,0,0.025)]"
                   >
-                    <div className="mb-4 flex items-center justify-between">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#858585]">
+                    <div className="mb-4 flex items-center justify-between rdsw_crfAddedVehContentMain">
+                      <p className=" rdsw_crfAddedVehHeadingMain text-[11px] font-semibold uppercase tracking-[0.08em] text-[#858585]">
                         Vehicle {index + 1}
                       </p>
 
@@ -1893,7 +1850,7 @@ export default function CampaignRequestPage() {
                           )
                         }
                         aria-label={`Remove ${vehicle.name}`}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f3f3f3] text-[#a00000] transition hover:bg-[#d70000] hover:text-white"
+                        className="rdsw_crfAddedVehHeadingMainBtn flex h-7 w-7 items-center justify-center rounded-full bg-[#f3f3f3] text-[#a00000] transition hover:bg-[#d70000] hover:text-white"
                       >
                         <X size={13} />
                       </button>

@@ -1,0 +1,43 @@
+.rdsw_CrfLeftHeading1 {
+    font-weight: 400;
+    font-size: 30px;
+    leading-trim: NONE;
+    line-height: 100%;
+    letter-spacing: 0%;
+    color: #000000;
+}
+
+.rdw_crf_inputs {
+    font-weight: 400;
+    font-size: 20px;
+    color: #000000;
+}
+
+.rdw_crf_inputs::placeholder {
+    font-weight: 400;
+    font-size: 20px;
+    color: #535353;
+}
+
+.rdsw_crfAddedVehHeadingMain {
+    font-weight: 400;
+    font-size: 18px;
+    color: #000000;
+}
+.rdsw_crfNoVehMainHeading{
+    color: #444444;
+    font-size: 16px;
+}
+.rdsw_crfNoVehMainSubHeading{
+     color: #8b8b8b;
+    font-size: 13px;
+}
+.rdsw_crfNoVehMainBtn{
+    padding: 10px 20px;
+    font-size: 15px;
+    width: auto;
+    height: auto;
+}
+.rdsw_crfAddedVehHeadingMainBtn{
+
+}
