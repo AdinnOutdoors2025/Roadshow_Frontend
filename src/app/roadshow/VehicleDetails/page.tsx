@@ -39,10 +39,11 @@ export default function VehicleDetailsPage() {
 
   return (
     <main className="min-h-screen bg-white text-black">
-      <section className="mx-auto grid max-w-[1420px] grid-cols-1 gap-20 px-4 pb-14 pt-20 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
+      <section className="mx-auto grid max-w-[1420px] grid-cols-1 gap-20 px-4 pb-14 pt-40 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
         {/* Vehicle Card */}
-        <div>
-          <h1 className="mb-5 text-[25px] font-bold tracking-tight">
+        
+          <div className="lg:sticky lg:top-32">
+          <h1 className="mb-5 text-[25px] font-semibold tracking-tight">
             Tata Ultra 19 Ft - 3 Sided LED
           </h1>
 
@@ -62,13 +63,13 @@ export default function VehicleDetailsPage() {
             ))}
 
             {/* Carousel Buttons */}
-            <div className="absolute bottom-9 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full border-[0.5px] border-[#C5C4C6] px-4 py-2">
+            <div className="absolute bottom-9 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border-[0.5px] border-[#C5C4C6] px-3 py-2">
               <button className="flex items-center justify-center">
                 <Image
                   src="/images/assets/detail_page/left.svg"
                   alt="left"
-                  width={50}
-                  height={50}
+                  width={40}
+                  height={40}
                   className="object-contain"
                 />
               </button>
@@ -77,8 +78,8 @@ export default function VehicleDetailsPage() {
                 <Image
                   src="/images/assets/detail_page/right.svg"
                   alt="right"
-                  width={50}
-                  height={50}
+                  width={40}
+                  height={40}
                   className="object-contain"
                 />
               </button>
@@ -92,11 +93,11 @@ export default function VehicleDetailsPage() {
             ₹ 25,000 <span className="text-[14px] font-semibold">Per Day</span>
           </h2>
 
-          <h3 className="mt-4 text-[24px] font-bold text-[#d70000]">
-            Product Details
-          </h3>
+         <h3 className="mt-4 inline-block bg-gradient-to-r from-[#E52B2C] via-[#B12021] to-[#7F1818] bg-clip-text text-[24px] font-normal text-transparent">
+  Product Details
+</h3>
 
-          <p className="mt-2 max-w-[540px] text-[16px] font-regular leading-[1.45] text-black">
+          <p className="mt-2 max-w-[540px] text-[19px] font-regular leading-[1.45] text-black">
             Our Roadshow Vehicles are like a moving stage for your brand. With
             big LED screens, clear sound system, comfortable seating, and full
             branding options, they easily grab attention on the road or at any

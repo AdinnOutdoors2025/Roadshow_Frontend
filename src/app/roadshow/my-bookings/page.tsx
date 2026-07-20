@@ -1283,7 +1283,7 @@ export default function MyBookingsPage() {
   return (
     <>
       <main className="min-h-screen bg-[#F7F7F8] px-4 pb-12 pt-[130px] text-[#17181B] sm:px-6 sm:pt-[140px] lg:px-8 lg:pt-[150px]">
-        <div className="mx-auto max-w-[1380px]">
+        <div className="mx-auto max-w-[1440px]">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="text-[30px] font-bold tracking-[-0.04em] text-[#151515] sm:text-[34px]">
