@@ -97,34 +97,33 @@ export default function HomePageSection1() {
     const [vehicleLoadError, setVehicleLoadError] = useState("");
 
     const [openingVehicleId, setOpeningVehicleId] = useState<string | null>(null);
-    useEffect(() => {
-        const loadVehicles = async () => {
-            try {
-                setLoadingVehicles(true);
-                setVehicleLoadError("");
+ useEffect(() => {
+  const loadVehicles = async () => {
+    try {
+      setLoadingVehicles(true);
+      setVehicleLoadError("");
 
-                const vehicles =
-                    await fetchAllRoadshowVehicles();
+      const vehicles =
+        await fetchAllRoadshowVehicles();
 
-                setOurRSVehicles(vehicles);
-                setCurrentIndex(0);
-            } catch (error) {
-                const message =
-                    error instanceof Error
-                        ? error.message
-                        : "Unable to load vehicles.";
+      setOurRSVehicles(vehicles);
+      setCurrentIndex(0);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to load vehicles.";
 
-                setVehicleLoadError(message);
-                setOurRSVehicles([]);
+      setVehicleLoadError(message);
+      setOurRSVehicles([]);
+      toast.error(message);
+    } finally {
+      setLoadingVehicles(false);
+    }
+  };
 
-                toast.error(message);
-            } finally {
-                setLoadingVehicles(false);
-            }
-        };
-
-        loadVehicles();
-    }, []);
+  loadVehicles();
+}, []);
 
     const openVehicleDetails = (
         vehicleId: string

@@ -166,7 +166,10 @@
   --z-index-99999: 99999;
   --z-index-999999: 999999;
 }
-
+*::selection{
+  background-color: rgb(255, 84, 84);
+  color:white;
+}
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still

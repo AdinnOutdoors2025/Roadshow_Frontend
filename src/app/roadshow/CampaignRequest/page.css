@@ -24,20 +24,72 @@
     font-size: 18px;
     color: #000000;
 }
-.rdsw_crfNoVehMainHeading{
+
+.rdsw_crfNoVehMainHeading {
     color: #444444;
     font-size: 16px;
 }
-.rdsw_crfNoVehMainSubHeading{
-     color: #8b8b8b;
+
+.rdsw_crfNoVehMainSubHeading {
+    color: #8b8b8b;
     font-size: 13px;
 }
-.rdsw_crfNoVehMainBtn{
+
+.rdsw_crfNoVehMainBtn {
     padding: 10px 20px;
     font-size: 15px;
     width: auto;
     height: auto;
 }
-.rdsw_crfAddedVehHeadingMainBtn{
 
+.rdsw_crfAddedVehHeadingMainRmvBtn {
+    background-color: #e6e6e6;
+    color: red;
+    font-weight: 600;
+    font-size: 30px;
+}
+
+.rdsw_crfAddedVehHeadingMainRmvBtn:hover {
+    color: white;
+    background-color: #d70000;
+}
+
+.rdsw_crdVehType {
+    font-size: 15px;
+}
+
+.rdsw_crfVehLableMain span {
+    font-size: 15px;
+}
+
+.rdsw_crfQtyHeading {
+    font-size: 15px;
+}
+
+.rdsw_crfQtyDesc {
+    font-size: 14px;
+    color: #969595;
+}
+
+.rdsw_crfQtyBtnMain button {
+    font-weight: 600;
+    font-size: 20px !important;
+}
+
+.rdsw_crfQtyBtnMain button:hover {
+    color: white;
+}
+
+.rdsw_crfVehSubmitBtn {
+    font-weight: 400;
+    font-size: 20px;
+    color: #FFFFFF;
+    padding: 15px 25px;
+}
+
+.rdsw_crfVehAddVehBtn {
+    font-weight: 400;
+    font-size: 20px;
+    color: #000000;
+    padding: 15px 25px;
 }

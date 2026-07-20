@@ -1,836 +1,3 @@
-// /* eslint-disable */
-// // @ts-nocheck
-// "use client";
-
-// import {
-//   useEffect,
-//   useMemo,
-//   useRef,
-//   useState,
-// } from "react";
-// import {
-//   differenceInCalendarDays,
-//   parseISO,
-// } from "date-fns";
-// import toast from "react-hot-toast";
-
-// import { useAuth } from "@/context/AuthContext";
-// import {
-//   FALLBACK_VEHICLE_IMAGE,
-//   fetchAllRoadshowVehicles,
-//   type RoadshowVehicle,
-// } from "@/lib/roadshowVehicles";
-
-// type SelectedVehicle =
-//   RoadshowVehicle & {
-//     startDate: string;
-//     endDate: string;
-//     quantity: number;
-//   };
-
-// const getToday = () =>
-//   new Date().toISOString().split("T")[0];
-
-// const getDays = (
-//   startDate: string,
-//   endDate: string
-// ) => {
-//   if (!startDate || !endDate) return 0;
-
-//   return Math.max(
-//     differenceInCalendarDays(
-//       parseISO(endDate),
-//       parseISO(startDate)
-//     ) + 1,
-//     0
-//   );
-// };
-
-// export default function CampaignRequestPage() {
-//   const { user, openAuth } = useAuth();
-
-//   const [vehicles, setVehicles] = useState<
-//     RoadshowVehicle[]
-//   >([]);
-
-//   const [selectedVehicles, setSelectedVehicles] =
-//     useState<SelectedVehicle[]>([]);
-
-//   const [loadingVehicles, setLoadingVehicles] =
-//     useState(true);
-
-//   const [submitting, setSubmitting] =
-//     useState(false);
-
-//   const [currentIndex, setCurrentIndex] =
-//     useState(0);
-
-//   const [visibleCount, setVisibleCount] =
-//     useState(4);
-
-//   const [clientDetails, setClientDetails] =
-//     useState({
-//       name: "",
-//       phone: "",
-//       email: "",
-//     });
-
-//   const vehicleSectionRef =
-//     useRef<HTMLDivElement | null>(null);
-
-//   useEffect(() => {
-//     if (!user) {
-//       toast.error(
-//         "Please login to continue booking."
-//       );
-
-//       openAuth("login");
-//       return;
-//     }
-
-//     setClientDetails({
-//       name: user?.name || "",
-//       phone: user?.phone || "",
-//       email: user?.email || "",
-//     });
-//   }, [user, openAuth]);
-
-//   useEffect(() => {
-//     const updateVisibleCount = () => {
-//       const width = window.innerWidth;
-
-//       if (width < 640) setVisibleCount(1);
-//       else if (width < 900) setVisibleCount(2);
-//       else if (width < 1180) setVisibleCount(3);
-//       else setVisibleCount(4);
-//     };
-
-//     updateVisibleCount();
-
-//     window.addEventListener(
-//       "resize",
-//       updateVisibleCount
-//     );
-
-//     return () => {
-//       window.removeEventListener(
-//         "resize",
-//         updateVisibleCount
-//       );
-//     };
-//   }, []);
-
-//   useEffect(() => {
-//     const loadVehicles = async () => {
-//       try {
-//         setLoadingVehicles(true);
-
-//         const allVehicles =
-//           await fetchAllRoadshowVehicles();
-
-//         setVehicles(allVehicles);
-
-//         const storedDraft =
-//           sessionStorage.getItem(
-//             "roadshow_booking_draft"
-//           );
-
-//         if (!storedDraft) return;
-
-//         const draft = JSON.parse(storedDraft);
-
-//         const initialVehicle =
-//           allVehicles.find(
-//             (vehicle) =>
-//               String(vehicle.id) ===
-//               String(draft?.vehicleId)
-//           );
-
-//         if (!initialVehicle) return;
-
-//         setSelectedVehicles([
-//           {
-//             ...initialVehicle,
-//             startDate:
-//               draft?.startDate || "",
-//             endDate:
-//               draft?.endDate || "",
-//             quantity: Number(
-//               draft?.quantity || 1
-//             ),
-//           },
-//         ]);
-//       } catch (error) {
-//         console.error(error);
-
-//         toast.error(
-//           error instanceof Error
-//             ? error.message
-//             : "Unable to load vehicles."
-//         );
-//       } finally {
-//         setLoadingVehicles(false);
-//       }
-//     };
-
-//     loadVehicles();
-//   }, []);
-
-//   const isSelected = (
-//     vehicleId: string
-//   ) =>
-//     selectedVehicles.some(
-//       (vehicle) => vehicle.id === vehicleId
-//     );
-
-//   const toggleVehicle = (
-//     vehicle: RoadshowVehicle
-//   ) => {
-//     if (isSelected(vehicle.id)) {
-//       setSelectedVehicles((current) =>
-//         current.filter(
-//           (item) => item.id !== vehicle.id
-//         )
-//       );
-
-//       return;
-//     }
-
-//     const firstSelected =
-//       selectedVehicles[0];
-
-//     setSelectedVehicles((current) => [
-//       ...current,
-//       {
-//         ...vehicle,
-//         startDate:
-//           firstSelected?.startDate || "",
-//         endDate:
-//           firstSelected?.endDate || "",
-//         quantity: 1,
-//       },
-//     ]);
-//   };
-
-//   const updateSelectedVehicle = (
-//     vehicleId: string,
-//     updates: Partial<SelectedVehicle>
-//   ) => {
-//     setSelectedVehicles((current) =>
-//       current.map((vehicle) =>
-//         vehicle.id === vehicleId
-//           ? {
-//               ...vehicle,
-//               ...updates,
-//             }
-//           : vehicle
-//       )
-//     );
-//   };
-
-//   const bookingRows = useMemo(() => {
-//     return selectedVehicles.map(
-//       (vehicle) => {
-//         const days = getDays(
-//           vehicle.startDate,
-//           vehicle.endDate
-//         );
-
-//         return {
-//           ...vehicle,
-//           days,
-//           total:
-//             vehicle.rate *
-//             days *
-//             vehicle.quantity,
-//         };
-//       }
-//     );
-//   }, [selectedVehicles]);
-
-//   const grandTotal = useMemo(() => {
-//     return bookingRows.reduce(
-//       (total, vehicle) =>
-//         total + vehicle.total,
-//       0
-//     );
-//   }, [bookingRows]);
-
-//   const validate = () => {
-//     if (!clientDetails.name.trim()) {
-//       toast.error(
-//         "Enter client or company name."
-//       );
-//       return false;
-//     }
-
-//     if (
-//       clientDetails.phone.replace(/\D/g, "")
-//         .length !== 10
-//     ) {
-//       toast.error(
-//         "Enter a valid phone number."
-//       );
-//       return false;
-//     }
-
-//     if (
-//       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-//         clientDetails.email.trim()
-//       )
-//     ) {
-//       toast.error(
-//         "Enter a valid email address."
-//       );
-//       return false;
-//     }
-
-//     if (!selectedVehicles.length) {
-//       toast.error(
-//         "Select at least one vehicle."
-//       );
-//       return false;
-//     }
-
-//     for (const vehicle of selectedVehicles) {
-//       if (
-//         !vehicle.startDate ||
-//         !vehicle.endDate
-//       ) {
-//         toast.error(
-//           `Select dates for ${vehicle.name}.`
-//         );
-//         return false;
-//       }
-
-//       if (
-//         vehicle.endDate <
-//         vehicle.startDate
-//       ) {
-//         toast.error(
-//           `Invalid dates for ${vehicle.name}.`
-//         );
-//         return false;
-//       }
-//     }
-
-//     return true;
-//   };
-
-//   const handleSubmit = () => {
-//     if (!validate()) return;
-
-//     setSubmitting(true);
-
-//     const payload = {
-//       clientDetails: {
-//         name: clientDetails.name.trim(),
-//         phone:
-//           clientDetails.phone.replace(
-//             /\D/g,
-//             ""
-//           ),
-//         email:
-//           clientDetails.email
-//             .trim()
-//             .toLowerCase(),
-//       },
-
-//       vehicles: bookingRows.map(
-//         (vehicle) => ({
-//           vehicleId: vehicle.id,
-//           vehicleTypeId:
-//             vehicle.vehicleTypeId,
-//           vehicleName: vehicle.name,
-//           packageId:
-//             vehicle.packageDetails?._id ||
-//             "",
-//           pricePerDay: vehicle.rate,
-//           startDate:
-//             vehicle.startDate,
-//           endDate:
-//             vehicle.endDate,
-//           days: vehicle.days,
-//           quantity:
-//             vehicle.quantity,
-//           total: vehicle.total,
-//         })
-//       ),
-
-//       grandTotal,
-//     };
-
-//     sessionStorage.setItem(
-//       "roadshow_campaign_payload",
-//       JSON.stringify(payload)
-//     );
-
-//     console.log(
-//       "Campaign request payload:",
-//       payload
-//     );
-
-//     window.setTimeout(() => {
-//       setSubmitting(false);
-
-//       toast.success(
-//         "Campaign request details prepared successfully."
-//       );
-//     }, 500);
-//   };
-
-//   const maxIndex = Math.max(
-//     vehicles.length - visibleCount,
-//     0
-//   );
-
-//   return (
-//     <main className="min-h-screen bg-white px-4 py-12 text-black">
-//       <section className="mx-auto grid max-w-[1420px] grid-cols-1 gap-5 lg:grid-cols-[0.68fr_1.32fr]">
-//         <aside className="rounded-[20px] bg-[#f7f7f9] p-7">
-//           <h1 className="text-[22px] font-semibold">
-//             Campaign Request Form
-//           </h1>
-
-//           <div className="mt-7 space-y-6">
-//             <input
-//               type="text"
-//               placeholder="Full Name / Company Name *"
-//               value={clientDetails.name}
-//               onChange={(event) =>
-//                 setClientDetails(
-//                   (current) => ({
-//                     ...current,
-//                     name: event.target.value,
-//                   })
-//                 )
-//               }
-//               className="w-full border-b border-[#888888] bg-transparent px-1 py-2 outline-none"
-//             />
-
-//             <input
-//               type="tel"
-//               placeholder="Phone Number *"
-//               value={clientDetails.phone}
-//               maxLength={10}
-//               onChange={(event) =>
-//                 setClientDetails(
-//                   (current) => ({
-//                     ...current,
-//                     phone:
-//                       event.target.value
-//                         .replace(/\D/g, "")
-//                         .slice(0, 10),
-//                   })
-//                 )
-//               }
-//               className="w-full border-b border-[#888888] bg-transparent px-1 py-2 outline-none"
-//             />
-
-//             <input
-//               type="email"
-//               placeholder="Email Address *"
-//               value={clientDetails.email}
-//               onChange={(event) =>
-//                 setClientDetails(
-//                   (current) => ({
-//                     ...current,
-//                     email:
-//                       event.target.value,
-//                   })
-//                 )
-//               }
-//               className="w-full border-b border-[#888888] bg-transparent px-1 py-2 outline-none"
-//             />
-//           </div>
-
-//           <div className="mt-7 space-y-4">
-//             {selectedVehicles.map(
-//               (vehicle) => (
-//                 <div
-//                   key={vehicle.id}
-//                   className="rounded-[16px] bg-white p-4"
-//                 >
-//                   <div className="flex items-start justify-between gap-3">
-//                     <div>
-//                       <p className="text-[12px] text-[#777777]">
-//                         Vehicle Type
-//                       </p>
-
-//                       <p className="mt-1 text-[14px] font-semibold">
-//                         {vehicle.name}
-//                       </p>
-//                     </div>
-
-//                     <button
-//                       type="button"
-//                       onClick={() =>
-//                         toggleVehicle(vehicle)
-//                       }
-//                       className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f1f1f1] text-[#d70000]"
-//                     >
-//                       ×
-//                     </button>
-//                   </div>
-
-//                   <div className="mt-5 grid grid-cols-2 gap-5">
-//                     <label>
-//                       <span className="text-[12px] text-[#666666]">
-//                         Start Date
-//                       </span>
-
-//                       <input
-//                         type="date"
-//                         min={getToday()}
-//                         value={
-//                           vehicle.startDate
-//                         }
-//                         onChange={(event) =>
-//                           updateSelectedVehicle(
-//                             vehicle.id,
-//                             {
-//                               startDate:
-//                                 event.target
-//                                   .value,
-//                             }
-//                           )
-//                         }
-//                         className="mt-1 w-full border-b border-[#888888] bg-transparent py-2 outline-none"
-//                       />
-//                     </label>
-
-//                     <label>
-//                       <span className="text-[12px] text-[#666666]">
-//                         End Date
-//                       </span>
-
-//                       <input
-//                         type="date"
-//                         min={
-//                           vehicle.startDate ||
-//                           getToday()
-//                         }
-//                         value={
-//                           vehicle.endDate
-//                         }
-//                         onChange={(event) =>
-//                           updateSelectedVehicle(
-//                             vehicle.id,
-//                             {
-//                               endDate:
-//                                 event.target
-//                                   .value,
-//                             }
-//                           )
-//                         }
-//                         className="mt-1 w-full border-b border-[#888888] bg-transparent py-2 outline-none"
-//                       />
-//                     </label>
-//                   </div>
-
-//                   <div className="mt-4">
-//                     <p className="text-[12px] text-[#666666]">
-//                       Vehicle Quantity
-//                     </p>
-
-//                     <div className="mt-2 flex items-center gap-3">
-//                       <button
-//                         type="button"
-//                         onClick={() =>
-//                           updateSelectedVehicle(
-//                             vehicle.id,
-//                             {
-//                               quantity:
-//                                 Math.max(
-//                                   vehicle.quantity -
-//                                     1,
-//                                   1
-//                                 ),
-//                             }
-//                           )
-//                         }
-//                         className="h-6 w-6 rounded bg-[#dedede]"
-//                       >
-//                         −
-//                       </button>
-
-//                       <span>
-//                         {vehicle.quantity}
-//                       </span>
-
-//                       <button
-//                         type="button"
-//                         onClick={() =>
-//                           updateSelectedVehicle(
-//                             vehicle.id,
-//                             {
-//                               quantity:
-//                                 vehicle.quantity +
-//                                 1,
-//                             }
-//                           )
-//                         }
-//                         className="h-6 w-6 rounded bg-[#dedede]"
-//                       >
-//                         +
-//                       </button>
-//                     </div>
-//                   </div>
-//                 </div>
-//               )
-//             )}
-//           </div>
-
-//           <div className="mt-7 flex gap-3">
-//             <button
-//               type="button"
-//               onClick={handleSubmit}
-//               disabled={submitting}
-//               className="rounded-full bg-black px-6 py-3 text-[13px] text-white disabled:opacity-60"
-//             >
-//               {submitting
-//                 ? "Submitting..."
-//                 : "Submit"}
-//             </button>
-
-//             <button
-//               type="button"
-//               onClick={() =>
-//                 vehicleSectionRef.current?.scrollIntoView(
-//                   {
-//                     behavior: "smooth",
-//                   }
-//                 )
-//               }
-//               className="rounded-full bg-[#d9d9dd] px-6 py-3 text-[13px]"
-//             >
-//               Add More Vehicle
-//             </button>
-//           </div>
-//         </aside>
-
-//         <section>
-//           <h2 className="font-bold">
-//             Product Details
-//           </h2>
-
-//           <p className="mt-1 text-[14px]">
-//             Review your roadshow campaign details and confirm your booking.
-//           </p>
-
-//           <div
-//             ref={vehicleSectionRef}
-//             className="mt-5 overflow-hidden"
-//           >
-//             {loadingVehicles ? (
-//               <div className="flex min-h-[230px] items-center justify-center">
-//                 Loading vehicles...
-//               </div>
-//             ) : (
-//               <div
-//                 className="flex transition-transform duration-500"
-//                 style={{
-//                   transform: `translateX(-${
-//                     currentIndex *
-//                     (100 / visibleCount)
-//                   }%)`,
-//                 }}
-//               >
-//                 {vehicles.map((vehicle) => {
-//                   const selected =
-//                     isSelected(vehicle.id);
-
-//                   return (
-//                     <article
-//                       key={vehicle.id}
-//                       className="shrink-0 px-1.5"
-//                       style={{
-//                         width: `${
-//                           100 / visibleCount
-//                         }%`,
-//                       }}
-//                     >
-//                       <div className="relative rounded-[16px] bg-[#d9d9d9] p-3">
-//                         <input
-//                           type="checkbox"
-//                           checked={selected}
-//                           onChange={() =>
-//                             toggleVehicle(vehicle)
-//                           }
-//                           className="absolute right-3 top-3"
-//                         />
-
-//                         <img
-//                           src={vehicle.image}
-//                           alt={vehicle.name}
-//                           className="h-[115px] w-full object-contain"
-//                           onError={(event) => {
-//                             event.currentTarget.src =
-//                               FALLBACK_VEHICLE_IMAGE;
-//                           }}
-//                         />
-
-//                         <h3 className="mt-2 text-[13px] font-bold">
-//                           {vehicle.name}
-//                         </h3>
-
-//                         <p className="text-[13px]">
-//                           ₹
-//                           {vehicle.rate.toLocaleString(
-//                             "en-IN"
-//                           )}
-//                           /Per Day
-//                         </p>
-
-//                         <p className="text-[11px] text-[#d70000]">
-//                           {vehicle.rating} ★
-//                         </p>
-
-//                         <button
-//                           type="button"
-//                           onClick={() =>
-//                             toggleVehicle(vehicle)
-//                           }
-//                           className="mt-2 w-full rounded-full bg-white py-2 text-[12px]"
-//                         >
-//                           {selected
-//                             ? "✓ Vehicle added"
-//                             : "Add Vehicle"}
-//                         </button>
-//                       </div>
-//                     </article>
-//                   );
-//                 })}
-//               </div>
-//             )}
-//           </div>
-
-//           <div className="mt-4 flex justify-end gap-2">
-//             <button
-//               type="button"
-//               onClick={() =>
-//                 setCurrentIndex(
-//                   (current) =>
-//                     Math.max(
-//                       current - 1,
-//                       0
-//                     )
-//                 )
-//               }
-//               disabled={currentIndex === 0}
-//               className="h-10 w-10 rounded-full border"
-//             >
-//               ‹
-//             </button>
-
-//             <button
-//               type="button"
-//               onClick={() =>
-//                 setCurrentIndex(
-//                   (current) =>
-//                     Math.min(
-//                       current + 1,
-//                       maxIndex
-//                     )
-//                 )
-//               }
-//               disabled={
-//                 currentIndex >= maxIndex
-//               }
-//               className="h-10 w-10 rounded-full border"
-//             >
-//               ›
-//             </button>
-//           </div>
-
-//           <div className="mt-8 overflow-x-auto rounded-[16px] bg-[#f1f1f1]">
-//             <table className="w-full min-w-[720px]">
-//               <thead className="bg-[#d8d8d8]">
-//                 <tr>
-//                   {[
-//                     "Name",
-//                     "Price",
-//                     "Days",
-//                     "Qty",
-//                     "Total",
-//                   ].map((heading) => (
-//                     <th
-//                       key={heading}
-//                       className="px-6 py-5 text-left"
-//                     >
-//                       {heading}
-//                     </th>
-//                   ))}
-//                 </tr>
-//               </thead>
-
-//               <tbody>
-//                 {bookingRows.map(
-//                   (vehicle) => (
-//                     <tr
-//                       key={vehicle.id}
-//                       className="border-b"
-//                     >
-//                       <td className="px-6 py-6">
-//                         {vehicle.name}
-//                       </td>
-
-//                       <td className="px-6 py-6">
-//                         ₹
-//                         {vehicle.rate.toLocaleString(
-//                           "en-IN"
-//                         )}
-//                       </td>
-
-//                       <td className="px-6 py-6">
-//                         {vehicle.days} day(s)
-//                       </td>
-
-//                       <td className="px-6 py-6">
-//                         {vehicle.quantity}
-//                       </td>
-
-//                       <td className="px-6 py-6">
-//                         ₹
-//                         {vehicle.total.toLocaleString(
-//                           "en-IN"
-//                         )}
-//                       </td>
-//                     </tr>
-//                   )
-//                 )}
-//               </tbody>
-
-//               {bookingRows.length > 0 && (
-//                 <tfoot>
-//                   <tr className="bg-[#dedede]">
-//                     <td
-//                       colSpan={4}
-//                       className="px-6 py-5 text-right font-bold"
-//                     >
-//                       Grand Total
-//                     </td>
-
-//                     <td className="px-6 py-5 font-bold">
-//                       ₹
-//                       {grandTotal.toLocaleString(
-//                         "en-IN"
-//                       )}
-//                     </td>
-//                   </tr>
-//                 </tfoot>
-//               )}
-//             </table>
-//           </div>
-//         </section>
-//       </section>
-//     </main>
-//   );
-// }
-
-
-
-
 /* eslint-disable */
 // @ts-nocheck
 "use client";
@@ -1716,7 +883,7 @@ export default function CampaignRequestPage() {
 
   return (
     <main className="min-h-screen bg-white pb-20 pt-8 text-[#171719] sm:pt-10 lg:pt-14">
-      <section className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8 xl:px-12">
+      <section className="mx-auto w-full  px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(320px,0.76fr)_minmax(0,1.28fr)] lg:items-start xl:gap-10">
           {/* Campaign request form */}
           <aside className="rounded-[26px] bg-[#f7f7f8] p-5 sm:p-6 lg:sticky lg:top-24 rdsw_CrfLeftMain">
@@ -1744,7 +911,7 @@ export default function CampaignRequestPage() {
                       })
                     )
                   }
-                  placeholder="Enter full name or company name"
+                  placeholder="Full Name / Company Name *"
                   className="rdw_crf_inputs h-10 w-full border-b border-[#aaaaaa] bg-transparent px-0 text-[13px] text-black outline-none transition placeholder:text-[#a0a0a0] focus:border-black"
                 />
               </label>
@@ -1772,7 +939,7 @@ export default function CampaignRequestPage() {
                       })
                     )
                   }
-                  placeholder="Enter phone number"
+                  placeholder="Phone Number *"
                   className="rdw_crf_inputs h-10 w-full border-b border-[#aaaaaa] bg-transparent px-0 text-[13px] text-black outline-none transition placeholder:text-[#a0a0a0] focus:border-black"
                 />
               </label>
@@ -1794,7 +961,7 @@ export default function CampaignRequestPage() {
                       })
                     )
                   }
-                  placeholder="Enter email address"
+                  placeholder="Email Address *"
                   className="rdw_crf_inputs  h-10 w-full border-b border-[#aaaaaa] bg-transparent px-0 text-[13px] text-black outline-none transition placeholder:text-[#a0a0a0] focus:border-black"
                 />
               </label>
@@ -1850,14 +1017,14 @@ export default function CampaignRequestPage() {
                           )
                         }
                         aria-label={`Remove ${vehicle.name}`}
-                        className="rdsw_crfAddedVehHeadingMainBtn flex h-7 w-7 items-center justify-center rounded-full bg-[#f3f3f3] text-[#a00000] transition hover:bg-[#d70000] hover:text-white"
+                        className="rdsw_crfAddedVehHeadingMainRmvBtn flex h-7 w-7 items-center justify-center rounded-full bg-[#f3f3f3] text-[#a00000] transition hover:bg-[#d70000] hover:text-white"
                       >
                         <X size={13} />
                       </button>
                     </div>
 
-                    <label className="block">
-                      <span className="mb-2 block text-[11px] font-medium text-[#575757]">
+                    <label className=" rdsw_crfVehLableMain block">
+                      <span className=" rdsw_crfVehLableSpan mb-2 block text-[11px] font-medium text-[#777777]">
                         Vehicle Type *
                       </span>
 
@@ -1869,7 +1036,7 @@ export default function CampaignRequestPage() {
                             event.target.value
                           )
                         }
-                        className="h-10 w-full border-b border-[#bbbbbb] bg-transparent text-[12px] text-black outline-none focus:border-black"
+                        className="rdsw_crdVehType h-10 w-full border-b border-[#bbbbbb] bg-transparent text-[12px] text-black outline-none focus:border-black"
                       >
                         {vehicles.map(
                           (vehicleOption) => (
@@ -1890,7 +1057,7 @@ export default function CampaignRequestPage() {
                       </select>
                     </label>
 
-                    <div className="mt-5 grid grid-cols-2 gap-4">
+                    <div className=" rdsw_crfVehLableMain mt-5 grid grid-cols-2 gap-4">
                       <button
                         type="button"
                         onClick={() =>
@@ -1948,18 +1115,18 @@ export default function CampaignRequestPage() {
                       </button>
                     </div>
 
-                    <div className="mt-5 flex items-center justify-between gap-4">
+                    <div className=" mt-5 flex items-center justify-between gap-4">
                       <div>
-                        <p className="text-[10px] font-medium text-[#777777]">
+                        <p className=" rdsw_crfQtyHeading text-[10px] font-medium text-[#777777]">
                           Vehicle Quantity
                         </p>
 
-                        <p className="mt-1 text-[11px] text-[#aaaaaa]">
+                        <p className=" rdsw_crfQtyDesc mt-1 text-[11px] text-[#aaaaaa]">
                           Select required vehicles
                         </p>
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-2 rounded-full bg-[#f3f3f4] p-1">
+                      <div className="rdsw_crfQtyBtnMain flex shrink-0 items-center gap-2 rounded-full bg-[#f3f3f4] p-1">
                         <button
                           type="button"
                           onClick={() =>
@@ -2014,7 +1181,7 @@ export default function CampaignRequestPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="flex min-w-[95px] items-center justify-center gap-2 rounded-full bg-[#1a1a1c] px-6 py-3 text-[12px] font-semibold text-white transition hover:bg-[#d70000] disabled:cursor-not-allowed disabled:opacity-60"
+                className="rdsw_crfVehSubmitBtn flex  items-center justify-center gap-2 rounded-full bg-[#1a1a1c] px-6 py-3 text-[12px] font-semibold text-white transition hover:bg-[#d70000] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting && (
                   <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
@@ -2035,7 +1202,7 @@ export default function CampaignRequestPage() {
                     }
                   )
                 }
-                className="rounded-full bg-[#dedee1] px-6 py-3 text-[12px] font-semibold text-[#202020] transition hover:bg-[#cfcfd2]"
+                className="rdsw_crfVehAddVehBtn rounded-full bg-[#dedee1] px-6 py-3 text-[12px] font-semibold text-[#202020] transition hover:bg-[#cfcfd2]"
               >
                 Add More Vehicle
               </button>
