@@ -429,11 +429,11 @@ import OrderEditHistoryTab from "./OrderEditHistoryTab";
 
 
 function OverviewTab({
-  order, onRefresh, onStageMove,getVehicleTypeName
+  order, onRefresh, onStageMove, getVehicleTypeName
 }: {
   order: SalesOrder; onRefresh: () => Promise<void>;
   onStageMove: (order: SalesOrder, toStage: string) => void;
-  getVehicleTypeName:any
+  getVehicleTypeName: any
 }) {
 
   const [activeVehicleTab, setActiveVehicleTab] = useState<number>(0);
@@ -479,6 +479,14 @@ function OverviewTab({
       }
     }
   }, [activeVehicleTab]);
+
+
+  const baseDays =
+  Math.ceil(
+    (new Date(currentVehicle.toDate).getTime() -
+      new Date(currentVehicle.fromDate).getTime()) /
+      86400000
+  ) + 1;
 
   return (
     <div className="p-4 space-y-4">
@@ -620,25 +628,40 @@ function OverviewTab({
                   ["Vehicle Model", getVehicleTypeName(currentVehicle.vehicleType)], // Fixed: changed 'vehicle' to 'currentVehicle'
                   ["Booking For", order.customerCategory],
                   ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType],
-                  ["Duration", currentVehicle.fromDate && currentVehicle.toDate
-                    ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000)}D base${currentVehicle.extraDays > 0 ? ` +${currentVehicle.extraDays} D = ${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000) + currentVehicle.extraDays}D total` : ""})`
-                    : "—"],
-                  ["Driving route", `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
-                  ["State / City", `${currentVehicle.state} / ${currentVehicle.city}`],
-                  ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
+                  [
+                    "Duration",
+                    currentVehicle.fromDate && currentVehicle.toDate
+                      ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })} (${baseDays}D base${currentVehicle.extraDays > 0
+                        ? ` +${currentVehicle.extraDays}D = ${baseDays + currentVehicle.extraDays
+                        }D total`
+                        : ""
+                      })`
+                      : "—",
+                  ],
+              ["Driving route", `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
+              ["State / City", `${currentVehicle.state} / ${currentVehicle.city}`],
+              ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
                   currentVehicle.extraKm > 0 ? ["Extra KM", `${currentVehicle.extraKm} km`] : null,
                   currentVehicle.extraHours > 0 ? ["Extra Hours", `${currentVehicle.extraHours} hours`] : null,
-                  currentVehicle.needPromoter ? ["Promoter", `${currentVehicle.promoterType === "Other" ? currentVehicle.otherPromoterType : currentVehicle.promoterType} · ${currentVehicle.promoterGender} · ${currentVehicle.promoterLanguage} · Qty ${currentVehicle.promoterQuantity}`] : null,
-                  currentVehicle.gstNumber ? ["GST", currentVehicle.gstNumber] : null,
-                ] as ([string, string] | null)[]
+              currentVehicle.needPromoter ? ["Promoter", `${currentVehicle.promoterType === "Other" ? currentVehicle.otherPromoterType : currentVehicle.promoterType} · ${currentVehicle.promoterGender} · ${currentVehicle.promoterLanguage} · Qty ${currentVehicle.promoterQuantity}`] : null,
+              currentVehicle.gstNumber ? ["GST", currentVehicle.gstNumber] : null,
+              ] as ([string, string] | null)[]
               )
                 .filter((item): item is [string, string] => item !== null)
                 .map(([label, value], i) => (
-                  <div key={i} className="flex justify-between text-md gap-4">
-                    <span className="text-gray-500 shrink-0">{label}</span>
-                    <span className="text-gray-800 dark:text-gray-200 font-medium text-right">{value}</span>
-                  </div>
-                ))
+              <div key={i} className="flex justify-between text-md gap-4">
+                <span className="text-gray-500 shrink-0">{label}</span>
+                <span className="text-gray-800 dark:text-gray-200 font-medium text-right">{value}</span>
+              </div>
+              ))
               }
             </div>
 
@@ -1324,13 +1347,13 @@ export default function SalesDetailDrawer({
   const stage = SALES_STAGE_MAP[order.salesPipelineStatus];
   const stageIdx = SALES_STAGES.findIndex((s) => s.key === order.salesPipelineStatus);
   const [showEditForm, setShowEditForm] = useState(false);
- const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+  const { vehicleTypes, fetchVehicleTypes } = useVehicle();
 
-   useEffect(() => {
+  useEffect(() => {
     fetchVehicleTypes()
   }, [])
 
-    const getVehicleTypeName = (vehicleTypeId: string) => {
+  const getVehicleTypeName = (vehicleTypeId: string) => {
     if (!vehicleTypeId || !vehicleTypes) return "";
     const vehicle = vehicleTypes.find((vt: any) => vt._id === vehicleTypeId);
     return vehicle?.typeName || vehicleTypeId;
@@ -1382,16 +1405,16 @@ export default function SalesDetailDrawer({
 
 
   const tabs: { key: Tab; label: string }[] = [
-  { key: "overview", label: "Overview" },
-  { key: "comments", label: "Comments" },
-  { key: "pipeline", label: "Pipeline History" },
-  { key: "documents", label: isPoStage ? "PO Document" : "" },
-  { key: "dateConflict", label: "Date Conflict" },
-  { key: "orderEditHistory", label: "Edit History" },   
-  ...(order.salesPipelineStatus === "projectCodeCreation"
-    ? [{ key: "codeCreation" as Tab, label: "Code Creation" }]
-    : []),
-];
+    { key: "overview", label: "Overview" },
+    { key: "comments", label: "Comments" },
+    { key: "pipeline", label: "Pipeline History" },
+    { key: "documents", label: isPoStage ? "PO Document" : "" },
+    { key: "dateConflict", label: "Date Conflict" },
+    { key: "orderEditHistory", label: "Edit History" },
+    ...(order.salesPipelineStatus === "projectCodeCreation"
+      ? [{ key: "codeCreation" as Tab, label: "Code Creation" }]
+      : []),
+  ];
 
 
   useEffect(() => {
@@ -1531,7 +1554,7 @@ export default function SalesDetailDrawer({
             <div className="flex flex-col sm:flex-row h-full min-h-0">
 
               <div className="flex-1 overflow-y-auto sm:border-r border-gray-100 dark:border-gray-800">
-                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove}  getVehicleTypeName={getVehicleTypeName}/>
+                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} getVehicleTypeName={getVehicleTypeName} />
               </div>
 
 
@@ -1653,9 +1676,9 @@ export default function SalesDetailDrawer({
           {activeTab === "codeCreation" && (
             <CodeCreationTab order={order} onRefresh={onRefresh} />
           )}
-{activeTab === "orderEditHistory" && (
-  <OrderEditHistoryTab order={order} getVehicleTypeName={getVehicleTypeName} />
-)}
+          {activeTab === "orderEditHistory" && (
+            <OrderEditHistoryTab order={order} getVehicleTypeName={getVehicleTypeName} />
+          )}
 
           {activeTab === "dateConflict" && (
             <DateConflictTab order={order} onOpenConflictOrder={onOpenConflictOrder} />

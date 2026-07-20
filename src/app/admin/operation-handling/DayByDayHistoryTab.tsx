@@ -265,19 +265,21 @@ export default function DayByDayHistoryTab({ order }: { order: { _id: string } }
       });
       allEvents.sort((a, b) => new Date(a._timestamp || 0).getTime() - new Date(b._timestamp || 0).getTime());
 
+      // Group by entryId, NOT by reg no. — a reg no. can be reused across
+      // multiple distinct entries over the campaign (replaced out, later
+      // reused as a replacement elsewhere). Grouping by reg text would merge
+      // two unrelated lifecycles into one tab. Each entryId is one lifecycle
+      // instance and gets its own tab, even if the reg no. repeats.
+      // Note: the replacement entry's own "Vehicle Added" / "Vehicle
+      // Replaced (Incoming)" driverChangeHistory records (built server-side,
+      // tagged with the new entryId) already cover its introduction — no
+      // synthetic event needs to be added here.
       const eventsByReg: Record<string, any[]> = {};
       allEvents.forEach((e) => {
-        const reg = e.vehicleRegistrationNumber;
-        if (reg) {
-          if (!eventsByReg[reg]) eventsByReg[reg] = [];
-          eventsByReg[reg].push(e);
-        }
-        // A "replaced" event also introduces the replacement reg as active from that day.
-        if (e._category === "unavailableHistory" && e.eventType === "replaced" && e.replacementVehicleRegistrationNumber) {
-          const rreg = e.replacementVehicleRegistrationNumber;
-          if (!eventsByReg[rreg]) eventsByReg[rreg] = [];
-          eventsByReg[rreg].push({ ...e, vehicleRegistrationNumber: rreg, _category: "driverChangeHistory", eventType: "Replacement Vehicle Added", newDriverName: e.replacementDriverName, newDriverPhone: e.replacementDriverPhone });
-        }
+        const key = e.entryId || e.vehicleRegistrationNumber;
+        if (!key) return;
+        if (!eventsByReg[key]) eventsByReg[key] = [];
+        eventsByReg[key].push(e);
       });
 
       const days: string[] = [];
@@ -336,21 +338,25 @@ export default function DayByDayHistoryTab({ order }: { order: { _id: string } }
         // turned Removed/Unavailable/Replaced on an earlier day are dropped — only On Road
         // vehicles (or ones whose status just changed today) carry forward.
         const dayRows = Object.keys(eventsByReg)
-          .map((reg) => {
-            const events = eventsByReg[reg];
+          .map((entryKey) => {
+            const events = eventsByReg[entryKey];
             const eventsUpToDay = events.filter((e) => (e._day || "") <= activeDay);
             if (eventsUpToDay.length === 0) return null;
             const snapshot = computeRegSnapshot(eventsUpToDay);
             if (snapshot.status !== "On Road" && snapshot.statusDay !== activeDay) return null;
             const todaysEvents = events.filter((e) => e._day === activeDay);
-            return { reg, firstDay: eventsUpToDay[0]._day, todaysEvents, ...snapshot };
+            // Display reg no. — most recent one known for this entry (a
+            // driver "updated" event can change the reg within the same entry).
+            const displayReg = [...eventsUpToDay].reverse().find((e) => e.vehicleRegistrationNumber)?.vehicleRegistrationNumber
+              || events[0]?.vehicleRegistrationNumber || entryKey;
+            return { reg: displayReg, entryKey, firstDay: eventsUpToDay[0]._day, todaysEvents, ...snapshot };
           })
           .filter(Boolean)
           .sort((a: any, b: any) => (a.firstDay || "").localeCompare(b.firstDay || ""));
 
         const dayKey = `${vt.vehicleIndex}:${activeDay}`;
-        const activeReg = regTab[dayKey] || dayRows[0]?.reg;
-        const activeRow = dayRows.find((r: any) => r.reg === activeReg);
+        const activeEntryKey = regTab[dayKey] || dayRows[0]?.entryKey;
+        const activeRow = dayRows.find((r: any) => r.entryKey === activeEntryKey);
 
         return (
           <div key={vt.vehicleIndex} className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900">
@@ -404,16 +410,16 @@ export default function DayByDayHistoryTab({ order }: { order: { _id: string } }
                           <div className="flex flex-wrap gap-1.5">
                             {dayRows.map((row: any) => (
                               <button
-                                key={row.reg}
-                                onClick={() => setRegTab((p) => ({ ...p, [dayKey]: row.reg }))}
+                                key={row.entryKey}
+                                onClick={() => setRegTab((p) => ({ ...p, [dayKey]: row.entryKey }))}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono font-semibold transition-all ${
-                                  activeReg === row.reg
+                                  activeEntryKey === row.entryKey
                                     ? "bg-teal-600 border-teal-600 text-white"
                                     : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                                 }`}
                               >
                                 {row.reg}
-                                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeReg === row.reg ? "bg-white/20 text-white" : STATUS_CHIP[row.status] || "bg-blue-100 text-blue-700"}`}>
+                                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeEntryKey === row.entryKey ? "bg-white/20 text-white" : STATUS_CHIP[row.status] || "bg-blue-100 text-blue-700"}`}>
                                   {row.status}
                                 </span>
                               </button>

@@ -20,6 +20,7 @@ import {
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 import { useVehicle } from "../../../context/vehicletypecontext";
+import RegNoHistoryModal from "./RegNoHistoryModal";
 
 
 
@@ -43,6 +44,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
   const [unavailablePhoto, setUnavailablePhoto] = useState(null);
   const [unavailableInventoryStatus, setUnavailableInventoryStatus] = useState("Unavailable");
   const [unavailableSubmitting, setUnavailableSubmitting] = useState(false);
+  const [regHistoryOpen, setRegHistoryOpen] = useState(false);
 
 
   // const handleUpdateDriver = async () => {
@@ -420,9 +422,15 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                 <Truck size={28} className="text-gray-400" />
               )}
             </div>
-            <span className="text-xs font-semibold tracking-wide text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded-md">
+            <button
+              type="button"
+              onClick={() => setRegHistoryOpen(true)}
+              disabled={!entry.vehicleRegistrationNumber}
+              className="text-xs font-semibold tracking-wide text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded-md hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-all disabled:cursor-default disabled:hover:bg-gray-100 disabled:hover:text-gray-600"
+              title="View full history for this registration number"
+            >
               {entry.vehicleRegistrationNumber || "—"}
-            </span>
+            </button>
             {isUnavailable && (
               <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md bg-red-100 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 text-center leading-tight">
                 <XCircle size={10} />
@@ -1062,6 +1070,14 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
             </div>
           </div>
         </div>
+      )}
+
+      {regHistoryOpen && (
+        <RegNoHistoryModal
+          order={order}
+          regNo={entry.vehicleRegistrationNumber}
+          onClose={() => setRegHistoryOpen(false)}
+        />
       )}
     </>
   );
