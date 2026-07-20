@@ -20,11 +20,12 @@ import {
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 import { useVehicle } from "../../../context/vehicletypecontext";
+import ReplaceVehicleModal from "./ReplaceVehicleModal";
 
 
 
 
-export default function VehicleUnavailableRow({ entry, index, order, onRefresh, vehicle, gpsData, correctVehicleIndex, forceOpen, onForceOpenHandled }) {
+export default function VehicleUnavailableRow({ entry, index, order, onRefresh, vehicle, vehicleTypes, gpsData, correctVehicleIndex, forceOpen, onForceOpenHandled }) {
     const [modalOpen, setModalOpen] = useState(false);
     const [commentText, setCommentText] = useState("");
     const [commentPhoto, setCommentPhoto] = useState(null);
@@ -39,6 +40,7 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
     const [availableSubmitting, setAvailableSubmitting] = useState(false);
     const [availableReason, setAvailableReason] = useState("");
     const [availablePhoto, setAvailablePhoto] = useState(null);
+    const [replaceOpen, setReplaceOpen] = useState(false);
 
 
     const fmtDatetime = (s) => {
@@ -182,6 +184,17 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
                         <span className="text-xs font-semibold tracking-wide text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded-md">
                             {entry.vehicleRegistrationNumber || "—"}
                         </span>
+                        {entry.inventoryStatus && (
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border leading-none ${
+                                entry.inventoryStatus === "Damaged"
+                                    ? "bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                                    : entry.inventoryStatus === "Under Maintenance"
+                                        ? "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
+                                        : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                            }`}>
+                                {entry.inventoryStatus}
+                            </span>
+                        )}
                     </div>
 
 
@@ -307,13 +320,15 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
                                 Call Driver
                             </button>
 
-                            {/* <button
-                                onClick={() => setAvailableOpen(true)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all whitespace-nowrap"
-                            >
-                                <CheckCircle size={11} />
-                                Available
-                            </button> */}
+                            {entry.entryStatus !== "removed" && latestUnavailableHistory?.eventType !== "replaced" && (
+                                <button
+                                    onClick={() => setReplaceOpen(true)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all whitespace-nowrap"
+                                >
+                                    <RefreshCw size={11} />
+                                    Replace Vehicle
+                                </button>
+                            )}
 
                         </div>
                     </div>
@@ -508,6 +523,20 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
                         </div>
                     </div>
                 </div>
+            )}
+
+            {replaceOpen && (
+                <ReplaceVehicleModal
+                    order={order}
+                    vehicle={vehicle}
+                    vehicleIndex={correctVehicleIndex}
+                    entry={entry}
+                    vehicleTypeName={
+                        vehicleTypes?.find((vt: any) => vt._id === vehicle?.vehicleType)?.typeName
+                    }
+                    onClose={() => setReplaceOpen(false)}
+                    onRefresh={onRefresh}
+                />
             )}
 
         </>

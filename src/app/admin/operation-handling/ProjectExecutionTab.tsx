@@ -17,6 +17,7 @@ import { getToken } from "../../utils/auth";
 import { useVehicle } from '../../../context/vehicletypecontext';
 import { checkVehicleAvailability } from "@/app/utils/Adminorderapi";
 import { createPortal } from "react-dom";
+import EditOnRoadModal from "./EditOnRoadModal";
 
 const fmtDate = (s?: string) => {
   if (!s) return "—";
@@ -202,7 +203,7 @@ function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }
 }
 
 
-function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, vehicleTypeId, fromDate, toDate, orderDisplayId, customerName }) {
+function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, vehicleTypeId, fromDate, toDate, orderDisplayId, customerName, isVehicleOnRoad }) {
   const [driverName, setDriverName] = useState(existingEntry?.driverName || "");
   const [driverPhone, setDriverPhone] = useState(existingEntry?.driverPhone || "");
   const [regNo, setRegNo] = useState(existingEntry?.vehicleRegistrationNumber || "");
@@ -211,6 +212,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
   const [gatepassPreview, setGatepassPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [editOpen, setEditOpen] = useState(false);
   const fileRef = useRef(null);
 
   const isSaved = !!existingEntry?._id;
@@ -316,8 +318,27 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
           <span className="inline-flex items-center gap-1 text-[13px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
             <CheckCircle size={16} /> Saved
           </span>
-          <span className="text-sm text-gray-400">{fmtDatetime(existingEntry?.uploadedAt)}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">{fmtDatetime(existingEntry?.uploadedAt)}</span>
+            {!isVehicleOnRoad && (
+              <button
+                onClick={() => setEditOpen(true)}
+                className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all"
+              >
+                Edit
+              </button>
+            )}
+          </div>
         </div>
+      )}
+
+      {editOpen && (
+        <EditOnRoadModal
+          entry={existingEntry}
+          orderId={orderId}
+          onClose={() => setEditOpen(false)}
+          onSuccess={onSaved}
+        />
       )}
 
 
@@ -716,6 +737,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   toDate={vehicle.toDate}
                   orderDisplayId={order.orderId}
                   customerName={order.name}
+                  isVehicleOnRoad={isVehicleOnRoad}
                 />
               </div>
 

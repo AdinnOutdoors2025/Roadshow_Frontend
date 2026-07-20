@@ -104,7 +104,7 @@ function calcPricing(
   const to = new Date(toDate);
   if (from >= to) return null;
 
-  const baseDays = Math.ceil((to.getTime() - from.getTime()) / 86400000);
+  const baseDays = Math.ceil((to.getTime() - from.getTime()) / 86400000) + 1;
   const totalDays = baseDays + (extraDays || 0);
 
   const rentalCost = pkg.perDayRentalCost * totalDays * quantity;
@@ -1303,8 +1303,8 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
             {form.fromDate && form.toDate && new Date(form.fromDate) < new Date(form.toDate) && (
               <p className="text-xs text-blue-500">
-                {Math.ceil((new Date(form.toDate).getTime() - new Date(form.fromDate).getTime()) / 86400000)} base day(s)
-                {form.extraDays > 0 ? ` + ${form.extraDays} extra = ${Math.ceil((new Date(form.toDate).getTime() - new Date(form.fromDate).getTime()) / 86400000) + form.extraDays} total days` : ""}
+                {Math.ceil((new Date(form.toDate).getTime() - new Date(form.fromDate).getTime()) / 86400000) + 1} base day(s)
+                {form.extraDays > 0 ? ` + ${form.extraDays} extra = ${Math.ceil((new Date(form.toDate).getTime() - new Date(form.fromDate).getTime()) / 86400000) + 1 + form.extraDays} total days` : ""}
               </p>
             )}
           </section>

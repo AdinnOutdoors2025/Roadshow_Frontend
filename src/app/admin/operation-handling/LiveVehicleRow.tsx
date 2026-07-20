@@ -20,7 +20,6 @@ import {
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 import { useVehicle } from "../../../context/vehicletypecontext";
-import ReplaceVehicleModal from "./ReplaceVehicleModal";
 
 
 
@@ -36,13 +35,14 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
   const [updDriverPhone, setUpdDriverPhone] = useState(entry.driverPhone || "");
   const [updRegNo, setUpdRegNo] = useState(entry.vehicleRegistrationNumber || "");
   const [updVehicleDocId, setUpdVehicleDocId] = useState(entry.vehicleDocId || "");
+  const [updReason, setUpdReason] = useState("");
+  const [updateConfirmOpen, setUpdateConfirmOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [unavailableOpen, setUnavailableOpen] = useState(false);
   const [unavailableReason, setUnavailableReason] = useState("");
   const [unavailablePhoto, setUnavailablePhoto] = useState(null);
+  const [unavailableInventoryStatus, setUnavailableInventoryStatus] = useState("Unavailable");
   const [unavailableSubmitting, setUnavailableSubmitting] = useState(false);
-  const [choiceOpen, setChoiceOpen] = useState(false);
-  const [replaceOpen, setReplaceOpen] = useState(false);
 
 
   // const handleUpdateDriver = async () => {
@@ -145,6 +145,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
     if (!updDriverName.trim()) return toast.error("Driver name required");
     if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
     if (!updRegNo.trim()) return toast.error("Vehicle Reg number required");
+    if (!updReason.trim()) return toast.error("Reason for this update is required");
     // if (!updVehicleDocId) return toast.error("Select a vehicle from the list");
 
     setUpdating(true);
@@ -171,7 +172,8 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
         {
           driverName: updDriverName.trim(),
           driverPhone: updDriverPhone.trim(),
-          vehicleRegistrationNumber: newReg,          
+          vehicleRegistrationNumber: newReg,
+          reason: updReason.trim(),
         },
         { headers: { Authorization: `Bearer ${getToken()}` } }
       );
@@ -225,6 +227,8 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
 
       toast.success("Driver details updated!");
       setUpdateDriverOpen(false);
+      setUpdateConfirmOpen(false);
+      setUpdReason("");
       onRefresh();
       onBookingStatusRefresh?.();
     } catch (e) {
@@ -365,6 +369,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
       formData.append("vehicleRegistrationNumber", entry.vehicleRegistrationNumber);
       formData.append("entryId", entry._id);
       formData.append("reason", unavailableReason.trim());
+      formData.append("inventoryStatus", unavailableInventoryStatus);
       if (unavailablePhoto) formData.append("unavailablePhoto", unavailablePhoto);
 
       await axios.post(
@@ -381,6 +386,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
       setUnavailableOpen(false);
       setUnavailableReason("");
       setUnavailablePhoto(null);
+      setUnavailableInventoryStatus("Unavailable");
       onRefresh();
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to mark unavailable");
@@ -585,6 +591,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                   setUpdDriverPhone(entry.driverPhone || "");
                   setUpdRegNo(entry.vehicleRegistrationNumber || "");
                   setUpdVehicleDocId(entry.vehicleDocId || "");
+                  setUpdReason("");
                   setUpdateDriverOpen(true);
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none border-gray-200 text-gray-400 bg-gray-50 dark:bg-gray-800 dark:border-gray-700" : "border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30"}`}
@@ -600,7 +607,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                 </div>
               ) : (
                 <button
-                  onClick={() => setChoiceOpen(true)}
+                  onClick={() => setUnavailableOpen(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all whitespace-nowrap"
                 >
                   <AlertTriangle size={11} />
@@ -898,84 +905,67 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
             </div>
 
             <button
-              onClick={handleUpdateDriver}
-              disabled={updating}
+              onClick={() => {
+                if (!updDriverName.trim()) return toast.error("Driver name required");
+                if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
+                if (!updRegNo.trim()) return toast.error("Vehicle Reg number required");
+                setUpdateConfirmOpen(true);
+              }}
+              disabled={
+                updating ||
+                (updDriverName.trim() === (entry.driverName || "").trim() &&
+                  updDriverPhone.trim() === (entry.driverPhone || "").trim() &&
+                  updRegNo.trim().toUpperCase() === (entry.vehicleRegistrationNumber || "").trim().toUpperCase())
+              }
               className="w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all disabled:opacity-40"
             >
-              {updating ? "Updating..." : "Save Changes"}
+              Save Changes
             </button>
           </div>
         </div>
       )}
 
-
-      {/* ── Vehicle Unavailable: choice step ── */}
-      {choiceOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-5 flex flex-col gap-3">
+      {/* ── Update Driver: confirmation + mandatory reason ── */}
+      {updateConfirmOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                Vehicle Unavailable · {entry.vehicleRegistrationNumber}
-              </h3>
-              <button onClick={() => setChoiceOpen(false)}>
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Confirm Driver Update</h3>
+              <button onClick={() => setUpdateConfirmOpen(false)}>
                 <XCircle size={18} className="text-gray-400 hover:text-gray-600" />
               </button>
             </div>
-            <p className="text-xs text-gray-400 -mt-1">Choose how to handle this vehicle</p>
+
+            <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 p-3 text-xs text-blue-700 dark:text-blue-300 space-y-1">
+              <p><b>Driver:</b> {entry.driverName || "—"} → {updDriverName}</p>
+              <p><b>Phone:</b> {entry.driverPhone || "—"} → {updDriverPhone}</p>
+              <p><b>Reg No:</b> {entry.vehicleRegistrationNumber || "—"} → {updRegNo}</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">
+                Reason for update <span className="text-red-400">*</span>
+              </label>
+              <textarea
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
+                rows={3}
+                placeholder="Why is this driver/vehicle being updated?"
+                value={updReason}
+                onChange={(e) => setUpdReason(e.target.value)}
+              />
+            </div>
 
             <button
-              onClick={() => {
-                setChoiceOpen(false);
-                setReplaceOpen(true);
-              }}
-              className="flex items-start gap-3 p-3 rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20 transition-all text-left"
+              onClick={handleUpdateDriver}
+              disabled={updating || !updReason.trim()}
+              className="w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all disabled:opacity-40"
             >
-              <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0">
-                <RefreshCw size={14} className="text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">Replace Vehicle</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Assign a replacement vehicle immediately and move this one to Vehicle Unavailable.
-                </p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => {
-                setChoiceOpen(false);
-                setUnavailableOpen(true);
-              }}
-              className="flex items-start gap-3 p-3 rounded-xl border border-orange-200 dark:border-orange-800/50 bg-orange-50 dark:bg-orange-900/10 hover:bg-orange-100 dark:hover:bg-orange-900/20 transition-all text-left"
-            >
-              <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center flex-shrink-0">
-                <AlertTriangle size={14} className="text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-orange-700 dark:text-orange-300">Mark as Unavailable</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  No replacement yet — just flag this vehicle as unavailable with a reason.
-                </p>
-              </div>
+              {updating ? "Updating..." : "Confirm & Save"}
             </button>
           </div>
         </div>
       )}
 
-      {/* ── Replace Vehicle Modal ── */}
-      {replaceOpen && (
-        <ReplaceVehicleModal
-          order={order}
-          vehicle={vehicle}
-          vehicleIndex={correctVehicleIndex}
-          entry={entry}
-          vehicleTypeName={
-            vehicleTypes?.find((vt: any) => vt._id === vehicle?.vehicleType)?.typeName
-          }
-          onClose={() => setReplaceOpen(false)}
-          onRefresh={onRefresh}
-        />
-      )}
 
       {unavailableOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
@@ -995,6 +985,28 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
             </div>
 
             <div className="px-5 py-4 flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                  Inventory Status
+                </label>
+                <div className="flex gap-2">
+                  {["Unavailable", "Damaged", "Under Maintenance"].map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setUnavailableInventoryStatus(status)}
+                      className={`flex-1 px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                        unavailableInventoryStatus === status
+                          ? "border-orange-400 bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400"
+                          : "border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
                   Add a comment ·{" "}

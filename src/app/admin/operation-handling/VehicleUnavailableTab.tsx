@@ -268,6 +268,7 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
                     order={order}
                     onRefresh={onRefresh}
                     vehicle={vehicle}
+                    vehicleTypes={vehicleTypes}
                     gpsData={gpsData}
                     correctVehicleIndex={vehicleIndex}
                     forceOpen={activeIssueEntryId === entry.vehicleRegistrationNumber}
@@ -314,6 +315,11 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
                           {h.eventType === "replaced" && (
                             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                               Replaced
+                            </span>
+                          )}
+                          {h.status === "unavailable" && h.inventoryStatus && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                              {h.inventoryStatus}
                             </span>
                           )}
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${

@@ -28,6 +28,16 @@ export default function ExtraKmModal({ order, vehicle, vehicleIndex, vehicleEntr
 const campaignFromISO = toISODate(vehicle.fromDate);
   const campaignToISO = toISODate(vehicle.toDate);
 
+  // Extra KM/Hours purchased at Order Creation form a free-use pool for this
+  // vehicle slot; usage beyond it is additional billable overage.
+  const purchasedKm = vehicle.extraKm || 0;
+  const purchasedHours = vehicle.extraHours || 0;
+  const loggedForVehicle = (order.extraKmDetailsArray || []).filter((e) => e.vehicleIndex === vehicleIndex);
+  const usedKm = loggedForVehicle.reduce((s, e) => s + (e.extraKm || 0), 0);
+  const usedHours = loggedForVehicle.reduce((s, e) => s + (e.extraHours || 0), 0);
+  const remainingKm = Math.max(purchasedKm - usedKm, 0);
+  const remainingHours = Math.max(purchasedHours - usedHours, 0);
+
   // ── NEW: booking mismatch check ──
   const cleanRegForCheck = (r) => (r || "").replace(/\s+/g, "").toUpperCase();
   const isEntryBookingValid = (entry) => {
@@ -105,6 +115,18 @@ const handleSubmit = async () => {
             <XCircle size={18} className="text-gray-400 hover:text-gray-600" />
           </button>
         </div>
+
+        {(purchasedKm > 0 || purchasedHours > 0) && (
+          <div className="flex items-center justify-between rounded-lg bg-orange-50 dark:bg-orange-900/10 px-3 py-2 text-xs">
+            <span className="text-orange-700 dark:text-orange-300 font-semibold">Purchased balance remaining</span>
+            <span className="text-orange-700 dark:text-orange-300 font-semibold">{remainingKm} km · {remainingHours} hrs</span>
+          </div>
+        )}
+        {((Number(extraKm) || 0) > remainingKm || (Number(extraHours) || 0) > remainingHours) && (
+          <p className="text-[11px] text-amber-600 -mt-2">
+            This exceeds the purchased balance — the excess will be billed as additional usage in the campaign settlement.
+          </p>
+        )}
 
         <div className="space-y-3">
           {/* Driver / Reg No dropdown */}

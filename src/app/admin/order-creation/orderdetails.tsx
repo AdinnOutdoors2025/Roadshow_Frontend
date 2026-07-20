@@ -431,7 +431,7 @@ export default function OrderDetailDrawer({
                                             (new Date(item.toDate).getTime() -
                                                 new Date(item.fromDate).getTime()) /
                                             86400000
-                                        )
+                                        ) + 1
                                         : 0;
                                 const extraDays = item.extraDays || 0;
                                 const totalDays = baseDays + extraDays;
