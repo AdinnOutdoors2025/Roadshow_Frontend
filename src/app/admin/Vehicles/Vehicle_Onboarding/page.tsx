@@ -305,7 +305,7 @@
 //                 disabled={isDisabled}
 //               >
 //                 <div
-//                   className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all duration-200 flex-shrink-0 ${stepCompletionStatus[step.number] || (currentStep > step.number)
+//                   className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all duration-200 shrink-0 ${stepCompletionStatus[step.number] || (currentStep > step.number)
 //                     ? "bg-green-600 text-white"
 //                     : isActive
 //                       ? "bg-blue-600 text-white ring-4 ring-blue-100"
@@ -334,7 +334,7 @@
 //                 </span>
 //               </button>
 //               {idx < steps.length - 1 && (
-//                 <div className="flex items-center mx-2 flex-shrink-0">
+//                 <div className="flex items-center mx-2 shrink-0">
 //                   <div
 //                     className={`h-0.5 w-10 rounded transition-colors duration-300 ${currentStep > step.number
 //                       ? "bg-blue-400"
@@ -2789,7 +2789,7 @@
 //               )}
 
 //               <div className="mt-6 p-4 bg-yellow-50 rounded-lg flex items-start gap-2">
-//                 <AlertTriangle size={16} className="text-yellow-600 mt-0.5 flex-shrink-0" />
+//                 <AlertTriangle size={16} className="text-yellow-600 mt-0.5 shrink-0" />
 //                 <p className="text-sm text-yellow-800">
 //                   Please review all details before submitting. Click the Submit button below to save all vehicles.
 //                 </p>
@@ -3184,7 +3184,7 @@ const StepperHeader = ({ steps, currentStep, onStepClick, canAccessStep6, stepCo
                 disabled={isDisabled}
               >
                 <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all duration-200 flex-shrink-0 ${stepCompletionStatus[step.number] || (currentStep > step.number)
+                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all duration-200 shrink-0 ${stepCompletionStatus[step.number] || (currentStep > step.number)
                     ? "bg-green-600 text-white"
                     : isActive
                       ? "bg-blue-600 text-white ring-4 ring-blue-100"
@@ -3213,7 +3213,7 @@ const StepperHeader = ({ steps, currentStep, onStepClick, canAccessStep6, stepCo
                 </span>
               </button>
               {idx < steps.length - 1 && (
-                <div className="flex items-center mx-2 flex-shrink-0">
+                <div className="flex items-center mx-2 shrink-0">
                   <div
                     className={`h-0.5 w-10 rounded transition-colors duration-300 ${currentStep > step.number
                       ? "bg-blue-400"
@@ -5835,7 +5835,7 @@ export default function VehicleOnboardingForm() {
               )}
 
               <div className="mt-6 p-4 bg-yellow-50 rounded-lg flex items-start gap-2">
-                <AlertTriangle size={16} className="text-yellow-600 mt-0.5 flex-shrink-0" />
+                <AlertTriangle size={16} className="text-yellow-600 mt-0.5 shrink-0" />
                 <p className="text-sm text-yellow-800">
                   Please review all details before submitting. Click the Submit button below to save all vehicles.
                 </p>

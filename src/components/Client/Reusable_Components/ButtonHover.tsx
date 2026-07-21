@@ -201,7 +201,7 @@ export function ButtonHover({
           : undefined)
       }
     >
-      <span className="relative z-[2] flex items-center justify-center gap-2">
+      <span className="relative z-2 flex items-center justify-center gap-2">
         {loading && (
           <span
             className="RS_BtnSpinner"

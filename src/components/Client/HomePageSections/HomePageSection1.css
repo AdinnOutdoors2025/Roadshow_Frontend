@@ -211,6 +211,9 @@
 .RS_VehicleName {
   font-weight: 700;
   font-size: 26px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .RS_VehicleRate {
@@ -952,9 +955,6 @@
   opacity: 1;
 }
 
-.RS_ClientBubble.RS_TextLogo {
-  /* background: transparent; */
-}
 
 .RS_ClientBubble.RS_TextLogo .RS_ClientLogo {
   width: 130px;
@@ -1050,10 +1050,8 @@
   color: #000000;
   font-weight: 400;
   font-size: 28px;
-  leading-trim: NONE;
   line-height: 100%;
   letter-spacing: 0%;
-
   cursor: pointer;
   transition: background 0.25s ease, transform 0.2s ease;
 }
@@ -1105,11 +1103,9 @@
 /* Extra Large Screens (2560px and above) ✅ Large Screens (4K Screens)  */
 @media (min-width: 2560px) {}
 
-/* Large Screens (1400px - 2559px) ✅ Large Desktop Screens 1440*/
+/* Large Screens (1400px - 2559px) ✅ Large Desktop Screens 1440 my laptop screens */
 @media (min-width: 1440px) and (max-width: 2559px) {
-  .RS_ClientsSection {
-    /* border: 2px solid red; */
-  }
+  
 }
 
 @media (min-width: 1024px) and (max-width: 1280px) {
