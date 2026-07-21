@@ -24,6 +24,7 @@ export default function ExtraKmModal({ order, vehicle, vehicleIndex, vehicleEntr
   const [extraHours, setExtraHours] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [distributionMethod, setDistributionMethod] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
 const campaignFromISO = toISODate(vehicle.fromDate);
@@ -70,6 +71,7 @@ const handleSubmit = async () => {
     if (!toDate) return toast.error("To date is required");
     if (new Date(fromDate) > new Date(toDate))
       return toast.error("From date must be before or equal to To date");
+    if (!distributionMethod) return toast.error("Select how to distribute the extra KM/Hours (Daily or Split)");
 
     setSubmitting(true);
     try {
@@ -82,6 +84,7 @@ const handleSubmit = async () => {
           extraHours: hrs,
           fromDate,
           toDate,
+          distributionMethod,
         },
         { headers: { Authorization: `Bearer ${getToken()}` } }
       );
@@ -214,11 +217,66 @@ const handleSubmit = async () => {
               />
             </div>
           </div>
+          {/* Distribution Method */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">
+              Apply Across Date Range <span className="text-rose-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setDistributionMethod("daily")}
+                className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                  distributionMethod === "daily"
+                    ? "bg-orange-500 border-orange-500 text-white"
+                    : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                }`}
+              >
+                Daily
+                <div className={`mt-0.5 text-[10px] font-normal ${distributionMethod === "daily" ? "text-orange-100" : "text-gray-400"}`}>
+                  Full amount applies every day
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDistributionMethod("split")}
+                className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                  distributionMethod === "split"
+                    ? "bg-orange-500 border-orange-500 text-white"
+                    : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                }`}
+              >
+                Split
+                <div className={`mt-0.5 text-[10px] font-normal ${distributionMethod === "split" ? "text-orange-100" : "text-gray-400"}`}>
+                  Total divided evenly across days
+                </div>
+              </button>
+            </div>
+            {distributionMethod === "split" && fromDate && toDate && (() => {
+              const start = new Date(fromDate);
+              const end = new Date(toDate);
+              const dayCount = Math.max(Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1, 1);
+              const km = Number(extraKm) || 0;
+              const hrs = Number(extraHours) || 0;
+              if (km <= 0 && hrs <= 0) return null;
+              const perDayKm = (km / dayCount).toFixed(1);
+              const perDayHrs = (hrs / dayCount).toFixed(1);
+              return (
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Preview:{" "}
+                  {km > 0 && <>≈ {perDayKm} km/day</>}
+                  {km > 0 && hrs > 0 && " · "}
+                  {hrs > 0 && <>≈ {perDayHrs} hrs/day</>}
+                  {" "}over {dayCount} day{dayCount !== 1 ? "s" : ""}
+                </p>
+              );
+            })()}
+          </div>
         </div>
 
         <button
           onClick={handleSubmit}
-          disabled={submitting}
+          disabled={submitting || !distributionMethod}
           className="w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition-all disabled:opacity-40"
         >
           {submitting ? "Saving..." : "Save Extra KM Details"}

@@ -30,6 +30,8 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
   const [endTime, setEndTime] = useState(DEFAULT_LOGOUT_TIME);
   const [remarks, setRemarks] = useState("");
   const [isAbsentDay, setIsAbsentDay] = useState(false);
+  const [absentDayResolution, setAbsentDayResolution] = useState("");
+  const [billingMode, setBillingMode] = useState("full");
   const [submitting, setSubmitting] = useState(false);
 
   const campaignFromISO = toISODate(vehicle.fromDate);
@@ -48,6 +50,9 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
   const handleSubmit = async () => {
     if (!selectedEntryId) return toast.error("Select a driver / vehicle");
     if (!day) return toast.error("Select a date");
+    if (isAbsentDay && !absentDayResolution) {
+      return toast.error("Choose Extend Campaign or Close on Original End Date");
+    }
 
     let startISO = null;
     let endISO = null;
@@ -74,6 +79,8 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
           endTime: endISO,
           remarks,
           isAbsentDay,
+          billingMode: isAbsentDay ? "absent" : billingMode,
+          absentDayResolution: isAbsentDay ? absentDayResolution : null,
         },
         { headers: { Authorization: `Bearer ${getToken()}` } }
       );
@@ -81,7 +88,12 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
       onRefresh();
       onClose();
     } catch (e) {
-      toast.error(e?.response?.data?.message || "Failed to log daily hours");
+      const msg = e?.response?.data?.message || "Failed to log daily hours";
+      if (/absentDayResolution/i.test(msg)) {
+        toast.error("Please choose Extend Campaign or Close on Original End Date for the absent day.");
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -133,11 +145,52 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
             <input
               type="checkbox"
               checked={isAbsentDay}
-              onChange={(e) => setIsAbsentDay(e.target.checked)}
+              onChange={(e) => {
+                setIsAbsentDay(e.target.checked);
+                if (!e.target.checked) setAbsentDayResolution("");
+              }}
               className="accent-amber-600"
             />
             Mark vehicle Absent for the full day
           </label>
+
+          {isAbsentDay && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">
+                What happens to this campaign day? <span className="text-rose-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAbsentDayResolution("extend")}
+                  className={`text-left px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                    absentDayResolution === "extend"
+                      ? "bg-amber-500 border-amber-500 text-white"
+                      : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  Extend Campaign (+1 Day)
+                  <div className={`mt-0.5 text-[10px] font-normal ${absentDayResolution === "extend" ? "text-amber-100" : "text-gray-400"}`}>
+                    Pushes the vehicle's campaign end date out by a day, at zero charge, until real data is logged.
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAbsentDayResolution("close")}
+                  className={`text-left px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                    absentDayResolution === "close"
+                      ? "bg-amber-500 border-amber-500 text-white"
+                      : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  Close on Original End Date
+                  <div className={`mt-0.5 text-[10px] font-normal ${absentDayResolution === "close" ? "text-amber-100" : "text-gray-400"}`}>
+                    Keeps the original campaign end date — this day bills as zero.
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
 
           {!isAbsentDay && (
             <div className="grid grid-cols-2 gap-3">
@@ -171,6 +224,36 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
             </div>
           )}
 
+          {!isAbsentDay && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Bill this day as</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBillingMode("full")}
+                  className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                    billingMode === "full"
+                      ? "bg-indigo-500 border-indigo-500 text-white"
+                      : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  Full Day
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillingMode("partial")}
+                  className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                    billingMode === "partial"
+                      ? "bg-indigo-500 border-indigo-500 text-white"
+                      : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  Partial (actual hours run)
+                </button>
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">Remarks</label>
             <textarea
@@ -185,7 +268,7 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
 
         <button
           onClick={handleSubmit}
-          disabled={submitting}
+          disabled={submitting || (isAbsentDay && !absentDayResolution)}
           className="w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold transition-all disabled:opacity-40"
         >
           {submitting ? "Saving..." : "Save Daily Hours"}

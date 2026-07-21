@@ -430,7 +430,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   </button>
 
                   {/* {savedCount < quantity && ( */}
-                    <button
+                    {/* <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setAddVehicleModalOpen(true);
@@ -439,7 +439,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     >
                       <Plus size={13} />
                       <span>Add Vehicle</span>
-                    </button>
+                    </button> */}
                   {/* )} */}
                 </div>
               </div>
@@ -1044,12 +1044,24 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                               <span className="text-xs font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-md">
                                 {fmtDate(e.fromDate)} → {fmtDate(e.toDate)}
                               </span>
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${e.distributionMethod === "split"
+                                ? "bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20 dark:text-fuchsia-400"
+                                : "bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-400"
+                                }`}>
+                                {e.distributionMethod === "split" ? "Split" : "Daily"}
+                              </span>
                               <span className="text-xs text-gray-400">
                                 {e.addedBy} · {new Date(e.addedAt).toLocaleString("en-IN", {
                                   day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
                                 })}
                               </span>
                             </div>
+                            <p className="mt-1.5 text-[11px] text-gray-400 leading-snug">
+                              {e.distributionMethod === "split"
+                                ? "Split: total divided evenly across each day in this range."
+                                : "Daily: this full amount applies on every day in this range."}
+                              {" "}Shown cost is the flat package-rate reference — the actual amount billed per day (see Campaign Calculator → Daily Timeline) is lower on days where the purchased Extra KM/Hours pool still has balance.
+                            </p>
                           </div>
                         ))}
                       </div>

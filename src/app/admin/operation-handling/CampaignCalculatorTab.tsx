@@ -64,6 +64,20 @@ const TIMELINE_STYLE: Record<string, { label: string; className: string; dot: st
   unavailable: { label: "Unavailable", className: "text-rose-600 dark:text-rose-400", dot: "bg-rose-500" },
 };
 
+const toISODateKey = (d?: string | null) => {
+  if (!d) return null;
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return null;
+  return dt.toISOString().slice(0, 10);
+};
+
+const fmtShortDate = (d?: string | null) => {
+  if (!d) return "—";
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return "—";
+  return dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+};
+
 const fmtDateLabel = (dateKey: string) =>
   new Date(dateKey + "T00:00:00.000Z").toLocaleDateString("en-IN", {
     day: "2-digit", month: "short", year: "numeric", weekday: "short",
@@ -563,6 +577,45 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
     ? selectedDay.vehicles.reduce((s: number, v: any) => s + v.activeCount, 0)
     : 0;
 
+  // Daily Summary: rolls up every active/released entry's running, issue,
+  // unavailable and absent hours for the selected day (across all vehicle-
+  // type slots) into one easy-to-read total, alongside the day's Extra
+  // KM/Hours Pool (one-time) fee vs Overage cost — so the whole day's story
+  // (time + money) can be understood at a glance without opening each card.
+  const daySummary = (() => {
+    if (!selectedDay) return null;
+    let runningHours = 0, issueHours = 0, unavailableHours = 0, absentHours = 0, campaignHours = 0;
+    let poolFee = 0, overageCost = 0;
+    selectedDay.vehicles.forEach((v: any) => {
+      [...(v.entries || []), ...(v.releasedToday || [])].forEach((e: any) => {
+        // Same event-derived, today-only computation the entry header
+        // badges use (backend's raw e.runningHours/issueHours/unavailable
+        // Hours fields aren't reliably day-scoped — see the header badge's
+        // comment above) so this summary matches what's shown per-entry.
+        const entryEvents = historyEventsByEntry[e.entryId] || [];
+        const todayDurations = computeEntryDurationsForDay(entryEvents, selectedDay.date);
+        runningHours += todayDurations.runningHours || 0;
+        issueHours += todayDurations.issueHours || 0;
+        unavailableHours += todayDurations.unavailableHours || 0;
+        absentHours += e.absentHours || 0;
+        campaignHours += e.totalCampaignHours || e.campaignHours || 0;
+      });
+      poolFee += (v.extraKmPoolFeeToday || 0) + (v.extraHourPoolFeeToday || 0);
+      overageCost += (v.extraKmCost - (v.extraKmPoolFeeToday || 0)) + (v.extraHourCost - (v.extraHourPoolFeeToday || 0));
+    });
+    const totalHours = runningHours + issueHours + unavailableHours + absentHours;
+    return {
+      runningHours: Math.round(runningHours * 100) / 100,
+      issueHours: Math.round(issueHours * 100) / 100,
+      unavailableHours: Math.round(unavailableHours * 100) / 100,
+      absentHours: Math.round(absentHours * 100) / 100,
+      campaignHours: Math.round(campaignHours * 100) / 100,
+      totalHours: Math.round(totalHours * 100) / 100,
+      poolFee: Math.round(poolFee * 100) / 100,
+      overageCost: Math.round(overageCost * 100) / 100,
+    };
+  })();
+
   return (
     <div className="p-4 sm:p-6 space-y-4">
       {/* Section tabs */}
@@ -687,6 +740,65 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
                 <SummaryCard icon={IndianRupee} label="Day Total" value={fmt(selectedDay.dayTotal)} />
                 <SummaryCard icon={ReceiptText} label="Cumulative up to this day" value={fmt(selectedDay.cumulativeTotal)} />
               </div>
+
+              {daySummary && (
+                <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
+                    <Calendar size={14} className="text-indigo-600" />
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                      {fmtDateLabel(selectedDay.date)} · Daily Summary
+                    </span>
+                  </div>
+
+                  <div className="p-4 space-y-4">
+                    {/* Hours breakdown */}
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Hours Breakdown</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 px-3 py-2">
+                          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1"><Clock size={11} /> Running</p>
+                          <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300 mt-0.5">{fmtHm(daySummary.runningHours)}</p>
+                        </div>
+                        <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 px-3 py-2">
+                          <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1"><AlertOctagon size={11} /> Issue</p>
+                          <p className="text-sm font-bold text-amber-700 dark:text-amber-300 mt-0.5">{fmtHm(daySummary.issueHours)}</p>
+                        </div>
+                        <div className="rounded-lg bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 px-3 py-2">
+                          <p className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold flex items-center gap-1"><ShieldAlert size={11} /> Unavailable</p>
+                          <p className="text-sm font-bold text-rose-700 dark:text-rose-300 mt-0.5">{fmtHm(daySummary.unavailableHours)}</p>
+                        </div>
+                        <div className="rounded-lg bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700 px-3 py-2">
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1"><CalendarX2 size={11} /> Absent</p>
+                          <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mt-0.5">{fmtHm(daySummary.absentHours)}</p>
+                        </div>
+                      </div>
+                      <p className="mt-2 text-[11px] text-gray-400">
+                        Total: {fmtHm(daySummary.runningHours)} run + {fmtHm(daySummary.issueHours)} issue + {fmtHm(daySummary.unavailableHours)} unavailable + {fmtHm(daySummary.absentHours)} absent
+                        {" "}= <span className="font-semibold text-gray-600 dark:text-gray-300">{fmtHm(daySummary.totalHours)}</span>
+                        {daySummary.campaignHours > 0 && <> (of {fmtHm(daySummary.campaignHours)} expected)</>}
+                      </p>
+                    </div>
+
+                    {/* Cost breakdown */}
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Extra KM/Hours Cost</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="rounded-lg bg-sky-50 dark:bg-sky-900/10 border border-sky-100 dark:border-sky-900/30 px-3 py-2 flex items-center justify-between">
+                          <span className="text-[11px] text-sky-600 dark:text-sky-400 font-semibold">Pool (one-time)</span>
+                          <span className="text-sm font-bold text-sky-700 dark:text-sky-300">{fmt(daySummary.poolFee)}</span>
+                        </div>
+                        <div className="rounded-lg bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/30 px-3 py-2 flex items-center justify-between">
+                          <span className="text-[11px] text-orange-600 dark:text-orange-400 font-semibold">Overage (on-road logged)</span>
+                          <span className="text-sm font-bold text-orange-700 dark:text-orange-300">{fmt(daySummary.overageCost)}</span>
+                        </div>
+                      </div>
+                      <p className="mt-2 text-[11px] text-gray-400">
+                        Pool is a flat one-time fee charged once regardless of usage; Overage is the full package-rate cost of everything logged on-road today, billed separately.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-3">
                 {selectedDay.vehicles.length === 0 && (
@@ -835,7 +947,17 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
                               )}
                               {e.isAbsentDay && (
                                 <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 font-semibold">
-                                  <CalendarX2 size={10} /> Absent
+                                  <CalendarX2 size={10} />
+                                  {e.absentDayResolution === "extend"
+                                    ? "Absent — Extended +1 Day"
+                                    : e.absentDayResolution === "close"
+                                    ? "Absent — Closed on Original Date"
+                                    : "Absent"}
+                                </span>
+                              )}
+                              {e.billingMode === "partial" && (
+                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
+                                  <Clock size={10} /> Partial Day Billing
                                 </span>
                               )}
                               {e.compensationDeduction > 0 && (
@@ -1011,19 +1133,47 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
                       </div>
 
                       {v.extraDetailsToday?.length > 0 && (
-                        <div className="mt-1 space-y-1">
-                          {v.extraDetailsToday.map((ex: any, i: number) => (
-                            <div key={i} className="flex items-center gap-1.5 text-[11px] text-gray-500">
-                              <Clock size={10} />
-                              {ex.registrationNumber}: {ex.extraKm} km / {ex.extraHours} hrs logged for {ex.loggedFor} →{" "}
-                              {ex.withinPurchasedBalance ? (
-                                <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 font-semibold">Within purchased balance</span>
-                              ) : (
-                                <span className="font-semibold text-gray-700 dark:text-gray-300">{fmt(ex.extraKmCost + ex.extraHourCost)} additional</span>
-                              )}{" "}
-                              ({ex.addedBy})
-                            </div>
-                          ))}
+                        <div className="mt-1.5 space-y-1.5">
+                          {v.extraDetailsToday.map((ex: any, i: number) => {
+                            const resolvedKm = ex.resolvedExtraKmToday ?? ex.extraKm;
+                            const resolvedHrs = ex.resolvedExtraHoursToday ?? ex.extraHours;
+                            const isSplit = ex.distributionMethod === "split";
+                            return (
+                              <div
+                                key={i}
+                                className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/30 px-2.5 py-2 text-[11px]"
+                              >
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 font-mono font-semibold">
+                                    <Truck size={10} /> {ex.registrationNumber}
+                                  </span>
+                                  <span className={`px-1.5 py-0.5 rounded-full font-semibold ${isSplit ? "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300" : "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"}`}>
+                                    {isSplit ? "Split Extra KM/Hours" : "Daily Extra KM/Hours"}
+                                  </span>
+                                  <span className="px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300 font-semibold">
+                                    {resolvedKm} km / {resolvedHrs} hrs today
+                                  </span>
+                                  {ex.withinPurchasedBalance ? (
+                                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 font-semibold">
+                                      Within purchased balance
+                                    </span>
+                                  ) : (
+                                    <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
+                                      {fmt(ex.extraKmCost + ex.extraHourCost)} additional
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="mt-1 text-gray-500 dark:text-gray-400">
+                                  {isSplit && (ex.recordExtraKm != null || ex.recordExtraHours != null) ? (
+                                    <>Split from {ex.recordExtraKm ?? 0} km / {ex.recordExtraHours ?? 0} hrs applied across {ex.loggedFor || "the range"}</>
+                                  ) : (
+                                    <>Applied for {ex.loggedFor}</>
+                                  )}
+                                  {ex.addedBy ? <> · logged by {ex.addedBy}</> : null}
+                                </p>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -1079,6 +1229,12 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
                       <span>Scheduled Days: {meta.totalScheduledDays}{meta.extraDaysGranted > 0 ? ` (incl. +${meta.extraDaysGranted} compensation)` : ""}</span>
                       <span>Completed: {meta.completedCampaignDays}</span>
                       {meta.absentDaysCount > 0 && <span className="text-amber-600 font-semibold">Absent: {meta.absentDaysCount}</span>}
+                      {meta.effectiveToDate && meta.toDate && toISODateKey(meta.effectiveToDate) !== toISODateKey(meta.toDate) && (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                          Original: {fmtShortDate(meta.fromDate)}–{fmtShortDate(meta.toDate)} · Extended to: {fmtShortDate(meta.effectiveToDate)}
+                          {meta.absentExtendDaysGranted > 0 ? ` (+${meta.absentExtendDaysGranted} absent day${meta.absentExtendDaysGranted !== 1 ? "s" : ""})` : ""}
+                        </span>
+                      )}
                     </div>
                   );
                 })()}
