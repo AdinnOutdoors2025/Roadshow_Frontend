@@ -337,11 +337,11 @@ font-size: 24px;
 }
 
 .rdsw_crfProdDetailsVehicleButton:hover {
-  border-color: #000000;
-  background: #000000;
+  border-color: #b8001f;
+  background: #b8001f;
   color: #ffffff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.13);
+  box-shadow: 0 8px 18px rgba(228, 0, 43, 0.25);
 }
 
 .rdsw_crfProdDetailsVehicleButton:active {
