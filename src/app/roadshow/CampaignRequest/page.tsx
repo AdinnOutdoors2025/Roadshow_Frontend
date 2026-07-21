@@ -3,9 +3,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, } from "react";
-import { addMonths, differenceInCalendarDays, eachDayOfInterval, endOfMonth, endOfWeek, format, isBefore, isSameDay, isSameMonth, isValid, parseISO, startOfDay, startOfMonth, startOfWeek, }from "date-fns";
+import { addMonths, differenceInCalendarDays, eachDayOfInterval, endOfMonth, endOfWeek, format, isBefore, isSameDay, isSameMonth, isValid, parseISO, startOfDay, startOfMonth, startOfWeek, } from "date-fns";
 import { CalendarDays, Check, ChevronLeft, ChevronRight, Minus, Plus, X, } from "lucide-react";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 import { useAuth } from "@/context/AuthContext";
 import { FALLBACK_VEHICLE_IMAGE, fetchAllRoadshowVehicles, type RoadshowVehicle, } from "@/lib/roadshowVehicles";
@@ -215,9 +216,9 @@ function DateRangeCalendar({
             const selectedStart =
               value.start
                 ? isSameDay(
-                    day,
-                    value.start
-                  )
+                  day,
+                  value.start
+                )
                 : false;
 
             const selectedEnd = value.end
@@ -250,7 +251,7 @@ function DateRangeCalendar({
                       ? "!bg-[#1b1b1d] !font-semibold !text-white"
                       : "",
                     selectedStart ||
-                    selectedEnd
+                      selectedEnd
                       ? "ring-2 ring-[#1b1b1d] ring-offset-1"
                       : "",
                   ].join(" ")}
@@ -580,9 +581,9 @@ export default function CampaignRequestPage() {
       current.map((vehicle) =>
         vehicle.id === vehicleId
           ? {
-              ...vehicle,
-              ...updates,
-            }
+            ...vehicle,
+            ...updates,
+          }
           : vehicle
       )
     );
@@ -822,17 +823,17 @@ export default function CampaignRequestPage() {
             startDate:
               vehicle.startDate
                 ? format(
-                    vehicle.startDate,
-                    "yyyy-MM-dd"
-                  )
+                  vehicle.startDate,
+                  "yyyy-MM-dd"
+                )
                 : "",
 
             endDate:
               vehicle.endDate
                 ? format(
-                    vehicle.endDate,
-                    "yyyy-MM-dd"
-                  )
+                  vehicle.endDate,
+                  "yyyy-MM-dd"
+                )
                 : "",
 
             days: vehicle.days,
@@ -898,7 +899,7 @@ export default function CampaignRequestPage() {
                 {/* <span className="mb-2 block text-[11px] font-medium text-[#575757]">
                   Full Name / Company Name *
                 </span> */}
- 
+
                 <input
                   type="text"
                   value={clientDetails.name}
@@ -970,33 +971,33 @@ export default function CampaignRequestPage() {
             <div className="rdsw_crfNoVehMain mt-7 space-y-4">
               {selectedVehicles.length ===
                 0 && (
-                <div className="rounded-[18px] border border-dashed border-[#d4d4d4] bg-white px-5 py-8 text-center">
-                  <p className=" rdsw_crfNoVehMainHeading font-semibold text-[#444444]">
-                    No vehicle added
-                  </p>
+                  <div className="rounded-[18px] border border-dashed border-[#d4d4d4] bg-white px-5 py-8 text-center">
+                    <p className=" rdsw_crfNoVehMainHeading font-semibold text-[#444444]">
+                      No vehicle added
+                    </p>
 
-                  <p className=" rdsw_crfNoVehMainSubHeading mt-1  leading-5 text-[#8b8b8b]">
-                    Choose a roadshow vehicle
-                    from the product section.
-                  </p>
+                    <p className=" rdsw_crfNoVehMainSubHeading mt-1  leading-5 text-[#8b8b8b]">
+                      Choose a roadshow vehicle
+                      from the product section.
+                    </p>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      productScrollerRef.current?.scrollIntoView(
-                        {
-                          behavior:
-                            "smooth",
-                          block: "center",
-                        }
-                      )
-                    }
-                    className="rdsw_crfNoVehMainBtn mt-4 rounded-full bg-[#eeeeef] px-4 py-2 font-semibold text-[#222222]"
-                  >
-                    View Vehicles
-                  </button>
-                </div>
-              )}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        productScrollerRef.current?.scrollIntoView(
+                          {
+                            behavior:
+                              "smooth",
+                            block: "center",
+                          }
+                        )
+                      }
+                      className="rdsw_crfNoVehMainBtn mt-4 rounded-full bg-[#eeeeef] px-4 py-2 font-semibold text-[#222222]"
+                    >
+                      View Vehicles
+                    </button>
+                  </div>
+                )}
 
               {selectedVehicles.map(
                 (vehicle, index) => (
@@ -1136,7 +1137,7 @@ export default function CampaignRequestPage() {
                                 quantity:
                                   Math.max(
                                     vehicle.quantity -
-                                      1,
+                                    1,
                                     1
                                   ),
                               }
@@ -1210,327 +1211,279 @@ export default function CampaignRequestPage() {
           </aside>
 
           {/* Product details */}
-          <section className="min-w-0">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#d70000]">
-                Roadshow booking
-              </p>
+        {/* Product details */}
+<section className="rdsw_crfProdDetailsMain min-w-0">
+  {/* Section heading */}
+  <div className="rdsw_crfProdDetailsHeadingWrapper">
+    <p className="rdsw_crfProdDetails1stHeading">
+      Roadshow booking
+    </p>
 
-              <h2 className="mt-1 text-[24px] font-semibold tracking-[-0.025em] text-[#171719] sm:text-[27px]">
-                Product Details
-              </h2>
+    <h2 className="rdsw_crfProdDetails2ndHeading">
+      Product Details
+    </h2>
 
-              <p className="mt-2 max-w-[500px] text-[13px] leading-5 text-[#676767]">
-                Review your roadshow campaign
-                vehicles and confirm your
-                booking.
-              </p>
-            </div>
+    <p className="rdsw_crfProdDetailsDesc">
+      Review your roadshow campaign details and confirm your booking.
+    </p>
+  </div>
 
-            <div className="mt-6">
-              <div
-                ref={productScrollerRef}
-                className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-              >
-                {loadingVehicles &&
-                  Array.from({
-                    length: 4,
-                  }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="w-[215px] shrink-0 animate-pulse rounded-[18px] bg-[#eeeeef] p-3 sm:w-[225px]"
-                    >
-                      <div className="h-[105px] rounded-[13px] bg-[#d8d8da]" />
+  {/* Vehicle cards */}
+  <div className="rdsw_crfProdDetailsVehicleSection">
+    <div
+      ref={productScrollerRef}
+      className="rdsw_crfProdDetailsScroller"
+    >
+      {/* Loading skeleton */}
+      {loadingVehicles &&
+        Array.from({ length: 4 }).map((_, index) => (
+          <article
+            key={index}
+            className="rdsw_crfProdDetailsSkeletonCard"
+          >
+            <div className="rdsw_crfProdDetailsSkeletonImage" />
 
-                      <div className="mt-3 h-3 w-4/5 rounded bg-[#d8d8da]" />
+            <div className="rdsw_crfProdDetailsSkeletonTitle" />
 
-                      <div className="mt-2 h-3 w-2/5 rounded bg-[#d8d8da]" />
+            <div className="rdsw_crfProdDetailsSkeletonPrice" />
 
-                      <div className="mt-4 h-9 rounded-full bg-[#dedee0]" />
-                    </div>
-                  ))}
+            <div className="rdsw_crfProdDetailsSkeletonRating" />
 
-                {!loadingVehicles &&
-                  vehicles.length === 0 && (
-                    <div className="flex min-h-[210px] w-full items-center justify-center rounded-[18px] border border-dashed border-[#dddddd] bg-[#fafafa] px-5 text-center">
-                      <div>
-                        <p className="text-[14px] font-semibold">
-                          No vehicles available
-                        </p>
+            <div className="rdsw_crfProdDetailsSkeletonButton" />
+          </article>
+        ))}
 
-                        <p className="mt-1 text-[12px] text-[#777777]">
-                          Campaign vehicles could
-                          not be found.
-                        </p>
-                      </div>
+      {/* Empty state */}
+      {!loadingVehicles && vehicles.length === 0 && (
+        <div className="rdsw_crfProdDetailsEmptyState">
+          <p className="rdsw_crfProdDetailsEmptyTitle">
+            No vehicles available
+          </p>
+
+          <p className="rdsw_crfProdDetailsEmptyDesc">
+            Campaign vehicles could not be found.
+          </p>
+        </div>
+      )}
+
+      {/* Vehicle cards */}
+      {!loadingVehicles &&
+        vehicles.map((vehicle) => {
+          const selected = isSelected(vehicle.id);
+
+          return (
+            <article
+              key={vehicle.id}
+              className={[
+                "rdsw_crfProdDetailsCardMain",
+                selected
+                  ? "rdsw_crfProdDetailsCardSelected"
+                  : "",
+              ].join(" ")}
+            >
+              <div className="rdsw_crfProdDetailsImageWrapper">
+                <img
+                  src={
+                    vehicle.image ||
+                    FALLBACK_VEHICLE_IMAGE
+                  }
+                  alt={vehicle.name}
+                  className="rdsw_crfProdDetailsVehicleImage"
+                  onError={(event) => {
+                    const image = event.currentTarget;
+
+                    if (
+                      image.src !==
+                      FALLBACK_VEHICLE_IMAGE
+                    ) {
+                      image.src =
+                        FALLBACK_VEHICLE_IMAGE;
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="rdsw_crfProdDetailsCardContent">
+                <h3 className="rdsw_crfProdDetailsVehicleName">
+                  {vehicle.name}
+                </h3>
+
+                <p className="rdsw_crfProdDetailsVehiclePrice">
+                  {formatCurrency(vehicle.rate)}
+                  <span>/Per Day</span>
+                </p>
+
+                {vehicle.rating !== undefined &&
+                  vehicle.rating !== null && (
+                    <div className="rdsw_crfProdDetailsRating">
+                      <span className="rdsw_crfProdDetailsRatingValue">
+                        {vehicle.rating}
+                      </span>
+
+                      <span className="rdsw_crfProdDetailsRatingStar">
+                        ★
+                      </span>
                     </div>
                   )}
 
-                {!loadingVehicles &&
-                  vehicles.map((vehicle) => {
-                    const selected =
-                      isSelected(vehicle.id);
-
-                    return (
-                      <article
-                        key={vehicle.id}
-                        className={[
-                          "relative w-[215px] shrink-0 snap-start rounded-[18px] border p-3 transition sm:w-[225px]",
-                          selected
-                            ? "border-[#a8a8a8] bg-[#ececee]"
-                            : "border-transparent bg-[#f0f0f1]",
-                        ].join(" ")}
-                      >
-                        <button
-                          type="button"
-                          onClick={() =>
-                            toggleVehicle(
-                              vehicle
-                            )
-                          }
-                          aria-label={
-                            selected
-                              ? `Remove ${vehicle.name}`
-                              : `Add ${vehicle.name}`
-                          }
-                          className={[
-                            "absolute right-3 top-3 z-10 flex h-5 w-5 items-center justify-center rounded-[5px] border transition",
-                            selected
-                              ? "border-[#555555] bg-[#555555] text-white"
-                              : "border-[#8b8b8b] bg-white/50 hover:bg-white",
-                          ].join(" ")}
-                        >
-                          {selected && (
-                            <Check
-                              size={12}
-                              strokeWidth={3}
-                            />
-                          )}
-                        </button>
-
-                        <div className="relative h-[105px] w-full overflow-hidden rounded-[13px] bg-[#dedee0]">
-                          <img
-                            src={
-                              vehicle.image ||
-                              FALLBACK_VEHICLE_IMAGE
-                            }
-                            alt={vehicle.name}
-                            className="h-full w-full object-contain p-1"
-                            onError={(event) => {
-                              const image =
-                                event.currentTarget;
-
-                              if (
-                                image.src !==
-                                FALLBACK_VEHICLE_IMAGE
-                              ) {
-                                image.src =
-                                  FALLBACK_VEHICLE_IMAGE;
-                              }
-                            }}
-                          />
-                        </div>
-
-                        <h3 className="mt-3 min-h-[34px] text-[12px] font-semibold leading-[1.35] text-[#1d1d1f]">
-                          {vehicle.name}
-                        </h3>
-
-                        <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                          <span className="text-[11px] font-semibold text-[#1f1f1f]">
-                            {formatCurrency(
-                              vehicle.rate
-                            )}
-                            /Per Day
-                          </span>
-                        </div>
-
-                        {vehicle.rating !==
-                          undefined &&
-                          vehicle.rating !==
-                            null && (
-                            <p className="mt-1 text-[9px] font-medium text-[#d70000]">
-                              {vehicle.rating} ★
-                            </p>
-                          )}
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            toggleVehicle(
-                              vehicle
-                            )
-                          }
-                          className={[
-                            "mt-3 flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[10px] font-semibold transition",
-                            selected
-                              ? "bg-white text-[#2c6f3b] hover:text-[#d70000]"
-                              : "bg-white text-[#1c1c1d] hover:bg-[#1c1c1d] hover:text-white",
-                          ].join(" ")}
-                        >
-                          {selected && (
-                            <Check
-                              size={12}
-                              strokeWidth={2.5}
-                            />
-                          )}
-
-                          {selected
-                            ? "Vehicle added"
-                            : "Add Vehicle"}
-                        </button>
-                      </article>
-                    );
-                  })}
-              </div>
-
-              <div className="mt-1 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() =>
-                    scrollProducts("left")
+                    toggleVehicle(vehicle)
                   }
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e2e2e2] bg-white text-[#999999] transition hover:border-black hover:text-black"
-                  aria-label="Previous vehicles"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    scrollProducts("right")
+                  aria-label={
+                    selected
+                      ? `Remove ${vehicle.name}`
+                      : `Add ${vehicle.name}`
                   }
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e2e2e2] bg-white text-[#777777] transition hover:border-black hover:text-black"
-                  aria-label="Next vehicles"
+                  className={[
+                    "rdsw_crfProdDetailsVehicleButton",
+                    selected
+                      ? "rdsw_crfProdDetailsVehicleButtonSelected"
+                      : "",
+                  ].join(" ")}
                 >
-                  <ChevronRight size={16} />
+                  {selected && (
+                    <Image
+                      src="/images/assets/rdsw_crfProdDetailsCheckMark.svg"
+                      alt=""
+                      width={18}
+                      height={18}
+                      className="rdsw_crfProdDetailsCheckMark"
+                    />
+                  )}
+
+                  <span>
+                    {selected
+                      ? "Vehicle added"
+                      : "Add Vehicle"}
+                  </span>
                 </button>
               </div>
-            </div>
+            </article>
+          );
+        })}
+    </div>
 
-            {/* Desktop summary table */}
-            <div className="mt-7 hidden overflow-hidden rounded-[18px] border border-[#e4e4e4] md:block">
-              <div className="grid grid-cols-[1.5fr_0.8fr_0.75fr_0.65fr_0.9fr] bg-[#dededf] px-6 py-4 text-[11px] font-semibold text-[#292929]">
-                <span>Name</span>
-                <span>Price</span>
-                <span>Days</span>
-                <span>Qty</span>
+    {/* Carousel navigation */}
+    <div className="rdsw_crfProdDetailsNavigation">
+      <button
+        type="button"
+        onClick={() => scrollProducts("left")}
+        className="rdsw_crfProdDetailsNavigationButton"
+        aria-label="Previous vehicles"
+      >
+        <ChevronLeft size={26} />
+      </button>
 
-                <span className="text-right">
-                  Total
-                </span>
-              </div>
+      <button
+        type="button"
+        onClick={() => scrollProducts("right")}
+        className="rdsw_crfProdDetailsNavigationButton"
+        aria-label="Next vehicles"
+      >
+        <ChevronRight size={26} />
+      </button>
+    </div>
+  </div>
 
-              <div className="divide-y divide-[#d2d2d2] bg-[#f4f4f5]">
-                {bookingRows.length ===
-                  0 && (
-                  <div className="flex min-h-[120px] items-center justify-center px-6 text-[12px] text-[#777777]">
-                    Select a vehicle to view
-                    the booking summary.
-                  </div>
-                )}
+  {/* Desktop summary table */}
+  <div className="rdsw_crfProdDetailsDesktopTable">
+    <div className="rdsw_crfProdDetailsTableHeader">
+      <span>Name</span>
+      <span>Price</span>
+      <span>Days</span>
+      <span>Qty</span>
+      <span>Total</span>
+    </div>
 
-                {bookingRows.map(
-                  (vehicle) => (
-                    <div
-                      key={vehicle.id}
-                      className="grid min-h-[82px] grid-cols-[1.5fr_0.8fr_0.75fr_0.65fr_0.9fr] items-center px-6 py-4 text-[11px] text-[#222222]"
-                    >
-                      <span className="pr-3 font-medium">
-                        {vehicle.name}
-                      </span>
+    <div className="rdsw_crfProdDetailsTableBody">
+      {bookingRows.length === 0 && (
+        <div className="rdsw_crfProdDetailsTableEmpty">
+          Select a vehicle to view the booking summary.
+        </div>
+      )}
 
-                      <span>
-                        {formatCurrency(
-                          vehicle.rate
-                        )}
-                      </span>
+      {bookingRows.map((vehicle, index) => (
+        <div
+          key={vehicle.id}
+          className="rdsw_crfProdDetailsTableRow"
+          style={{
+            animationDelay: `${index * 60}ms`,
+          }}
+        >
+          <span className="rdsw_crfProdDetailsTableVehicleName">
+            {vehicle.name}
+          </span>
 
-                      <span>
-                        {vehicle.days} day(s)
-                      </span>
+          <span>
+            {formatCurrency(vehicle.rate)}
+          </span>
 
-                      <span>
-                        {vehicle.quantity}{" "}
-                        vehicle(s)
-                      </span>
+          <span>
+            {vehicle.days} day(s)
+          </span>
 
-                      <span className="text-right font-medium">
-                        {formatCurrency(
-                          vehicle.total
-                        )}
-                      </span>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
+          <span>
+            {vehicle.quantity} vehicle(s)
+          </span>
 
-            {/* Mobile summary */}
-            <div className="mt-7 space-y-3 md:hidden">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[16px] font-semibold">
-                  Booking summary
-                </h3>
+          <span>
+            {formatCurrency(vehicle.total)}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
 
-                <span className="rounded-full bg-[#f1f1f2] px-3 py-1 text-[10px] font-semibold text-[#656565]">
-                  {bookingRows.length}{" "}
-                  vehicle
-                  {bookingRows.length === 1
-                    ? ""
-                    : "s"}
-                </span>
-              </div>
+  {/* Mobile summary */}
+  <div className="rdsw_crfProdDetailsMobileSummary">
+    <div className="rdsw_crfProdDetailsMobileSummaryHeader">
+      <h3>Booking summary</h3>
 
-              {bookingRows.length === 0 && (
-                <div className="rounded-[18px] border border-dashed border-[#dddddd] bg-[#fafafa] px-5 py-8 text-center text-[12px] text-[#777777]">
-                  Select a vehicle to view the
-                  booking summary.
-                </div>
-              )}
+      <span>
+        {bookingRows.length} vehicle
+        {bookingRows.length === 1 ? "" : "s"}
+      </span>
+    </div>
 
-              {bookingRows.map(
-                (vehicle) => (
-                  <article
-                    key={vehicle.id}
-                    className="rounded-[18px] border border-[#e6e6e6] bg-[#f7f7f8] p-4"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h4 className="text-[13px] font-semibold text-[#1c1c1d]">
-                          {vehicle.name}
-                        </h4>
+    {bookingRows.length === 0 && (
+      <div className="rdsw_crfProdDetailsMobileEmpty">
+        Select a vehicle to view the booking summary.
+      </div>
+    )}
 
-                        <p className="mt-1 text-[11px] text-[#737373]">
-                          {vehicle.days} day(s) ·{" "}
-                          {vehicle.quantity}{" "}
-                          vehicle(s)
-                        </p>
-                      </div>
+    {bookingRows.map((vehicle) => (
+      <article
+        key={vehicle.id}
+        className="rdsw_crfProdDetailsMobileCard"
+      >
+        <div className="rdsw_crfProdDetailsMobileCardTop">
+          <div>
+            <h4>{vehicle.name}</h4>
 
-                      <p className="shrink-0 text-[13px] font-semibold">
-                        {formatCurrency(
-                          vehicle.total
-                        )}
-                      </p>
-                    </div>
+            <p>
+              {vehicle.days} day(s) ·{" "}
+              {vehicle.quantity} vehicle(s)
+            </p>
+          </div>
 
-                    <div className="mt-4 flex items-center justify-between border-t border-[#dedede] pt-3">
-                      <span className="text-[10px] text-[#777777]">
-                        Price per day
-                      </span>
+          <strong>
+            {formatCurrency(vehicle.total)}
+          </strong>
+        </div>
 
-                      <span className="text-[11px] font-medium">
-                        {formatCurrency(
-                          vehicle.rate
-                        )}
-                      </span>
-                    </div>
-                  </article>
-                )
-              )}
-            </div>
-          </section>
+        <div className="rdsw_crfProdDetailsMobilePrice">
+          <span>Price per day</span>
+
+          <strong>
+            {formatCurrency(vehicle.rate)}
+          </strong>
+        </div>
+      </article>
+    ))}
+  </div>
+</section>
         </div>
       </section>
 
