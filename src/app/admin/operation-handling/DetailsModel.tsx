@@ -519,7 +519,7 @@ useEffect(() => {
                     )}
 
                     {activeTab === "campaignCalculator" && (
-                        <CampaignCalculatorTab order={order} />
+                        <CampaignCalculatorTab order={order}  vehicleTypes={vehicleTypes} />
                     )}
 
                     {activeTab === "history" && (

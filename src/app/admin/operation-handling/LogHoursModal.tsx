@@ -11,6 +11,8 @@ import { getToken } from "../../utils/auth";
 import DatePicker from "../../utils/datepicker";
 
 const CAMPAIGN_HOURS_PER_DAY = Number(process.env.NEXT_PUBLIC_CAMPAIGN_HOURS_PER_DAY) || 8;
+const DEFAULT_LOGIN_TIME = process.env.NEXT_PUBLIC_DEFAULT_LOGIN_TIME || "11:00";
+const DEFAULT_LOGOUT_TIME = process.env.NEXT_PUBLIC_DEFAULT_LOGOUT_TIME || "18:00";
 
 const toISODate = (d) => {
   if (!d) return "";
@@ -24,9 +26,10 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
 
   const [selectedEntryId, setSelectedEntryId] = useState(activeEntries[0]?._id || "");
   const [day, setDay] = useState(toISODate(new Date()));
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [startTime, setStartTime] = useState(DEFAULT_LOGIN_TIME);
+  const [endTime, setEndTime] = useState(DEFAULT_LOGOUT_TIME);
   const [remarks, setRemarks] = useState("");
+  const [isAbsentDay, setIsAbsentDay] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const campaignFromISO = toISODate(vehicle.fromDate);
@@ -45,12 +48,19 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
   const handleSubmit = async () => {
     if (!selectedEntryId) return toast.error("Select a driver / vehicle");
     if (!day) return toast.error("Select a date");
-    if (!startTime) return toast.error("Start time is required");
-    if (!endTime) return toast.error("End time is required");
 
-    const start = new Date(`${day}T${startTime}:00`);
-    const end = new Date(`${day}T${endTime}:00`);
-    if (end <= start) return toast.error("End time must be after start time");
+    let startISO = null;
+    let endISO = null;
+    if (!isAbsentDay) {
+      if (!startTime) return toast.error("Start time is required");
+      if (!endTime) return toast.error("End time is required");
+
+      const start = new Date(`${day}T${startTime}:00`);
+      const end = new Date(`${day}T${endTime}:00`);
+      if (end <= start) return toast.error("End time must be after start time");
+      startISO = start.toISOString();
+      endISO = end.toISOString();
+    }
 
     setSubmitting(true);
     try {
@@ -60,9 +70,10 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
           vehicleIndex,
           entryId: selectedEntryId,
           day,
-          startTime: start.toISOString(),
-          endTime: end.toISOString(),
+          startTime: startISO,
+          endTime: endISO,
           remarks,
+          isAbsentDay,
         },
         { headers: { Authorization: `Bearer ${getToken()}` } }
       );
@@ -118,28 +129,40 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
             <DatePicker value={day} onChange={setDay} minDate={campaignFromISO} maxDate={campaignToISO} />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Start Time</label>
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">End Time</label>
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-              />
-            </div>
-          </div>
+          <label className="flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/40 rounded-lg px-3 py-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isAbsentDay}
+              onChange={(e) => setIsAbsentDay(e.target.checked)}
+              className="accent-amber-600"
+            />
+            Mark vehicle Absent for the full day
+          </label>
 
-          {preview && (
+          {!isAbsentDay && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Start Time</label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">End Time</label>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
+            </div>
+          )}
+
+          {!isAbsentDay && preview && (
             <div className="flex items-center justify-between rounded-lg bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 text-xs">
               <span className="text-indigo-700 dark:text-indigo-300 font-semibold">Running: {preview.runningHours} hrs</span>
               <span className={preview.absentHours > 0 ? "text-amber-600 font-semibold" : "text-gray-400"}>

@@ -9,10 +9,13 @@ import {
   Calendar, Truck, User, Phone, IndianRupee, RefreshCw,
   ArrowRightLeft, LogOut, ChevronLeft, ChevronRight, Gauge,
   Clock, ReceiptText, AlertTriangle, LayoutGrid, ListChecks,
-  FileCheck2, MinusCircle,
+  FileCheck2, MinusCircle, Gift, AlertOctagon, ShieldAlert, CalendarX2,
+  ChevronDown, ChevronUp, History,
 } from "lucide-react";
 import { getToken } from "../../utils/auth";
 import API_BASE from "../../../../baseurl";
+import CompensationModal from "./CompensationModal";
+import PoolWindowModal from "./PoolWindowModal";
 
 interface Order {
   _id: string;
@@ -22,10 +25,111 @@ interface Order {
 const fmt = (n?: number | null) =>
   n != null ? `₹ ${Number(n).toLocaleString("en-IN")}` : "₹ 0";
 
+const fmtHm = (n?: number | null) => {
+  if (n == null || isNaN(n)) return "0h";
+  const totalMinutes = Math.round(Math.abs(n) * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  const sign = n < 0 ? "-" : "";
+  if (h === 0) return `${sign}${m}m`;
+  if (m === 0) return `${sign}${h}h`;
+  return `${sign}${h}h ${m}m`;
+};
+
+const fmtClock = (d?: string | null) => {
+  if (!d) return "—";
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return "—";
+  // Use the browser's LOCAL timezone (matching fmtDatetime below), not UTC.
+  // This used to intentionally read UTC hours because the backend built the
+  // default work window (NEXT_PUBLIC_DEFAULT_LOGIN_TIME/LOGOUT_TIME, e.g.
+  // 16:00-24:00) as raw UTC hours, which produced a confusing "9:30pm-5:30am"
+  // display once converted to IST. The backend (Adminordercontroller.js,
+  // resolveWorkWindow/istWallClock) now anchors that default window — and
+  // every other entry.timeline boundary — as literal IST-equivalent instants,
+  // so every timeline segment (real event-derived or synthetic default-
+  // window) can and should be rendered in local time consistently, matching
+  // the Issue/Unavailable/Replaced cards which already use fmtDatetime.
+  let h = dt.getHours();
+  const m = dt.getMinutes();
+  const suffix = h >= 12 ? "pm" : "am";
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h}:${String(m).padStart(2, "0")} ${suffix}`;
+};
+
+const TIMELINE_STYLE: Record<string, { label: string; className: string; dot: string }> = {
+  running: { label: "Running", className: "text-indigo-600 dark:text-indigo-400", dot: "bg-indigo-500" },
+  issue: { label: "Issue", className: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+  unavailable: { label: "Unavailable", className: "text-rose-600 dark:text-rose-400", dot: "bg-rose-500" },
+};
+
 const fmtDateLabel = (dateKey: string) =>
   new Date(dateKey + "T00:00:00.000Z").toLocaleDateString("en-IN", {
     day: "2-digit", month: "short", year: "numeric", weekday: "short",
   });
+
+// Full-datetime formatter for REAL recorded event timestamps (issue reported,
+// marked unavailable, replaced, driver/vehicle changes, on-road start/end).
+// Uses the browser's local timezone, matching DayByDayHistoryTab.tsx exactly,
+// so the same event shows the same time in both places (e.g. 08:43 pm, not a
+// UTC-shifted 3:13 pm). fmtClock above now also renders local time, for the
+// same reason — see its comment.
+const fmtDatetime = (d?: string | null) => {
+  if (!d) return "—";
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return "—";
+  return dt.toLocaleString("en-IN", {
+    day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+};
+
+// Presentation metadata for the raw on-road event categories returned by the
+// day-by-day-history endpoint (same categories DayByDayHistoryTab.tsx uses),
+// reused here — without the "restrict to one active day" filtering — to build
+// a full chronological per-entry event list for the Vehicle History section.
+const HISTORY_CATEGORY_META: Record<string, any> = {
+  issueHistory: {
+    icon: AlertOctagon,
+    label: "issue",
+    badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+    border: "border-amber-100 dark:border-amber-900/40",
+    getTimestamp: (e: any) => e.createdAt,
+    getTitle: (e: any) => "Issue Reported",
+  },
+  unavailableHistory: {
+    icon: ShieldAlert,
+    label: "unavailable",
+    badge: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+    border: "border-rose-100 dark:border-rose-900/40",
+    getTimestamp: (e: any) => e.reportedAt,
+    getTitle: (e: any) => (e.eventType === "replaced" ? "Replaced" : "Marked Unavailable"),
+  },
+  extraKmHistory: {
+    icon: Gauge,
+    label: "extra-km",
+    badge: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300",
+    border: "border-fuchsia-100 dark:border-fuchsia-900/40",
+    getTimestamp: (e: any) => e.updatedAt,
+    getTitle: (e: any) => "Extra KM / Hours Applied",
+  },
+  driverChangeHistory: {
+    icon: ArrowRightLeft,
+    label: "driver",
+    badge: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
+    border: "border-sky-100 dark:border-sky-900/40",
+    getTimestamp: (e: any) => e.changedAt,
+    // NOTE: the day-by-day-history endpoint labels these via ACTION_LABEL
+    // server-side ("Vehicle Added"/"Vehicle Updated"/"Vehicle Removed"), NOT
+    // the raw "created"/"updated"/"removed" action strings — match on the
+    // labeled values, not the raw ones (previously never matched "created"/
+    // "removed" at all, silently making every driver-change event fall
+    // through to "Driver/Vehicle Updated").
+    getTitle: (e: any) =>
+      e.eventType === "Vehicle Added" ? "Vehicle Assigned" : e.eventType === "Vehicle Removed" ? "Vehicle Removed" : "Driver/Vehicle Updated",
+  },
+};
 
 const SECTIONS = [
   { key: "overview", label: "Overview", icon: LayoutGrid },
@@ -34,11 +138,17 @@ const SECTIONS = [
   { key: "billing", label: "Final Billing", icon: FileCheck2 },
 ];
 
-export default function CampaignCalculatorTab({ order }: { order: Order }) {
+export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: Order,vehicleTypes:any }) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
+  const [historyData, setHistoryData] = useState<any>(null);
   const [section, setSection] = useState("overview");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [compensationVehicleIndex, setCompensationVehicleIndex] = useState<number | null>(null);
+  const [poolWindowVehicleIndex, setPoolWindowVehicleIndex] = useState<number | null>(null);
+  const [expandedTimelines, setExpandedTimelines] = useState<Record<string, boolean>>({});
+  const toggleTimeline = (entryId: string) =>
+    setExpandedTimelines((prev) => ({ ...prev, [entryId]: !prev[entryId] }));
 
   const fetchCalculator = async () => {
     setLoading(true);
@@ -59,8 +169,25 @@ export default function CampaignCalculatorTab({ order }: { order: Order }) {
     }
   };
 
+  // The "Vehicle History" section reuses the same day-by-day-history endpoint
+  // DayByDayHistoryTab.tsx already fetches (already returns issue/unavailable/
+  // extraKm/driverChange records flattened & tagged with vehicleIndex/entryId/day)
+  // rather than requiring the raw order object to be passed down as a new prop.
+  const fetchHistory = async () => {
+    try {
+      const res = await axios.get(
+        `${API_BASE}admin/pipeline/${order._id}/day-by-day-history`,
+        { headers: { Authorization: `Bearer ${getToken()}` } }
+      );
+      setHistoryData(res.data?.data || null);
+    } catch (err: any) {
+      // Non-fatal — the History section will just show "no data" if this fails.
+    }
+  };
+
   useEffect(() => {
     fetchCalculator();
+    fetchHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order._id]);
 
@@ -115,6 +242,298 @@ export default function CampaignCalculatorTab({ order }: { order: Order }) {
     });
     return Object.values(map).sort((a: any, b: any) => a.vehicleIndex - b.vehicleIndex);
   }, [data]);
+
+  // Distinct entries (driver/reg no) seen for each vehicle-type slot, for the
+  // Compensation modal's optional reg-no-specific scope.
+  const entriesByVehicle = useMemo(() => {
+    if (!data?.days) return {};
+    const map: Record<number, any[]> = {};
+    data.days.forEach((d: any) => {
+      d.vehicles.forEach((v: any) => {
+        if (!map[v.vehicleIndex]) map[v.vehicleIndex] = [];
+        v.entries.forEach((e: any) => {
+          if (!map[v.vehicleIndex].some((x: any) => x._id === e.entryId)) {
+            map[v.vehicleIndex].push({
+              _id: e.entryId,
+              driverName: e.driverName,
+              vehicleRegistrationNumber: e.vehicleRegistrationNumber,
+              entryStatus: "active",
+            });
+          }
+        });
+      });
+    });
+    return map;
+  }, [data]);
+
+  // Per-entryId totals rolled up across every campaign day, grouped under their
+  // vehicle-type slot — the source for the Vehicle History section's summary
+  // cards (running/issue/unavailable/compensation hours, replacement flag).
+  // Uses the already-per-day-aggregated entry fields from the calculator
+  // response (safe to sum — each day's entry object only covers that day),
+  // rather than re-summing raw entry.timeline segments which could double
+  // count a segment spanning midnight across two day buckets.
+  // Raw on-road events (issue/unavailable/extra-km/driver-change) from the
+  // day-by-day-history endpoint, grouped by entryId (not restricted to a
+  // single active day — the whole entry lifecycle) for the chronological
+  // "Vehicle History" timeline per entry. Mirrors DayByDayHistoryTab.tsx's
+  // grouping logic (group by entryId so a reused reg no. across distinct
+  // lifecycles doesn't get merged into one timeline).
+  const historyEventsByEntry = useMemo(() => {
+    const out: Record<string, any[]> = {};
+    if (!historyData) return out;
+    Object.keys(HISTORY_CATEGORY_META).forEach((catKey) => {
+      (historyData[catKey] || []).forEach((e: any) => {
+        const meta = HISTORY_CATEGORY_META[catKey];
+        const key = e.entryId;
+        if (!key) return;
+        if (!out[key]) out[key] = [];
+        out[key].push({ ...e, _category: catKey, _timestamp: meta.getTimestamp(e) });
+      });
+    });
+    Object.keys(out).forEach((key) => {
+      out[key].sort((a, b) => new Date(a._timestamp || 0).getTime() - new Date(b._timestamp || 0).getTime());
+    });
+    return out;
+  }, [historyData]);
+
+  // Derive running/issue/unavailable durations purely from the actual
+  // timestamps already recorded in Day-by-Day History (vehicle added/removed,
+  // issue reported/resolved, marked-unavailable/replaced) — no assumed
+  // default work-window, no synthetic timeline. This is what the Vehicle
+  // History section displays; it intentionally does NOT reuse the
+  // calculator's day-bucketed runningHours/issueHours/unavailableHours,
+  // which are derived against a default 16:00-24:00 work window when no
+  // hours are logged for a day — a different (and less literal) number
+  // than what Day-by-Day History actually records event-to-event.
+  function computeEntryDurationsFromEvents(events: any[]) {
+    const now = Date.now();
+    let issueHours = 0;
+    events
+      .filter((e) => e._category === "issueHistory")
+      .forEach((e) => {
+        const start = new Date(e.createdAt || e._timestamp).getTime();
+        const end = e.resolvedAt ? new Date(e.resolvedAt).getTime() : now;
+        if (start && end > start) issueHours += (end - start) / 3_600_000;
+      });
+
+    let unavailableHours = 0;
+    const unavailEvents = events.filter((e) => e._category === "unavailableHistory");
+    unavailEvents
+      .filter((e) => e.eventType !== "replaced")
+      .forEach((e) => {
+        const start = new Date(e.reportedAt || e._timestamp).getTime();
+        let end: number;
+        if (e.resolvedAt) {
+          end = new Date(e.resolvedAt).getTime();
+        } else {
+          const next = unavailEvents.find(
+            (u) => u !== e && u.eventType === "replaced" && new Date(u._timestamp).getTime() > start
+          );
+          end = next ? new Date(next._timestamp).getTime() : now;
+        }
+        if (start && end > start) unavailableHours += (end - start) / 3_600_000;
+      });
+
+    // Bug B fix: match the actual labeled eventType values the backend sends
+    // ("Vehicle Added"/"Vehicle Removed"), not the raw "created"/"removed"
+    // action strings — see the getTitle comment above. Previously this never
+    // matched, so createdEv was always undefined, entryStart stayed null,
+    // and every entry's running hours silently computed to 0.
+    const createdEv = events.find((e) => e._category === "driverChangeHistory" && e.eventType === "Vehicle Added");
+    const removedEv = events.find((e) => e._category === "driverChangeHistory" && e.eventType === "Vehicle Removed");
+    const startAt = createdEv ? new Date(createdEv.changedAt || createdEv._timestamp).getTime() : null;
+    const endAt = removedEv ? new Date(removedEv.changedAt || removedEv._timestamp).getTime() : now;
+    const totalElapsedHours = startAt && endAt > startAt ? (endAt - startAt) / 3_600_000 : 0;
+    const runningHours = Math.max(totalElapsedHours - issueHours - unavailableHours, 0);
+
+    return {
+      runningHours: Math.round(runningHours * 100) / 100,
+      issueHours: Math.round(issueHours * 100) / 100,
+      unavailableHours: Math.round(unavailableHours * 100) / 100,
+      onRoadStartAt: createdEv?.changedAt || createdEv?._timestamp || null,
+      onRoadEndAt: removedEv?.changedAt || removedEv?._timestamp || null,
+    };
+  }
+
+  // Same event-derived logic as computeEntryDurationsFromEvents, but bounded
+  // to a single calendar day (the currently selected Daily Timeline day)
+  // instead of the entry's whole lifecycle. This is what the header-row
+  // badges on each entry card should show — "today's" running/issue/
+  // unavailable hours — so it no longer contradicts the expand panel's
+  // (correctly lifetime-labeled) "total running" figure below it.
+  function computeEntryDurationsForDay(events: any[], dayKey: string) {
+    const dayStart = new Date(`${dayKey}T00:00:00.000Z`).getTime();
+    const dayEnd = dayStart + 24 * 3_600_000;
+    const now = Date.now();
+    const clip = (t: number) => Math.min(Math.max(t, dayStart), dayEnd);
+
+    let issueHours = 0;
+    events
+      .filter((e) => e._category === "issueHistory")
+      .forEach((e) => {
+        const start = new Date(e.createdAt || e._timestamp).getTime();
+        const end = e.resolvedAt ? new Date(e.resolvedAt).getTime() : now;
+        if (!start || end <= start) return;
+        if (end <= dayStart || start >= dayEnd) return;
+        const s = clip(start);
+        const en = clip(end);
+        if (en > s) issueHours += (en - s) / 3_600_000;
+      });
+
+    let unavailableHours = 0;
+    const unavailEvents = events.filter((e) => e._category === "unavailableHistory");
+    unavailEvents
+      .filter((e) => e.eventType !== "replaced")
+      .forEach((e) => {
+        const start = new Date(e.reportedAt || e._timestamp).getTime();
+        let end: number;
+        if (e.resolvedAt) {
+          end = new Date(e.resolvedAt).getTime();
+        } else {
+          const next = unavailEvents.find(
+            (u) => u !== e && u.eventType === "replaced" && new Date(u._timestamp).getTime() > start
+          );
+          end = next ? new Date(next._timestamp).getTime() : now;
+        }
+        if (!start || end <= start) return;
+        if (end <= dayStart || start >= dayEnd) return;
+        const s = clip(start);
+        const en = clip(end);
+        if (en > s) unavailableHours += (en - s) / 3_600_000;
+      });
+
+    // Bug B fix: match the actual labeled eventType values the backend sends
+    // ("Vehicle Added"/"Vehicle Removed"), not the raw "created"/"removed"
+    // action strings — see the getTitle comment above. Previously this never
+    // matched, so createdEv was always undefined, entryStart stayed null,
+    // and every entry's running hours silently computed to 0.
+    const createdEv = events.find((e) => e._category === "driverChangeHistory" && e.eventType === "Vehicle Added");
+    const removedEv = events.find((e) => e._category === "driverChangeHistory" && e.eventType === "Vehicle Removed");
+    const entryStart = createdEv ? new Date(createdEv.changedAt || createdEv._timestamp).getTime() : null;
+    const entryEnd = removedEv ? new Date(removedEv.changedAt || removedEv._timestamp).getTime() : now;
+
+    if (entryStart == null || entryEnd <= dayStart || entryStart >= dayEnd) {
+      return { runningHours: 0, issueHours: 0, unavailableHours: 0 };
+    }
+    const windowStart = clip(entryStart);
+    const windowEnd = clip(entryEnd);
+    const totalElapsedHours = windowEnd > windowStart ? (windowEnd - windowStart) / 3_600_000 : 0;
+    const runningHours = Math.max(totalElapsedHours - issueHours - unavailableHours, 0);
+
+    return {
+      runningHours: Math.round(runningHours * 100) / 100,
+      issueHours: Math.round(issueHours * 100) / 100,
+      unavailableHours: Math.round(unavailableHours * 100) / 100,
+    };
+  }
+
+      const getVehicleTypeName = (vehicleTypeId) => {
+    if (!vehicleTypeId || !vehicleTypes) return "";
+    const v = vehicleTypes.find((vt) => vt._id === vehicleTypeId);
+    return v?.typeName || vehicleTypeId;
+  };
+
+
+  const entrySummaryByVehicle = useMemo(() => {
+    if (!data?.days) return {};
+    const map: Record<number, Record<string, any>> = {};
+    data.days.forEach((d: any) => {
+      d.vehicles.forEach((v: any) => {
+        if (!map[v.vehicleIndex]) map[v.vehicleIndex] = {};
+        v.entries.forEach((e: any) => {
+          if (!e.entryId) return;
+          if (!map[v.vehicleIndex][e.entryId]) {
+            map[v.vehicleIndex][e.entryId] = {
+              entryId: e.entryId,
+              driverName: e.driverName,
+              driverPhone: e.driverPhone,
+              vehicleRegistrationNumber: e.vehicleRegistrationNumber,
+              isReplacement: !!e.isReplacement,
+              runningHours: 0,
+              absentHours: 0,
+              issueHours: 0,
+              unavailableHours: 0,
+              compensationHours: 0,
+              compensationDeduction: 0,
+              firstDay: d.date,
+              lastDay: d.date,
+            };
+          }
+          const s = map[v.vehicleIndex][e.entryId];
+          s.runningHours += e.runningHours || 0;
+          s.absentHours += e.absentHours || 0;
+          s.issueHours += e.issueHours || 0;
+          s.unavailableHours += e.unavailableHours || 0;
+          s.compensationHours += e.compensationHours || 0;
+          s.compensationDeduction += e.compensationDeduction || 0;
+          s.isReplacement = s.isReplacement || !!e.isReplacement;
+          if (e.vehicleRegistrationNumber) s.vehicleRegistrationNumber = e.vehicleRegistrationNumber;
+          if (e.driverName) s.driverName = e.driverName;
+          s.lastDay = d.date;
+        });
+      });
+    });
+    // Seed any entryId that has recorded history but never showed up as an
+    // "active" entry on a calculator day — e.g. a vehicle created and
+    // replaced-out within the same day never appears in `data.days[].vehicles[].entries`
+    // (the calculator loop only pushes currently-active entries per day), so
+    // without this, old/replaced-out vehicles would be silently missing from
+    // the Vehicle History section entirely.
+    Object.keys(historyEventsByEntry).forEach((entryId) => {
+      const events = historyEventsByEntry[entryId];
+      const first = events[0];
+      if (first == null || first.vehicleIndex == null) return;
+      const vIdx = first.vehicleIndex;
+      if (!map[vIdx]) map[vIdx] = {};
+      if (map[vIdx][entryId]) return;
+      const latestWithReg = [...events].reverse().find((e) => e.vehicleRegistrationNumber);
+      const isReplacement = events.some(
+        (e) => e._category === "driverChangeHistory" && e.eventType === "Vehicle Added" && e.changedFields?.replacementFor
+      );
+      map[vIdx][entryId] = {
+        entryId,
+        driverName: latestWithReg?.driverName || "",
+        driverPhone: latestWithReg?.driverPhone || "",
+        vehicleRegistrationNumber: latestWithReg?.vehicleRegistrationNumber || "",
+        isReplacement,
+        runningHours: 0,
+        absentHours: 0,
+        issueHours: 0,
+        unavailableHours: 0,
+        compensationHours: 0,
+        compensationDeduction: 0,
+        firstDay: null,
+        lastDay: null,
+      };
+    });
+
+    // Override running/issue/unavailable with event-derived durations for any
+    // entry that has Day-by-Day History records — per the business requirement
+    // that the Campaign Calculator must reflect only the actual recorded
+    // history, not a default-work-window estimate. compensation/absent hours
+    // aren't recorded in Day-by-Day History, so those stay calculator-derived.
+    Object.keys(map).forEach((vIdxKey) => {
+      Object.keys(map[vIdxKey]).forEach((entryId) => {
+        const events = historyEventsByEntry[entryId];
+        if (!events || events.length === 0) return;
+        const derived = computeEntryDurationsFromEvents(events);
+        const s = map[vIdxKey][entryId];
+        s.runningHours = derived.runningHours;
+        s.issueHours = derived.issueHours;
+        s.unavailableHours = derived.unavailableHours;
+        s.onRoadStartAt = derived.onRoadStartAt;
+        s.onRoadEndAt = derived.onRoadEndAt;
+      });
+    });
+
+    return map;
+  }, [data, historyEventsByEntry]);
+
+  const compensationVehicleMeta =
+    compensationVehicleIndex != null
+      ? (data?.bookingItemsMeta || []).find((b: any) => b.vehicleIndex === compensationVehicleIndex)
+      : null;
 
   if (loading) {
     return (
@@ -187,12 +606,19 @@ export default function CampaignCalculatorTab({ order }: { order: Order }) {
             <SummaryCard icon={Truck} label="Vehicle Types" value={String(vehicleTotals.length)} small />
           </div>
 
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <SummaryCard icon={AlertOctagon} label="Total Issue Hours" value={fmtHm(fb.totalIssueHours)} tone={fb.totalIssueHours > 0 ? "warn" : undefined} />
+            <SummaryCard icon={ShieldAlert} label="Total Unavailable Hours" value={fmtHm(fb.totalUnavailableHours)} tone={fb.totalUnavailableHours > 0 ? "warn" : undefined} />
+            <SummaryCard icon={Gift} label="Compensation Granted" value={`${fmtHm(fb.totalCompensationHoursGranted)} / +${fb.totalCompensationDaysGranted ?? 0}d`} />
+            <SummaryCard icon={CalendarX2} label="Completed / Absent Days" value={`${fb.totalCompletedCampaignDays ?? 0} / ${fb.totalAbsentDays ?? 0}`} tone={fb.totalAbsentDays > 0 ? "warn" : undefined} />
+          </div>
+
           <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
             <div className="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Estimated (Order Creation) vs Actual (Campaign Calculator)</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Estimated  (Campaign Calculator)</p>
+              {/* <p className="text-[11px] text-gray-400 mt-0.5">
                 Actual amounts only appear after Operations logs them in the On-Road tab. Differences are expected until every day's activity is logged.
-              </p>
+              </p> */}
             </div>
             <div className="flex items-center justify-between px-4 pt-2 text-[10px] font-bold text-gray-400 uppercase tracking-wide">
               <span></span>
@@ -275,72 +701,301 @@ export default function CampaignCalculatorTab({ order }: { order: Order }) {
                       <div className="flex items-center gap-2 min-w-0">
                         <Truck size={14} className="text-teal-600 flex-shrink-0" />
                         <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                          {v.vehicleType} {v.vehicleModel ? `· ${v.vehicleModel}` : ""}
+                        {getVehicleTypeName(v.vehicleType)}  
                         </span>
                         <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-300 font-semibold flex-shrink-0">
                           {v.activeCount}/{v.bookedQuantity} active
                         </span>
+                        {v.isCompensationExtensionDay && (
+                          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 font-semibold flex-shrink-0">
+                            Compensation Extension Day
+                          </span>
+                        )}
                       </div>
-                      <span className="text-sm font-bold text-gray-900 dark:text-white flex-shrink-0">{fmt(v.itemDayTotal)}</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setCompensationVehicleIndex(v.vehicleIndex)}
+                          className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 font-semibold"
+                        >
+                          <Gift size={11} /> Compensation
+                        </button>
+                        <span className="text-sm font-bold text-gray-900 dark:text-white flex-shrink-0">{fmt(v.itemDayTotal)}</span>
+                      </div>
                     </div>
+
+                    {(v.issueHoursToday > 0 || v.unavailableHoursToday > 0 || v.compensationHoursGrantedToday > 0) && (
+                      <div className="flex flex-wrap items-center gap-3 px-4 py-2 text-[11px] bg-amber-50/60 dark:bg-amber-900/10 border-b border-gray-100 dark:border-gray-800">
+                        {v.issueHoursToday > 0 && (
+                          <span className="flex items-center gap-1 text-amber-700 dark:text-amber-300 font-semibold">
+                            <AlertOctagon size={11} /> Issue: {fmtHm(v.issueHoursToday)}
+                          </span>
+                        )}
+                        {v.unavailableHoursToday > 0 && (
+                          <span className="flex items-center gap-1 text-rose-700 dark:text-rose-300 font-semibold">
+                            <ShieldAlert size={11} /> Unavailable: {fmtHm(v.unavailableHoursToday)}
+                          </span>
+                        )}
+                        {(v.issueHoursToday > 0 || v.unavailableHoursToday > 0) && (
+                          <span className="text-gray-500">Total Downtime: {fmtHm(v.downtimeHoursToday)}</span>
+                        )}
+                        {v.compensationHoursGrantedToday > 0 && (
+                          <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-semibold">
+                            <Gift size={11} /> Compensation: +{fmtHm(v.compensationHoursGrantedToday)}
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                     <div className="p-3 space-y-2">
                       {v.entries.length === 0 && (
                         <p className="text-xs text-gray-400 italic px-1">No driver/vehicle assigned yet for this slot.</p>
                       )}
 
-                      {v.entries.map((e: any) => (
-                        <div
-                          key={e.entryId}
-                          className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-xs flex-wrap ${
-                            e.isReplacement
-                              ? "border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-800/50"
-                              : "border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/30"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3 min-w-0 flex-wrap">
-                            <span className="flex items-center gap-1 font-mono font-semibold text-gray-700 dark:text-gray-300">
-                              <Truck size={11} /> {e.vehicleRegistrationNumber || "—"}
-                            </span>
-                            <span className="flex items-center gap-1 text-gray-500">
-                              <User size={11} /> {e.driverName || "—"}
-                            </span>
-                            <span className="hidden sm:flex items-center gap-1 text-gray-400">
-                              <Phone size={11} /> {e.driverPhone || "—"}
-                            </span>
-                            {e.runningHours != null && (
-                              <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-semibold">
-                                <Clock size={11} /> {e.runningHours}h run
-                                {e.absentHours > 0 && <span className="text-amber-600">· {e.absentHours}h absent</span>}
+                      {[...v.entries, ...(v.releasedToday || [])].map((e: any) => {
+                        const entrySummary = entrySummaryByVehicle[v.vehicleIndex]?.[e.entryId];
+                        const entryEvents = historyEventsByEntry[e.entryId] || [];
+                        const hasTimeline =
+                          (Array.isArray(e.timeline) && e.timeline.length > 0) || entryEvents.length > 0;
+                        const isExpanded = !!expandedTimelines[e.entryId];
+                        const replacedEvent = entryEvents.find(
+                          (ev: any) => ev._category === "unavailableHistory" && ev.eventType === "replaced"
+                        );
+                        const isReleasedEntry = !!e.removed;
+                        // Header badge shows TODAY-ONLY hours (event-derived, bounded to
+                        // the currently selected Daily Timeline day) — not the entry's
+                        // lifetime total (that lives in the expand panel's "total
+                        // running" line) and not the backend's assumed-work-window
+                        // fallback, per the stakeholder's "0m vs 8h" contradiction report.
+                        const todayDurations = selectedDay
+                          ? computeEntryDurationsForDay(entryEvents, selectedDay.date)
+                          : { runningHours: e.runningHours, issueHours: e.issueHours, unavailableHours: e.unavailableHours };
+                        return (
+                        <div key={e.entryId}>
+                          <div
+                            className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-xs flex-wrap ${
+                              isReleasedEntry
+                                ? "border-rose-200 bg-rose-50 dark:bg-rose-900/10 dark:border-rose-800/50"
+                                : e.isReplacement
+                                ? "border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-800/50"
+                                : "border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/30"
+                            } ${hasTimeline ? "rounded-b-none" : ""}`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0 flex-wrap">
+                              <span className="flex items-center gap-1 font-mono font-semibold text-gray-700 dark:text-gray-300">
+                                <Truck size={11} /> {e.vehicleRegistrationNumber || "—"}
                               </span>
-                            )}
+                              <span className="flex items-center gap-1 text-gray-500">
+                                <User size={11} /> {e.driverName || "—"}
+                              </span>
+                              <span className="hidden sm:flex items-center gap-1 text-gray-400">
+                                <Phone size={11} /> {e.driverPhone || "—"}
+                              </span>
+                              {todayDurations.runningHours != null && (
+                                <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-semibold">
+                                  <Clock size={11} /> {fmtHm(todayDurations.runningHours)} run
+                                  {e.absentHours > 0 && <span className="text-amber-600">· {fmtHm(e.absentHours)} absent</span>}
+                                </span>
+                              )}
+                              {todayDurations.issueHours > 0 && (
+                                <span className="flex items-center gap-1 text-amber-600 font-semibold">
+                                  <AlertOctagon size={11} /> {fmtHm(todayDurations.issueHours)} issue
+                                </span>
+                              )}
+                              {todayDurations.unavailableHours > 0 && (
+                                <span className="flex items-center gap-1 text-rose-600 font-semibold">
+                                  <ShieldAlert size={11} /> {fmtHm(todayDurations.unavailableHours)} unavailable
+                                </span>
+                              )}
+                              {e.compensationHours > 0 && (
+                                <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+                                  <Gift size={11} /> +{fmtHm(e.compensationHours)} comp.
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              {isReleasedEntry && (
+                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 font-semibold">
+                                  <LogOut size={10} /> Released Today
+                                </span>
+                              )}
+                              {e.wasReplacedToday && (
+                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
+                                  <ArrowRightLeft size={10} /> Replaced by {e.replacedByRegistrationNumber || "—"}
+                                </span>
+                              )}
+                              {e.isReplacement && (
+                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
+                                  <ArrowRightLeft size={10} /> Replacement
+                                </span>
+                              )}
+                              {e.createdOnThisDay && (
+                                <span className="px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 font-semibold">
+                                  Assigned Today
+                                </span>
+                              )}
+                              {e.isAbsentDay && (
+                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 font-semibold">
+                                  <CalendarX2 size={10} /> Absent
+                                </span>
+                              )}
+                              {e.compensationDeduction > 0 && (
+                                <span className="px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 font-semibold">
+                                  -{fmt(e.compensationDeduction)}
+                                </span>
+                              )}
+                              {hasTimeline && (
+                                <button
+                                  onClick={() => toggleTimeline(e.entryId)}
+                                  className="flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold"
+                                >
+                                  <History size={10} />
+                                  {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            {e.isReplacement && (
-                              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
-                                <ArrowRightLeft size={10} /> Replacement
-                              </span>
-                            )}
-                            {e.createdOnThisDay && (
-                              <span className="px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 font-semibold">
-                                Assigned Today
-                              </span>
-                            )}
-                            {e.compensationDeduction > 0 && (
-                              <span className="px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 font-semibold">
-                                -{fmt(e.compensationDeduction)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
 
-                      {v.releasedToday?.length > 0 && (
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-800/40 text-xs text-rose-700 dark:text-rose-300">
-                          <LogOut size={11} />
-                          Released today: {v.releasedToday.join(", ")}
+                          {hasTimeline && isExpanded && (
+                            <div className="rounded-b-lg border border-t-0 border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 space-y-2">
+                              {Array.isArray(e.timeline) && e.timeline.length > 0 && (
+                                <div className="space-y-1">
+                                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Today's Running Time Timeline</p>
+                                  {e.timeline.map((seg: any, i: number) => {
+                                    const style = TIMELINE_STYLE[seg.type] || TIMELINE_STYLE.running;
+                                    return (
+                                      <div key={i} className="flex items-center gap-2 text-[11px]">
+                                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${style.dot}`} />
+                                        <span className={`font-semibold ${style.className}`}>{style.label}</span>
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                          {fmtClock(seg.start)}–{fmtClock(seg.end)}
+                                        </span>
+                                        <span className="text-gray-400">({fmtHm(seg.hours)})</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {entrySummary && (
+                                <div className="flex flex-wrap items-center gap-3 text-[11px] pt-1 border-t border-gray-100 dark:border-gray-800">
+                                  <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-semibold">
+                                    <Clock size={11} /> {fmtHm(entrySummary.runningHours)} total running
+                                  </span>
+                                  {entrySummary.issueHours > 0 && (
+                                    <span className="flex items-center gap-1 text-amber-600 font-semibold">
+                                      <AlertOctagon size={11} /> {fmtHm(entrySummary.issueHours)} issue
+                                    </span>
+                                  )}
+                                  {entrySummary.unavailableHours > 0 && (
+                                    <span className="flex items-center gap-1 text-rose-600 font-semibold">
+                                      <ShieldAlert size={11} /> {fmtHm(entrySummary.unavailableHours)} unavailable
+                                    </span>
+                                  )}
+                                  {(entrySummary.onRoadStartAt || entrySummary.onRoadEndAt) && (
+                                    <span className="text-gray-400">
+                                      On-Road: {fmtDatetime(entrySummary.onRoadStartAt)} {entrySummary.onRoadEndAt ? `→ ${fmtDatetime(entrySummary.onRoadEndAt)}` : "→ still active"}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+
+                              {(() => {
+                                // Scope every event card to the currently selected campaign day —
+                                // entryEvents/replacedEvent cover an entry's WHOLE lifecycle, so
+                                // without this filter, an issue reported on day 1 kept re-appearing
+                                // under every later day's expand panel too.
+                                const toDayKey = (d: any) => (d ? new Date(d).toISOString().slice(0, 10) : null);
+                                const onSelectedDay = (ts: any) => toDayKey(ts) === selectedDay.date;
+
+                                const issueEvents = entryEvents.filter(
+                                  (ev: any) => ev._category === "issueHistory" && onSelectedDay(ev.createdAt)
+                                );
+                                const unavailEvents = entryEvents.filter(
+                                  (ev: any) =>
+                                    ev._category === "unavailableHistory" &&
+                                    ev.eventType !== "replaced" &&
+                                    onSelectedDay(ev.reportedAt)
+                                );
+                                const extraKmEvents = entryEvents.filter(
+                                  (ev: any) => ev._category === "extraKmHistory" && onSelectedDay(ev.updatedAt)
+                                );
+                                const replacedToday = replacedEvent && onSelectedDay(replacedEvent._timestamp) ? replacedEvent : null;
+                                if (
+                                  issueEvents.length === 0 &&
+                                  unavailEvents.length === 0 &&
+                                  extraKmEvents.length === 0 &&
+                                  !replacedToday
+                                ) {
+                                  return null;
+                                }
+                                return (
+                                  <div className="space-y-1.5 pt-1 border-t border-gray-100 dark:border-gray-800">
+                                    {issueEvents.map((ev: any, i: number) => (
+                                      <div key={`issue-${i}`} className="rounded-lg border border-amber-100 dark:border-amber-900/40 px-2.5 py-2 text-[11px]">
+                                        <span className="flex items-center gap-1 font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 w-fit">
+                                          <AlertOctagon size={10} /> Issue Time
+                                        </span>
+                                        <p className="mt-1 text-gray-600 dark:text-gray-400">
+                                          Reported {fmtDatetime(ev.createdAt)}
+                                          {ev.resolvedAt ? (
+                                            <> → Resolved {fmtDatetime(ev.resolvedAt)} · Duration: {fmtHm((new Date(ev.resolvedAt).getTime() - new Date(ev.createdAt).getTime()) / 3_600_000)}</>
+                                          ) : (
+                                            <span className="text-amber-600"> · Still open</span>
+                                          )}
+                                        </p>
+                                      </div>
+                                    ))}
+
+                                    {unavailEvents.map((ev: any, i: number) => (
+                                      <div key={`unavail-${i}`} className="rounded-lg border border-rose-100 dark:border-rose-900/40 px-2.5 py-2 text-[11px]">
+                                        <span className="flex items-center gap-1 font-bold px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 w-fit">
+                                          <ShieldAlert size={10} /> Unavailable Time
+                                        </span>
+                                        <p className="mt-1 text-gray-600 dark:text-gray-400">
+                                          Marked unavailable {fmtDatetime(ev.reportedAt)}
+                                          {ev.resolvedAt ? (
+                                            <> → Available again {fmtDatetime(ev.resolvedAt)} · Duration: {fmtHm((new Date(ev.resolvedAt).getTime() - new Date(ev.reportedAt).getTime()) / 3_600_000)}</>
+                                          ) : replacedToday ? (
+                                            <> → Replaced {fmtDatetime(replacedToday._timestamp)} · Duration: {fmtHm((new Date(replacedToday._timestamp).getTime() - new Date(ev.reportedAt).getTime()) / 3_600_000)}</>
+                                          ) : (
+                                            <span className="text-rose-600"> · Still unavailable</span>
+                                          )}
+                                        </p>
+                                      </div>
+                                    ))}
+
+                                    {extraKmEvents.map((ev: any, i: number) => (
+                                      <div key={`extrakm-${i}`} className="rounded-lg border border-fuchsia-100 dark:border-fuchsia-900/40 px-2.5 py-2 text-[11px]">
+                                        <span className="flex items-center gap-1 font-bold px-1.5 py-0.5 rounded-full bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300 w-fit">
+                                          <Gauge size={10} /> Extra KM/Hours
+                                        </span>
+                                        <p className="mt-1 text-gray-600 dark:text-gray-400">
+                                          {ev.extraKm ?? 0} km · {ev.extraHours ?? 0} hrs — applied {fmtDatetime(ev.updatedAt)} (period: {ev.loggedFor || "—"})
+                                        </p>
+                                      </div>
+                                    ))}
+
+                                    {replacedToday && (
+                                      <div className="rounded-lg border border-amber-100 dark:border-amber-900/40 px-2.5 py-2 text-[11px]">
+                                        <span className="flex items-center gap-1 font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 w-fit">
+                                          <ArrowRightLeft size={10} /> Vehicle Replaced
+                                        </span>
+                                        <p className="mt-1 text-gray-600 dark:text-gray-400">
+                                          Old vehicle {entrySummary?.vehicleRegistrationNumber || "—"} (running {fmtHm(entrySummary?.runningHours)}) replaced at {fmtDatetime(replacedToday._timestamp)} by new vehicle{" "}
+                                          <span className="font-mono font-semibold text-gray-700 dark:text-gray-300">{replacedToday.replacementVehicleRegistrationNumber || "—"}</span>
+                                          {replacedToday.replacementDriverName ? ` (${replacedToday.replacementDriverName}${replacedToday.replacementDriverPhone ? ` · ${replacedToday.replacementDriverPhone}` : ""})` : ""}
+                                          — new vehicle on-road from {fmtDatetime(replacedToday._timestamp)}.
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          )}
                         </div>
-                      )}
+                        );
+                      })}
 
                       <div className="pt-2 mt-1 border-t border-gray-100 dark:border-gray-800 grid grid-cols-2 sm:grid-cols-5 gap-2 text-[11px]">
                         <CostLine label="Base (rental+driver)" value={v.dailyVehicleAmount} />
@@ -398,7 +1053,15 @@ export default function CampaignCalculatorTab({ order }: { order: Order }) {
                       {v.daysActive} active day{v.daysActive !== 1 ? "s" : ""}
                     </span>
                   </div>
-                  <span className="text-sm font-bold text-gray-900 dark:text-white flex-shrink-0">{fmt(v.grandTotal)}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCompensationVehicleIndex(v.vehicleIndex)}
+                      className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 font-semibold"
+                    >
+                      <Gift size={11} /> Compensation
+                    </button>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white flex-shrink-0">{fmt(v.grandTotal)}</span>
+                  </div>
                 </div>
                 <div className="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
                   <CostLine label="Rental Total" value={v.rentalTotal} />
@@ -408,6 +1071,17 @@ export default function CampaignCalculatorTab({ order }: { order: Order }) {
                   <CostLine label="Extra Hours Total" value={v.extraHourTotal} />
                   {v.compensationTotal > 0 && <CostLine label="Compensation" value={-v.compensationTotal} negative />}
                 </div>
+                {(() => {
+                  const meta = (data.bookingItemsMeta || []).find((b: any) => b.vehicleIndex === v.vehicleIndex);
+                  if (!meta) return null;
+                  return (
+                    <div className="px-3 pb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-500">
+                      <span>Scheduled Days: {meta.totalScheduledDays}{meta.extraDaysGranted > 0 ? ` (incl. +${meta.extraDaysGranted} compensation)` : ""}</span>
+                      <span>Completed: {meta.completedCampaignDays}</span>
+                      {meta.absentDaysCount > 0 && <span className="text-amber-600 font-semibold">Absent: {meta.absentDaysCount}</span>}
+                    </div>
+                  );
+                })()}
                 {(() => {
                   const bal = (data.extraKmBalances || []).find((b: any) => b.vehicleIndex === v.vehicleIndex);
                   if (!bal || (bal.purchasedKm === 0 && bal.purchasedHours === 0)) return null;
@@ -423,6 +1097,18 @@ export default function CampaignCalculatorTab({ order }: { order: Order }) {
                             Overage: {bal.overageKm} km · {bal.overageHours} hrs → {fmt(bal.overageKmCost + bal.overageHourCost)}
                           </span>
                         )}
+                        <span className="flex items-center gap-1 text-fuchsia-700 dark:text-fuchsia-300">
+                          Applicable: {bal.purchasedWindowFrom ? new Date(bal.purchasedWindowFrom).toLocaleDateString("en-IN") : "—"}
+                          {" → "}
+                          {bal.purchasedWindowTo ? new Date(bal.purchasedWindowTo).toLocaleDateString("en-IN") : "—"}
+                          {!bal.isPurchasedWindowCustom && <span className="text-gray-400">(full campaign)</span>}
+                        </span>
+                        <button
+                          onClick={() => setPoolWindowVehicleIndex(v.vehicleIndex)}
+                          className="text-[11px] px-2 py-0.5 rounded-lg border border-fuchsia-200 dark:border-fuchsia-800/50 text-fuchsia-700 dark:text-fuchsia-300 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/20 font-semibold"
+                        >
+                          Edit Dates
+                        </button>
                       </div>
                     </div>
                   );
@@ -461,6 +1147,33 @@ export default function CampaignCalculatorTab({ order }: { order: Order }) {
           </div>
         </div>
       )}
+
+      {compensationVehicleIndex != null && compensationVehicleMeta && (
+        <CompensationModal
+          order={order}
+          vehicle={{ fromDate: compensationVehicleMeta.fromDate, toDate: compensationVehicleMeta.toDate }}
+          vehicleIndex={compensationVehicleIndex}
+          vehicleEntries={entriesByVehicle[compensationVehicleIndex] || []}
+          onClose={() => setCompensationVehicleIndex(null)}
+          onRefresh={fetchCalculator}
+        />
+      )}
+
+      {poolWindowVehicleIndex != null && (() => {
+        const meta = (data?.bookingItemsMeta || []).find((b: any) => b.vehicleIndex === poolWindowVehicleIndex);
+        const bal = (data?.extraKmBalances || []).find((b: any) => b.vehicleIndex === poolWindowVehicleIndex);
+        if (!meta) return null;
+        return (
+          <PoolWindowModal
+            order={order}
+            vehicle={{ fromDate: meta.fromDate, toDate: meta.toDate }}
+            vehicleIndex={poolWindowVehicleIndex}
+            balance={bal}
+            onClose={() => setPoolWindowVehicleIndex(null)}
+            onRefresh={fetchCalculator}
+          />
+        );
+      })()}
     </div>
   );
 }

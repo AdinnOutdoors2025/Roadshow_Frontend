@@ -19,6 +19,7 @@ const toISODate = (d) => {
 
 export default function ExtraKmModal({ order, vehicle, vehicleIndex, vehicleEntries, bookingStatusMap, onClose, onRefresh }) {
  const [selectedEntryId, setSelectedEntryId] = useState("");
+  const [campaignLevel, setCampaignLevel] = useState(false);
   const [extraKm, setExtraKm] = useState("");
   const [extraHours, setExtraHours] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -53,11 +54,12 @@ const campaignFromISO = toISODate(vehicle.fromDate);
   const activeEntries = (vehicleEntries || []).filter((e) => e.entryStatus !== "removed");
 
 const handleSubmit = async () => {
-    if (!selectedEntryId) return toast.error("Select a driver / vehicle");
-
-    const selectedEntry = activeEntries.find((e) => e._id === selectedEntryId);
-    if (selectedEntry && !isEntryBookingValid(selectedEntry)) {
-      return toast.error("This vehicle's registration doesn't match the booking. Please update driver first.");
+    if (!campaignLevel) {
+      if (!selectedEntryId) return toast.error("Select a driver / vehicle");
+      const selectedEntry = activeEntries.find((e) => e._id === selectedEntryId);
+      if (selectedEntry && !isEntryBookingValid(selectedEntry)) {
+        return toast.error("This vehicle's registration doesn't match the booking. Please update driver first.");
+      }
     }
 
     const km = Number(extraKm) || 0;
@@ -75,7 +77,7 @@ const handleSubmit = async () => {
         `${API_BASE}admin/pipeline/${order._id}/extra-km`,
         {
           vehicleIndex,
-          entryId: selectedEntryId,
+          entryId: campaignLevel ? null : selectedEntryId,
           extraKm: km,
           extraHours: hrs,
           fromDate,
@@ -129,26 +131,41 @@ const handleSubmit = async () => {
         )}
 
         <div className="space-y-3">
+          <label className="flex items-center gap-2 text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/40 rounded-lg px-3 py-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={campaignLevel}
+              onChange={(e) => {
+                setCampaignLevel(e.target.checked);
+                if (e.target.checked) setSelectedEntryId("");
+              }}
+              className="accent-orange-600"
+            />
+            Apply to whole vehicle type (campaign-level), not one registration number
+          </label>
+
           {/* Driver / Reg No dropdown */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Driver / Vehicle</label>
-           <select
-              value={selectedEntryId}
-              onChange={(e) => setSelectedEntryId(e.target.value)}
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-300"
-            >
-              <option value="">Select driver / reg no</option>
-              {activeEntries.map((entry) => {
-                const isValid = isEntryBookingValid(entry);
-                return (
-                  <option key={entry._id} value={entry._id}>
-                    {entry.driverName || "—"} · {entry.vehicleRegistrationNumber || "—"}
-                    
-                  </option>
-                );
-              })}
-            </select>
-          </div>
+          {!campaignLevel && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Driver / Vehicle</label>
+             <select
+                value={selectedEntryId}
+                onChange={(e) => setSelectedEntryId(e.target.value)}
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-300"
+              >
+                <option value="">Select driver / reg no</option>
+                {activeEntries.map((entry) => {
+                  const isValid = isEntryBookingValid(entry);
+                  return (
+                    <option key={entry._id} value={entry._id}>
+                      {entry.driverName || "—"} · {entry.vehicleRegistrationNumber || "—"}
+
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          )}
 
           {/* Extra KM */}
           <div>

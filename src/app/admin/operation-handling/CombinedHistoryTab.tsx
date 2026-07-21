@@ -117,7 +117,7 @@ export default function CombinedHistoryTab({ order ,vehicleTypes }: { order: Ord
                     <UnavailableHistoryTab order={order} vehicleTypes={vehicleTypes} />
                 )}
                 {activeHistoryTab === "dayByDay" && showDayByDay && (
-                    <DayByDayHistoryTab order={order} />
+                    <DayByDayHistoryTab order={order}  vehicleTypes={vehicleTypes}/>
                 )}
             </div>
         </div>

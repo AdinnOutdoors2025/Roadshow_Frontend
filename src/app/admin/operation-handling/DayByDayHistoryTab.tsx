@@ -219,7 +219,7 @@ function computeRegSnapshot(eventsUpToDay: any[]) {
   return { status, statusReason, statusTime, statusDay, driverName, driverPhone };
 }
 
-export default function DayByDayHistoryTab({ order }: { order: { _id: string } }) {
+export default function DayByDayHistoryTab({ order ,vehicleTypes }: { order: { _id: string } ,vehicleTypes:any}) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
@@ -248,6 +248,14 @@ export default function DayByDayHistoryTab({ order }: { order: { _id: string } }
     fetchHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order._id]);
+
+
+      const getVehicleTypeName = (vehicleTypeId) => {
+    if (!vehicleTypeId || !vehicleTypes) return "";
+    const v = vehicleTypes.find((vt) => vt._id === vehicleTypeId);
+    return v?.typeName || vehicleTypeId;
+  };
+
 
   // Per vehicle type: full campaign day list + every event tagged & grouped by registration number.
   const perVehicleType = useMemo(() => {
@@ -370,7 +378,7 @@ export default function DayByDayHistoryTab({ order }: { order: { _id: string } }
                 </div>
                 <div className="text-left min-w-0">
                   <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
-                    {vt.vehicleType} {vt.vehicleModel ? `· ${vt.vehicleModel}` : ""}
+                   {getVehicleTypeName(vt.vehicleType)}  
                   </p>
                   <p className="text-xs text-gray-400">
                     {vt.registrationNumbers.length} vehicle{vt.registrationNumbers.length !== 1 ? "s" : ""} · {days.length} day{days.length !== 1 ? "s" : ""}
