@@ -2,350 +2,45 @@
 // @ts-nocheck
 "use client";
 
-import { useEffect, useMemo, useRef, useState, } from "react";
-import { addMonths, differenceInCalendarDays, eachDayOfInterval, endOfMonth, endOfWeek, format, isBefore, isSameDay, isSameMonth, isValid, parseISO, startOfDay, startOfMonth, startOfWeek, } from "date-fns";
-import { CalendarDays, Check, ChevronLeft, ChevronRight, Minus, Plus, X, } from "lucide-react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { isBefore } from "date-fns";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Minus,
+  Plus,
+  X,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
+import DatePicker from "@/components/calendar/calendar_reusable/calender";
 import { useAuth } from "@/context/AuthContext";
-import { FALLBACK_VEHICLE_IMAGE, fetchAllRoadshowVehicles, type RoadshowVehicle, } from "@/lib/roadshowVehicles";
-import './page.css';
+import {
+  FALLBACK_VEHICLE_IMAGE,
+  fetchAllRoadshowVehicles,
+  type RoadshowVehicle,
+} from "@/lib/roadshowVehicles";
+import "./page.css";
+import {
+  formatCurrency,
+  formatDate,
+  formatDateForApi,
+  getInclusiveDayCount,
+  parseStoredDate,
+  toSafeNumber,
+} from "@/app/utils/currency";
 type SelectedVehicle = RoadshowVehicle & {
   startDate: Date | null;
   endDate: Date | null;
   quantity: number;
 };
-
-type DateRange = {
-  start: Date | null;
-  end: Date | null;
-};
-
-type DateRangeCalendarProps = {
-  value: DateRange;
-  onChange: (range: DateRange) => void;
-  onClose: () => void;
-};
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(Number(amount || 0));
-};
-
-const parseStoredDate = (
-  value: string | null | undefined
-) => {
-  if (!value) return null;
-
-  const parsedDate = parseISO(value);
-
-  return isValid(parsedDate)
-    ? parsedDate
-    : null;
-};
-
-const getBookingDays = (
-  startDate: Date | null,
-  endDate: Date | null
-) => {
-  if (!startDate || !endDate) return 0;
-
-  return Math.max(
-    differenceInCalendarDays(
-      endDate,
-      startDate
-    ) + 1,
-    0
-  );
-};
-
-const getDateText = (
-  date: Date | null,
-  placeholder: string
-) => {
-  return date
-    ? format(date, "dd MMM yyyy")
-    : placeholder;
-};
-
-/*   DATE RANGE CALENDA */
-function DateRangeCalendar({
-  value,
-  onChange,
-  onClose,
-}: DateRangeCalendarProps) {
-  const today = startOfDay(new Date());
-
-  const [visibleMonth, setVisibleMonth] =
-    useState(
-      startOfMonth(value.start || today)
-    );
-
-  useEffect(() => {
-    const previousOverflow =
-      document.body.style.overflow;
-
-    document.body.style.overflow = "hidden";
-
-    const handleEscape = (
-      event: KeyboardEvent
-    ) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-
-    document.addEventListener(
-      "keydown",
-      handleEscape
-    );
-
-    return () => {
-      document.body.style.overflow =
-        previousOverflow;
-
-      document.removeEventListener(
-        "keydown",
-        handleEscape
-      );
-    };
-  }, [onClose]);
-
-  const getMonthDays = (month: Date) => {
-    return eachDayOfInterval({
-      start: startOfWeek(
-        startOfMonth(month)
-      ),
-      end: endOfWeek(endOfMonth(month)),
-    });
-  };
-
-  const isInsideSelectedRange = (
-    day: Date
-  ) => {
-    if (!value.start) return false;
-
-    const startTime = startOfDay(
-      value.start
-    ).getTime();
-
-    const endTime = value.end
-      ? startOfDay(value.end).getTime()
-      : startTime;
-
-    const currentTime =
-      startOfDay(day).getTime();
-
-    return (
-      currentTime >= startTime &&
-      currentTime <= endTime
-    );
-  };
-
-  const handleDateClick = (day: Date) => {
-    if (isBefore(day, today)) return;
-
-    if (!value.start || value.end) {
-      onChange({
-        start: day,
-        end: null,
-      });
-
-      return;
-    }
-
-    if (isBefore(day, value.start)) {
-      onChange({
-        start: day,
-        end: value.start,
-      });
-
-      return;
-    }
-
-    onChange({
-      start: value.start,
-      end: day,
-    });
-  };
-
-  const renderMonth = (month: Date) => {
-    const monthDays = getMonthDays(month);
-
-    return (
-      <div className="min-w-0 flex-1">
-        <div className="mb-5 text-center">
-          <h3 className="text-[14px] font-semibold text-[#1d1d1f]">
-            {format(month, "MMMM yyyy")}
-          </h3>
-        </div>
-
-        <div className="mb-2 grid grid-cols-7">
-          {[
-            "S",
-            "M",
-            "T",
-            "W",
-            "T",
-            "F",
-            "S",
-          ].map((dayName, index) => (
-            <div
-              key={`${dayName}-${index}`}
-              className="flex h-7 items-center justify-center text-[10px] font-semibold text-[#969696]"
-            >
-              {dayName}
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 gap-y-1">
-          {monthDays.map((day) => {
-            const belongsToMonth =
-              isSameMonth(day, month);
-
-            const isPast = isBefore(
-              day,
-              today
-            );
-
-            const selectedStart =
-              value.start
-                ? isSameDay(
-                  day,
-                  value.start
-                )
-                : false;
-
-            const selectedEnd = value.end
-              ? isSameDay(day, value.end)
-              : false;
-
-            const selectedRange =
-              isInsideSelectedRange(day);
-
-            return (
-              <div
-                key={day.toISOString()}
-                className="flex items-center justify-center"
-              >
-                <button
-                  type="button"
-                  disabled={isPast}
-                  onClick={() =>
-                    handleDateClick(day)
-                  }
-                  className={[
-                    "flex h-8 w-8 items-center justify-center rounded-full text-[11px] transition",
-                    !belongsToMonth
-                      ? "text-[#d2d2d2]"
-                      : "text-[#282828]",
-                    isPast
-                      ? "cursor-not-allowed opacity-25"
-                      : "hover:bg-[#eeeeef]",
-                    selectedRange
-                      ? "!bg-[#1b1b1d] !font-semibold !text-white"
-                      : "",
-                    selectedStart ||
-                      selectedEnd
-                      ? "ring-2 ring-[#1b1b1d] ring-offset-1"
-                      : "",
-                  ].join(" ")}
-                >
-                  {format(day, "d")}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <>
-      <button
-        type="button"
-        aria-label="Close calendar"
-        onClick={onClose}
-        className="fixed inset-0 z-[150] cursor-default bg-black/35 backdrop-blur-[1px]"
-      />
-
-      <div className="fixed left-1/2 top-1/2 z-[160] w-[calc(100vw-32px)] max-w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-[22px] border border-black/5 bg-white p-4 shadow-[0_30px_90px_rgba(0,0,0,0.28)] sm:p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() =>
-              setVisibleMonth(
-                (current) =>
-                  addMonths(current, -1)
-              )
-            }
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e5e5e5] text-[#1d1d1f] transition hover:bg-[#f4f4f4]"
-            aria-label="Previous month"
-          >
-            <ChevronLeft size={17} />
-          </button>
-
-          <p className="text-[12px] font-medium text-[#777777]">
-            Select campaign dates
-          </p>
-
-          <button
-            type="button"
-            onClick={() =>
-              setVisibleMonth(
-                (current) =>
-                  addMonths(current, 1)
-              )
-            }
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e5e5e5] text-[#1d1d1f] transition hover:bg-[#f4f4f4]"
-            aria-label="Next month"
-          >
-            <ChevronRight size={17} />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 gap-7 sm:grid-cols-2">
-          {renderMonth(visibleMonth)}
-
-          <div className="hidden sm:block">
-            {renderMonth(
-              addMonths(visibleMonth, 1)
-            )}
-          </div>
-        </div>
-
-        <div className="mt-6 flex items-center justify-between border-t border-[#eeeeee] pt-4">
-          <button
-            type="button"
-            onClick={() =>
-              onChange({
-                start: null,
-                end: null,
-              })
-            }
-            className="text-[12px] font-medium text-[#777777] underline underline-offset-4 transition hover:text-black"
-          >
-            Clear dates
-          </button>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full bg-[#171719] px-5 py-2.5 text-[12px] font-semibold text-white transition hover:bg-[#d70000]"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
 
 /* CAMPAIGN REQUEST PAGE */
 export default function CampaignRequestPage() {
@@ -531,31 +226,49 @@ export default function CampaignRequestPage() {
     vehicle: RoadshowVehicle
   ) => {
     setSelectedVehicles((current) => {
-      const alreadySelected =
-        current.some(
-          (item) =>
-            item.id === vehicle.id
-        );
+      const alreadySelected = current.some(
+        (item) =>
+          String(item.id) ===
+          String(vehicle.id)
+      );
 
       if (alreadySelected) {
         return current.filter(
           (item) =>
-            item.id !== vehicle.id
+            String(item.id) !==
+            String(vehicle.id)
         );
       }
 
       const firstSelected = current[0];
 
+      const directRate = toSafeNumber(
+        vehicle.rate
+      );
+
+      const packageRate = toSafeNumber(
+        vehicle.packageDetails
+          ?.perDayRentalCost
+      );
+
       return [
         ...current,
         {
           ...vehicle,
+
+          rate:
+            directRate > 0
+              ? directRate
+              : packageRate,
+
           startDate:
             firstSelected?.startDate ||
             null,
+
           endDate:
             firstSelected?.endDate ||
             null,
+
           quantity: 1,
         },
       ];
@@ -636,22 +349,43 @@ export default function CampaignRequestPage() {
   const bookingRows = useMemo(() => {
     return selectedVehicles.map(
       (vehicle) => {
-        const days = getBookingDays(
+        const days = getInclusiveDayCount(
           vehicle.startDate,
           vehicle.endDate
         );
 
-        const rate = Number(
-          vehicle.rate || 0
+        const quantity = Math.max(
+          Math.floor(
+            toSafeNumber(vehicle.quantity)
+          ),
+          1
         );
+
+        const directRate = toSafeNumber(
+          vehicle.rate
+        );
+
+        const packageRate = toSafeNumber(
+          vehicle.packageDetails
+            ?.perDayRentalCost
+        );
+
+        const rate =
+          directRate > 0
+            ? directRate
+            : packageRate;
+
+        const total =
+          rate * days * quantity;
 
         return {
           ...vehicle,
+          rate,
           days,
-          total:
-            rate *
-            days *
-            vehicle.quantity,
+          quantity,
+          total: Number.isFinite(total)
+            ? total
+            : 0,
         };
       }
     );
@@ -660,10 +394,12 @@ export default function CampaignRequestPage() {
   const grandTotal = useMemo(() => {
     return bookingRows.reduce(
       (total, vehicle) =>
-        total + vehicle.total,
+        total +
+        toSafeNumber(vehicle.total),
       0
     );
   }, [bookingRows]);
+
 
   const scrollProducts = (
     direction: "left" | "right"
@@ -816,25 +552,17 @@ export default function CampaignRequestPage() {
               vehicle.packageDetails
                 ?._id || "",
 
-            pricePerDay: Number(
+            pricePerDay: toSafeNumber(
               vehicle.rate || 0
             ),
 
-            startDate:
+            startDate: formatDateForApi(
               vehicle.startDate
-                ? format(
-                  vehicle.startDate,
-                  "yyyy-MM-dd"
-                )
-                : "",
+            ),
 
-            endDate:
+            endDate: formatDateForApi(
               vehicle.endDate
-                ? format(
-                  vehicle.endDate,
-                  "yyyy-MM-dd"
-                )
-                : "",
+            ),
 
             days: vehicle.days,
 
@@ -1003,7 +731,7 @@ export default function CampaignRequestPage() {
                 (vehicle, index) => (
                   <div
                     key={vehicle.id}
-                    className="rdsw_crfAddedVehMain rounded-[18px] border border-black/[0.04] bg-white p-4 shadow-[0_7px_25px_rgba(0,0,0,0.025)]"
+                    className="rdsw_crfAddedVehMain rounded-[18px] bg-white p-4 shadow-[0_7px_25px_rgba(0,0,0,0.025)]"
                   >
                     <div className="mb-4 flex items-center justify-between rdsw_crfAddedVehContentMain">
                       <p className=" rdsw_crfAddedVehHeadingMain text-[11px] font-semibold uppercase tracking-[0.08em] text-[#858585]">
@@ -1079,9 +807,14 @@ export default function CampaignRequestPage() {
                           />
 
                           <span className="truncate">
-                            {getDateText(
+                            {formatDate(
                               vehicle.startDate,
-                              "Select date"
+                              {
+                                pattern:
+                                  "dd MMM yyyy",
+                                fallback:
+                                  "Select date",
+                              }
                             )}
                           </span>
                         </span>
@@ -1107,9 +840,14 @@ export default function CampaignRequestPage() {
                           />
 
                           <span className="truncate">
-                            {getDateText(
+                            {formatDate(
                               vehicle.endDate,
-                              "Select date"
+                              {
+                                pattern:
+                                  "dd MMM yyyy",
+                                fallback:
+                                  "Select date",
+                              }
                             )}
                           </span>
                         </span>
@@ -1211,301 +949,315 @@ export default function CampaignRequestPage() {
           </aside>
 
           {/* Product details */}
-        {/* Product details */}
-<section className="rdsw_crfProdDetailsMain min-w-0">
-  {/* Section heading */}
-  <div className="rdsw_crfProdDetailsHeadingWrapper">
-    <p className="rdsw_crfProdDetails1stHeading">
-      Roadshow booking
-    </p>
+          {/* Product details */}
+          <section className="rdsw_crfProdDetailsMain min-w-0">
+            {/* Section heading */}
+            <div className="rdsw_crfProdDetailsHeadingWrapper">
+              <p className="rdsw_crfProdDetails1stHeading">
+                Roadshow booking
+              </p>
 
-    <h2 className="rdsw_crfProdDetails2ndHeading">
-      Product Details
-    </h2>
+              <h2 className="rdsw_crfProdDetails2ndHeading">
+                Product Details
+              </h2>
 
-    <p className="rdsw_crfProdDetailsDesc">
-      Review your roadshow campaign details and confirm your booking.
-    </p>
-  </div>
+              <p className="rdsw_crfProdDetailsDesc">
+                Review your roadshow campaign details and confirm your booking.
+              </p>
+            </div>
 
-  {/* Vehicle cards */}
-  <div className="rdsw_crfProdDetailsVehicleSection">
-    <div
-      ref={productScrollerRef}
-      className="rdsw_crfProdDetailsScroller"
-    >
-      {/* Loading skeleton */}
-      {loadingVehicles &&
-        Array.from({ length: 4 }).map((_, index) => (
-          <article
-            key={index}
-            className="rdsw_crfProdDetailsSkeletonCard"
-          >
-            <div className="rdsw_crfProdDetailsSkeletonImage" />
+            {/* Vehicle cards */}
+            <div className="rdsw_crfProdDetailsVehicleSection">
+              <div
+                ref={productScrollerRef}
+                className="rdsw_crfProdDetailsScroller"
+              >
+                {/* Loading skeleton */}
+                {loadingVehicles &&
+                  Array.from({ length: 4 }).map((_, index) => (
+                    <article
+                      key={index}
+                      className="rdsw_crfProdDetailsSkeletonCard"
+                    >
+                      <div className="rdsw_crfProdDetailsSkeletonImage" />
 
-            <div className="rdsw_crfProdDetailsSkeletonTitle" />
+                      <div className="rdsw_crfProdDetailsSkeletonTitle" />
 
-            <div className="rdsw_crfProdDetailsSkeletonPrice" />
+                      <div className="rdsw_crfProdDetailsSkeletonPrice" />
 
-            <div className="rdsw_crfProdDetailsSkeletonRating" />
+                      <div className="rdsw_crfProdDetailsSkeletonRating" />
 
-            <div className="rdsw_crfProdDetailsSkeletonButton" />
-          </article>
-        ))}
+                      <div className="rdsw_crfProdDetailsSkeletonButton" />
+                    </article>
+                  ))}
 
-      {/* Empty state */}
-      {!loadingVehicles && vehicles.length === 0 && (
-        <div className="rdsw_crfProdDetailsEmptyState">
-          <p className="rdsw_crfProdDetailsEmptyTitle">
-            No vehicles available
-          </p>
+                {/* Empty state */}
+                {!loadingVehicles && vehicles.length === 0 && (
+                  <div className="rdsw_crfProdDetailsEmptyState">
+                    <p className="rdsw_crfProdDetailsEmptyTitle">
+                      No vehicles available
+                    </p>
 
-          <p className="rdsw_crfProdDetailsEmptyDesc">
-            Campaign vehicles could not be found.
-          </p>
-        </div>
-      )}
+                    <p className="rdsw_crfProdDetailsEmptyDesc">
+                      Campaign vehicles could not be found.
+                    </p>
+                  </div>
+                )}
 
-      {/* Vehicle cards */}
-      {!loadingVehicles &&
-        vehicles.map((vehicle) => {
-          const selected = isSelected(vehicle.id);
+                {/* Vehicle cards */}
+                {!loadingVehicles &&
+                  vehicles.map((vehicle) => {
+                    const selected = isSelected(vehicle.id);
 
-          return (
-            <article
-              key={vehicle.id}
-              className={[
-                "rdsw_crfProdDetailsCardMain",
-                selected
-                  ? "rdsw_crfProdDetailsCardSelected"
-                  : "",
-              ].join(" ")}
-            >
-              <div className="rdsw_crfProdDetailsImageWrapper">
-                <img
-                  src={
-                    vehicle.image ||
-                    FALLBACK_VEHICLE_IMAGE
-                  }
-                  alt={vehicle.name}
-                  className="rdsw_crfProdDetailsVehicleImage"
-                  onError={(event) => {
-                    const image = event.currentTarget;
+                    return (
+                      <article
+                        key={vehicle.id}
+                        className={[
+                          "rdsw_crfProdDetailsCardMain",
+                          selected
+                            ? "rdsw_crfProdDetailsCardSelected"
+                            : "",
+                        ].join(" ")}
+                      >
+                        <div className="rdsw_crfProdDetailsImageWrapper">
+                          <img
+                            src={
+                              vehicle.image ||
+                              FALLBACK_VEHICLE_IMAGE
+                            }
+                            alt={vehicle.name}
+                            className="rdsw_crfProdDetailsVehicleImage"
+                            onError={(event) => {
+                              const image = event.currentTarget;
 
-                    if (
-                      image.src !==
-                      FALLBACK_VEHICLE_IMAGE
-                    ) {
-                      image.src =
-                        FALLBACK_VEHICLE_IMAGE;
-                    }
-                  }}
-                />
+                              if (
+                                image.src !==
+                                FALLBACK_VEHICLE_IMAGE
+                              ) {
+                                image.src =
+                                  FALLBACK_VEHICLE_IMAGE;
+                              }
+                            }}
+                          />
+                        </div>
+
+                        <div className="rdsw_crfProdDetailsCardContent">
+                          <h3 className="rdsw_crfProdDetailsVehicleName">
+                            {vehicle.name}
+                          </h3>
+
+                          <p className="rdsw_crfProdDetailsVehiclePrice">
+                            {formatCurrency(vehicle.rate)}
+                            <span>/ Per Day</span>
+                          </p>
+
+                          {vehicle.rating !== undefined &&
+                            vehicle.rating !== null && (
+                              <div className="rdsw_crfProdDetailsRating">
+                                <span className="rdsw_crfProdDetailsRatingValue">
+                                  {vehicle.rating}
+                                </span>
+
+                                {/* <span className="rdsw_crfProdDetailsRatingStar"> */}
+                                  <div><img src='/images/assets/RS_VehicleRateStar.svg' className='rdsw_crfVehRatingStar' alt="Rating" /></div>
+                                {/* </span> */}
+                              </div>
+                            )}
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              toggleVehicle(vehicle)
+                            }
+                            aria-label={
+                              selected
+                                ? `Remove ${vehicle.name}`
+                                : `Add ${vehicle.name}`
+                            }
+                            className={[
+                              "rdsw_crfProdDetailsVehicleButton",
+                              selected
+                                ? "rdsw_crfProdDetailsVehicleButtonSelected"
+                                : "",
+                            ].join(" ")}
+                          >
+                            {selected && (
+                              <Image
+                                src="/images/assets/rdsw_crfProdDetailsCheckMark.svg"
+                                alt=""
+                                width={18}
+                                height={18}
+                                className="rdsw_crfProdDetailsCheckMark"
+                              />
+                            )}
+
+                            <span>
+                              {selected
+                                ? "Vehicle added"
+                                : "Add Vehicle"}
+                            </span>
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
               </div>
 
-              <div className="rdsw_crfProdDetailsCardContent">
-                <h3 className="rdsw_crfProdDetailsVehicleName">
-                  {vehicle.name}
-                </h3>
-
-                <p className="rdsw_crfProdDetailsVehiclePrice">
-                  {formatCurrency(vehicle.rate)}
-                  <span>/Per Day</span>
-                </p>
-
-                {vehicle.rating !== undefined &&
-                  vehicle.rating !== null && (
-                    <div className="rdsw_crfProdDetailsRating">
-                      <span className="rdsw_crfProdDetailsRatingValue">
-                        {vehicle.rating}
-                      </span>
-
-                      <span className="rdsw_crfProdDetailsRatingStar">
-                        ★
-                      </span>
-                    </div>
-                  )}
+              {/* Carousel navigation */}
+              <div className="rdsw_crfProdDetailsNavigation">
+                <button
+                  type="button"
+                  onClick={() => scrollProducts("left")}
+                  className="rdsw_crfProdDetailsNavigationButton"
+                  aria-label="Previous vehicles"
+                >
+                  <ChevronLeft size={26} />
+                </button>
 
                 <button
                   type="button"
-                  onClick={() =>
-                    toggleVehicle(vehicle)
-                  }
-                  aria-label={
-                    selected
-                      ? `Remove ${vehicle.name}`
-                      : `Add ${vehicle.name}`
-                  }
-                  className={[
-                    "rdsw_crfProdDetailsVehicleButton",
-                    selected
-                      ? "rdsw_crfProdDetailsVehicleButtonSelected"
-                      : "",
-                  ].join(" ")}
+                  onClick={() => scrollProducts("right")}
+                  className="rdsw_crfProdDetailsNavigationButton"
+                  aria-label="Next vehicles"
                 >
-                  {selected && (
-                    <Image
-                      src="/images/assets/rdsw_crfProdDetailsCheckMark.svg"
-                      alt=""
-                      width={18}
-                      height={18}
-                      className="rdsw_crfProdDetailsCheckMark"
-                    />
-                  )}
-
-                  <span>
-                    {selected
-                      ? "Vehicle added"
-                      : "Add Vehicle"}
-                  </span>
+                  <ChevronRight size={26} />
                 </button>
               </div>
-            </article>
-          );
-        })}
-    </div>
+            </div>
 
-    {/* Carousel navigation */}
-    <div className="rdsw_crfProdDetailsNavigation">
-      <button
-        type="button"
-        onClick={() => scrollProducts("left")}
-        className="rdsw_crfProdDetailsNavigationButton"
-        aria-label="Previous vehicles"
-      >
-        <ChevronLeft size={26} />
-      </button>
+            {/* Desktop summary table */}
+            <div className="rdsw_crfProdDetailsDesktopTable">
+              <div className="rdsw_crfProdDetailsTableHeader">
+                <span>Name</span>
+                <span>Price</span>
+                <span>Days</span>
+                <span>Qty</span>
+                <span>Total</span>
+              </div>
 
-      <button
-        type="button"
-        onClick={() => scrollProducts("right")}
-        className="rdsw_crfProdDetailsNavigationButton"
-        aria-label="Next vehicles"
-      >
-        <ChevronRight size={26} />
-      </button>
-    </div>
-  </div>
+              <div className="rdsw_crfProdDetailsTableBody">
+                {bookingRows.length === 0 && (
+                  <div className="rdsw_crfProdDetailsTableEmpty">
+                    Select a vehicle to view the booking summary.
+                  </div>
+                )}
 
-  {/* Desktop summary table */}
-  <div className="rdsw_crfProdDetailsDesktopTable">
-    <div className="rdsw_crfProdDetailsTableHeader">
-      <span>Name</span>
-      <span>Price</span>
-      <span>Days</span>
-      <span>Qty</span>
-      <span>Total</span>
-    </div>
+                {bookingRows.map((vehicle, index) => (
+                  <div
+                    key={vehicle.id}
+                    className="rdsw_crfProdDetailsTableRow"
+                    style={{
+                      animationDelay: `${index * 60}ms`,
+                    }}
+                  >
+                    <span className="rdsw_crfProdDetailsTableVehicleName">
+                      {vehicle.name}
+                    </span>
 
-    <div className="rdsw_crfProdDetailsTableBody">
-      {bookingRows.length === 0 && (
-        <div className="rdsw_crfProdDetailsTableEmpty">
-          Select a vehicle to view the booking summary.
-        </div>
-      )}
+                    <span>
+                      {formatCurrency(vehicle.rate)}
+                    </span>
 
-      {bookingRows.map((vehicle, index) => (
-        <div
-          key={vehicle.id}
-          className="rdsw_crfProdDetailsTableRow"
-          style={{
-            animationDelay: `${index * 60}ms`,
-          }}
-        >
-          <span className="rdsw_crfProdDetailsTableVehicleName">
-            {vehicle.name}
-          </span>
+                    <span>
+                      {vehicle.days} day(s)
+                    </span>
 
-          <span>
-            {formatCurrency(vehicle.rate)}
-          </span>
+                    <span>
+                      {vehicle.quantity} vehicle(s)
+                    </span>
 
-          <span>
-            {vehicle.days} day(s)
-          </span>
+                    <span>
+                      {formatCurrency(vehicle.total)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          <span>
-            {vehicle.quantity} vehicle(s)
-          </span>
+            {/* Mobile summary */}
+            <div className="rdsw_crfProdDetailsMobileSummary">
+              <div className="rdsw_crfProdDetailsMobileSummaryHeader">
+                <h3>Booking summary</h3>
 
-          <span>
-            {formatCurrency(vehicle.total)}
-          </span>
-        </div>
-      ))}
-    </div>
-  </div>
+                <span>
+                  {bookingRows.length} vehicle
+                  {bookingRows.length === 1 ? "" : "s"}
+                </span>
+              </div>
 
-  {/* Mobile summary */}
-  <div className="rdsw_crfProdDetailsMobileSummary">
-    <div className="rdsw_crfProdDetailsMobileSummaryHeader">
-      <h3>Booking summary</h3>
+              {bookingRows.length === 0 && (
+                <div className="rdsw_crfProdDetailsMobileEmpty">
+                  Select a vehicle to view the booking summary.
+                </div>
+              )}
 
-      <span>
-        {bookingRows.length} vehicle
-        {bookingRows.length === 1 ? "" : "s"}
-      </span>
-    </div>
+              {bookingRows.map((vehicle) => (
+                <article
+                  key={vehicle.id}
+                  className="rdsw_crfProdDetailsMobileCard"
+                >
+                  <div className="rdsw_crfProdDetailsMobileCardTop">
+                    <div>
+                      <h4>{vehicle.name}</h4>
 
-    {bookingRows.length === 0 && (
-      <div className="rdsw_crfProdDetailsMobileEmpty">
-        Select a vehicle to view the booking summary.
-      </div>
-    )}
+                      <p>
+                        {vehicle.days} day(s) ·{" "}
+                        {vehicle.quantity} vehicle(s)
+                      </p>
+                    </div>
 
-    {bookingRows.map((vehicle) => (
-      <article
-        key={vehicle.id}
-        className="rdsw_crfProdDetailsMobileCard"
-      >
-        <div className="rdsw_crfProdDetailsMobileCardTop">
-          <div>
-            <h4>{vehicle.name}</h4>
+                    <strong>
+                      {formatCurrency(vehicle.total)}
+                    </strong>
+                  </div>
 
-            <p>
-              {vehicle.days} day(s) ·{" "}
-              {vehicle.quantity} vehicle(s)
-            </p>
-          </div>
+                  <div className="rdsw_crfProdDetailsMobilePrice">
+                    <span>Price per day</span>
 
-          <strong>
-            {formatCurrency(vehicle.total)}
-          </strong>
-        </div>
-
-        <div className="rdsw_crfProdDetailsMobilePrice">
-          <span>Price per day</span>
-
-          <strong>
-            {formatCurrency(vehicle.rate)}
-          </strong>
-        </div>
-      </article>
-    ))}
-  </div>
-</section>
+                    <strong>
+                      {formatCurrency(vehicle.rate)}
+                    </strong>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
         </div>
       </section>
 
       {activeDateVehicle && (
-        <DateRangeCalendar
-          value={{
-            start:
-              activeDateVehicle.startDate,
-            end: activeDateVehicle.endDate,
-          }}
-          onChange={(range) =>
+        <DatePicker
+          checkIn={
+            activeDateVehicle.startDate
+          }
+          checkOut={
+            activeDateVehicle.endDate
+          }
+          setCheckIn={(date) =>
             updateSelectedVehicle(
               activeDateVehicle.id,
               {
-                startDate: range.start,
-                endDate: range.end,
+                startDate: date,
               }
             )
           }
-          onClose={() =>
-            setActiveDateVehicleId(null)
+          setCheckOut={(date) =>
+            updateSelectedVehicle(
+              activeDateVehicle.id,
+              {
+                endDate: date,
+              }
+            )
           }
+          open
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) {
+              setActiveDateVehicleId(null);
+            }
+          }}
+          showInputCard={false}
+          popupMode="dialog"
+          title="Select campaign dates"
         />
       )}
     </main>

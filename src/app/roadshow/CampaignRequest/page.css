@@ -1,7 +1,6 @@
 .rdsw_CrfLeftHeading1 {
     font-weight: 400;
     font-size: 30px;
-    leading-trim: NONE;
     line-height: 100%;
     letter-spacing: 0%;
     color: #000000;
@@ -96,7 +95,6 @@
 
 /* PRODUCT LIST WITH DETAILS SECTION  */
 .rdsw_crfProdDetailsHeadingMain{
-leading-trim: NONE;
 line-height: 100%;
 letter-spacing: 0%;
 color: #000000;
@@ -111,9 +109,8 @@ font-weight: 400;
 font-size: 24px;
 
 }
-/* ==========================================================
-   PRODUCT DETAILS SECTION
-========================================================== */
+/*
+   PRODUCT DETAILS SECTION */
 
 .rdsw_crfProdDetailsMain {
   width: 100%;
@@ -148,17 +145,14 @@ font-size: 24px;
 .rdsw_crfProdDetailsDesc {
   max-width: 600px;
   margin: 10px 0 0;
-  color: #676767;
-  font-family: "Outfit", sans-serif;
   font-size: 24px;
   font-weight: 400;
   line-height: 1.3;
   letter-spacing: 0;
 }
 
-/* ==========================================================
-   VEHICLE CARD CAROUSEL
-========================================================== */
+/*
+   VEHICLE CARD CAROUSEL */
 
 .rdsw_crfProdDetailsVehicleSection {
   width: 100%;
@@ -204,12 +198,11 @@ font-size: 24px;
 
 .rdsw_crfProdDetailsCardMain:hover {
   transform: translateY(-5px);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
+  /* box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12); */
 }
 
 .rdsw_crfProdDetailsCardSelected {
   border-color: #a9a9a9;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.09);
 }
 
 /* Vehicle image */
@@ -227,7 +220,9 @@ font-size: 24px;
 .rdsw_crfProdDetailsVehicleImage {
   width: 100%;
   height: 100%;
-  padding: 12px 10px 4px;
+  height:  auto;
+  align-items: center; align-content: center;
+  /* padding: 12px 10px 4px; */
   object-fit: contain;
   object-position: center;
   transform: scale(1);
@@ -249,11 +244,14 @@ font-size: 24px;
   min-height: 40px;
   margin: 0;
   color: #000000;
-  font-family: "Figtree", sans-serif;
+  /* font-family: "Figtree", sans-serif; */
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rdsw_crfProdDetailsVehiclePrice {
@@ -262,9 +260,9 @@ font-size: 24px;
   align-items: baseline;
   margin: 8px 0 0;
   color: #000000;
-  font-family: "Figtree", sans-serif;
+  /* font-family: "Figtree", sans-serif; */
   font-size: 20px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1;
   letter-spacing: 0;
 }
@@ -278,15 +276,15 @@ font-size: 24px;
 .rdsw_crfProdDetailsRating {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  width: fit-content;
+  gap: 8px;
+ padding: 10px 10px;
+ padding-left: 9px !important;
   margin-top: 7px;
   padding: 5px;
-  border-radius: 3px;
+  border-radius: 5px;
   background: #f3f3f3;
-  font-family: "Figtree", sans-serif;
   font-size: 20px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1;
 }
 
@@ -302,10 +300,12 @@ font-size: 24px;
   -webkit-text-fill-color: transparent;
 }
 
-.rdsw_crfProdDetailsRatingStar {
-  color: #e5b72e;
+.rdsw_crfVehRatingStar {
+  /* color: #e5b72e; */
   font-size: 15px;
   line-height: 1;
+  height: 25px;
+  align-items: center;
 }
 
 /* Add vehicle button */
@@ -337,11 +337,11 @@ font-size: 24px;
 }
 
 .rdsw_crfProdDetailsVehicleButton:hover {
-  border-color: #b8001f;
-  background: #b8001f;
+  border-color: #000000;
+  background: #000000;
   color: #ffffff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(228, 0, 43, 0.25);
+  /* box-shadow: 0 8px 18px rgba(0, 0, 0, 0.13); */
 }
 
 .rdsw_crfProdDetailsVehicleButton:active {
@@ -371,9 +371,7 @@ font-size: 24px;
   transform: scale(1.12);
 }
 
-/* ==========================================================
-   CAROUSEL NAVIGATION
-========================================================== */
+/* CAROUSEL NAVIGATION */
 
 .rdsw_crfProdDetailsNavigation {
   display: flex;
@@ -411,17 +409,15 @@ font-size: 24px;
   transform: scale(0.94);
 }
 
-/* ==========================================================
-   DESKTOP BOOKING TABLE
-========================================================== */
+/* DESKTOP BOOKING TABLE */
 
 .rdsw_crfProdDetailsDesktopTable {
   width: 100%;
-  min-height: 598px;
+  /* min-height: 598px; */
   margin-top: 47px;
   overflow: hidden;
-  border: 1px solid #000000;
-  border-radius: 20px 20px 0 0;
+  /* border: 1px solid #000000; */
+  border-radius: 20px;
   background: #f3f3f3;
 }
 
@@ -499,9 +495,7 @@ font-size: 24px;
   }
 }
 
-/* ==========================================================
-   LOADING AND EMPTY STATES
-========================================================== */
+/* LOADING AND EMPTY STATES */
 
 .rdsw_crfProdDetailsSkeletonCard {
   flex: 0 0 calc((100% - 36px) / 4);
@@ -589,9 +583,7 @@ font-size: 24px;
   font-size: 14px;
 }
 
-/* ==========================================================
-   MOBILE BOOKING SUMMARY
-========================================================== */
+/*  MOBILE BOOKING SUMMARY */
 
 .rdsw_crfProdDetailsMobileSummary {
   display: none;
@@ -701,9 +693,7 @@ font-size: 24px;
   font-weight: 500;
 }
 
-/* ==========================================================
-   RESPONSIVE
-========================================================== */
+/* RESPONSIVE */
 
 @media (max-width: 1280px) {
   .rdsw_crfProdDetailsCardMain,
