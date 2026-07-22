@@ -14,7 +14,7 @@ import {
   PlusCircle, ImageIcon, Video,
   Users, BadgeCheck, Banknote,
   AlertTriangle, History, MoreHorizontal,
-  MessageSquare, RotateCcw, CheckCheck,
+  MessageSquare, RotateCcw, CheckCheck, UserCog,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import axios from "axios";
@@ -27,6 +27,7 @@ import {
   FiCheckCircle, FiCode, FiXCircle,
 } from "react-icons/fi";
 import CodeCreationTab from "./CodeCreationTab";
+import DatePicker from "../../utils/datepicker";
 import { useVehicle } from '../../../context/vehicletypecontext';
 
 
@@ -429,15 +430,23 @@ import OrderEditHistoryTab from "./OrderEditHistoryTab";
 
 
 function OverviewTab({
-  order, onRefresh, onStageMove, getVehicleTypeName
+  order, onRefresh, onStageMove, getVehicleTypeName, onOpenHandover, onResolveHandover,
 }: {
   order: SalesOrder; onRefresh: () => Promise<void>;
   onStageMove: (order: SalesOrder, toStage: string) => void;
-  getVehicleTypeName: any
+  getVehicleTypeName: any;
+  onOpenHandover?: () => void;
+  onResolveHandover?: (assignmentId: string, makePermanent: boolean) => void;
 }) {
 
   const [activeVehicleTab, setActiveVehicleTab] = useState<number>(0);
+  const [showHandoverHistory, setShowHandoverHistory] = useState(false);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
+
+  const handlerAssignmentHistory: any[] = (order as any).handlerAssignmentHistory || [];
+  const activeTemporaryHandover = handlerAssignmentHistory.find(
+    (h: any) => h.status === "active" && h.isTemporary
+  );
 
 
 
@@ -552,6 +561,117 @@ function OverviewTab({
               <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{fmtDatetime(order.createdAt)}</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Handler Assignment */}
+      <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <UserCog size={15} className="text-gray-400" />
+            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Handler Assignment</h3>
+          </div>
+          {onOpenHandover && (
+            <button
+              onClick={onOpenHandover}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-violet-400 hover:text-violet-600 text-[12px] font-semibold"
+            >
+              <RotateCcw size={12} /> Reassign
+            </button>
+          )}
+        </div>
+        <div className="p-4 space-y-3">
+          {order.salesHandlerName ? (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                {order.salesHandlerName.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.salesHandlerName}</p>
+                {activeTemporaryHandover && (
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Temporary handover</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">No handler assigned yet</p>
+          )}
+
+          {activeTemporaryHandover && (
+            <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+              <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                Covering for <span className="font-semibold">{activeTemporaryHandover.previousHandler}</span> (
+                {activeTemporaryHandover.leaveStartDate ? fmtDatetime(activeTemporaryHandover.leaveStartDate).split(",")[0] : ""}
+                {" – "}
+                {activeTemporaryHandover.leaveEndDate ? fmtDatetime(activeTemporaryHandover.leaveEndDate).split(",")[0] : ""})
+              </p>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <button
+                  onClick={() => onResolveHandover?.(activeTemporaryHandover._id, false)}
+                  className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 text-[10px] font-semibold"
+                >
+                  <RotateCcw size={10} /> Return
+                </button>
+                <button
+                  onClick={() => onResolveHandover?.(activeTemporaryHandover._id, true)}
+                  className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-semibold"
+                >
+                  <CheckCheck size={10} /> Make Permanent
+                </button>
+              </div>
+            </div>
+          )}
+
+          {handlerAssignmentHistory.length > 0 && (
+            <button
+              onClick={() => setShowHandoverHistory((v) => !v)}
+              className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600"
+            >
+              <History size={11} /> Handover history ({handlerAssignmentHistory.length})
+            </button>
+          )}
+          {showHandoverHistory && (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+              {handlerAssignmentHistory.slice().reverse().map((h: any) => {
+                const statusStyle =
+                  h.status === "madePermanent"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                    : h.status === "reverted"
+                      ? "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                      : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800";
+                const statusLabel =
+                  h.status === "madePermanent" ? "Made Permanent"
+                    : h.status === "reverted" ? "Reverted"
+                      : "Active";
+                return (
+                  <div
+                    key={h._id}
+                    className="rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-2.5"
+                  >
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                        <span>{h.previousHandler || "—"}</span>
+                        <ChevronRight size={13} className="text-gray-400 flex-shrink-0" />
+                        <span>{h.newHandler}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-1.5 py-0.5 rounded-md text-[11px] font-medium border bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400">
+                          {h.isTemporary ? "Temporary" : "Permanent"}
+                        </span>
+                        <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-semibold border ${statusStyle}`}>
+                          {statusLabel}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[13px] text-gray-600 dark:text-gray-300 mt-1.5">{h.reason}</p>
+                    <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-1">
+                      {fmtDatetime(h.assignedAt)} · by {h.assignedBy}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1482,7 +1602,6 @@ export default function SalesDetailDrawer({
 
   // ── Handler handover / reassignment ────────────────────────────────────
   const [showHandoverModal, setShowHandoverModal] = useState(false);
-  const [showHandoverHistory, setShowHandoverHistory] = useState(false);
   const [handoverNewHandler, setHandoverNewHandler] = useState("");
   const [handoverIsTemporary, setHandoverIsTemporary] = useState(true);
   const [handoverLeaveStart, setHandoverLeaveStart] = useState("");
@@ -1493,6 +1612,8 @@ export default function SalesDetailDrawer({
   const activeTemporaryHandover = handlerAssignmentHistory.find(
     (h: any) => h.status === "active" && h.isTemporary
   );
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const oneYearAheadIso = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   const submitHandover = async () => {
     if (!handoverNewHandler.trim()) { toast.error("Select the new handler"); return; }
@@ -1745,7 +1866,11 @@ export default function SalesDetailDrawer({
             <div className="flex flex-col sm:flex-row h-full min-h-0">
 
               <div className="flex-1 overflow-y-auto sm:border-r border-gray-100 dark:border-gray-800">
-                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} getVehicleTypeName={getVehicleTypeName} />
+                <OverviewTab
+                  order={order} onRefresh={onRefresh} onStageMove={onStageMove} getVehicleTypeName={getVehicleTypeName}
+                  onOpenHandover={() => setShowHandoverModal(true)}
+                  onResolveHandover={resolveHandover}
+                />
               </div>
 
 
@@ -1761,73 +1886,16 @@ export default function SalesDetailDrawer({
                     {stage?.label}
                   </div>
                   {order.salesHandlerName && (
-                    <div className="flex items-center justify-between gap-2 mt-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                          {order.salesHandlerName.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.salesHandlerName}</p>
-                          {activeTemporaryHandover && (
-                            <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Temporary handover</p>
-                          )}
-                        </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                        {order.salesHandlerName.charAt(0).toUpperCase()}
                       </div>
-                      <button
-                        onClick={() => setShowHandoverModal(true)}
-                        title="Reassign / handover"
-                        className="w-6 h-6 flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 text-gray-400 hover:text-violet-600 hover:border-violet-300"
-                      >
-                        <RotateCcw size={12} />
-                      </button>
-                    </div>
-                  )}
-
-                  {activeTemporaryHandover && (
-                    <div className="mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                      <p className="text-[11px] text-amber-700 dark:text-amber-300">
-                        Covering for <span className="font-semibold">{activeTemporaryHandover.previousHandler}</span> (
-                        {activeTemporaryHandover.leaveStartDate ? fmtDatetime(activeTemporaryHandover.leaveStartDate).split(",")[0] : ""}
-                        {" – "}
-                        {activeTemporaryHandover.leaveEndDate ? fmtDatetime(activeTemporaryHandover.leaveEndDate).split(",")[0] : ""})
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-1.5">
-                        <button
-                          onClick={() => resolveHandover(activeTemporaryHandover._id, false)}
-                          className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 text-[10px] font-semibold"
-                        >
-                          <RotateCcw size={10} /> Return
-                        </button>
-                        <button
-                          onClick={() => resolveHandover(activeTemporaryHandover._id, true)}
-                          className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-semibold"
-                        >
-                          <CheckCheck size={10} /> Make Permanent
-                        </button>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.salesHandlerName}</p>
+                        {activeTemporaryHandover && (
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Temporary handover</p>
+                        )}
                       </div>
-                    </div>
-                  )}
-
-                  {handlerAssignmentHistory.length > 0 && (
-                    <button
-                      onClick={() => setShowHandoverHistory((v) => !v)}
-                      className="mt-2 flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600"
-                    >
-                      <History size={11} /> Handover history ({handlerAssignmentHistory.length})
-                    </button>
-                  )}
-                  {showHandoverHistory && (
-                    <div className="mt-1.5 space-y-1.5 max-h-40 overflow-y-auto">
-                      {handlerAssignmentHistory.slice().reverse().map((h: any) => (
-                        <div key={h._id} className="text-[11px] text-gray-500 dark:text-gray-400 border-l-2 border-gray-200 dark:border-gray-700 pl-2">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">{h.previousHandler || "—"}</span>
-                          {" → "}
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">{h.newHandler}</span>
-                          {" "}({h.isTemporary ? "temporary" : "permanent"}, {h.status})
-                          <br />
-                          {h.reason} — {fmtDatetime(h.assignedAt)} by {h.assignedBy}
-                        </div>
-                      ))}
                     </div>
                   )}
 
@@ -1989,22 +2057,26 @@ export default function SalesDetailDrawer({
                   {handoverIsTemporary && (
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs font-semibold text-gray-500">Leave Start</label>
-                        <input
-                          type="date"
-                          value={handoverLeaveStart}
-                          onChange={(e) => setHandoverLeaveStart(e.target.value)}
-                          className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-2 text-sm"
-                        />
+                        <label className="text-xs font-semibold text-gray-500">Leave Start (From Date)</label>
+                        <div className="mt-1">
+                          <DatePicker
+                            value={handoverLeaveStart}
+                            onChange={setHandoverLeaveStart}
+                            minDate={todayIso}
+                            maxDate={handoverLeaveEnd || oneYearAheadIso}
+                          />
+                        </div>
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-gray-500">Leave End</label>
-                        <input
-                          type="date"
-                          value={handoverLeaveEnd}
-                          onChange={(e) => setHandoverLeaveEnd(e.target.value)}
-                          className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-2 text-sm"
-                        />
+                        <label className="text-xs font-semibold text-gray-500">Leave End (To Date)</label>
+                        <div className="mt-1">
+                          <DatePicker
+                            value={handoverLeaveEnd}
+                            onChange={setHandoverLeaveEnd}
+                            minDate={handoverLeaveStart || todayIso}
+                            maxDate={oneYearAheadIso}
+                          />
+                        </div>
                       </div>
                     </div>
                   )}

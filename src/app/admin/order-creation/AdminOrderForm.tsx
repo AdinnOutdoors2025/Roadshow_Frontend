@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { toast, Toaster } from "react-hot-toast";
 import { IoMdClose } from "react-icons/io";
 import { HiOutlineUser, HiOutlineTruck, HiOutlineClipboardList, HiOutlinePhone } from "react-icons/hi";
 import CustomerDetailsStep from "./CustomerDetailsStep";
@@ -352,7 +353,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
 
       onSuccess(data.data.orderId);
     } catch (err: any) {
-      alert(err.message || "Failed to create order");
+      toast.error(err.message || "Failed to create order");
     } finally {
       setSubmitting(false);
     }
@@ -367,6 +368,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
   return (
     // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2">
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-2">
+        <Toaster position="top-right" />
       <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
 
         {/* Header */}

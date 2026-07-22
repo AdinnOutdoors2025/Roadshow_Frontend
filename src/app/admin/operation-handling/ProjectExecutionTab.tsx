@@ -203,7 +203,8 @@ function VehicleRegSelect({ vehicleTypeId, value, onChange, disabled, hasError }
 }
 
 
-function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, vehicleTypeId, fromDate, toDate, orderDisplayId, customerName, isVehicleOnRoad }) {
+function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, vehicleTypeId, fromDate, toDate, orderDisplayId, customerName, orderPipelineStatus }) {
+  const canEditDriver = orderPipelineStatus === "projectExecution";
   const [driverName, setDriverName] = useState(existingEntry?.driverName || "");
   const [driverPhone, setDriverPhone] = useState(existingEntry?.driverPhone || "");
   const [regNo, setRegNo] = useState(existingEntry?.vehicleRegistrationNumber || "");
@@ -216,6 +217,19 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
   const fileRef = useRef(null);
 
   const isSaved = !!existingEntry?._id;
+
+  useEffect(() => {
+    setDriverName(existingEntry?.driverName || "");
+    setDriverPhone(existingEntry?.driverPhone || "");
+    setRegNo(existingEntry?.vehicleRegistrationNumber || "");
+    setVehicleDocId(existingEntry?.vehicleDocId || "");
+  }, [
+    existingEntry?._id,
+    existingEntry?.driverName,
+    existingEntry?.driverPhone,
+    existingEntry?.vehicleRegistrationNumber,
+    existingEntry?.vehicleDocId,
+  ]);
 
   const fmtDate = (s?: string) => {
     if (!s) return "—";
@@ -320,7 +334,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
           </span>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-400">{fmtDatetime(existingEntry?.uploadedAt)}</span>
-            {!isVehicleOnRoad && (
+            {canEditDriver && (
               <button
                 onClick={() => setEditOpen(true)}
                 className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all"
@@ -737,7 +751,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   toDate={vehicle.toDate}
                   orderDisplayId={order.orderId}
                   customerName={order.name}
-                  isVehicleOnRoad={isVehicleOnRoad}
+                  orderPipelineStatus={order.pipelineStatus}
                 />
               </div>
 

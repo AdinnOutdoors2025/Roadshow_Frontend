@@ -121,12 +121,12 @@ const handleSubmit = async () => {
           </button>
         </div>
 
-        {(purchasedKm > 0 || purchasedHours > 0) && (
+        {/* {(purchasedKm > 0 || purchasedHours > 0) && (
           <div className="flex items-center justify-between rounded-lg bg-orange-50 dark:bg-orange-900/10 px-3 py-2 text-xs">
             <span className="text-orange-700 dark:text-orange-300 font-semibold">Purchased balance remaining</span>
             <span className="text-orange-700 dark:text-orange-300 font-semibold">{remainingKm} km · {remainingHours} hrs</span>
           </div>
-        )}
+        )} */}
         {((Number(extraKm) || 0) > remainingKm || (Number(extraHours) || 0) > remainingHours) && (
           <p className="text-[11px] text-amber-600 -mt-2">
             This exceeds the purchased balance — the excess will be billed as additional usage in the campaign settlement.
@@ -134,7 +134,7 @@ const handleSubmit = async () => {
         )}
 
         <div className="space-y-3">
-          <label className="flex items-center gap-2 text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/40 rounded-lg px-3 py-2 cursor-pointer">
+          {/* <label className="flex items-center gap-2 text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/40 rounded-lg px-3 py-2 cursor-pointer">
             <input
               type="checkbox"
               checked={campaignLevel}
@@ -145,7 +145,7 @@ const handleSubmit = async () => {
               className="accent-orange-600"
             />
             Apply to whole vehicle type (campaign-level), not one registration number
-          </label>
+          </label> */}
 
           {/* Driver / Reg No dropdown */}
           {!campaignLevel && (
