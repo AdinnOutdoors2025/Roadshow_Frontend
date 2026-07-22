@@ -1246,6 +1246,43 @@ function DocumentsTab({
   const [poSaving, setPoSaving] = useState(false);
   const [showPoForm, setShowPoForm] = useState(false);
 
+  // ── PO document correction — open until Project Code is created ─────────
+  const hasProjectCode =
+    order.salesPipelineStatus === "projectCodeCreation" ||
+    ((order as any).projectCodeArray || []).length > 0;
+  const poDocumentEditHistory: any[] = (order as any).poDocumentEditHistory || [];
+  const [showPoEdit, setShowPoEdit] = useState(false);
+  const [showPoEditHistory, setShowPoEditHistory] = useState(false);
+  const [poEditFile, setPoEditFile] = useState<File | null>(null);
+  const [poEditReason, setPoEditReason] = useState("");
+  const [poEditSaving, setPoEditSaving] = useState(false);
+
+  const handlePoDocumentEdit = async () => {
+    if (!poEditFile) { toast.error("Select the corrected PO document"); return; }
+    const sizeErr = validateFileSize(poEditFile);
+    if (sizeErr) { toast.error(sizeErr); return; }
+    if (!poEditReason.trim()) { toast.error("Reason for correction is required"); return; }
+    setPoEditSaving(true);
+    try {
+      const token = getToken();
+      const fd = new FormData();
+      fd.append("poDocument", poEditFile);
+      fd.append("reason", poEditReason.trim());
+      await axios.patch(`${API_BASE}sales/pipeline/${order._id}/po-document`, fd, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("PO document corrected");
+      setShowPoEdit(false);
+      setPoEditFile(null);
+      setPoEditReason("");
+      await onRefresh();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Failed to update PO document");
+    } finally {
+      setPoEditSaving(false);
+    }
+  };
+
   const handlePoUpload = async () => {
     if (!poFile) { toast.error("Please select a PO document"); return; }
     const sizeErr = validateFileSize(poFile);
@@ -1323,6 +1360,100 @@ function DocumentsTab({
                   at={doc.at}
                 />
               ))}
+
+              {section.label === "PO Documents" && (
+                <div className="pt-1">
+                  <div className="flex items-center gap-2">
+                    {!hasProjectCode && (
+                      <button
+                        onClick={() => setShowPoEdit((v) => !v)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[12px] font-semibold"
+                      >
+                        <FileEdit size={12} /> Edit PO Document
+                      </button>
+                    )}
+                    {poDocumentEditHistory.length > 0 && (
+                      <button
+                        onClick={() => setShowPoEditHistory((v) => !v)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-[12px] font-semibold"
+                      >
+                        <History size={12} /> Edit History ({poDocumentEditHistory.length})
+                      </button>
+                    )}
+                  </div>
+
+                  {showPoEditHistory && poDocumentEditHistory.length > 0 && (
+                    <div className="mt-3 space-y-2.5">
+                      {poDocumentEditHistory.slice().reverse().map((h: any, hi: number) => (
+                        <div key={h._id} className="rounded-xl border border-amber-100 dark:border-amber-900/40 bg-amber-50/30 dark:bg-amber-900/10 p-2.5">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold">
+                              <FileEdit size={10} /> Correction #{poDocumentEditHistory.length - hi}
+                            </span>
+                            <span className="text-[11px] text-gray-400">{fmtDatetime(h.editedAt)}</span>
+                          </div>
+                          <DocItem
+                            docPath={h.document}
+                            label="Corrected PO Document"
+                            by={h.editedBy}
+                            at={h.editedAt}
+                          />
+                          <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-2 flex items-start gap-1">
+                            <StickyNote size={12} className="mt-0.5 flex-shrink-0 text-gray-400" />
+                            <span><span className="font-semibold text-gray-700 dark:text-gray-300">Reason:</span> <span className="italic">{h.reason}</span></span>
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {showPoEdit && !hasProjectCode && (
+                    <div className="mt-3 space-y-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10 p-3">
+                      <div>
+                        <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                          <Upload size={11} /> Corrected PO Document
+                        </p>
+                        <DragDropFile
+                          file={poEditFile}
+                          onFile={setPoEditFile}
+                          onRemove={() => setPoEditFile(null)}
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          label="Click or drag to upload corrected PO"
+                        />
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                          <StickyNote size={11} /> Reason for Correction
+                        </p>
+                        <textarea
+                          value={poEditReason}
+                          onChange={(e) => setPoEditReason(e.target.value)}
+                          placeholder="e.g. Wrong PO number, incorrect amount..."
+                          rows={2}
+                          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-amber-300"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handlePoDocumentEdit}
+                          disabled={poEditSaving}
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white text-[12px] font-semibold transition-all"
+                        >
+                          <CheckCircle2 size={13} /> {poEditSaving ? "Saving..." : "Save Changes"}
+                        </button>
+                        <button
+                          onClick={() => { setShowPoEdit(false); setPoEditFile(null); setPoEditReason(""); }}
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-[12px] font-semibold transition-all"
+                        >
+                          <X size={13} /> Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))
@@ -1348,6 +1479,66 @@ export default function SalesDetailDrawer({
   const stageIdx = SALES_STAGES.findIndex((s) => s.key === order.salesPipelineStatus);
   const [showEditForm, setShowEditForm] = useState(false);
   const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+
+  // ── Handler handover / reassignment ────────────────────────────────────
+  const [showHandoverModal, setShowHandoverModal] = useState(false);
+  const [showHandoverHistory, setShowHandoverHistory] = useState(false);
+  const [handoverNewHandler, setHandoverNewHandler] = useState("");
+  const [handoverIsTemporary, setHandoverIsTemporary] = useState(true);
+  const [handoverLeaveStart, setHandoverLeaveStart] = useState("");
+  const [handoverLeaveEnd, setHandoverLeaveEnd] = useState("");
+  const [handoverReason, setHandoverReason] = useState("");
+  const [handoverSaving, setHandoverSaving] = useState(false);
+  const handlerAssignmentHistory: any[] = (order as any).handlerAssignmentHistory || [];
+  const activeTemporaryHandover = handlerAssignmentHistory.find(
+    (h: any) => h.status === "active" && h.isTemporary
+  );
+
+  const submitHandover = async () => {
+    if (!handoverNewHandler.trim()) { toast.error("Select the new handler"); return; }
+    if (!handoverReason.trim()) { toast.error("Reason is required"); return; }
+    if (handoverIsTemporary && (!handoverLeaveStart || !handoverLeaveEnd)) {
+      toast.error("Leave start and end dates are required"); return;
+    }
+    setHandoverSaving(true);
+    try {
+      const token = getToken();
+      await axios.patch(
+        `${API_BASE}sales/pipeline/${order._id}/reassign-handler`,
+        {
+          newHandler: handoverNewHandler.trim(),
+          isTemporary: handoverIsTemporary,
+          leaveStartDate: handoverIsTemporary ? handoverLeaveStart : null,
+          leaveEndDate: handoverIsTemporary ? handoverLeaveEnd : null,
+          reason: handoverReason.trim(),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Handler reassigned");
+      setShowHandoverModal(false);
+      setHandoverNewHandler(""); setHandoverLeaveStart(""); setHandoverLeaveEnd(""); setHandoverReason("");
+      await onRefresh();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to reassign handler");
+    } finally {
+      setHandoverSaving(false);
+    }
+  };
+
+  const resolveHandover = async (assignmentId: string, makePermanent: boolean) => {
+    try {
+      const token = getToken();
+      await axios.patch(
+        `${API_BASE}sales/pipeline/${order._id}/handover/${assignmentId}/resolve`,
+        { makePermanent },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(makePermanent ? "Handover made permanent" : "Order returned to previous handler");
+      await onRefresh();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to resolve handover");
+    }
+  };
 
   useEffect(() => {
     fetchVehicleTypes()
@@ -1570,16 +1761,76 @@ export default function SalesDetailDrawer({
                     {stage?.label}
                   </div>
                   {order.salesHandlerName && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                        {order.salesHandlerName.charAt(0).toUpperCase()}
+                    <div className="flex items-center justify-between gap-2 mt-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                          {order.salesHandlerName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.salesHandlerName}</p>
+                          {activeTemporaryHandover && (
+                            <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Temporary handover</p>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.salesHandlerName}</p>
-                        {/* <p className="text-[10px] text-gray-400">Sales Executive</p> */}
+                      <button
+                        onClick={() => setShowHandoverModal(true)}
+                        title="Reassign / handover"
+                        className="w-6 h-6 flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 text-gray-400 hover:text-violet-600 hover:border-violet-300"
+                      >
+                        <RotateCcw size={12} />
+                      </button>
+                    </div>
+                  )}
+
+                  {activeTemporaryHandover && (
+                    <div className="mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                      <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                        Covering for <span className="font-semibold">{activeTemporaryHandover.previousHandler}</span> (
+                        {activeTemporaryHandover.leaveStartDate ? fmtDatetime(activeTemporaryHandover.leaveStartDate).split(",")[0] : ""}
+                        {" – "}
+                        {activeTemporaryHandover.leaveEndDate ? fmtDatetime(activeTemporaryHandover.leaveEndDate).split(",")[0] : ""})
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <button
+                          onClick={() => resolveHandover(activeTemporaryHandover._id, false)}
+                          className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 text-[10px] font-semibold"
+                        >
+                          <RotateCcw size={10} /> Return
+                        </button>
+                        <button
+                          onClick={() => resolveHandover(activeTemporaryHandover._id, true)}
+                          className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-semibold"
+                        >
+                          <CheckCheck size={10} /> Make Permanent
+                        </button>
                       </div>
                     </div>
                   )}
+
+                  {handlerAssignmentHistory.length > 0 && (
+                    <button
+                      onClick={() => setShowHandoverHistory((v) => !v)}
+                      className="mt-2 flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600"
+                    >
+                      <History size={11} /> Handover history ({handlerAssignmentHistory.length})
+                    </button>
+                  )}
+                  {showHandoverHistory && (
+                    <div className="mt-1.5 space-y-1.5 max-h-40 overflow-y-auto">
+                      {handlerAssignmentHistory.slice().reverse().map((h: any) => (
+                        <div key={h._id} className="text-[11px] text-gray-500 dark:text-gray-400 border-l-2 border-gray-200 dark:border-gray-700 pl-2">
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">{h.previousHandler || "—"}</span>
+                          {" → "}
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">{h.newHandler}</span>
+                          {" "}({h.isTemporary ? "temporary" : "permanent"}, {h.status})
+                          <br />
+                          {h.reason} — {fmtDatetime(h.assignedAt)} by {h.assignedBy}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {order.updatedAt && (
                     <p className="text-[13px] text-gray-400 mt-2">
                       Updated On<br />
@@ -1696,6 +1947,97 @@ export default function SalesDetailDrawer({
               }}
               getVehicleTypeName={getVehicleTypeName}
             />
+          )}
+
+          {showHandoverModal && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+              <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white">Reassign Handler</h3>
+                  <button onClick={() => setShowHandoverModal(false)} className="text-gray-400 hover:text-gray-600">
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500">New Handler</label>
+                    <select
+                      value={handoverNewHandler}
+                      onChange={(e) => setHandoverNewHandler(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+                    >
+                      <option value="">Select handler...</option>
+                      {staffAdmins.map((s) => (
+                        <option key={s.username} value={s.username}>{s.username}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="handoverTemp"
+                      type="checkbox"
+                      checked={handoverIsTemporary}
+                      onChange={(e) => setHandoverIsTemporary(e.target.checked)}
+                    />
+                    <label htmlFor="handoverTemp" className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                      Temporary (e.g. leave handover) — return or make permanent later
+                    </label>
+                  </div>
+
+                  {handoverIsTemporary && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500">Leave Start</label>
+                        <input
+                          type="date"
+                          value={handoverLeaveStart}
+                          onChange={(e) => setHandoverLeaveStart(e.target.value)}
+                          className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500">Leave End</label>
+                        <input
+                          type="date"
+                          value={handoverLeaveEnd}
+                          onChange={(e) => setHandoverLeaveEnd(e.target.value)}
+                          className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500">Reason</label>
+                    <textarea
+                      value={handoverReason}
+                      onChange={(e) => setHandoverReason(e.target.value)}
+                      rows={2}
+                      placeholder="e.g. Handler on leave, manager reassignment..."
+                      className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      onClick={submitHandover}
+                      disabled={handoverSaving}
+                      className="flex-1 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-semibold"
+                    >
+                      {handoverSaving ? "Saving..." : "Reassign"}
+                    </button>
+                    <button
+                      onClick={() => setShowHandoverModal(false)}
+                      className="flex-1 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-semibold"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
         </div>

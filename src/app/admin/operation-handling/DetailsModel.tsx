@@ -389,7 +389,7 @@ useEffect(() => {
                         <div className="flex flex-col sm:flex-row h-full min-h-0">
                             {/* Main content */}
                             <div className="flex-1 overflow-y-auto sm:border-r border-gray-100 dark:border-gray-800">
-                                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} vehicleTypes={vehicleTypes} />
+                                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} vehicleTypes={vehicleTypes} staffAdmins={staffAdmins} />
                             </div>
 
 

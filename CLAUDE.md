@@ -60,3 +60,5 @@ Token-based, not NextAuth:
 - Tailwind v4 is configured via `@tailwindcss/postcss` (no `tailwind.config.js`); custom theme values appear as arbitrary values like `max-w-(--breakpoint-2xl)` in JSX directly.
 - SVGs are imported as React components via `@svgr/webpack` (configured in both the webpack and turbopack sections of `next.config.ts`).
 - Path alias: `@/*` → `src/*` (see `tsconfig.json`).
+
+
