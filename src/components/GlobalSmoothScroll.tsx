@@ -1,61 +1,78 @@
 "use client";
 
-import { useEffect } from "react";
-import Lenis from "lenis";
+import { useEffect, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
+
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollSmoother } from "gsap/ScrollSmoother";
 
-export default function GlobalSmoothScroll() {
+type GlobalSmoothScrollProps = {
+  children: ReactNode;
+};
+
+export default function GlobalSmoothScroll({
+  children,
+}: GlobalSmoothScrollProps) {
+  const pathname = usePathname();
+
   useEffect(() => {
-    console.log("✅ Lenis smooth scroll mounted");
+    gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
 
-    gsap.registerPlugin(ScrollTrigger);
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
 
-    const lenis = new Lenis({
-      smoothWheel: true,
+    if (prefersReducedMotion) {
+      return;
+    }
 
-      // Extreme values only for testing
-      duration: 1.1,
-wheelMultiplier: 1,
+    let smoother: ReturnType<typeof ScrollSmoother.create> | null =
+      null;
 
-      easing: (t: number) => 1 - Math.pow(1 - t, 4),
+    const frameId = requestAnimationFrame(() => {
+      // Prevent duplicate instances during Next.js development
+      ScrollSmoother.get()?.kill();
 
-      touchMultiplier: 1,
-      syncTouch: false,
-      anchors: true,
-    });
+      smoother = ScrollSmoother.create({
+        wrapper: "#smooth-wrapper",
+        content: "#smooth-content",
 
-    const handleScroll = (event: {
-      animatedScroll: number;
-      targetScroll: number;
-      velocity: number;
-    }) => {
-      console.log("Lenis scrolling:", {
-        current: event.animatedScroll,
-        target: event.targetScroll,
-        velocity: event.velocity,
+        // Catch-up duration:
+        // 0.7 = quicker
+        // 0.85 = premium and balanced
+        // 1.1 = softer but slower
+        smooth: 1.85,
+
+        // Overall page-scroll speed
+        speed: 1.1,
+
+        // Enables data-speed and data-lag attributes
+        effects: true,
+
+        // Keep touch scrolling nearly native
+        smoothTouch: 0.08,
+
+        // Helps reduce scroll-thread synchronization jitter
+        normalizeScroll: true,
+
+        // Reduces mobile resize jumps
+        ignoreMobileResize: true,
       });
 
-      ScrollTrigger.update();
-    };
-
-    lenis.on("scroll", handleScroll);
-
-    const updateLenis = (time: number) => {
-      lenis.raf(time * 500);
-    };
-
-    gsap.ticker.add(updateLenis);
-    gsap.ticker.lagSmoothing(0);
+      ScrollTrigger.refresh();
+    });
 
     return () => {
-      console.log("❌ Lenis smooth scroll destroyed");
-
-      lenis.off("scroll", handleScroll);
-      gsap.ticker.remove(updateLenis);
-      lenis.destroy();
+      cancelAnimationFrame(frameId);
+      smoother?.kill();
+      smoother = null;
     };
-  }, []);
+  }, [pathname]);
 
-  return null;
+  return (
+    <div id="smooth-wrapper">
+      <div id="smooth-content">{children}</div>
+    </div>
+  );
 }

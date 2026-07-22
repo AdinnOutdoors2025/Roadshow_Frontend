@@ -8,7 +8,7 @@ export default function MainPage() {
     return (
         <div>
            <div  style={{background: 'linear-gradient(180deg, #D2D2FF 0%, #FFFFFF 100%)'}}>
-             <Navbar />
+             
              <HomeBanner />
            </div>
                {/* Offers section  */}

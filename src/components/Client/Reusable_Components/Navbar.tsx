@@ -1,4 +1,5 @@
 "use client";
+
 /* eslint-disable */
 // @ts-nocheck
 
@@ -215,26 +216,47 @@ export default function Navbar() {
 
               z-index: 9999;
               pointer-events: none;
+
+              transform: translate3d(0, 0, 0);
+              -webkit-transform: translate3d(0, 0, 0);
+
+              backface-visibility: hidden;
+              -webkit-backface-visibility: hidden;
+
+              will-change: transform;
             }
 
             .RS_SoftHeader {
               position: relative;
 
-              width: min(1120px, calc(100% - 28px));
+              /*
+                Reduced from 1120px to 820px.
+                Header height remains unchanged.
+              */
+              width: min(820px, calc(100% - 28px));
               height: 78px;
 
               margin: 0 auto;
-              padding: 0 12px 0 21px;
+              padding: 0 17px;
 
-              display: grid;
-              grid-template-columns: 1fr auto 1fr;
+              display: flex;
               align-items: center;
+              justify-content: space-between;
 
               overflow: hidden;
               isolation: isolate;
 
               border: none;
               border-radius: 50px;
+
+              transform: translate3d(0, 0, 0);
+              -webkit-transform: translate3d(0, 0, 0);
+
+              backface-visibility: hidden;
+              -webkit-backface-visibility: hidden;
+
+              will-change: transform;
+              contain: paint;
 
               background:
                 radial-gradient(
@@ -245,24 +267,23 @@ export default function Navbar() {
                 ),
                 linear-gradient(
                   135deg,
-                  rgba(255, 255, 255, 0.55),
-                  rgba(246, 248, 251, 0.39) 12%,
-                  rgba(225, 231, 239, 0.25)
+                  rgba(255, 255, 255, 0.57),
+                  rgba(246, 248, 251, 0.42) 12%,
+                  rgba(225, 231, 239, 0.28)
                 );
 
               -webkit-backdrop-filter:
-                blur(19px)
-                saturate(138%);
+                blur(13px)
+                saturate(130%);
 
               backdrop-filter:
-                blur(19px)
-                saturate(138%);
+                blur(13px)
+                saturate(130%);
 
               box-shadow:
-                0 16px 34px rgba(15, 23, 42, 0.09),
-                0 4px 12px rgba(15, 23, 42, 0.045),
-                inset 0 1px 0 rgba(255, 255, 255, 0.64),
-                inset 0 -8px 22px rgba(100, 116, 139, 0.025);
+                0 14px 28px rgba(15, 23, 42, 0.08),
+                0 4px 10px rgba(15, 23, 42, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.64);
 
               pointer-events: auto;
             }
@@ -326,55 +347,69 @@ export default function Navbar() {
             .RS_SoftBrand {
               display: inline-flex;
               align-items: center;
-              justify-self: start;
+              justify-content: flex-start;
+
+              flex: 0 0 auto;
 
               width: fit-content;
               height: 44px;
+
+              margin: 0;
+              padding: 0;
 
               text-decoration: none;
               outline: none;
             }
 
             .RS_SoftLogo {
-              display: block;
+  display: block;
 
-              width: auto;
-              height: 31px;
+  width: auto;
+  height: 31px;
 
-              object-fit: contain;
-              user-select: none;
+  object-fit: contain;
+  user-select: none;
 
-              filter:
-                brightness(0)
-                saturate(100%)
-                opacity(0.82);
+  /* Keep the logo's original SVG colors */
+  filter: none;
+  opacity: 1;
 
-              transition:
-                transform 280ms cubic-bezier(0.16, 1, 0.3, 1),
-                filter 220ms ease;
-            }
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 
-            .RS_SoftBrand:hover .RS_SoftLogo {
-              filter:
-                brightness(0)
-                saturate(100%)
-                opacity(1);
+  transition:
+    transform 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 220ms ease;
+}
 
-              transform: scale(1.018);
-            }
+  .RS_SoftBrand:hover .RS_SoftLogo {
+  filter: none;
+  opacity: 1;
+
+  transform:
+    translate3d(0, 0, 0)
+    scale(1.018);
+}
 
             /* ================================================
                CENTRE NAVIGATION
             ================================================ */
 
             .RS_SoftNavigation {
+              position: absolute;
+              left: 50%;
+              top: 50%;
+
               display: flex;
               align-items: center;
               justify-content: center;
 
               gap: 3px;
 
+              width: fit-content;
               height: 40px;
+
+              margin: 0;
               padding: 3px;
 
               border: none;
@@ -390,6 +425,9 @@ export default function Navbar() {
               box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 0.54),
                 0 3px 12px rgba(15, 23, 42, 0.025);
+
+              transform: translate3d(-50%, -50%, 0);
+              -webkit-transform: translate3d(-50%, -50%, 0);
             }
 
             .RS_SoftNavLink {
@@ -399,12 +437,12 @@ export default function Navbar() {
               align-items: center;
               justify-content: center;
 
-              gap: 7px;
+              gap: 6px;
 
-              min-width: 96px;
+              min-width: 90px;
               height: 32px;
 
-              padding: 0 15px;
+              padding: 0 12px;
 
               border: none;
               border-radius: 999px;
@@ -420,6 +458,9 @@ export default function Navbar() {
               text-decoration: none;
               white-space: nowrap;
               outline: none;
+
+              transform: translate3d(0, 0, 0);
+              backface-visibility: hidden;
 
               transition:
                 color 220ms ease,
@@ -447,7 +488,7 @@ export default function Navbar() {
                 0 4px 13px rgba(15, 23, 42, 0.045),
                 inset 0 1px 0 rgba(255, 255, 255, 0.7);
 
-              transform: translateY(-1px);
+              transform: translate3d(0, -1px, 0);
             }
 
             .RS_SoftNavLink--active {
@@ -495,6 +536,13 @@ export default function Navbar() {
               display: flex;
               align-items: center;
               justify-content: flex-end;
+
+              flex: 0 0 auto;
+
+              width: fit-content;
+
+              margin: 0;
+              padding: 0;
             }
 
             .RS_SoftMenuButton {
@@ -524,6 +572,9 @@ export default function Navbar() {
               cursor: pointer;
               outline: none;
 
+              transform: translate3d(0, 0, 0);
+              backface-visibility: hidden;
+
               transition:
                 transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
                 background 220ms ease,
@@ -538,7 +589,7 @@ export default function Navbar() {
                 0 7px 16px rgba(15, 23, 42, 0.065),
                 inset 0 1px 0 rgba(255, 255, 255, 0.78);
 
-              transform: translateY(-1px);
+              transform: translate3d(0, -1px, 0);
             }
 
             .RS_SoftMenuButton--open {
@@ -578,6 +629,7 @@ export default function Navbar() {
                 rgba(15, 23, 42, 0.76);
 
               transform-origin: center;
+              backface-visibility: hidden;
 
               transition:
                 transform 400ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -600,7 +652,7 @@ export default function Navbar() {
             .RS_SoftMenuButton--open
             .RS_SoftHamburgerLine:nth-child(1) {
               transform:
-                translateY(5.5px)
+                translate3d(0, 5.5px, 0)
                 rotate(45deg);
             }
 
@@ -617,7 +669,7 @@ export default function Navbar() {
             .RS_SoftMenuButton--open
             .RS_SoftHamburgerLine:nth-child(3) {
               transform:
-                translateY(-5.5px)
+                translate3d(0, -5.5px, 0)
                 rotate(-45deg);
             }
 
@@ -632,7 +684,7 @@ export default function Navbar() {
               right:
                 max(
                   14px,
-                  calc((100vw - 1120px) / 2)
+                  calc((100vw - 820px) / 2)
                 );
 
               width: 315px;
@@ -653,21 +705,21 @@ export default function Navbar() {
                 ),
                 linear-gradient(
                   145deg,
-                  rgba(255, 255, 255, 0.72),
-                  rgba(239, 243, 248, 0.58)
+                  rgba(255, 255, 255, 0.74),
+                  rgba(239, 243, 248, 0.62)
                 );
 
               -webkit-backdrop-filter:
-                blur(19px)
-                saturate(128%);
+                blur(13px)
+                saturate(124%);
 
               backdrop-filter:
-                blur(19px)
-                saturate(128%);
+                blur(13px)
+                saturate(124%);
 
               box-shadow:
-                0 22px 46px rgba(15, 23, 42, 0.12),
-                0 7px 18px rgba(15, 23, 42, 0.055),
+                0 18px 36px rgba(15, 23, 42, 0.1),
+                0 6px 15px rgba(15, 23, 42, 0.05),
                 inset 0 1px 0 rgba(255, 255, 255, 0.62);
 
               opacity: 0;
@@ -675,10 +727,20 @@ export default function Navbar() {
               pointer-events: none;
 
               transform:
-                translateY(-9px)
+                translate3d(0, -9px, 0)
+                scale(0.97);
+
+              -webkit-transform:
+                translate3d(0, -9px, 0)
                 scale(0.97);
 
               transform-origin: 90% 0%;
+
+              backface-visibility: hidden;
+              -webkit-backface-visibility: hidden;
+
+              will-change: transform, opacity;
+              contain: paint;
 
               transition:
                 opacity 220ms ease,
@@ -712,7 +774,11 @@ export default function Navbar() {
               pointer-events: auto;
 
               transform:
-                translateY(0)
+                translate3d(0, 0, 0)
+                scale(1);
+
+              -webkit-transform:
+                translate3d(0, 0, 0)
                 scale(1);
 
               transition:
@@ -844,8 +910,10 @@ export default function Navbar() {
               opacity: 0;
 
               transform:
-                translateY(7px)
+                translate3d(0, 7px, 0)
                 scale(0.985);
+
+              backface-visibility: hidden;
 
               transition:
                 opacity 220ms ease,
@@ -860,7 +928,7 @@ export default function Navbar() {
               opacity: 1;
 
               transform:
-                translateY(0)
+                translate3d(0, 0, 0)
                 scale(1);
 
               transition-delay:
@@ -881,7 +949,7 @@ export default function Navbar() {
               box-shadow:
                 0 5px 13px rgba(15, 23, 42, 0.035);
 
-              transform: translateX(2px);
+              transform: translate3d(2px, 0, 0);
             }
 
             .RS_SoftDropIcon {
@@ -927,7 +995,7 @@ export default function Navbar() {
             .RS_SoftDropArrow {
               color: rgba(15, 23, 42, 0.65);
 
-              transform: translateX(2px);
+              transform: translate3d(2px, 0, 0);
             }
 
             /* ================================================
@@ -996,7 +1064,13 @@ export default function Navbar() {
 
             @media (max-width: 900px) {
               .RS_SoftHeader {
-                grid-template-columns: 1fr auto;
+                width: min(680px, calc(100% - 20px));
+
+                padding: 0 14px 0 18px;
+
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
               }
 
               .RS_SoftNavigation {
@@ -1005,6 +1079,14 @@ export default function Navbar() {
 
               .RS_SoftMobileNavigation {
                 display: flex;
+              }
+
+              .RS_SoftDropdown {
+                right:
+                  max(
+                    10px,
+                    calc((100vw - 680px) / 2)
+                  );
               }
             }
 
@@ -1015,11 +1097,21 @@ export default function Navbar() {
 
               .RS_SoftHeader {
                 width: calc(100% - 16px);
+
+                /* Original mobile height retained */
                 height: 56px;
 
-                padding: 0 8px 0 14px;
+                padding: 0 9px 0 15px;
 
                 border-radius: 19px;
+
+                -webkit-backdrop-filter:
+                  blur(9px)
+                  saturate(120%);
+
+                backdrop-filter:
+                  blur(9px)
+                  saturate(120%);
               }
 
               .RS_SoftLogo {
@@ -1045,6 +1137,14 @@ export default function Navbar() {
                 overflow-y: auto;
 
                 border-radius: 20px;
+
+                -webkit-backdrop-filter:
+                  blur(9px)
+                  saturate(118%);
+
+                backdrop-filter:
+                  blur(9px)
+                  saturate(118%);
               }
             }
 
@@ -1060,8 +1160,8 @@ export default function Navbar() {
             }
 
             @supports not (
-              (backdrop-filter: blur(19px)) or
-              (-webkit-backdrop-filter: blur(19px))
+              (backdrop-filter: blur(13px)) or
+              (-webkit-backdrop-filter: blur(13px))
             ) {
               .RS_SoftHeader {
                 background:
@@ -1117,9 +1217,8 @@ export default function Navbar() {
                 <Link
                   key={label}
                   href={href}
-                  className={`RS_SoftNavLink ${
-                    active ? "RS_SoftNavLink--active" : ""
-                  }`}
+                  className={`RS_SoftNavLink ${active ? "RS_SoftNavLink--active" : ""
+                    }`}
                   onClick={() => setOpen(false)}
                   aria-current={active ? "page" : undefined}
                 >
@@ -1136,9 +1235,8 @@ export default function Navbar() {
           <div className="RS_SoftRight">
             <button
               type="button"
-              className={`RS_SoftMenuButton ${
-                open ? "RS_SoftMenuButton--open" : ""
-              }`}
+              className={`RS_SoftMenuButton ${open ? "RS_SoftMenuButton--open" : ""
+                }`}
               onClick={() => setOpen((previous) => !previous)}
               aria-label={open ? "Close menu" : "Open menu"}
               aria-expanded={open}
@@ -1157,9 +1255,8 @@ export default function Navbar() {
       <aside
         ref={dropdownRef}
         id="roadshow-soft-menu"
-        className={`RS_SoftDropdown ${
-          open ? "RS_SoftDropdown--open" : ""
-        }`}
+        className={`RS_SoftDropdown ${open ? "RS_SoftDropdown--open" : ""
+          }`}
         aria-hidden={!open}
       >
         <div className="RS_SoftDropContent">
@@ -1172,9 +1269,8 @@ export default function Navbar() {
                   key={label}
                   href={href}
                   tabIndex={open ? 0 : -1}
-                  className={`RS_SoftMobileNavLink ${
-                    active ? "RS_SoftMobileNavLink--active" : ""
-                  }`}
+                  className={`RS_SoftMobileNavLink ${active ? "RS_SoftMobileNavLink--active" : ""
+                    }`}
                   onClick={() => setOpen(false)}
                   aria-current={active ? "page" : undefined}
                 >

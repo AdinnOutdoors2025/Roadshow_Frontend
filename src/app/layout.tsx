@@ -1,15 +1,21 @@
-// src/app/layout.tsx
-"use client";
 import { Outfit } from "next/font/google";
+
+import Navbar from "@/components/Client/Reusable_Components/Navbar";
+import Footer from "@/components/Client/Reusable_Components/Footer";
 import GlobalSmoothScroll from "@/components/GlobalSmoothScroll";
-import "lenis/dist/lenis.css";
+
 import "./globals.css";
 
 const outfit = Outfit({
   subsets: ["latin"],
+  display: "swap",
 });
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
       <head>
@@ -17,18 +23,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
         />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap"
-          rel="stylesheet"
-        />
       </head>
-      <body className={`${outfit.className} dark:bg-gray-900 relative`}>
-        {/* Apply smooth scrolling to all pages */}
-        <GlobalSmoothScroll />
 
-        {/* Render all page children */}
-        {children}
+      <body className={`${outfit.className} relative dark:bg-gray-900`}>
+        {/* Only global Navbar */}
+        <Navbar />
+
+        {/* Smooth scrolling for every website page */}
+        <GlobalSmoothScroll>
+          <main className="relative min-h-screen w-full">
+            {children}
+          </main>
+
+          {/* Only global Footer */}
+          <Footer />
+        </GlobalSmoothScroll>
       </body>
     </html>
   );
