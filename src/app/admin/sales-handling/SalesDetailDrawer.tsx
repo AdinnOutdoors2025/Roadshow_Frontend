@@ -1514,7 +1514,7 @@ function DocumentsTab({
                           </div>
                           <DocItem
                             docPath={h.document}
-                            label="Corrected PO Document"
+                            label="PO Document"
                             by={h.editedBy}
                             at={h.editedAt}
                           />
@@ -1531,7 +1531,7 @@ function DocumentsTab({
                     <div className="mt-3 space-y-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10 p-3">
                       <div>
                         <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
-                          <Upload size={11} /> Corrected PO Document
+                          <Upload size={11} />PO Document
                         </p>
                         <DragDropFile
                           file={poEditFile}

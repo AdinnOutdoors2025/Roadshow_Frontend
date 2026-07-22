@@ -311,6 +311,62 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
     return out;
   }, [historyData]);
 
+  // Driver's default login/logout shift window (e.g. "18:30" -> "02:30",
+  // crossing midnight = 8 hours), matching the backend's DEFAULT_WORK_START_
+  // HOUR/DEFAULT_WORK_END_HOUR (Adminordercontroller.js resolveWorkWindow).
+  // Running/issue/unavailable time below is clipped to this window per day —
+  // time before login or after logout (e.g. a vehicle added at 18:13, before
+  // the 18:30 shift start) is not counted as "running".
+  function parseTimeToDecimalHour(str, fallback) {
+    const m = String(str || "").trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) {
+      const n = Number(str);
+      return isNaN(n) ? fallback : n;
+    }
+    return Number(m[1]) + Number(m[2]) / 60;
+  }
+  const SHIFT_START_HOUR = parseTimeToDecimalHour(process.env.NEXT_PUBLIC_DEFAULT_LOGIN_TIME, 16);
+  let SHIFT_END_HOUR = parseTimeToDecimalHour(process.env.NEXT_PUBLIC_DEFAULT_LOGOUT_TIME, 24);
+  if (SHIFT_END_HOUR <= SHIFT_START_HOUR) SHIFT_END_HOUR += 24;
+
+  // Builds the IST-anchored instant (ms) for `dayKey` (YYYY-MM-DD) at
+  // `hourDecimal`, mirroring the backend's istWallClock so both sides agree.
+  function istWallClockMs(dayKey, hourDecimal) {
+    const totalMinutes = Math.round(hourDecimal * 60);
+    const dayOffset = Math.floor(totalMinutes / (24 * 60));
+    const minutesInDay = totalMinutes - dayOffset * 24 * 60;
+    const hh = String(Math.floor(minutesInDay / 60)).padStart(2, "0");
+    const mm = String(minutesInDay % 60).padStart(2, "0");
+    const base = new Date(`${dayKey}T00:00:00.000Z`);
+    base.setUTCDate(base.getUTCDate() + dayOffset);
+    const targetDayKey = base.toISOString().slice(0, 10);
+    return new Date(`${targetDayKey}T${hh}:${mm}:00+05:30`).getTime();
+  }
+
+  function shiftWindowForDay(dayKey) {
+    return { start: istWallClockMs(dayKey, SHIFT_START_HOUR), end: istWallClockMs(dayKey, SHIFT_END_HOUR) };
+  }
+
+  // Sums overlap (in hours) between [startMs,endMs] and the union of every
+  // day's shift window across the days that interval spans.
+  function overlapWithShiftHours(startMs, endMs) {
+    if (!(endMs > startMs)) return 0;
+    const dayMs = 24 * 3_600_000;
+    const firstDayKey = new Date(startMs - dayMs).toISOString().slice(0, 10);
+    const totalDays = Math.ceil((endMs - startMs) / dayMs) + 3;
+    let hours = 0;
+    let cursor = new Date(`${firstDayKey}T00:00:00.000Z`);
+    for (let i = 0; i < totalDays; i++) {
+      const dayKey = cursor.toISOString().slice(0, 10);
+      const { start: ws, end: we } = shiftWindowForDay(dayKey);
+      const s = Math.max(ws, startMs);
+      const e = Math.min(we, endMs);
+      if (e > s) hours += (e - s) / 3_600_000;
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+    return hours;
+  }
+
   // Derive running/issue/unavailable durations purely from the actual
   // timestamps already recorded in Day-by-Day History (vehicle added/removed,
   // issue reported/resolved, marked-unavailable/replaced) — no assumed
@@ -328,7 +384,7 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
       .forEach((e) => {
         const start = new Date(e.createdAt || e._timestamp).getTime();
         const end = e.resolvedAt ? new Date(e.resolvedAt).getTime() : now;
-        if (start && end > start) issueHours += (end - start) / 3_600_000;
+        if (start && end > start) issueHours += overlapWithShiftHours(start, end);
       });
 
     let unavailableHours = 0;
@@ -346,7 +402,7 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
           );
           end = next ? new Date(next._timestamp).getTime() : now;
         }
-        if (start && end > start) unavailableHours += (end - start) / 3_600_000;
+        if (start && end > start) unavailableHours += overlapWithShiftHours(start, end);
       });
 
     // Bug B fix: match the actual labeled eventType values the backend sends
@@ -358,7 +414,10 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
     const removedEv = events.find((e) => e._category === "driverChangeHistory" && e.eventType === "Vehicle Removed");
     const startAt = createdEv ? new Date(createdEv.changedAt || createdEv._timestamp).getTime() : null;
     const endAt = removedEv ? new Date(removedEv.changedAt || removedEv._timestamp).getTime() : now;
-    const totalElapsedHours = startAt && endAt > startAt ? (endAt - startAt) / 3_600_000 : 0;
+    // Only count time that falls inside the driver's login-logout shift
+    // window (e.g. 18:30-02:30) as "elapsed" — a vehicle added before login
+    // time no longer counts as running from that earlier moment.
+    const totalElapsedHours = startAt && endAt > startAt ? overlapWithShiftHours(startAt, endAt) : 0;
     const runningHours = Math.max(totalElapsedHours - issueHours - unavailableHours, 0);
 
     return {
@@ -377,8 +436,10 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
   // unavailable hours — so it no longer contradicts the expand panel's
   // (correctly lifetime-labeled) "total running" figure below it.
   function computeEntryDurationsForDay(events: any[], dayKey: string) {
-    const dayStart = new Date(`${dayKey}T00:00:00.000Z`).getTime();
-    const dayEnd = dayStart + 24 * 3_600_000;
+    // Bounded to the driver's login-logout shift window for this day (e.g.
+    // 18:30-02:30), not the raw UTC calendar day — so time outside the shift
+    // (before login / after logout) is excluded, same as the lifetime calc.
+    const { start: dayStart, end: dayEnd } = shiftWindowForDay(dayKey);
     const now = Date.now();
     const clip = (t: number) => Math.min(Math.max(t, dayStart), dayEnd);
 
