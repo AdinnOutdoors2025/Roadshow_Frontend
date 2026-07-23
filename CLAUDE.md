@@ -187,7 +187,7 @@ All paths are relative to `NEXT_PUBLIC_API_BASE` (see the prefix-inconsistency n
 - Some feature files are very large and monolithic (e.g. `admin/Vehicles/Vehicle_Onboarding/page.tsx` is several thousand lines with multiple wizard steps, form state, and API calls in one file). Match the existing file's internal organization when editing rather than unilaterally splitting it up mid-task.
 
 ## Development guidelines
-
+- Give the corrected full code without affecting the current UI styles and formats and functionalities and suggest where i need to changed the code also.
 - When adding a new admin feature, mirror an existing one end-to-end: a folder under `src/app/admin/<feature>/` with `page.tsx`, a `*FormModal.tsx`, and a `DeleteModal.tsx` if it's a CRUD resource.
 - When touching auth, be explicit about which of the three auth mechanisms you're modifying (admin cookie+JWT, legacy `AuthContext`, or client OTP) — they are independent and easy to conflate.
 - When adding an API call, check whether a domain module already exists for that resource (`src/app/utils/*`, `src/lib/*`) before adding another inline `fetch` — but if every other call site for that resource is inline, stay consistent with the file you're editing.
