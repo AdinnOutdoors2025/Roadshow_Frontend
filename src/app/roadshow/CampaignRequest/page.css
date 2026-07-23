@@ -82,7 +82,7 @@
 .rdsw_crfVehSubmitBtn {
     font-weight: 400;
     font-size: 20px;
-    color: #FFFFFF;
+    /* color: #FFFFFF; */
     padding: 15px 25px;
 }
 
@@ -409,6 +409,21 @@ font-size: 24px;
   transform: scale(0.94);
 }
 
+.rdsw_crfProdDetailsNavigationButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+  color: #cccccc;
+  border-color: #ececec;
+  background: #f7f7f7;
+}
+
+.rdsw_crfProdDetailsNavigationButton:disabled:hover {
+  transform: none;
+  border-color: #ececec;
+  background: #f7f7f7;
+  color: #cccccc;
+}
+
 /* DESKTOP BOOKING TABLE */
 
 .rdsw_crfProdDetailsDesktopTable {
@@ -477,7 +492,7 @@ font-size: 24px;
 
 .rdsw_crfProdDetailsTableEmpty {
   display: flex;
-  min-height: 508px;
+  min-height: 108px;
   align-items: center;
   justify-content: center;
   padding: 30px;
@@ -815,5 +830,614 @@ font-size: 24px;
     animation: none;
     opacity: 1;
     transform: none;
+  }
+}
+
+/* ==========================================================
+   REVIEW ORDER MODAL — FIGMA MATCH
+========================================================== */
+
+.rdsw_reviewModalShell {
+  width: calc(100vw - 48px) !important;
+  max-width: 1280px !important;
+  max-height: calc(100dvh - 44px) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 50px !important;
+  background: #f7f7f8 !important;
+  font-family: "Outfit", sans-serif;
+  box-shadow:
+    0 28px 90px rgba(0, 0, 0, 0.24);
+}
+
+.rdsw_reviewModalLayout {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(360px, 438px);
+  gap: 34px;
+  width: 100%;
+  min-height: 0;
+  max-height: calc(100dvh - 44px);
+  padding:60px 34px 34px 60px;
+  animation:
+    rdswReviewModalEnter
+    360ms
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+.rdsw_reviewLeftPanel {
+  min-width: 0;
+  min-height: 0;
+  max-height: calc(100dvh - 126px);
+  padding-right: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+
+.rdsw_reviewLeftPanel::-webkit-scrollbar {
+  width: 7px;
+}
+
+.rdsw_reviewLeftPanel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rdsw_reviewLeftPanel::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background:
+    rgba(122, 122, 127, 0.34);
+  background-clip: padding-box;
+}
+
+.rdsw_reviewTitle {
+  margin: 0;
+  color: #000000;
+  font-family: "Outfit", sans-serif;
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.rdsw_reviewSection {
+  margin-top: 34px;
+}
+
+.rdsw_reviewSectionHeading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.rdsw_reviewSectionHeading h3 {
+  margin: 0;
+  color: #000000;
+  font-family: "Outfit", sans-serif;
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.rdsw_reviewHeadingDot {
+  display: block;
+  width: 41px;
+  height: 41px;
+  flex: 0 0 41px;
+  border-radius: 50%;
+  background: #d9d9d9;
+  align-content: center; text-align: center; font-size: 23px;
+}
+
+.rdsw_reviewContactDetails {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+  padding-left: 3px;
+}
+
+.rdsw_reviewContactRow {
+  display: grid;
+  grid-template-columns:
+    minmax(128px, 170px)
+    minmax(0, 1fr);
+  align-items: center;
+  column-gap: 16px;
+}
+
+.rdsw_reviewContactLabel,
+.rdsw_reviewContactValue {
+  font-family: "Outfit", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.rdsw_reviewContactLabel {
+  color: #7a7a7f;
+}
+
+.rdsw_reviewContactValue {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #000000;
+}
+
+.rdsw_reviewVehicleSection {
+  padding-bottom: 8px;
+}
+
+.rdsw_reviewVehicleList {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.rdsw_reviewVehicleCard {
+  display: grid;
+  grid-template-columns:
+    minmax(170px, 1.35fr)
+    minmax(116px, 0.82fr)
+    minmax(116px, 0.82fr)
+    minmax(130px, 0.88fr);
+  min-height: 200px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  background: transparent;
+  opacity: 0;
+  transform: translateY(14px);
+  animation:
+    rdswReviewVehicleReveal
+    440ms
+    cubic-bezier(0.22, 1, 0.36, 1)
+    forwards;
+  transition:
+    border-color 220ms ease,
+    background-color 220ms ease,
+    transform 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.rdsw_reviewVehicleCard:hover {
+  border-color: #d1d1d1;
+  background: rgba(255, 255, 255, 0.58);
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.035);
+}
+
+.rdsw_reviewVehicleInfoColumn {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 25px 16px 25px 20px;
+  border-right: 1px solid #e0e0e0;
+}
+
+.rdsw_reviewVehicleLabel,
+.rdsw_reviewVehicleName,
+.rdsw_reviewVehicleValue,
+.rdsw_reviewVehicleTotalLabel,
+.rdsw_reviewVehicleTotalValue {
+  margin: 0;
+  font-family: "Outfit", sans-serif;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.rdsw_reviewVehicleLabel {
+  color: #7a7a7f;
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.rdsw_reviewVehicleName {
+  display: -webkit-box;
+  margin-top: 9px;
+  overflow: hidden;
+  color: #000000;
+  font-size: 20px;
+  font-weight: 600;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.rdsw_reviewVehicleValue {
+  margin-top: 9px;
+  color: #000000;
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.rdsw_reviewVehicleTotal {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 14px;
+}
+
+.rdsw_reviewVehicleTotalLabel {
+  color: #000000;
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.rdsw_reviewVehicleTotalValue {
+  margin-top: 10px;
+  color: #000000;
+  font-size: 24px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.rdsw_reviewRightColumn {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  max-height: calc(100dvh - 112px);
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rdsw_reviewPricingCard {
+  display: flex;
+  width: 100%;
+  min-height: 500px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: 40px 38px;
+  border-radius: 50px;
+  background: #ffffff;
+  box-shadow:
+    0 0 15px rgba(0, 0, 0, 0.03);
+  animation:
+    rdswReviewSummaryEnter
+    480ms
+    80ms
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+.rdsw_reviewPricingTitle {
+  margin: 0;
+  color: #000000;
+  font-family: "Outfit", sans-serif;
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.rdsw_reviewPricingRows {
+  display: grid;
+  gap: 23px;
+  margin-top: 56px;
+}
+
+.rdsw_reviewPricingRow {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+  align-items: center;
+  gap: 18px;
+  color: #7a7a7f;
+  font-family: "Outfit", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.rdsw_reviewPricingRow > :last-child {
+  text-align: right;
+}
+
+.rdsw_reviewPricingTotalRow {
+  color: #000000;
+  font-weight: 500;
+}
+
+.rdsw_reviewPricingTotalRow strong {
+  color: #e3000f;
+  font-family: "Outfit", sans-serif;
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.rdsw_reviewActions {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.rdsw_reviewActionButton {
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 81px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  color: #000000;
+  font-family: "Outfit", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateY(0);
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease,
+    opacity 220ms ease;
+}
+
+.rdsw_reviewActionButton:hover {
+  transform: translateY(-2px);
+}
+
+.rdsw_reviewActionButton:active {
+  transform: scale(0.985);
+}
+
+.rdsw_reviewEditButton {
+  border: 1px solid #000000;
+  background: transparent;
+}
+
+.rdsw_reviewEditButton:hover {
+  background: #ffffff;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.rdsw_reviewSendButton {
+  border: 1px solid transparent;
+  background: #d2d2d7;
+}
+
+.rdsw_reviewSendButton:hover {
+  background: #c5c5cb;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.rdsw_reviewActionButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+  box-shadow: none;
+}
+
+.rdsw_reviewSendSpinner {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #000000;
+  border-radius: 50%;
+  animation:
+    rdswReviewSpinner
+    700ms
+    linear
+    infinite;
+}
+
+@keyframes rdswReviewModalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes rdswReviewVehicleReveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rdswReviewSummaryEnter {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes rdswReviewSpinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1180px) {
+  .rdsw_reviewModalLayout {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(320px, 380px);
+    gap: 24px;
+    padding:
+      38px 26px 28px 36px;
+  }
+
+  .rdsw_reviewVehicleCard {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .rdsw_reviewVehicleInfoColumn:nth-child(2) {
+    border-right: 0;
+  }
+
+  .rdsw_reviewVehicleInfoColumn:nth-child(3) {
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .rdsw_reviewVehicleTotal {
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .rdsw_reviewPricingCard {
+    padding: 34px 26px;
+  }
+
+  .rdsw_reviewPricingRow {
+    font-size: 20px;
+  }
+
+  .rdsw_reviewActionButton {
+    font-size: 19px;
+  }
+}
+
+@media (max-width: 900px) {
+  .rdsw_reviewModalShell {
+    width: calc(100vw - 28px) !important;
+    max-height: calc(100dvh - 28px) !important;
+    overflow-y: auto !important;
+    border-radius: 30px !important;
+  }
+
+  .rdsw_reviewModalLayout {
+    display: flex;
+    max-height: none;
+    flex-direction: column;
+    padding: 30px 22px 24px;
+  }
+
+  .rdsw_reviewLeftPanel {
+    max-height: none;
+    padding-right: 0;
+    overflow: visible;
+  }
+
+  .rdsw_reviewRightColumn {
+    position: static;
+    max-height: none;
+  }
+
+  .rdsw_reviewPricingCard {
+    min-height: 330px;
+    flex: none;
+    border-radius: 32px;
+  }
+}
+
+@media (max-width: 640px) {
+  .rdsw_reviewModalLayout {
+    gap: 24px;
+    padding: 25px 16px 18px;
+  }
+
+  .rdsw_reviewTitle,
+  .rdsw_reviewSectionHeading h3,
+  .rdsw_reviewPricingTitle {
+    font-size: 23px;
+  }
+
+  .rdsw_reviewHeadingDot {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+  .rdsw_reviewContactRow {
+    grid-template-columns: 1fr;
+    row-gap: 5px;
+  }
+
+  .rdsw_reviewContactLabel,
+  .rdsw_reviewContactValue,
+  .rdsw_reviewVehicleLabel,
+  .rdsw_reviewVehicleName,
+  .rdsw_reviewVehicleValue,
+  .rdsw_reviewVehicleTotalLabel {
+    font-size: 16px;
+  }
+
+  .rdsw_reviewVehicleCard {
+    grid-template-columns: 1fr;
+  }
+
+  .rdsw_reviewVehicleInfoColumn {
+    border-right: 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .rdsw_reviewVehicleInfoColumn:nth-child(2),
+  .rdsw_reviewVehicleInfoColumn:nth-child(3) {
+    border-top: 0;
+  }
+
+  .rdsw_reviewVehicleTotal {
+    border-top: 0;
+  }
+
+  .rdsw_reviewPricingCard {
+    min-height: 290px;
+    padding: 28px 22px;
+  }
+
+  .rdsw_reviewPricingRows {
+    margin-top: 38px;
+  }
+
+  .rdsw_reviewPricingRow {
+    font-size: 18px;
+  }
+
+  .rdsw_reviewPricingTotalRow strong {
+    font-size: 23px;
+  }
+
+  .rdsw_reviewActions {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .rdsw_reviewActionButton {
+    min-height: 64px;
+    font-size: 19px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rdsw_reviewModalLayout,
+  .rdsw_reviewVehicleCard,
+  .rdsw_reviewPricingCard,
+  .rdsw_reviewActionButton {
+    animation: none;
+    transition: none;
   }
 }

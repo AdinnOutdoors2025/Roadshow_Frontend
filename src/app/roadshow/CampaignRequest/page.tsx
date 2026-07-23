@@ -2,40 +2,24 @@
 // @ts-nocheck
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState,} from "react";
 import { isBefore } from "date-fns";
-import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Minus,
-  Plus,
-  X,
-} from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Minus, Plus, Send, SquarePen, X,} from "lucide-react";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
 import DatePicker from "@/components/calendar/calendar_reusable/calender";
+import { ButtonHover as VehicleCrfSubmitBtn } from "@/components/Client/Reusable_Components/ButtonHover";
+import { ButtonHover as VehicleCrfAddMoreVehBtn } from "@/components/Client/Reusable_Components/ButtonHover";
+import '../../../components/Client/HomePageSections/HomePageSection1.css';
+
+import { Modal } from "@/components/ui/modal";
+import { useModal } from "@/hooks/useModal";
 import { useAuth } from "@/context/AuthContext";
-import {
-  FALLBACK_VEHICLE_IMAGE,
-  fetchAllRoadshowVehicles,
-  type RoadshowVehicle,
-} from "@/lib/roadshowVehicles";
+import { FALLBACK_VEHICLE_IMAGE, fetchAllRoadshowVehicles, type RoadshowVehicle,} from "@/lib/roadshowVehicles";
+import { GST_Percentage } from '../../../BaseUrl'
 import "./page.css";
-import {
-  formatCurrency,
-  formatDate,
-  formatDateForApi,
-  getInclusiveDayCount,
-  parseStoredDate,
-  toSafeNumber,
-} from "@/app/utils/currency";
+import { formatCurrency, formatDate, formatDateForApi, getInclusiveDayCount, parseStoredDate, toSafeNumber,} from "@/app/utils/currency";
 type SelectedVehicle = RoadshowVehicle & {
   startDate: Date | null;
   endDate: Date | null;
@@ -44,10 +28,18 @@ type SelectedVehicle = RoadshowVehicle & {
 
 /* CAMPAIGN REQUEST PAGE */
 export default function CampaignRequestPage() {
-  const { user, openAuth } = useAuth();
+  const { user, openAuth, authLoading } = useAuth();
 
   const productScrollerRef =
     useRef<HTMLDivElement>(null);
+
+  const cardNodesRef = useRef(
+    new Map<string, HTMLElement>()
+  );
+
+  const cardPositionsRef = useRef(
+    new Map<string, DOMRect>()
+  );
 
   const authPromptedRef = useRef(false);
 
@@ -73,6 +65,18 @@ export default function CampaignRequestPage() {
   const [submitting, setSubmitting] =
     useState(false);
 
+  const {
+    isOpen: isReviewOpen,
+    openModal: openReviewModal,
+    closeModal: closeReviewModal,
+  } = useModal();
+
+  const [canScrollLeft, setCanScrollLeft] =
+    useState(false);
+
+  const [canScrollRight, setCanScrollRight] =
+    useState(false);
+
   const [clientDetails, setClientDetails] =
     useState({
       name: "",
@@ -82,6 +86,8 @@ export default function CampaignRequestPage() {
 
   /* Logged-in customer information */
   useEffect(() => {
+    if (authLoading) return;
+
     if (!user) {
       if (!authPromptedRef.current) {
         authPromptedRef.current = true;
@@ -106,7 +112,7 @@ export default function CampaignRequestPage() {
       phone: user?.phone || "",
       email: user?.email || "",
     });
-  }, [user, openAuth]);
+  }, [user, authLoading, openAuth]);
 
   /* Load all campaign vehicles through API */
   useEffect(() => {
@@ -200,6 +206,46 @@ export default function CampaignRequestPage() {
       ),
     [selectedVehicles]
   );
+
+  const sortedVehicles = useMemo(() => {
+    return [...vehicles].sort((a, b) => {
+      const aSelected = selectedVehicleIds.has(a.id) ? 0 : 1;
+      const bSelected = selectedVehicleIds.has(b.id) ? 0 : 1;
+
+      return aSelected - bSelected;
+    });
+  }, [vehicles, selectedVehicleIds]);
+
+  /* FLIP animation: slide cards to their new spot instead of jumping */
+  useLayoutEffect(() => {
+    const newPositions = new Map<string, DOMRect>();
+
+    cardNodesRef.current.forEach((node, id) => {
+      newPositions.set(id, node.getBoundingClientRect());
+    });
+
+    newPositions.forEach((newRect, id) => {
+      const oldRect = cardPositionsRef.current.get(id);
+      const node = cardNodesRef.current.get(id);
+
+      if (!oldRect || !node) return;
+
+      const deltaX = oldRect.left - newRect.left;
+      const deltaY = oldRect.top - newRect.top;
+
+      if (!deltaX && !deltaY) return;
+
+      node.style.transition = "none";
+      node.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+      requestAnimationFrame(() => {
+        node.style.transition = "transform 320ms ease";
+        node.style.transform = "";
+      });
+    });
+
+    cardPositionsRef.current = newPositions;
+  }, [sortedVehicles]);
 
   const activeDateVehicle = useMemo(
     () =>
@@ -400,6 +446,41 @@ export default function CampaignRequestPage() {
     );
   }, [bookingRows]);
 
+  const GST_PERCENT = parseFloat(GST_Percentage);
+
+  const gstAmount = useMemo(() => {
+    return grandTotal * (GST_PERCENT / 100);
+  }, [grandTotal, GST_PERCENT]);
+
+  const estimatedTotal = useMemo(() => {
+    return grandTotal + gstAmount;
+  }, [grandTotal, gstAmount]);
+
+  const reviewCompanyName =
+    user?.companyName ||
+    user?.company ||
+    user?.organizationName ||
+    "—";
+
+  const reviewPhoneNumber = (() => {
+    const digits =
+      clientDetails.phone.replace(
+        /\D/g,
+        ""
+      );
+
+    if (!digits) return "—";
+
+    if (digits.length === 10) {
+      return `+91 ${digits.slice(
+        0,
+        5
+      )} ${digits.slice(5)}`;
+    }
+
+    return clientDetails.phone;
+  })();
+
 
   const scrollProducts = (
     direction: "left" | "right"
@@ -412,6 +493,49 @@ export default function CampaignRequestPage() {
       behavior: "smooth",
     });
   };
+
+  /* Track carousel scroll position so nav buttons can disable at the ends */
+  useEffect(() => {
+    const scroller = productScrollerRef.current;
+
+    if (!scroller) return;
+
+    const updateScrollState = () => {
+      const { scrollLeft, scrollWidth, clientWidth } =
+        scroller;
+
+      setCanScrollLeft(scrollLeft > 4);
+
+      setCanScrollRight(
+        scrollLeft + clientWidth <
+        scrollWidth - 4
+      );
+    };
+
+    updateScrollState();
+
+    scroller.addEventListener(
+      "scroll",
+      updateScrollState
+    );
+
+    window.addEventListener(
+      "resize",
+      updateScrollState
+    );
+
+    return () => {
+      scroller.removeEventListener(
+        "scroll",
+        updateScrollState
+      );
+
+      window.removeEventListener(
+        "resize",
+        updateScrollState
+      );
+    };
+  }, [vehicles, loadingVehicles]);
 
   const validateForm = () => {
     if (!user) {
@@ -512,10 +636,16 @@ export default function CampaignRequestPage() {
     return true;
   };
 
-  const handleSubmit = async () => {
+  const handleReviewSubmit = () => {
     if (submitting) return;
 
     if (!validateForm()) return;
+
+    openReviewModal();
+  };
+
+  const handleConfirmSend = async () => {
+    if (submitting) return;
 
     try {
       setSubmitting(true);
@@ -596,6 +726,8 @@ export default function CampaignRequestPage() {
       toast.success(
         "Campaign request prepared successfully."
       );
+
+      closeReviewModal();
     } catch (error) {
       console.error(
         "Campaign request error:",
@@ -881,7 +1013,8 @@ export default function CampaignRequestPage() {
                               }
                             )
                           }
-                          className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-black shadow-sm transition hover:bg-black hover:text-white"
+                          disabled={vehicle.quantity <= 1}
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-black shadow-sm transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-black"
                           aria-label="Reduce quantity"
                         >
                           <Minus size={12} />
@@ -903,7 +1036,12 @@ export default function CampaignRequestPage() {
                               }
                             )
                           }
-                          className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-black shadow-sm transition hover:bg-black hover:text-white"
+                          disabled={
+                            vehicle.availableVehicles > 0 &&
+                            vehicle.quantity >=
+                            vehicle.availableVehicles
+                          }
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-black shadow-sm transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-black"
                           aria-label="Increase quantity"
                         >
                           <Plus size={12} />
@@ -916,9 +1054,9 @@ export default function CampaignRequestPage() {
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <button
+              {/* <button
                 type="button"
-                onClick={handleSubmit}
+                onClick={handleReviewSubmit}
                 disabled={submitting}
                 className="rdsw_crfVehSubmitBtn flex  items-center justify-center gap-2 rounded-full bg-[#1a1a1c] px-6 py-3 text-[12px] font-semibold text-white transition hover:bg-[#d70000] disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -929,9 +1067,32 @@ export default function CampaignRequestPage() {
                 {submitting
                   ? "Submitting..."
                   : "Submit"}
-              </button>
+              </button> */}
+              <VehicleCrfSubmitBtn
+                type="button"
+                label="Submit"
+                loadingLabel="Submitting..."
+                loading={submitting}
+                disabled={submitting}
+                ariaLabel="Submit campaign request"
+                onClick={handleReviewSubmit}
+                className="RS_VehicleButton rdsw_crfVehSubmitBtn flex items-center justify-center gap-2 rounded-full bg-[#1a1a1c] px-6 py-3 text-[12px] font-semibold  transition disabled:cursor-not-allowed disabled:opacity-60"
+              />
 
-              <button
+              <VehicleCrfAddMoreVehBtn
+                type="button"
+                label="Add More Vehicle"
+                ariaLabel="Add more vehicle"
+                onClick={() =>
+                  productScrollerRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                  })
+                }
+                className="RS_VehicleButton rdsw_crfVehAddVehBtn rounded-full bg-[#dedee1] px-6 py-3 text-[12px] font-semibold text-[#202020] transition"
+              />
+
+              {/* <button
                 type="button"
                 onClick={() =>
                   productScrollerRef.current?.scrollIntoView(
@@ -944,7 +1105,8 @@ export default function CampaignRequestPage() {
                 className="rdsw_crfVehAddVehBtn rounded-full bg-[#dedee1] px-6 py-3 text-[12px] font-semibold text-[#202020] transition hover:bg-[#cfcfd2]"
               >
                 Add More Vehicle
-              </button>
+              </button> */}
+
             </div>
           </aside>
 
@@ -1006,12 +1168,24 @@ export default function CampaignRequestPage() {
 
                 {/* Vehicle cards */}
                 {!loadingVehicles &&
-                  vehicles.map((vehicle) => {
+                  sortedVehicles.map((vehicle) => {
                     const selected = isSelected(vehicle.id);
 
                     return (
                       <article
                         key={vehicle.id}
+                        ref={(node) => {
+                          if (node) {
+                            cardNodesRef.current.set(
+                              vehicle.id,
+                              node
+                            );
+                          } else {
+                            cardNodesRef.current.delete(
+                              vehicle.id
+                            );
+                          }
+                        }}
                         className={[
                           "rdsw_crfProdDetailsCardMain",
                           selected
@@ -1059,7 +1233,7 @@ export default function CampaignRequestPage() {
                                 </span>
 
                                 {/* <span className="rdsw_crfProdDetailsRatingStar"> */}
-                                  <div><img src='/images/assets/RS_VehicleRateStar.svg' className='rdsw_crfVehRatingStar' alt="Rating" /></div>
+                                <div><img src='/images/assets/RS_VehicleRateStar.svg' className='rdsw_crfVehRatingStar' alt="Rating" /></div>
                                 {/* </span> */}
                               </div>
                             )}
@@ -1110,6 +1284,7 @@ export default function CampaignRequestPage() {
                   onClick={() => scrollProducts("left")}
                   className="rdsw_crfProdDetailsNavigationButton"
                   aria-label="Previous vehicles"
+                  disabled={!canScrollLeft}
                 >
                   <ChevronLeft size={26} />
                 </button>
@@ -1119,6 +1294,7 @@ export default function CampaignRequestPage() {
                   onClick={() => scrollProducts("right")}
                   className="rdsw_crfProdDetailsNavigationButton"
                   aria-label="Next vehicles"
+                  disabled={!canScrollRight}
                 >
                   <ChevronRight size={26} />
                 </button>
@@ -1260,6 +1436,297 @@ export default function CampaignRequestPage() {
           title="Select campaign dates"
         />
       )}
+
+      <Modal
+        isOpen={isReviewOpen}
+        onClose={closeReviewModal}
+        className="rdsw_reviewModalShell"
+        overlayClassName="fixed inset-0 h-full w-full bg-black/35 backdrop-blur-[1px]"
+      >
+        <div className="rdsw_reviewModalLayout">
+          {/* Left side: independently scrollable when many vehicles are selected */}
+          <section className="rdsw_reviewLeftPanel">
+            <h2 className="rdsw_reviewTitle">
+              Review Your Order &amp; Confirm
+            </h2>
+
+            <section className="rdsw_reviewSection">
+              <div className="rdsw_reviewSectionHeading">
+                <span
+                  className="rdsw_reviewHeadingDot"
+                  aria-hidden="true"
+                >
+                  <i className="fa-regular fa-circle-user"></i>
+                </span>
+                <h3>Contact Details</h3>
+              </div>
+
+              <div className="rdsw_reviewContactDetails">
+                <div className="rdsw_reviewContactRow">
+                  <span className="rdsw_reviewContactLabel">
+                    Name
+                  </span>
+
+                  <span className="rdsw_reviewContactValue">
+                    - {clientDetails.name || "—"}
+                  </span>
+                </div>
+
+                {/* <div className="rdsw_reviewContactRow">
+                  <span className="rdsw_reviewContactLabel">
+                    Company Name
+                  </span>
+
+                  <span className="rdsw_reviewContactValue">
+                    - {reviewCompanyName}
+                  </span>
+                </div> */}
+
+                <div className="rdsw_reviewContactRow">
+                  <span className="rdsw_reviewContactLabel">
+                    Phone Number
+                  </span>
+
+                  <span className="rdsw_reviewContactValue">
+                    - {reviewPhoneNumber}
+                  </span>
+                </div>
+
+                <div className="rdsw_reviewContactRow">
+                  <span className="rdsw_reviewContactLabel">
+                    Email Address
+                  </span>
+
+                  <span className="rdsw_reviewContactValue">
+                    - {clientDetails.email || "—"}
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <section className="rdsw_reviewSection rdsw_reviewVehicleSection">
+              <div className="rdsw_reviewSectionHeading">
+                <span
+                  className="rdsw_reviewHeadingDot"
+                  aria-hidden="true"
+                >
+                  <i className="fa-regular fa-circle-check"></i>
+                </span>
+                <h3>Selected Vehicles</h3>
+              </div>
+
+              <div className="rdsw_reviewVehicleList">
+                {bookingRows.map(
+                  (vehicle, index) => (
+                    <article
+                      key={vehicle.id}
+                      className="rdsw_reviewVehicleCard"
+                      style={{
+                        animationDelay: `${index * 70
+                          }ms`,
+                      }}
+                    >
+                      <div className="rdsw_reviewVehicleInfoColumn">
+                        <div>
+                          <p className="rdsw_reviewVehicleLabel">
+                            Vehicle Type {index + 1}
+                          </p>
+
+                          <p className="rdsw_reviewVehicleName">
+                            {vehicle.name}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="rdsw_reviewVehicleLabel">
+                            Vehicle Quantity
+                          </p>
+
+                          <p className="rdsw_reviewVehicleValue">
+                            {vehicle.quantity}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rdsw_reviewVehicleInfoColumn">
+                        <div>
+                          <p className="rdsw_reviewVehicleLabel">
+                            Start Date
+                          </p>
+
+                          <p className="rdsw_reviewVehicleValue">
+                            {formatDate(
+                              vehicle.startDate,
+                              {
+                                pattern:
+                                  "dd MMM yyyy",
+                                fallback: "—",
+                              }
+                            )}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="rdsw_reviewVehicleLabel">
+                            Rate Per Day
+                          </p>
+
+                          <p className="rdsw_reviewVehicleValue">
+                            {formatCurrency(
+                              vehicle.rate
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rdsw_reviewVehicleInfoColumn">
+                        <div>
+                          <p className="rdsw_reviewVehicleLabel">
+                            End Date
+                          </p>
+
+                          <p className="rdsw_reviewVehicleValue">
+                            {formatDate(
+                              vehicle.endDate,
+                              {
+                                pattern:
+                                  "dd MMM yyyy",
+                                fallback: "—",
+                              }
+                            )}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="rdsw_reviewVehicleLabel">
+                            Duration
+                          </p>
+
+                          <p className="rdsw_reviewVehicleValue">
+                            {vehicle.days}{" "}
+                            {vehicle.days === 1
+                              ? "Day"
+                              : "Days"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rdsw_reviewVehicleTotal">
+                        <p className="rdsw_reviewVehicleTotalLabel">
+                          Vehicle Total
+                        </p>
+
+                        <p className="rdsw_reviewVehicleTotalValue">
+                          {formatCurrency(
+                            vehicle.total
+                          )}
+                        </p>
+                      </div>
+                    </article>
+                  )
+                )}
+              </div>
+            </section>
+          </section>
+
+          {/* Right side: sticky pricing summary and actions */}
+          <aside className="rdsw_reviewRightColumn">
+            <div className="rdsw_reviewPricingCard">
+              <h3 className="rdsw_reviewPricingTitle">
+                Pricing Summary
+              </h3>
+
+              <div className="rdsw_reviewPricingRows">
+                <div className="rdsw_reviewPricingRow">
+                  <span>Subtotal</span>
+
+                  <span>
+                    {formatCurrency(
+                      grandTotal
+                    )}
+                  </span>
+                </div>
+
+                <div className="rdsw_reviewPricingRow">
+                  <span>GST {GST_PERCENT}%</span>
+
+                  <span>
+                    {formatCurrency(
+                      gstAmount
+                    )}
+                  </span>
+                </div>
+
+                <div className="rdsw_reviewPricingRow rdsw_reviewPricingTotalRow">
+                  <span>Estimated Total</span>
+
+                  <strong>
+                    {formatCurrency(
+                      estimatedTotal
+                    )}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="rdsw_reviewActions">
+              <button
+                type="button"
+                onClick={closeReviewModal}
+                className="rdsw_reviewActionButton rdsw_reviewEditButton"
+              >
+                {/* <SquarePen
+                  size={25}
+                  strokeWidth={1.6}
+                  aria-hidden="true"
+                /> */}
+                <Image
+                  src="/images/assets/CRF_RequestEditBtn.svg"
+                  alt=""
+                  width={18}
+                  height={18}
+                  className="rdsw_crfProdDetailsCheckMark"
+                />
+
+                <span>Edit Details</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmSend}
+                disabled={submitting}
+                className="rdsw_reviewActionButton rdsw_reviewSendButton"
+              >
+                {submitting ? (
+                  <span
+                    className="rdsw_reviewSendSpinner"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  // <Send
+                  //   size={25}
+                  //   strokeWidth={1.6}
+                  //   aria-hidden="true"
+                  // />
+                  <Image
+                    src="/images/assets/CRF_RequestSendBtn.svg"
+                    alt=""
+                    width={18}
+                    height={18}
+                    className="rdsw_crfProdDetailsCheckMark"
+                  />
+                )}
+
+                <span>
+                  {submitting
+                    ? "Sending..."
+                    : "Send Request"}
+                </span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      </Modal>
     </main>
   );
 }

@@ -600,6 +600,8 @@ import {
 import toast from "react-hot-toast";
 
 import DatePicker from "@/components/calendar/calendar_reusable/calender";
+import { ButtonHover as VehicleDetailsBookNowBtn } from "@/components/Client/Reusable_Components/ButtonHover";
+import '../../../../components/Client/HomePageSections/HomePageSection1.css';
 import {
   formatCurrency,
   formatDateForApi,
@@ -1126,7 +1128,7 @@ export default function VehicleDetailsPage() {
                 setCheckOut={setCheckOut}
               />
 
-              <button
+              {/* <button
                 type="button"
                 onClick={handleBookNow}
                 disabled={checkingLogin}
@@ -1139,7 +1141,17 @@ export default function VehicleDetailsPage() {
                 {checkingLogin
                   ? "Checking..."
                   : "Book Now"}
-              </button>
+              </button> */}
+              <VehicleDetailsBookNowBtn
+                type="button"
+                label="Book Now"
+                loadingLabel="Checking..."
+                loading={checkingLogin}
+                disabled={checkingLogin}
+                ariaLabel="Book this vehicle"
+                onClick={handleBookNow}
+                className="RS_VehicleButton mt-6 flex min-w-33.75 items-center justify-center gap-2 rounded-full bg-black px-7 py-3 text-[13px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+              />
             </div>
           </div>
         </section>
