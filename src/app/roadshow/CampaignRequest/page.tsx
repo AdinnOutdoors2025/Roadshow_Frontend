@@ -13,7 +13,6 @@ import { ButtonHover as VehicleCrfSubmitBtn } from "@/components/Client/Reusable
 import { ButtonHover as VehicleCrfAddMoreVehBtn } from "@/components/Client/Reusable_Components/ButtonHover";
 import '../../../components/Client/HomePageSections/HomePageSection1.css';
 
-import { Modal } from "@/components/ui/modal";
 import { useModal } from "@/hooks/useModal";
 import { useAuth } from "@/context/AuthContext";
 import { FALLBACK_VEHICLE_IMAGE, fetchAllRoadshowVehicles, type RoadshowVehicle,} from "@/lib/roadshowVehicles";
@@ -70,6 +69,24 @@ export default function CampaignRequestPage() {
     openModal: openReviewModal,
     closeModal: closeReviewModal,
   } = useModal();
+
+  useEffect(() => {
+    if (!isReviewOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeReviewModal();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
+  }, [isReviewOpen, closeReviewModal]);
 
   const [canScrollLeft, setCanScrollLeft] =
     useState(false);
@@ -1437,12 +1454,26 @@ export default function CampaignRequestPage() {
         />
       )}
 
-      <Modal
-        isOpen={isReviewOpen}
-        onClose={closeReviewModal}
-        className="rdsw_reviewModalShell"
-        overlayClassName="fixed inset-0 h-full w-full bg-black/35 backdrop-blur-[1px]"
-      >
+      {isReviewOpen && (
+      <div className="fixed inset-0 z-99999 flex items-center justify-center overflow-y-auto">
+        <div
+          className="fixed inset-0 h-full w-full bg-black/35 backdrop-blur-[1px]"
+          onClick={closeReviewModal}
+        />
+
+        <div
+          className="rdsw_reviewModalShell relative w-full"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={closeReviewModal}
+            aria-label="Close"
+            className="rdsw_reviewModalCloseBtn absolute right-3 top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full sm:right-6 sm:top-6 sm:h-11 sm:w-11"
+          >
+            <X size={20} strokeWidth={2.25} />
+          </button>
+
         <div className="rdsw_reviewModalLayout">
           {/* Left side: independently scrollable when many vehicles are selected */}
           <section className="rdsw_reviewLeftPanel">
@@ -1675,17 +1706,13 @@ export default function CampaignRequestPage() {
                 onClick={closeReviewModal}
                 className="rdsw_reviewActionButton rdsw_reviewEditButton"
               >
-                {/* <SquarePen
-                  size={25}
-                  strokeWidth={1.6}
-                  aria-hidden="true"
-                /> */}
+             
                 <Image
                   src="/images/assets/CRF_RequestEditBtn.svg"
                   alt=""
                   width={18}
                   height={18}
-                  className="rdsw_crfProdDetailsCheckMark"
+                  className="rdsw_crfProdDetailsCheckMark rdsw_reviewEditReqIcon"
                 />
 
                 <span>Edit Details</span>
@@ -1703,20 +1730,15 @@ export default function CampaignRequestPage() {
                     aria-hidden="true"
                   />
                 ) : (
-                  // <Send
-                  //   size={25}
-                  //   strokeWidth={1.6}
-                  //   aria-hidden="true"
-                  // />
+                
                   <Image
                     src="/images/assets/CRF_RequestSendBtn.svg"
                     alt=""
                     width={18}
                     height={18}
-                    className="rdsw_crfProdDetailsCheckMark"
+                    className="rdsw_crfProdDetailsCheckMark rdsw_reviewEditReqIcon"
                   />
-                )}
-
+                )} 
                 <span>
                   {submitting
                     ? "Sending..."
@@ -1726,7 +1748,9 @@ export default function CampaignRequestPage() {
             </div>
           </aside>
         </div>
-      </Modal>
+        </div>
+      </div>
+      )}
     </main>
   );
 }
