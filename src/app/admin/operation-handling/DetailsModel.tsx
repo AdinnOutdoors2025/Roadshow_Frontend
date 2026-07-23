@@ -169,8 +169,17 @@ export default function DetailDrawer({
     const stage = STAGE_MAP[order.pipelineStatus];
     const StageIcon = stage?.icon || FiClipboard;
 
+    // Mirrors the kanban board's "Vehicle Unavailable" column grouping (a
+    // virtual bucket, not a real pipelineStatus — see page.tsx fetchPipeline)
+    // — an order with any currently-unavailable vehicle entry must not be
+    // stage-moved from here either, same as it can't be drag-and-dropped
+    // out of that column on the board.
+    const hasUnavailableVehicle = (order.onRoadExecutionArray || []).some(
+        (e: any) => e.unavailableStatus === true
+    );
+
     const nextStageKey = NEXT_STAGE[order.pipelineStatus];
-    const nextLabel = NEXT_LABEL[order.pipelineStatus];
+    const nextLabel = hasUnavailableVehicle ? undefined : NEXT_LABEL[order.pipelineStatus];
 
     const subtotal = order.bookingItems.reduce((s: number, i: any) => s + (i.totalAmount || 0), 0);
     const totalDiscount = (order.negotiationLogs || []).reduce((s, l) => s + (l.discountAmount || 0), 0);
@@ -218,7 +227,14 @@ export default function DetailDrawer({
         ...(defaultTab === "VehicleUnavailable"
             ? [{ key: "VehicleUnavailable", label: "VehicleUnavailable" }]
             : []),
-        ...(order.pipelineStatus === "clientClosure"
+        // Show this tab either once the order has actually reached the
+        // Client Closure stage, OR as soon as a FOC (Free of Cost extension)
+        // request exists against it — e.g. raised from the Campaign
+        // Calculator's Mark Absent / Extra Campaign Days flows while the
+        // order is still sitting in On Road. Otherwise that FOC card was only
+        // reachable via the header's quick-jump button, not a normal tab.
+        ...(order.pipelineStatus === "clientClosure" ||
+        (order.campaignClosureArray || []).some((c: any) => c.type === "foc")
             ? [{ key: "clientClosure", label: "Client Closure" }]
             : []),
     ];
@@ -519,7 +535,7 @@ useEffect(() => {
                     )}
 
                     {activeTab === "campaignCalculator" && (
-                        <CampaignCalculatorTab order={order}  vehicleTypes={vehicleTypes} />
+                        <CampaignCalculatorTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
                     )}
 
                     {activeTab === "history" && (

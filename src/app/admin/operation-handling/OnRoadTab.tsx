@@ -168,6 +168,17 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
     }
   };
 
+  // FOC (Free of Cost) extension requests raised for this vehicle-type slot —
+  // e.g. via the Campaign Calculator's Mark Absent → "Extend Campaign +1 Day"
+  // flow. Super-admin-created entries land already "approved"; anyone else's
+  // request sits "pending" until a super admin approves it.
+  const bookingItemForVehicle = (order.bookingItems || [])[vehicleIndex];
+  const vehicleFocEntries = (order.campaignClosureArray || []).filter(
+    (c) => c.type === "foc" && String(c.bookingItemId) === String(bookingItemForVehicle?._id || "")
+  );
+  const pendingFoc = vehicleFocEntries.find((c) => c.status === "pending");
+  const approvedFoc = [...vehicleFocEntries].reverse().find((c) => c.status === "approved");
+
   const vehicleIssues = (order.onRoadIssues || []).filter(
     (iss) => iss.vehicleIndex === vehicleIndex
   );
@@ -312,6 +323,21 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
             {isVehicleOnRoad && (
               <span className="text-[14px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
                 On Road
+              </span>
+            )}
+            {liveStatusEntries.some((e) => e.unavailableStatus) && (
+              <span className="text-[14px] px-2 py-0.5 rounded-full bg-red-50 text-red-600 font-semibold border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800">
+                Vehicle Unavailable
+              </span>
+            )}
+            {pendingFoc && (
+              <span className="text-[14px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold border border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800">
+                FOC — Waiting for Approval
+              </span>
+            )}
+            {!pendingFoc && approvedFoc && (
+              <span className="text-[14px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800">
+                FOC Approved · +1 Day
               </span>
             )}
           </div>

@@ -21,11 +21,12 @@ const toISODate = (d) => {
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
 };
 
-export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEntries, onClose, onRefresh }) {
+export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEntries, lockedEntryId, lockedDate, onClose, onRefresh }) {
   const activeEntries = (vehicleEntries || []).filter((e) => e.entryStatus !== "removed");
+  const isLocked = !!lockedEntryId;
 
-  const [selectedEntryId, setSelectedEntryId] = useState(activeEntries[0]?._id || "");
-  const [day, setDay] = useState(toISODate(new Date()));
+  const [selectedEntryId, setSelectedEntryId] = useState(lockedEntryId || activeEntries[0]?._id || "");
+  const [day, setDay] = useState(lockedDate || toISODate(new Date()));
   const [startTime, setStartTime] = useState(DEFAULT_LOGIN_TIME);
   const [endTime, setEndTime] = useState(DEFAULT_LOGOUT_TIME);
   const [remarks, setRemarks] = useState("");
@@ -40,8 +41,9 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
   const preview = useMemo(() => {
     if (!day || !startTime || !endTime) return null;
     const start = new Date(`${day}T${startTime}:00`);
-    const end = new Date(`${day}T${endTime}:00`);
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return null;
+    let end = new Date(`${day}T${endTime}:00`);
+    if (end <= start) end = new Date(end.getTime() + 24 * 3_600_000);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
     const runningHours = Math.round(((end - start) / (1000 * 60 * 60)) * 100) / 100;
     const absentHours = Math.max(Math.round((CAMPAIGN_HOURS_PER_DAY - runningHours) * 100) / 100, 0);
     return { runningHours, absentHours };
@@ -61,8 +63,8 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
       if (!endTime) return toast.error("End time is required");
 
       const start = new Date(`${day}T${startTime}:00`);
-      const end = new Date(`${day}T${endTime}:00`);
-      if (end <= start) return toast.error("End time must be after start time");
+      let end = new Date(`${day}T${endTime}:00`);
+      if (end <= start) end = new Date(end.getTime() + 24 * 3_600_000);
       startISO = start.toISOString();
       endISO = end.toISOString();
     }
@@ -125,7 +127,8 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
             <select
               value={selectedEntryId}
               onChange={(e) => setSelectedEntryId(e.target.value)}
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              disabled={isLocked}
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <option value="">Select driver / reg no</option>
               {activeEntries.map((entry) => (
@@ -136,7 +139,7 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
             </select>
           </div>
 
-          <div>
+          <div className={isLocked ? "opacity-60 pointer-events-none" : ""}>
             <label className="block text-xs font-semibold text-gray-500 mb-1">Date</label>
             <DatePicker value={day} onChange={setDay} minDate={campaignFromISO} maxDate={campaignToISO} />
           </div>

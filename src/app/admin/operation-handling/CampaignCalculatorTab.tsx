@@ -16,6 +16,12 @@ import { getToken } from "../../utils/auth";
 import API_BASE from "../../../../baseurl";
 import CompensationModal from "./CompensationModal";
 import PoolWindowModal from "./PoolWindowModal";
+import LogHoursModal from "./LogHoursModal";
+
+// Downtime (issue + unavailable hours) threshold for a day, past which the
+// "Mark Absent" button is highlighted as a suggestion — admin still has to
+// click it to actually mark the day absent (not automatic).
+const ABSENT_SUGGEST_THRESHOLD_HOURS = Number(process.env.NEXT_PUBLIC_ABSENT_THRESHOLD_HOURS) || 4;
 
 interface Order {
   _id: string;
@@ -152,7 +158,7 @@ const SECTIONS = [
   { key: "billing", label: "Final Billing", icon: FileCheck2 },
 ];
 
-export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: Order,vehicleTypes:any }) {
+export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefresh, vehicleTypes }: { order: Order, onRefresh?: () => Promise<void>, vehicleTypes:any }) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [historyData, setHistoryData] = useState<any>(null);
@@ -160,6 +166,8 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [compensationVehicleIndex, setCompensationVehicleIndex] = useState<number | null>(null);
   const [poolWindowVehicleIndex, setPoolWindowVehicleIndex] = useState<number | null>(null);
+  const [logHoursVehicleIndex, setLogHoursVehicleIndex] = useState<number | null>(null);
+  const [logHoursEntryId, setLogHoursEntryId] = useState<string | null>(null);
   const [expandedTimelines, setExpandedTimelines] = useState<Record<string, boolean>>({});
   const toggleTimeline = (entryId: string) =>
     setExpandedTimelines((prev) => ({ ...prev, [entryId]: !prev[entryId] }));
@@ -204,6 +212,17 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
     fetchHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order._id]);
+
+  // FOC/absent/compensation actions triggered from this tab mutate the order
+  // document (campaignClosureArray, dailyHoursLogArray) but this tab keeps its
+  // own `data` copy from the campaign-calculator endpoint — refreshing only
+  // that leaves the shared `order` object (read by OnRoadTab/ClientClosureTab)
+  // stale, so a newly-created FOC entry silently doesn't show up on the
+  // Client Closure tab until the whole Order Details modal is reopened. Call
+  // both refreshes together everywhere a child modal reports success.
+  const refreshAll = async () => {
+    await Promise.all([fetchCalculator(), fetchHistory(), parentOnRefresh ? parentOnRefresh() : Promise.resolve()]);
+  };
 
   const dayIndex = useMemo(() => {
     if (!data) return -1;
@@ -610,6 +629,11 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
       ? (data?.bookingItemsMeta || []).find((b: any) => b.vehicleIndex === compensationVehicleIndex)
       : null;
 
+  const logHoursVehicleMeta =
+    logHoursVehicleIndex != null
+      ? (data?.bookingItemsMeta || []).find((b: any) => b.vehicleIndex === logHoursVehicleIndex)
+      : null;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -809,6 +833,9 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
                     <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                       {fmtDateLabel(selectedDay.date)} · Daily Summary
                     </span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-300 font-semibold">
+                      DAY TOTAL — all vehicles combined
+                    </span>
                   </div>
 
                   <div className="p-4 space-y-4">
@@ -862,6 +889,11 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
               )}
 
               <div className="space-y-3">
+                {selectedDay.vehicles.length > 0 && (
+                  <p className="text-[11px] text-gray-400 px-1 -mt-1">
+                    VEHICLE-WISE — below, each card is one vehicle-type slot's own breakdown for {fmtDateLabel(selectedDay.date)} (old + replacement entries shown separately); the Daily Summary above is the sum of all of these.
+                  </p>
+                )}
                 {selectedDay.vehicles.length === 0 && (
                   <p className="text-sm text-gray-400 text-center py-8">
                     No vehicle type is within its campaign window on {fmtDateLabel(selectedDay.date)}.
@@ -1026,6 +1058,27 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
                                   -{fmt(e.compensationDeduction)}
                                 </span>
                               )}
+                              {!e.isAbsentDay && !isReleasedEntry && (() => {
+                                const downtimeToday = (todayDurations.issueHours || 0) + (todayDurations.unavailableHours || 0);
+                                const suggestAbsent = downtimeToday >= ABSENT_SUGGEST_THRESHOLD_HOURS;
+                                return (
+                                  <button
+                                    onClick={() => { setLogHoursVehicleIndex(v.vehicleIndex); setLogHoursEntryId(e.entryId); }}
+                                    title={
+                                      suggestAbsent
+                                        ? `Downtime crossed ${ABSENT_SUGGEST_THRESHOLD_HOURS}h today — consider marking this vehicle Absent`
+                                        : "Log hours / mark absent for this vehicle"
+                                    }
+                                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border font-semibold ${
+                                      suggestAbsent
+                                        ? "border-amber-300 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300 animate-pulse"
+                                        : "border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    }`}
+                                  >
+                                    <CalendarX2 size={10} /> Mark Absent
+                                  </button>
+                                );
+                              })()}
                               {hasTimeline && (
                                 <button
                                   onClick={() => toggleTimeline(e.entryId)}
@@ -1212,23 +1265,23 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
                                     {isSplit ? "Split Extra KM/Hours" : "Daily Extra KM/Hours"}
                                   </span>
                                   <span className="px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300 font-semibold">
-                                    {resolvedKm} km / {resolvedHrs} hrs today
+                                    Drove {resolvedKm} km extra & ran {resolvedHrs} hrs extra today
                                   </span>
                                   {ex.withinPurchasedBalance ? (
                                     <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 font-semibold">
-                                      Within purchased balance
+                                      Covered — within the package's free allowance
                                     </span>
                                   ) : (
                                     <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
-                                      {fmt(ex.extraKmCost + ex.extraHourCost)} additional
+                                      + {fmt(ex.extraKmCost + ex.extraHourCost)} extra charge (over the free allowance)
                                     </span>
                                   )}
                                 </div>
                                 <p className="mt-1 text-gray-500 dark:text-gray-400">
                                   {isSplit && (ex.recordExtraKm != null || ex.recordExtraHours != null) ? (
-                                    <>Split from {ex.recordExtraKm ?? 0} km / {ex.recordExtraHours ?? 0} hrs applied across {ex.loggedFor || "the range"}</>
+                                    <>Logged as {ex.recordExtraKm ?? 0} km / {ex.recordExtraHours ?? 0} hrs, split evenly across {ex.loggedFor || "the range"}</>
                                   ) : (
-                                    <>Applied for {ex.loggedFor}</>
+                                    <>Recorded for {ex.loggedFor}</>
                                   )}
                                   {ex.addedBy ? <> · logged by {ex.addedBy}</> : null}
                                 </p>
@@ -1371,8 +1424,12 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
           vehicle={{ fromDate: compensationVehicleMeta.fromDate, toDate: compensationVehicleMeta.toDate }}
           vehicleIndex={compensationVehicleIndex}
           vehicleEntries={entriesByVehicle[compensationVehicleIndex] || []}
+          detectedLossDate={selectedDay?.date || null}
+          detectedLossHours={
+            selectedDay?.vehicles.find((v: any) => v.vehicleIndex === compensationVehicleIndex)?.downtimeHoursToday || 0
+          }
           onClose={() => setCompensationVehicleIndex(null)}
-          onRefresh={fetchCalculator}
+          onRefresh={refreshAll}
         />
       )}
 
@@ -1391,6 +1448,19 @@ export default function CampaignCalculatorTab({ order,vehicleTypes }: { order: O
           />
         );
       })()}
+
+      {logHoursVehicleIndex != null && logHoursVehicleMeta && (
+        <LogHoursModal
+          order={order}
+          vehicle={{ fromDate: logHoursVehicleMeta.fromDate, toDate: logHoursVehicleMeta.toDate }}
+          vehicleIndex={logHoursVehicleIndex}
+          vehicleEntries={entriesByVehicle[logHoursVehicleIndex] || []}
+          lockedEntryId={logHoursEntryId}
+          lockedDate={selectedDay?.date || null}
+          onClose={() => { setLogHoursVehicleIndex(null); setLogHoursEntryId(null); }}
+          onRefresh={refreshAll}
+        />
+      )}
     </div>
   );
 }
