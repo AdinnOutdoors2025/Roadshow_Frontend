@@ -158,7 +158,7 @@ const SECTIONS = [
   { key: "billing", label: "Final Billing", icon: FileCheck2 },
 ];
 
-export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefresh, vehicleTypes }: { order: Order, onRefresh?: () => Promise<void>, vehicleTypes:any }) {
+export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefresh, vehicleTypes, isAdmin }: { order: Order, onRefresh?: () => Promise<void>, vehicleTypes:any, isAdmin?: number }) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [historyData, setHistoryData] = useState<any>(null);
@@ -966,18 +966,28 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                     {v.compensationStatus?.hasLoss && (
                       <div
                         className={`px-4 py-2 text-[11px] border-b border-gray-100 dark:border-gray-800 ${
-                          v.compensationStatus.applied
+                          v.compensationStatus.state === "approved"
                             ? "bg-emerald-50/70 dark:bg-emerald-900/10"
+                            : v.compensationStatus.state === "pending"
+                            ? "bg-sky-50/70 dark:bg-sky-900/10"
                             : "bg-amber-50/70 dark:bg-amber-900/10"
                         }`}
                       >
-                        {v.compensationStatus.applied ? (
+                        {v.compensationStatus.state === "approved" ? (
                           <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-semibold">
                             <Gift size={11} />
                             {fmtHm(v.compensationStatus.lossHours)} loss — Compensated{" "}
                             {v.compensationStatus.scope === "this-date"
                               ? "(this date only)"
                               : `(split across ${fmtShortDate(v.compensationStatus.dateFrom)} → ${fmtShortDate(v.compensationStatus.dateTo)}, ${v.compensationStatus.valuePerDay}h/day)`}
+                          </span>
+                        ) : v.compensationStatus.state === "pending" ? (
+                          <span className="flex items-center gap-1 text-sky-700 dark:text-sky-300 font-semibold">
+                            <ShieldAlert size={11} />
+                            {fmtHm(v.compensationStatus.lossHours)} loss — Requested, waiting for admin approval{" "}
+                            {v.compensationStatus.scope === "this-date"
+                              ? "(this date only)"
+                              : `(${fmtShortDate(v.compensationStatus.dateFrom)} → ${fmtShortDate(v.compensationStatus.dateTo)})`}
                           </span>
                         ) : (
                           <div className="flex items-center justify-between gap-2">
@@ -1479,6 +1489,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
           detectedLossHours={
             selectedDay?.vehicles.find((v: any) => v.vehicleIndex === compensationVehicleIndex)?.downtimeHoursToday || 0
           }
+          isAdmin={isAdmin}
           onClose={() => setCompensationVehicleIndex(null)}
           onRefresh={refreshAll}
         />

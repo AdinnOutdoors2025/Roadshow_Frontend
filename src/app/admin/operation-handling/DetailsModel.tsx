@@ -535,7 +535,7 @@ useEffect(() => {
                     )}
 
                     {activeTab === "campaignCalculator" && (
-                        <CampaignCalculatorTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
+                        <CampaignCalculatorTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} isAdmin={currentUserIsAdmin} />
                     )}
 
                     {activeTab === "history" && (

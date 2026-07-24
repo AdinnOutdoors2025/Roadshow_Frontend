@@ -43,7 +43,8 @@ const addDaysISO = (iso, days) => {
 //     count is derived from (To Date − campaign end date). Days requests go
 //     through the FOC approval rule (super admin: instant; others: pending
 //     until a super admin approves it in Client Closure).
-export default function CompensationModal({ order, vehicle, vehicleIndex, vehicleEntries, detectedLossDate, detectedLossHours, onClose, onRefresh }) {
+export default function CompensationModal({ order, vehicle, vehicleIndex, vehicleEntries, detectedLossDate, detectedLossHours, isAdmin, onClose, onRefresh }) {
+  const isSuperAdmin = Number(isAdmin) === 1;
   const activeEntries = (vehicleEntries || []).filter((e) => e.entryStatus !== "removed");
   const hasDetectedLoss = !!detectedLossDate && Number(detectedLossHours) > 0;
 
@@ -54,21 +55,29 @@ export default function CompensationModal({ order, vehicle, vehicleIndex, vehicl
   const [campaignLevel, setCampaignLevel] = useState(true);
   const [selectedEntryId, setSelectedEntryId] = useState("");
   const [compensationType, setCompensationType] = useState("hours");
-  const [compensationValue, setCompensationValue] = useState(hasDetectedLoss ? String(detectedLossHours) : "");
+  // Hours compensation is entered as separate Hours + Minutes fields (not a
+  // single decimal) so admin/staff don't have to mentally convert "1.72h" —
+  // deliberately left blank (not auto-filled from the detected loss) so
+  // whoever applies it types the real value themselves after reading the
+  // "loss detected" banner above, rather than blindly saving a pre-filled one.
+  const [compHours, setCompHours] = useState("");
+  const [compMinutes, setCompMinutes] = useState("");
   // "single" = apply the whole value to just this date; "split" = spread it
   // (hours: per-day value across a range) or extend the campaign (days).
   const [applyScope, setApplyScope] = useState("single");
   const [fromDate, setFromDate] = useState(singleDate);
   const [toDate, setToDate] = useState(singleDate);
-  const [reason, setReason] = useState(
-    hasDetectedLoss ? `Compensating for ${detectedLossHours}h of downtime on ${detectedLossDate}` : ""
-  );
+  const [reason, setReason] = useState("");
+  // Once the admin/staff manually edits the Reason box, stop overwriting it —
+  // only auto-sync Reason to the typed Hours/Minutes while it's untouched.
+  const [reasonEdited, setReasonEdited] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const isSingle = applyScope === "single";
   const isSplitDays = applyScope === "split" && compensationType === "days";
   const isSplitHours = applyScope === "split" && compensationType === "hours";
   const derivedDaysValue = isSplitDays ? daysBetween(campaignToISO, toDate) : null;
+  const compensationValue = (Number(compHours) || 0) + (Number(compMinutes) || 0) / 60;
 
   // Keep the date fields correct whenever scope/type changes.
   useEffect(() => {
@@ -86,10 +95,25 @@ export default function CompensationModal({ order, vehicle, vehicleIndex, vehicl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applyScope, compensationType]);
 
+  // Auto-suggest the Reason text from whatever Hours/Minutes the admin/staff
+  // has typed so far, as long as they haven't hand-edited Reason themselves.
+  useEffect(() => {
+    if (reasonEdited || isSplitDays) return;
+    const h = Number(compHours) || 0;
+    const m = Number(compMinutes) || 0;
+    if (h <= 0 && m <= 0) return;
+    const parts = [];
+    if (h > 0) parts.push(`${h}h`);
+    if (m > 0) parts.push(`${m}m`);
+    const dateLabel = isSingle ? singleDate : fromDate;
+    setReason(`Compensating for ${parts.join(" ")} of downtime on ${dateLabel}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compHours, compMinutes, isSingle, fromDate, reasonEdited, isSplitDays]);
+
   const handleSubmit = async () => {
     if (!campaignLevel && !selectedEntryId) return toast.error("Select a driver / vehicle, or apply campaign-level");
 
-    const value = isSplitDays ? derivedDaysValue : Number(compensationValue) || 0;
+    const value = isSplitDays ? derivedDaysValue : Math.round(compensationValue * 100) / 100;
     if (value <= 0) {
       return toast.error(isSplitDays ? "Pick a To Date after the campaign end date" : "Enter a compensation value greater than 0");
     }
@@ -145,6 +169,12 @@ export default function CompensationModal({ order, vehicle, vehicleIndex, vehicl
         </div>
 
         <div className="space-y-3 px-6 overflow-y-auto flex-1">
+          {!isSuperAdmin && (
+            <div className="rounded-lg bg-sky-50 dark:bg-sky-900/10 border border-sky-200 dark:border-sky-800/40 px-3 py-2 text-[11px] text-sky-800 dark:text-sky-300">
+              You're not a super admin — this compensation will be submitted as a <span className="font-semibold">pending request</span> in Client Closure and only applies once a super admin approves it.
+            </div>
+          )}
+
           {hasDetectedLoss && (
             <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/40 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
               <span className="font-semibold">{detectedLossHours}h loss detected</span> on {new Date(detectedLossDate + "T00:00:00.000Z").toLocaleDateString("en-IN")} (issue + unavailable hours). Choose below how to apply the compensation for it.
@@ -242,16 +272,33 @@ export default function CompensationModal({ order, vehicle, vehicleIndex, vehicl
           {!isSplitDays && (
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">
-                {isSingle ? "Hours" : "Extra Hours per Day"}
+                {isSingle ? "Hours & Minutes" : "Extra Hours & Minutes per Day"}
               </label>
-              <input
-                type="number"
-                min="0"
-                value={compensationValue}
-                onChange={(e) => setCompensationValue(e.target.value)}
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-                placeholder="e.g. 2"
-              />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <input
+                    type="number"
+                    min="0"
+                    value={compHours}
+                    onChange={(e) => setCompHours(e.target.value)}
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                    placeholder="Hours e.g. 1"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-0.5">Hours</p>
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    min="0"
+                    max="59"
+                    value={compMinutes}
+                    onChange={(e) => setCompMinutes(e.target.value)}
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                    placeholder="Minutes e.g. 30"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-0.5">Minutes</p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -296,7 +343,10 @@ export default function CompensationModal({ order, vehicle, vehicleIndex, vehicl
             <label className="block text-xs font-semibold text-gray-500 mb-1">Reason</label>
             <textarea
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e) => {
+                setReason(e.target.value);
+                setReasonEdited(true);
+              }}
               rows={2}
               className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-300"
               placeholder="e.g. Compensating for 3 hours of vehicle downtime"
@@ -310,7 +360,13 @@ export default function CompensationModal({ order, vehicle, vehicleIndex, vehicl
             disabled={submitting}
             className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-all disabled:opacity-40"
           >
-            {submitting ? "Saving..." : isSplitDays ? "Request / Apply Extension" : "Save Compensation"}
+            {submitting
+              ? "Saving..."
+              : isSuperAdmin
+              ? isSplitDays
+                ? "Approve & Apply Extension"
+                : "Save Compensation"
+              : "Request Compensation Approval"}
           </button>
         </div>
       </div>
