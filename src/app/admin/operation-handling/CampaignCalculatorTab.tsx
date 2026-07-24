@@ -951,6 +951,51 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                       </div>
                     )}
 
+                    {v.combinedRunningHoursToday > 0 && (
+                      <div className="px-4 py-2 text-[11px] bg-indigo-50/60 dark:bg-indigo-900/10 border-b border-gray-100 dark:border-gray-800">
+                        <span className="flex items-center gap-1 text-indigo-700 dark:text-indigo-300 font-semibold">
+                          <Clock size={11} /> Combined Running Today: {fmtHm(v.combinedRunningHoursToday)}
+                        </span>
+                        <span className="text-gray-400 mt-0.5 block">
+                          Old + replacement vehicle running hours added together for this slot today
+                          {v.downtimeHoursToday > 0 && <> · Loss (not running): {fmtHm(v.downtimeHoursToday)}</>}
+                        </span>
+                      </div>
+                    )}
+
+                    {v.compensationStatus?.hasLoss && (
+                      <div
+                        className={`px-4 py-2 text-[11px] border-b border-gray-100 dark:border-gray-800 ${
+                          v.compensationStatus.applied
+                            ? "bg-emerald-50/70 dark:bg-emerald-900/10"
+                            : "bg-amber-50/70 dark:bg-amber-900/10"
+                        }`}
+                      >
+                        {v.compensationStatus.applied ? (
+                          <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-semibold">
+                            <Gift size={11} />
+                            {fmtHm(v.compensationStatus.lossHours)} loss — Compensated{" "}
+                            {v.compensationStatus.scope === "this-date"
+                              ? "(this date only)"
+                              : `(split across ${fmtShortDate(v.compensationStatus.dateFrom)} → ${fmtShortDate(v.compensationStatus.dateTo)}, ${v.compensationStatus.valuePerDay}h/day)`}
+                          </span>
+                        ) : (
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="flex items-center gap-1 text-amber-700 dark:text-amber-300 font-semibold">
+                              <AlertOctagon size={11} />
+                              {fmtHm(v.compensationStatus.lossHours)} loss — Not compensated yet
+                            </span>
+                            <button
+                              onClick={() => setCompensationVehicleIndex(v.vehicleIndex)}
+                              className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 underline"
+                            >
+                              Add Compensation
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="p-3 space-y-2">
                       {v.entries.length === 0 && (
                         <p className="text-xs text-gray-400 italic px-1">No driver/vehicle assigned yet for this slot.</p>
@@ -1233,17 +1278,23 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                         );
                       })}
 
-                      <div className="pt-2 mt-1 border-t border-gray-100 dark:border-gray-800 grid grid-cols-2 sm:grid-cols-5 gap-2 text-[11px]">
-                        <CostLine label="Base (rental+driver)" value={v.dailyVehicleAmount} />
-                        {v.rtoAppliedToday > 0 && <CostLine label="RTO (one-time)" value={v.rtoAppliedToday} />}
-                        {v.promoterAmountToday > 0 && <CostLine label="Promoter (daily share)" value={v.promoterAmountToday} />}
-                        {(v.extraKmPoolFeeToday > 0 || v.extraHourPoolFeeToday > 0) && (
-                          <CostLine label="Extra KM/Hours Pool (one-time)" value={v.extraKmPoolFeeToday + v.extraHourPoolFeeToday} />
-                        )}
-                        {(v.extraKmCost - v.extraKmPoolFeeToday > 0 || v.extraHourCost - v.extraHourPoolFeeToday > 0) && (
-                          <CostLine label="Extra KM/Hours Overage" value={(v.extraKmCost - v.extraKmPoolFeeToday) + (v.extraHourCost - v.extraHourPoolFeeToday)} />
-                        )}
-                        {v.compensationToday > 0 && <CostLine label="Compensation" value={-v.compensationToday} negative />}
+                      <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-800">
+                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                          <ReceiptText size={11} /> Price Breakdown — {fmtDateLabel(selectedDay.date)}
+                        </p>
+                        <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden">
+                          <PriceRow label={`Rental + Driver (${v.activeCount} vehicle${v.activeCount !== 1 ? "s" : ""} × ${fmt(v.baseDailyRate)})`} value={v.dailyVehicleAmount} />
+                          {v.promoterAmountToday > 0 && <PriceRow label="Promoter Charges (today's share)" value={v.promoterAmountToday} />}
+                          {v.rtoAppliedToday > 0 && <PriceRow label="RTO Charges (one-time, first day)" value={v.rtoAppliedToday} />}
+                          {(v.extraKmPoolFeeToday > 0 || v.extraHourPoolFeeToday > 0) && (
+                            <PriceRow label="Extra KM/Hours Pool (one-time, first day)" value={v.extraKmPoolFeeToday + v.extraHourPoolFeeToday} />
+                          )}
+                          {(v.extraKmCost - v.extraKmPoolFeeToday > 0 || v.extraHourCost - v.extraHourPoolFeeToday > 0) && (
+                            <PriceRow label="Extra KM/Hours Overage (logged today)" value={(v.extraKmCost - v.extraKmPoolFeeToday) + (v.extraHourCost - v.extraHourPoolFeeToday)} />
+                          )}
+                          {v.compensationToday > 0 && <PriceRow label="Compensation / Absent-day Deduction" value={-v.compensationToday} negative />}
+                          <PriceRow label="Day Total" value={v.itemDayTotal} bold />
+                        </div>
                       </div>
 
                       {v.extraDetailsToday?.length > 0 && (
@@ -1479,6 +1530,28 @@ function SummaryCard({ icon: Icon, label, value, small = false, tone }: any) {
         <span className="text-[10px] font-bold uppercase tracking-wide">{label}</span>
       </div>
       <p className={`${small ? "text-xs" : "text-sm"} font-bold ${toneClass} truncate`}>{value}</p>
+    </div>
+  );
+}
+
+// Clean line-item row (label left, amount right) matching the Order
+// Creation "Price Breakdown" card design — used for the Daily Timeline's
+// per-vehicle, per-day price breakdown so it reads the same way.
+function PriceRow({ label, value, bold = false, negative = false }: { label: string; value: number; bold?: boolean; negative?: boolean }) {
+  return (
+    <div className={`flex items-center justify-between px-3 py-2 text-xs ${bold ? "bg-gray-50 dark:bg-gray-800/40" : "bg-white dark:bg-gray-900"}`}>
+      <span className={bold ? "font-bold text-gray-800 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"}>{label}</span>
+      <span
+        className={
+          bold
+            ? "font-bold text-blue-600 dark:text-blue-400"
+            : negative
+            ? "font-semibold text-rose-600 dark:text-rose-400"
+            : "font-semibold text-gray-800 dark:text-gray-200"
+        }
+      >
+        {negative ? `-${fmt(Math.abs(value))}` : fmt(value)}
+      </span>
     </div>
   );
 }
