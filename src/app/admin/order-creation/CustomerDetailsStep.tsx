@@ -35,7 +35,8 @@ type FormErrors = Partial<
     | "companyName"
     | "clientName"
     | "designation"
-    | "gstNumber",
+    | "gstNumber"
+    | "panNumber",
     string
   >
 >;
@@ -132,13 +133,15 @@ export default function CustomerDetailsStep({
 
       if (!res.ok) throw new Error(data2.message || "Verification failed");
 
-      // Company name auto-fill
-      onChange({ companyName: data2.data.business_name });
+      // Company name + PAN auto-fill
+      onChange({ companyName: data2.data.business_name, panNumber: data2.data.business_pan || "" });
+      setErrors((p) => ({ ...p, panNumber: undefined }));
 
       onGstVerified({
         gstDetailId: data2.data.gstDetailId,
         gst_number: data2.data.gst_number,
         business_name: data2.data.business_name,
+        business_pan: data2.data.business_pan,
       });
 
       setGstStatus("success");
@@ -239,6 +242,7 @@ export default function CustomerDetailsStep({
     else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(data.gstNumber.trim()))
       e.gstNumber = "Enter a valid GST number (e.g. 22AAAAA0000A1Z5)";
     else if (!gstVerified) e.gstNumber = "Please verify the GST number";
+    if (!data.panNumber?.trim()) e.panNumber = "PAN number will be auto-filled after GST verification";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -498,6 +502,7 @@ export default function CustomerDetailsStep({
                 value={data.gstNumber || ""}
                 onChange={(e) => {
                   set("gstNumber", e.target.value.toUpperCase());
+                  set("panNumber", "");
                   setGstStatus("idle");
                   setGstMessage("");
                   onGstVerifiedChange(false);
@@ -542,6 +547,18 @@ export default function CustomerDetailsStep({
               </p>
             )}
           </FormField>
+
+          <FormField label="PAN Number" error={errors.panNumber} required>
+            <input
+              type="text"
+              value={data.panNumber || ""}
+              readOnly
+              placeholder="Auto-filled after GST verification"
+              className={inputClass(!!errors.panNumber) + " bg-gray-50 dark:bg-gray-800 cursor-not-allowed"}
+            />
+          </FormField>
+
+        
 
 
           <FormField label="Company Name" error={errors.companyName} required>
@@ -606,9 +623,21 @@ export default function CustomerDetailsStep({
               className={inputClass(!!errors.email)}
             />
           </FormField>
+
+           <FormField label="Address" error={errors.address} required={false}>
+            <textarea
+              value={data.address || ""}
+              onChange={(e) => set("address", e.target.value)}
+              placeholder="Enter full address"
+              rows={3}
+              className={inputClass(!!errors.address) + " resize-none"}
+            />
+          </FormField>
+
         </div>
       )}
 
+       
       {globalError && (
         <p className="text-xs text-red-500">{globalError}</p>
       )}

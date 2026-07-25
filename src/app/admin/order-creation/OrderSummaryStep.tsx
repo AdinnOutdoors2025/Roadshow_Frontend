@@ -76,7 +76,10 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
           {order.customerForm?.gstNumber && (
             <Row label="GST Number" value={order.customerForm.gstNumber} />
           )}
-          <Row label="Address" value={customer?.address || "—"} />
+          {order.customerForm?.panNumber && (
+            <Row label="PAN Number" value={order.customerForm.panNumber} />
+          )}
+          <Row label="Address" value={order.customerForm?.address || customer?.address || "—"} />
         </div>
       </div>
 

@@ -35,6 +35,7 @@ import VehicleUnavailable from "./VehicleUnavailableTab";
 import OrderReportPDF from "./OrderReportPDF";
 import ClientClosureTab from "./ClientClosureTab";
 import CampaignCalculatorTab from "./CampaignCalculatorTab";
+import InvoiceTab from "./InvoiceTab";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -67,6 +68,8 @@ interface Order {
     clientName?: string;
     designation?: string;
     gstNumber?: string;
+    panNumber?: string;
+    invoiceData?: any;
     customerCategory?: string;
 }
 
@@ -236,6 +239,9 @@ export default function DetailDrawer({
         ...(order.pipelineStatus === "clientClosure" ||
         (order.campaignClosureArray || []).some((c: any) => c.type === "foc")
             ? [{ key: "clientClosure", label: "Client Closure" }]
+            : []),
+        ...(order.pipelineStatus === "closedWon"
+            ? [{ key: "invoice", label: "Invoice" }]
             : []),
     ];
 
@@ -555,6 +561,10 @@ useEffect(() => {
 
                     {activeTab === "clientClosure" && (
                         <ClientClosureTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} isAdmin={currentUserIsAdmin} />
+                    )}
+
+                    {activeTab === "invoice" && (
+                        <InvoiceTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
                     )}
 
                 </div>

@@ -18,9 +18,7 @@ import CompensationModal from "./CompensationModal";
 import PoolWindowModal from "./PoolWindowModal";
 import LogHoursModal from "./LogHoursModal";
 
-// Downtime (issue + unavailable hours) threshold for a day, past which the
-// "Mark Absent" button is highlighted as a suggestion — admin still has to
-// click it to actually mark the day absent (not automatic).
+
 const ABSENT_SUGGEST_THRESHOLD_HOURS = Number(process.env.NEXT_PUBLIC_ABSENT_THRESHOLD_HOURS) || 4;
 
 interface Order {
@@ -46,16 +44,6 @@ const fmtClock = (d?: string | null) => {
   if (!d) return "—";
   const dt = new Date(d);
   if (isNaN(dt.getTime())) return "—";
-  // Use the browser's LOCAL timezone (matching fmtDatetime below), not UTC.
-  // This used to intentionally read UTC hours because the backend built the
-  // default work window (NEXT_PUBLIC_DEFAULT_LOGIN_TIME/LOGOUT_TIME, e.g.
-  // 16:00-24:00) as raw UTC hours, which produced a confusing "9:30pm-5:30am"
-  // display once converted to IST. The backend (Adminordercontroller.js,
-  // resolveWorkWindow/istWallClock) now anchors that default window — and
-  // every other entry.timeline boundary — as literal IST-equivalent instants,
-  // so every timeline segment (real event-derived or synthetic default-
-  // window) can and should be rendered in local time consistently, matching
-  // the Issue/Unavailable/Replaced cards which already use fmtDatetime.
   let h = dt.getHours();
   const m = dt.getMinutes();
   const suffix = h >= 12 ? "pm" : "am";
@@ -89,12 +77,7 @@ const fmtDateLabel = (dateKey: string) =>
     day: "2-digit", month: "short", year: "numeric", weekday: "short",
   });
 
-// Full-datetime formatter for REAL recorded event timestamps (issue reported,
-// marked unavailable, replaced, driver/vehicle changes, on-road start/end).
-// Uses the browser's local timezone, matching DayByDayHistoryTab.tsx exactly,
-// so the same event shows the same time in both places (e.g. 08:43 pm, not a
-// UTC-shifted 3:13 pm). fmtClock above now also renders local time, for the
-// same reason — see its comment.
+
 const fmtDatetime = (d?: string | null) => {
   if (!d) return "—";
   const dt = new Date(d);
@@ -105,10 +88,7 @@ const fmtDatetime = (d?: string | null) => {
   });
 };
 
-// Presentation metadata for the raw on-road event categories returned by the
-// day-by-day-history endpoint (same categories DayByDayHistoryTab.tsx uses),
-// reused here — without the "restrict to one active day" filtering — to build
-// a full chronological per-entry event list for the Vehicle History section.
+
 const HISTORY_CATEGORY_META: Record<string, any> = {
   issueHistory: {
     icon: AlertOctagon,
@@ -140,12 +120,7 @@ const HISTORY_CATEGORY_META: Record<string, any> = {
     badge: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
     border: "border-sky-100 dark:border-sky-900/40",
     getTimestamp: (e: any) => e.changedAt,
-    // NOTE: the day-by-day-history endpoint labels these via ACTION_LABEL
-    // server-side ("Vehicle Added"/"Vehicle Updated"/"Vehicle Removed"), NOT
-    // the raw "created"/"updated"/"removed" action strings — match on the
-    // labeled values, not the raw ones (previously never matched "created"/
-    // "removed" at all, silently making every driver-change event fall
-    // through to "Driver/Vehicle Updated").
+  
     getTitle: (e: any) =>
       e.eventType === "Vehicle Added" ? "Vehicle Assigned" : e.eventType === "Vehicle Removed" ? "Vehicle Removed" : "Driver/Vehicle Updated",
   },
@@ -171,9 +146,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
   const [expandedTimelines, setExpandedTimelines] = useState<Record<string, boolean>>({});
   const toggleTimeline = (entryId: string) =>
     setExpandedTimelines((prev) => ({ ...prev, [entryId]: !prev[entryId] }));
-  // Daily Timeline's vehicle-type slot cards behave as an accordion — only
-  // one open at a time, both closed by default, so the day doesn't render as
-  // one long wall of every slot's entries/price-breakdown at once.
+ 
   const [expandedSlotVehicleIndex, setExpandedSlotVehicleIndex] = useState<number | null>(null);
 
   const fetchCalculator = async () => {
@@ -195,10 +168,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
     }
   };
 
-  // The "Vehicle History" section reuses the same day-by-day-history endpoint
-  // DayByDayHistoryTab.tsx already fetches (already returns issue/unavailable/
-  // extraKm/driverChange records flattened & tagged with vehicleIndex/entryId/day)
-  // rather than requiring the raw order object to be passed down as a new prop.
+
   const fetchHistory = async () => {
     try {
       const res = await axios.get(
@@ -217,13 +187,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order._id]);
 
-  // FOC/absent/compensation actions triggered from this tab mutate the order
-  // document (campaignClosureArray, dailyHoursLogArray) but this tab keeps its
-  // own `data` copy from the campaign-calculator endpoint — refreshing only
-  // that leaves the shared `order` object (read by OnRoadTab/ClientClosureTab)
-  // stale, so a newly-created FOC entry silently doesn't show up on the
-  // Client Closure tab until the whole Order Details modal is reopened. Call
-  // both refreshes together everywhere a child modal reports success.
+
   const refreshAll = async () => {
     await Promise.all([fetchCalculator(), fetchHistory(), parentOnRefresh ? parentOnRefresh() : Promise.resolve()]);
   };
@@ -280,8 +244,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
     return Object.values(map).sort((a: any, b: any) => a.vehicleIndex - b.vehicleIndex);
   }, [data]);
 
-  // Distinct entries (driver/reg no) seen for each vehicle-type slot, for the
-  // Compensation modal's optional reg-no-specific scope.
+
   const entriesByVehicle = useMemo(() => {
     if (!data?.days) return {};
     const map: Record<number, any[]> = {};
@@ -303,19 +266,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
     return map;
   }, [data]);
 
-  // Per-entryId totals rolled up across every campaign day, grouped under their
-  // vehicle-type slot — the source for the Vehicle History section's summary
-  // cards (running/issue/unavailable/compensation hours, replacement flag).
-  // Uses the already-per-day-aggregated entry fields from the calculator
-  // response (safe to sum — each day's entry object only covers that day),
-  // rather than re-summing raw entry.timeline segments which could double
-  // count a segment spanning midnight across two day buckets.
-  // Raw on-road events (issue/unavailable/extra-km/driver-change) from the
-  // day-by-day-history endpoint, grouped by entryId (not restricted to a
-  // single active day — the whole entry lifecycle) for the chronological
-  // "Vehicle History" timeline per entry. Mirrors DayByDayHistoryTab.tsx's
-  // grouping logic (group by entryId so a reused reg no. across distinct
-  // lifecycles doesn't get merged into one timeline).
+
   const historyEventsByEntry = useMemo(() => {
     const out: Record<string, any[]> = {};
     if (!historyData) return out;
@@ -334,12 +285,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
     return out;
   }, [historyData]);
 
-  // Driver's default login/logout shift window (e.g. "18:30" -> "02:30",
-  // crossing midnight = 8 hours), matching the backend's DEFAULT_WORK_START_
-  // HOUR/DEFAULT_WORK_END_HOUR (Adminordercontroller.js resolveWorkWindow).
-  // Running/issue/unavailable time below is clipped to this window per day —
-  // time before login or after logout (e.g. a vehicle added at 18:13, before
-  // the 18:30 shift start) is not counted as "running".
+
   function parseTimeToDecimalHour(str, fallback) {
     const m = String(str || "").trim().match(/^(\d{1,2}):(\d{2})$/);
     if (!m) {
@@ -352,8 +298,6 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
   let SHIFT_END_HOUR = parseTimeToDecimalHour(process.env.NEXT_PUBLIC_DEFAULT_LOGOUT_TIME, 24);
   if (SHIFT_END_HOUR <= SHIFT_START_HOUR) SHIFT_END_HOUR += 24;
 
-  // Builds the IST-anchored instant (ms) for `dayKey` (YYYY-MM-DD) at
-  // `hourDecimal`, mirroring the backend's istWallClock so both sides agree.
   function istWallClockMs(dayKey, hourDecimal) {
     const totalMinutes = Math.round(hourDecimal * 60);
     const dayOffset = Math.floor(totalMinutes / (24 * 60));
@@ -370,8 +314,6 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
     return { start: istWallClockMs(dayKey, SHIFT_START_HOUR), end: istWallClockMs(dayKey, SHIFT_END_HOUR) };
   }
 
-  // Sums overlap (in hours) between [startMs,endMs] and the union of every
-  // day's shift window across the days that interval spans.
   function overlapWithShiftHours(startMs, endMs) {
     if (!(endMs > startMs)) return 0;
     const dayMs = 24 * 3_600_000;
@@ -390,15 +332,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
     return hours;
   }
 
-  // Derive running/issue/unavailable durations purely from the actual
-  // timestamps already recorded in Day-by-Day History (vehicle added/removed,
-  // issue reported/resolved, marked-unavailable/replaced) — no assumed
-  // default work-window, no synthetic timeline. This is what the Vehicle
-  // History section displays; it intentionally does NOT reuse the
-  // calculator's day-bucketed runningHours/issueHours/unavailableHours,
-  // which are derived against a default 16:00-24:00 work window when no
-  // hours are logged for a day — a different (and less literal) number
-  // than what Day-by-Day History actually records event-to-event.
+
   function computeEntryDurationsFromEvents(events: any[]) {
     const now = Date.now();
     let issueHours = 0;
@@ -428,18 +362,11 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
         if (start && end > start) unavailableHours += overlapWithShiftHours(start, end);
       });
 
-    // Bug B fix: match the actual labeled eventType values the backend sends
-    // ("Vehicle Added"/"Vehicle Removed"), not the raw "created"/"removed"
-    // action strings — see the getTitle comment above. Previously this never
-    // matched, so createdEv was always undefined, entryStart stayed null,
-    // and every entry's running hours silently computed to 0.
+ 
     const createdEv = events.find((e) => e._category === "driverChangeHistory" && e.eventType === "Vehicle Added");
     const removedEv = events.find((e) => e._category === "driverChangeHistory" && e.eventType === "Vehicle Removed");
     const startAt = createdEv ? new Date(createdEv.changedAt || createdEv._timestamp).getTime() : null;
     const endAt = removedEv ? new Date(removedEv.changedAt || removedEv._timestamp).getTime() : now;
-    // Only count time that falls inside the driver's login-logout shift
-    // window (e.g. 18:30-02:30) as "elapsed" — a vehicle added before login
-    // time no longer counts as running from that earlier moment.
     const totalElapsedHours = startAt && endAt > startAt ? overlapWithShiftHours(startAt, endAt) : 0;
     const runningHours = Math.max(totalElapsedHours - issueHours - unavailableHours, 0);
 
@@ -452,16 +379,8 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
     };
   }
 
-  // Same event-derived logic as computeEntryDurationsFromEvents, but bounded
-  // to a single calendar day (the currently selected Daily Timeline day)
-  // instead of the entry's whole lifecycle. This is what the header-row
-  // badges on each entry card should show — "today's" running/issue/
-  // unavailable hours — so it no longer contradicts the expand panel's
-  // (correctly lifetime-labeled) "total running" figure below it.
   function computeEntryDurationsForDay(events: any[], dayKey: string) {
-    // Bounded to the driver's login-logout shift window for this day (e.g.
-    // 18:30-02:30), not the raw UTC calendar day — so time outside the shift
-    // (before login / after logout) is excluded, same as the lifetime calc.
+
     const { start: dayStart, end: dayEnd } = shiftWindowForDay(dayKey);
     const now = Date.now();
     const clip = (t: number) => Math.min(Math.max(t, dayStart), dayEnd);
@@ -501,11 +420,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
         if (en > s) unavailableHours += (en - s) / 3_600_000;
       });
 
-    // Bug B fix: match the actual labeled eventType values the backend sends
-    // ("Vehicle Added"/"Vehicle Removed"), not the raw "created"/"removed"
-    // action strings — see the getTitle comment above. Previously this never
-    // matched, so createdEv was always undefined, entryStart stayed null,
-    // and every entry's running hours silently computed to 0.
+
     const createdEv = events.find((e) => e._category === "driverChangeHistory" && e.eventType === "Vehicle Added");
     const removedEv = events.find((e) => e._category === "driverChangeHistory" && e.eventType === "Vehicle Removed");
     const entryStart = createdEv ? new Date(createdEv.changedAt || createdEv._timestamp).getTime() : null;
@@ -572,12 +487,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
         });
       });
     });
-    // Seed any entryId that has recorded history but never showed up as an
-    // "active" entry on a calculator day — e.g. a vehicle created and
-    // replaced-out within the same day never appears in `data.days[].vehicles[].entries`
-    // (the calculator loop only pushes currently-active entries per day), so
-    // without this, old/replaced-out vehicles would be silently missing from
-    // the Vehicle History section entirely.
+ 
     Object.keys(historyEventsByEntry).forEach((entryId) => {
       const events = historyEventsByEntry[entryId];
       const first = events[0];
@@ -606,11 +516,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
       };
     });
 
-    // Override running/issue/unavailable with event-derived durations for any
-    // entry that has Day-by-Day History records — per the business requirement
-    // that the Campaign Calculator must reflect only the actual recorded
-    // history, not a default-work-window estimate. compensation/absent hours
-    // aren't recorded in Day-by-Day History, so those stay calculator-derived.
+ 
     Object.keys(map).forEach((vIdxKey) => {
       Object.keys(map[vIdxKey]).forEach((entryId) => {
         const events = historyEventsByEntry[entryId];
@@ -666,21 +572,14 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
     ? selectedDay.vehicles.reduce((s: number, v: any) => s + v.activeCount, 0)
     : 0;
 
-  // Daily Summary: rolls up every active/released entry's running, issue,
-  // unavailable and absent hours for the selected day (across all vehicle-
-  // type slots) into one easy-to-read total, alongside the day's Extra
-  // KM/Hours Pool (one-time) fee vs Overage cost — so the whole day's story
-  // (time + money) can be understood at a glance without opening each card.
+ 
   const daySummary = (() => {
     if (!selectedDay) return null;
     let runningHours = 0, issueHours = 0, unavailableHours = 0, absentHours = 0, campaignHours = 0;
     let poolFee = 0, overageCost = 0;
     selectedDay.vehicles.forEach((v: any) => {
       [...(v.entries || []), ...(v.releasedToday || [])].forEach((e: any) => {
-        // Same event-derived, today-only computation the entry header
-        // badges use (backend's raw e.runningHours/issueHours/unavailable
-        // Hours fields aren't reliably day-scoped — see the header badge's
-        // comment above) so this summary matches what's shown per-entry.
+       
         const entryEvents = historyEventsByEntry[e.entryId] || [];
         const todayDurations = computeEntryDurationsForDay(entryEvents, selectedDay.date);
         runningHours += todayDurations.runningHours || 0;
@@ -1209,10 +1108,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                               )}
 
                               {(() => {
-                                // Scope every event card to the currently selected campaign day —
-                                // entryEvents/replacedEvent cover an entry's WHOLE lifecycle, so
-                                // without this filter, an issue reported on day 1 kept re-appearing
-                                // under every later day's expand panel too.
+                            
                                 const toDayKey = (d: any) => (d ? new Date(d).toISOString().slice(0, 10) : null);
                                 const onSelectedDay = (ts: any) => toDayKey(ts) === selectedDay.date;
 
@@ -1566,9 +1462,7 @@ function SummaryCard({ icon: Icon, label, value, small = false, tone }: any) {
   );
 }
 
-// Clean line-item row (label left, amount right) matching the Order
-// Creation "Price Breakdown" card design — used for the Daily Timeline's
-// per-vehicle, per-day price breakdown so it reads the same way.
+
 function PriceRow({ label, value, bold = false, negative = false }: { label: string; value: number; bold?: boolean; negative?: boolean }) {
   return (
     <div className={`flex items-center justify-between px-3 py-2 text-xs ${bold ? "bg-gray-50 dark:bg-gray-800/40" : "bg-white dark:bg-gray-900"}`}>
