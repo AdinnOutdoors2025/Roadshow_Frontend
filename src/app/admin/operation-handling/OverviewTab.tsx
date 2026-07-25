@@ -215,6 +215,13 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
         return vehicle?.typeName || vehicleTypeId;
     };
 
+      const baseDays =
+  Math.ceil(
+    (new Date(currentVehicle.toDate).getTime() -
+      new Date(currentVehicle.fromDate).getTime()) /
+      86400000
+  ) + 1;
+
     return (
 
         <div className="p-4 space-y-4">
@@ -563,9 +570,27 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                                     ["Vehicle Model", getVehicleTypeName(currentVehicle.vehicleType)], // Fixed: changed 'vehicle' to 'currentVehicle'
                                     ["Booking For", order.customerCategory],
                                     ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType],
-                                    ["Duration", currentVehicle.fromDate && currentVehicle.toDate
-                                        ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000)}D base${currentVehicle.extraDays > 0 ? ` +${currentVehicle.extraDays} D = ${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000) + currentVehicle.extraDays}D total` : ""})`
-                                        : "—"],
+                                    // ["Duration", currentVehicle.fromDate && currentVehicle.toDate
+                                    //     ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000)}D base${currentVehicle.extraDays > 0 ? ` +${currentVehicle.extraDays} D = ${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000) + currentVehicle.extraDays}D total` : ""})`
+                                    //     : "—"],
+                                    [
+                                        "Duration",
+                                        currentVehicle.fromDate && currentVehicle.toDate
+                                            ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric",
+                                            })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric",
+                                            })} (${baseDays}D base${currentVehicle.extraDays > 0
+                                                ? ` +${currentVehicle.extraDays}D = ${baseDays + currentVehicle.extraDays
+                                                }D total`
+                                                : ""
+                                            })`
+                                            : "—",
+                                    ],
                                     ["Driving route", `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
                                     ["State / City", `${currentVehicle.state} / ${currentVehicle.city}`],
                                     ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
@@ -712,52 +737,52 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
             </div>
 
             {/* Closed Lost */}
-           {order?.pipelineStatus === "closedLost" &&
-  order?.orderClosedLostArray?.length > 0 && (
-    <div className="rounded-xl border border-rose-100 dark:border-rose-800/50 overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border-b border-rose-100 dark:border-rose-800/50">
-        <XCircle size={13} className="text-rose-500" />
-        <h3 className="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider">
-          Closed Lost — Reason
-        </h3>
-      </div>
+            {order?.pipelineStatus === "closedLost" &&
+                order?.orderClosedLostArray?.length > 0 && (
+                    <div className="rounded-xl border border-rose-100 dark:border-rose-800/50 overflow-hidden">
+                        <div className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border-b border-rose-100 dark:border-rose-800/50">
+                            <XCircle size={13} className="text-rose-500" />
+                            <h3 className="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider">
+                                Closed Lost — Reason
+                            </h3>
+                        </div>
 
-      <div className="p-4 space-y-3">
-        {order.orderClosedLostArray.map((item, index) => (
-          <div
-            key={item._id || index}
-            className="p-3 rounded-lg border border-rose-200 bg-rose-50"
-          >
-            <div>
-              <span className="font-semibold">Reason:</span>
-              <p>{item.reason || "-"}</p>
-            </div>
+                        <div className="p-4 space-y-3">
+                            {order.orderClosedLostArray.map((item, index) => (
+                                <div
+                                    key={item._id || index}
+                                    className="p-3 rounded-lg border border-rose-200 bg-rose-50"
+                                >
+                                    <div>
+                                        <span className="font-semibold">Reason:</span>
+                                        <p>{item.reason || "-"}</p>
+                                    </div>
 
-            <div className="mt-2 text-xs text-gray-500">
-              Uploaded By: {item.uploadedBy || "-"}
-            </div>
+                                    <div className="mt-2 text-xs text-gray-500">
+                                        Uploaded By: {item.uploadedBy || "-"}
+                                    </div>
 
-            <div className="text-xs text-gray-500">
-              Uploaded At: {fmtDatetime(item.uploadedAt)}
-            </div>
+                                    <div className="text-xs text-gray-500">
+                                        Uploaded At: {fmtDatetime(item.uploadedAt)}
+                                    </div>
 
-            {item.document ? (
-              <div className="mt-2">
-                <DocItem
-                  docPath={item.document}
-                  label="Supporting Document"
-                />
-              </div>
-            ) : (
-              <p className="mt-2 text-xs text-gray-400">
-                No document uploaded
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-)}
+                                    {item.document ? (
+                                        <div className="mt-2">
+                                            <DocItem
+                                                docPath={item.document}
+                                                label="Supporting Document"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <p className="mt-2 text-xs text-gray-400">
+                                            No document uploaded
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
         </div>
 
     );

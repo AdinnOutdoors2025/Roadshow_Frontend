@@ -171,6 +171,10 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
   const [expandedTimelines, setExpandedTimelines] = useState<Record<string, boolean>>({});
   const toggleTimeline = (entryId: string) =>
     setExpandedTimelines((prev) => ({ ...prev, [entryId]: !prev[entryId] }));
+  // Daily Timeline's vehicle-type slot cards behave as an accordion — only
+  // one open at a time, both closed by default, so the day doesn't render as
+  // one long wall of every slot's entries/price-breakdown at once.
+  const [expandedSlotVehicleIndex, setExpandedSlotVehicleIndex] = useState<number | null>(null);
 
   const fetchCalculator = async () => {
     setLoading(true);
@@ -900,13 +904,20 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                   </p>
                 )}
 
-                {selectedDay.vehicles.map((v: any) => (
+                {selectedDay.vehicles.map((v: any) => {
+                  const isSlotExpanded = expandedSlotVehicleIndex === v.vehicleIndex;
+                  return (
                   <div key={v.vehicleIndex} className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedSlotVehicleIndex(isSlotExpanded ? null : v.vehicleIndex)}
+                      className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800 text-left hover:bg-gray-100 dark:hover:bg-gray-800/70"
+                    >
                       <div className="flex items-center gap-2 min-w-0">
+                        {isSlotExpanded ? <ChevronUp size={14} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />}
                         <Truck size={14} className="text-teal-600 flex-shrink-0" />
                         <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                        {getVehicleTypeName(v.vehicleType)}  
+                        {getVehicleTypeName(v.vehicleType)}
                         </span>
                         <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-300 font-semibold flex-shrink-0">
                           {v.activeCount}/{v.bookedQuantity} active
@@ -918,16 +929,21 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setCompensationVehicleIndex(v.vehicleIndex)}
-                          className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 font-semibold"
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(ev) => { ev.stopPropagation(); setCompensationVehicleIndex(v.vehicleIndex); }}
+                          onKeyDown={(ev) => { if (ev.key === "Enter") { ev.stopPropagation(); setCompensationVehicleIndex(v.vehicleIndex); } }}
+                          className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 font-semibold cursor-pointer"
                         >
                           <Gift size={11} /> Compensation
-                        </button>
+                        </span>
                         <span className="text-sm font-bold text-gray-900 dark:text-white flex-shrink-0">{fmt(v.itemDayTotal)}</span>
                       </div>
-                    </div>
+                    </button>
 
+                    {isSlotExpanded && (
+                    <>
                     {(v.issueHoursToday > 0 || v.unavailableHoursToday > 0 || v.compensationHoursGrantedToday > 0) && (
                       <div className="flex flex-wrap items-center gap-3 px-4 py-2 text-[11px] bg-amber-50/60 dark:bg-amber-900/10 border-b border-gray-100 dark:border-gray-800">
                         {v.issueHoursToday > 0 && (
@@ -1137,9 +1153,11 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                               {hasTimeline && (
                                 <button
                                   onClick={() => toggleTimeline(e.entryId)}
-                                  className="flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold"
+                                  title={isExpanded ? "Hide this vehicle's minute-by-minute issue/unavailable timeline" : "View this vehicle's minute-by-minute issue/unavailable timeline"}
+                                  className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 font-semibold"
                                 >
                                   <History size={10} />
+                                  {isExpanded ? "Hide Timeline" : "View Timeline"}
                                   {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
                                 </button>
                               )}
@@ -1352,8 +1370,11 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                         </div>
                       )}
                     </div>
+                    </>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
