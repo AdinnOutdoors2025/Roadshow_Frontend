@@ -831,10 +831,7 @@
   }
 }
 
-/* ==========================================================
-   REVIEW ORDER MODAL — FIGMA MATCH
-========================================================== */
-
+/*   REVIEW ORDER MODAL — FIGMA MATCH */
 .rdsw_reviewModalShell {
   width: calc(100vw - 48px) !important;
   max-width: 1280px !important;
@@ -1450,11 +1447,7 @@
 
 
 
-/* ==========================================================
-   TABLET
-   641px to 900px
-========================================================== */
-
+/*   TABLET 641px to 900px */
 @media (max-width: 900px) {
   /*
    * Modal becomes one scrollable container on tablet/mobile.
@@ -1661,9 +1654,7 @@
     font-size: 24px;
   }
 
-  /*
-   * Buttons remain visible at the bottom while scrolling.
-   */
+  /* Buttons remain visible at the bottom while scrolling. */
   .rdsw_reviewActions {
     position: sticky;
     z-index: 20;
@@ -1696,11 +1687,7 @@
   }
 }
 
-/* ==========================================================
-   MOBILE
-   Up to 640px
-========================================================== */
-
+/*   MOBILE Up to 640px */
 @media (max-width: 640px) {
   .rdsw_reviewModalShell {
     width: calc(100vw - 16px) !important;
@@ -1937,10 +1924,7 @@
   }
 }
 
-/* ==========================================================
-   EXTRA-SMALL MOBILE
-========================================================== */
-
+/*   EXTRA-SMALL MOBILE */
 @media (max-width: 390px) {
   .rdsw_reviewModalLayout {
     padding-right: 13px;

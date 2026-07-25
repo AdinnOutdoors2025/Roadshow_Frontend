@@ -2,9 +2,9 @@
 // @ts-nocheck
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState,} from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, } from "react";
 import { isBefore } from "date-fns";
-import { CalendarDays, ChevronLeft, ChevronRight, Minus, Plus, Send, SquarePen, X,} from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Minus, Plus, Send, SquarePen, X, } from "lucide-react";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
@@ -15,10 +15,12 @@ import '../../../components/Client/HomePageSections/HomePageSection1.css';
 
 import { useModal } from "@/hooks/useModal";
 import { useAuth } from "@/context/AuthContext";
-import { FALLBACK_VEHICLE_IMAGE, fetchAllRoadshowVehicles, type RoadshowVehicle,} from "@/lib/roadshowVehicles";
+import { FALLBACK_VEHICLE_IMAGE, fetchAllRoadshowVehicles, type RoadshowVehicle, } from "@/lib/roadshowVehicles";
 import { GST_Percentage } from '../../../BaseUrl'
 import "./page.css";
-import { formatCurrency, formatDate, formatDateForApi, getInclusiveDayCount, parseStoredDate, toSafeNumber,} from "@/app/utils/currency";
+import { formatCurrency, formatDate, formatDateForApi, getInclusiveDayCount, parseStoredDate, toSafeNumber, } from "@/app/utils/currency";
+import { useRouter } from "next/navigation";
+import { baseUrl } from "../../../BaseUrl";
 type SelectedVehicle = RoadshowVehicle & {
   startDate: Date | null;
   endDate: Date | null;
@@ -27,6 +29,7 @@ type SelectedVehicle = RoadshowVehicle & {
 
 /* CAMPAIGN REQUEST PAGE */
 export default function CampaignRequestPage() {
+    const router = useRouter();
   const { user, openAuth, authLoading } = useAuth();
 
   const productScrollerRef =
@@ -661,103 +664,275 @@ export default function CampaignRequestPage() {
     openReviewModal();
   };
 
+  // const handleConfirmSend = async () => {
+  //   if (submitting) return;
+
+  //   try {
+  //     setSubmitting(true);
+
+  //     const payload = {
+  //       clientId: user?._id || "",
+
+  //       clientDetails: {
+  //         name: clientDetails.name.trim(),
+
+  //         phone:
+  //           clientDetails.phone.replace(
+  //             /\D/g,
+  //             ""
+  //           ),
+
+  //         email:
+  //           clientDetails.email
+  //             .trim()
+  //             .toLowerCase(),
+  //       },
+
+  //       vehicles: bookingRows.map(
+  //         (vehicle) => ({
+  //           vehicleId: vehicle.id,
+
+  //           vehicleTypeId:
+  //             vehicle.vehicleTypeId ||
+  //             "",
+
+  //           vehicleName: vehicle.name,
+
+  //           packageId:
+  //             vehicle.packageDetails
+  //               ?._id || "",
+
+  //           pricePerDay: toSafeNumber(
+  //             vehicle.rate || 0
+  //           ),
+
+  //           startDate: formatDateForApi(
+  //             vehicle.startDate
+  //           ),
+
+  //           endDate: formatDateForApi(
+  //             vehicle.endDate
+  //           ),
+
+  //           days: vehicle.days,
+
+  //           quantity:
+  //             vehicle.quantity,
+
+  //           total: vehicle.total,
+  //         })
+  //       ),
+
+  //       grandTotal,
+  //     };
+
+  //     /*
+  //      * Save the prepared request for the next
+  //      * booking/checkout page.
+  //      *
+  //      * Replace this with your create campaign
+  //      * request POST API after the endpoint is ready.
+  //      */
+  //     sessionStorage.setItem(
+  //       "roadshow_campaign_payload",
+  //       JSON.stringify(payload)
+  //     );
+
+  //     console.log(
+  //       "Campaign request payload:",
+  //       payload
+  //     );
+
+  //     toast.success(
+  //       "Campaign request prepared successfully."
+  //     );
+
+  //     closeReviewModal();
+  //   } catch (error) {
+  //     console.error(
+  //       "Campaign request error:",
+  //       error
+  //     );
+
+  //     toast.error(
+  //       "Unable to prepare campaign request."
+  //     );
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
+
+
   const handleConfirmSend = async () => {
-    if (submitting) return;
+  if (submitting) return;
 
-    try {
-      setSubmitting(true);
+  try {
+    setSubmitting(true);
 
-      const payload = {
-        clientId: user?._id || "",
+    const storedDraft = sessionStorage.getItem(
+      "roadshow_booking_draft"
+    );
 
-        clientDetails: {
-          name: clientDetails.name.trim(),
+    let campaignMeta: {
+      campaignType?: string;
+      location?: string;
+      route?: string;
+      addOns?: string[];
+    } = {};
 
-          phone:
-            clientDetails.phone.replace(
-              /\D/g,
-              ""
-            ),
+    if (storedDraft) {
+      try {
+        const parsedDraft = JSON.parse(storedDraft);
 
-          email:
-            clientDetails.email
-              .trim()
-              .toLowerCase(),
+        campaignMeta = {
+          campaignType:
+            typeof parsedDraft?.campaignType === "string"
+              ? parsedDraft.campaignType.trim()
+              : "",
+
+          location:
+            typeof parsedDraft?.location === "string"
+              ? parsedDraft.location.trim()
+              : "",
+
+          route:
+            typeof parsedDraft?.route === "string"
+              ? parsedDraft.route.trim()
+              : "",
+
+          addOns: Array.isArray(parsedDraft?.addOns)
+            ? parsedDraft.addOns.filter(
+                (item: unknown) =>
+                  typeof item === "string" && item.trim()
+              )
+            : [],
+        };
+      } catch {
+        // Optional campaign metadata is unavailable.
+      }
+    }
+
+    const payload = {
+      name: clientDetails.name.trim(),
+
+      email: clientDetails.email
+        .trim()
+        .toLowerCase(),
+
+      phone: clientDetails.phone.replace(
+        /\D/g,
+        ""
+      ),
+
+      userId: user?._id,
+
+      campaignType:
+        campaignMeta.campaignType ||
+        "Roadshow Campaign",
+
+      location: campaignMeta.location || "",
+
+      route: campaignMeta.route || "",
+
+      addOns: campaignMeta.addOns || [],
+
+      vehicleTypes: bookingRows.map(
+        (vehicle) => ({
+          vehicleId: vehicle.id,
+
+          vehicleType:
+            vehicle.vehicleTypeId ||
+            vehicle.id,
+
+          vehicleName: vehicle.name,
+
+          quantity: vehicle.quantity,
+
+          fromDate: formatDateForApi(
+            vehicle.startDate
+          ),
+
+          toDate: formatDateForApi(
+            vehicle.endDate
+          ),
+
+          pricePerDay: toSafeNumber(
+            vehicle.rate
+          ),
+
+          lineTotal: toSafeNumber(
+            vehicle.total
+          ),
+        })
+      ),
+
+      subtotal: grandTotal,
+
+      gstPercentage: GST_PERCENT,
+
+      gstAmount,
+
+      estimatedTotal,
+    };
+
+    const response = await fetch(
+      `${baseUrl}/client-requests`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
         },
 
-        vehicles: bookingRows.map(
-          (vehicle) => ({
-            vehicleId: vehicle.id,
+        body: JSON.stringify(payload),
+      }
+    );
 
-            vehicleTypeId:
-              vehicle.vehicleTypeId ||
-              "",
+    const result = await response
+      .json()
+      .catch(() => null);
 
-            vehicleName: vehicle.name,
-
-            packageId:
-              vehicle.packageDetails
-                ?._id || "",
-
-            pricePerDay: toSafeNumber(
-              vehicle.rate || 0
-            ),
-
-            startDate: formatDateForApi(
-              vehicle.startDate
-            ),
-
-            endDate: formatDateForApi(
-              vehicle.endDate
-            ),
-
-            days: vehicle.days,
-
-            quantity:
-              vehicle.quantity,
-
-            total: vehicle.total,
-          })
-        ),
-
-        grandTotal,
-      };
-
-      /*
-       * Save the prepared request for the next
-       * booking/checkout page.
-       *
-       * Replace this with your create campaign
-       * request POST API after the endpoint is ready.
-       */
-      sessionStorage.setItem(
-        "roadshow_campaign_payload",
-        JSON.stringify(payload)
+    if (
+      !response.ok ||
+      !result?.success ||
+      !result?.data?._id
+    ) {
+      throw new Error(
+        result?.message ||
+          "Unable to submit the campaign request."
       );
-
-      console.log(
-        "Campaign request payload:",
-        payload
-      );
-
-      toast.success(
-        "Campaign request prepared successfully."
-      );
-
-      closeReviewModal();
-    } catch (error) {
-      console.error(
-        "Campaign request error:",
-        error
-      );
-
-      toast.error(
-        "Unable to prepare campaign request."
-      );
-    } finally {
-      setSubmitting(false);
     }
-  };
+
+    sessionStorage.setItem(
+      "roadshow_last_client_request",
+      JSON.stringify(result.data)
+    );
+
+    closeReviewModal();
+
+    toast.success(
+      "Booking request submitted successfully."
+    );
+
+    router.push(
+      `/roadshow/booking-request-submitted/${result.data._id}`
+    );
+  } catch (error) {
+    console.error(
+      "Campaign request error:",
+      error
+    );
+
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Unable to submit the campaign request."
+    );
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   return (
     <main className="min-h-screen bg-white pb-20 pt-8 text-[#171719] sm:pt-10 lg:pt-14">
@@ -1455,55 +1630,55 @@ export default function CampaignRequestPage() {
       )}
 
       {isReviewOpen && (
-      <div className="fixed inset-0 z-99999 flex items-center justify-center overflow-y-auto">
-        <div
-          className="fixed inset-0 h-full w-full bg-black/35 backdrop-blur-[1px]"
-          onClick={closeReviewModal}
-        />
-
-        <div
-          className="rdsw_reviewModalShell relative w-full"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
+        <div className="fixed inset-0 z-99999 flex items-center justify-center overflow-y-auto">
+          <div
+            className="fixed inset-0 h-full w-full bg-black/35 backdrop-blur-[1px]"
             onClick={closeReviewModal}
-            aria-label="Close"
-            className="rdsw_reviewModalCloseBtn absolute right-3 top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full sm:right-6 sm:top-6 sm:h-11 sm:w-11"
+          />
+
+          <div
+            className="rdsw_reviewModalShell relative w-full"
+            onClick={(e) => e.stopPropagation()}
           >
-            <X size={20} strokeWidth={2.25} />
-          </button>
+            <button
+              type="button"
+              onClick={closeReviewModal}
+              aria-label="Close"
+              className="rdsw_reviewModalCloseBtn absolute right-3 top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full sm:right-6 sm:top-6 sm:h-11 sm:w-11"
+            >
+              <X size={20} strokeWidth={2.25} />
+            </button>
 
-        <div className="rdsw_reviewModalLayout">
-          {/* Left side: independently scrollable when many vehicles are selected */}
-          <section className="rdsw_reviewLeftPanel">
-            <h2 className="rdsw_reviewTitle">
-              Review Your Order &amp; Confirm
-            </h2>
+            <div className="rdsw_reviewModalLayout">
+              {/* Left side: independently scrollable when many vehicles are selected */}
+              <section className="rdsw_reviewLeftPanel">
+                <h2 className="rdsw_reviewTitle">
+                  Review Your Order &amp; Confirm
+                </h2>
 
-            <section className="rdsw_reviewSection">
-              <div className="rdsw_reviewSectionHeading">
-                <span
-                  className="rdsw_reviewHeadingDot"
-                  aria-hidden="true"
-                >
-                  <i className="fa-regular fa-circle-user"></i>
-                </span>
-                <h3>Contact Details</h3>
-              </div>
+                <section className="rdsw_reviewSection">
+                  <div className="rdsw_reviewSectionHeading">
+                    <span
+                      className="rdsw_reviewHeadingDot"
+                      aria-hidden="true"
+                    >
+                      <i className="fa-regular fa-circle-user"></i>
+                    </span>
+                    <h3>Contact Details</h3>
+                  </div>
 
-              <div className="rdsw_reviewContactDetails">
-                <div className="rdsw_reviewContactRow">
-                  <span className="rdsw_reviewContactLabel">
-                    Name
-                  </span>
+                  <div className="rdsw_reviewContactDetails">
+                    <div className="rdsw_reviewContactRow">
+                      <span className="rdsw_reviewContactLabel">
+                        Name
+                      </span>
 
-                  <span className="rdsw_reviewContactValue">
-                    - {clientDetails.name || "—"}
-                  </span>
-                </div>
+                      <span className="rdsw_reviewContactValue">
+                        - {clientDetails.name || "—"}
+                      </span>
+                    </div>
 
-                {/* <div className="rdsw_reviewContactRow">
+                    {/* <div className="rdsw_reviewContactRow">
                   <span className="rdsw_reviewContactLabel">
                     Company Name
                   </span>
@@ -1513,243 +1688,243 @@ export default function CampaignRequestPage() {
                   </span>
                 </div> */}
 
-                <div className="rdsw_reviewContactRow">
-                  <span className="rdsw_reviewContactLabel">
-                    Phone Number
-                  </span>
+                    <div className="rdsw_reviewContactRow">
+                      <span className="rdsw_reviewContactLabel">
+                        Phone Number
+                      </span>
 
-                  <span className="rdsw_reviewContactValue">
-                    - {reviewPhoneNumber}
-                  </span>
-                </div>
+                      <span className="rdsw_reviewContactValue">
+                        - {reviewPhoneNumber}
+                      </span>
+                    </div>
 
-                <div className="rdsw_reviewContactRow">
-                  <span className="rdsw_reviewContactLabel">
-                    Email Address
-                  </span>
+                    <div className="rdsw_reviewContactRow">
+                      <span className="rdsw_reviewContactLabel">
+                        Email Address
+                      </span>
 
-                  <span className="rdsw_reviewContactValue">
-                    - {clientDetails.email || "—"}
-                  </span>
-                </div>
-              </div>
-            </section>
+                      <span className="rdsw_reviewContactValue">
+                        - {clientDetails.email || "—"}
+                      </span>
+                    </div>
+                  </div>
+                </section>
 
-            <section className="rdsw_reviewSection rdsw_reviewVehicleSection">
-              <div className="rdsw_reviewSectionHeading">
-                <span
-                  className="rdsw_reviewHeadingDot"
-                  aria-hidden="true"
-                >
-                  <i className="fa-regular fa-circle-check"></i>
-                </span>
-                <h3>Selected Vehicles</h3>
-              </div>
-
-              <div className="rdsw_reviewVehicleList">
-                {bookingRows.map(
-                  (vehicle, index) => (
-                    <article
-                      key={vehicle.id}
-                      className="rdsw_reviewVehicleCard"
-                      style={{
-                        animationDelay: `${index * 70
-                          }ms`,
-                      }}
+                <section className="rdsw_reviewSection rdsw_reviewVehicleSection">
+                  <div className="rdsw_reviewSectionHeading">
+                    <span
+                      className="rdsw_reviewHeadingDot"
+                      aria-hidden="true"
                     >
-                      <div className="rdsw_reviewVehicleInfoColumn">
-                        <div>
-                          <p className="rdsw_reviewVehicleLabel">
-                            Vehicle Type {index + 1}
-                          </p>
+                      <i className="fa-regular fa-circle-check"></i>
+                    </span>
+                    <h3>Selected Vehicles</h3>
+                  </div>
 
-                          <p className="rdsw_reviewVehicleName">
-                            {vehicle.name}
-                          </p>
-                        </div>
+                  <div className="rdsw_reviewVehicleList">
+                    {bookingRows.map(
+                      (vehicle, index) => (
+                        <article
+                          key={vehicle.id}
+                          className="rdsw_reviewVehicleCard"
+                          style={{
+                            animationDelay: `${index * 70
+                              }ms`,
+                          }}
+                        >
+                          <div className="rdsw_reviewVehicleInfoColumn">
+                            <div>
+                              <p className="rdsw_reviewVehicleLabel">
+                                Vehicle Type {index + 1}
+                              </p>
 
-                        <div>
-                          <p className="rdsw_reviewVehicleLabel">
-                            Vehicle Quantity
-                          </p>
+                              <p className="rdsw_reviewVehicleName">
+                                {vehicle.name}
+                              </p>
+                            </div>
 
-                          <p className="rdsw_reviewVehicleValue">
-                            {vehicle.quantity}
-                          </p>
-                        </div>
-                      </div>
+                            <div>
+                              <p className="rdsw_reviewVehicleLabel">
+                                Vehicle Quantity
+                              </p>
 
-                      <div className="rdsw_reviewVehicleInfoColumn">
-                        <div>
-                          <p className="rdsw_reviewVehicleLabel">
-                            Start Date
-                          </p>
+                              <p className="rdsw_reviewVehicleValue">
+                                {vehicle.quantity}
+                              </p>
+                            </div>
+                          </div>
 
-                          <p className="rdsw_reviewVehicleValue">
-                            {formatDate(
-                              vehicle.startDate,
-                              {
-                                pattern:
-                                  "dd MMM yyyy",
-                                fallback: "—",
-                              }
-                            )}
-                          </p>
-                        </div>
+                          <div className="rdsw_reviewVehicleInfoColumn">
+                            <div>
+                              <p className="rdsw_reviewVehicleLabel">
+                                Start Date
+                              </p>
 
-                        <div>
-                          <p className="rdsw_reviewVehicleLabel">
-                            Rate Per Day
-                          </p>
+                              <p className="rdsw_reviewVehicleValue">
+                                {formatDate(
+                                  vehicle.startDate,
+                                  {
+                                    pattern:
+                                      "dd MMM yyyy",
+                                    fallback: "—",
+                                  }
+                                )}
+                              </p>
+                            </div>
 
-                          <p className="rdsw_reviewVehicleValue">
-                            {formatCurrency(
-                              vehicle.rate
-                            )}
-                          </p>
-                        </div>
-                      </div>
+                            <div>
+                              <p className="rdsw_reviewVehicleLabel">
+                                Rate Per Day
+                              </p>
 
-                      <div className="rdsw_reviewVehicleInfoColumn">
-                        <div>
-                          <p className="rdsw_reviewVehicleLabel">
-                            End Date
-                          </p>
+                              <p className="rdsw_reviewVehicleValue">
+                                {formatCurrency(
+                                  vehicle.rate
+                                )}
+                              </p>
+                            </div>
+                          </div>
 
-                          <p className="rdsw_reviewVehicleValue">
-                            {formatDate(
-                              vehicle.endDate,
-                              {
-                                pattern:
-                                  "dd MMM yyyy",
-                                fallback: "—",
-                              }
-                            )}
-                          </p>
-                        </div>
+                          <div className="rdsw_reviewVehicleInfoColumn">
+                            <div>
+                              <p className="rdsw_reviewVehicleLabel">
+                                End Date
+                              </p>
 
-                        <div>
-                          <p className="rdsw_reviewVehicleLabel">
-                            Duration
-                          </p>
+                              <p className="rdsw_reviewVehicleValue">
+                                {formatDate(
+                                  vehicle.endDate,
+                                  {
+                                    pattern:
+                                      "dd MMM yyyy",
+                                    fallback: "—",
+                                  }
+                                )}
+                              </p>
+                            </div>
 
-                          <p className="rdsw_reviewVehicleValue">
-                            {vehicle.days}{" "}
-                            {vehicle.days === 1
-                              ? "Day"
-                              : "Days"}
-                          </p>
-                        </div>
-                      </div>
+                            <div>
+                              <p className="rdsw_reviewVehicleLabel">
+                                Duration
+                              </p>
 
-                      <div className="rdsw_reviewVehicleTotal">
-                        <p className="rdsw_reviewVehicleTotalLabel">
-                          Vehicle Total
-                        </p>
+                              <p className="rdsw_reviewVehicleValue">
+                                {vehicle.days}{" "}
+                                {vehicle.days === 1
+                                  ? "Day"
+                                  : "Days"}
+                              </p>
+                            </div>
+                          </div>
 
-                        <p className="rdsw_reviewVehicleTotalValue">
-                          {formatCurrency(
-                            vehicle.total
-                          )}
-                        </p>
-                      </div>
-                    </article>
-                  )
-                )}
-              </div>
-            </section>
-          </section>
+                          <div className="rdsw_reviewVehicleTotal">
+                            <p className="rdsw_reviewVehicleTotalLabel">
+                              Vehicle Total
+                            </p>
 
-          {/* Right side: sticky pricing summary and actions */}
-          <aside className="rdsw_reviewRightColumn">
-            <div className="rdsw_reviewPricingCard">
-              <h3 className="rdsw_reviewPricingTitle">
-                Pricing Summary
-              </h3>
-
-              <div className="rdsw_reviewPricingRows">
-                <div className="rdsw_reviewPricingRow">
-                  <span>Subtotal</span>
-
-                  <span>
-                    {formatCurrency(
-                      grandTotal
+                            <p className="rdsw_reviewVehicleTotalValue">
+                              {formatCurrency(
+                                vehicle.total
+                              )}
+                            </p>
+                          </div>
+                        </article>
+                      )
                     )}
-                  </span>
+                  </div>
+                </section>
+              </section>
+
+              {/* Right side: sticky pricing summary and actions */}
+              <aside className="rdsw_reviewRightColumn">
+                <div className="rdsw_reviewPricingCard">
+                  <h3 className="rdsw_reviewPricingTitle">
+                    Pricing Summary
+                  </h3>
+
+                  <div className="rdsw_reviewPricingRows">
+                    <div className="rdsw_reviewPricingRow">
+                      <span>Subtotal</span>
+
+                      <span>
+                        {formatCurrency(
+                          grandTotal
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="rdsw_reviewPricingRow">
+                      <span>GST {GST_PERCENT}%</span>
+
+                      <span>
+                        {formatCurrency(
+                          gstAmount
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="rdsw_reviewPricingRow rdsw_reviewPricingTotalRow">
+                      <span>Estimated Total</span>
+
+                      <strong>
+                        {formatCurrency(
+                          estimatedTotal
+                        )}
+                      </strong>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="rdsw_reviewPricingRow">
-                  <span>GST {GST_PERCENT}%</span>
+                <div className="rdsw_reviewActions">
+                  <button
+                    type="button"
+                    onClick={closeReviewModal}
+                    className="rdsw_reviewActionButton rdsw_reviewEditButton"
+                  >
 
-                  <span>
-                    {formatCurrency(
-                      gstAmount
+                    <Image
+                      src="/images/assets/CRF_RequestEditBtn.svg"
+                      alt=""
+                      width={18}
+                      height={18}
+                      className="rdsw_crfProdDetailsCheckMark rdsw_reviewEditReqIcon"
+                    />
+
+                    <span>Edit Details</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleConfirmSend}
+                    disabled={submitting}
+                    className="rdsw_reviewActionButton rdsw_reviewSendButton"
+                  >
+                    {submitting ? (
+                      <span
+                        className="rdsw_reviewSendSpinner"
+                        aria-hidden="true"
+                      />
+                    ) : (
+
+                      <Image
+                        src="/images/assets/CRF_RequestSendBtn.svg"
+                        alt=""
+                        width={18}
+                        height={18}
+                        className="rdsw_crfProdDetailsCheckMark rdsw_reviewEditReqIcon"
+                      />
                     )}
-                  </span>
+                    <span>
+                      {submitting
+                        ? "Sending..."
+                        : "Send Request"}
+                    </span>
+                  </button>
                 </div>
-
-                <div className="rdsw_reviewPricingRow rdsw_reviewPricingTotalRow">
-                  <span>Estimated Total</span>
-
-                  <strong>
-                    {formatCurrency(
-                      estimatedTotal
-                    )}
-                  </strong>
-                </div>
-              </div>
+              </aside>
             </div>
-
-            <div className="rdsw_reviewActions">
-              <button
-                type="button"
-                onClick={closeReviewModal}
-                className="rdsw_reviewActionButton rdsw_reviewEditButton"
-              >
-             
-                <Image
-                  src="/images/assets/CRF_RequestEditBtn.svg"
-                  alt=""
-                  width={18}
-                  height={18}
-                  className="rdsw_crfProdDetailsCheckMark rdsw_reviewEditReqIcon"
-                />
-
-                <span>Edit Details</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleConfirmSend}
-                disabled={submitting}
-                className="rdsw_reviewActionButton rdsw_reviewSendButton"
-              >
-                {submitting ? (
-                  <span
-                    className="rdsw_reviewSendSpinner"
-                    aria-hidden="true"
-                  />
-                ) : (
-                
-                  <Image
-                    src="/images/assets/CRF_RequestSendBtn.svg"
-                    alt=""
-                    width={18}
-                    height={18}
-                    className="rdsw_crfProdDetailsCheckMark rdsw_reviewEditReqIcon"
-                  />
-                )} 
-                <span>
-                  {submitting
-                    ? "Sending..."
-                    : "Send Request"}
-                </span>
-              </button>
-            </div>
-          </aside>
+          </div>
         </div>
-        </div>
-      </div>
       )}
     </main>
   );

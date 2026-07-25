@@ -347,7 +347,7 @@ export default function HomePageSection1() {
             </div>
 
             {/* Our Roadshow Vehicles List section */}
-            <div className='px-20 mx-auto RS_OurRdwMainSection'>
+            <div id="our-roadshow-vehicles" className='px-20 mx-auto RS_OurRdwMainSection'>
                 <div className="RS_OurRdwHeading">
                     <div className="RS_OurRdwHeadingContent1">Our Roadshow </div>
                     <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2">Vehicles</div>
