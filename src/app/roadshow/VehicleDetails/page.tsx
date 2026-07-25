@@ -4,7 +4,6 @@ import { useState } from "react";
 import Image from "next/image";
 import DatePicker from "@/components/calendar/calendar_reusable/calender";
 
-
 type ProductFeature = {
   icon: string;
   title: string;
@@ -33,16 +32,15 @@ const productFeatures: ProductFeature[] = [
 ];
 
 export default function VehicleDetailsPage() {
-  // Calendar state
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
 
   return (
     <main className="min-h-screen bg-white text-black">
-      <section className="mx-auto grid max-w-[1420px] grid-cols-1 gap-20 px-4 pb-14 pt-40 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
-        {/* Vehicle Card */}
+      <section className="mx-auto max-w-[1420px] px-4 pb-14 pt-40 grid gap-20 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
         
-          <div className="lg:sticky lg:top-32">
+        {/* Left Sticky Vehicle Card */}
+        <div className="lg:sticky lg:top-32 self-start">
           <h1 className="mb-5 text-[25px] font-semibold tracking-tight">
             Tata Ultra 19 Ft - 3 Sided LED
           </h1>
@@ -65,85 +63,45 @@ export default function VehicleDetailsPage() {
             {/* Carousel Buttons */}
             <div className="absolute bottom-9 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border-[0.5px] border-[#C5C4C6] px-3 py-2">
               <button className="flex items-center justify-center">
-                <Image
-                  src="/images/assets/detail_page/left.svg"
-                  alt="left"
-                  width={40}
-                  height={40}
-                  className="object-contain"
-                />
+                <Image src="/images/assets/detail_page/left.svg" alt="left" width={40} height={40} className="object-contain" />
               </button>
-
               <button className="flex items-center justify-center">
-                <Image
-                  src="/images/assets/detail_page/right.svg"
-                  alt="right"
-                  width={40}
-                  height={40}
-                  className="object-contain"
-                />
+                <Image src="/images/assets/detail_page/right.svg" alt="right" width={40} height={40} className="object-contain" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Product Details */}
-        <div className="pt-14">
+        {/* Right Scrollable Product Details */}
+        <div>
           <h2 className="text-[30px] font-bold tracking-tight">
             ₹ 25,000 <span className="text-[14px] font-semibold">Per Day</span>
           </h2>
 
-         <h3 className="mt-4 inline-block bg-gradient-to-r from-[#E52B2C] via-[#B12021] to-[#7F1818] bg-clip-text text-[24px] font-normal text-transparent">
-  Product Details
-</h3>
+          <h3 className="mt-4 inline-block bg-gradient-to-r from-[#E52B2C] via-[#B12021] to-[#7F1818] bg-clip-text text-[24px] font-normal text-transparent">
+            Product Details
+          </h3>
 
-          <p className="mt-2 max-w-[540px] text-[19px] font-regular leading-[1.45] text-black">
-            Our Roadshow Vehicles are like a moving stage for your brand. With
-            big LED screens, clear sound system, comfortable seating, and full
-            branding options, they easily grab attention on the road or at any
-            spot.
+          <p className="mt-2 max-w-[540px] text-[19px] leading-[1.45] text-black">
+            Our Roadshow Vehicles are like a moving stage for your brand. With big LED screens, clear sound system, comfortable seating, and full branding options, they easily grab attention on the road or at any spot.
           </p>
 
           <div className="mt-9 grid grid-cols-4 gap-x-8 gap-y-8">
             {productFeatures.map((item) => (
               <div key={item.title} className="text-center">
-                <div
-                  className="mx-auto mb-3 flex items-center justify-center"
-                  style={{ width: item.width, height: item.height }}
-                >
-                  <Image
-                    src={item.icon}
-                    alt={`${item.title} icon`}
-                    width={item.width}
-                    height={item.height}
-                    className="object-contain"
-                  />
+                <div className="mx-auto mb-3 flex items-center justify-center" style={{ width: item.width, height: item.height }}>
+                  <Image src={item.icon} alt={`${item.title} icon`} width={item.width} height={item.height} className="object-contain" />
                 </div>
-
-                <h4 className="text-[16px] font-mediumn leading-tight text-black">
-                  {item.title}
-                </h4>
-
-                <p className="mt-1 text-[13px] font-medium leading-tight text-[#666666]">
-                  {item.desc}
-                </p>
+                <h4 className="text-[16px] font-medium leading-tight text-black">{item.title}</h4>
+                <p className="mt-1 text-[13px] font-medium leading-tight text-[#666666]">{item.desc}</p>
               </div>
             ))}
           </div>
 
-          {/* Available Dates with Reusable Calendar */}
+          {/* Available Dates */}
           <div className="mt-9">
-            <h3 className="text-[20px] font-bold text-[#d70000] mb-2">
-              Available Dates
-            </h3>
-
-            {/* Insert reusable calendar component here */}
-            <DatePicker
-              checkIn={checkIn}
-              checkOut={checkOut}
-              setCheckIn={setCheckIn}
-              setCheckOut={setCheckOut}
-            />
+            <h3 className="text-[20px] font-bold text-[#d70000] mb-2">Available Dates</h3>
+            <DatePicker checkIn={checkIn} checkOut={checkOut} setCheckIn={setCheckIn} setCheckOut={setCheckOut} />
 
             <button className="mt-6 rounded-full bg-black px-7 py-3 text-[13px] font-semibold text-white transition hover:bg-[#d70000]">
               Book Now
@@ -154,7 +112,7 @@ export default function VehicleDetailsPage() {
 
       {/* Product Detail Banner */}
       <section className="w-full m-0 p-0 mt-20 mb-20">
-        <div className="relative w-full overflow-hidden rounded-none">
+        <div className="relative w-full overflow-hidden">
           <Image
             src="/images/assets/detail_page/product_detail_page_banner.svg"
             alt="Product detail banner"

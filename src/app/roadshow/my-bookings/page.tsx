@@ -1,11 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  type ButtonHTMLAttributes,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 
 /* =========================================================
    UPDATE VEHICLE IMAGE PATH HERE
-
-   The image must be inside your public folder.
 ========================================================= */
 
 const VEHICLE_IMAGE =
@@ -24,7 +32,11 @@ type BookingStatus =
 
 type StatusFilter = "All" | BookingStatus;
 
-type SortMode = "newest" | "oldest" | "highest" | "lowest";
+type SortMode =
+  | "newest"
+  | "oldest"
+  | "highest"
+  | "lowest";
 
 type Vehicle = {
   name: string;
@@ -47,12 +59,14 @@ type Booking = {
   vehicleTypes: number;
   vehicleCount: number;
   estimatedTotal: number;
+
   customer: {
     name: string;
     company: string;
     phone: string;
     email: string;
   };
+
   vehicles: Vehicle[];
 };
 
@@ -77,7 +91,6 @@ type IconName =
 
 /* =========================================================
    FILLED ICONS
-   No stroke icons are used.
 ========================================================= */
 
 function FilledIcon({
@@ -157,8 +170,7 @@ function FilledIcon({
 }
 
 /* =========================================================
-   SAMPLE JSON DATA
-   Replace this with your API response later.
+   SAMPLE BOOKING DATA
 ========================================================= */
 
 const bookingData: Booking[] = [
@@ -173,12 +185,14 @@ const bookingData: Booking[] = [
     vehicleTypes: 2,
     vehicleCount: 3,
     estimatedTotal: 750000,
+
     customer: {
       name: "Kishore",
       company: "ABC Company",
       phone: "+91 98765 43210",
       email: "example@email.com",
     },
+
     vehicles: [
       {
         name: "19 Feet Single Side LED Van",
@@ -211,12 +225,14 @@ const bookingData: Booking[] = [
     vehicleTypes: 1,
     vehicleCount: 1,
     estimatedTotal: 250000,
+
     customer: {
       name: "Arun Kumar",
       company: "Skyline Enterprises",
       phone: "+91 98765 12345",
       email: "arun@skyline.com",
     },
+
     vehicles: [
       {
         name: "19 Feet Single Side LED Van",
@@ -240,12 +256,14 @@ const bookingData: Booking[] = [
     vehicleTypes: 3,
     vehicleCount: 5,
     estimatedTotal: 1120000,
+
     customer: {
       name: "Pradeep",
       company: "Bright Media",
       phone: "+91 98765 22222",
       email: "pradeep@brightmedia.com",
     },
+
     vehicles: [
       {
         name: "19 Feet Single Side LED Van",
@@ -287,12 +305,14 @@ const bookingData: Booking[] = [
     vehicleTypes: 1,
     vehicleCount: 2,
     estimatedTotal: 350000,
+
     customer: {
       name: "Ramesh",
       company: "Ramesh Agencies",
       phone: "+91 98765 33333",
       email: "ramesh@email.com",
     },
+
     vehicles: [
       {
         name: "19 Feet Single Side LED Van",
@@ -316,12 +336,14 @@ const bookingData: Booking[] = [
     vehicleTypes: 1,
     vehicleCount: 1,
     estimatedTotal: 175000,
+
     customer: {
       name: "Surya",
       company: "Surya Marketing",
       phone: "+91 98765 44444",
       email: "surya@email.com",
     },
+
     vehicles: [
       {
         name: "19 Feet Single Side LED Van",
@@ -345,12 +367,14 @@ const bookingData: Booking[] = [
     vehicleTypes: 1,
     vehicleCount: 1,
     estimatedTotal: 175000,
+
     customer: {
       name: "Vignesh",
       company: "Vignesh Traders",
       phone: "+91 98765 55555",
       email: "vignesh@email.com",
     },
+
     vehicles: [
       {
         name: "19 Feet Single Side LED Van",
@@ -374,12 +398,14 @@ const bookingData: Booking[] = [
     vehicleTypes: 1,
     vehicleCount: 2,
     estimatedTotal: 350000,
+
     customer: {
       name: "Naveen",
       company: "Naveen Solutions",
       phone: "+91 98765 66666",
       email: "naveen@email.com",
     },
+
     vehicles: [
       {
         name: "19 Feet Single Side LED Van",
@@ -403,12 +429,14 @@ const bookingData: Booking[] = [
     vehicleTypes: 1,
     vehicleCount: 1,
     estimatedTotal: 175000,
+
     customer: {
       name: "Ajay",
       company: "AJ Enterprises",
       phone: "+91 98765 77777",
       email: "ajay@email.com",
     },
+
     vehicles: [
       {
         name: "19 Feet Single Side LED Van",
@@ -432,12 +460,14 @@ const bookingData: Booking[] = [
     vehicleTypes: 2,
     vehicleCount: 3,
     estimatedTotal: 720000,
+
     customer: {
       name: "Sathish",
       company: "Sathish Media",
       phone: "+91 98765 88888",
       email: "sathish@email.com",
     },
+
     vehicles: [
       {
         name: "19 Feet Single Side LED Van",
@@ -470,12 +500,14 @@ const bookingData: Booking[] = [
     vehicleTypes: 1,
     vehicleCount: 1,
     estimatedTotal: 175000,
+
     customer: {
       name: "Dinesh",
       company: "Dinesh Groups",
       phone: "+91 98765 99999",
       email: "dinesh@email.com",
     },
+
     vehicles: [
       {
         name: "19 Feet Single Side LED Van",
@@ -499,12 +531,14 @@ const bookingData: Booking[] = [
     vehicleTypes: 1,
     vehicleCount: 2,
     estimatedTotal: 350000,
+
     customer: {
       name: "Manoj",
       company: "Manoj Promotions",
       phone: "+91 98765 10101",
       email: "manoj@email.com",
     },
+
     vehicles: [
       {
         name: "19 Feet Single Side LED Van",
@@ -528,12 +562,14 @@ const bookingData: Booking[] = [
     vehicleTypes: 1,
     vehicleCount: 1,
     estimatedTotal: 175000,
+
     customer: {
       name: "Karthick",
       company: "Karthick Advertising",
       phone: "+91 98765 12121",
       email: "karthick@email.com",
     },
+
     vehicles: [
       {
         name: "19 Feet Single Side LED Van",
@@ -570,29 +606,33 @@ const statusStyles: Record<
   }
 > = {
   Pending: {
-    badge: "bg-[#FFF1E5] text-[#E87522]",
+    badge: "bg-[#FFF0E8] text-[#B75B22]",
     label: "Pending Confirmation",
-    dot: "bg-[#F28A36]",
+    dot: "bg-[#D86C2C]",
   },
+
   Confirmed: {
-    badge: "bg-[#EAF8ED] text-[#24883A]",
+    badge: "bg-[#EDF7EF] text-[#357A45]",
     label: "Booking Confirmed",
-    dot: "bg-[#35A34D]",
+    dot: "bg-[#4A9459]",
   },
+
   Ongoing: {
-    badge: "bg-[#EAF2FF] text-[#246CC8]",
+    badge: "bg-[#EDF2FA] text-[#4D6687]",
     label: "Campaign Ongoing",
-    dot: "bg-[#3A7BD5]",
+    dot: "bg-[#647D9F]",
   },
+
   Completed: {
-    badge: "bg-[#EEEEF1] text-[#555B65]",
+    badge: "bg-[#EFEFF2] text-[#626269]",
     label: "Campaign Completed",
-    dot: "bg-[#777D87]",
+    dot: "bg-[#7C7C83]",
   },
+
   Cancelled: {
-    badge: "bg-[#FFEAEA] text-[#E33B43]",
+    badge: "bg-[#FCEBED] text-[#B31C28]",
     label: "Request Cancelled",
-    dot: "bg-[#ED4C54]",
+    dot: "bg-[#C92936]",
   },
 };
 
@@ -600,8 +640,161 @@ function formatINR(value: number) {
   return `₹ ${value.toLocaleString("en-IN")}`;
 }
 
+/* jsPDF's standard fonts (Helvetica/Times/Courier) use
+   WinAnsi encoding and cannot render the ₹ glyph, so the
+   PDF summary uses "INR" instead to avoid a broken character. */
+function formatINRForPdf(value: number) {
+  return `INR ${value.toLocaleString("en-IN")}`;
+}
+
 /* =========================================================
-   REUSABLE COMPONENTS
+   ANIMATED ROADSHOW BUTTON
+========================================================= */
+
+type BubbleButtonVariant =
+  | "light"
+  | "white"
+  | "dark"
+  | "danger";
+
+type BubbleButtonProps = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "children"
+> & {
+  children: ReactNode;
+  variant?: BubbleButtonVariant;
+  contentClassName?: string;
+};
+
+function BubbleButton({
+  children,
+  variant = "light",
+  className = "",
+  contentClassName = "",
+  disabled,
+  onMouseEnter,
+  onMouseMove,
+  onMouseLeave,
+  onFocus,
+  onBlur,
+  ...buttonProps
+}: BubbleButtonProps) {
+  const [bubbleStyle, setBubbleStyle] =
+    useState<CSSProperties>({
+      width: 0,
+      height: 0,
+      left: 0,
+      top: 0,
+      transform: "scale(0)",
+      opacity: 0,
+    });
+
+  function moveBubble(
+    event: ReactMouseEvent<HTMLButtonElement>,
+  ) {
+    if (disabled) return;
+
+    const rect =
+      event.currentTarget.getBoundingClientRect();
+
+    const size =
+      Math.hypot(rect.width, rect.height) * 2;
+
+    setBubbleStyle({
+      width: size,
+      height: size,
+      left:
+        event.clientX -
+        rect.left -
+        size / 2,
+      top:
+        event.clientY -
+        rect.top -
+        size / 2,
+      transform: "scale(1)",
+      opacity: 1,
+    });
+  }
+
+  function hideBubble() {
+    setBubbleStyle((current) => ({
+      ...current,
+      transform: "scale(0)",
+      opacity: 0,
+    }));
+  }
+
+  function showBubbleFromCenter(
+    button: HTMLButtonElement,
+  ) {
+    if (disabled) return;
+
+    const rect =
+      button.getBoundingClientRect();
+
+    const size =
+      Math.hypot(rect.width, rect.height) * 2;
+
+    setBubbleStyle({
+      width: size,
+      height: size,
+      left:
+        rect.width / 2 -
+        size / 2,
+      top:
+        rect.height / 2 -
+        size / 2,
+      transform: "scale(1)",
+      opacity: 1,
+    });
+  }
+
+  return (
+    <button
+      {...buttonProps}
+      type={buttonProps.type ?? "button"}
+      disabled={disabled}
+      onMouseEnter={(event) => {
+        moveBubble(event);
+        onMouseEnter?.(event);
+      }}
+      onMouseMove={(event) => {
+        moveBubble(event);
+        onMouseMove?.(event);
+      }}
+      onMouseLeave={(event) => {
+        hideBubble();
+        onMouseLeave?.(event);
+      }}
+      onFocus={(event) => {
+        showBubbleFromCenter(
+          event.currentTarget,
+        );
+        onFocus?.(event);
+      }}
+      onBlur={(event) => {
+        hideBubble();
+        onBlur?.(event);
+      }}
+      className={`RS_VehicleButton RS_VehicleButton--${variant} ${className}`}
+    >
+      <span
+        aria-hidden="true"
+        className="RS_BtnBubble"
+        style={bubbleStyle}
+      />
+
+      <span
+        className={`RS_BtnContent ${contentClassName}`}
+      >
+        {children}
+      </span>
+    </button>
+  );
+}
+
+/* =========================================================
+   SMALL REUSABLE DETAILS
 ========================================================= */
 
 function DetailItem({
@@ -615,16 +808,19 @@ function DetailItem({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#F2F3F5] text-[#555B65]">
-        <FilledIcon name={icon} size={16} />
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#EFEFF2] text-[#5E5E66]">
+        <FilledIcon
+          name={icon}
+          size={16}
+        />
       </div>
 
       <div className="min-w-0 pt-0.5">
-        <p className="text-[10px] font-medium text-[#8A9099]">
+        <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#8A8A92]">
           {label}
         </p>
 
-        <p className="mt-1 break-words text-[12px] font-semibold leading-5 text-[#25282D]">
+        <p className="mt-1 break-words text-[13px] font-semibold leading-5 text-[#202024]">
           {value}
         </p>
       </div>
@@ -641,11 +837,11 @@ function VehicleSmallDetail({
 }) {
   return (
     <div>
-      <p className="text-[9px] font-medium text-[#8A9099]">
+      <p className="text-[10px] font-medium uppercase tracking-[0.04em] text-[#8A8A92]">
         {label}
       </p>
 
-      <p className="mt-1 text-[11px] font-semibold text-[#30343A]">
+      <p className="mt-1 text-[12px] font-semibold text-[#303035]">
         {value}
       </p>
     </div>
@@ -663,11 +859,12 @@ function BookingCard({
   booking: Booking;
   onView: () => void;
 }) {
-  const style = statusStyles[booking.status];
+  const style =
+    statusStyles[booking.status];
 
   return (
-    <article className="grid overflow-hidden rounded-[22px] bg-white p-3 shadow-[0_12px_40px_rgba(25,31,40,0.07)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_50px_rgba(25,31,40,0.1)] md:grid-cols-[210px_minmax(0,1fr)]">
-      <div className="relative h-[170px] overflow-hidden rounded-[17px] bg-[#EFEFF1] md:h-full md:min-h-[155px]">
+    <article className="grid overflow-hidden rounded-[28px] bg-white/95 p-3 shadow-[0_14px_45px_rgba(31,31,38,0.055)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_55px_rgba(31,31,38,0.085)] md:grid-cols-[210px_minmax(0,1fr)]">
+      <div className="relative h-[170px] overflow-hidden rounded-[20px] bg-[#EFEFF2] md:h-full md:min-h-[155px]">
         <img
           src={VEHICLE_IMAGE}
           alt="Roadshow LED vehicle"
@@ -675,7 +872,7 @@ function BookingCard({
         />
 
         <span
-          className={`absolute left-3 top-3 inline-flex items-center gap-2 rounded-full px-3 py-2 text-[11px] font-bold shadow-sm ${style.badge}`}
+          className={`absolute left-3 top-3 inline-flex items-center gap-2 rounded-full px-3 py-2 text-[11px] font-semibold shadow-sm ${style.badge}`}
         >
           <span
             className={`h-2 w-2 rounded-full ${style.dot}`}
@@ -685,95 +882,125 @@ function BookingCard({
         </span>
       </div>
 
-      <div className="grid min-w-0 gap-5 px-2 py-4 sm:px-5 xl:grid-cols-[220px_minmax(280px,1fr)_180px_150px] xl:items-center">
+      <div className="grid min-w-0 gap-5 px-2 py-4 sm:px-5 md:grid-cols-2 md:gap-x-8 md:gap-y-6 xl:grid-cols-[220px_minmax(280px,1fr)_180px_150px] xl:items-center xl:gap-5">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#8A9099]">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#8A8A92]">
             Booking ID
           </p>
 
-          <h3 className="mt-1 text-[17px] font-bold text-[#17191D]">
+          <h3 className="mt-1 text-[19px] font-semibold tracking-tight text-[#17191D]">
             {booking.id}
           </h3>
 
-          <p className="mt-4 text-[10px] font-medium text-[#8A9099]">
+          <p className="mt-4 text-[10px] font-medium text-[#8A8A92]">
             Requested on
           </p>
 
-          <p className="mt-1 text-[12px] font-medium text-[#4C525B]">
+          <p className="mt-1 text-[12px] font-medium text-[#616168]">
             {booking.requestedOn}
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+        <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1 xl:justify-self-end">
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#F3F4F6] text-[#555B65]">
-              <FilledIcon name="calendar" size={16} />
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFEFF2] text-[#616168]">
+              <FilledIcon
+                name="calendar"
+                size={16}
+              />
             </div>
 
-            <p className="text-[12px] font-semibold text-[#30343A]">
+            <p className="text-[12px] font-semibold text-[#303035]">
               {booking.startDate}
-              <span className="mx-2 text-[#A1A6AE]">–</span>
+
+              <span className="mx-2 text-[#A6A6AD]">
+                –
+              </span>
+
               {booking.endDate}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#F3F4F6] text-[#555B65]">
-              <FilledIcon name="clock" size={16} />
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFEFF2] text-[#616168]">
+              <FilledIcon
+                name="clock"
+                size={16}
+              />
             </div>
 
-            <p className="text-[12px] font-medium text-[#555B65]">
+            <p className="text-[12px] font-medium text-[#616168]">
               {booking.duration}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#F3F4F6] text-[#555B65]">
-              <FilledIcon name="vehicle" size={17} />
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFEFF2] text-[#616168]">
+              <FilledIcon
+                name="vehicle"
+                size={17}
+              />
             </div>
 
-            <p className="text-[12px] font-medium text-[#555B65]">
+            <p className="text-[12px] font-medium text-[#616168]">
               {booking.vehicleTypes} vehicle{" "}
-              {booking.vehicleTypes === 1 ? "type" : "types"}
-              <span className="mx-2 text-[#A1A6AE]">•</span>
+              {booking.vehicleTypes === 1
+                ? "type"
+                : "types"}
+
+              <span className="mx-2 text-[#A6A6AD]">
+                •
+              </span>
+
               {booking.vehicleCount}{" "}
-              {booking.vehicleCount === 1 ? "vehicle" : "vehicles"}
+              {booking.vehicleCount === 1
+                ? "vehicle"
+                : "vehicles"}
             </p>
           </div>
         </div>
 
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#8A9099]">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#8A8A92]">
             Estimated Total
           </p>
 
-          <p className="mt-2 text-[21px] font-bold tracking-tight text-[#151619]">
-            {formatINR(booking.estimatedTotal)}
+          <p className="mt-2 text-[21px] font-semibold tracking-tight text-[#B20D19]">
+            {formatINR(
+              booking.estimatedTotal,
+            )}
           </p>
         </div>
 
-        <button
-          type="button"
+        <BubbleButton
           onClick={onView}
-          className="flex h-12 w-full items-center justify-center gap-3 rounded-[14px] bg-[#111214] px-5 text-[12px] font-bold text-white shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition hover:bg-[#292B2F] active:scale-[0.98]"
+          variant="light"
+          className="h-12 w-full px-5 text-[12px] font-semibold shadow-[0_4px_16px_rgba(31,31,38,0.06)]"
         >
           View Details
 
-          <FilledIcon name="chevronRight" size={16} />
-        </button>
+          <FilledIcon
+            name="chevronRight"
+            size={16}
+          />
+        </BubbleButton>
       </div>
     </article>
   );
 }
 
 /* =========================================================
-   VEHICLE ROW INSIDE POPUP
+   VEHICLE ROW INSIDE MODAL
 ========================================================= */
 
-function VehicleRow({ vehicle }: { vehicle: Vehicle }) {
+function VehicleRow({
+  vehicle,
+}: {
+  vehicle: Vehicle;
+}) {
   return (
-    <div className="grid gap-4 rounded-[18px] bg-[#F7F8FA] p-3 sm:p-4 lg:grid-cols-[110px_minmax(0,1fr)_190px] lg:items-center">
-      <div className="h-[100px] overflow-hidden rounded-[14px] bg-[#ECEEF1] lg:h-[82px]">
+    <div className="grid gap-4 rounded-[22px] bg-[#F1F1F4] p-3 sm:p-4 lg:grid-cols-[110px_minmax(0,1fr)_190px] lg:items-center">
+      <div className="h-[100px] overflow-hidden rounded-[18px] bg-[#EDEDF0] lg:h-[82px]">
         <img
           src={VEHICLE_IMAGE}
           alt={vehicle.name}
@@ -782,7 +1009,7 @@ function VehicleRow({ vehicle }: { vehicle: Vehicle }) {
       </div>
 
       <div className="min-w-0">
-        <h4 className="text-[13px] font-bold text-[#23262A]">
+        <h4 className="text-[13px] font-semibold text-[#202024]">
           {vehicle.name}
         </h4>
 
@@ -805,29 +1032,33 @@ function VehicleRow({ vehicle }: { vehicle: Vehicle }) {
           <VehicleSmallDetail
             label="Quantity"
             value={`${vehicle.quantity} ${
-              vehicle.quantity === 1 ? "Vehicle" : "Vehicles"
+              vehicle.quantity === 1
+                ? "Vehicle"
+                : "Vehicles"
             }`}
           />
         </div>
       </div>
 
-      <div className="rounded-[14px] bg-white p-4">
+      <div className="rounded-[18px] bg-white p-4">
         <div className="flex items-center justify-between gap-4">
-          <span className="text-[10px] font-medium text-[#8A9099]">
+          <span className="text-[10px] font-medium text-[#8A8A92]">
             Rate / Day
           </span>
 
-          <span className="text-[12px] font-semibold text-[#454A52]">
-            {formatINR(vehicle.ratePerDay)}
+          <span className="text-[12px] font-semibold text-[#4F4F55]">
+            {formatINR(
+              vehicle.ratePerDay,
+            )}
           </span>
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-4">
-          <span className="text-[10px] font-medium text-[#8A9099]">
+          <span className="text-[10px] font-medium text-[#8A8A92]">
             Total
           </span>
 
-          <span className="text-[14px] font-bold text-[#E5232A]">
+          <span className="text-[14px] font-semibold text-[#111114]">
             {formatINR(vehicle.total)}
           </span>
         </div>
@@ -837,7 +1068,7 @@ function VehicleRow({ vehicle }: { vehicle: Vehicle }) {
 }
 
 /* =========================================================
-   POPUP MODAL
+   BOOKING DETAILS MODAL
 ========================================================= */
 
 function BookingModal({
@@ -851,51 +1082,125 @@ function BookingModal({
   onCancel: () => void;
   onDownload: () => void;
 }) {
-  const style = statusStyles[booking.status];
+  const style =
+    statusStyles[booking.status];
+
+  const [mounted] = useState(
+    () =>
+      typeof document !== "undefined",
+  );
 
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
+    const scrollY = window.scrollY;
 
-    document.body.style.overflow = "hidden";
+    const previousBodyPosition =
+      document.body.style.position;
 
-    function handleEscape(event: KeyboardEvent) {
+    const previousBodyTop =
+      document.body.style.top;
+
+    const previousBodyLeft =
+      document.body.style.left;
+
+    const previousBodyWidth =
+      document.body.style.width;
+
+    const previousBodyOverflow =
+      document.body.style.overflow;
+
+    const previousHtmlOverflow =
+      document.documentElement.style
+        .overflow;
+
+    document.body.style.position =
+      "fixed";
+
+    document.body.style.top =
+      `-${scrollY}px`;
+
+    document.body.style.left = "0";
+    document.body.style.width =
+      "100%";
+
+    document.body.style.overflow =
+      "hidden";
+
+    document.documentElement.style.overflow =
+      "hidden";
+
+    function handleEscape(
+      event: KeyboardEvent,
+    ) {
       if (event.key === "Escape") {
         onClose();
       }
     }
 
-    window.addEventListener("keydown", handleEscape);
+    window.addEventListener(
+      "keydown",
+      handleEscape,
+    );
 
     return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleEscape);
+      document.body.style.position =
+        previousBodyPosition;
+
+      document.body.style.top =
+        previousBodyTop;
+
+      document.body.style.left =
+        previousBodyLeft;
+
+      document.body.style.width =
+        previousBodyWidth;
+
+      document.body.style.overflow =
+        previousBodyOverflow;
+
+      document.documentElement.style.overflow =
+        previousHtmlOverflow;
+
+      window.scrollTo(0, scrollY);
+
+      window.removeEventListener(
+        "keydown",
+        handleEscape,
+      );
     };
   }, [onClose]);
 
-  return (
+  if (
+    !mounted ||
+    typeof document === "undefined"
+  ) {
+    return null;
+  }
+
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label={`Booking details for ${booking.id}`}
       onClick={onClose}
-      className="fixed inset-0 z-[200] flex items-end justify-center bg-black/50 backdrop-blur-[3px] sm:items-center sm:p-6"
+      className="RS_MyBookingsModal fixed inset-0 z-[9999] grid place-items-center bg-black/40 p-4 backdrop-blur-[8px] sm:p-6"
     >
       <div
-        onClick={(event) => event.stopPropagation()}
-        className="max-h-[94vh] w-full overflow-y-auto rounded-t-[30px] bg-[#F8F8F9] shadow-[0_-20px_60px_rgba(0,0,0,0.22)] sm:max-w-[1180px] sm:rounded-[30px] sm:shadow-[0_30px_90px_rgba(0,0,0,0.26)]"
+        onClick={(event) =>
+          event.stopPropagation()
+        }
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-[1180px] overflow-y-auto overscroll-contain rounded-[30px] bg-[#F5F5F7] shadow-[0_35px_100px_rgba(0,0,0,0.22)]"
       >
-        <div className="sticky top-0 z-20 bg-[#F8F8F9]/95 px-4 pb-4 pt-3 backdrop-blur-xl sm:px-7 sm:pt-6">
-          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#D7D9DD] sm:hidden" />
-
+        <div className="sticky top-0 z-20 bg-[#F5F5F7]/88 px-4 pb-4 pt-3 backdrop-blur-2xl sm:px-7 sm:pt-6">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-[18px] font-bold text-[#202226] sm:text-[21px]">
-                  Booking ID: {booking.id}
+                <h2 className="text-[18px] font-bold text-[#19191D] sm:text-[21px]">
+                  Booking ID:{" "}
+                  {booking.id}
                 </h2>
 
                 <span
-                  className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-[10px] font-bold ${style.badge}`}
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-[10px] font-semibold ${style.badge}`}
                 >
                   <span
                     className={`h-2 w-2 rounded-full ${style.dot}`}
@@ -905,8 +1210,9 @@ function BookingModal({
                 </span>
               </div>
 
-              <p className="mt-2 text-[11px] font-medium text-[#737983]">
-                Requested on {booking.requestedOn}
+              <p className="mt-2 text-[11px] font-medium text-[#76767E]">
+                Requested on{" "}
+                {booking.requestedOn}
               </p>
             </div>
 
@@ -914,9 +1220,12 @@ function BookingModal({
               type="button"
               onClick={onClose}
               aria-label="Close booking details"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-[#353A42] shadow-sm transition hover:bg-[#ECEEF1] active:scale-95"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-[#353A42] shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition hover:bg-[#ECECEF] active:scale-95"
             >
-              <FilledIcon name="close" size={17} />
+              <FilledIcon
+                name="close"
+                size={18}
+              />
             </button>
           </div>
         </div>
@@ -924,13 +1233,16 @@ function BookingModal({
         <div className="px-4 pb-6 sm:px-7 sm:pb-8">
           <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
             <aside className="space-y-4">
-              <div className="rounded-[22px] bg-white p-5 shadow-[0_10px_35px_rgba(22,27,34,0.05)]">
+              <div className="rounded-[26px] bg-white p-5 shadow-[0_10px_35px_rgba(22,27,34,0.05)]">
                 <div className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-[13px] bg-[#F1F2F4] text-[#40454D]">
-                    <FilledIcon name="user" size={18} />
+                  <div className="grid h-10 w-10 place-items-center rounded-full bg-[#ECECEF] text-[#40454D]">
+                    <FilledIcon
+                      name="user"
+                      size={18}
+                    />
                   </div>
 
-                  <h3 className="text-[14px] font-bold text-[#202226]">
+                  <h3 className="text-[15px] font-semibold text-[#17171A]">
                     Customer Details
                   </h3>
                 </div>
@@ -939,134 +1251,180 @@ function BookingModal({
                   <DetailItem
                     icon="user"
                     label="Name"
-                    value={booking.customer.name}
+                    value={
+                      booking.customer.name
+                    }
                   />
 
                   <DetailItem
                     icon="company"
                     label="Company Name"
-                    value={booking.customer.company}
+                    value={
+                      booking.customer.company
+                    }
                   />
 
                   <DetailItem
                     icon="phone"
                     label="Phone Number"
-                    value={booking.customer.phone}
+                    value={
+                      booking.customer.phone
+                    }
                   />
 
                   <DetailItem
                     icon="mail"
                     label="Email Address"
-                    value={booking.customer.email}
+                    value={
+                      booking.customer.email
+                    }
                   />
                 </div>
               </div>
 
-              <div className="rounded-[22px] bg-[#17181B] p-5 text-white shadow-[0_14px_40px_rgba(0,0,0,0.14)]">
+              <div className="rounded-[26px] bg-[#111114] p-5 text-white shadow-[0_14px_40px_rgba(0,0,0,0.14)]">
                 <div className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-[13px] bg-white/12">
-                    <FilledIcon name="support" size={19} />
+                  <div className="grid h-10 w-10 place-items-center rounded-full bg-white/12">
+                    <FilledIcon
+                      name="support"
+                      size={19}
+                    />
                   </div>
 
-                  <h3 className="text-[14px] font-bold">
+                  <h3 className="text-[14px] font-semibold">
                     Need Help?
                   </h3>
                 </div>
 
                 <p className="mt-4 text-[11px] leading-5 text-white/65">
-                  Our support team is ready to assist you with your
-                  booking.
+                  Our support team is
+                  ready to assist you
+                  with your booking.
                 </p>
 
                 <a
                   href="/contact"
-                  className="mt-5 flex h-11 w-full items-center justify-center rounded-[13px] bg-white text-[12px] font-bold text-[#17181B] transition hover:bg-[#F0F1F3] active:scale-[0.98]"
+                  className="RS_VehicleButton RS_VehicleButton--white mt-5 h-11 w-full text-[12px] font-semibold"
                 >
-                  Contact Support
+                  <span
+                    aria-hidden="true"
+                    className="RS_BtnBubble RS_BtnBubble--static"
+                  />
+
+                  <span className="RS_BtnContent">
+                    Contact Support
+                  </span>
                 </a>
               </div>
             </aside>
 
             <div className="space-y-4">
-              <div className="rounded-[22px] bg-white p-4 shadow-[0_10px_35px_rgba(22,27,34,0.05)] sm:p-5">
+              <div className="rounded-[26px] bg-white p-4 shadow-[0_10px_35px_rgba(22,27,34,0.05)] sm:p-5">
                 <div className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-[13px] bg-[#F1F2F4] text-[#40454D]">
-                    <FilledIcon name="vehicle" size={19} />
+                  <div className="grid h-10 w-10 place-items-center rounded-full bg-[#ECECEF] text-[#40454D]">
+                    <FilledIcon
+                      name="vehicle"
+                      size={19}
+                    />
                   </div>
 
-                  <h3 className="text-[14px] font-bold text-[#202226]">
-                    Vehicles &amp; Booking Details
+                  <h3 className="text-[15px] font-semibold text-[#17171A]">
+                    Vehicles &amp;
+                    Booking Details
                   </h3>
                 </div>
 
                 <div className="mt-5 space-y-3">
-                  {booking.vehicles.map((vehicle, index) => (
-                    <VehicleRow
-                      key={`${booking.id}-${vehicle.name}-${index}`}
-                      vehicle={vehicle}
-                    />
-                  ))}
+                  {booking.vehicles.map(
+                    (
+                      vehicle,
+                      index,
+                    ) => (
+                      <VehicleRow
+                        key={`${booking.id}-${vehicle.name}-${index}`}
+                        vehicle={vehicle}
+                      />
+                    ),
+                  )}
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-[22px] bg-white p-5 shadow-[0_10px_35px_rgba(22,27,34,0.05)]">
+                <div className="rounded-[26px] bg-white p-5 shadow-[0_10px_35px_rgba(22,27,34,0.05)]">
                   <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-[13px] bg-[#F1F2F4] text-[#40454D]">
-                      <FilledIcon name="vehicle" size={18} />
+                    <div className="grid h-10 w-10 place-items-center rounded-full bg-[#ECECEF] text-[#40454D]">
+                      <FilledIcon
+                        name="vehicle"
+                        size={18}
+                      />
                     </div>
 
-                    <h3 className="text-[14px] font-bold text-[#202226]">
+                    <h3 className="text-[15px] font-semibold text-[#17171A]">
                       Amount Summary
                     </h3>
                   </div>
 
                   <div className="mt-6 space-y-4 text-[12px] text-[#555B64]">
                     <div className="flex items-center justify-between gap-4">
-                      <span>Subtotal</span>
+                      <span>
+                        Subtotal
+                      </span>
 
-                      <span className="font-semibold text-[#30343A]">
-                        {formatINR(booking.estimatedTotal)}
+                      <span className="font-semibold text-[#303035]">
+                        {formatINR(
+                          booking.estimatedTotal,
+                        )}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-4">
-                      <span>Taxes &amp; Charges</span>
+                      <span>
+                        Taxes &amp;
+                        Charges
+                      </span>
 
-                      <span className="font-semibold text-[#30343A]">
+                      <span className="font-semibold text-[#303035]">
                         ₹ 0
                       </span>
                     </div>
 
-                    <div className="h-px bg-[#ECEEF1]" />
+                    <div className="h-px bg-[#EDEDF0]" />
 
                     <div className="flex items-center justify-between gap-4">
-                      <span className="text-[13px] font-bold text-[#202226]">
+                      <span className="text-[13px] font-semibold text-[#19191D]">
                         Estimated Total
                       </span>
 
-                      <span className="text-[16px] font-bold text-[#E5232A]">
-                        {formatINR(booking.estimatedTotal)}
+                      <span className="text-[16px] font-bold text-[#B20D19]">
+                        {formatINR(
+                          booking.estimatedTotal,
+                        )}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded-[22px] bg-white p-5 shadow-[0_10px_35px_rgba(22,27,34,0.05)]">
+                <div className="rounded-[26px] bg-white p-5 shadow-[0_10px_35px_rgba(22,27,34,0.05)]">
                   <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-[13px] bg-[#F1F2F4] text-[#40454D]">
-                      <FilledIcon name="send" size={18} />
+                    <div className="grid h-10 w-10 place-items-center rounded-full bg-[#ECECEF] text-[#40454D]">
+                      <FilledIcon
+                        name="send"
+                        size={18}
+                      />
                     </div>
 
-                    <h3 className="text-[14px] font-bold text-[#202226]">
+                    <h3 className="text-[15px] font-semibold text-[#17171A]">
                       What Happens Next?
                     </h3>
                   </div>
 
-                  <p className="mt-5 text-[12px] leading-6 text-[#626872]">
-                    Our team will contact you soon to confirm vehicle
-                    availability, campaign requirements, route details
-                    and the final booking amount.
+                  <p className="mt-5 text-[12px] leading-6 text-[#6A6A72]">
+                    Our team will contact
+                    you soon to confirm
+                    vehicle availability,
+                    campaign requirements,
+                    route details and the
+                    final booking amount.
                   </p>
                 </div>
               </div>
@@ -1074,49 +1432,68 @@ function BookingModal({
           </div>
 
           <div className="mt-5 grid gap-3 sm:flex sm:flex-wrap sm:justify-end">
-            <button
-              type="button"
+            <BubbleButton
               onClick={onDownload}
-              className="flex h-12 items-center justify-center gap-3 rounded-[14px] bg-[#EDEEF1] px-5 text-[12px] font-bold text-[#30343A] transition hover:bg-[#E2E4E8] active:scale-[0.98]"
+              variant="light"
+              className="h-12 px-5 text-[12px] font-semibold"
             >
-              <FilledIcon name="download" size={17} />
+              <FilledIcon
+                name="download"
+                size={17}
+              />
 
               Download Summary
-            </button>
+            </BubbleButton>
 
-            {booking.status !== "Cancelled" &&
-              booking.status !== "Completed" && (
-                <button
-                  type="button"
+            {booking.status !==
+              "Cancelled" &&
+              booking.status !==
+                "Completed" && (
+                <BubbleButton
                   onClick={onCancel}
-                  className="flex h-12 items-center justify-center gap-3 rounded-[14px] bg-[#FFE9EA] px-5 text-[12px] font-bold text-[#D9343C] transition hover:bg-[#FFDCDD] active:scale-[0.98]"
+                  variant="danger"
+                  className="h-12 px-5 text-[12px] font-semibold"
                 >
-                  <FilledIcon name="trash" size={17} />
+                  <FilledIcon
+                    name="trash"
+                    size={17}
+                  />
 
                   Cancel Request
-                </button>
+                </BubbleButton>
               )}
 
-            <button
-              type="button"
+            <BubbleButton
               onClick={onClose}
-              className="h-12 rounded-[14px] bg-white px-7 text-[12px] font-bold text-[#30343A] shadow-sm transition hover:bg-[#ECEEF1] active:scale-[0.98]"
+              variant="white"
+              className="h-12 px-7 text-[12px] font-semibold shadow-sm"
             >
               Close
-            </button>
+            </BubbleButton>
 
             <a
               href="/contact"
-              className="flex h-12 items-center justify-center gap-3 rounded-[14px] bg-[#111214] px-7 text-[12px] font-bold text-white shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition hover:bg-[#292B2F] active:scale-[0.98]"
+              className="RS_VehicleButton RS_VehicleButton--light h-12 px-7 text-[12px] font-semibold"
             >
-              <FilledIcon name="support" size={17} />
+              <span
+                aria-hidden="true"
+                className="RS_BtnBubble RS_BtnBubble--static"
+              />
 
-              Contact Us
+              <span className="RS_BtnContent">
+                <FilledIcon
+                  name="support"
+                  size={17}
+                />
+
+                Contact Us
+              </span>
             </a>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -1131,102 +1508,243 @@ export default function MyBookingsPage() {
   const [activeTab, setActiveTab] =
     useState<StatusFilter>("All");
 
-  const [searchValue, setSearchValue] = useState("");
+  const tabButtonRefs = useRef<
+    Partial<
+      Record<
+        StatusFilter,
+        HTMLButtonElement | null
+      >
+    >
+  >({});
+
+  const [
+    activeTabPillRect,
+    setActiveTabPillRect,
+  ] = useState<{
+    left: number;
+    width: number;
+  } | null>(null);
+
+  useEffect(() => {
+    function updateActiveTabPill() {
+      const activeButton =
+        tabButtonRefs.current[
+          activeTab
+        ];
+
+      if (!activeButton) return;
+
+      setActiveTabPillRect({
+        left: activeButton.offsetLeft,
+        width:
+          activeButton.offsetWidth,
+      });
+    }
+
+    updateActiveTabPill();
+
+    window.addEventListener(
+      "resize",
+      updateActiveTabPill,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "resize",
+        updateActiveTabPill,
+      );
+    };
+  }, [activeTab]);
+
+  const [searchValue, setSearchValue] =
+    useState("");
 
   const [sortMode, setSortMode] =
     useState<SortMode>("newest");
 
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterOpen, setFilterOpen] =
+    useState(false);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const filterRef =
+    useRef<HTMLDivElement>(null);
 
-  const [selectedBookingId, setSelectedBookingId] =
-    useState<string | null>(null);
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
+  const [
+    selectedBookingId,
+    setSelectedBookingId,
+  ] = useState<string | null>(null);
 
   const pageSize = 3;
+
+  useEffect(() => {
+    if (!filterOpen) return;
+
+    function handleClickOutside(
+      event: MouseEvent,
+    ) {
+      if (
+        filterRef.current &&
+        !filterRef.current.contains(
+          event.target as Node,
+        )
+      ) {
+        setFilterOpen(false);
+      }
+    }
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside,
+      );
+    };
+  }, [filterOpen]);
 
   const statusCounts = useMemo(() => {
     return {
       All: bookings.length,
+
       Pending: bookings.filter(
-        (booking) => booking.status === "Pending",
+        (booking) =>
+          booking.status ===
+          "Pending",
       ).length,
+
       Confirmed: bookings.filter(
-        (booking) => booking.status === "Confirmed",
+        (booking) =>
+          booking.status ===
+          "Confirmed",
       ).length,
+
       Ongoing: bookings.filter(
-        (booking) => booking.status === "Ongoing",
+        (booking) =>
+          booking.status ===
+          "Ongoing",
       ).length,
+
       Completed: bookings.filter(
-        (booking) => booking.status === "Completed",
+        (booking) =>
+          booking.status ===
+          "Completed",
       ).length,
+
       Cancelled: bookings.filter(
-        (booking) => booking.status === "Cancelled",
+        (booking) =>
+          booking.status ===
+          "Cancelled",
       ).length,
     };
   }, [bookings]);
 
-  const filteredBookings = useMemo(() => {
-    let result = bookings.filter((booking) => {
-      const statusMatches =
-        activeTab === "All" || booking.status === activeTab;
+  const filteredBookings =
+    useMemo(() => {
+      let result = bookings.filter(
+        (booking) => {
+          const statusMatches =
+            activeTab === "All" ||
+            booking.status ===
+              activeTab;
 
-      const searchMatches = booking.id
-        .toLowerCase()
-        .includes(searchValue.trim().toLowerCase());
+          const searchMatches =
+            booking.id
+              .toLowerCase()
+              .includes(
+                searchValue
+                  .trim()
+                  .toLowerCase(),
+              );
 
-      return statusMatches && searchMatches;
-    });
-
-    if (sortMode === "newest") {
-      result = [...result].sort(
-        (a, b) =>
-          new Date(b.requestedAt).getTime() -
-          new Date(a.requestedAt).getTime(),
+          return (
+            statusMatches &&
+            searchMatches
+          );
+        },
       );
-    }
 
-    if (sortMode === "oldest") {
-      result = [...result].sort(
-        (a, b) =>
-          new Date(a.requestedAt).getTime() -
-          new Date(b.requestedAt).getTime(),
-      );
-    }
+      if (sortMode === "newest") {
+        result = [...result].sort(
+          (a, b) =>
+            new Date(
+              b.requestedAt,
+            ).getTime() -
+            new Date(
+              a.requestedAt,
+            ).getTime(),
+        );
+      }
 
-    if (sortMode === "highest") {
-      result = [...result].sort(
-        (a, b) => b.estimatedTotal - a.estimatedTotal,
-      );
-    }
+      if (sortMode === "oldest") {
+        result = [...result].sort(
+          (a, b) =>
+            new Date(
+              a.requestedAt,
+            ).getTime() -
+            new Date(
+              b.requestedAt,
+            ).getTime(),
+        );
+      }
 
-    if (sortMode === "lowest") {
-      result = [...result].sort(
-        (a, b) => a.estimatedTotal - b.estimatedTotal,
-      );
-    }
+      if (sortMode === "highest") {
+        result = [...result].sort(
+          (a, b) =>
+            b.estimatedTotal -
+            a.estimatedTotal,
+        );
+      }
 
-    return result;
-  }, [activeTab, bookings, searchValue, sortMode]);
+      if (sortMode === "lowest") {
+        result = [...result].sort(
+          (a, b) =>
+            a.estimatedTotal -
+            b.estimatedTotal,
+        );
+      }
+
+      return result;
+    }, [
+      activeTab,
+      bookings,
+      searchValue,
+      sortMode,
+    ]);
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredBookings.length / pageSize),
+    Math.ceil(
+      filteredBookings.length /
+        pageSize,
+    ),
   );
 
-  const safePage = Math.min(currentPage, totalPages);
-
-  const visibleBookings = filteredBookings.slice(
-    (safePage - 1) * pageSize,
-    safePage * pageSize,
+  const safePage = Math.min(
+    currentPage,
+    totalPages,
   );
+
+  const visibleBookings =
+    filteredBookings.slice(
+      (safePage - 1) * pageSize,
+      safePage * pageSize,
+    );
 
   const selectedBooking =
     bookings.find(
-      (booking) => booking.id === selectedBookingId,
+      (booking) =>
+        booking.id ===
+        selectedBookingId,
     ) ?? null;
 
-  function handleTabChange(tab: StatusFilter) {
+  function handleTabChange(
+    tab: StatusFilter,
+  ) {
     setActiveTab(tab);
     setCurrentPage(1);
   }
@@ -1234,138 +1752,460 @@ export default function MyBookingsPage() {
   function handleCancelBooking() {
     if (!selectedBooking) return;
 
-    const shouldCancel = window.confirm(
-      `Are you sure you want to cancel ${selectedBooking.id}?`,
-    );
+    const shouldCancel =
+      window.confirm(
+        `Are you sure you want to cancel ${selectedBooking.id}?`,
+      );
 
     if (!shouldCancel) return;
 
-    setBookings((currentBookings) =>
-      currentBookings.map((booking) =>
-        booking.id === selectedBooking.id
-          ? {
-              ...booking,
-              status: "Cancelled",
-            }
-          : booking,
-      ),
+    setBookings(
+      (currentBookings) =>
+        currentBookings.map(
+          (booking) =>
+            booking.id ===
+            selectedBooking.id
+              ? {
+                  ...booking,
+                  status:
+                    "Cancelled",
+                }
+              : booking,
+        ),
     );
   }
 
-  function handleDownloadSummary() {
+  async function handleDownloadSummary() {
     if (!selectedBooking) return;
 
-    const jsonContent = JSON.stringify(
-      selectedBooking,
-      null,
-      2,
-    );
+    const booking = selectedBooking;
+    const style =
+      statusStyles[booking.status];
 
-    const blob = new Blob([jsonContent], {
-      type: "application/json",
+    const { default: JsPDF } =
+      await import("jspdf");
+
+    const doc = new JsPDF({
+      orientation: "portrait",
+      unit: "pt",
+      format: "a4",
     });
 
-    const downloadUrl = URL.createObjectURL(blob);
+    const pageWidth =
+      doc.internal.pageSize.getWidth();
 
-    const downloadLink = document.createElement("a");
+    const pageHeight =
+      doc.internal.pageSize.getHeight();
 
-    downloadLink.href = downloadUrl;
-    downloadLink.download = `${selectedBooking.id}-summary.json`;
+    const marginX = 48;
+    const marginBottom = 56;
+    const contentWidth =
+      pageWidth - marginX * 2;
 
-    document.body.appendChild(downloadLink);
+    let y = 56;
 
-    downloadLink.click();
-    downloadLink.remove();
+    function newPageIfNeeded(
+      needed: number,
+    ) {
+      if (
+        y + needed >
+        pageHeight - marginBottom
+      ) {
+        doc.addPage();
+        y = 56;
+      }
+    }
 
-    URL.revokeObjectURL(downloadUrl);
+    function drawSectionTitle(
+      title: string,
+    ) {
+      newPageIfNeeded(30);
+
+      doc.setFont(
+        "helvetica",
+        "bold",
+      );
+      doc.setFontSize(12);
+      doc.setTextColor(17, 17, 20);
+      doc.text(
+        title.toUpperCase(),
+        marginX,
+        y,
+      );
+
+      y += 6;
+
+      doc.setDrawColor(
+        225,
+        225,
+        230,
+      );
+      doc.setLineWidth(1);
+      doc.line(
+        marginX,
+        y,
+        marginX + contentWidth,
+        y,
+      );
+
+      y += 18;
+    }
+
+    function drawRow(
+      label: string,
+      value: string,
+    ) {
+      newPageIfNeeded(18);
+
+      doc.setFont(
+        "helvetica",
+        "normal",
+      );
+      doc.setFontSize(9.5);
+      doc.setTextColor(
+        120,
+        120,
+        128,
+      );
+      doc.text(label, marginX, y);
+
+      doc.setFont(
+        "helvetica",
+        "bold",
+      );
+      doc.setFontSize(10.5);
+      doc.setTextColor(25, 25, 29);
+      doc.text(
+        value,
+        marginX + contentWidth,
+        y,
+        { align: "right" },
+      );
+
+      y += 18;
+    }
+
+    function drawSeparator() {
+      newPageIfNeeded(14);
+
+      doc.setDrawColor(
+        237,
+        237,
+        240,
+      );
+      doc.setLineWidth(0.75);
+      doc.line(
+        marginX,
+        y,
+        marginX + contentWidth,
+        y,
+      );
+
+      y += 14;
+    }
+
+    doc.setFont(
+      "helvetica",
+      "bold",
+    );
+    doc.setFontSize(18);
+    doc.setTextColor(17, 17, 20);
+    doc.text(
+      "Booking Summary",
+      marginX,
+      y,
+    );
+
+    y += 22;
+
+    doc.setFont(
+      "helvetica",
+      "normal",
+    );
+    doc.setFontSize(10);
+    doc.setTextColor(
+      110,
+      110,
+      118,
+    );
+    doc.text(
+      `Booking ID: ${booking.id}`,
+      marginX,
+      y,
+    );
+
+    y += 26;
+
+    drawSectionTitle(
+      "Booking Details",
+    );
+    drawRow("Booking ID", booking.id);
+    drawRow("Status", style.label);
+    drawRow(
+      "Requested On",
+      booking.requestedOn,
+    );
+
+    y += 8;
+
+    drawSectionTitle(
+      "Customer Details",
+    );
+    drawRow(
+      "Name",
+      booking.customer.name,
+    );
+    drawRow(
+      "Company Name",
+      booking.customer.company,
+    );
+    drawRow(
+      "Phone Number",
+      booking.customer.phone,
+    );
+    drawRow(
+      "Email Address",
+      booking.customer.email,
+    );
+
+    y += 8;
+
+    drawSectionTitle(
+      "Vehicles & Booking Details",
+    );
+
+    booking.vehicles.forEach(
+      (vehicle, index) => {
+        newPageIfNeeded(130);
+
+        doc.setFont(
+          "helvetica",
+          "bold",
+        );
+        doc.setFontSize(11);
+        doc.setTextColor(
+          17,
+          17,
+          20,
+        );
+        doc.text(
+          `${index + 1}. ${vehicle.name}`,
+          marginX,
+          y,
+        );
+
+        y += 18;
+
+        drawRow(
+          "Start Date",
+          vehicle.startDate,
+        );
+        drawRow(
+          "End Date",
+          vehicle.endDate,
+        );
+        drawRow(
+          "Duration",
+          vehicle.duration,
+        );
+        drawRow(
+          "Quantity",
+          `${vehicle.quantity} ${
+            vehicle.quantity === 1
+              ? "Vehicle"
+              : "Vehicles"
+          }`,
+        );
+        drawRow(
+          "Rate / Day",
+          formatINRForPdf(
+            vehicle.ratePerDay,
+          ),
+        );
+        drawRow(
+          "Vehicle Total",
+          formatINRForPdf(
+            vehicle.total,
+          ),
+        );
+
+        if (
+          index <
+          booking.vehicles.length - 1
+        ) {
+          y += 4;
+          drawSeparator();
+        } else {
+          y += 8;
+        }
+      },
+    );
+
+    drawSectionTitle(
+      "Amount Summary",
+    );
+    drawRow(
+      "Subtotal",
+      formatINRForPdf(
+        booking.estimatedTotal,
+      ),
+    );
+    drawRow(
+      "Taxes & Charges",
+      formatINRForPdf(0),
+    );
+    drawSeparator();
+
+    newPageIfNeeded(24);
+
+    doc.setFont(
+      "helvetica",
+      "bold",
+    );
+    doc.setFontSize(12.5);
+    doc.setTextColor(17, 17, 20);
+    doc.text(
+      "Estimated Total",
+      marginX,
+      y,
+    );
+    doc.text(
+      formatINRForPdf(
+        booking.estimatedTotal,
+      ),
+      marginX + contentWidth,
+      y,
+      { align: "right" },
+    );
+
+    y += 24;
+
+    doc.save(
+      `${booking.id}-booking-summary.pdf`,
+    );
   }
 
   return (
     <>
-      <main className="min-h-screen bg-[#F7F7F8] px-4 pb-12 pt-[130px] text-[#17181B] sm:px-6 sm:pt-[140px] lg:px-8 lg:pt-[150px]">
+      <main className="RS_MyBookingsRoot min-h-screen bg-[#ffffff] px-4 pb-12 pt-[130px] text-[#111114] sm:px-6 sm:pt-[140px] lg:px-8 lg:pt-[150px]">
         <div className="mx-auto max-w-[1440px]">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1 className="text-[30px] font-bold tracking-[-0.04em] text-[#151515] sm:text-[34px]">
+              <h1 className="RS_PageTitle text-[34px] font-medium tracking-[-0.045em] text-[#0F0F12] sm:text-[40px]">
                 My Bookings
               </h1>
 
-              <p className="mt-2 text-[13px] font-medium text-[#666C75]">
-                View and manage your roadshow booking requests.
+              <p className="mt-2 text-[14px] font-normal leading-6 text-[#6D6D75]">
+                View and manage your
+                roadshow booking
+                requests.
               </p>
             </div>
 
             <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
-              <label className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-[14px] bg-white px-4 shadow-[0_8px_25px_rgba(25,31,40,0.05)] lg:w-[320px]">
+              <label className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full bg-white/90 px-5 shadow-[0_10px_30px_rgba(31,31,38,0.055)] backdrop-blur-xl lg:w-[320px]">
                 <FilledIcon
                   name="search"
                   size={18}
-                  className="shrink-0 text-[#6D737C]"
+                  className="shrink-0 text-[#66666D]"
                 />
 
                 <input
                   value={searchValue}
                   onChange={(event) => {
-                    setSearchValue(event.target.value);
+                    setSearchValue(
+                      event.target.value,
+                    );
+
                     setCurrentPage(1);
                   }}
                   placeholder="Search by Booking ID..."
-                  className="min-w-0 flex-1 bg-transparent text-[12px] font-medium text-[#25282E] outline-none placeholder:text-[#A1A6AE]"
+                  className="min-w-0 flex-1 bg-transparent text-[12px] font-medium text-[#252529] outline-none placeholder:text-[#A6A6AD]"
                 />
               </label>
 
-              <div className="relative">
-                <button
-                  type="button"
+              <div
+                className="relative"
+                ref={filterRef}
+              >
+                <BubbleButton
                   onClick={() =>
-                    setFilterOpen((current) => !current)
+                    setFilterOpen(
+                      (current) =>
+                        !current,
+                    )
                   }
-                  className="flex h-12 w-full items-center justify-center gap-3 rounded-[14px] bg-white px-5 text-[12px] font-bold text-[#2A2D32] shadow-[0_8px_25px_rgba(25,31,40,0.05)] transition hover:bg-[#EEEEF1] active:scale-[0.98] sm:w-[150px]"
+                  variant="white"
+                  className="h-12 w-full px-5 text-[12px] font-semibold shadow-[0_10px_30px_rgba(31,31,38,0.055)] sm:w-[150px]"
                 >
-                  <FilledIcon name="filter" size={17} />
+                  <FilledIcon
+                    name="filter"
+                    size={17}
+                  />
 
                   Filters
-                </button>
+                </BubbleButton>
 
                 {filterOpen && (
-                  <div className="absolute right-0 top-[56px] z-40 w-full min-w-[210px] rounded-[16px] bg-white p-2 shadow-[0_18px_55px_rgba(0,0,0,0.16)]">
+                  <div className="absolute right-0 top-[56px] z-40 w-full min-w-[210px] rounded-[20px] bg-white p-2 shadow-[0_18px_55px_rgba(0,0,0,0.16)]">
                     {[
                       {
-                        value: "newest",
-                        label: "Newest first",
+                        value:
+                          "newest",
+                        label:
+                          "Newest first",
                       },
                       {
-                        value: "oldest",
-                        label: "Oldest first",
+                        value:
+                          "oldest",
+                        label:
+                          "Oldest first",
                       },
                       {
-                        value: "highest",
-                        label: "Highest amount",
+                        value:
+                          "highest",
+                        label:
+                          "Highest amount",
                       },
                       {
-                        value: "lowest",
-                        label: "Lowest amount",
+                        value:
+                          "lowest",
+                        label:
+                          "Lowest amount",
                       },
-                    ].map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => {
-                          setSortMode(
-                            option.value as SortMode,
-                          );
-                          setCurrentPage(1);
-                          setFilterOpen(false);
-                        }}
-                        className={`block w-full rounded-[11px] px-4 py-3 text-left text-[12px] font-semibold transition ${
-                          sortMode === option.value
-                            ? "bg-[#17181B] text-white"
-                            : "text-[#555B64] hover:bg-[#F2F3F5]"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
+                    ].map(
+                      (option) => (
+                        <button
+                          key={
+                            option.value
+                          }
+                          type="button"
+                          onClick={() => {
+                            setSortMode(
+                              option.value as SortMode,
+                            );
+
+                            setCurrentPage(
+                              1,
+                            );
+
+                            setFilterOpen(
+                              false,
+                            );
+                          }}
+                          className={`block w-full rounded-full px-4 py-3 text-left text-[12px] font-semibold transition ${
+                            sortMode ===
+                            option.value
+                              ? "bg-[#ECECEF] text-[#17171A]"
+                              : "text-[#555B64] hover:bg-[#F1F1F4]"
+                          }`}
+                        >
+                          {
+                            option.label
+                          }
+                        </button>
+                      ),
+                    )}
                   </div>
                 )}
               </div>
@@ -1373,36 +2213,61 @@ export default function MyBookingsPage() {
           </div>
 
           <div className="mt-8 overflow-x-auto pb-2">
-            <div className="flex min-w-max gap-3">
-              {tabs.map((tab) => {
-                const active = activeTab === tab;
+            <div className="relative flex min-w-max gap-1.5 rounded-full bg-[#EDEDF0] p-1.5">
+              {activeTabPillRect && (
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute z-0 rounded-full bg-white"
+                  style={{
+                    top: "50%",
+                    height: 44,
+                    left: activeTabPillRect.left,
+                    width:
+                      activeTabPillRect.width,
+                    transform:
+                      "translateY(-50%)",
+                    transition:
+                      "left 320ms cubic-bezier(0.22, 1, 0.36, 1), width 320ms cubic-bezier(0.22, 1, 0.36, 1)",
+                  }}
+                />
+              )}
 
-                const inactiveCountStyle =
+              {tabs.map((tab) => {
+                const countBg =
                   tab === "All"
-                    ? "bg-[#E7E8EB] text-[#555B65]"
-                    : statusStyles[tab].badge;
+                    ? "bg-[#E2E2E6]"
+                    : statusStyles[
+                        tab
+                      ].badge.split(
+                        " ",
+                      )[0];
 
                 return (
                   <button
                     key={tab}
+                    ref={(element) => {
+                      tabButtonRefs.current[
+                        tab
+                      ] = element;
+                    }}
                     type="button"
-                    onClick={() => handleTabChange(tab)}
-                    className={`flex h-12 min-w-[150px] items-center justify-center gap-4 rounded-[14px] px-5 text-[12px] font-bold transition active:scale-[0.98] ${
-                      active
-                        ? "bg-[#111214] text-white shadow-[0_8px_22px_rgba(0,0,0,0.18)]"
-                        : "bg-white text-[#272A2F] shadow-[0_8px_25px_rgba(25,31,40,0.04)] hover:bg-[#EEEEF1]"
-                    }`}
+                    onClick={() =>
+                      handleTabChange(
+                        tab,
+                      )
+                    }
+                    className="relative z-10 flex h-11 min-w-[140px] items-center justify-center gap-3 rounded-full bg-transparent px-5 text-[12px] font-normal text-black transition active:scale-[0.98]"
                   >
                     <span>{tab}</span>
 
                     <span
-                      className={`grid h-6 min-w-6 place-items-center rounded-lg px-1.5 text-[10px] font-bold ${
-                        active
-                          ? "bg-white/15 text-white"
-                          : inactiveCountStyle
-                      }`}
+                      className={`grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-[10px] font-normal text-black ${countBg}`}
                     >
-                      {statusCounts[tab]}
+                      {
+                        statusCounts[
+                          tab
+                        ]
+                      }
                     </span>
                   </button>
                 );
@@ -1411,110 +2276,379 @@ export default function MyBookingsPage() {
           </div>
 
           <div className="mt-5 space-y-4">
-            {visibleBookings.length > 0 ? (
-              visibleBookings.map((booking) => (
-                <BookingCard
-                  key={booking.id}
-                  booking={booking}
-                  onView={() =>
-                    setSelectedBookingId(booking.id)
-                  }
-                />
-              ))
+            {visibleBookings.length >
+            0 ? (
+              visibleBookings.map(
+                (booking) => (
+                  <BookingCard
+                    key={booking.id}
+                    booking={booking}
+                    onView={() =>
+                      setSelectedBookingId(
+                        booking.id,
+                      )
+                    }
+                  />
+                ),
+              )
             ) : (
-              <div className="rounded-[24px] bg-white px-6 py-20 text-center shadow-[0_12px_40px_rgba(25,31,40,0.06)]">
-                <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#F1F2F4] text-[#777D87]">
-                  <FilledIcon name="search" size={23} />
+              <div className="rounded-[28px] bg-white px-6 py-20 text-center shadow-[0_12px_40px_rgba(25,31,40,0.06)]">
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#ECECEF] text-[#777D87]">
+                  <FilledIcon
+                    name="search"
+                    size={23}
+                  />
                 </div>
 
-                <p className="mt-4 text-[14px] font-bold text-[#30343A]">
+                <p className="mt-4 text-[14px] font-semibold text-[#303035]">
                   No bookings found
                 </p>
 
                 <p className="mt-2 text-[12px] text-[#777D87]">
-                  Try changing the search or selected status.
+                  Try changing the
+                  search or selected
+                  status.
                 </p>
+
+                {(activeTab !==
+                  "All" ||
+                  searchValue.trim() !==
+                    "") && (
+                  <BubbleButton
+                    onClick={() => {
+                      setActiveTab(
+                        "All",
+                      );
+
+                      setSearchValue(
+                        "",
+                      );
+
+                      setCurrentPage(
+                        1,
+                      );
+                    }}
+                    variant="light"
+                    className="mx-auto mt-6 h-11 px-6 text-[12px] font-semibold"
+                  >
+                    Clear filters
+                  </BubbleButton>
+                )}
               </div>
             )}
           </div>
 
-          <div className="mt-6 flex flex-col gap-4 text-[11px] font-medium text-[#666C75] sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-6 flex flex-col gap-4 text-[11px] font-medium text-[#6D6D75] sm:flex-row sm:items-center sm:justify-between">
             <p>
               Showing{" "}
-              {visibleBookings.length === 0
+              {visibleBookings.length ===
+              0
                 ? 0
-                : (safePage - 1) * pageSize + 1}{" "}
+                : (safePage - 1) *
+                    pageSize +
+                  1}{" "}
               to{" "}
               {Math.min(
-                safePage * pageSize,
+                safePage *
+                  pageSize,
                 filteredBookings.length,
               )}{" "}
-              of {filteredBookings.length} bookings
+              of{" "}
+              {
+                filteredBookings.length
+              }{" "}
+              bookings
             </p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
               <button
                 type="button"
                 aria-label="Previous page"
-                disabled={safePage === 1}
+                disabled={
+                  safePage === 1
+                }
                 onClick={() =>
-                  setCurrentPage((current) =>
-                    Math.max(1, current - 1),
+                  setCurrentPage(
+                    (current) =>
+                      Math.max(
+                        1,
+                        current - 1,
+                      ),
                   )
                 }
-                className="grid h-10 w-10 place-items-center rounded-[12px] bg-white text-[#454A52] shadow-sm transition hover:bg-[#EDEEF1] disabled:cursor-not-allowed disabled:opacity-40"
+                className="grid h-10 w-10 place-items-center rounded-full bg-white text-[#4F4F55] shadow-sm transition hover:bg-[#ECECEF] disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <FilledIcon name="arrowLeft" size={16} />
+                <FilledIcon
+                  name="arrowLeft"
+                  size={16}
+                />
               </button>
 
-              {Array.from(
-                {
-                  length: totalPages,
-                },
-                (_, index) => index + 1,
-              ).map((pageNumber) => (
-                <button
-                  key={pageNumber}
-                  type="button"
-                  onClick={() =>
-                    setCurrentPage(pageNumber)
-                  }
-                  className={`grid h-10 min-w-10 place-items-center rounded-[12px] px-3 text-[11px] font-bold transition active:scale-95 ${
-                    safePage === pageNumber
-                      ? "bg-[#111214] text-white shadow-[0_6px_16px_rgba(0,0,0,0.16)]"
-                      : "bg-white text-[#454A52] shadow-sm hover:bg-[#EDEEF1]"
-                  }`}
-                >
-                  {pageNumber}
-                </button>
-              ))}
+              <div className="flex items-center gap-1 rounded-full bg-[#ECECEF] p-1">
+                {Array.from(
+                  {
+                    length:
+                      totalPages,
+                  },
+                  (_, index) =>
+                    index + 1,
+                ).map(
+                  (pageNumber) => (
+                    <button
+                      key={
+                        pageNumber
+                      }
+                      type="button"
+                      onClick={() =>
+                        setCurrentPage(
+                          pageNumber,
+                        )
+                      }
+                      className={`grid h-8 min-w-8 place-items-center rounded-full px-3 text-[11px] font-semibold transition active:scale-95 ${
+                        safePage ===
+                        pageNumber
+                          ? "bg-white text-[#111114] shadow-[0_4px_12px_rgba(25,31,40,0.1)]"
+                          : "bg-transparent text-[#72727A] hover:text-[#111114]"
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  ),
+                )}
+              </div>
 
               <button
                 type="button"
                 aria-label="Next page"
-                disabled={safePage === totalPages}
+                disabled={
+                  safePage ===
+                  totalPages
+                }
                 onClick={() =>
-                  setCurrentPage((current) =>
-                    Math.min(totalPages, current + 1),
+                  setCurrentPage(
+                    (current) =>
+                      Math.min(
+                        totalPages,
+                        current + 1,
+                      ),
                   )
                 }
-                className="grid h-10 w-10 place-items-center rounded-[12px] bg-white text-[#454A52] shadow-sm transition hover:bg-[#EDEEF1] disabled:cursor-not-allowed disabled:opacity-40"
+                className="grid h-10 w-10 place-items-center rounded-full bg-white text-[#4F4F55] shadow-sm transition hover:bg-[#ECECEF] disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <FilledIcon name="arrowRight" size={16} />
+                <FilledIcon
+                  name="arrowRight"
+                  size={16}
+                />
               </button>
             </div>
           </div>
         </div>
       </main>
 
+      <style jsx global>{`
+        .RS_MyBookingsRoot,
+        .RS_MyBookingsModal {
+          font-family:
+            "Outfit",
+            "Inter",
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif;
+          font-synthesis: none;
+        }
+
+        .RS_PageTitle {
+          position: relative;
+          width: fit-content;
+        }
+
+        .RS_VehicleButton {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          isolation: isolate;
+          border: 0;
+          border-radius: 999px;
+          cursor: pointer;
+          transform: translateZ(0);
+          transition:
+            transform 180ms ease,
+            box-shadow 220ms ease,
+            color 220ms ease,
+            background-color 220ms ease;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .RS_VehicleButton::after {
+          content: "";
+          position: absolute;
+          inset: 1px;
+          z-index: 0;
+          border-radius: inherit;
+          pointer-events: none;
+          background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.38),
+            rgba(255, 255, 255, 0)
+              48%
+          );
+          opacity: 0.7;
+        }
+
+        .RS_VehicleButton--light {
+          background: #ececef;
+          color: #17171a;
+        }
+
+        .RS_VehicleButton--white {
+          background: rgba(
+            255,
+            255,
+            255,
+            0.96
+          );
+          color: #17171a;
+        }
+
+        .RS_VehicleButton--dark {
+          background: #111114;
+          color: #ffffff;
+        }
+
+        .RS_VehicleButton--danger {
+          background: #fcebed;
+          color: #a91521;
+        }
+
+        .RS_BtnBubble {
+          position: absolute;
+          z-index: 0;
+          display: block;
+          border-radius: 999px;
+          pointer-events: none;
+          background: linear-gradient(
+            135deg,
+            #d51d2b 0%,
+            #8f0712 100%
+          );
+          transition:
+            transform 0.55s
+              cubic-bezier(
+                0.25,
+                0.46,
+                0.45,
+                0.94
+              ),
+            opacity 0.55s;
+          will-change:
+            transform,
+            opacity;
+        }
+
+        .RS_BtnBubble--static {
+          width: 360px;
+          height: 360px;
+          left: 50%;
+          top: 50%;
+          opacity: 0;
+          transform: translate(
+              -50%,
+              -50%
+            )
+            scale(0);
+        }
+
+        .RS_VehicleButton:hover
+          .RS_BtnBubble--static,
+        .RS_VehicleButton:focus-visible
+          .RS_BtnBubble--static {
+          opacity: 1;
+          transform: translate(
+              -50%,
+              -50%
+            )
+            scale(1);
+        }
+
+        .RS_BtnContent {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          width: 100%;
+          height: 100%;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          white-space: nowrap;
+        }
+
+        .RS_VehicleButton:hover,
+        .RS_VehicleButton:focus-visible {
+          color: #ffffff;
+          box-shadow: 0 12px 28px
+            rgba(
+              143,
+              7,
+              18,
+              0.18
+            );
+        }
+
+        .RS_VehicleButton:active {
+          transform: scale(0.975);
+        }
+
+        .RS_VehicleButton:disabled {
+          cursor: not-allowed;
+          opacity: 0.4;
+          transform: none;
+          box-shadow: none;
+        }
+
+        .RS_VehicleButton:disabled
+          .RS_BtnBubble {
+          display: none;
+        }
+
+        .RS_MyBookingsRoot
+          ::selection,
+        .RS_MyBookingsModal
+          ::selection {
+          color: #ffffff;
+          background: #b20d19;
+        }
+
+        @media (
+          prefers-reduced-motion:
+            reduce
+        ) {
+          .RS_VehicleButton,
+          .RS_BtnBubble {
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `}</style>
+
       {selectedBooking && (
         <BookingModal
           booking={selectedBooking}
-          onClose={() => setSelectedBookingId(null)}
-          onCancel={handleCancelBooking}
-          onDownload={handleDownloadSummary}
+          onClose={() =>
+            setSelectedBookingId(
+              null,
+            )
+          }
+          onCancel={
+            handleCancelBooking
+          }
+          onDownload={
+            handleDownloadSummary
+          }
         />
       )}
     </>
   );
-}
+} 
