@@ -53,6 +53,18 @@ export interface SalesOrder {
   hasDateConflict?: boolean;
   projectCodeCommentsArray: any[];
   closedLostCommentsArray: any[];
+ orderEditHistory?: {
+  _id: string;
+  editedBy: string;
+  editedAt: string;
+  customerChanges: { field: string; oldValue: any; newValue: any }[];
+  vehicleChanges: {
+    vehicleIndex: number;
+    action: "modified" | "added" | "removed";
+    vehicleLabel?: string;
+    changes: { field: string; oldValue: any; newValue: any }[];
+  }[];
+}[];
 }
 
 // ── Stage config ──────────────────────────────────────────────────────────────
@@ -128,6 +140,8 @@ export const SALES_STAGES = [
     step: 7,
   },
 ];
+
+
 
 export const SALES_STAGE_MAP = Object.fromEntries(
   SALES_STAGES.map((s) => [s.key, s])

@@ -556,6 +556,13 @@ export default function PipelineBoard() {
   const onDrop = (toStage: string) => {
     const order = dragOrder.current;
     if (!order || dragFrom.current === toStage) return;
+    // Vehicle Unavailable is a virtual column (grouped by unavailable-vehicle
+    // count, not a real pipelineStatus) that only exists to surface history —
+    // cards sitting there must not be draggable to any other stage.
+    if (dragFrom.current === "vehicleUnavailable") {
+      toast.error("Cannot move a Vehicle Unavailable card — resolve/replace the vehicle first.");
+      return;
+    }
     handleStageMove(order, toStage);
   };
 
@@ -766,16 +773,19 @@ export default function PipelineBoard() {
               }}
               onCardClick={(order) => {
                 const hasPendingFoc = orderHasPendingFoc(order);
-                if (hasPendingFoc) {
-                  setDefaultTab("clientClosure");
-                } else if (stage.key === "vehicleUnavailable") {
+                // A stage column with its own dedicated tab (Vehicle
+                // Unavailable, Client Closure) always opens that tab first —
+                // a pending FOC badge should only redirect to Client Closure
+                // for columns that don't already have a more specific tab
+                // (On Road, or any other generic stage).
+                if (stage.key === "vehicleUnavailable") {
                   setDefaultTab("VehicleUnavailable");
-                } else if (stage.key === "onRoad") {
-                  setDefaultTab("onRoad");
                 } else if (stage.key === "clientClosure") {
                   setDefaultTab("clientClosure");
+                } else if (stage.key === "onRoad") {
+                  setDefaultTab(hasPendingFoc ? "clientClosure" : "onRoad");
                 } else {
-                  setDefaultTab("overview");
+                  setDefaultTab(hasPendingFoc ? "clientClosure" : "overview");
                 }
                 setDrawerOrder(order);
               }}

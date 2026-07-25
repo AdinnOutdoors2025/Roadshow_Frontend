@@ -288,6 +288,18 @@ export default function OrderDetailDrawer({
                                     </div>
                                 )}
 
+                                {order.panNumber && (
+                                    <div className="flex items-start gap-3 text-sm">
+                                        <HiOutlineDocumentText className="w-5 h-5 text-gray-400 mt-0.5" />
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-gray-500 block text-sm mb-0.5">PAN Number</span>
+                                            <span className="font-medium text-gray-800 dark:text-gray-200 text-sm break-words">
+                                                {order.panNumber}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {order.phone && (
                                     <div className="flex items-start gap-3 text-sm">
                                         <HiOutlinePhone className="w-5 h-5 text-gray-400 mt-0.5" />
@@ -431,7 +443,7 @@ export default function OrderDetailDrawer({
                                             (new Date(item.toDate).getTime() -
                                                 new Date(item.fromDate).getTime()) /
                                             86400000
-                                        )
+                                        ) + 1
                                         : 0;
                                 const extraDays = item.extraDays || 0;
                                 const totalDays = baseDays + extraDays;

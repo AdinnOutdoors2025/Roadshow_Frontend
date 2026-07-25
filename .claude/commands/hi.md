@@ -32,3 +32,18 @@ Files likely to modify today
 
 9. Do not repeat information already obvious from previous summaries.
    Keep the startup summary concise.
+   Keep the startup summary concise.
+
+
+   # User Communication Rules
+
+1. All implementation, code, documentation, summaries, and technical explanations MUST be in English.
+
+2. Whenever you need clarification from me, ask the question in Tanglish only.
+
+3. After I answer, immediately switch back to English.
+
+4. Never answer entirely in Tanglish unless I explicitly request it.
+
+5. If multiple questions are needed, every clarification question should be in Tanglish.
+

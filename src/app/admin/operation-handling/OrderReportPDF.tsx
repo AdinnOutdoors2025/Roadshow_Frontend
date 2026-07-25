@@ -801,6 +801,134 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
           )}
 
 
+{/* ══ SECTION 4b: EXTRA KM HISTORY ══ */}
+          {(order.extraKmDetailsArray || []).length > 0 && (
+            <div style={S.section}>
+              <SectionTitle bg="#ea580c">Extra KM / Hours History ({(order.extraKmDetailsArray || []).length} records)</SectionTitle>
+              <div style={S.sectionBody}>
+                {order.bookingItems.map((bookingItem: any, bIdx: number) => {
+                  const entriesForBooking = driverEntries.filter((e: any) => e.vehicleIndex === bIdx);
+                  const extraKmForBooking = (order.extraKmDetailsArray || []).filter((e: any) => e.vehicleIndex === bIdx);
+                  if (extraKmForBooking.length === 0) return null;
+
+                  return (
+                    <div key={bIdx} data-avoid-break="true" style={{ marginBottom: 16 }}>
+                      {/* Booking item header */}
+                      <div style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                        background: "#fff7ed", border: "1px solid #fed7aa",
+                        borderRadius: "6px", padding: "8px 12px", marginBottom: 8, height: "44px"
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: "50%",
+                            background: "#ea580c", display: "flex", alignItems: "center",
+                            justifyContent: "center", fontSize: "11px", fontWeight: 800, color: "#fff",
+                            flexShrink: 0, lineHeight: 1, paddingBottom: "15px"
+                          }}>V{bIdx + 1}</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 }}>
+                            <span style={{ fontWeight: 700, fontSize: "12px", color: "#9a3412", lineHeight: 1.2 }}>
+                              {getVehicleTypeName(bookingItem.vehicleType, vehicleTypes)}
+                            </span>
+                            <span style={{ fontSize: "10px", color: "#6b7280", lineHeight: 1.2 }}>
+                              {bookingItem.campaignType} · {bookingItem.city}
+                            </span>
+                          </div>
+                        </div>
+                        <span style={{
+                          fontSize: "10px", fontWeight: 700,
+                          background: "#ffedd5", color: "#9a3412",
+                          padding: "4px 12px", borderRadius: "20px", whiteSpace: "nowrap",
+                          display: "inline-flex", alignItems: "center", justifyContent: "center",
+                          flexShrink: 0, paddingBottom: "15px"
+                        }}>
+                          {extraKmForBooking.length} records
+                        </span>
+                      </div>
+
+                      {entriesForBooking.map((entry: any, eIdx: number) => {
+                        const entryKmRecords = extraKmForBooking.filter((e: any) =>
+                          e.entryId ? String(e.entryId) === String(entry._id) : e.vehicleRegistrationNumber === entry.vehicleRegistrationNumber
+                        );
+                        if (entryKmRecords.length === 0) return null;
+
+                        // reg no vachu group pannu — old vs current
+                        const groups: Record<string, any[]> = {};
+                        entryKmRecords.forEach((e: any) => {
+                          const key = e.vehicleRegistrationNumber || "—";
+                          if (!groups[key]) groups[key] = [];
+                          groups[key].push(e);
+                        });
+
+                        return (
+                          <div key={eIdx} data-avoid-break="true" style={{
+                            marginBottom: 12, border: "1px solid #fed7aa", borderRadius: "8px", overflow: "hidden",
+                          }}>
+                            <div style={{
+                              display: "flex", alignItems: "center", gap: 10, padding: "8px 8px",
+                              background: "#fff7ed", borderBottom: "1px solid #fed7aa",
+                            }}>
+                              <span style={{ fontSize: "11px", fontWeight: 700, color: "#9a3412" }}>
+                                {entry.driverName}
+                              </span>
+                              <span style={{ fontSize: "10px", color: "#d1d5db" }}>·</span>
+                              <span style={{ fontSize: "10px", color: "#6b7280" }}>{entry.driverPhone}</span>
+                            </div>
+
+                            {Object.keys(groups).map((regNo) => {
+                              const groupRecords = groups[regNo];
+                              const isCurrentReg = regNo === entry.vehicleRegistrationNumber;
+                              const groupTotalKm = groupRecords.reduce((s, e) => s + (e.extraKm || 0), 0);
+                              const groupTotalHrs = groupRecords.reduce((s, e) => s + (e.extraHours || 0), 0);
+                              const groupTotalCost = groupRecords.reduce((s, e) => s + (e.totalCost || 0), 0);
+
+                              return (
+                                <div key={regNo} style={{ padding: "8px" }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                    <Badge color={isCurrentReg ? "green" : "gray"}>
+                                      {regNo} {isCurrentReg ? "(current)" : "(old)"}
+                                    </Badge>
+                                    <span style={{ fontSize: "10px", color: "#6b7280" }}>
+                                      {groupTotalKm} km · {groupTotalHrs} hrs · {fmt(groupTotalCost)}
+                                    </span>
+                                  </div>
+                                  <table style={{ ...S.table, margin: 0 }}>
+                                    <thead>
+                                      <tr>
+                                        {["Duration", "Extra KM", "Extra Hrs", "KM Cost", "Hr Cost", "Total", "Added By"].map(h => (
+                                          <th key={h} style={{ ...S.th, background: "#fff7ed" }}>{h}</th>
+                                        ))}
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {[...groupRecords].reverse().map((e: any, i: number) => (
+                                        <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fffaf5" }}>
+                                          <td style={{ ...S.td, fontSize: "10px" }}>{fmtDate(e.fromDate)} → {fmtDate(e.toDate)}</td>
+                                          <td style={S.td}>{e.extraKm} km</td>
+                                          <td style={S.td}>{e.extraHours} hrs</td>
+                                          <td style={S.td}>{fmt(e.extraKmCost)}</td>
+                                          <td style={S.td}>{fmt(e.extraHourCost)}</td>
+                                          <td style={{ ...S.td, fontWeight: 700, color: "#ea580c" }}>{fmt(e.totalCost)}</td>
+                                          <td style={{ ...S.td, fontSize: "10px" }}>{e.addedBy}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+    
+
 
           {/* ══ SECTION 3: COMMENTS ══ */}
           {(() => {
@@ -982,6 +1110,143 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
               </div>
             </div>
           )} */}
+
+          {/* ══ SECTION 6: ISSUES ══ */}
+          {/* {allIssues.length > 0 && (
+            <div data-avoid-break="true" style={S.section}>
+              <SectionTitle bg="#d97706">Issue / Escalation History ({allIssues.length} total)</SectionTitle>
+              <div style={S.sectionBody}>
+                <div data-avoid-break="true" style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+                  {[
+                    { label: "Issue", value: allIssues.filter((i: any) => i.status === "open").length, color: "#dc2626" },
+                    { label: "Resolved", value: allIssues.filter((i: any) => i.status === "resolved").length, color: "#16a34a" },
+                    { label: "Total", value: allIssues.length, color: "#111827" },
+                  ].map((s, i) => (
+                    <div key={i} style={{ ...S.statCard, flex: 1 }}>
+                      <div style={S.statLabel}>{s.label}</div>
+                      <div style={{ ...S.statValue, color: s.color }}>{s.value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {order.bookingItems.map((bookingItem: any, bIdx: number) => {
+                  const entriesForBooking = driverEntries.filter((e: any) => e.vehicleIndex === bIdx);
+                  const issuesForBooking = allIssues.filter((iss: any) => iss.vehicleIndex === bIdx);
+                  if (issuesForBooking.length === 0) return null;
+
+                  return (
+                    <div key={bIdx} data-avoid-break="true" style={{ marginBottom: 16 }}>
+                     
+                      <div style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                        background: "#fffbeb", border: "1px solid #fde68a",
+                        borderRadius: "6px", padding: "8px 12px", marginBottom: 8, height: "44px"
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: "50%",
+                            background: "#d97706", display: "flex", alignItems: "center",
+                            justifyContent: "center", fontSize: "11px", fontWeight: 800, color: "#fff",
+                            flexShrink: 0, lineHeight: 1, paddingBottom: "15px"
+                          }}>V{bIdx + 1}</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 }}>
+                            <span style={{ fontWeight: 700, fontSize: "12px", color: "#92400e", lineHeight: 1.2 }}>
+                              {getVehicleTypeName(bookingItem.vehicleType, vehicleTypes)}
+                            </span>
+                            <span style={{ fontSize: "10px", color: "#6b7280", lineHeight: 1.2 }}>
+                              {bookingItem.campaignType} · {bookingItem.city}
+                            </span>
+                          </div>
+                        </div>
+                        <span style={{
+                          fontSize: "10px", fontWeight: 700,
+                          background: "#fef3c7", color: "#92400e",
+                          padding: "4px 12px", borderRadius: "20px", whiteSpace: "nowrap",
+                          display: "inline-flex", alignItems: "center", justifyContent: "center",
+                          flexShrink: 0, paddingBottom: "15px"
+                        }}>
+                          {issuesForBooking.length} issues
+                        </span>
+                      </div>
+
+                      {entriesForBooking.map((entry: any, eIdx: number) => {
+                        const entryIssues = issuesForBooking.filter((iss: any) =>
+                          iss.entryId ? String(iss.entryId) === String(entry._id) : iss.vehicleRegNo === entry.vehicleRegistrationNumber
+                        );
+                        if (entryIssues.length === 0) return null;
+
+                      
+                        const groups: Record<string, any[]> = {};
+                        entryIssues.forEach((iss: any) => {
+                          const key = iss.vehicleRegNo || "—";
+                          if (!groups[key]) groups[key] = [];
+                          groups[key].push(iss);
+                        });
+
+                        return (
+                          <div key={eIdx} data-avoid-break="true" style={{
+                            marginBottom: 12, border: "1px solid #fde68a", borderRadius: "8px", overflow: "hidden",
+                          }}>
+                            <div style={{
+                              display: "flex", alignItems: "center", gap: 10, padding: "8px 8px",
+                              background: "#fffbeb", borderBottom: "1px solid #fde68a",
+                            }}>
+                              <span style={{ fontSize: "11px", fontWeight: 700, color: "#92400e" }}>
+                                {entry.driverName}
+                              </span>
+                              <span style={{ fontSize: "10px", color: "#d1d5db" }}>·</span>
+                              <span style={{ fontSize: "10px", color: "#6b7280" }}>{entry.driverPhone}</span>
+                            </div>
+
+                            {Object.keys(groups).map((regNo) => {
+                              const groupIssues = [...groups[regNo]].reverse();
+                              const isCurrentReg = regNo === entry.vehicleRegistrationNumber;
+                              const groupOpenCount = groupIssues.filter((i: any) => i.status === "open").length;
+
+                              return (
+                                <div key={regNo} style={{ padding: "8px" }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                    <Badge color={isCurrentReg ? "green" : "gray"}>
+                                      {regNo} {isCurrentReg ? "(current)" : "(old)"}
+                                    </Badge>
+                                    <span style={{ fontSize: "10px", color: "#6b7280" }}>
+                                      {groupIssues.length} issues{groupOpenCount > 0 ? ` · ${groupOpenCount} open` : ""}
+                                    </span>
+                                  </div>
+                                  {groupIssues.map((iss: any, i: number) => (
+                                    <div key={i} data-avoid-break="true" style={iss.status === "open" ? S.issueCardOpen : S.issueCardResolved}>
+                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                        <div style={{ fontSize: "11px", fontWeight: 700, color: iss.status === "open" ? "#c2410c" : "#15803d" }}>
+                                          {iss.driverName} — <span style={{ fontFamily: "monospace" }}>{iss.vehicleRegNo}</span>
+                                        </div>
+                                        <Badge color={iss.status === "open" ? "amber" : "green"}>
+                                          {iss.status === "open" ? "Issue" : "Resolved"}
+                                        </Badge>
+                                      </div>
+                                      <p style={{ fontSize: "11px", marginTop: 4, color: "#374151" }}><strong>Issue:</strong> {iss.issueDescription}</p>
+                                      <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 3 }}>Reported by {iss.reportedBy} · {fmtDatetime(iss.reportedAt)}</p>
+                                      {iss.status === "resolved" && (
+                                        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #bbf7d0" }}>
+                                          <p style={{ fontSize: "11px" }}><strong>Resolution:</strong> {iss.resolveDescription}</p>
+                                          <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 3 }}>Resolved by {iss.resolvedBy} · {fmtDatetime(iss.resolvedAt)}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )} */}
+
+
 
           {/* ══ SECTION 6: ISSUES ══ */}
           {allIssues.length > 0 && (

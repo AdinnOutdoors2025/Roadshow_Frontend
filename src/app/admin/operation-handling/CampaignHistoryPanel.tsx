@@ -7,7 +7,7 @@
 interface VehicleEntry {
   _id: string;
   vehicleRegistrationNumber: string;
-  
+
 }
 
 interface DriverHistoryEntry {
@@ -89,21 +89,44 @@ function buildVehicleSegments(
     (a, b) => new Date(a.changedAt).getTime() - new Date(b.changedAt).getTime()
   );
 
-  return sorted.map((entry, i) => {
-    const nextEntry = sorted[i + 1];
-    return {
-      _id: entry._id || `${entry.vehicleRegistrationNumber}-${entry.changedAt}-${i}`,
-      driverName: entry.driverName,
-      driverPhone: entry.driverPhone,
-      vehicleRegistrationNumber: entry.vehicleRegistrationNumber,
-      action: entry.action,
-      changedBy: entry.changedBy,
-      changedFields: entry.changedFields,
-      startDate: entry.changedAt,
-      endDate: nextEntry ? nextEntry.changedAt : campaignToDate,
-      isOngoing: !nextEntry,
-    };
-  });
+  const segments: Segment[] = [];
+  let current: any = null;
+
+sorted.forEach((entry) => {
+  if (entry.action === "removed") {
+    if (current) {
+      current.endDate = entry.changedAt;
+      current.isOngoing = false;
+      current.wasRemoved = true;
+      current.removalReason = entry.changedFields?.reason || "";
+      current.removedBy = entry.changedBy;
+      current.removedAt = entry.changedAt;
+    }
+    current = null;
+    return;
+  }
+
+  if (current) {
+    current.endDate = entry.changedAt;
+    current.isOngoing = false;
+  }
+
+  current = {
+    _id: entry._id || `${entry.vehicleRegistrationNumber}-${entry.changedAt}`,
+    driverName: entry.driverName,
+    driverPhone: entry.driverPhone,
+    vehicleRegistrationNumber: entry.vehicleRegistrationNumber,
+    action: entry.action,
+    changedBy: entry.changedBy,
+    changedFields: entry.changedFields,
+    startDate: entry.changedAt,
+    endDate: campaignToDate,
+    isOngoing: true,
+  };
+  segments.push(current);
+});
+
+  return segments;
 }
 
 function groupSegmentsByDate(segments: Segment[]): DateGroup[] {
@@ -177,7 +200,7 @@ function getDayView(
   });
 
   if (candidates.length > 0) {
-  
+
     const latest = candidates.reduce((a, b) =>
       new Date(a.startDate).getTime() > new Date(b.startDate).getTime() ? a : b
     );
@@ -190,6 +213,10 @@ function getDayView(
 
 function hasUpdateOnDay(segments: Segment[], dateKey: string): boolean {
   return segments.some((seg) => dayKeyOf(seg.startDate) === dateKey);
+}
+
+function hasRemovalOnDay(segments: Segment[], dateKey: string): boolean {
+  return segments.some((seg: any) => seg.wasRemoved && dayKeyOf(seg.endDate) === dateKey);
 }
 
 function fmtDt(s?: string): string {
@@ -233,6 +260,32 @@ function getImageUrlCH(url?: string): string | null {
   return `${(window as any).API_BASE?.replace("/api", "") || ""}${url}`;
 }
 
+// Mirrors the status tag logic in OnRoadTab.tsx so a registration number's
+// current state (On Road / Unavailable / Released / Assigned) is never
+// ambiguous, even after chained replacements.
+function getRegStatusCH(entry: any) {
+  if (!entry) return { label: "—", cls: "bg-gray-100 text-gray-400 border-gray-200" };
+  if (entry.entryStatus === "removed") {
+    return { label: "Released", cls: "bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600" };
+  }
+  if (entry.unavailableStatus) {
+    return { label: "Unavailable", cls: "bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800" };
+  }
+  if (entry.onRoadStatus === 1) {
+    return { label: "On Road", cls: "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" };
+  }
+  return { label: "Assigned", cls: "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800" };
+}
+
+function RegStatusBadgeCH({ entry }: { entry: any }) {
+  const { label, cls } = getRegStatusCH(entry);
+  return (
+    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border leading-none ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
 
 
 import React, { useState, useEffect } from "react";
@@ -267,10 +320,10 @@ export default function CampaignHistoryPanel({
     );
   });
 
- 
+
   const segments = buildVehicleSegments(vehicleDriverHistory, campaignToDate);
 
- 
+
   const dateGroups = groupSegmentsByDate(segments);
 
   useEffect(() => {
@@ -349,25 +402,20 @@ export default function CampaignHistoryPanel({
       {/* Vehicle tabs */}
       {vehicleEntries.length > 1 && (
         <div className="flex gap-1 px-3 pt-3 pb-0 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
-          {vehicleEntries.map((entry, i) => (
+        {vehicleEntries.map((entry, i) => (
             <button
               key={entry._id || i}
               onClick={() => setActiveVehicleTab(i)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${
-                activeVehicleTab === i
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                  : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${activeVehicleTab === i
+                ? "border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                }`}
             >
-              <div
-                className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white"
-                style={{ fontSize: "9px" }}
-              >
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-white ${entry.entryStatus === "removed" ? "bg-red-500" : "bg-blue-500"}`} style={{ fontSize: "9px" }}>
                 V{i + 1}
               </div>
-              <span className="font-mono text-xs">
-                {entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}
-              </span>
+              <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
+              <RegStatusBadgeCH entry={entry} />
             </button>
           ))}
         </div>
@@ -393,28 +441,26 @@ export default function CampaignHistoryPanel({
         <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
           <button
             onClick={() => setActiveSubTab("driverStatus")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-              activeSubTab === "driverStatus"
-                ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm"
-                : "text-gray-400 hover:text-gray-600"
-            }`}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeSubTab === "driverStatus"
+              ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm"
+              : "text-gray-400 hover:text-gray-600"
+              }`}
           >
             Driver Status
           </button>
           <button
             onClick={() => setActiveSubTab("campaignStatus")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-              activeSubTab === "campaignStatus"
-                ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm"
-                : "text-gray-400 hover:text-gray-600"
-            }`}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeSubTab === "campaignStatus"
+              ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm"
+              : "text-gray-400 hover:text-gray-600"
+              }`}
           >
             Campaign Status
           </button>
         </div>
       </div>
 
-     
+
       {activeSubTab === "driverStatus" && (
         <>
           {dateGroups.length > 0 && (
@@ -424,11 +470,10 @@ export default function CampaignHistoryPanel({
                   <button
                     key={grp.key}
                     onClick={() => setActiveGroupIdx(i)}
-                    className={`flex flex-col items-start gap-0.5 px-3 py-1.5 rounded-lg border text-left whitespace-nowrap flex-shrink-0 transition-all ${
-                      activeGroupIdx === i
-                        ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700"
-                        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
-                    }`}
+                    className={`flex flex-col items-start gap-0.5 px-3 py-1.5 rounded-lg border text-left whitespace-nowrap flex-shrink-0 transition-all ${activeGroupIdx === i
+                      ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700"
+                      : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      }`}
                   >
                     <span className="text-[11px] text-gray-400">{fmtD(grp.date)}</span>
                   </button>
@@ -461,11 +506,10 @@ export default function CampaignHistoryPanel({
                   <div key={seg._id}>
                     {/* Segment header card */}
                     <div
-                      className={`rounded-xl border p-3 ${
-                        seg.isOngoing
-                          ? "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10"
-                          : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/40"
-                      }`}
+                      className={`rounded-xl border p-3 ${seg.isOngoing
+                        ? "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10"
+                        : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/40"
+                        }`}
                     >
                       <div className="flex items-start justify-between gap-2 mb-1.5">
                         <div className="flex items-center gap-2">
@@ -481,14 +525,16 @@ export default function CampaignHistoryPanel({
                             </p>
                           </div>
                         </div>
-                        <span
+                       <span
                           className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
                             seg.isOngoing
                               ? "bg-emerald-100 text-emerald-700"
-                              : "bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                              : (seg as any).wasRemoved
+                                ? "bg-red-100 text-red-700"
+                                : "bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
                           }`}
                         >
-                          {seg.isOngoing ? "Active" : "Closed"}
+                          {seg.isOngoing ? "Active" : (seg as any).wasRemoved ? "Released" : "Closed"}
                         </span>
                       </div>
 
@@ -500,6 +546,16 @@ export default function CampaignHistoryPanel({
                         {seg.action === "created" ? "Driver added" : "Driver updated"} by{" "}
                         {seg.changedBy || "—"}
                       </p>
+
+                      {(seg as any).wasRemoved && (
+                        <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-2 py-1 w-fit dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+                          <XCircle size={12} />
+                          Released by {(seg as any).removedBy || "—"} on {fmtDt((seg as any).removedAt)}
+                          {(seg as any).removalReason && (
+                            <span className="font-normal text-red-500"> — {(seg as any).removalReason}</span>
+                          )}
+                        </div>
+                      )}
 
                       {seg.action === "updated" && seg.changedFields && Object.keys(seg.changedFields).length > 0 && (
                         <div className="mt-1.5 space-y-0.5 pt-1.5 border-t border-gray-200 dark:border-gray-700">
@@ -526,13 +582,12 @@ export default function CampaignHistoryPanel({
                           return (
                             <div key={idx} className="flex gap-2">
                               <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-white ${
-                                  act.kind === "issue"
-                                    ? issueData?.status === "open"
-                                      ? "bg-red-500"
-                                      : "bg-emerald-500"
-                                    : "bg-orange-500"
-                                }`}
+                                className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-white ${act.kind === "issue"
+                                  ? issueData?.status === "open"
+                                    ? "bg-red-500"
+                                    : "bg-emerald-500"
+                                  : "bg-orange-500"
+                                  }`}
                               >
                                 {act.kind === "issue" ? (
                                   <AlertTriangle size={12} />
@@ -548,8 +603,8 @@ export default function CampaignHistoryPanel({
                                         ? "Issue reported"
                                         : "Issue resolved"
                                       : unavailableData?.status === "unavailable"
-                                      ? "Marked unavailable"
-                                      : "Marked available"}
+                                        ? "Marked unavailable"
+                                        : "Marked available"}
                                   </span>
                                   <span className="text-xs text-gray-400">{fmtDt(act.date)}</span>
                                 </div>
@@ -594,7 +649,7 @@ export default function CampaignHistoryPanel({
         </>
       )}
 
-    
+
       {activeSubTab === "campaignStatus" && (
         <>
           {campaignDates.length === 0 ? (
@@ -603,7 +658,7 @@ export default function CampaignHistoryPanel({
             </div>
           ) : (
             <>
-             
+
               <div className="flex gap-1.5 px-3 pt-3 pb-2 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
                 {campaignDates.map((dateKey, i) => {
                   const changedThisDay = hasUpdateOnDay(segments, dateKey);
@@ -612,28 +667,28 @@ export default function CampaignHistoryPanel({
                     <button
                       key={dateKey}
                       onClick={() => setActiveCampaignDateIdx(i)}
-                      className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg border text-center whitespace-nowrap flex-shrink-0 transition-all relative ${
-                        activeCampaignDateIdx === i
-                          ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700"
-                          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      }`}
+                      className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg border text-center whitespace-nowrap flex-shrink-0 transition-all relative ${activeCampaignDateIdx === i
+                        ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700"
+                        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        }`}
                     >
                       <span
-                        className={`text-[10px] font-medium ${
-                          activeCampaignDateIdx === i ? "text-blue-500" : "text-gray-400"
-                        }`}
+                        className={`text-[10px] font-medium ${activeCampaignDateIdx === i ? "text-blue-500" : "text-gray-400"
+                          }`}
                       >
                         {fmtDayName(dateKey)}
                       </span>
                       <span
-                        className={`text-xs font-bold ${
-                          activeCampaignDateIdx === i ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-300"
-                        }`}
+                        className={`text-xs font-bold ${activeCampaignDateIdx === i ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-300"
+                          }`}
                       >
                         {fmtDShort(dateKey)}
                       </span>
                       {changedThisDay && (
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 absolute top-1 right-1" />
+                      )}
+                      {hasRemovalOnDay(segments, dateKey) && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 absolute top-1 left-1" />
                       )}
                       {isToday && (
                         <span className="text-[9px] font-semibold text-emerald-500">Today</span>
@@ -650,18 +705,17 @@ export default function CampaignHistoryPanel({
                   </div>
                 ) : (
                   <>
-                   
-                   {[...dayView.segments].reverse().map((seg, segIdx) => {
+
+                    {[...dayView.segments].reverse().map((seg, segIdx) => {
                       const showUpdatedBadge = dayView.mode === "updated";
 
                       return (
                         <div
                           key={seg._id}
-                          className={`rounded-xl border p-3 ${
-                            seg.isOngoing
-                              ? "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10"
-                              : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/40"
-                          }`}
+                          className={`rounded-xl border p-3 ${seg.isOngoing
+                            ? "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10"
+                            : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/40"
+                            }`}
                         >
                           <div className="flex items-start justify-between gap-2 mb-1.5">
                             <div className="flex items-center gap-2">
@@ -678,11 +732,10 @@ export default function CampaignHistoryPanel({
                               </div>
                             </div>
                             <span
-                              className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                                seg.isOngoing
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                              }`}
+                              className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${seg.isOngoing
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                                }`}
                             >
                               {seg.isOngoing ? "Active" : "Closed"}
                             </span>
@@ -699,6 +752,16 @@ export default function CampaignHistoryPanel({
                             <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 w-fit dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400">
                               <User size={12} />
                               {seg.action === "created" ? "Driver added on this date" : "Driver updated on this date"}
+                            </div>
+                          )}
+
+                          {(seg as any).wasRemoved && dayKeyOf((seg as any).endDate) === selectedDateKey && (
+                            <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-2 py-1 w-fit dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+                              <XCircle size={12} />
+                              Vehicle released on this date
+                              {(seg as any).removalReason && (
+                                <span className="font-normal text-red-500"> — {(seg as any).removalReason}</span>
+                              )}
                             </div>
                           )}
 
@@ -721,7 +784,7 @@ export default function CampaignHistoryPanel({
                       );
                     })}
 
-          
+
                     {activityForSelectedDate.length > 0 && (
                       <div className="pl-4 border-l-2 border-gray-200 dark:border-gray-700 space-y-2">
                         {activityForSelectedDate.map((act, idx) => {
@@ -732,13 +795,12 @@ export default function CampaignHistoryPanel({
                           return (
                             <div key={idx} className="flex gap-2">
                               <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-white ${
-                                  act.kind === "issue"
-                                    ? issueData?.status === "open"
-                                      ? "bg-red-500"
-                                      : "bg-emerald-500"
-                                    : "bg-orange-500"
-                                }`}
+                                className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-white ${act.kind === "issue"
+                                  ? issueData?.status === "open"
+                                    ? "bg-red-500"
+                                    : "bg-emerald-500"
+                                  : "bg-orange-500"
+                                  }`}
                               >
                                 {act.kind === "issue" ? (
                                   <AlertTriangle size={12} />
@@ -754,8 +816,8 @@ export default function CampaignHistoryPanel({
                                         ? "Issue reported"
                                         : "Issue resolved"
                                       : unavailableData?.status === "unavailable"
-                                      ? "Marked unavailable"
-                                      : "Marked available"}
+                                        ? "Marked unavailable"
+                                        : "Marked available"}
                                   </span>
                                   <span className="text-xs text-gray-400">{fmtDt(act.date)}</span>
                                 </div>

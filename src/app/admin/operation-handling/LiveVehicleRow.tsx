@@ -1,6 +1,6 @@
 
 
-/* eslint-disable */
+
 // @ts-nocheck
 "use client";
 
@@ -20,11 +20,12 @@ import {
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 import { useVehicle } from "../../../context/vehicletypecontext";
+import RegNoHistoryModal from "./RegNoHistoryModal";
 
 
 
 
-export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, onTrackIdFetched, correctVehicleIndex, forceOpen, onForceOpenHandled, onViewDriverRoute }) {
+export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, bookingStatusMap, onBookingStatusRefresh, onTrackIdFetched, correctVehicleIndex, forceOpen, onForceOpenHandled, onViewDriverRoute, vehicleTypes }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [commentPhoto, setCommentPhoto] = useState(null);
@@ -35,31 +36,146 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
   const [updDriverPhone, setUpdDriverPhone] = useState(entry.driverPhone || "");
   const [updRegNo, setUpdRegNo] = useState(entry.vehicleRegistrationNumber || "");
   const [updVehicleDocId, setUpdVehicleDocId] = useState(entry.vehicleDocId || "");
+  const [updReason, setUpdReason] = useState("");
+  const [updateConfirmOpen, setUpdateConfirmOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [unavailableOpen, setUnavailableOpen] = useState(false);
   const [unavailableReason, setUnavailableReason] = useState("");
   const [unavailablePhoto, setUnavailablePhoto] = useState(null);
+  const [unavailableInventoryStatus, setUnavailableInventoryStatus] = useState("Unavailable");
   const [unavailableSubmitting, setUnavailableSubmitting] = useState(false);
+  const [regHistoryOpen, setRegHistoryOpen] = useState(false);
+
+
+  // const handleUpdateDriver = async () => {
+  //   if (!updDriverName.trim()) return toast.error("Driver name required");
+  //   if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
+  //   if (!updRegNo.trim()) return toast.error("Reg number required");
+  //   if (!updVehicleDocId) return toast.error("Select a vehicle from the list");
+
+  //   setUpdating(true);
+  //   try {
+  //     const cleanReg = (r) => (r || "").replace(/\s+/g, "").toUpperCase();
+
+  //     const isUnavailable = entry.unavailableStatus === true;
+
+  //     const bs = bookingStatusMap?.[cleanReg(entry.vehicleRegistrationNumber)];
+  //     const isBookingValid = !!(
+  //       bs &&
+  //       bs.currentStatus === "Booked" &&
+  //       String(bs.orderId) === String(order._id) &&
+  //       bs.orderDisplayId === order.orderId
+  //     );
+  //     const isBookingMismatch = !isBookingValid;
+  //     const oldReg = (entry.vehicleRegistrationNumber || "").trim().toUpperCase().replace(/\s+/g, "");
+  //     const regChanged = oldReg && oldReg !== cleanReg;
+
+  //     await axios.patch(
+  //       `${API_BASE}admin/pipeline/${order._id}/onroad-driver/${entry._id}`,
+  //       {
+  //         driverName: updDriverName.trim(),
+  //         driverPhone: updDriverPhone.trim(),
+  //         vehicleRegistrationNumber: cleanReg,
+  //       },
+  //       { headers: { Authorization: `Bearer ${getToken()}` } }
+  //     );
+
+  //     const normalizeDate = (d) => {
+  //       if (!d) return null;
+  //       const dt = new Date(d);
+  //       const y = dt.getFullYear();
+  //       const m = String(dt.getMonth() + 1).padStart(2, "0");
+  //       const day = String(dt.getDate()).padStart(2, "0");
+  //       return `${y}-${m}-${day}`;
+  //     };
+
+  //     // ── NEW: friendly date format for remarks text ──
+  //     const fmtDate = (d) => {
+  //       if (!d) return "—";
+  //       return new Date(d).toLocaleDateString("en-IN", {
+  //         day: "2-digit", month: "short", year: "numeric",
+  //       });
+  //     };
+
+  //     // ── NEW: booked remarks + order references ──
+  //     const bookedRemarks = `Booked for Order ${order.orderId} - ${order.name || "Customer"} (${fmtDate(vehicle.fromDate)} to ${fmtDate(vehicle.toDate)})`;
+
+  //     try {
+
+  //       if (regChanged) {
+  //         try {
+  //           await axios.put(
+  //             `${API_BASE}api/updateRegistrationVehicleByRegNo/${oldReg}`,
+  //             { currentStatus: "Available" },
+  //             { headers: { Authorization: `Bearer ${getToken()}` } }
+  //           );
+  //         } catch (oldVehicleErr) {
+  //           console.error("Failed to release old vehicle:", oldVehicleErr);
+  //         }
+  //       }
+
+
+  //       await axios.put(
+  //         `${API_BASE}api/updateRegistrationVehicleByRegNo/${cleanReg}`,
+  //         {
+  //           currentStatus: "Booked",
+  //           fromDate: normalizeDate(vehicle.fromDate),
+  //           toDate: normalizeDate(vehicle.toDate),
+  //           remarks: bookedRemarks,
+  //           orderId: order._id,
+  //           orderDisplayId: order.orderId || "",
+  //         },
+  //         { headers: { Authorization: `Bearer ${getToken()}` } }
+  //       );
+  //     } catch (statusErr) {
+  //       toast.error("Driver updated, but vehicle status update failed. Please update manually.");
+  //     }
+
+  //     toast.success("Driver details updated!");
+  //     setUpdateDriverOpen(false);
+  //     onRefresh();
+  //     onBookingStatusRefresh?.();
+  //   } catch (e) {
+  //     toast.error(e?.response?.data?.message || "Failed to update");
+  //   } finally {
+  //     setUpdating(false);
+  //   }
+  // };
 
 
   const handleUpdateDriver = async () => {
     if (!updDriverName.trim()) return toast.error("Driver name required");
     if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
-    if (!updRegNo.trim()) return toast.error("Reg number required");
-    if (!updVehicleDocId) return toast.error("Select a vehicle from the list");
+    if (!updRegNo.trim()) return toast.error("Vehicle Reg number required");
+    if (!updReason.trim()) return toast.error("Reason for this update is required");
+    // if (!updVehicleDocId) return toast.error("Select a vehicle from the list");
 
     setUpdating(true);
     try {
-      const cleanReg = updRegNo.trim().toUpperCase().replace(/\s+/g, "");
-      const oldReg = (entry.vehicleRegistrationNumber || "").trim().toUpperCase().replace(/\s+/g, "");
-      const regChanged = oldReg && oldReg !== cleanReg;
+      const cleanReg = (r) => (r || "").replace(/\s+/g, "").toUpperCase();
+
+      const newReg = cleanReg(updRegNo);             
+      const oldReg = cleanReg(entry.vehicleRegistrationNumber); 
+
+      const isUnavailable = entry.unavailableStatus === true;
+
+      const bs = bookingStatusMap?.[oldReg];           
+      const isBookingValid = !!(
+        bs &&
+        bs.currentStatus === "Booked" &&
+        String(bs.orderId) === String(order._id) &&
+        bs.orderDisplayId === order.orderId
+      );
+      const isBookingMismatch = !isBookingValid;
+      const regChanged = oldReg && oldReg !== newReg; 
 
       await axios.patch(
         `${API_BASE}admin/pipeline/${order._id}/onroad-driver/${entry._id}`,
         {
           driverName: updDriverName.trim(),
           driverPhone: updDriverPhone.trim(),
-          vehicleRegistrationNumber: cleanReg,
+          vehicleRegistrationNumber: newReg,
+          reason: updReason.trim(),
         },
         { headers: { Authorization: `Bearer ${getToken()}` } }
       );
@@ -73,13 +189,20 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
         return `${y}-${m}-${day}`;
       };
 
-    
+      const fmtDate = (d) => {
+        if (!d) return "—";
+        return new Date(d).toLocaleDateString("en-IN", {
+          day: "2-digit", month: "short", year: "numeric",
+        });
+      };
+
+      const bookedRemarks = `Booked for Order ${order.orderId} - ${order.name || "Customer"} (${fmtDate(vehicle.fromDate)} to ${fmtDate(vehicle.toDate)})`;
+
       try {
-      
         if (regChanged) {
           try {
             await axios.put(
-              `${API_BASE}api/updateRegistrationVehicleByRegNo/${oldReg}`,
+              `${API_BASE}api/updateRegistrationVehicleByRegNo/${oldReg}`,   
               { currentStatus: "Available" },
               { headers: { Authorization: `Bearer ${getToken()}` } }
             );
@@ -88,13 +211,15 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
           }
         }
 
-     
         await axios.put(
-          `${API_BASE}api/updateRegistrationVehicleByRegNo/${cleanReg}`,
+          `${API_BASE}api/updateRegistrationVehicleByRegNo/${newReg}`,    
           {
             currentStatus: "Booked",
             fromDate: normalizeDate(vehicle.fromDate),
             toDate: normalizeDate(vehicle.toDate),
+            remarks: bookedRemarks,
+            orderId: order._id,
+            orderDisplayId: order.orderId || "",
           },
           { headers: { Authorization: `Bearer ${getToken()}` } }
         );
@@ -104,14 +229,16 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
 
       toast.success("Driver details updated!");
       setUpdateDriverOpen(false);
+      setUpdateConfirmOpen(false);
+      setUpdReason("");
       onRefresh();
+      onBookingStatusRefresh?.();
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to update");
     } finally {
       setUpdating(false);
     }
   };
-
 
 
   const fmtDatetime = (s) => {
@@ -177,6 +304,12 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
   const routeProgress = entry.routeProgress ?? 0;
   const isUnavailable = entry.unavailableStatus === true;
 
+  // ── NEW: booking mismatch check ──
+  const cleanRegForCheck = (r) => (r || "").replace(/\s+/g, "").toUpperCase();
+  const bs = bookingStatusMap?.[cleanRegForCheck(entry.vehicleRegistrationNumber)];
+
+
+
   // const handleSubmit = async () => {
   //   if (!commentText.trim()) return toast.error("Issue description required");
   //   setSubmitting(true);
@@ -236,7 +369,9 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
       const formData = new FormData();
       formData.append("vehicleIndex", correctVehicleIndex);
       formData.append("vehicleRegistrationNumber", entry.vehicleRegistrationNumber);
+      formData.append("entryId", entry._id);
       formData.append("reason", unavailableReason.trim());
+      formData.append("inventoryStatus", unavailableInventoryStatus);
       if (unavailablePhoto) formData.append("unavailablePhoto", unavailablePhoto);
 
       await axios.post(
@@ -253,6 +388,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
       setUnavailableOpen(false);
       setUnavailableReason("");
       setUnavailablePhoto(null);
+      setUnavailableInventoryStatus("Unavailable");
       onRefresh();
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to mark unavailable");
@@ -286,15 +422,22 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                 <Truck size={28} className="text-gray-400" />
               )}
             </div>
-            <span className="text-xs font-semibold tracking-wide text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded-md">
+            <button
+              type="button"
+              onClick={() => setRegHistoryOpen(true)}
+              disabled={!entry.vehicleRegistrationNumber}
+              className="text-xs font-semibold tracking-wide text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded-md hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-all disabled:cursor-default disabled:hover:bg-gray-100 disabled:hover:text-gray-600"
+              title="View full history for this registration number"
+            >
               {entry.vehicleRegistrationNumber || "—"}
-            </span>
+            </button>
             {isUnavailable && (
               <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md bg-red-100 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 text-center leading-tight">
                 <XCircle size={10} />
                 Unavailable
               </span>
             )}
+            
           </div>
 
 
@@ -408,16 +551,16 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
               <button
                 onClick={handleViewRoute}
                 disabled={isUnavailable}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${(isUnavailable) ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
               >
                 <Navigation size={11} />
                 View Route
               </button>
 
               <button
-                onClick={() => !isUnavailable && setCallModalOpen(true)}
+                onClick={() => !(isUnavailable) && setCallModalOpen(true)}
                 disabled={isUnavailable}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 transition-all whitespace-nowrap ${(isUnavailable) ? "opacity-40 cursor-no-drop pointer-events-none" : "hover:bg-gray-50 dark:hover:bg-gray-700"}`}
               >
                 <Phone size={11} />
                 Call Driver
@@ -425,9 +568,9 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
 
 
               <button
-                onClick={() => !isUnavailable && setModalOpen(true)}
+                onClick={() => !(isUnavailable ) && setModalOpen(true)}
                 disabled={isUnavailable}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none border-gray-200 text-gray-400 bg-gray-50" : openCount > 0
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${(isUnavailable) ? "opacity-40 cursor-no-drop pointer-events-none border-gray-200 text-gray-400 bg-gray-50" : openCount > 0
                   ? "border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30"
                   : "border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
                   }`}
@@ -456,6 +599,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                   setUpdDriverPhone(entry.driverPhone || "");
                   setUpdRegNo(entry.vehicleRegistrationNumber || "");
                   setUpdVehicleDocId(entry.vehicleDocId || "");
+                  setUpdReason("");
                   setUpdateDriverOpen(true);
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${isUnavailable ? "opacity-40 cursor-no-drop pointer-events-none border-gray-200 text-gray-400 bg-gray-50 dark:bg-gray-800 dark:border-gray-700" : "border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30"}`}
@@ -472,7 +616,7 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
               ) : (
                 <button
                   onClick={() => setUnavailableOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-800 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all whitespace-nowrap"
                 >
                   <AlertTriangle size={11} />
                   Unavailable
@@ -769,11 +913,62 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
             </div>
 
             <button
-              onClick={handleUpdateDriver}
-              disabled={updating}
+              onClick={() => {
+                if (!updDriverName.trim()) return toast.error("Driver name required");
+                if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
+                if (!updRegNo.trim()) return toast.error("Vehicle Reg number required");
+                setUpdateConfirmOpen(true);
+              }}
+              disabled={
+                updating ||
+                (updDriverName.trim() === (entry.driverName || "").trim() &&
+                  updDriverPhone.trim() === (entry.driverPhone || "").trim() &&
+                  updRegNo.trim().toUpperCase() === (entry.vehicleRegistrationNumber || "").trim().toUpperCase())
+              }
               className="w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all disabled:opacity-40"
             >
-              {updating ? "Updating..." : "Save Changes"}
+              Save Changes
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Update Driver: confirmation + mandatory reason ── */}
+      {updateConfirmOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Confirm Driver Update</h3>
+              <button onClick={() => setUpdateConfirmOpen(false)}>
+                <XCircle size={18} className="text-gray-400 hover:text-gray-600" />
+              </button>
+            </div>
+
+            <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 p-3 text-xs text-blue-700 dark:text-blue-300 space-y-1">
+              <p><b>Driver:</b> {entry.driverName || "—"} → {updDriverName}</p>
+              <p><b>Phone:</b> {entry.driverPhone || "—"} → {updDriverPhone}</p>
+              <p><b>Reg No:</b> {entry.vehicleRegistrationNumber || "—"} → {updRegNo}</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">
+                Reason for update <span className="text-red-400">*</span>
+              </label>
+              <textarea
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
+                rows={3}
+                placeholder="Why is this driver/vehicle being updated?"
+                value={updReason}
+                onChange={(e) => setUpdReason(e.target.value)}
+              />
+            </div>
+
+            <button
+              onClick={handleUpdateDriver}
+              disabled={updating || !updReason.trim()}
+              className="w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all disabled:opacity-40"
+            >
+              {updating ? "Updating..." : "Confirm & Save"}
             </button>
           </div>
         </div>
@@ -798,6 +993,28 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
             </div>
 
             <div className="px-5 py-4 flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                  Inventory Status
+                </label>
+                <div className="flex gap-2">
+                  {["Unavailable", "Damaged", "Under Maintenance"].map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setUnavailableInventoryStatus(status)}
+                      className={`flex-1 px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                        unavailableInventoryStatus === status
+                          ? "border-orange-400 bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400"
+                          : "border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
                   Add a comment ·{" "}
@@ -853,6 +1070,14 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
             </div>
           </div>
         </div>
+      )}
+
+      {regHistoryOpen && (
+        <RegNoHistoryModal
+          order={order}
+          regNo={entry.vehicleRegistrationNumber}
+          onClose={() => setRegHistoryOpen(false)}
+        />
       )}
     </>
   );

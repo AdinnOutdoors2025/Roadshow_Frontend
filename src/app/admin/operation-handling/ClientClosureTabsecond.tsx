@@ -929,11 +929,46 @@ function FocHistoryCard({
 
     const [historyExpanded, setHistoryExpanded] = useState(false);
 
+    const projectCode = (order as any)?.projectCodeArray?.[0]?.projectCode || "";
+    const customerName = (order as any)?.clientName || "";
+    const purposeLabel =
+        foc.focPurpose === "absent-day"
+            ? "Vehicle Absent — Extend +1 Day"
+            : foc.focPurpose === "compensation-hours"
+            ? "Extra Working Hours Compensation"
+            : foc.focPurpose === "compensation-days"
+            ? "Extra Campaign Days Compensation"
+            : null;
+    const compensationValue =
+        foc.focPurpose === "compensation-hours"
+            ? foc.compensationHoursValue
+            : foc.focPurpose === "compensation-days"
+            ? foc.compensationDaysValue
+            : null;
+    const compensationValueLabel =
+        foc.focPurpose === "compensation-hours" && compensationValue
+            ? `${compensationValue}h`
+            : foc.focPurpose === "compensation-days" && compensationValue
+            ? `${compensationValue} day(s)`
+            : null;
+    // Issue day = the date the loss/absence happened (fromDate for
+    // absent-day/hours requests raised from that same day's Daily Timeline).
+    // Compensation applied range = fromDate→toDate this FOC actually covers.
+    const isSameDayApplication = fromDateStr === toDateStr;
+
     return (
         <div className={`bg-white dark:bg-gray-900 rounded-xl border p-3 ${status === "approved"
             ? "border-emerald-100 dark:border-emerald-800/30"
             : "border-orange-100 dark:border-orange-800/30"
             }`}>
+            {(projectCode || customerName) && (
+                <div className="flex items-center gap-2 flex-wrap mb-1.5 text-[11px] text-gray-400">
+                    {projectCode && <span className="font-mono font-semibold text-gray-600 dark:text-gray-300">{projectCode}</span>}
+                    {projectCode && customerName && <span>·</span>}
+                    {customerName && <span>{customerName}</span>}
+                </div>
+            )}
+
             <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
                 <span className="text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
                     <Gift size={11} /> FOC #{index}
@@ -961,10 +996,27 @@ function FocHistoryCard({
                 </div>
             </div>
 
+            {(purposeLabel || compensationValueLabel) && (
+                <div className="flex items-center gap-2 flex-wrap mb-2">
+                    {purposeLabel && (
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 border border-purple-200">
+                            {purposeLabel}
+                        </span>
+                    )}
+                    {compensationValueLabel && (
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-200">
+                            Value: {compensationValueLabel}
+                        </span>
+                    )}
+                </div>
+            )}
+
             <p className="text-md text-gray-700 dark:text-gray-300 mb-2 break-words">{foc.reason || "—"}</p>
             <div className="flex items-center gap-2 text-sm text-gray-400 flex-wrap">
                 <Clock size={10} />
-                {fromDateStr} → {toDateStr}
+                {isSameDayApplication
+                    ? <>Compensation applied on {fromDateStr} (same date)</>
+                    : <>Compensation applied: {fromDateStr} → {toDateStr} (split)</>}
             </div>
             <p className="text-sm text-gray-400 mt-1">Requested by {foc.createdBy}</p>
 

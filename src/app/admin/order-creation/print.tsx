@@ -807,7 +807,13 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                         <div className="pdf-info-value">{order.gstNumber}</div>
                       </div>
                          )}
-                         
+                          {order.panNumber && (
+                       <div className="pdf-info-item">
+                        <div className="pdf-info-label">PAN Number</div>
+                        <div className="pdf-info-value">{order.panNumber}</div>
+                      </div>
+                         )}
+
                       <div className="pdf-info-item full-width">
                         <div className="pdf-info-label">Address</div>
                         <div className="pdf-info-value">{order.address || "—"}</div>

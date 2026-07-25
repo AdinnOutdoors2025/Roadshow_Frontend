@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { toast, Toaster } from "react-hot-toast";
 import { IoMdClose } from "react-icons/io";
 import { HiOutlineUser, HiOutlineTruck, HiOutlineClipboardList, HiOutlinePhone } from "react-icons/hi";
 import CustomerDetailsStep from "./CustomerDetailsStep";
@@ -17,6 +18,7 @@ export interface CustomerFormData {
   clientName?: string;
   designation?: string;
   gstNumber?: string;
+  panNumber?: string;
 }
 
 export interface CustomerSelection {
@@ -72,6 +74,7 @@ export interface GstDetail {
   gstDetailId: string;
   gst_number: string;
   business_name: string;
+  business_pan?: string;
 }
 export interface OrderState {
   customerForm: CustomerFormData;
@@ -93,7 +96,7 @@ const STEPS = [
 const defaultOrder: OrderState = {
   customerForm: {
     name: "", phone: "", address: "", email: "",
-    companyName: "", clientName: "", designation: "", gstNumber: ""
+    companyName: "", clientName: "", designation: "", gstNumber: "", panNumber: ""
   },
   customerSelection: { type: "", customer: null },
   customerCategory: "individual",
@@ -103,7 +106,7 @@ const defaultOrder: OrderState = {
   },
   organizationForm: {
     name: "", phone: "", address: "", email: "",
-    companyName: "", clientName: "", designation: "", gstNumber: ""
+    companyName: "", clientName: "", designation: "", gstNumber: "", panNumber: ""
   },
 
   gstDetails: [],
@@ -153,6 +156,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
       clientName: isOrg ? (o.clientName || o.name || "") : "",
       designation: o.designation || "",
       gstNumber: o.gstNumber || "",
+      panNumber: o.panNumber || "",
     };
 
     return {
@@ -173,6 +177,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
         gstDetailId: g.gstDetailId,
         gst_number: g.gst_number,
         business_name: g.business_name,
+        business_pan: g.business_pan,
       })),
       selectedClientOrder: null,
     
@@ -267,6 +272,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
             gstDetailId: g.gstDetailId,
             gst_number: g.gst_number,
             business_name: g.business_name,
+            business_pan: g.business_pan,
           }))
         )
       );
@@ -281,6 +287,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
       formData.append("clientName", order.customerForm.clientName || "");
       formData.append("designation", order.customerForm.designation || "");
       formData.append("gstNumber", order.customerForm.gstNumber || "");
+      formData.append("panNumber", order.customerForm.panNumber || "");
 
       vehicles.forEach((v, i) => {
         const vData = {
@@ -352,7 +359,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
 
       onSuccess(data.data.orderId);
     } catch (err: any) {
-      alert(err.message || "Failed to create order");
+      toast.error(err.message || "Failed to create order");
     } finally {
       setSubmitting(false);
     }
@@ -367,6 +374,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
   return (
     // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2">
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-2">
+        <Toaster position="top-right" />
       <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
 
         {/* Header */}

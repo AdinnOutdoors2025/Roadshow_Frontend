@@ -1,6 +1,4 @@
 
-
-
 /* eslint-disable */
 // @ts-nocheck
 
@@ -36,6 +34,8 @@ import { useVehicle } from "../../../context/vehicletypecontext";
 import VehicleUnavailable from "./VehicleUnavailableTab";
 import OrderReportPDF from "./OrderReportPDF";
 import ClientClosureTab from "./ClientClosureTab";
+import CampaignCalculatorTab from "./CampaignCalculatorTab";
+import InvoiceTab from "./InvoiceTab";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -68,6 +68,8 @@ interface Order {
     clientName?: string;
     designation?: string;
     gstNumber?: string;
+    panNumber?: string;
+    invoiceData?: any;
     customerCategory?: string;
 }
 
@@ -170,8 +172,17 @@ export default function DetailDrawer({
     const stage = STAGE_MAP[order.pipelineStatus];
     const StageIcon = stage?.icon || FiClipboard;
 
+    // Mirrors the kanban board's "Vehicle Unavailable" column grouping (a
+    // virtual bucket, not a real pipelineStatus — see page.tsx fetchPipeline)
+    // — an order with any currently-unavailable vehicle entry must not be
+    // stage-moved from here either, same as it can't be drag-and-dropped
+    // out of that column on the board.
+    const hasUnavailableVehicle = (order.onRoadExecutionArray || []).some(
+        (e: any) => e.unavailableStatus === true
+    );
+
     const nextStageKey = NEXT_STAGE[order.pipelineStatus];
-    const nextLabel = NEXT_LABEL[order.pipelineStatus];
+    const nextLabel = hasUnavailableVehicle ? undefined : NEXT_LABEL[order.pipelineStatus];
 
     const subtotal = order.bookingItems.reduce((s: number, i: any) => s + (i.totalAmount || 0), 0);
     const totalDiscount = (order.negotiationLogs || []).reduce((s, l) => s + (l.discountAmount || 0), 0);
@@ -212,12 +223,25 @@ export default function DetailDrawer({
         ...(hasReachedOnRoad
             ? [{ key: "onRoad", label: "On Road" }]
             : []),
+        ...(hasReachedProjectExecution
+            ? [{ key: "campaignCalculator", label: "Campaign Calculator" }]
+            : []),
 
         ...(defaultTab === "VehicleUnavailable"
             ? [{ key: "VehicleUnavailable", label: "VehicleUnavailable" }]
             : []),
-        ...(order.pipelineStatus === "clientClosure"
+        // Show this tab either once the order has actually reached the
+        // Client Closure stage, OR as soon as a FOC (Free of Cost extension)
+        // request exists against it — e.g. raised from the Campaign
+        // Calculator's Mark Absent / Extra Campaign Days flows while the
+        // order is still sitting in On Road. Otherwise that FOC card was only
+        // reachable via the header's quick-jump button, not a normal tab.
+        ...(order.pipelineStatus === "clientClosure" ||
+        (order.campaignClosureArray || []).some((c: any) => c.type === "foc")
             ? [{ key: "clientClosure", label: "Client Closure" }]
+            : []),
+        ...(order.pipelineStatus === "closedWon"
+            ? [{ key: "invoice", label: "Invoice" }]
             : []),
     ];
 
@@ -387,7 +411,7 @@ useEffect(() => {
                         <div className="flex flex-col sm:flex-row h-full min-h-0">
                             {/* Main content */}
                             <div className="flex-1 overflow-y-auto sm:border-r border-gray-100 dark:border-gray-800">
-                                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} vehicleTypes={vehicleTypes} />
+                                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} vehicleTypes={vehicleTypes} staffAdmins={staffAdmins} />
                             </div>
 
 
@@ -516,6 +540,10 @@ useEffect(() => {
                         <OnRoadTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
                     )}
 
+                    {activeTab === "campaignCalculator" && (
+                        <CampaignCalculatorTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} isAdmin={currentUserIsAdmin} />
+                    )}
+
                     {activeTab === "history" && (
                         <CombinedHistoryTab order={order} vehicleTypes={vehicleTypes} />
                     )}
@@ -533,6 +561,10 @@ useEffect(() => {
 
                     {activeTab === "clientClosure" && (
                         <ClientClosureTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} isAdmin={currentUserIsAdmin} />
+                    )}
+
+                    {activeTab === "invoice" && (
+                        <InvoiceTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
                     )}
 
                 </div>

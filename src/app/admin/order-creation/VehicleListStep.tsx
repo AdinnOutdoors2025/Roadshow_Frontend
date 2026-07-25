@@ -115,7 +115,7 @@ console.log("vehicles",vehicles)
 
                     <p className="text-xs text-gray-400">
                       {v.fromDate && v.toDate
-                        ? `${formatDate(v.fromDate)} → ${formatDate(v.toDate)} · ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000)}d`
+                        ? `${formatDate(v.fromDate)} → ${formatDate(v.toDate)} · ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + 1}d`
                         : "Dates not set"}
                       {v.city ? ` · ${v.city}` : ""}
                     </p>

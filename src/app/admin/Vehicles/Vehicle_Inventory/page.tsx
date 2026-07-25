@@ -51,6 +51,7 @@ const STATUS_PRIORITY = AdminSelectOptionsData?.statusPriority || {
 
 const REMARKS_REQUIRED = AdminSelectOptionsData?.remarksRequiredStatuses || ["Unavailable", "Maintenance", "Damaged"];
 const REMARKS_OPTIONAL = AdminSelectOptionsData?.remarksOptionalStatuses || ["Booked"];
+const BOOKED_LOCK_STATUSES = ["Waiting for Status", "Available", "Booked"];
 
 const StatusBadge = ({ status }) => {
   const styles = {
@@ -74,21 +75,22 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const RemarksModal = ({ isOpen, onClose, onConfirm, status, vehicleLabel, isBulk = false }) => {
+
+const RemarksModal = ({ isOpen, onClose, onConfirm, status, vehicleLabel, isBulk = false, previousRemarks = "", previousStatus = "" }) => {
   const [selectedRemark, setSelectedRemark] = useState("");
   const [customRemark, setCustomRemark] = useState("");
-  const [fromDate, setFromDate] = useState("");  
-  const [toDate, setToDate] = useState("");     
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const isRequired = REMARKS_REQUIRED.includes(status);
   const isOptional = REMARKS_OPTIONAL.includes(status);
-  const isBookedStatus = status === "Booked";     
+  const isBookedStatus = status === "Booked";
 
   useEffect(() => {
     if (isOpen) {
       setSelectedRemark("");
       setCustomRemark("");
-      setFromDate("");  
-      setToDate("");    
+      setFromDate("");
+      setToDate("");
     }
   }, [isOpen]);
 
@@ -96,7 +98,7 @@ const RemarksModal = ({ isOpen, onClose, onConfirm, status, vehicleLabel, isBulk
 
   const finalRemarks = customRemark.trim() || selectedRemark;
 
-  
+
   const datesInvalid = isBookedStatus && (!fromDate || !toDate);
   const dateRangeInvalid = isBookedStatus && fromDate && toDate && fromDate >= toDate;
   const canConfirm = !(isRequired && !finalRemarks) && !datesInvalid && !dateRangeInvalid;
@@ -118,7 +120,15 @@ const RemarksModal = ({ isOpen, onClose, onConfirm, status, vehicleLabel, isBulk
             <p className="text-sm text-gray-500 mb-3">Applying to all selected vehicles.</p>
           )}
 
-         
+          {previousStatus === "Booked" && ["Unavailable", "Damaged", "Maintenance"].includes(status) && previousRemarks && (
+            <div className="mb-3 p-2.5 rounded-lg bg-blue-50 border border-blue-100 animate-pulse">
+              <p className="text-xs font-medium text-red-700 mb-0.5">Booking Info</p>
+              <p className="text-xs text-red-600">{previousRemarks}</p>
+            </div>
+          )}
+
+
+
           {isBookedStatus && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -411,7 +421,7 @@ export default function VehicleInventory() {
   const [isBulkApplying, setIsBulkApplying] = useState(false);
 
   const [remarksModal, setRemarksModal] = useState({
-    open: false, status: "", vehicleId: null, isBulk: false,
+    open: false, status: "", vehicleId: null, isBulk: false, previousRemarks: "", previousStatus: "",
   });
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -666,22 +676,32 @@ export default function VehicleInventory() {
     }
   };
 
-  const updateRegistrationVehicleRaw = async (groupId, registrationNumber, updatePayload) => {
-    try {
-      const cleanReg = registrationNumber.replace(/\s/g, "");
-      const url = `${baseUrl}/api/updateRegistrationVehicle/${groupId}/${encodeURIComponent(cleanReg)}`;
-      const res = await fetch(url, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatePayload),
-      });
-      const data = await res.json();
-      return data.success;
-    } catch (err) {
-      console.error(err);
-      return false;
+const updateRegistrationVehicleRaw = async (groupId, registrationNumber, updatePayload) => {
+  try {
+    const cleanReg = registrationNumber.replace(/\s/g, "");
+    const url = `${baseUrl}/api/updateRegistrationVehicle/${groupId}/${encodeURIComponent(cleanReg)}`;
+    
+    // If status is Unavailable, Maintenance, or Damaged, clear booking fields
+    if (updatePayload.currentStatus && 
+        ["Unavailable", "Maintenance", "Damaged"].includes(updatePayload.currentStatus)) {
+      updatePayload.fromDate = null;
+      updatePayload.toDate = null;
+      updatePayload.orderId = null;
+      updatePayload.orderDisplayId = null;
     }
-  };
+    
+    const res = await fetch(url, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatePayload),
+    });
+    const data = await res.json();
+    return data.success;
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+};
 
   const updateRegistrationVehicle = async (groupId, registrationNumber, updatePayload) => {
     const ok = await updateRegistrationVehicleRaw(groupId, registrationNumber, updatePayload);
@@ -727,14 +747,24 @@ export default function VehicleInventory() {
     }));
   };
 
+
   const handleStatusChange = (vehicleId, newStatus) => {
     const needsRemarks = REMARKS_REQUIRED.includes(newStatus) || REMARKS_OPTIONAL.includes(newStatus);
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    const oldStatus = vehicle?.status || "";
     if (needsRemarks && newStatus !== "Available") {
       setEditingRows(prev => ({
         ...prev,
         [vehicleId]: { ...prev[vehicleId], status: newStatus, remarks: "" },
       }));
-      setRemarksModal({ open: true, status: newStatus, vehicleId, isBulk: false });
+      setRemarksModal({
+        open: true,
+        status: newStatus,
+        vehicleId,
+        isBulk: false,
+        previousStatus: oldStatus,
+        previousRemarks: oldStatus === "Booked" ? (vehicle?.remarks || "") : "",
+      });
     } else {
       setEditingRows(prev => ({
         ...prev,
@@ -743,31 +773,31 @@ export default function VehicleInventory() {
     }
   };
 
-const handleRemarksConfirm = (remarks, dates = {}) => {   
-  const { vehicleId, isBulk, status } = remarksModal;
-  if (isBulk) {
-    pendingBulkRemarksRef.current = remarks;
-    setRemarksModal({ open: false, status: "", vehicleId: null, isBulk: false });
-    executeBulkApply(bulkStatus, bulkCity, remarks, dates);   
-  } else {
-    setEditingRows(prev => ({
-      ...prev,
-      [vehicleId]: {
-        ...prev[vehicleId],
-        remarks,
-        fromDate: dates.fromDate || undefined,  
-        toDate: dates.toDate || undefined,       
-      },
-    }));
-    setRemarksModal({ open: false, status: "", vehicleId: null, isBulk: false });
-  }
-};
+  const handleRemarksConfirm = (remarks, dates = {}) => {
+    const { vehicleId, isBulk, status } = remarksModal;
+    if (isBulk) {
+      pendingBulkRemarksRef.current = remarks;
+      setRemarksModal({ open: false, status: "", vehicleId: null, isBulk: false });
+      executeBulkApply(bulkStatus, bulkCity, remarks, dates);
+    } else {
+      setEditingRows(prev => ({
+        ...prev,
+        [vehicleId]: {
+          ...prev[vehicleId],
+          remarks,
+          fromDate: dates.fromDate || undefined,
+          toDate: dates.toDate || undefined,
+        },
+      }));
+      setRemarksModal({ open: false, status: "", vehicleId: null, isBulk: false });
+    }
+  };
 
 
   const pendingBulkRemarksRef = useRef("");
 
 
-  const handleSaveRow = async (vehicle) => {
+const handleSaveRow = async (vehicle) => {
   const updatedFields = editingRows[vehicle.id];
   if (!updatedFields) return;
   const newStatus = updatedFields.status !== undefined ? updatedFields.status : vehicle.status;
@@ -783,6 +813,14 @@ const handleRemarksConfirm = (remarks, dates = {}) => {
   if (updatedFields.status !== undefined) {
     payload.currentStatus = updatedFields.status;
     payload.statusPriority = STATUS_PRIORITY[updatedFields.status] ?? 0;
+    
+   
+    if (["Unavailable", "Maintenance", "Damaged"].includes(updatedFields.status)) {
+      payload.fromDate = null;
+      payload.toDate = null;
+      payload.orderId = null;
+      payload.orderDisplayId = null;
+    }
   }
   if (updatedFields.remarks !== undefined) payload.remarks = updatedFields.remarks;
 
@@ -838,7 +876,7 @@ const handleRemarksConfirm = (remarks, dates = {}) => {
 
   // ── FIX: executeBulkApply now also handles GPS ───────────────────────────
 
-  const executeBulkApply = async (status, city, remarks, dates = {}) => {   
+const executeBulkApply = async (status, city, remarks, dates = {}) => {
   setIsBulkApplying(true);
   const selectedVehicles = vehicles.filter(v => selectedRows.has(v.id));
   let successCount = 0;
@@ -847,11 +885,20 @@ const handleRemarksConfirm = (remarks, dates = {}) => {
     if (status) {
       payload.currentStatus = status;
       payload.statusPriority = STATUS_PRIORITY[status] ?? 0;
+      
+      // Clear booking fields for these statuses
+      if (["Unavailable", "Maintenance", "Damaged"].includes(status)) {
+        payload.fromDate = null;
+        payload.toDate = null;
+        payload.orderId = null;
+        payload.orderDisplayId = null;
+      }
     }
     if (city) payload.city = city;
     if (remarks) payload.remarks = remarks;
     else if (status === "Available") payload.remarks = "";
     if (bulkGps) payload.gpsEnabled = bulkGps === "Active";
+
     if (status === "Booked" && dates.fromDate) payload.fromDate = dates.fromDate;
     if (status === "Booked" && dates.toDate) payload.toDate = dates.toDate;
 
@@ -904,13 +951,15 @@ const handleRemarksConfirm = (remarks, dates = {}) => {
 
       <RemarksModal
         isOpen={remarksModal.open}
-        onClose={() => setRemarksModal({ open: false, status: "", vehicleId: null, isBulk: false })}
+        onClose={() => setRemarksModal({ open: false, status: "", vehicleId: null, isBulk: false, previousRemarks: "", previousStatus: "" })}
         onConfirm={handleRemarksConfirm}
         status={remarksModal.status}
         vehicleLabel={remarksModal.vehicleId
           ? vehicles.find(v => v.id === remarksModal.vehicleId)?.registrationNumber
           : null}
         isBulk={remarksModal.isBulk}
+        previousRemarks={remarksModal.previousRemarks}
+        previousStatus={remarksModal.previousStatus}
       />
 
       <div className="mb-4 flex items-center gap-2 text-sm text-gray-600">
@@ -1193,7 +1242,15 @@ const handleRemarksConfirm = (remarks, dates = {}) => {
                           <td className="px-2 py-3 min-w-[170px]">
                             <select value={currentStatus} onChange={e => handleStatusChange(vehicle.id, e.target.value)}
                               className="h-9 w-full border border-gray-200 rounded-lg px-2 text-xs focus:border-blue-500 focus:outline-none bg-white">
-                              {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                              {statusOptions.map(s => (
+                                <option
+                                  key={s}
+                                  value={s}
+                                  disabled={currentStatus === "Booked" && BOOKED_LOCK_STATUSES.includes(s)}
+                                >
+                                  {s}
+                                </option>
+                              ))}
                             </select>
                             <div className="mt-1"><StatusBadge status={currentStatus} /></div>
                           </td>
@@ -1603,8 +1660,8 @@ const handleRemarksConfirm = (remarks, dates = {}) => {
                 key={i}
                 onClick={() => setLegendPage(i)}
                 className={`rounded-full transition-all ${i === legendPage
-                    ? "w-4 h-1.5 bg-gray-500"
-                    : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
+                  ? "w-4 h-1.5 bg-gray-500"
+                  : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
                   }`}
               />
             ))}

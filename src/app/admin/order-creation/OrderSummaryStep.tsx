@@ -5,7 +5,7 @@
 
 import React, { useState } from "react";
 import { OrderState } from "./AdminOrderForm";
-
+import { toast, Toaster } from "react-hot-toast";
 interface Props {
   order: OrderState;
   onBack: () => void;
@@ -76,7 +76,10 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
           {order.customerForm?.gstNumber && (
             <Row label="GST Number" value={order.customerForm.gstNumber} />
           )}
-          <Row label="Address" value={customer?.address || "—"} />
+          {order.customerForm?.panNumber && (
+            <Row label="PAN Number" value={order.customerForm.panNumber} />
+          )}
+          <Row label="Address" value={order.customerForm?.address || customer?.address || "—"} />
         </div>
       </div>
 
@@ -163,7 +166,7 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
                   ["Booking For", order.customerCategory],
                   ["Campaign", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType],
                   ["Duration", v.fromDate && v.toDate
-                    ? `${new Date(v.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(v.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000)}D base${v.extraDays > 0 ? ` +${v.extraDays} D = ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + v.extraDays}D total` : ""})`
+                    ? `${new Date(v.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(v.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + 1}D base${v.extraDays > 0 ? ` +${v.extraDays} D = ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + 1 + v.extraDays}D total` : ""})`
                     : "—"],
                   ["Driving route", `${v.fromLocation} → ${v.toLocation}`],
                   ["State / City", `${v.state} / ${v.city}`],

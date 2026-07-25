@@ -86,7 +86,7 @@ const vehicles = (order.bookingItems || [])
 
 
   const allEntries = order.onRoadExecutionArray || [];
-  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
+  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus && e.entryStatus !== "removed").length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 
@@ -268,6 +268,7 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
                     order={order}
                     onRefresh={onRefresh}
                     vehicle={vehicle}
+                    vehicleTypes={vehicleTypes}
                     gpsData={gpsData}
                     correctVehicleIndex={vehicleIndex}
                     forceOpen={activeIssueEntryId === entry.vehicleRegistrationNumber}
@@ -310,13 +311,25 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                           {h.driverName} — {h.vehicleRegNo}
                         </p>
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                          h.status === "unavailable"
-                            ? "bg-red-100 text-red-600"
-                            : "bg-emerald-100 text-emerald-600"
-                        }`}>
-                          {h.status === "unavailable" ? "Unavailable" : "Available"}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {h.eventType === "replaced" && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                              Replaced
+                            </span>
+                          )}
+                          {h.status === "unavailable" && h.inventoryStatus && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                              {h.inventoryStatus}
+                            </span>
+                          )}
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            h.status === "unavailable"
+                              ? "bg-red-100 text-red-600"
+                              : "bg-emerald-100 text-emerald-600"
+                          }`}>
+                            {h.status === "unavailable" ? "Unavailable" : "Available"}
+                          </span>
+                        </div>
                       </div>
 
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
@@ -336,6 +349,24 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
                       <p className="text-xs text-gray-400">
                         Reported by {h.reportedBy} · {fmtDatetime(h.reportedAt)}
                       </p>
+
+                      {h.eventType === "replaced" && (
+                        <div className="mt-2 pt-2 border-t border-red-200 dark:border-red-800/50 grid grid-cols-2 gap-2">
+                          <div>
+                            <p className="text-xs text-gray-400">Old Vehicle</p>
+                            <p className="text-xs font-mono font-semibold text-gray-700 dark:text-gray-300">{h.vehicleRegNo}</p>
+                            <p className="text-xs text-gray-500">{h.driverName} · {h.driverPhone}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-amber-600 dark:text-amber-400">Replacement Vehicle</p>
+                            <p className="text-xs font-mono font-semibold text-gray-700 dark:text-gray-300">{h.replacementVehicleRegNo}</p>
+                            <p className="text-xs text-gray-500">{h.replacementDriverName} · {h.replacementDriverPhone}</p>
+                          </div>
+                          <p className="col-span-2 text-xs text-gray-400">
+                            Replaced at {fmtDatetime(h.replacedAt)}
+                          </p>
+                        </div>
+                      )}
 
                      {h.status === "available" && h.resolvedBy && (
                         <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800 space-y-1">
@@ -431,7 +462,7 @@ const vehicles = (order.bookingItems || [])
 
 
   const allEntries = order.onRoadExecutionArray || [];
-  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1).length;
+  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus && e.entryStatus !== "removed").length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 

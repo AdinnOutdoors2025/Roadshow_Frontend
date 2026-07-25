@@ -571,7 +571,6 @@ export default function CodeCreationTab({
               )}
             </div>
 
-
             {/* Subject — bordered card */}
             <div className="mx-4 mt-4 mb-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
               <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
