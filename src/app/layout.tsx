@@ -7,8 +7,13 @@ import { AuthProvider } from "@/context/AuthContext";
 import AuthModal from "@/components/auth/ClientAuthModal";
 import ToastProvider from "@/components/Notify/ToastProvider";
 
+import Navbar from "@/components/Client/Reusable_Components/Navbar";
+import Footer from "@/components/Client/Reusable_Components/Footer";
+import GlobalSmoothScroll from "@/components/GlobalSmoothScroll";
+
 const outfit = Outfit({
   subsets: ["latin"],
+  display: "swap",
 });
 
 export default function RootLayout({
@@ -17,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link
           rel="stylesheet"
@@ -43,7 +48,14 @@ export default function RootLayout({
       </head>
       <body className={`${outfit.className} dark:bg-gray-900`}>
         <AuthProvider>
-          {children}
+          {/* {children} */}
+
+          {/* Smooth scrolling for every website page */}
+          <GlobalSmoothScroll>
+            <main className="relative min-h-screen w-full">
+              {children}
+            </main>
+          </GlobalSmoothScroll>
 
           {/* Bootstrap JS Bundle (includes Popper) - placed before closing body */}
           {/* <script
@@ -52,9 +64,10 @@ export default function RootLayout({
           crossOrigin="anonymous"
           async
         /> */}
-        <ToastProvider />
+          <ToastProvider />
           <AuthModal />
         </AuthProvider>
+
       </body>
     </html>
   );

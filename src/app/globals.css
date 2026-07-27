@@ -1,10 +1,37 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
+html {
+  scroll-behavior: auto !important;
+  scroll-padding-top: 90px;
+}
 
+body {
+  margin: 0;
+  overflow-x: hidden;
+  scroll-behavior: auto !important;
+  overscroll-behavior-y: none;
+}
+
+#smooth-wrapper {
+  width: 100%;
+  overflow: hidden;
+}
+
+#smooth-content {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Your existing theme variables remain intact */
 @theme {
-  --font-*: initial;
   --font-outfit: Outfit, sans-serif;
+  --color-white: #ffffff;
+  --color-black: #101828;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f2f4f7;
+  --shadow-theme-xl:
+    0px 20px 24px -4px rgba(16, 24, 40, 0.08),
+    0px 8px 8px -4px rgba(16, 24, 40, 0.03);
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
