@@ -11,7 +11,7 @@ import { usePathname } from "next/navigation";
 const navLinks = [
   { label: "Home", href: "/", icon: "home" },
   { label: "Vehicle", href: "/vehicle", icon: "vehicle" },
-  { label: "Contact Us", href: "/contact", icon: "contact" },
+  { label: "Contact Us", href: "/roadshow/Contact", icon: "contact" },
 ];
 
 const menuItems = [

@@ -380,7 +380,7 @@ function Footer() {
           </div>
 
           <a
-            href="/contact"
+            href="/roadshow/Contact"
             className="FooterCTAButton shrink-0 md:shrink-0 w-full md:w-auto text-center hover:bg-gray-100 transition-colors duration-200 whitespace-nowrap block"
           >
             Reach Us
