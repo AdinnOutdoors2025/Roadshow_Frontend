@@ -172,6 +172,10 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh }) {
   const [billToPan, setBillToPan] = useState(existing?.billToPan || order.panNumber || "");
   const [cgstPercent, setCgstPercent] = useState(existing?.cgstPercent ?? 9);
   const [sgstPercent, setSgstPercent] = useState(existing?.sgstPercent ?? 9);
+  const [discountMode, setDiscountMode] = useState(existing?.discountMode || "decrease");
+  const [discountType, setDiscountType] = useState(existing?.discountType || "percent");
+  const [discountValue, setDiscountValue] = useState(existing?.discountValue ?? 0);
+  const [discountLabel, setDiscountLabel] = useState(existing?.discountLabel || "Discount");
   // "unsigned"  -> left side shows the "system generated, no signature required" thank-you note
   // "signed"    -> right side reserves blank space for an authorized signature
   const [signatureMode, setSignatureMode] = useState(existing?.signatureMode || "signed");
@@ -198,6 +202,10 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh }) {
 
   const addItemToGroup = (groupLabel) =>
     setLineItems((prev) => {
+      // Keep the underlying order (used by the right-side invoice preview) as
+      // append-at-bottom — new rows must appear last in the actual invoice.
+      // The left editable list displays each group reversed (newest on top)
+      // purely for editing convenience; see group.items.slice().reverse() below.
       const newItem = { id: uid(), groupLabel, description: "", hsnSac: "998361", qty: 1, rate: 0 };
       const lastIndex = prev.map((it) => it.groupLabel).lastIndexOf(groupLabel);
       if (lastIndex === -1) return [...prev, newItem];
@@ -247,9 +255,16 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh }) {
 
   const showGroupHeadings = groupedLineItems.length > 1;
 
-  const cgstAmt = Math.round(subtotal * (Number(cgstPercent) || 0)) / 100;
-  const sgstAmt = Math.round(subtotal * (Number(sgstPercent) || 0)) / 100;
-  const rawTotal = subtotal + cgstAmt + sgstAmt;
+  const discountMagnitude =
+    discountType === "percent"
+      ? Math.round(subtotal * (Number(discountValue) || 0)) / 100
+      : Number(discountValue) || 0;
+  const discountAmt = discountMode === "add" ? discountMagnitude : -discountMagnitude;
+  const subtotalAfterDiscount = Math.max(subtotal + discountAmt, 0);
+
+  const cgstAmt = Math.round(subtotalAfterDiscount * (Number(cgstPercent) || 0)) / 100;
+  const sgstAmt = Math.round(subtotalAfterDiscount * (Number(sgstPercent) || 0)) / 100;
+  const rawTotal = subtotalAfterDiscount + cgstAmt + sgstAmt;
   const roundedTotal = Math.floor(rawTotal);
   const rounding = Math.round((roundedTotal - rawTotal) * 100) / 100;
   const totalInWords = numberToWords(roundedTotal);
@@ -267,6 +282,10 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh }) {
     billToGstin,
     billToPan,
     lineItems: lineItems.map(({ id, _rowNo, ...rest }) => rest),
+    discountLabel,
+    discountMode,
+    discountType,
+    discountValue,
     cgstPercent,
     sgstPercent,
     rounding,
@@ -387,7 +406,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh }) {
     "text-[13px] font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 pb-1";
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pl-4">
       {/* ── LEFT: Fully editable form ─────────────────────────────── */}
       <div className="space-y-5">
         <div className="flex items-center justify-between sticky top-0 z-10 bg-gray-50/95 dark:bg-gray-950/95 backdrop-blur -mx-1 px-1 py-2 rounded-xl">
@@ -477,6 +496,50 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh }) {
         </div>
 
         <div className={cardCls}>
+          <p className={sectionTitleCls}>
+            <Percent size={14} className="text-gray-400" /> Discount
+          </p>
+          <div>
+            <label className={labelCls}>Label</label>
+            <input value={discountLabel} onChange={(e) => setDiscountLabel(e.target.value)} placeholder="Discount" className={inputCls} />
+          </div>
+          <div className="grid grid-cols-3 gap-3.5">
+            <div>
+              <label className={labelCls}>Mode</label>
+              <select value={discountMode} onChange={(e) => setDiscountMode(e.target.value)} className={inputCls}>
+                <option value="decrease">Decrease</option>
+                <option value="add">Add</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Type</label>
+              <select value={discountType} onChange={(e) => setDiscountType(e.target.value)} className={inputCls}>
+                <option value="percent">%</option>
+                <option value="amount">₹</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Value</label>
+              <input
+                type="number"
+                value={discountValue === 0 ? "" : discountValue}
+                placeholder="0"
+                onChange={(e) => setDiscountValue(e.target.value === "" ? 0 : Number(e.target.value) || 0)}
+                className={inputCls + " text-right tabular-nums"}
+              />
+            </div>
+          </div>
+          {discountMagnitude > 0 && (
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-gray-800/40 px-3 py-2 mt-3">
+              <span className="text-xs font-semibold text-gray-500">Discount Amount</span>
+              <span className={"text-sm font-bold tabular-nums " + (discountMode === "decrease" ? "text-red-600" : "text-green-700 dark:text-green-400")}>
+                {discountMode === "decrease" ? "-" : "+"}₹{fmtMoney(discountMagnitude)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className={cardCls}>
           <div className="flex items-center justify-between">
             <p className={sectionTitleCls}>
               <ListChecks size={14} className="text-gray-400" /> Line Items by Vehicle Type
@@ -506,7 +569,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh }) {
                   </button>
                 </div>
                 <div className="space-y-2.5">
-                  {group.items.map((it) => (
+                  {group.items.slice().reverse().map((it) => (
                     <div
                       key={it.id}
                       className="rounded-xl border border-gray-150 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 p-3 space-y-2.5"
@@ -536,8 +599,9 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh }) {
                           <label className={labelCls}>Qty</label>
                           <input
                             type="number"
-                            value={it.qty}
-                            onChange={(e) => updateItem(it.id, { qty: Number(e.target.value) || 0 })}
+                            value={it.qty === 0 ? "" : it.qty}
+                            placeholder="0"
+                            onChange={(e) => updateItem(it.id, { qty: e.target.value === "" ? 0 : Number(e.target.value) || 0 })}
                             className={inputCls + " bg-white text-right tabular-nums"}
                           />
                         </div>
@@ -545,8 +609,9 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh }) {
                           <label className={labelCls}>Rate</label>
                           <input
                             type="number"
-                            value={it.rate}
-                            onChange={(e) => updateItem(it.id, { rate: Number(e.target.value) || 0 })}
+                            value={it.rate === 0 ? "" : it.rate}
+                            placeholder="0"
+                            onChange={(e) => updateItem(it.id, { rate: e.target.value === "" ? 0 : Number(e.target.value) || 0 })}
                             className={inputCls + " bg-white text-right tabular-nums"}
                           />
                         </div>
@@ -817,11 +882,29 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh }) {
                   <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 4px", color: INK }}>
                     <span>Sub Total</span><span>{fmtMoney(subtotal)}</span>
                   </div>
+                  {discountMagnitude > 0 && (
+                    <>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          padding: "3px 4px",
+                          color: discountMode === "decrease" ? "#DC2626" : "#15803d",
+                        }}
+                      >
+                        <span>{discountLabel || "Discount"} {discountType === "percent" ? `(${discountValue}%)` : ""}</span>
+                        <span>{discountMode === "decrease" ? "-" : "+"}{fmtMoney(discountMagnitude)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 4px", color: INK, fontWeight: 700 }}>
+                        <span>Sub Total After Discount</span><span>{fmtMoney(subtotalAfterDiscount)}</span>
+                      </div>
+                    </>
+                  )}
                   <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 4px", color: INK }}>
-                    <span>CGST{cgstPercent} (%)</span><span>{fmtMoney(cgstAmt)}</span>
+                    <span>CGST ({cgstPercent}%)</span><span>{fmtMoney(cgstAmt)}</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 4px", color: INK }}>
-                    <span>SGST{sgstPercent} (%)</span><span>{fmtMoney(sgstAmt)}</span>
+                    <span>SGST ({sgstPercent}%)</span><span>{fmtMoney(sgstAmt)}</span>
                   </div>
                   {/* <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 4px", color: INK }}>
                     <span>Rounding</span><span>{fmtMoney(rounding)}</span>
