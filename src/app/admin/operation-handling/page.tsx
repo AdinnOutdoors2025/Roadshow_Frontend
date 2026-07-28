@@ -783,9 +783,9 @@ export default function PipelineBoard() {
                 } else if (stage.key === "clientClosure") {
                   setDefaultTab("clientClosure");
                 } else if (stage.key === "onRoad") {
-                  setDefaultTab(hasPendingFoc ? "clientClosure" : "onRoad");
+                  setDefaultTab(hasPendingFoc ? "focRequest" : "onRoad");
                 } else {
-                  setDefaultTab(hasPendingFoc ? "clientClosure" : "overview");
+                  setDefaultTab(hasPendingFoc ? "focRequest" : "overview");
                 }
                 setDrawerOrder(order);
               }}

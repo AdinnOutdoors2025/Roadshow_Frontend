@@ -145,16 +145,21 @@ export default function ClientClosureTabSecond({
     onRefresh,
     bookingItemId,
     isAdmin = 1, autoOpenFoc = false,
+    mode,
 }: {
     order: Order;
     onRefresh: () => Promise<void>;
     bookingItemId?: string;
     isAdmin?: number;
-    autoOpenFoc?: boolean
+    autoOpenFoc?: boolean;
+    // "foc" -> FOC Request only (no Feedback tab), "feedback" -> Client
+    // Closure feedback only (no FOC/Campaign Status tab). Omit to show both
+    // with the switcher (legacy behaviour).
+    mode?: "foc" | "feedback";
 }) {
     // const [mainTab, setMainTab] = useState<"feedback" | "campaignStatus">("feedback");
     const [mainTab, setMainTab] = useState(
-        autoOpenFoc ? "campaignStatus" : "feedback"
+        mode === "foc" ? "campaignStatus" : mode === "feedback" ? "feedback" : (autoOpenFoc ? "campaignStatus" : "feedback")
     );
 
     // Feedback state
@@ -429,24 +434,28 @@ export default function ClientClosureTabSecond({
     return (
         <div className="p-4 h-full flex flex-col">
 
-            {/* Main Tabs */}
-            <div className="flex gap-1 mb-4 border-b border-gray-100 dark:border-gray-800">
-                {[
-                    { key: "feedback", label: "Feedback" },
-                    { key: "campaignStatus", label: "Campaign Status" },
-                ].map((t) => (
-                    <button
-                        key={t.key}
-                        onClick={() => setMainTab(t.key as any)}
-                        className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-all -mb-px ${mainTab === t.key
-                            ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                            : "border-transparent text-gray-400 hover:text-gray-600"
-                            }`}
-                    >
-                        {t.label}
-                    </button>
-                ))}
-            </div>
+            {/* Main Tabs — hidden when a fixed `mode` is forced by the caller
+                (On Road's FOC Request tab / Client Closure's feedback tab),
+                since each of those only ever needs the one section. */}
+            {!mode && (
+                <div className="flex gap-1 mb-4 border-b border-gray-100 dark:border-gray-800">
+                    {[
+                        { key: "feedback", label: "Feedback" },
+                        { key: "campaignStatus", label: "FOC Request" },
+                    ].map((t) => (
+                        <button
+                            key={t.key}
+                            onClick={() => setMainTab(t.key as any)}
+                            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-all -mb-px ${mainTab === t.key
+                                ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                                : "border-transparent text-gray-400 hover:text-gray-600"
+                                }`}
+                        >
+                            {t.label}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* ── Feedback Tab ────────────────────────────────────── */}
             {mainTab === "feedback" && (

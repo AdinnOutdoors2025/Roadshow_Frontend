@@ -57,7 +57,7 @@ const getImageUrl = (url) => {
 };
 
 
-function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, gpsData, gpsLoading, isAdmin, autoOpenFoc, isOpen, onToggle }) {
+function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicleTypes, gpsData, gpsLoading, isAdmin, autoOpenFoc, isOpen, onToggle, mode }) {
     const [activeDriverTab, setActiveDriverTab] = useState(0);
     const [toggling, setToggling] = useState(false);
     const issueRef = useRef(null);
@@ -174,12 +174,12 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                         <span className="text-[15px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">
                             {vehicle.campaignType || "—"}
                         </span>
-                          {vehiclePendingFoc && (
+                          {mode !== "feedback" && vehiclePendingFoc && (
                         <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-200 animate-pulse">
                             Waiting for FOC
                         </span>
                     )}
-                    {!vehiclePendingFoc && vehicleHasApprovedFoc && (
+                    {mode !== "feedback" && !vehiclePendingFoc && vehicleHasApprovedFoc && (
                         <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
                             FOC Approved
                         </span>
@@ -269,7 +269,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
 
 
-                        <ClientClosureTabSecond order={order} onRefresh={onRefresh} bookingItemId={vehicle._id?.toString?.() ?? String(vehicle._id)} isAdmin={isAdmin} autoOpenFoc={autoOpenFoc} />
+                        <ClientClosureTabSecond order={order} onRefresh={onRefresh} bookingItemId={vehicle._id?.toString?.() ?? String(vehicle._id)} isAdmin={isAdmin} autoOpenFoc={autoOpenFoc} mode={mode} />
 
                     </div>
 
@@ -288,7 +288,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
 
 
-export default function ClientClosureTab({ order, onRefresh, vehicleTypes, isAdmin }) {
+export default function ClientClosureTab({ order, onRefresh, vehicleTypes, isAdmin, mode }) {
 
     const [gpsData, setGpsData] = useState<any[]>([]);
     const [gpsLoading, setGpsLoading] = useState(false);
@@ -397,7 +397,9 @@ export default function ClientClosureTab({ order, onRefresh, vehicleTypes, isAdm
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                     <div>
-                        <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">Client Closure</h3>
+                        <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
+                            {mode === "foc" ? "FOC Request" : "Client Closure"}
+                        </h3>
                         <p className="text-sm text-gray-400 mt-0.5">
                             {vehicles.length} booking item{vehicles.length > 1 ? "s" : ""} · {totalVehicles} total vehicles
                         </p>
@@ -435,6 +437,7 @@ export default function ClientClosureTab({ order, onRefresh, vehicleTypes, isAdm
                                     autoOpenFoc={autoOpenFoc}
                                     isOpen={openIndex === originalIdx}
                                     onToggle={() => handleToggle(originalIdx)}
+                                    mode={mode}
                                 />
                             </div>
                         );
