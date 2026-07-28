@@ -32,6 +32,7 @@ Files likely to modify today
 
 9. Do not repeat information already obvious from previous summaries.
    Keep the startup summary concise.
+   Keep the startup summary concise.
 
 
    # User Communication Rules

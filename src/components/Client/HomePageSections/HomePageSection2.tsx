@@ -308,6 +308,7 @@ function useCarousel(length) {
 // ─── Main Component ──────────────────────────────────────────────────────────
 function HomePageSection2() {
     // VOICES FROM THE ROAD SECTION
+    const [activeAdvantage, setActiveAdvantage] = useState<number | null>(null);
     const testimonials = [
         {
             id: 1,
@@ -533,7 +534,7 @@ function HomePageSection2() {
                                     <div className='RA_leftContentHeading'>{RA.name}</div>
                                     <div className='RA_leftContentIcon'>
                                         {/* <i className={`fa-solid ${activeIndex === idx ? 'fa-xmark' : 'fa-plus'}`}></i> */}
-                                        <i className='fa-solid fa-plus'></i>
+                                        <i className="fa-solid fa-plus"></i>
                                     </div>
                                 </div>
 

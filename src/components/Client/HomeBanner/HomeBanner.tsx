@@ -24,12 +24,12 @@ const bannerItems = [
     {
         id: 4,
         image: "./images/assets/single side edited (1)_NEW.png",
-        title: "3 Sided 19ft",
+        title: "Single Side 19ft",
     },
     {
         id: 5,
         image: "./images/assets/full side LED edited (1)_NEW.png",
-        title: "Full Side Led",
+        title: "3 Sided 19ft",
     },
 ];
 

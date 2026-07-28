@@ -8,12 +8,12 @@ export default function ClientLayout({
   children: React.ReactNode;
 }) {
   return (
-  <>
-  <Navbar/>
-  <div>
-  {children}
-  </div>
-  <Footer/>
-  </>
-);
+    <>
+      <Navbar />
+      <div>
+        {children}
+      </div>
+      <Footer />
+    </>
+  );
 }
