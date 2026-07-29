@@ -47,8 +47,7 @@ export interface VehicleConfig {
   toDate: string;
   state: string;
   city: string;
-  fromLocation: string;
-  toLocation: string;
+  campaignLocation: string;
   quantity: number;
   extraKm: number;
   extraDays: number;
@@ -201,8 +200,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
     toDate: item.toDate ? String(item.toDate).slice(0, 10) : "",
     state: item.state || "",
     city: item.city || "",
-    fromLocation: item.fromLocation || "",
-    toLocation: item.toLocation || "",
+    campaignLocation: item.campaignLocation || (item.fromLocation && item.toLocation ? `${item.fromLocation} → ${item.toLocation}` : ""),
     quantity: item.quantity || 1,
     extraKm: item.extraKm || 0,
     extraDays: item.extraDays || 0,
@@ -301,8 +299,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
           toDate: v.toDate,
           state: v.state,
           city: v.city,
-          fromLocation: v.fromLocation,
-          toLocation: v.toLocation,
+          campaignLocation: v.campaignLocation,
           quantity: v.quantity,
           extraKm: v.extraKm,
           extraDays: v.extraDays,

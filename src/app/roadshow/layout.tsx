@@ -15,8 +15,9 @@ export default function ClientLayout({
       <div>
         {children}
       </div>
-       </GlobalSmoothScroll>
       <Footer />
+
+       </GlobalSmoothScroll>
       
     </>
   );

@@ -58,8 +58,7 @@ function defaultForm(): Omit<VehicleConfig, "id"> {
     toDate: "",
     state: "",
     city: "",
-    fromLocation: "",
-    toLocation: "",
+    campaignLocation: "",
     quantity: 1,
     extraKm: 0,
     extraDays: 0,
@@ -477,6 +476,35 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
     }
   }, [packageslist, editing]);
 
+  // Client Request → Order: when the selected client request has exactly one
+  // vehicle type, auto-fill the model/dates/location/quantity so the admin
+  // doesn't have to retype what the customer already requested.
+  useEffect(() => {
+    if (editing || !selectedClientOrder || packageslist.length === 0) return;
+    const vtList = selectedClientOrder.vehicleTypes || [];
+    if (vtList.length !== 1) return;
+
+    const vt = vtList[0];
+    const vtId = typeof vt.vehicleType === "object" ? vt.vehicleType?._id : vt.vehicleType;
+    const pkg = packageslist.find((p) => {
+      const pId = typeof p.vehicleType === "object" ? (p.vehicleType as any)?._id : p.vehicleType;
+      return pId === vtId;
+    });
+
+    setForm((f) => ({
+      ...f,
+      packageId: pkg ? pkg._id : f.packageId,
+      vehicleModel: pkg
+        ? (typeof pkg.vehicleType === "object" ? (pkg.vehicleType as any)?.typeName : "") || f.vehicleModel
+        : f.vehicleModel,
+      fromDate: vt.fromDate ? String(vt.fromDate).slice(0, 10) : f.fromDate,
+      toDate: vt.toDate ? String(vt.toDate).slice(0, 10) : f.toDate,
+      campaignLocation: vt.campaignLocation || f.campaignLocation,
+      quantity: vt.quantity || f.quantity,
+    }));
+    if (pkg) setSelectedPackage(pkg);
+  }, [selectedClientOrder, packageslist, editing]);
+
 
   const handleAddCity = async () => {
     if (!newCityName.trim()) {
@@ -617,8 +645,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
       e.toDate = "End date must be after start date";
     if (!form.state) e.state = "Select state";
     if (!form.city.trim()) e.city = "Enter city";
-    if (!form.fromLocation.trim()) e.fromLocation = "Enter from location";
-    if (!form.toLocation.trim()) e.toLocation = "Enter to location";
+    if (!form.campaignLocation.trim()) e.campaignLocation = "Enter campaign location";
 
     if (!form.quantity || form.quantity < 1) {
       e.quantity = "Please add valid quantity (minimum 1)";
@@ -707,7 +734,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
         const fieldOrder = [
           "vehicleType", "vehicleModel", "bookingFor", "gstNumber",
           "campaignType", "otherCampaignType", "fromDate", "toDate",
-          "state", "city", "fromLocation", "toLocation", "quantity",
+          "state", "city", "campaignLocation", "quantity",
           "promoterType", "otherPromoterType", "promoterGender",
           "promoterLanguage", "promoterQuantity", "packageUnsaved",
         ];
@@ -1355,14 +1382,9 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
               </div>
 
 
-              <div id="field-fromLocation">
-                <FormField label="From Location" error={errors.fromLocation} required>
-                  <input type="text" value={form.fromLocation} onChange={(e) => set("fromLocation", e.target.value)} placeholder="Starting point" className={inputClass(!!errors.fromLocation)} />
-                </FormField>
-              </div>
-              <div id="field-toLocation">
-                <FormField label="To Location" error={errors.toLocation} required>
-                  <input type="text" value={form.toLocation} onChange={(e) => set("toLocation", e.target.value)} placeholder="Ending point" className={inputClass(!!errors.toLocation)} />
+              <div id="field-campaignLocation">
+                <FormField label="Campaign Location" error={errors.campaignLocation} required>
+                  <input type="text" value={form.campaignLocation} onChange={(e) => set("campaignLocation", e.target.value)} placeholder="Campaign location" className={inputClass(!!errors.campaignLocation)} />
                 </FormField>
               </div>
             </div>

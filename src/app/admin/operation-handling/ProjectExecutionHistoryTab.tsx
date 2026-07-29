@@ -434,25 +434,39 @@ function AllDriverHistorySection({
             No history for this vehicle
           </div>
         ) : (
-          [...filteredHistory].reverse().map((h, i) => (
+          [...filteredHistory].reverse().map((h, i) => {
+            // "removed" fires from two different backend flows:
+            //  - Unavailable → Replace (changedFields.replacedBy set) — the old
+            //    driver/vehicle was pulled because it went unavailable.
+            //  - Plain manual release (no replacedBy) — admin released the
+            //    vehicle back to the pool directly.
+            // "created" mirrors this: changedFields.replacementFor marks a
+            // driver/vehicle that was added specifically to replace one above.
+            const isUnavailableRemoval = h.action === "removed" && !!h.changedFields?.replacedBy;
+            const isPlainRelease = h.action === "removed" && !h.changedFields?.replacedBy;
+            const isReplacementAdd = h.action === "created" && !!h.changedFields?.replacementFor;
+
+            const tag = isUnavailableRemoval
+              ? { label: "Unavailable Vehicle", icon: "!", cls: "bg-red-50 text-red-600 border-red-200", dot: "bg-red-500" }
+              : isPlainRelease
+              ? { label: "Vehicle Released", icon: "↩", cls: "bg-slate-100 text-slate-600 border-slate-300", dot: "bg-slate-400" }
+              : isReplacementAdd
+              ? { label: "Replacement Vehicle", icon: "↻", cls: "bg-indigo-50 text-indigo-600 border-indigo-200", dot: "bg-indigo-500" }
+              : h.action === "created"
+              ? { label: "Driver added", icon: "+", cls: "bg-blue-50 text-blue-600 border-blue-200", dot: "bg-blue-500" }
+              : { label: "Driver updated", icon: "↻", cls: "bg-amber-50 text-amber-600 border-amber-200", dot: "bg-amber-500" };
+
+            return (
             <div key={h._id || i} className="p-4 flex gap-3">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold ${
-                  h.action === "created" ? "bg-blue-500" : "bg-amber-500"
-                }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold ${tag.dot}`}
               >
-                {h.action === "created" ? "+" : "↻"}
+                {tag.icon}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span
-                    className={`text-xs font-semibold px-1.5 py-0.5 rounded border ${
-                      h.action === "created"
-                        ? "bg-blue-50 text-blue-600 border-blue-200"
-                        : "bg-amber-50 text-amber-600 border-amber-200"
-                    }`}
-                  >
-                    {h.action === "created" ? "Driver added" : "Driver updated"}
+                  <span className={`text-xs font-semibold px-1.5 py-0.5 rounded border ${tag.cls}`}>
+                    {tag.label}
                   </span>
                   <span className="text-xs text-gray-400">{fmtDt(h.changedAt)}</span>
                 </div>
@@ -464,6 +478,21 @@ function AllDriverHistorySection({
                   </span>
                 </p>
                 <p className="text-xs text-gray-400 mt-0.5">By {h.changedBy}</p>
+                {isUnavailableRemoval && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Replaced by <span className="font-mono font-semibold">{h.changedFields.replacedBy}</span>
+                  </p>
+                )}
+                {isReplacementAdd && (
+                  <p className="text-xs text-indigo-500 mt-1">
+                    Replaces <span className="font-mono font-semibold">{h.changedFields.replacementFor}</span>
+                  </p>
+                )}
+                {h.changedFields?.reason && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    <span className="font-medium">Reason:</span> {h.changedFields.reason}
+                  </p>
+                )}
                 {h.action === "updated" &&
                   h.changedFields &&
                   Object.keys(h.changedFields).length > 0 && (
@@ -480,7 +509,8 @@ function AllDriverHistorySection({
                   )}
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

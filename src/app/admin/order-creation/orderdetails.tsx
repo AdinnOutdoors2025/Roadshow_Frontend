@@ -77,6 +77,7 @@ interface BookingItem {
     gstAmount: number;
     totalAmount: number;
     needPromoter: boolean;
+    campaignLocation?: string;
     fromLocation?: string;
     toLocation?: string;
     promoterType?: string;
@@ -531,11 +532,12 @@ export default function OrderDetailDrawer({
                                                         icon: (
                                                             <HiOutlineMap className="w-4 h-4 text-gray-400" />
                                                         ),
-                                                        label: "Driving Route",
+                                                        label: "Campaign Location",
                                                         value:
-                                                            item.fromLocation && item.toLocation
+                                                            item.campaignLocation ||
+                                                            (item.fromLocation && item.toLocation
                                                                 ? `${item.fromLocation} → ${item.toLocation}`
-                                                                : "—",
+                                                                : "—"),
                                                     },
                                                     item.extraKm && item.extraKm > 0
                                                         ? {

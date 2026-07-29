@@ -154,6 +154,16 @@ function buildDefaultLineItems(order, vehicleTypes) {
         rate: b.additionalHourCharges || 0,
       });
     }
+    (b.additionalFields || []).forEach((f) => {
+      items.push({
+        id: uid(),
+        groupLabel,
+        description: f.label || "Additional Charge",
+        hsnSac: "998361",
+        qty: 1,
+        rate: f.mode === "-" ? -(Number(f.amount) || 0) : Number(f.amount) || 0,
+      });
+    });
   });
   return items.length ? items : [{ id: uid(), groupLabel: "General", description: "", hsnSac: "998361", qty: 1, rate: 0 }];
 }

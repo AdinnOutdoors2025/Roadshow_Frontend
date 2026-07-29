@@ -170,13 +170,20 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
                             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                                 {h.driverName} — <span className="font-mono">{h.vehicleRegNo}</span>
                             </p>
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                                h.status === "unavailable"
-                                    ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                                    : "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                            }`}>
-                                {h.status === "unavailable" ? "Unavailable" : "Available"}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                                {h.eventType === "replaced" && (
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                                        Replaced
+                                    </span>
+                                )}
+                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                    h.status === "unavailable"
+                                        ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                                        : "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                }`}>
+                                    {h.status === "unavailable" ? "Unavailable" : "Available"}
+                                </span>
+                            </div>
                         </div>
 
                        
@@ -198,7 +205,21 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
                             </p>
                         </div>
 
-                      
+                        {h.eventType === "replaced" && (
+                            <div className="mt-2 pt-2 border-t border-indigo-200 dark:border-indigo-800 space-y-1">
+                                <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Replacement Vehicle</p>
+                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                    <span className="font-mono font-semibold">{h.replacementVehicleRegNo || "—"}</span>
+                                    {h.replacementDriverName && <> — {h.replacementDriverName}</>}
+                                    {h.replacementDriverPhone && <span className="text-gray-400"> ({h.replacementDriverPhone})</span>}
+                                </p>
+                                {h.replacedAt && (
+                                    <p className="text-xs text-gray-400">Replaced at {fmtDatetime(h.replacedAt)}</p>
+                                )}
+                            </div>
+                        )}
+
+
                         {h.status === "available" && (
                             <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800 space-y-1">
                                 {h.resolveDescription && (

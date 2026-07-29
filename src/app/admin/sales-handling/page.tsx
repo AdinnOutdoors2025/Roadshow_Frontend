@@ -299,7 +299,7 @@ function SalesStageColumn({
     >
       {/* Header */}
       <div
-        className={`flex items-center justify-between px-3 py-2.5 rounded-xl mb-2 shrink-0 ${stage.headerGrad}`}
+        className={`flex items-center justify-between px-3 py-2.5 rounded-xl mb-2 shrink-0 bg-gradient-to-r ${stage.headerGrad}`}
       >
         <div className="flex items-center gap-2 min-w-0">
           <StageIcon size={16} className="text-white shrink-0" />
@@ -843,14 +843,9 @@ export default function SalesPipelineBoard() {
   const submitClosedWon = async () => {
     if (!closedWonModal) return;
     setPoError("");
-    if (!poFile) {
-      setPoError("Please upload the PO document");
-      return;
-    }
-    await commitMove(closedWonModal, "closedWon", {
-      salesPoDocument: poFile,
-      salesPoNotes: poNotes,
-    });
+    const extra: Record<string, string | File> = { salesPoNotes: poNotes };
+    if (poFile) extra.salesPoDocument = poFile;
+    await commitMove(closedWonModal, "closedWon", extra);
     setClosedWonModal(null);
     setPoFile(null);
     setPoNotes("");
@@ -1183,7 +1178,7 @@ export default function SalesPipelineBoard() {
 
             <div className="mb-3">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Sales PO Document <span className="text-red-500">*</span>
+                Sales PO Document (optional)
               </label>
               <input
                 type="file"

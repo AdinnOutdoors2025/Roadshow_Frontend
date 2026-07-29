@@ -168,7 +168,7 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
                   ["Duration", v.fromDate && v.toDate
                     ? `${new Date(v.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(v.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + 1}D base${v.extraDays > 0 ? ` +${v.extraDays} D = ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + 1 + v.extraDays}D total` : ""})`
                     : "—"],
-                  ["Driving route", `${v.fromLocation} → ${v.toLocation}`],
+                  ["Campaign Location", v.campaignLocation],
                   ["State / City", `${v.state} / ${v.city}`],
                   ["Vehicle Count", `${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"} ✕ ${v.vehicleModel}`],
                   v.extraKm > 0 ? ["Extra KM", `${v.extraKm} km`] : null,

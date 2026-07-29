@@ -848,6 +848,8 @@ export default function CampaignRequestPage() {
 
           quantity: vehicle.quantity,
 
+          campaignLocation: campaignMeta.location || "",
+
           fromDate: formatDateForApi(
             vehicle.startDate
           ),

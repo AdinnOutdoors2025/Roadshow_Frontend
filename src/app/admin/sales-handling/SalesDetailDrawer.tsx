@@ -333,8 +333,8 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
 
   const campaignLabel = item.campaignType === "Other"
     ? (item.otherCampaignType || "Other") : (item.campaignType || "—");
-  const drivingRoute = item.fromLocation && item.toLocation
-    ? `${item.fromLocation} → ${item.toLocation}` : null;
+  const drivingRoute = item.campaignLocation || (item.fromLocation && item.toLocation
+    ? `${item.fromLocation} → ${item.toLocation}` : null);
   const locationLabel = [item.state, item.city].filter(Boolean).join(" / ") || "—";
 
   const getImageUrl = (path: string) => {
@@ -369,7 +369,7 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
               { label: "Campaign", value: campaignLabel },
               { label: "Location", value: locationLabel },
               item.fromDate && { label: "Duration", value: `${fmtDate(item.fromDate)} → ${fmtDate(item.toDate)} (${item.totalDays}d)` },
-              drivingRoute && { label: "Route", value: drivingRoute },
+              drivingRoute && { label: "Campaign Location", value: drivingRoute },
               item.extraKm > 0 && { label: "Extra KM", value: `${item.extraKm} km` },
               item.extraHours > 0 && { label: "Extra Hours", value: `${item.extraHours} hrs` },
             ].filter(Boolean).map((f: any, i) => (
@@ -766,7 +766,7 @@ function OverviewTab({
                       })`
                       : "—",
                   ],
-              ["Driving route", `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
+              ["Campaign Location", currentVehicle.campaignLocation || `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
               ["State / City", `${currentVehicle.state} / ${currentVehicle.city}`],
               ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
                   currentVehicle.extraKm > 0 ? ["Extra KM", `${currentVehicle.extraKm} km`] : null,
@@ -947,10 +947,11 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
   const [savingName, setSavingName] = useState(false);
 
   const isEnquiry = order.salesPipelineStatus === "enquiry";
+  const [commentsTab, setCommentsTab] = useState("all");
 
 
   const allComments: Array<{
-    text: string; by: string; at: string; stage: string; docPath?: string;
+    text: string; by: string; at: string; stage: string; stageGroup: string; docPath?: string;
   }> = [];
 
   (order.enquiryArray || []).forEach((item) => {
@@ -960,6 +961,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Enquiry",
+        stageGroup: "enquiry",
         docPath: item.document,
       });
     }
@@ -972,6 +974,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Need Analysis",
+        stageGroup: "needAnalysis",
         docPath: item.analysisDocument,
       });
     }
@@ -984,6 +987,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Proposal",
+        stageGroup: "proposal",
         docPath: item.proposalDocument,
       });
     }
@@ -996,6 +1000,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Negotiation",
+        stageGroup: "negotiation",
         docPath: item.document,
       });
     }
@@ -1008,6 +1013,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Closed Won — PO Document",
+        stageGroup: "closedWon",
         docPath: item.salesPoDocument,
         isMandatoryPO: true,
       });
@@ -1021,6 +1027,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "PO Comment",
+        stageGroup: "closedWon",
         docPath: item.document,
       });
     }
@@ -1033,6 +1040,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Project Code Creation",
+        stageGroup: "projectCode",
         docPath: item.document,
       });
     }
@@ -1045,6 +1053,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Closed Lost",
+        stageGroup: "closedLost",
         docPath: item.document,
       });
     }
@@ -1057,12 +1066,28 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Closed Lost",
+        stageGroup: "closedLost",
         docPath: item.document,
       });
     }
   });
 
   allComments.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+
+  const commentsTabs: Array<{ key: string; label: string }> = [
+    { key: "all", label: "All" },
+    { key: "enquiry", label: "Enquiry" },
+    { key: "needAnalysis", label: "Need Analysis" },
+    { key: "proposal", label: "Proposal & Price Quote" },
+    { key: "negotiation", label: "Negotiation" },
+    { key: "closedWon", label: "Closed Won" },
+    { key: "projectCode", label: "Project Code Creation" },
+  ];
+
+  const filteredComments =
+    commentsTab === "all"
+      ? allComments
+      : allComments.filter((c) => c.stageGroup === commentsTab);
 
   // ── Enquiry name confirm & save ────────────────────────────────────────
   const handleNameConfirm = async () => {
@@ -1281,7 +1306,22 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
 
       <div>
         <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Comments History</h3>
-        {allComments.length === 0 ? (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {commentsTabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setCommentsTab(t.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                commentsTab === t.key
+                  ? "bg-blue-600 border-blue-600 text-white"
+                  : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {filteredComments.length === 0 ? (
           <div className="text-center py-8 text-gray-400 text-sm">No comments yet</div>
         ) : (
           <div className="space-y-3">
@@ -1315,7 +1355,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
                 </div>
               );
             })} */}
-            {allComments.map((c, i) => {
+            {filteredComments.map((c, i) => {
               const initials = c.by.charAt(0).toUpperCase();
               const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500"];
               const color = colors[c.by.charCodeAt(0) % colors.length];

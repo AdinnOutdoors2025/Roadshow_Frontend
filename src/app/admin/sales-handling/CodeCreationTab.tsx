@@ -740,10 +740,11 @@ export default function CodeCreationTab({
                           : "—",
                       ],
                       [
-                        "Route",
-                        v.fromLocation && v.toLocation
-                          ? `${v.fromLocation} → ${v.toLocation}`
-                          : null,
+                        "Campaign Location",
+                        v.campaignLocation ||
+                          (v.fromLocation && v.toLocation
+                            ? `${v.fromLocation} → ${v.toLocation}`
+                            : null),
                       ],
                       [
                         "State / City",

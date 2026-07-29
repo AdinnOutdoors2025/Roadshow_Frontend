@@ -309,7 +309,7 @@ export default function CustomerDetailsStep({
           <option value="">-- Select Client Order --</option>
           {clientOrders.map((co) => (
             <option key={co._id} value={co._id}>
-              {co.clientOrderId}
+              {co.clientOrderId} — {co.name}
             </option>
           ))}
         </select>

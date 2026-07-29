@@ -228,9 +228,9 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                 {entry.currentLocation || (isOnRoad ? "On Road" : "Last seen: En route")}
                             </span>
-                            {(vehicle.fromLocation || vehicle.toLocation) && (
+                            {(vehicle.campaignLocation || vehicle.fromLocation || vehicle.toLocation) && (
                                 <span className="text-sm text-gray-400">
-                                    — {vehicle.fromLocation} → {vehicle.toLocation}
+                                    — {vehicle.campaignLocation || `${vehicle.fromLocation} → ${vehicle.toLocation}`}
                                 </span>
                             )}
                         </div>

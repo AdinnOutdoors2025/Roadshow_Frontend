@@ -898,6 +898,7 @@ interface BookingItem {
   gstAmount: number;
   totalAmount: number;
   needPromoter: boolean;
+  campaignLocation?: string;
   fromLocation?: string;
   toLocation?: string;
   promoterType?: string;

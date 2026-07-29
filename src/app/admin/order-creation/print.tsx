@@ -28,6 +28,7 @@ interface BookingItem {
   bookingFor?: string;
   campaignType?: string;
   otherCampaignType?: string;
+  campaignLocation?: string;
   fromLocation?: string;
   toLocation?: string;
   extraKm?: number;
@@ -912,10 +913,10 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                                 <div className="detail-value">{location}</div>
                               </div>
                                <div className="detail-item">
-                                <div className="detail-label">Driving Route</div>
-                                <div className="detail-value">{item.fromLocation && item.toLocation
+                                <div className="detail-label">Campaign Location</div>
+                                <div className="detail-value">{item.campaignLocation || (item.fromLocation && item.toLocation
                                                                 ? `${item.fromLocation} → ${item.toLocation}`
-                                                                : "—"}</div>
+                                                                : "—")}</div>
                               </div>
                               <div className="detail-item" style={{ gridColumn: 'span 2' }}>
                                 <div className="detail-label">Duration</div>

@@ -591,7 +591,7 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                                             })`
                                             : "—",
                                     ],
-                                    ["Driving route", `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
+                                    ["Campaign Location", currentVehicle.campaignLocation || `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
                                     ["State / City", `${currentVehicle.state} / ${currentVehicle.city}`],
                                     ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
                                     currentVehicle.extraKm > 0 ? ["Extra KM", `${currentVehicle.extraKm} km`] : null,

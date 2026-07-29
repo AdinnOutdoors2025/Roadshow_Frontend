@@ -66,7 +66,7 @@ export default function CombinedHistoryTab({ order ,vehicleTypes }: { order: Ord
                 >
                     Pipeline History
                 </button>
-                {showExecution && (
+                {/* {showExecution && (
                     <button
                         onClick={() => setActiveHistoryTab("execution")}
                         className={`px-4 py-2 text-md font-medium border-b-2 transition-all -mb-px ${
@@ -77,7 +77,7 @@ export default function CombinedHistoryTab({ order ,vehicleTypes }: { order: Ord
                     >
                         Execution History
                     </button>
-                )}
+                )} */}
 
                 {showUnavailable && (
                     <button

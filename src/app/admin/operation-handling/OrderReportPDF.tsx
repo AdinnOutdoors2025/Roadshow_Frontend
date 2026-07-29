@@ -254,6 +254,12 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
   const driverHistory = order.onRoadDriverHistory || [];
   const unavailHistory = order.onRoadUnavailableHistory || [];
   const allIssues = order.onRoadIssues || [];
+  const focEntries = (order.campaignClosureArray || []).filter((c: any) => c.type === "foc");
+  const focPurposeLabel = (p: string) =>
+    p === "absent-day" ? "Vehicle Absent — Extend +1 Day"
+      : p === "compensation-hours" ? "Extra Working Hours Compensation"
+      : p === "compensation-days" ? "Extra Campaign Days Compensation"
+      : null;
 
   return (
     <>
@@ -297,6 +303,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                   // ["Customer Category", order.customerCategory || "—"],
                   order.companyName ? ["Company", order.companyName] : null,
                   order.gstNumber ? ["GST Number", order.gstNumber] : null,
+                  order.panNumber ? ["PAN Number", order.panNumber] : null,
                   order.designation ? ["Designation", order.designation] : null,
                   ["Order Created At", fmtDatetime(order.createdAt)],
                   ["Last Updated", fmtDatetime(order.updatedAt)],
@@ -366,7 +373,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                         ["Total Days",
                           `${item.totalDays}D${item.extraDays > 0 ? ` + ${item.extraDays}D` : ""}`],
 
-                        ["Route", `${item.fromLocation} → ${item.toLocation}`],
+                        ["Campaign Location", item.campaignLocation || `${item.fromLocation} → ${item.toLocation}`],
 
                         ["City / State", `${item.city || ""} / ${item.state || ""}`],
 
@@ -629,12 +636,25 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {regHistory.map((h: any, i: number) => (
+                                    {regHistory.map((h: any, i: number) => {
+                                      const isUnavailableRemoval = h.action === "removed" && !!h.changedFields?.replacedBy;
+                                      const isPlainRelease = h.action === "removed" && !h.changedFields?.replacedBy;
+                                      const isReplacementAdd = h.action === "created" && !!h.changedFields?.replacementFor;
+
+                                      const tag = isUnavailableRemoval
+                                        ? { label: "Unavailable Vehicle", color: "red" as const }
+                                        : isPlainRelease
+                                        ? { label: "Vehicle Released", color: "gray" as const }
+                                        : isReplacementAdd
+                                        ? { label: "Replacement Vehicle", color: "violet" as const }
+                                        : h.action === "created"
+                                        ? { label: "Driver Added", color: "blue" as const }
+                                        : { label: "Driver Updated", color: "amber" as const };
+
+                                      return (
                                       <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#f9fafb" }}>
-                                        <td style={{ ...S.td, verticalAlign: "middle", textAlign: "center", width: "70px", paddingTop: "20px" }}>
-                                          <Badge color={h.action === "created" ? "blue" : "amber"}>
-                                            {h.action === "created" ? "Added" : "Updated"}
-                                          </Badge>
+                                        <td style={{ ...S.td, verticalAlign: "middle", textAlign: "center", width: "90px", paddingTop: "20px" }}>
+                                          <Badge color={tag.color}>{tag.label}</Badge>
                                         </td>
                                         <td style={{ ...S.td, verticalAlign: "middle", fontWeight: 700 }}>{h.driverName}</td>
                                         <td style={{ ...S.td, verticalAlign: "middle" }}>{h.driverPhone}</td>
@@ -642,7 +662,22 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                                         <td style={{ ...S.td, verticalAlign: "middle" }}>{h.changedBy}</td>
                                         <td style={{ ...S.td, verticalAlign: "middle", fontSize: "10px" }}>{fmtDatetime(h.changedAt)}</td>
                                         <td style={{ ...S.td, verticalAlign: "middle", fontSize: "10px" }}>
-                                          {h.changedFields && Object.keys(h.changedFields).length > 0
+                                          {isUnavailableRemoval && (
+                                            <div style={{ marginBottom: 4, color: "#dc2626" }}>
+                                              Replaced by <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{h.changedFields.replacedBy}</span>
+                                            </div>
+                                          )}
+                                          {isReplacementAdd && (
+                                            <div style={{ marginBottom: 4, color: "#5b21b6" }}>
+                                              Replaces <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{h.changedFields.replacementFor}</span>
+                                            </div>
+                                          )}
+                                          {h.changedFields?.reason && (
+                                            <div style={{ marginBottom: 4 }}>
+                                              <span style={{ fontWeight: 700, color: "#374151" }}>Reason:</span> {h.changedFields.reason}
+                                            </div>
+                                          )}
+                                          {h.action === "updated" && h.changedFields && Object.keys(h.changedFields).length > 0
                                             ? Object.entries(h.changedFields).map(([field, val]: any, fi: number) => (
                                               <div key={fi} style={{ marginBottom: fi < Object.keys(h.changedFields).length - 1 ? 4 : 0 }}>
                                                 <span style={{ fontWeight: 700, color: "#374151" }}>
@@ -656,10 +691,11 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                                                 <span style={{ color: "#16a34a", fontWeight: 600 }}>{val.new}</span>
                                               </div>
                                             ))
-                                            : <span style={{ color: "#9ca3af" }}>—</span>}
+                                            : (!isUnavailableRemoval && !isReplacementAdd && !h.changedFields?.reason) && <span style={{ color: "#9ca3af" }}>—</span>}
                                         </td>
                                       </tr>
-                                    ))}
+                                      );
+                                    })}
                                   </tbody>
                                 </table>
                               </div>
@@ -674,131 +710,6 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
             </div>
           )}
 
-{/* ══ SECTION 4b: EXTRA KM HISTORY ══ */}
-          {(order.extraKmDetailsArray || []).length > 0 && (
-            <div style={S.section}>
-              <SectionTitle bg="#ea580c">Extra KM / Hours History ({(order.extraKmDetailsArray || []).length} records)</SectionTitle>
-              <div style={S.sectionBody}>
-                {order.bookingItems.map((bookingItem: any, bIdx: number) => {
-                  const entriesForBooking = driverEntries.filter((e: any) => e.vehicleIndex === bIdx);
-                  const extraKmForBooking = (order.extraKmDetailsArray || []).filter((e: any) => e.vehicleIndex === bIdx);
-                  if (extraKmForBooking.length === 0) return null;
-
-                  return (
-                    <div key={bIdx} data-avoid-break="true" style={{ marginBottom: 16 }}>
-                      {/* Booking item header */}
-                      <div style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-                        background: "#fff7ed", border: "1px solid #fed7aa",
-                        borderRadius: "6px", padding: "8px 12px", marginBottom: 8, height: "44px"
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            width: 32, height: 32, borderRadius: "50%",
-                            background: "#ea580c", display: "flex", alignItems: "center",
-                            justifyContent: "center", fontSize: "11px", fontWeight: 800, color: "#fff",
-                            flexShrink: 0, lineHeight: 1, paddingBottom: "15px"
-                          }}>V{bIdx + 1}</div>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 }}>
-                            <span style={{ fontWeight: 700, fontSize: "12px", color: "#9a3412", lineHeight: 1.2 }}>
-                              {getVehicleTypeName(bookingItem.vehicleType, vehicleTypes)}
-                            </span>
-                            <span style={{ fontSize: "10px", color: "#6b7280", lineHeight: 1.2 }}>
-                              {bookingItem.campaignType} · {bookingItem.city}
-                            </span>
-                          </div>
-                        </div>
-                        <span style={{
-                          fontSize: "10px", fontWeight: 700,
-                          background: "#ffedd5", color: "#9a3412",
-                          padding: "4px 12px", borderRadius: "20px", whiteSpace: "nowrap",
-                          display: "inline-flex", alignItems: "center", justifyContent: "center",
-                          flexShrink: 0, paddingBottom: "15px"
-                        }}>
-                          {extraKmForBooking.length} records
-                        </span>
-                      </div>
-
-                      {entriesForBooking.map((entry: any, eIdx: number) => {
-                        const entryKmRecords = extraKmForBooking.filter((e: any) =>
-                          e.entryId ? String(e.entryId) === String(entry._id) : e.vehicleRegistrationNumber === entry.vehicleRegistrationNumber
-                        );
-                        if (entryKmRecords.length === 0) return null;
-
-                        // reg no vachu group pannu — old vs current
-                        const groups: Record<string, any[]> = {};
-                        entryKmRecords.forEach((e: any) => {
-                          const key = e.vehicleRegistrationNumber || "—";
-                          if (!groups[key]) groups[key] = [];
-                          groups[key].push(e);
-                        });
-
-                        return (
-                          <div key={eIdx} data-avoid-break="true" style={{
-                            marginBottom: 12, border: "1px solid #fed7aa", borderRadius: "8px", overflow: "hidden",
-                          }}>
-                            <div style={{
-                              display: "flex", alignItems: "center", gap: 10, padding: "8px 8px",
-                              background: "#fff7ed", borderBottom: "1px solid #fed7aa",
-                            }}>
-                              <span style={{ fontSize: "11px", fontWeight: 700, color: "#9a3412" }}>
-                                {entry.driverName}
-                              </span>
-                              <span style={{ fontSize: "10px", color: "#d1d5db" }}>·</span>
-                              <span style={{ fontSize: "10px", color: "#6b7280" }}>{entry.driverPhone}</span>
-                            </div>
-
-                            {Object.keys(groups).map((regNo) => {
-                              const groupRecords = groups[regNo];
-                              const isCurrentReg = regNo === entry.vehicleRegistrationNumber;
-                              const groupTotalKm = groupRecords.reduce((s, e) => s + (e.extraKm || 0), 0);
-                              const groupTotalHrs = groupRecords.reduce((s, e) => s + (e.extraHours || 0), 0);
-                              const groupTotalCost = groupRecords.reduce((s, e) => s + (e.totalCost || 0), 0);
-
-                              return (
-                                <div key={regNo} style={{ padding: "8px" }}>
-                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                                    <Badge color={isCurrentReg ? "green" : "gray"}>
-                                      {regNo} {isCurrentReg ? "(current)" : "(old)"}
-                                    </Badge>
-                                    <span style={{ fontSize: "10px", color: "#6b7280" }}>
-                                      {groupTotalKm} km · {groupTotalHrs} hrs · {fmt(groupTotalCost)}
-                                    </span>
-                                  </div>
-                                  <table style={{ ...S.table, margin: 0 }}>
-                                    <thead>
-                                      <tr>
-                                        {["Duration", "Extra KM", "Extra Hrs", "KM Cost", "Hr Cost", "Total", "Added By"].map(h => (
-                                          <th key={h} style={{ ...S.th, background: "#fff7ed" }}>{h}</th>
-                                        ))}
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {[...groupRecords].reverse().map((e: any, i: number) => (
-                                        <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fffaf5" }}>
-                                          <td style={{ ...S.td, fontSize: "10px" }}>{fmtDate(e.fromDate)} → {fmtDate(e.toDate)}</td>
-                                          <td style={S.td}>{e.extraKm} km</td>
-                                          <td style={S.td}>{e.extraHours} hrs</td>
-                                          <td style={S.td}>{fmt(e.extraKmCost)}</td>
-                                          <td style={S.td}>{fmt(e.extraHourCost)}</td>
-                                          <td style={{ ...S.td, fontWeight: 700, color: "#ea580c" }}>{fmt(e.totalCost)}</td>
-                                          <td style={{ ...S.td, fontSize: "10px" }}>{e.addedBy}</td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
 
 {/* ══ SECTION 4b: EXTRA KM HISTORY ══ */}
@@ -1052,12 +963,30 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                           <Badge color={h.status === "unavailable" ? "red" : "green"}>
                             {h.status === "unavailable" ? "Unavailable" : "Available"}
                           </Badge>
+                          {h.eventType === "replaced" && (
+                            <span style={{ marginLeft: 6 }}>
+                              <Badge color="violet">Replaced</Badge>
+                            </span>
+                          )}
                         </span>
                       </div>
                       <span style={{ fontSize: "10px", color: "#9ca3af" }}>{fmtDatetime(h.reportedAt)}</span>
                     </div>
                     <p style={{ fontSize: "11px", color: "#374151" }}><strong>Reason:</strong> {h.reason}</p>
                     <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 3 }}>Reported by {h.reportedBy}</p>
+                    {h.eventType === "replaced" && (
+                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #ddd6fe" }}>
+                        <p style={{ fontSize: "10px", fontWeight: 700, color: "#5b21b6" }}>Replacement Vehicle</p>
+                        <p style={{ fontSize: "11px", color: "#374151" }}>
+                          <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{h.replacementVehicleRegNo || "—"}</span>
+                          {h.replacementDriverName && <> — {h.replacementDriverName}</>}
+                          {h.replacementDriverPhone && <span style={{ color: "#9ca3af" }}> ({h.replacementDriverPhone})</span>}
+                        </p>
+                        {h.replacedAt && (
+                          <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 2 }}>Replaced at {fmtDatetime(h.replacedAt)}</p>
+                        )}
+                      </div>
+                    )}
                     {h.status === "available" && (
                       <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #bbf7d0" }}>
                         {h.resolveDescription && <p style={{ fontSize: "11px" }}><strong>Resolution:</strong> {h.resolveDescription}</p>}
@@ -1066,6 +995,103 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                     )}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* ══ SECTION 5b: FOC REQUEST ══ */}
+          {focEntries.length > 0 && (
+            <div style={S.section}>
+              <SectionTitle bg="#5b21b6">FOC Request ({focEntries.length} records)</SectionTitle>
+              <div style={S.sectionBody}>
+                {order.bookingItems.map((bookingItem: any, bIdx: number) => {
+                  const bookingItemId = String(bookingItem._id?.$oid || bookingItem._id || "");
+                  const focForBooking = focEntries.filter((c: any) => {
+                    const cId = (typeof c.bookingItemId === "object" && c.bookingItemId !== null)
+                      ? (c.bookingItemId.$oid || c.bookingItemId._id || c.bookingItemId.toString())
+                      : String(c.bookingItemId ?? "");
+                    return cId === bookingItemId;
+                  });
+                  if (focForBooking.length === 0) return null;
+
+                  return (
+                    <div key={bIdx} data-avoid-break="true" style={{ marginBottom: 16 }}>
+                      <div style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                        background: "#f5f3ff", border: "1px solid #ddd6fe",
+                        borderRadius: "6px", padding: "8px 12px", marginBottom: 8, height: "44px"
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: "50%",
+                            background: "#5b21b6", display: "flex", alignItems: "center",
+                            justifyContent: "center", fontSize: "11px", fontWeight: 800, color: "#fff",
+                            flexShrink: 0, lineHeight: 1, paddingBottom: "15px"
+                          }}>V{bIdx + 1}</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 }}>
+                            <span style={{ fontWeight: 700, fontSize: "12px", color: "#5b21b6", lineHeight: 1.2 }}>
+                              {getVehicleTypeName(bookingItem.vehicleType, vehicleTypes)}
+                            </span>
+                            <span style={{ fontSize: "10px", color: "#6b7280", lineHeight: 1.2 }}>
+                              {bookingItem.campaignType} · {bookingItem.city}
+                            </span>
+                          </div>
+                        </div>
+                        <span style={{
+                          fontSize: "10px", fontWeight: 700,
+                          background: "#ede9fe", color: "#5b21b6",
+                          padding: "4px 12px", borderRadius: "20px", whiteSpace: "nowrap",
+                          display: "inline-flex", alignItems: "center", justifyContent: "center",
+                          flexShrink: 0, paddingBottom: "15px"
+                        }}>
+                          {focForBooking.length} FOC
+                        </span>
+                      </div>
+
+                      {focForBooking.map((foc: any, fIdx: number) => {
+                        const status = foc.status || "pending";
+                        const purposeLabel = focPurposeLabel(foc.focPurpose);
+                        const compensationValue =
+                          foc.focPurpose === "compensation-hours" ? foc.compensationHoursValue
+                            : foc.focPurpose === "compensation-days" ? foc.compensationDaysValue
+                            : null;
+                        const compensationValueLabel =
+                          foc.focPurpose === "compensation-hours" && compensationValue ? `${compensationValue}h`
+                            : foc.focPurpose === "compensation-days" && compensationValue ? `${compensationValue} day(s)`
+                            : null;
+
+                        return (
+                          <div key={fIdx} data-avoid-break="true" style={{
+                            borderRadius: "8px", padding: "10px 12px", marginBottom: 8,
+                            background: status === "approved" ? "#f0fdf4" : "#fff7ed",
+                            border: `1px solid ${status === "approved" ? "#bbf7d0" : "#fed7aa"}`,
+                          }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
+                              <span style={{ fontSize: "11px", fontWeight: 700, color: "#5b21b6" }}>FOC #{fIdx + 1}</span>
+                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                {purposeLabel && <Badge color="violet">{purposeLabel}</Badge>}
+                                {compensationValueLabel && <Badge color="gray">Value: {compensationValueLabel}</Badge>}
+                                <Badge color={status === "approved" ? "green" : "amber"}>
+                                  {status === "approved" ? "Approved" : "Pending"}
+                                </Badge>
+                              </div>
+                            </div>
+                            <p style={{ fontSize: "11px", color: "#374151" }}>{foc.reason || "—"}</p>
+                            <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 3 }}>
+                              Compensation: {fmtDate(foc.fromDate)} → {fmtDate(foc.toDate)}
+                            </p>
+                            <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 2 }}>Requested by {foc.createdBy}</p>
+                            {status === "approved" && foc.approvedBy && (
+                              <p style={{ fontSize: "10px", color: "#16a34a", marginTop: 2 }}>
+                                Approved by {foc.approvedBy} · {fmtDatetime(foc.approvedAt)}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

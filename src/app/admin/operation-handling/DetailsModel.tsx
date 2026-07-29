@@ -223,22 +223,17 @@ export default function DetailDrawer({
         ...(hasReachedOnRoad
             ? [{ key: "onRoad", label: "On Road" }]
             : []),
-        ...(hasReachedProjectExecution
+        ...(hasReachedOnRoad
             ? [{ key: "campaignCalculator", label: "Campaign Calculator" }]
             : []),
 
         ...(defaultTab === "VehicleUnavailable"
             ? [{ key: "VehicleUnavailable", label: "VehicleUnavailable" }]
             : []),
-        // "FOC Request" — admin approval / staff request for a Free of Cost
-        // extension. Shown as soon as any FOC entry exists against the order,
-        // whether it was raised from On Road (Mark Absent / Extra Campaign
-        // Days) or later at Client Closure. This tab is FOC-only, no feedback.
+
         ...((order.campaignClosureArray || []).some((c: any) => c.type === "foc")
             ? [{ key: "focRequest", label: "FOC Request" }]
             : []),
-        // "Client Closure" — client feedback only. Shown once the order has
-        // actually reached the Client Closure stage.
         ...(order.pipelineStatus === "clientClosure"
             ? [{ key: "clientClosure", label: "Client Closure" }]
             : []),
