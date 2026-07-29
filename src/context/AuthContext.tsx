@@ -1,7 +1,13 @@
 /* eslint-disable */
 // @ts-nocheck
 "use client";
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -106,14 +112,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [user]);
 
-  const openAuth = (screenType: "login" | "signup" = "login") => {
-    setScreen(screenType);
-    setOpen(true);
-  };
+  const openAuth = useCallback(
+    (screenType: "login" | "signup" = "login") => {
+      setScreen(screenType);
+      setOpen(true);
+    },
+    []
+  );
 
-  const closeAuth = () => setOpen(false);
+  const closeAuth = useCallback(() => setOpen(false), []);
 
-  const loginUser = (user: User, token: string) => {
+  const loginUser = useCallback((user: User, token: string) => {
     setUser(user);
     setToken(token);
     localStorage.setItem("roadshow_user", JSON.stringify(user));
@@ -123,15 +132,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       String(Date.now() + SESSION_DURATION_MS)
     );
     setOpen(false);
-  };
+  }, []);
 
-  const logoutUser = () => {
+  const logoutUser = useCallback(() => {
     setUser(null);
     setToken(null);
     localStorage.removeItem("roadshow_user");
     localStorage.removeItem("roadshow_token");
     localStorage.removeItem("roadshow_session_expiry");
-  };
+  }, []);
 
   return (
     <AuthContext.Provider

@@ -4,7 +4,9 @@
 
 /* ── Container ── */
 .HomeBannerContainer {
-    margin: 3% auto;
+    /* margin: 3% auto; */
+    padding: 3% 0px;
+    padding-top: 8%;
 }
 
 .HomeBannerText {
@@ -267,6 +269,7 @@
 
 /* Motion accessibility */
 @media (prefers-reduced-motion: reduce) {
+
     .HomeBannerCurrentImg,
     .HomeBannerPrevImg {
         animation-duration: 1ms !important;

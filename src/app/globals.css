@@ -309,6 +309,23 @@ body {
   background-color: #344054;
 }
 
+@utility rdsw-thin-scrollbar {
+  &::-webkit-scrollbar {
+    width: 7px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: rgba(122, 122, 127, 0.34);
+    background-clip: padding-box;
+  }
+}
+
 
 
 @layer utilities {

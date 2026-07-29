@@ -592,6 +592,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import {
   useParams,
@@ -608,6 +609,7 @@ import {
   formatDateRange,
 } from "@/app/utils/currency";
 import { useAuth } from "@/context/AuthContext";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import {
   FALLBACK_VEHICLE_IMAGE,
   fetchRoadshowVehicleById,
@@ -633,11 +635,14 @@ function BookingReadyPopup({
   onClose,
   onContinue,
 }: BookingReadyPopupProps) {
+  const [mounted] = useState(
+    () => typeof document !== "undefined"
+  );
+
+  useScrollLock(open);
+
   useEffect(() => {
     if (!open) return;
-
-    const previousOverflow =
-      document.body.style.overflow;
 
     const closeWithEscape = (
       event: KeyboardEvent
@@ -645,17 +650,12 @@ function BookingReadyPopup({
       if (event.key === "Escape") onClose();
     };
 
-    document.body.style.overflow = "hidden";
-
     document.addEventListener(
       "keydown",
       closeWithEscape
     );
 
     return () => {
-      document.body.style.overflow =
-        previousOverflow;
-
       document.removeEventListener(
         "keydown",
         closeWithEscape
@@ -663,18 +663,18 @@ function BookingReadyPopup({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-150 flex items-center justify-center bg-black/50 px-4 backdrop-blur-xs"
+      className="fixed inset-0 z-9999 flex overflow-y-auto bg-black/35 px-4 py-6 backdrop-blur-[1px]"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
         }
       }}
     >
-      <section className="relative w-full max-w-110 rounded-[28px] bg-white p-7 text-center shadow-[0_28px_80px_rgba(0,0,0,0.24)] sm:p-9">
+      <section className="relative w-full max-w-110 m-auto rounded-[28px] bg-white p-7 text-center shadow-[0_28px_80px_rgba(0,0,0,0.24)] sm:p-9">
         <button
           type="button"
           onClick={onClose}
@@ -723,7 +723,8 @@ function BookingReadyPopup({
           Continue Booking
         </button>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -819,9 +820,9 @@ export default function VehicleDetailsPage() {
     setWaitingForLogin(false);
 
     if (user) {
-      toast.success(
-        "Login successful. Continue booking."
-      );
+      // toast.success(
+      //   "Login successful. Continue booking."
+      // );
 
       setBookingReadyOpen(true);
     }
@@ -1005,7 +1006,7 @@ export default function VehicleDetailsPage() {
   return (
     <>
       <main className="min-h-screen bg-white text-black">
-        <section className="mx-auto grid max-w-355 grid-cols-1 gap-20 px-4 pb-14 pt-20 lg:grid-cols-[1.12fr_0.88fr]">
+        <section className="mx-auto grid max-w-355 grid-cols-1 gap-20 px-4 pb-14 pt-30 lg:grid-cols-[1.12fr_0.88fr]">
           <div>
             <h1 className="mb-5 text-[25px] font-bold">
               {vehicle.name}

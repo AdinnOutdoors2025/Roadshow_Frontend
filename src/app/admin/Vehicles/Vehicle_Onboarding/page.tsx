@@ -5321,7 +5321,7 @@ export default function VehicleOnboardingForm() {
                       <tbody className="divide-y">
                         {vehicles.map((vehicle) => (
                           <tr key={vehicle.registrationNumber} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 font-mono font-semibold text-blue-700">
+                            <td className="px-4 py-3 font-semibold text-blue-700">
                               {formatRegistrationNumber(vehicle.registrationNumber)}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600">{vehicle.vehicleId}</td>
