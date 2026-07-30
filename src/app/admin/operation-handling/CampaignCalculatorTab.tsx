@@ -1,3 +1,6 @@
+
+
+
 /* eslint-disable */
 // @ts-nocheck
 "use client";
@@ -135,7 +138,7 @@ const HISTORY_CATEGORY_META: Record<string, any> = {
     badge: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
     border: "border-sky-100 dark:border-sky-900/40",
     getTimestamp: (e: any) => e.changedAt,
-  
+
     getTitle: (e: any) =>
       e.eventType === "Vehicle Added" ? "Vehicle Assigned" : e.eventType === "Vehicle Removed" ? "Vehicle Removed" : "Driver/Vehicle Updated",
   },
@@ -144,7 +147,7 @@ const HISTORY_CATEGORY_META: Record<string, any> = {
 const SECTIONS = [
   { key: "overview", label: "Overview", icon: LayoutGrid },
   { key: "daily", label: "Daily Timeline", icon: Calendar },
-  { key: "vehicles", label: "Vehicle Breakdown", icon: Truck },
+  // { key: "vehicles", label: "Vehicle Breakdown", icon: Truck },
   { key: "billing", label: "Final Billing", icon: FileCheck2 },
 ];
 
@@ -161,7 +164,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
   const [expandedTimelines, setExpandedTimelines] = useState<Record<string, boolean>>({});
   const toggleTimeline = (entryId: string) =>
     setExpandedTimelines((prev) => ({ ...prev, [entryId]: !prev[entryId] }));
- 
+
   const [expandedSlotVehicleIndex, setExpandedSlotVehicleIndex] = useState<number | null>(null);
 
   const fetchCalculator = async () => {
@@ -377,7 +380,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
         if (start && end > start) unavailableHours += overlapWithShiftHours(start, end);
       });
 
- 
+
     const createdEv = events.find((e) => e._category === "driverChangeHistory" && e.eventType === "Vehicle Added");
     const removedEv = events.find((e) => e._category === "driverChangeHistory" && e.eventType === "Vehicle Removed");
     const startAt = createdEv ? new Date(createdEv.changedAt || createdEv._timestamp).getTime() : null;
@@ -502,7 +505,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
         });
       });
     });
- 
+
     Object.keys(historyEventsByEntry).forEach((entryId) => {
       const events = historyEventsByEntry[entryId];
       const first = events[0];
@@ -531,7 +534,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
       };
     });
 
- 
+
     Object.keys(map).forEach((vIdxKey) => {
       Object.keys(map[vIdxKey]).forEach((entryId) => {
         const events = historyEventsByEntry[entryId];
@@ -574,9 +577,9 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
         <p className="text-sm text-gray-500">Could not load the campaign calculator for this order.</p>
         <button
           onClick={fetchCalculator}
-          className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-semibold"
+          className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-semibold"
         >
-          <RefreshCw size={12} /> Retry
+          <RefreshCw size={14} /> Retry
         </button>
       </div>
     );
@@ -587,14 +590,14 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
     ? selectedDay.vehicles.reduce((s: number, v: any) => s + v.activeCount, 0)
     : 0;
 
- 
+
   const daySummary = (() => {
     if (!selectedDay) return null;
     let runningHours = 0, issueHours = 0, unavailableHours = 0, absentHours = 0, campaignHours = 0;
     let poolFee = 0, overageCost = 0;
     selectedDay.vehicles.forEach((v: any) => {
       [...(v.entries || []), ...(v.releasedToday || [])].forEach((e: any) => {
-       
+
         const entryEvents = historyEventsByEntry[e.entryId] || [];
         const todayDurations = computeEntryDurationsForDay(entryEvents, selectedDay.date);
         runningHours += todayDurations.runningHours || 0;
@@ -629,13 +632,13 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
             <button
               key={s.key}
               onClick={() => setSection(s.key)}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all -mb-px whitespace-nowrap ${
+              className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-all -mb-px whitespace-nowrap ${
                 section === s.key
                   ? "border-blue-500 text-blue-600 dark:text-blue-400"
                   : "border-transparent text-gray-400 hover:text-gray-600"
               }`}
             >
-              <Icon size={13} /> {s.label}
+              <Icon size={16} /> {s.label}
             </button>
           );
         })}
@@ -670,13 +673,10 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
           </div>
 
           <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
-            <div className="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Estimated  (Campaign Calculator)</p>
-              {/* <p className="text-[11px] text-gray-400 mt-0.5">
-                Actual amounts only appear after Operations logs them in the On-Road tab. Differences are expected until every day's activity is logged.
-              </p> */}
+            <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
+              <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Estimated  (Campaign Calculator)</p>
             </div>
-            <div className="flex items-center justify-between px-4 pt-2 text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+            <div className="flex items-center justify-between px-4 pt-2.5 text-xs font-bold text-gray-400 uppercase tracking-wide">
               <span></span>
               <div className="flex items-center gap-4">
                 <span className="w-24 text-right">Estimated</span>
@@ -690,6 +690,9 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
               <CompareRow label="Promoter Charges" estimated={fb.estimatedPromoter} actual={fb.actualPromoter} />
               <CompareRow label="Extra KM" estimated={fb.estimatedExtraKm} actual={fb.actualExtraKm} />
               <CompareRow label="Extra Hours" estimated={fb.estimatedExtraHours} actual={fb.actualExtraHours} />
+              {(fb.estimatedAdditionalCharges !== 0 || fb.actualAdditionalCharges !== 0) && (
+                <CompareRow label="Additional Charges" estimated={fb.estimatedAdditionalCharges} actual={fb.actualAdditionalCharges} />
+              )}
               <CompareRow label="Total (before GST)" estimated={data.orderTaxableAmount} actual={data.grandTotal} bold />
             </div>
           </div>
@@ -699,17 +702,17 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
       {/* ── Daily Timeline ── */}
       {section === "daily" && (
         <div className="space-y-4">
-          <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-3">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Select a Campaign Day</p>
+          <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="text-sm font-bold text-gray-400 uppercase tracking-wide">Select a Campaign Day</p>
               <div className="flex items-center gap-1">
                 <button onClick={goPrevDay} disabled={dayIndex <= 0}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-30">
-                  <ChevronLeft size={14} />
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-30">
+                  <ChevronLeft size={16} />
                 </button>
                 <button onClick={goNextDay} disabled={dayIndex < 0 || dayIndex >= data.days.length - 1}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-30">
-                  <ChevronRight size={14} />
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-30">
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>
@@ -720,7 +723,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                   <button
                     key={d.date}
                     onClick={() => setSelectedDate(d.date)}
-                    className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg border text-xs transition-all ${
+                    className={`flex-shrink-0 flex flex-col items-center px-4 py-2.5 rounded-lg border text-sm transition-all ${
                       active
                         ? "bg-blue-600 border-blue-600 text-white"
                         : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -746,12 +749,12 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
 
               {daySummary && (
                 <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
-                  <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
-                    <Calendar size={14} className="text-indigo-600" />
-                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                  <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
+                    <Calendar size={16} className="text-indigo-600" />
+                    <span className="text-base font-semibold text-gray-800 dark:text-gray-200">
                       {fmtDateLabel(selectedDay.date)} · Daily Summary
                     </span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-300 font-semibold">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-300 font-semibold">
                       DAY TOTAL — all vehicles combined
                     </span>
                   </div>
@@ -759,26 +762,26 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                   <div className="p-4 space-y-4">
                     {/* Hours breakdown */}
                     <div>
-                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Hours Breakdown</p>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Hours Breakdown</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 px-3 py-2">
-                          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1"><Clock size={11} /> Running</p>
-                          <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300 mt-0.5">{fmtHm(daySummary.runningHours)}</p>
+                        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 px-3 py-2.5">
+                          <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1"><Clock size={13} /> Running</p>
+                          <p className="text-base font-bold text-emerald-700 dark:text-emerald-300 mt-0.5">{fmtHm(daySummary.runningHours)}</p>
                         </div>
-                        <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 px-3 py-2">
-                          <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1"><AlertOctagon size={11} /> Issue</p>
-                          <p className="text-sm font-bold text-amber-700 dark:text-amber-300 mt-0.5">{fmtHm(daySummary.issueHours)}</p>
+                        <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 px-3 py-2.5">
+                          <p className="text-sm text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1"><AlertOctagon size={13} /> Issue</p>
+                          <p className="text-base font-bold text-amber-700 dark:text-amber-300 mt-0.5">{fmtHm(daySummary.issueHours)}</p>
                         </div>
-                        <div className="rounded-lg bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 px-3 py-2">
-                          <p className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold flex items-center gap-1"><ShieldAlert size={11} /> Unavailable</p>
-                          <p className="text-sm font-bold text-rose-700 dark:text-rose-300 mt-0.5">{fmtHm(daySummary.unavailableHours)}</p>
+                        <div className="rounded-lg bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 px-3 py-2.5">
+                          <p className="text-sm text-rose-600 dark:text-rose-400 font-semibold flex items-center gap-1"><ShieldAlert size={13} /> Unavailable</p>
+                          <p className="text-base font-bold text-rose-700 dark:text-rose-300 mt-0.5">{fmtHm(daySummary.unavailableHours)}</p>
                         </div>
-                        <div className="rounded-lg bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700 px-3 py-2">
-                          <p className="text-[11px] text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1"><CalendarX2 size={11} /> Absent</p>
-                          <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mt-0.5">{fmtHm(daySummary.absentHours)}</p>
+                        <div className="rounded-lg bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700 px-3 py-2.5">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1"><CalendarX2 size={13} /> Absent</p>
+                          <p className="text-base font-bold text-gray-700 dark:text-gray-300 mt-0.5">{fmtHm(daySummary.absentHours)}</p>
                         </div>
                       </div>
-                      <p className="mt-2 text-[11px] text-gray-400">
+                      <p className="mt-2.5 text-sm text-gray-400">
                         Total: {fmtHm(daySummary.runningHours)} run + {fmtHm(daySummary.issueHours)} issue + {fmtHm(daySummary.unavailableHours)} unavailable + {fmtHm(daySummary.absentHours)} absent
                         {" "}= <span className="font-semibold text-gray-600 dark:text-gray-300">{fmtHm(daySummary.totalHours)}</span>
                         {daySummary.campaignHours > 0 && <> (of {fmtHm(daySummary.campaignHours)} expected)</>}
@@ -787,33 +790,33 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
 
                     {/* Cost breakdown */}
                     <div>
-                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Extra KM/Hours Cost</p>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Extra KM/Hours Cost</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <div className="rounded-lg bg-sky-50 dark:bg-sky-900/10 border border-sky-100 dark:border-sky-900/30 px-3 py-2 flex items-center justify-between">
-                          <span className="text-[11px] text-sky-600 dark:text-sky-400 font-semibold">Pool (one-time)</span>
-                          <span className="text-sm font-bold text-sky-700 dark:text-sky-300">{fmt(daySummary.poolFee)}</span>
+                        <div className="rounded-lg bg-sky-50 dark:bg-sky-900/10 border border-sky-100 dark:border-sky-900/30 px-3 py-2.5 flex items-center justify-between">
+                          <span className="text-sm text-sky-600 dark:text-sky-400 font-semibold">Pool (one-time)</span>
+                          <span className="text-base font-bold text-sky-700 dark:text-sky-300">{fmt(daySummary.poolFee)}</span>
                         </div>
-                        <div className="rounded-lg bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/30 px-3 py-2 flex items-center justify-between">
-                          <span className="text-[11px] text-orange-600 dark:text-orange-400 font-semibold">Overage (on-road logged)</span>
-                          <span className="text-sm font-bold text-orange-700 dark:text-orange-300">{fmt(daySummary.overageCost)}</span>
+                        <div className="rounded-lg bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/30 px-3 py-2.5 flex items-center justify-between">
+                          <span className="text-sm text-orange-600 dark:text-orange-400 font-semibold">Overage (on-road logged)</span>
+                          <span className="text-base font-bold text-orange-700 dark:text-orange-300">{fmt(daySummary.overageCost)}</span>
                         </div>
                       </div>
-                      <p className="mt-2 text-[11px] text-gray-400">
+                      {/* <p className="mt-2.5 text-sm text-gray-400">
                         Pool is a flat one-time fee charged once regardless of usage; Overage is the full package-rate cost of everything logged on-road today, billed separately.
-                      </p>
+                      </p> */}
                     </div>
                   </div>
                 </div>
               )}
 
               <div className="space-y-3">
-                {selectedDay.vehicles.length > 0 && (
-                  <p className="text-[11px] text-gray-400 px-1 -mt-1">
+                {/* {selectedDay.vehicles.length > 0 && (
+                  <p className="text-sm text-gray-400 px-1 -mt-1">
                     VEHICLE-WISE — below, each card is one vehicle-type slot's own breakdown for {fmtDateLabel(selectedDay.date)} (old + replacement entries shown separately); the Daily Summary above is the sum of all of these.
                   </p>
-                )}
+                )} */}
                 {selectedDay.vehicles.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-8">
+                  <p className="text-base text-gray-400 text-center py-8">
                     No vehicle type is within its campaign window on {fmtDateLabel(selectedDay.date)}.
                   </p>
                 )}
@@ -821,53 +824,60 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                 {selectedDay.vehicles.map((v: any) => {
                   const isSlotExpanded = expandedSlotVehicleIndex === v.vehicleIndex;
                   return (
-                  <div key={v.vehicleIndex} className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+                  <div key={v.vehicleIndex} className={`rounded-xl border overflow-hidden shadow-sm hover:shadow-md transition-all ${v.activeCount > 0 ? "border-emerald-200 dark:border-emerald-800" : "border-gray-200 dark:border-gray-700"} bg-white dark:bg-gray-900`}>
                     <button
                       type="button"
                       onClick={() => setExpandedSlotVehicleIndex(isSlotExpanded ? null : v.vehicleIndex)}
-                      className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800 text-left hover:bg-gray-100 dark:hover:bg-gray-800/70"
+                      className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all"
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        {isSlotExpanded ? <ChevronUp size={14} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />}
-                        <Truck size={14} className="text-teal-600 flex-shrink-0" />
-                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                        {getVehicleTypeName(v.vehicleType)}
-                        </span>
-                        <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-300 font-semibold flex-shrink-0">
-                          {v.activeCount}/{v.bookedQuantity} active
-                        </span>
-                        {v.isCompensationExtensionDay && (
-                          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 font-semibold flex-shrink-0">
-                            Compensation Extension Day
-                          </span>
-                        )}
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${v.activeCount > 0 ? "bg-emerald-500" : "bg-gray-400"}`}>
+                        V{v.vehicleIndex + 1}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-lg font-semibold text-gray-800 dark:text-gray-100 truncate">
+                            {getVehicleTypeName(v.vehicleType)}
+                          </span>
+                          <span className="text-sm px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-300 font-semibold flex-shrink-0">
+                            {v.activeCount}/{v.bookedQuantity} active
+                          </span>
+                          {v.isCompensationExtensionDay && (
+                            <span className="text-sm px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 font-semibold flex-shrink-0">
+                              Compensation Extension Day
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 mt-0.5 text-sm text-gray-400">
+                          {isSlotExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          <span>{isSlotExpanded ? "Hide details" : "Show details"}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                         <span
                           role="button"
                           tabIndex={0}
                           onClick={(ev) => { ev.stopPropagation(); setCompensationVehicleIndex(v.vehicleIndex); }}
                           onKeyDown={(ev) => { if (ev.key === "Enter") { ev.stopPropagation(); setCompensationVehicleIndex(v.vehicleIndex); } }}
-                          className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 font-semibold cursor-pointer"
+                          className="flex items-center gap-1 text-sm px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 font-semibold cursor-pointer"
                         >
-                          <Gift size={11} /> Compensation
+                          <Gift size={13} /> Compensation
                         </span>
-                        <span className="text-sm font-bold text-gray-900 dark:text-white flex-shrink-0">{fmt(v.itemDayTotal)}</span>
+                        <span className="text-base font-bold text-gray-900 dark:text-white">{fmt(v.itemDayTotal)}</span>
                       </div>
                     </button>
 
                     {isSlotExpanded && (
                     <>
                     {(v.issueHoursToday > 0 || v.unavailableHoursToday > 0 || v.compensationHoursGrantedToday > 0) && (
-                      <div className="flex flex-wrap items-center gap-3 px-4 py-2 text-[11px] bg-amber-50/60 dark:bg-amber-900/10 border-b border-gray-100 dark:border-gray-800">
+                      <div className="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm bg-amber-50/60 dark:bg-amber-900/10 border-b border-gray-100 dark:border-gray-800">
                         {v.issueHoursToday > 0 && (
                           <span className="flex items-center gap-1 text-amber-700 dark:text-amber-300 font-semibold">
-                            <AlertOctagon size={11} /> Issue: {fmtHm(v.issueHoursToday)}
+                            <AlertOctagon size={13} /> Issue: {fmtHm(v.issueHoursToday)}
                           </span>
                         )}
                         {v.unavailableHoursToday > 0 && (
                           <span className="flex items-center gap-1 text-rose-700 dark:text-rose-300 font-semibold">
-                            <ShieldAlert size={11} /> Unavailable: {fmtHm(v.unavailableHoursToday)}
+                            <ShieldAlert size={13} /> Unavailable: {fmtHm(v.unavailableHoursToday)}
                           </span>
                         )}
                         {(v.issueHoursToday > 0 || v.unavailableHoursToday > 0) && (
@@ -875,16 +885,16 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                         )}
                         {v.compensationHoursGrantedToday > 0 && (
                           <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-semibold">
-                            <Gift size={11} /> Compensation: +{fmtHm(v.compensationHoursGrantedToday)}
+                            <Gift size={13} /> Compensation: +{fmtHm(v.compensationHoursGrantedToday)}
                           </span>
                         )}
                       </div>
                     )}
 
                     {v.combinedRunningHoursToday > 0 && (
-                      <div className="px-4 py-2 text-[11px] bg-indigo-50/60 dark:bg-indigo-900/10 border-b border-gray-100 dark:border-gray-800">
+                      <div className="px-4 py-2.5 text-sm bg-indigo-50/60 dark:bg-indigo-900/10 border-b border-gray-100 dark:border-gray-800">
                         <span className="flex items-center gap-1 text-indigo-700 dark:text-indigo-300 font-semibold">
-                          <Clock size={11} /> Combined Running Today: {fmtHm(v.combinedRunningHoursToday)}
+                          <Clock size={13} /> Combined Running Today: {fmtHm(v.combinedRunningHoursToday)}
                         </span>
                         <span className="text-gray-400 mt-0.5 block">
                           Old + replacement vehicle running hours added together for this slot today
@@ -895,7 +905,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
 
                     {v.compensationStatus?.hasLoss && (
                       <div
-                        className={`px-4 py-2 text-[11px] border-b border-gray-100 dark:border-gray-800 ${
+                        className={`px-4 py-2.5 text-sm border-b border-gray-100 dark:border-gray-800 ${
                           v.compensationStatus.state === "approved"
                             ? "bg-emerald-50/70 dark:bg-emerald-900/10"
                             : v.compensationStatus.state === "pending"
@@ -905,7 +915,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                       >
                         {v.compensationStatus.state === "approved" ? (
                           <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-semibold">
-                            <Gift size={11} />
+                            <Gift size={13} />
                             {fmtHm(v.compensationStatus.lossHours)} loss — Compensated{" "}
                             {v.compensationStatus.scope === "this-date"
                               ? "(this date only)"
@@ -913,7 +923,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                           </span>
                         ) : v.compensationStatus.state === "pending" ? (
                           <span className="flex items-center gap-1 text-sky-700 dark:text-sky-300 font-semibold">
-                            <ShieldAlert size={11} />
+                            <ShieldAlert size={13} />
                             {fmtHm(v.compensationStatus.lossHours)} loss — Requested, waiting for admin approval{" "}
                             {v.compensationStatus.scope === "this-date"
                               ? "(this date only)"
@@ -922,12 +932,12 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                         ) : (
                           <div className="flex items-center justify-between gap-2">
                             <span className="flex items-center gap-1 text-amber-700 dark:text-amber-300 font-semibold">
-                              <AlertOctagon size={11} />
+                              <AlertOctagon size={13} />
                               {fmtHm(v.compensationStatus.lossHours)} loss — Not compensated yet
                             </span>
                             <button
                               onClick={() => setCompensationVehicleIndex(v.vehicleIndex)}
-                              className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 underline"
+                              className="text-sm font-semibold text-emerald-700 dark:text-emerald-300 underline"
                             >
                               Add Compensation
                             </button>
@@ -938,7 +948,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
 
                     <div className="p-3 space-y-2">
                       {v.entries.length === 0 && (
-                        <p className="text-xs text-gray-400 italic px-1">No driver/vehicle assigned yet for this slot.</p>
+                        <p className="text-sm text-gray-400 italic px-1">No driver/vehicle assigned yet for this slot.</p>
                       )}
 
                       {[...v.entries, ...(v.releasedToday || [])].map((e: any) => {
@@ -962,7 +972,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                         return (
                         <div key={e.entryId}>
                           <div
-                            className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-xs flex-wrap ${
+                            className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border text-sm flex-wrap ${
                               isReleasedEntry
                                 ? "border-rose-200 bg-rose-50 dark:bg-rose-900/10 dark:border-rose-800/50"
                                 : e.isReplacement
@@ -972,60 +982,60 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                           >
                             <div className="flex items-center gap-3 min-w-0 flex-wrap">
                               <span className="flex items-center gap-1 font-mono font-semibold text-gray-700 dark:text-gray-300">
-                                <Truck size={11} /> {e.vehicleRegistrationNumber || "—"}
+                                <Truck size={13} /> {e.vehicleRegistrationNumber || "—"}
                               </span>
                               <span className="flex items-center gap-1 text-gray-500">
-                                <User size={11} /> {e.driverName || "—"}
+                                <User size={13} /> {e.driverName || "—"}
                               </span>
                               <span className="hidden sm:flex items-center gap-1 text-gray-400">
-                                <Phone size={11} /> {e.driverPhone || "—"}
+                                <Phone size={13} /> {e.driverPhone || "—"}
                               </span>
                               {todayDurations.runningHours != null && (
                                 <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-semibold">
-                                  <Clock size={11} /> {fmtHm(todayDurations.runningHours)} run
+                                  <Clock size={13} /> {fmtHm(todayDurations.runningHours)} run
                                   {e.absentHours > 0 && <span className="text-amber-600">· {fmtHm(e.absentHours)} absent</span>}
                                 </span>
                               )}
                               {todayDurations.issueHours > 0 && (
                                 <span className="flex items-center gap-1 text-amber-600 font-semibold">
-                                  <AlertOctagon size={11} /> {fmtHm(todayDurations.issueHours)} issue
+                                  <AlertOctagon size={13} /> {fmtHm(todayDurations.issueHours)} issue
                                 </span>
                               )}
                               {todayDurations.unavailableHours > 0 && (
                                 <span className="flex items-center gap-1 text-rose-600 font-semibold">
-                                  <ShieldAlert size={11} /> {fmtHm(todayDurations.unavailableHours)} unavailable
+                                  <ShieldAlert size={13} /> {fmtHm(todayDurations.unavailableHours)} unavailable
                                 </span>
                               )}
                               {e.compensationHours > 0 && (
                                 <span className="flex items-center gap-1 text-emerald-600 font-semibold">
-                                  <Gift size={11} /> +{fmtHm(e.compensationHours)} comp.
+                                  <Gift size={13} /> +{fmtHm(e.compensationHours)} comp.
                                 </span>
                               )}
                             </div>
                             <div className="flex items-center gap-1.5 flex-shrink-0">
                               {isReleasedEntry && (
-                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 font-semibold">
-                                  <LogOut size={10} /> Released Today
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 font-semibold">
+                                  <LogOut size={11} /> Released Today
                                 </span>
                               )}
                               {e.wasReplacedToday && (
-                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
-                                  <ArrowRightLeft size={10} /> Replaced by {e.replacedByRegistrationNumber || "—"}
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
+                                  <ArrowRightLeft size={11} /> Replaced by {e.replacedByRegistrationNumber || "—"}
                                 </span>
                               )}
                               {e.isReplacement && (
-                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
-                                  <ArrowRightLeft size={10} /> Replacement
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
+                                  <ArrowRightLeft size={11} /> Replacement
                                 </span>
                               )}
                               {e.createdOnThisDay && (
-                                <span className="px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 font-semibold">
+                                <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 font-semibold">
                                   Assigned Today
                                 </span>
                               )}
                               {e.isAbsentDay && (
-                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 font-semibold">
-                                  <CalendarX2 size={10} />
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 font-semibold">
+                                  <CalendarX2 size={11} />
                                   {e.absentDayResolution === "extend"
                                     ? "Absent — Extended +1 Day"
                                     : e.absentDayResolution === "close"
@@ -1034,12 +1044,12 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                                 </span>
                               )}
                               {e.billingMode === "partial" && (
-                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
-                                  <Clock size={10} /> Partial Day Billing
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
+                                  <Clock size={11} /> Partial Day Billing
                                 </span>
                               )}
                               {e.compensationDeduction > 0 && (
-                                <span className="px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 font-semibold">
+                                <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 font-semibold">
                                   -{fmt(e.compensationDeduction)}
                                 </span>
                               )}
@@ -1054,13 +1064,13 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                                         ? `Downtime crossed ${ABSENT_SUGGEST_THRESHOLD_HOURS}h today — consider marking this vehicle Absent`
                                         : "Log hours / mark absent for this vehicle"
                                     }
-                                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border font-semibold ${
+                                    className={`flex items-center gap-1 px-2 py-0.5 rounded-full border font-semibold ${
                                       suggestAbsent
                                         ? "border-amber-300 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300 animate-pulse"
                                         : "border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
                                     }`}
                                   >
-                                    <CalendarX2 size={10} /> Mark Absent
+                                    <CalendarX2 size={11} /> Mark Absent
                                   </button>
                                 );
                               })()}
@@ -1068,25 +1078,25 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                                 <button
                                   onClick={() => toggleTimeline(e.entryId)}
                                   title={isExpanded ? "Hide this vehicle's minute-by-minute issue/unavailable timeline" : "View this vehicle's minute-by-minute issue/unavailable timeline"}
-                                  className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 font-semibold"
+                                  className="flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 font-semibold"
                                 >
-                                  <History size={10} />
+                                  <History size={11} />
                                   {isExpanded ? "Hide Timeline" : "View Timeline"}
-                                  {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                  {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
                                 </button>
                               )}
                             </div>
                           </div>
 
                           {hasTimeline && isExpanded && (
-                            <div className="rounded-b-lg border border-t-0 border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 space-y-2">
+                            <div className="rounded-b-lg border border-t-0 border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2.5 space-y-2">
                               {Array.isArray(e.timeline) && e.timeline.length > 0 && (
                                 <div className="space-y-1">
-                                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Today's Running Time Timeline</p>
+                                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Today's Running Time Timeline</p>
                                   {e.timeline.map((seg: any, i: number) => {
                                     const style = TIMELINE_STYLE[seg.type] || TIMELINE_STYLE.running;
                                     return (
-                                      <div key={i} className="flex items-center gap-2 text-[11px]">
+                                      <div key={i} className="flex items-center gap-2 text-sm">
                                         <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${style.dot}`} />
                                         <span className={`font-semibold ${style.className}`}>{style.label}</span>
                                         <span className="text-gray-500 dark:text-gray-400">
@@ -1100,18 +1110,18 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                               )}
 
                               {entrySummary && (
-                                <div className="flex flex-wrap items-center gap-3 text-[11px] pt-1 border-t border-gray-100 dark:border-gray-800">
+                                <div className="flex flex-wrap items-center gap-3 text-sm pt-1 border-t border-gray-100 dark:border-gray-800">
                                   <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-semibold">
-                                    <Clock size={11} /> {fmtHm(entrySummary.runningHours)} total running
+                                    <Clock size={13} /> {fmtHm(entrySummary.runningHours)} total running
                                   </span>
                                   {entrySummary.issueHours > 0 && (
                                     <span className="flex items-center gap-1 text-amber-600 font-semibold">
-                                      <AlertOctagon size={11} /> {fmtHm(entrySummary.issueHours)} issue
+                                      <AlertOctagon size={13} /> {fmtHm(entrySummary.issueHours)} issue
                                     </span>
                                   )}
                                   {entrySummary.unavailableHours > 0 && (
                                     <span className="flex items-center gap-1 text-rose-600 font-semibold">
-                                      <ShieldAlert size={11} /> {fmtHm(entrySummary.unavailableHours)} unavailable
+                                      <ShieldAlert size={13} /> {fmtHm(entrySummary.unavailableHours)} unavailable
                                     </span>
                                   )}
                                   {(entrySummary.onRoadStartAt || entrySummary.onRoadEndAt) && (
@@ -1123,7 +1133,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                               )}
 
                               {(() => {
-                            
+
                                 const toDayKey = (d: any) => (d ? new Date(d).toISOString().slice(0, 10) : null);
                                 const onSelectedDay = (ts: any) => toDayKey(ts) === selectedDay.date;
 
@@ -1151,9 +1161,9 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                                 return (
                                   <div className="space-y-1.5 pt-1 border-t border-gray-100 dark:border-gray-800">
                                     {issueEvents.map((ev: any, i: number) => (
-                                      <div key={`issue-${i}`} className="rounded-lg border border-amber-100 dark:border-amber-900/40 px-2.5 py-2 text-[11px]">
-                                        <span className="flex items-center gap-1 font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 w-fit">
-                                          <AlertOctagon size={10} /> Issue Time
+                                      <div key={`issue-${i}`} className="rounded-lg border border-amber-100 dark:border-amber-900/40 px-2.5 py-2 text-sm">
+                                        <span className="flex items-center gap-1 font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 w-fit">
+                                          <AlertOctagon size={11} /> Issue Time
                                         </span>
                                         <p className="mt-1 text-gray-600 dark:text-gray-400">
                                           Reported {fmtDatetime(ev.createdAt)}
@@ -1167,9 +1177,9 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                                     ))}
 
                                     {unavailEvents.map((ev: any, i: number) => (
-                                      <div key={`unavail-${i}`} className="rounded-lg border border-rose-100 dark:border-rose-900/40 px-2.5 py-2 text-[11px]">
-                                        <span className="flex items-center gap-1 font-bold px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 w-fit">
-                                          <ShieldAlert size={10} /> Unavailable Time
+                                      <div key={`unavail-${i}`} className="rounded-lg border border-rose-100 dark:border-rose-900/40 px-2.5 py-2 text-sm">
+                                        <span className="flex items-center gap-1 font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 w-fit">
+                                          <ShieldAlert size={11} /> Unavailable Time
                                         </span>
                                         <p className="mt-1 text-gray-600 dark:text-gray-400">
                                           Marked unavailable {fmtDatetime(ev.reportedAt)}
@@ -1185,9 +1195,9 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                                     ))}
 
                                     {extraKmEvents.map((ev: any, i: number) => (
-                                      <div key={`extrakm-${i}`} className="rounded-lg border border-fuchsia-100 dark:border-fuchsia-900/40 px-2.5 py-2 text-[11px]">
-                                        <span className="flex items-center gap-1 font-bold px-1.5 py-0.5 rounded-full bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300 w-fit">
-                                          <Gauge size={10} /> Extra KM/Hours
+                                      <div key={`extrakm-${i}`} className="rounded-lg border border-fuchsia-100 dark:border-fuchsia-900/40 px-2.5 py-2 text-sm">
+                                        <span className="flex items-center gap-1 font-bold px-2 py-0.5 rounded-full bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300 w-fit">
+                                          <Gauge size={11} /> Extra KM/Hours
                                         </span>
                                         <p className="mt-1 text-gray-600 dark:text-gray-400">
                                           {ev.extraKm ?? 0} km · {ev.extraHours ?? 0} hrs — applied {fmtDatetime(ev.updatedAt)} (period: {ev.loggedFor || "—"})
@@ -1196,9 +1206,9 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                                     ))}
 
                                     {replacedToday && (
-                                      <div className="rounded-lg border border-amber-100 dark:border-amber-900/40 px-2.5 py-2 text-[11px]">
-                                        <span className="flex items-center gap-1 font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 w-fit">
-                                          <ArrowRightLeft size={10} /> Vehicle Replaced
+                                      <div className="rounded-lg border border-amber-100 dark:border-amber-900/40 px-2.5 py-2 text-sm">
+                                        <span className="flex items-center gap-1 font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 w-fit">
+                                          <ArrowRightLeft size={11} /> Vehicle Replaced
                                         </span>
                                         <p className="mt-1 text-gray-600 dark:text-gray-400">
                                           Old vehicle {entrySummary?.vehicleRegistrationNumber || "—"} (running {fmtHm(entrySummary?.runningHours)}) replaced at {fmtDatetime(replacedToday._timestamp)} by new vehicle{" "}
@@ -1218,8 +1228,8 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                       })}
 
                       <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-800">
-                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
-                          <ReceiptText size={11} /> Price Breakdown — {fmtDateLabel(selectedDay.date)}
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                          <ReceiptText size={13} /> Price Breakdown — {fmtDateLabel(selectedDay.date)}
                         </p>
                         <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden">
                           <PriceRow label={`Rental + Driver (${v.activeCount} vehicle${v.activeCount !== 1 ? "s" : ""} × ${fmt(v.baseDailyRate)})`} value={v.dailyVehicleAmount} />
@@ -1245,24 +1255,24 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                             return (
                               <div
                                 key={i}
-                                className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/30 px-2.5 py-2 text-[11px]"
+                                className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/30 px-2.5 py-2 text-sm"
                               >
                                 <div className="flex flex-wrap items-center gap-1.5">
-                                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 font-mono font-semibold">
-                                    <Truck size={10} /> {ex.registrationNumber}
+                                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 font-mono font-semibold">
+                                    <Truck size={11} /> {ex.registrationNumber}
                                   </span>
-                                  <span className={`px-1.5 py-0.5 rounded-full font-semibold ${isSplit ? "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300" : "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"}`}>
+                                  <span className={`px-2 py-0.5 rounded-full font-semibold ${isSplit ? "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300" : "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"}`}>
                                     {isSplit ? "Split Extra KM/Hours" : "Daily Extra KM/Hours"}
                                   </span>
-                                  <span className="px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300 font-semibold">
+                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300 font-semibold">
                                     Drove {resolvedKm} km extra & ran {resolvedHrs} hrs extra today
                                   </span>
                                   {ex.withinPurchasedBalance ? (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 font-semibold">
+                                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 font-semibold">
                                       Covered — within the package's free allowance
                                     </span>
                                   ) : (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
+                                    <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
                                       + {fmt(ex.extraKmCost + ex.extraHourCost)} extra charge (over the free allowance)
                                     </span>
                                   )}
@@ -1296,31 +1306,35 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
       {section === "vehicles" && (
         <div className="space-y-3">
           {vehicleTotals.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">No vehicle data for this campaign.</p>
+            <p className="text-base text-gray-400 text-center py-8">No vehicle data for this campaign.</p>
           ) : (
             vehicleTotals.map((v: any) => (
-              <div key={v.vehicleIndex} className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Truck size={14} className="text-teal-600 flex-shrink-0" />
-                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                      {v.vehicleType} {v.vehicleModel ? `· ${v.vehicleModel}` : ""}
-                    </span>
-                    <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-300 font-semibold flex-shrink-0">
-                      {v.daysActive} active day{v.daysActive !== 1 ? "s" : ""}
-                    </span>
+              <div key={v.vehicleIndex} className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-center gap-3 px-4 py-3.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 bg-teal-500">
+                    V{v.vehicleIndex + 1}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-lg font-semibold text-gray-800 dark:text-gray-100 truncate">
+                        {v.vehicleType} {v.vehicleModel ? `· ${v.vehicleModel}` : ""}
+                      </span>
+                      <span className="text-sm px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-300 font-semibold flex-shrink-0">
+                        {v.daysActive} active day{v.daysActive !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                     <button
                       onClick={() => setCompensationVehicleIndex(v.vehicleIndex)}
-                      className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 font-semibold"
+                      className="flex items-center gap-1 text-sm px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 font-semibold"
                     >
-                      <Gift size={11} /> Compensation
+                      <Gift size={13} /> Compensation
                     </button>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white flex-shrink-0">{fmt(v.grandTotal)}</span>
+                    <span className="text-base font-bold text-gray-900 dark:text-white">{fmt(v.grandTotal)}</span>
                   </div>
                 </div>
-                <div className="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+                <div className="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
                   <CostLine label="Rental Total" value={v.rentalTotal} />
                   <CostLine label="RTO Total" value={v.rtoTotal} />
                   <CostLine label="Promoter Total" value={v.promoterTotal} />
@@ -1332,7 +1346,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                   const meta = (data.bookingItemsMeta || []).find((b: any) => b.vehicleIndex === v.vehicleIndex);
                   if (!meta) return null;
                   return (
-                    <div className="px-3 pb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-500">
+                    <div className="px-3 pb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
                       <span>Scheduled Days: {meta.totalScheduledDays}{meta.extraDaysGranted > 0 ? ` (incl. +${meta.extraDaysGranted} compensation)` : ""}</span>
                       <span>Completed: {meta.completedCampaignDays}</span>
                       {meta.absentDaysCount > 0 && <span className="text-amber-600 font-semibold">Absent: {meta.absentDaysCount}</span>}
@@ -1350,7 +1364,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                   if (!bal || (bal.purchasedKm === 0 && bal.purchasedHours === 0)) return null;
                   return (
                     <div className="px-3 pb-3">
-                      <div className="rounded-lg bg-fuchsia-50 dark:bg-fuchsia-900/10 border border-fuchsia-100 dark:border-fuchsia-800/40 px-3 py-2 text-[11px] flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <div className="rounded-lg bg-fuchsia-50 dark:bg-fuchsia-900/10 border border-fuchsia-100 dark:border-fuchsia-800/40 px-3 py-2.5 text-sm flex flex-wrap items-center gap-x-4 gap-y-1">
                         <span className="text-fuchsia-700 dark:text-fuchsia-300 font-semibold">Extra KM/Hours Pool</span>
                         <span>Purchased: {bal.purchasedKm} km · {bal.purchasedHours} hrs</span>
                         <span>Used: {bal.usedKm} km · {bal.usedHours} hrs</span>
@@ -1368,7 +1382,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                         </span>
                         <button
                           onClick={() => setPoolWindowVehicleIndex(v.vehicleIndex)}
-                          className="text-[11px] px-2 py-0.5 rounded-lg border border-fuchsia-200 dark:border-fuchsia-800/50 text-fuchsia-700 dark:text-fuchsia-300 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/20 font-semibold"
+                          className="text-sm px-2.5 py-0.5 rounded-lg border border-fuchsia-200 dark:border-fuchsia-800/50 text-fuchsia-700 dark:text-fuchsia-300 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/20 font-semibold"
                         >
                           Edit Dates
                         </button>
@@ -1385,12 +1399,12 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
       {/* ── Final Billing ── */}
       {section === "billing" && (
         <div className="max-w-md rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
-            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-              <ListChecks size={15} className="text-blue-500" /> Campaign Summary
+          <div className="px-4 py-3.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
+            <p className="text-base font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+              <ListChecks size={17} className="text-blue-500" /> Campaign Summary
             </p>
           </div>
-          <div className="p-4 space-y-1 text-sm">
+          <div className="p-4 space-y-1.5 text-base">
             <BillingLine label="Estimated Amount" value={fb.estimatedAmount} />
             <BillingLine label="Actual Rental" value={fb.actualRental} />
             <BillingLine label="Extra KM" value={fb.actualExtraKm} />
@@ -1404,8 +1418,8 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
             <BillingLine label={`GST (${fb.gstPercent ?? 0}%)`} value={fb.gstAmount} />
             <div className="border-t border-gray-100 dark:border-gray-800 my-2" />
             <div className="flex items-center justify-between pt-1">
-              <span className="text-sm font-bold text-gray-900 dark:text-white">Final Invoice Amount</span>
-              <span className="text-base font-bold text-green-600 dark:text-green-400">{fmt(fb.finalInvoiceAmount)}</span>
+              <span className="text-base font-bold text-gray-900 dark:text-white">Final Invoice Amount</span>
+              <span className="text-lg font-bold text-green-600 dark:text-green-400">{fmt(fb.finalInvoiceAmount)}</span>
             </div>
           </div>
         </div>
@@ -1467,12 +1481,12 @@ function SummaryCard({ icon: Icon, label, value, small = false, tone }: any) {
       ? "text-amber-600 dark:text-amber-400"
       : "text-gray-900 dark:text-white";
   return (
-    <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-3">
-      <div className="flex items-center gap-1.5 text-gray-400 mb-1">
-        <Icon size={12} />
-        <span className="text-[10px] font-bold uppercase tracking-wide">{label}</span>
+    <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+      <div className="flex items-center gap-1.5 text-gray-400 mb-1.5">
+        <Icon size={14} />
+        <span className="text-xs font-bold uppercase tracking-wide">{label}</span>
       </div>
-      <p className={`${small ? "text-xs" : "text-sm"} font-bold ${toneClass} truncate`}>{value}</p>
+      <p className={`${small ? "text-sm" : "text-lg"} font-bold ${toneClass} truncate`}>{value}</p>
     </div>
   );
 }
@@ -1480,7 +1494,7 @@ function SummaryCard({ icon: Icon, label, value, small = false, tone }: any) {
 
 function PriceRow({ label, value, bold = false, negative = false }: { label: string; value: number; bold?: boolean; negative?: boolean }) {
   return (
-    <div className={`flex items-center justify-between px-3 py-2 text-xs ${bold ? "bg-gray-50 dark:bg-gray-800/40" : "bg-white dark:bg-gray-900"}`}>
+    <div className={`flex items-center justify-between px-3 py-2.5 text-sm ${bold ? "bg-gray-50 dark:bg-gray-800/40" : "bg-white dark:bg-gray-900"}`}>
       <span className={bold ? "font-bold text-gray-800 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"}>{label}</span>
       <span
         className={
@@ -1494,12 +1508,12 @@ function PriceRow({ label, value, bold = false, negative = false }: { label: str
         {negative ? `-${fmt(Math.abs(value))}` : fmt(value)}
       </span>
     </div>
-  );  
+  );
 }
 
 function CostLine({ label, value, negative = false }: { label: string; value: number; negative?: boolean }) {
   return (
-    <div className="flex items-center justify-between px-2 py-1 rounded-md bg-gray-50 dark:bg-gray-800/40">
+    <div className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-gray-50 dark:bg-gray-800/40 text-sm">
       <span className="text-gray-400">{label}</span>
       <span className={`font-semibold ${negative ? "text-rose-600 dark:text-rose-400" : "text-gray-700 dark:text-gray-300"}`}>{fmt(value)}</span>
     </div>
@@ -1509,7 +1523,7 @@ function CostLine({ label, value, negative = false }: { label: string; value: nu
 function CompareRow({ label, estimated, actual, bold = false }: { label: string; estimated: number; actual: number; bold?: boolean }) {
   const diff = Math.round(((actual || 0) - (estimated || 0)) * 100) / 100;
   return (
-    <div className={`flex items-center justify-between px-4 py-2 text-xs ${bold ? "bg-gray-50 dark:bg-gray-800/40" : ""}`}>
+    <div className={`flex items-center justify-between px-4 py-2.5 text-sm ${bold ? "bg-gray-50 dark:bg-gray-800/40" : ""}`}>
       <span className={`text-gray-500 dark:text-gray-400 ${bold ? "font-bold" : ""}`}>{label}</span>
       <div className="flex items-center gap-4">
         <span className="text-gray-400 w-24 text-right">{fmt(estimated)}</span>
@@ -1524,7 +1538,7 @@ function CompareRow({ label, estimated, actual, bold = false }: { label: string;
 
 function BillingLine({ label, value, bold = false, negative = false }: any) {
   return (
-    <div className="flex items-center justify-between py-1">
+    <div className="flex items-center justify-between py-1.5">
       <span className={`text-gray-500 dark:text-gray-400 ${bold ? "font-semibold" : ""}`}>{label}</span>
       <span className={`${bold ? "font-bold text-gray-900 dark:text-white" : "font-semibold"} ${negative ? "text-rose-600 dark:text-rose-400" : "text-gray-700 dark:text-gray-300"}`}>
         {negative ? "− " : ""}{fmt(value)}

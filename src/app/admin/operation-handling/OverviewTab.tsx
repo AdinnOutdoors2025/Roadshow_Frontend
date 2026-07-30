@@ -293,6 +293,7 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
             </div>
 
             {/* Handler Assignment */}
+            {order?.pipelineStatus !== "todo" && (
             <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
                     <div className="flex items-center gap-2">
@@ -400,6 +401,7 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                     )}
                 </div>
             </div>
+            )}
 
             {showHandoverModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
