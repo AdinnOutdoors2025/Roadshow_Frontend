@@ -1494,7 +1494,7 @@ function PriceRow({ label, value, bold = false, negative = false }: { label: str
         {negative ? `-${fmt(Math.abs(value))}` : fmt(value)}
       </span>
     </div>
-  );
+  );  
 }
 
 function CostLine({ label, value, negative = false }: { label: string; value: number; negative?: boolean }) {

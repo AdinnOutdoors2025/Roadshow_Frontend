@@ -522,7 +522,7 @@ export default function OrderDetailDrawer({
                                                         icon: (
                                                             <HiOutlineLocationMarker className="w-4 h-4 text-gray-400" />
                                                         ),
-                                                        label: "Location",
+                                                        label: "State / City",
                                                         value:
                                                             [item.state, item.city]
                                                                 .filter(Boolean)

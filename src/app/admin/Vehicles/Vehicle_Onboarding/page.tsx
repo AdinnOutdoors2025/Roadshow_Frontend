@@ -3017,6 +3017,10 @@ const Textarea = ({
   />
 );
 
+// Today in YYYY-MM-DD, used as the `min` for expiry-date pickers (native
+// <input type="date"> requires this exact format for the min attribute).
+const todayDateStr = () => new Date().toISOString().slice(0, 10);
+
 // ─── Date Input with Calendar Icon ───────────────────────────────────────────
 const DateInput = ({
   value,
@@ -3024,6 +3028,7 @@ const DateInput = ({
   placeholder,
   disabled = false,
   required = false,
+  min,
 }) => {
   return (
     <div className="relative">
@@ -3033,6 +3038,7 @@ const DateInput = ({
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
+        min={min}
         className={`${disabled ? "bg-gray-100 dark:bg-gray-800" : ""} pr-10`}
       />
       <span className="absolute text-gray-400 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-500">
@@ -3941,6 +3947,7 @@ const AddVehicleModal = ({
                   <DateInput
                     value={formData.insuranceExpiryDate}
                     onChange={(e) => setFormData((prev) => ({ ...prev, insuranceExpiryDate: e.target.value }))}
+                    min={todayDateStr()}
                   />
                 </div>
                 <div>
@@ -3948,6 +3955,7 @@ const AddVehicleModal = ({
                   <DateInput
                     value={formData.pollutionExpiryDate}
                     onChange={(e) => setFormData((prev) => ({ ...prev, pollutionExpiryDate: e.target.value }))}
+                    min={todayDateStr()}
                   />
                 </div>
               </div>
@@ -4110,6 +4118,7 @@ const MaintenanceModal = ({ isOpen, onClose, vehicle, onSave }) => {
                 <DateInput
                   value={maintenanceData.insuranceExpiryDate}
                   onChange={(e) => setMaintenanceData((prev) => ({ ...prev, insuranceExpiryDate: e.target.value }))}
+                  min={todayDateStr()}
                 />
               </div>
               <div>
@@ -4117,6 +4126,7 @@ const MaintenanceModal = ({ isOpen, onClose, vehicle, onSave }) => {
                 <DateInput
                   value={maintenanceData.pollutionExpiryDate}
                   onChange={(e) => setMaintenanceData((prev) => ({ ...prev, pollutionExpiryDate: e.target.value }))}
+                  min={todayDateStr()}
                 />
               </div>
             </div>
@@ -5362,14 +5372,18 @@ export default function VehicleOnboardingForm() {
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(true)}
-                  className="flex items-center gap-2 mt-4 text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  <Plus size={16} />
-                  Add Another Vehicle
-                </button>
+                {commonInfo.vehicleType ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center gap-2 mt-4 text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    <Plus size={16} />
+                    Add Another Vehicle
+                  </button>
+                ) : (
+                  <p className="mt-4 text-sm text-gray-400">Select a Vehicle Type first</p>
+                )}
                 {stepErrors.vehicles && <p className="text-red-500 text-xs mt-1">{stepErrors.vehicles}</p>}
               </div>
             </div>

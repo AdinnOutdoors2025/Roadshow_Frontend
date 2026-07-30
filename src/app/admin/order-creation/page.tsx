@@ -936,6 +936,7 @@ interface Order {
   grandTotal: number;
   orderStatus: "Pending" | "Confirmed" | "Cancelled";
   pipelineStatus: string;
+  salesPipelineStatus?: string;
   isAdminCreated?: boolean;
   bookingItems: BookingItem[];
   createdAt: string;
@@ -999,6 +1000,19 @@ const STATUS_CONFIG: Record<string, { color: string; dot: string }> = {
     color: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
     dot: "bg-red-400",
   },
+  Completed: {
+    color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    dot: "bg-green-500",
+  },
+};
+
+// Operation-handling's pipelineStatus is the source of truth for whether an
+// order actually finished — order.orderStatus is a separate, rarely-updated
+// field that stays "Pending" even after the order reaches Closed Won/Lost.
+const displayOrderStatus = (order: Order): "Pending" | "Confirmed" | "Cancelled" | "Completed" => {
+  if (order.pipelineStatus === "closedWon") return "Completed";
+  if (order.pipelineStatus === "closedLost" || order.salesPipelineStatus === "closedLost") return "Cancelled";
+  return order.orderStatus;
 };
 
 
@@ -1466,7 +1480,8 @@ export default function OrdersPage() {
                           label: order.pipelineStatus,
                           color: "bg-gray-100 text-gray-500",
                         };
-                      const statusCfg = STATUS_CONFIG[order.orderStatus] || {
+                      const resolvedOrderStatus = displayOrderStatus(order);
+                      const statusCfg = STATUS_CONFIG[resolvedOrderStatus] || {
                         color: "bg-gray-100 text-gray-500",
                         dot: "bg-gray-400",
                       };
@@ -1647,7 +1662,7 @@ export default function OrdersPage() {
                           <td className="px-4 py-4">
                             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${statusCfg.color}`}>
                               <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} />
-                              {order.orderStatus}
+                              {resolvedOrderStatus}
                             </span>
                           </td>
 

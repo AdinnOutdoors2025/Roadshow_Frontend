@@ -831,12 +831,12 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                           )}
                         </div>
                       </div>
-                      {handlerName && (
+                      {/* {handlerName && (
                         <div className="pdf-info-item">
                           <div className="pdf-info-label">Assigned Handler</div>
                           <div className="pdf-info-value">{handlerName}</div>
                         </div>
-                      )}
+                      )} */}
                       {order.isAdminCreated && (
                         <div className="pdf-info-item">
                           <div className="pdf-info-label">Order Source</div>
@@ -909,7 +909,7 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                                 <div className="detail-value">{item.campaignName}</div>
                               </div>
                               <div className="detail-item">
-                                <div className="detail-label">Location</div>
+                                <div className="detail-label">State / City</div>
                                 <div className="detail-value">{location}</div>
                               </div>
                                <div className="detail-item">
