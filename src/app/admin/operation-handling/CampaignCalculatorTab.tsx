@@ -40,6 +40,21 @@ const fmtHm = (n?: number | null) => {
   return `${sign}${h}h ${m}m`;
 };
 
+// Formats a total as the SUM of its already-rounded-to-minute parts (rather
+// than rounding the precise combined decimal separately), so a displayed
+// "Issue: 4m" + "Unavailable: 4m" always visibly adds up to "Total: 8m".
+const fmtHmSumOfParts = (...parts: Array<number | null | undefined>) => {
+  const totalMinutes = parts.reduce((sum: number, n) => {
+    if (n == null || isNaN(n)) return sum;
+    return sum + Math.round(Math.abs(n) * 60);
+  }, 0);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+};
+
 const fmtClock = (d?: string | null) => {
   if (!d) return "—";
   const dt = new Date(d);
@@ -856,7 +871,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                           </span>
                         )}
                         {(v.issueHoursToday > 0 || v.unavailableHoursToday > 0) && (
-                          <span className="text-gray-500">Total Downtime: {fmtHm(v.downtimeHoursToday)}</span>
+                          <span className="text-gray-500">Total Downtime: {fmtHmSumOfParts(v.issueHoursToday, v.unavailableHoursToday)}</span>
                         )}
                         {v.compensationHoursGrantedToday > 0 && (
                           <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-semibold">
@@ -873,7 +888,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                         </span>
                         <span className="text-gray-400 mt-0.5 block">
                           Old + replacement vehicle running hours added together for this slot today
-                          {v.downtimeHoursToday > 0 && <> · Loss (not running): {fmtHm(v.downtimeHoursToday)}</>}
+                          {v.downtimeHoursToday > 0 && <> · Loss (not running): {fmtHmSumOfParts(v.issueHoursToday, v.unavailableHoursToday)}</>}
                         </span>
                       </div>
                     )}
