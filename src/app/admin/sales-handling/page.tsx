@@ -721,14 +721,6 @@ export default function SalesPipelineBoard() {
 
     if (fromStage === "projectCodeCreation") {
       if (toStage === "closedLost") {
-        const mailLogsCount = (order.projectMailLogs || []).length;
-        if (mailLogsCount > 0) {
-          toast.error(
-            "Mail already sent for this order. Cannot move to Closed Lost!"
-          );
-          return;
-        }
-
         setLostReason("");
         setLostFile(null);
         setLostError("");

@@ -565,6 +565,7 @@ function OverviewTab({
       </div>
 
       {/* Handler Assignment */}
+      {order.salesPipelineStatus !== "enquiry" && (
       <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-2">
@@ -674,6 +675,7 @@ function OverviewTab({
           )}
         </div>
       </div>
+      )}
 
 
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -1760,9 +1762,11 @@ export default function SalesDetailDrawer({
     { key: "overview", label: "Overview" },
     { key: "comments", label: "Comments" },
     { key: "pipeline", label: "Pipeline History" },
-    { key: "documents", label: isPoStage ? "PO Document" : "" },
-    { key: "dateConflict", label: "Date Conflict" },
-    { key: "orderEditHistory", label: "Edit History" },
+    ...(isPoStage ? [{ key: "documents" as Tab, label: "PO Document" }] : []),
+    ...(order.hasDateConflict ? [{ key: "dateConflict" as Tab, label: "Date Conflict" }] : []),
+    ...((order.orderEditHistory || []).length > 0
+      ? [{ key: "orderEditHistory" as Tab, label: "Edit History" }]
+      : []),
     ...(order.salesPipelineStatus === "projectCodeCreation"
       ? [{ key: "codeCreation" as Tab, label: "Code Creation" }]
       : []),
@@ -1810,6 +1814,11 @@ export default function SalesDetailDrawer({
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[13px] font-semibold ${stage?.bg || "bg-gray-100"} ${stage?.color || "text-gray-700"}`}>
                   {stage?.label || order.salesPipelineStatus}
                 </span>
+                {(order.companyName || order.clientName) && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[13px] font-bold text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/30 truncate">
+                    {order.companyName || order.clientName}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2 text-[13px] text-gray-400 mt-0.5">
                 <span className="font-mono">{order.orderId}</span>

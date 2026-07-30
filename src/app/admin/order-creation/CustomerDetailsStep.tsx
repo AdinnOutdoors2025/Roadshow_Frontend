@@ -95,6 +95,23 @@ export default function CustomerDetailsStep({
   const handleClientOrderSelect = (id: string) => {
     if (!id) {
       onSelectClientOrder(null);
+      onCategoryChange("individual");
+      onChange({
+        name: "",
+        phone: "",
+        email: "",
+        address: "",
+        companyName: "",
+        clientName: "",
+        designation: "",
+        gstNumber: "",
+        panNumber: "",
+      });
+      onGstDetailsReset();
+      onGstVerifiedChange(true);
+      setGstStatus("idle");
+      setGstMessage("");
+      setErrors({});
       return;
     }
     const co = clientOrders.find((c) => c._id === id);
