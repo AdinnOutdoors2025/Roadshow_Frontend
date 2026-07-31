@@ -43,9 +43,6 @@ const fmtHm = (n?: number | null) => {
   return `${sign}${h}h ${m}m`;
 };
 
-// Formats a total as the SUM of its already-rounded-to-minute parts (rather
-// than rounding the precise combined decimal separately), so a displayed
-// "Issue: 4m" + "Unavailable: 4m" always visibly adds up to "Total: 8m".
 const fmtHmSumOfParts = (...parts: Array<number | null | undefined>) => {
   const totalMinutes = parts.reduce((sum: number, n) => {
     if (n == null || isNaN(n)) return sum;

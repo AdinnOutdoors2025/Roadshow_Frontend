@@ -299,10 +299,6 @@ export default function ClientClosureTab({ order, onRefresh, vehicleTypes, isAdm
 
     const autoOpenedRef = useRef(false);
 
-
-
-
-
      const vehicles = (order.bookingItems || [])
     .map((item, originalIdx) => ({ item, originalIdx }))
     .filter(({ item, originalIdx }) => {
