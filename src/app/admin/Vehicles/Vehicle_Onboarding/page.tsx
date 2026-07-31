@@ -3311,9 +3311,9 @@ const validateStep = (step, { commonInfo, vehicles, techSpecs, vehicleDescriptio
 
     if (num === "1") {
       // 1 screen = back screen only
-      if (!techSpecs.backScreenWidth || !techSpecs.backScreenHeight)
+      if (!techSpecs.singleBackScreenWidth || !techSpecs.singleBackScreenHeight)
         errors.backScreenSize = "Back Screen size (Width & Height) is required";
-      if (!techSpecs.backResolutionWidth || !techSpecs.backResolutionHeight)
+      if (!techSpecs.singleBackResolutionWidth || !techSpecs.singleBackResolutionHeight)
         errors.backResolution = "Back Resolution (Width & Height) is required";
     } else if (num === "2") {
       // 2 screens = left + right (no back)
@@ -4177,6 +4177,10 @@ export default function VehicleOnboardingForm() {
 
   // FIX 3: vehicleDescription state
   const [vehicleDescription, setVehicleDescription] = useState("");
+  // Tracks the last value actually persisted to the server for step 3 —
+  // used to discard unsaved edits if the user navigates away (Previous)
+  // without clicking Save & Next on this step.
+  const [savedVehicleDescription, setSavedVehicleDescription] = useState("");
 
   const [commonInfo, setCommonInfo] = useState({
     customizedType: "Non-Customized",
@@ -4189,6 +4193,12 @@ export default function VehicleOnboardingForm() {
   const [techSpecs, setTechSpecs] = useState({
     screenType: "",
     numberOfScreens: "",
+    // Back screen fields (used when numberOfScreens === "1") — separate from
+    // the "3 screens" back fields below so switching 1↔3 doesn't cross-populate.
+    singleBackScreenWidth: "",
+    singleBackScreenHeight: "",
+    singleBackResolutionWidth: "",
+    singleBackResolutionHeight: "",
     // Shared Left/Right fields (used when numberOfScreens === "3")
     leftRightScreenWidth: "",
     leftRightScreenHeight: "",
@@ -4346,6 +4356,7 @@ export default function VehicleOnboardingForm() {
         );
         if (res.data.success) {
           setStepCompletionStatus((prev) => ({ ...prev, [stepNumber]: true }));
+          setSavedVehicleDescription(vehicleDescription);
           toast.success("Media & Description saved", { position: "bottom-right", autoClose: 3000 });
           if (nextStep) setCurrentStep(nextStep);
           return true;
@@ -4626,6 +4637,10 @@ export default function VehicleOnboardingForm() {
           data.techSpecs || {
             screenType: "LED Only",
             numberOfScreens: "",
+            singleBackScreenWidth: "",
+            singleBackScreenHeight: "",
+            singleBackResolutionWidth: "",
+            singleBackResolutionHeight: "",
             leftRightScreenWidth: "",
             leftRightScreenHeight: "",
             backScreenWidth: "",
@@ -4651,6 +4666,7 @@ export default function VehicleOnboardingForm() {
         );
 
         setVehicleDescription(data.vehicleDescription || "");
+        setSavedVehicleDescription(data.vehicleDescription || "");
         setExistingMediaUrls(data.mediaFiles || {});
 
         if (
@@ -4845,6 +4861,10 @@ export default function VehicleOnboardingForm() {
     setTechSpecs({
       screenType: "",
       numberOfScreens: "",
+      singleBackScreenWidth: "",
+      singleBackScreenHeight: "",
+      singleBackResolutionWidth: "",
+      singleBackResolutionHeight: "",
       leftRightScreenWidth: "",
       leftRightScreenHeight: "",
       backScreenWidth: "",
@@ -5421,23 +5441,10 @@ export default function VehicleOnboardingForm() {
                       setTechSpecs((prev) => ({
                         ...prev,
                         numberOfScreens: value,
-                        // Reset all screen-specific fields when changing screen count
-                        leftRightScreenWidth: "",
-                        leftRightScreenHeight: "",
-                        backScreenWidth: "",
-                        backScreenHeight: "",
-                        leftRightResolutionWidth: "",
-                        leftRightResolutionHeight: "",
-                        backResolutionWidth: "",
-                        backResolutionHeight: "",
-                        leftScreenWidth: "",
-                        leftScreenHeight: "",
-                        leftResolutionWidth: "",
-                        leftResolutionHeight: "",
-                        rightScreenWidth: "",
-                        rightScreenHeight: "",
-                        rightResolutionWidth: "",
-                        rightResolutionHeight: "",
+                        // Each screen-count option reads its own dedicated fields
+                        // (1/2/3 screens use different field names), so switching
+                        // between them just shows/hides sections — no reset needed,
+                        // values already entered for any option are preserved.
                       }))
                     }
                   />
@@ -5454,18 +5461,18 @@ export default function VehicleOnboardingForm() {
                       <div className="flex gap-2 items-center">
                         <Input
                           type="text"
-                          value={techSpecs.backScreenWidth}
+                          value={techSpecs.singleBackScreenWidth}
                           placeholder="Width"
                           className="flex-1"
-                          onChange={(e) => { if (validateNumber(e.target.value, true)) setTechSpecs((prev) => ({ ...prev, backScreenWidth: e.target.value })); }}
+                          onChange={(e) => { if (validateNumber(e.target.value, true)) setTechSpecs((prev) => ({ ...prev, singleBackScreenWidth: e.target.value })); }}
                         />
                         <span className="text-gray-500">x</span>
                         <Input
                           type="text"
-                          value={techSpecs.backScreenHeight}
+                          value={techSpecs.singleBackScreenHeight}
                           placeholder="Height"
                           className="flex-1"
-                          onChange={(e) => { if (validateNumber(e.target.value, true)) setTechSpecs((prev) => ({ ...prev, backScreenHeight: e.target.value })); }}
+                          onChange={(e) => { if (validateNumber(e.target.value, true)) setTechSpecs((prev) => ({ ...prev, singleBackScreenHeight: e.target.value })); }}
                         />
                       </div>
                       {stepErrors.backScreenSize && <p className="mt-1 text-xs text-red-500">{stepErrors.backScreenSize}</p>}
@@ -5476,18 +5483,18 @@ export default function VehicleOnboardingForm() {
                       <div className="flex gap-2 items-center">
                         <Input
                           type="text"
-                          value={techSpecs.backResolutionWidth}
+                          value={techSpecs.singleBackResolutionWidth}
                           placeholder="Width (px)"
                           className="flex-1"
-                          onChange={(e) => { if (validateNumber(e.target.value, false)) setTechSpecs((prev) => ({ ...prev, backResolutionWidth: e.target.value })); }}
+                          onChange={(e) => { if (validateNumber(e.target.value, false)) setTechSpecs((prev) => ({ ...prev, singleBackResolutionWidth: e.target.value })); }}
                         />
                         <span className="text-gray-500">x</span>
                         <Input
                           type="text"
-                          value={techSpecs.backResolutionHeight}
+                          value={techSpecs.singleBackResolutionHeight}
                           placeholder="Height (px)"
                           className="flex-1"
-                          onChange={(e) => { if (validateNumber(e.target.value, false)) setTechSpecs((prev) => ({ ...prev, backResolutionHeight: e.target.value })); }}
+                          onChange={(e) => { if (validateNumber(e.target.value, false)) setTechSpecs((prev) => ({ ...prev, singleBackResolutionHeight: e.target.value })); }}
                         />
                       </div>
                       {stepErrors.backResolution && <p className="mt-1 text-xs text-red-500">{stepErrors.backResolution}</p>}
@@ -5886,6 +5893,11 @@ export default function VehicleOnboardingForm() {
                 <button
                   type="button"
                   onClick={() => {
+                    if (currentStep === 3) {
+                      // Discard any unsaved Vehicle Description edit —
+                      // only the last actually-saved value should persist.
+                      setVehicleDescription(savedVehicleDescription);
+                    }
                     const prev = currentStep - 1;
                     currentStepRef.current = prev;
                     setCurrentStep(prev);
