@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, useCallback, } from "react";
 import { createPortal } from "react-dom";
+import toast from "react-hot-toast";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import {
   addMonths,
@@ -192,6 +193,34 @@ export default function Calendar({
     setCheckOut(null);
   };
 
+  // Fires when a click completes the range (a valid end date is set),
+  // so the calendar can auto-close with a confirmation toast instead of
+  // requiring the user to hit "Close" manually.
+  const completeRangeSelection = (
+    start: Date,
+    end: Date
+  ) => {
+    setCheckOut(end);
+    setCalendarOpen(false);
+
+    const dayCount = getInclusiveDayCount(
+      start,
+      end
+    );
+
+    const rangeLabel = isSameDay(start, end)
+      ? format(start, "dd MMM yyyy")
+      : `${format(start, "dd MMM yyyy")} - ${format(
+        end,
+        "dd MMM yyyy"
+      )}`;
+
+    toast.success(
+      `${dayCount} ${dayCount === 1 ? "day" : "days"
+      } selected: ${rangeLabel}`
+    );
+  };
+
   const handleDateSelect = (date: Date) => {
     const selectedDate = startOfDay(date);
     const start = checkIn
@@ -221,7 +250,7 @@ export default function Calendar({
       }
 
       // Selecting the same day is allowed as a one-day campaign.
-      setCheckOut(selectedDate);
+      completeRangeSelection(start, selectedDate);
       return;
     }
 
@@ -232,7 +261,7 @@ export default function Calendar({
     }
 
     if (isAfter(selectedDate, start)) {
-      setCheckOut(selectedDate);
+      completeRangeSelection(start, selectedDate);
       return;
     }
 

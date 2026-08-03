@@ -624,6 +624,7 @@ type BookingReadyPopupProps = {
   checkOut: Date | null;
   onClose: () => void;
   onContinue: () => void;
+  continuing?: boolean;
 };
 
 function BookingReadyPopup({
@@ -634,6 +635,7 @@ function BookingReadyPopup({
   checkOut,
   onClose,
   onContinue,
+  continuing = false,
 }: BookingReadyPopupProps) {
   const [mounted] = useState(
     () => typeof document !== "undefined"
@@ -669,7 +671,10 @@ function BookingReadyPopup({
     <div
       className="fixed inset-0 z-9999 flex overflow-y-auto bg-black/35 px-4 py-6 backdrop-blur-[1px]"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
+        if (
+          event.target === event.currentTarget &&
+          !continuing
+        ) {
           onClose();
         }
       }}
@@ -678,7 +683,8 @@ function BookingReadyPopup({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-[#f2f2f2] text-[20px] text-black"
+          disabled={continuing}
+          className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-[#f2f2f2] text-[20px] text-black disabled:cursor-not-allowed disabled:opacity-40"
         >
           ×
         </button>
@@ -718,9 +724,14 @@ function BookingReadyPopup({
         <button
           type="button"
           onClick={onContinue}
-          className="mt-6 w-full rounded-full bg-black px-7 py-3.5 text-[14px] font-semibold text-white transition hover:bg-[#d70000]"
+          disabled={continuing}
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-black px-7 py-3.5 text-[14px] font-semibold text-white transition hover:bg-[#d70000] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Continue Booking
+          {continuing && (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+          )}
+
+          {continuing ? "Redirecting..." : "Continue Booking"}
         </button>
       </section>
     </div>,
@@ -767,6 +778,9 @@ export default function VehicleDetailsPage() {
     useState(false);
 
   const [bookingReadyOpen, setBookingReadyOpen] =
+    useState(false);
+
+  const [redirectingToCampaign, setRedirectingToCampaign] =
     useState(false);
 
   const loginModalOpenedRef = useRef(false);
@@ -944,9 +958,16 @@ export default function VehicleDetailsPage() {
   };
 
   const handleContinueBooking = () => {
-    if (!vehicle || !checkIn || !checkOut) {
+    if (
+      !vehicle ||
+      !checkIn ||
+      !checkOut ||
+      redirectingToCampaign
+    ) {
       return;
     }
+
+    setRedirectingToCampaign(true);
 
     sessionStorage.setItem(
       "roadshow_booking_draft",
@@ -959,8 +980,6 @@ export default function VehicleDetailsPage() {
         quantity: 1,
       })
     );
-
-    setBookingReadyOpen(false);
 
     router.push("/roadshow/CampaignRequest");
   };
@@ -1168,6 +1187,7 @@ export default function VehicleDetailsPage() {
           setBookingReadyOpen(false)
         }
         onContinue={handleContinueBooking}
+        continuing={redirectingToCampaign}
       />
     </>
   );
