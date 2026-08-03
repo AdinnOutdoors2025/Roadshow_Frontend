@@ -19,14 +19,16 @@ import {
 import { useState, useRef, useCallback, useEffect } from "react";
 import axios from "axios";
 import { getToken } from "../../utils/auth";
+import { jwtDecode } from "jwt-decode";
 import toast from "react-hot-toast";
 import API_BASE from "../../../../baseurl";
 import { SALES_STAGE_MAP, SALES_STAGES, SalesOrder } from "./page";
 import {
   FiClipboard, FiSearch, FiFileText, FiRepeat,
-  FiCheckCircle, FiCode, FiXCircle,
+  FiCheckCircle, FiCode, FiXCircle, FiDollarSign,
 } from "react-icons/fi";
 import CodeCreationTab from "./CodeCreationTab";
+import InvoiceTab from "../operation-handling/InvoiceTab";
 import DatePicker from "../../utils/datepicker";
 import { useVehicle } from '../../../context/vehicletypecontext';
 
@@ -114,7 +116,7 @@ const getFileUrl = (p: string) => {
 const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
 
-type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation" | "dateConflict" | "orderEditHistory";
+type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation" | "invoice" | "dateConflict" | "orderEditHistory";
 
 function DocPreviewModal({ url, label, onClose }: { url: string; label: string; onClose: () => void }) {
   const img = isImage(url);
@@ -1014,7 +1016,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         text: item.salesPoNotes || "",
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
-        stage: "Closed Won — PO Document",
+        stage: "PO Document",
         stageGroup: "closedWon",
         docPath: item.salesPoDocument,
         isMandatoryPO: true,
@@ -1043,6 +1045,19 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         at: item.uploadedAt,
         stage: "Project Code Creation",
         stageGroup: "projectCode",
+        docPath: item.document,
+      });
+    }
+  });
+
+  (order.salesFinalClosedWonArray || []).forEach((item) => {
+    if (item.notes || item.document) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Closed Won",
+        stageGroup: "salesFinalClosedWon",
         docPath: item.document,
       });
     }
@@ -1082,8 +1097,9 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
     { key: "needAnalysis", label: "Need Analysis" },
     { key: "proposal", label: "Proposal & Price Quote" },
     { key: "negotiation", label: "Negotiation" },
-    { key: "closedWon", label: "Closed Won" },
+    { key: "closedWon", label: "PO Document" },
     { key: "projectCode", label: "Project Code Creation" },
+    { key: "salesFinalClosedWon", label: "Closed Won" },
   ];
 
   const filteredComments =
@@ -1147,6 +1163,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         negotiationReview: "negotiationNotes",
         closedWon: "poCommentNotes",
         projectCodeCreation: "projectCodeCommentNotes",
+        salesFinalClosedWon: "salesFinalClosedWonNotes",
         closedLost: "closedLostCommentNotes",
       };
       const docFieldMap: Record<string, string> = {
@@ -1156,6 +1173,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         negotiationReview: "negotiationDocument",
         closedWon: "poCommentDocument",
         projectCodeCreation: "projectCodeCommentDocument",
+        salesFinalClosedWon: "salesFinalClosedWonDocument",
         closedLost: "closedLostCommentDocument",
       };
 
@@ -1192,6 +1210,13 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
     if (!comment.trim() && !file) return;
 
     if (isEnquiry && !enquiryName) {
+      const token = getToken();
+      const loggedInUsername = token ? (jwtDecode(token) as any)?.username : "";
+      if (loggedInUsername) {
+        setEnquiryName(loggedInUsername);
+        await submitComment(loggedInUsername);
+        return;
+      }
       setNameInput("");
       setNameError("");
       setShowNameModal(true);
@@ -1713,7 +1738,7 @@ export default function SalesDetailDrawer({
     return vehicle?.typeName || vehicleTypeId;
   };
 
-  const canEdit = !["closedWon", "projectCodeCreation", "closedLost"]
+  const canEdit = !["closedWon", "projectCodeCreation", "salesFinalClosedWon", "invoiceGeneration", "closedLost"]
     .includes(order.salesPipelineStatus);
 
   const getNextLabel = (): string | null => {
@@ -1723,6 +1748,8 @@ export default function SalesDetailDrawer({
     if (s === "proposalPriceQuote") return "Move to Negotiation";
     if (s === "negotiationReview") return "Move to Closed Won";
     if (s === "closedWon") return "Move to Project Code Creation";
+    if (s === "projectCodeCreation") return "Move to Closed Won";
+    if (s === "salesFinalClosedWon") return "Move to Invoice Generation";
     return null;
   };
 
@@ -1733,6 +1760,8 @@ export default function SalesDetailDrawer({
     if (s === "proposalPriceQuote") return "Negotiation";
     if (s === "negotiationReview") return "Closed Won";
     if (s === "closedWon") return "Project Code";
+    if (s === "projectCodeCreation") return "Closed Won";
+    if (s === "salesFinalClosedWon") return "Invoice Generation";
     return null;
   };
 
@@ -1743,6 +1772,8 @@ export default function SalesDetailDrawer({
     if (s === "proposalPriceQuote") return "negotiationReview";
     if (s === "negotiationReview") return "closedWon";
     if (s === "closedWon") return "projectCodeCreation";
+    if (s === "projectCodeCreation") return "salesFinalClosedWon";
+    if (s === "salesFinalClosedWon") return "invoiceGeneration";
     return null;
   };
 
@@ -1770,6 +1801,9 @@ export default function SalesDetailDrawer({
     ...(order.salesPipelineStatus === "projectCodeCreation"
       ? [{ key: "codeCreation" as Tab, label: "Code Creation" }]
       : []),
+    ...(order.salesPipelineStatus === "invoiceGeneration"
+      ? [{ key: "invoice" as Tab, label: "Invoice" }]
+      : []),
   ];
 
 
@@ -1777,6 +1811,9 @@ export default function SalesDetailDrawer({
 
     if (order.salesPipelineStatus === "projectCodeCreation") {
       setActiveTab("codeCreation");
+    }
+    if (order.salesPipelineStatus === "invoiceGeneration") {
+      setActiveTab("invoice");
     }
   }, [order.salesPipelineStatus]);
 
@@ -1993,6 +2030,15 @@ export default function SalesDetailDrawer({
                         <FiCode size={13} /> Code Creation
                       </button>
                     )}
+
+                    {order.salesPipelineStatus === "invoiceGeneration" && (
+                      <button
+                        onClick={() => setActiveTab("invoice")}
+                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400 text-xs font-medium hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+                      >
+                        <FiDollarSign size={13} /> Invoice
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -2044,6 +2090,9 @@ export default function SalesDetailDrawer({
           {activeTab === "codeCreation" && (
             <CodeCreationTab order={order} onRefresh={onRefresh} />
           )}
+          {activeTab === "invoice" && (
+            <InvoiceTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
+          )}
           {activeTab === "orderEditHistory" && (
             <OrderEditHistoryTab order={order} getVehicleTypeName={getVehicleTypeName} />
           )}
@@ -2085,9 +2134,11 @@ export default function SalesDetailDrawer({
                       className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
                     >
                       <option value="">Select handler...</option>
-                      {staffAdmins.map((s) => (
-                        <option key={s.username} value={s.username}>{s.username}</option>
-                      ))}
+                      {staffAdmins
+                        .filter((s) => s.username !== order.salesHandlerName)
+                        .map((s) => (
+                          <option key={s.username} value={s.username}>{s.username}</option>
+                        ))}
                     </select>
                   </div>
 

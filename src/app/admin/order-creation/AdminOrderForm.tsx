@@ -74,6 +74,7 @@ export interface GstDetail {
   gst_number: string;
   business_name: string;
   business_pan?: string;
+  business_address?: string;
 }
 export interface OrderState {
   customerForm: CustomerFormData;

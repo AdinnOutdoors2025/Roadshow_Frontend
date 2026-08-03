@@ -18,7 +18,7 @@ import {
   FiFileText,
   FiRepeat,
   FiCheckCircle, FiCode,
-  FiXCircle,
+  FiXCircle, FiDollarSign,
 } from "react-icons/fi";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -110,8 +110,10 @@ export const SALES_STAGES = [
     step: 4,
   },
   {
+    // Key stays "closedWon" (unchanged internally/backend) — this stage's
+    // actual purpose is PO document upload, so it's labeled "PO Document".
     key: "closedWon",
-    label: "Closed Won",
+    label: "PO Document",
     color: "text-green-700",
     bg: "bg-green-50",
     dot: "bg-green-500",
@@ -130,6 +132,28 @@ export const SALES_STAGES = [
     step: 6,
   },
   {
+    // The real "Closed Won" (deal finalized), distinct from the PO Document
+    // stage above — separate key/data (salesFinalClosedWonArray).
+    key: "salesFinalClosedWon",
+    label: "Closed Won",
+    color: "text-emerald-700",
+    bg: "bg-emerald-50",
+    dot: "bg-emerald-500",
+    headerGrad: "from-emerald-400 to-emerald-400",
+    icon: FiCheckCircle,
+    step: 7,
+  },
+  {
+    key: "invoiceGeneration",
+    label: "Invoice Generation",
+    color: "text-indigo-700",
+    bg: "bg-indigo-50",
+    dot: "bg-indigo-500",
+    headerGrad: "from-indigo-400 to-indigo-400",
+    icon: FiDollarSign,
+    step: 8,
+  },
+  {
     key: "closedLost",
     label: "Closed Lost",
     color: "text-rose-700",
@@ -137,7 +161,7 @@ export const SALES_STAGES = [
     dot: "bg-rose-500",
     headerGrad: "from-rose-400 to-rose-400",
     icon: FiXCircle,
-    step: 7,
+    step: 9,
   },
 ];
 
@@ -718,6 +742,14 @@ export default function SalesPipelineBoard() {
       return;
     }
 
+    if (
+      (toStage === "salesFinalClosedWon" || toStage === "invoiceGeneration") &&
+      ["needAnalysis", "proposalPriceQuote", "negotiationReview"].includes(fromStage)
+    ) {
+      toast.error("Cannot move directly to Closed Won/Invoice Generation stage — please move through Project Code Creation stage first!");
+      return;
+    }
+
 
     if (fromStage === "projectCodeCreation") {
       if (toStage === "closedLost") {
@@ -727,8 +759,44 @@ export default function SalesPipelineBoard() {
         setClosedLostModal(order);
         return;
       }
+      if (toStage === "salesFinalClosedWon") {
+        const mailSent = ((order as any).projectMailLogs || []).length > 0;
+        const codeCreated = ((order as any).projectCodeArray || []).length > 0;
+        if (!mailSent || !codeCreated) {
+          toast.error("Please complete the Project Code Creation stage");
+          return;
+        }
+        commitMove(order, toStage);
+        return;
+      }
+
+      if (toStage === "invoiceGeneration") {
+        const mailSent = ((order as any).projectMailLogs || []).length > 0;
+        const codeCreated = ((order as any).projectCodeArray || []).length > 0;
+        if (!mailSent || !codeCreated) {
+          toast.error("Please complete the Project Code Creation stage");
+          return;
+        }
+        toast.error("Please move the Closed Won stage completed");
+        return;
+      }
 
       toast.error("Cannot move back from Project Code Creation stage!");
+      return;
+    }
+
+    if (fromStage === "salesFinalClosedWon") {
+      if (toStage === "invoiceGeneration") {
+        commitMove(order, toStage);
+        return;
+      }
+
+      toast.error("Closed Won stage can only move to Invoice Generation!");
+      return;
+    }
+
+    if (fromStage === "invoiceGeneration") {
+      toast.error("Invoice Generation is the final stage — this order cannot be moved further!");
       return;
     }
 
@@ -739,6 +807,8 @@ export default function SalesPipelineBoard() {
       "negotiationReview",
       "closedWon",
       "projectCodeCreation",
+      "salesFinalClosedWon",
+      "invoiceGeneration",
       "closedLost",
     ];
     const LOCKED_BACK_STAGES = ["enquiry", "needAnalysis"];
@@ -758,7 +828,7 @@ export default function SalesPipelineBoard() {
       toStage !== "projectCodeCreation" &&
       toStage !== "closedLost"
     ) {
-      toast.error("Closed Won order can only move to Project Code Creation or Closed Lost.");
+      toast.error("PO Document order can only move to Project Code Creation or Closed Lost.");
       return;
     }
 

@@ -150,15 +150,20 @@ export default function CustomerDetailsStep({
 
       if (!res.ok) throw new Error(data2.message || "Verification failed");
 
-      // Company name + PAN auto-fill
-      onChange({ companyName: data2.data.business_name, panNumber: data2.data.business_pan || "" });
-      setErrors((p) => ({ ...p, panNumber: undefined }));
+      // Company name + PAN + Address auto-fill
+      onChange({
+        companyName: data2.data.business_name,
+        panNumber: data2.data.business_pan || "",
+        address: data2.data.business_address || "",
+      });
+      setErrors((p) => ({ ...p, panNumber: undefined, address: undefined }));
 
       onGstVerified({
         gstDetailId: data2.data.gstDetailId,
         gst_number: data2.data.gst_number,
         business_name: data2.data.business_name,
         business_pan: data2.data.business_pan,
+        business_address: data2.data.business_address,
       });
 
       setGstStatus("success");
@@ -315,7 +320,7 @@ export default function CustomerDetailsStep({
       <div>
       
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Client Order Request <span className="text-gray-400 font-normal">(Optional)</span>
+          Client Order Request <span className="text-gray-400 font-normal"></span>
         </label>
         
         <select
@@ -332,7 +337,7 @@ export default function CustomerDetailsStep({
         </select>
         {selectedClientOrder && (
           <p className="mt-1.5 text-xs text-blue-600">
-            Client Order selected — Customer Type locked to Individual
+            Client Order selected 
           </p>
         )}
       </div>

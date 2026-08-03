@@ -148,7 +148,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
           fcode: "VAM",
           days: 30,
           mailId: "vignesh032rk@gmail.com",
-          phone: "919003935122",
+          phone: "9345771779",
           userId: "ADINN12",
         },
       });
@@ -452,7 +452,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     className="flex items-center text-[13px] gap-2 px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-all"
                   >
                     <XCircle size={13} />
-                    <span>Release Vehicle</span>
+                    <span>withdraw vehicle</span>
                   </button>
 
                   {/* {savedCount < quantity && ( */}

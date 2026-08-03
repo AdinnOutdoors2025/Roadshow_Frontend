@@ -7,6 +7,7 @@ import { inputClass, selectClass } from "../../../components/reusableFormField";
 import FormField from "../../../components/reusableFormField";
 import { getToken } from "../../utils/auth";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { toast, Toaster } from "react-hot-toast";
 
 export interface StaffAdmin {
   _id?: string;
@@ -99,7 +100,7 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
       }
       onSuccess();
     } catch (err: any) {
-      alert(err.message || "Something went wrong");
+       toast.error(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -107,6 +108,7 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+       <Toaster position="top-right" />
       <div className="relative w-full max-w-md max-h-[70vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
 
         {/* Header */}

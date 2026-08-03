@@ -16,6 +16,7 @@ interface AdditionalField {
 interface BookingItem {
   vehicleModel: string;
   vehicleType?: string;
+  campaignName?: string;
   city: string;
   state?: string;
   quantity: number;
@@ -66,26 +67,6 @@ interface NegotiationLog {
   discountNotes?: any;
 }
 
-interface PoDocumentLog {
-  _id: string;
-  poDocument: string;
-  poDate: string;
-  poNotes?: string;
-  uploadedBy?: string;
-  uploadedAt: string;
-}
-
-interface PaymentStageFirst {
-  _id: string;
-  advancePayment: number;
-  paymentProofDocument: string;
-  paymentDate: string;
-  paymentVerification: string;
-  paymentNotes?: string;
-  uploadedBy?: string;
-  uploadedAt: string;
-}
-
 interface Order {
   _id: string;
   orderId: string;
@@ -93,6 +74,9 @@ interface Order {
   phone: string;
   email?: string;
   address?: string;
+  companyName?: string;
+  designation?: string;
+  panNumber?: string;
   customerType?: number;
   pipelineStatus: string;
   orderStatus?: string;
@@ -106,8 +90,7 @@ interface Order {
   negotiationLogs?: NegotiationLog[];
   pipelineLogs?: any[];
   poDocument?: string;
-  poDocumentLogs?: PoDocumentLog[];
-  paymentStageFirst?: PaymentStageFirst[];
+  paymentStageFirst?: { advancePayment: number }[];
   createdAt: string;
   isAdminCreated?: boolean;
   campaignType?: string;
@@ -117,7 +100,6 @@ interface OrderPDFViewProps {
   order: Order;
   onClose: () => void;
   vehicleTypes: any;
-  showHistory?: boolean;
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -134,15 +116,6 @@ const fmtDate = (d?: string): string => {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
-};
-
-const fmtDateShort = (d?: string): string => {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
   });
 };
 
@@ -233,7 +206,7 @@ const PRINT_STYLES = `
     color: #fff;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
   }
-  .pdf-btn-primary:hover { 
+  .pdf-btn-primary:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
   }
@@ -241,7 +214,7 @@ const PRINT_STYLES = `
     background: #fff; color: #374151;
     border: 2px solid #e5e7eb;
   }
-  .pdf-btn-secondary:hover { 
+  .pdf-btn-secondary:hover {
     background: #f9fafb;
     border-color: #d1d5db;
   }
@@ -267,7 +240,7 @@ const PRINT_STYLES = `
     position: absolute; top: -80px; right: -80px;
     width: 280px; height: 280px;
     border-radius: 50%;
-    
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.15) 0%, transparent 70%);
   }
   .pdf-header::after {
     content: '';
@@ -305,7 +278,7 @@ const PRINT_STYLES = `
   }
 
   .pdf-header-stats {
-    display: grid; grid-template-columns: repeat(3, 1fr);
+    display: grid; grid-template-columns: repeat(4, 1fr);
     gap: 16px;
   }
   .pdf-stat-card {
@@ -370,7 +343,7 @@ const PRINT_STYLES = `
   }
   .pdf-info-grid.two-col { grid-template-columns: repeat(2, 1fr); }
   .pdf-info-grid.four-col { grid-template-columns: repeat(4, 1fr); }
-  
+
   .pdf-info-item {
     background: #f9fafb;
     border: 1px solid #e5e7eb;
@@ -379,7 +352,7 @@ const PRINT_STYLES = `
   }
   .pdf-info-item:hover { background: #f3f4f6; }
   .pdf-info-item.full-width { grid-column: 1 / -1; }
-  
+
   .pdf-info-label {
     font-size: 10px; font-weight: 600; color: #6b7280;
     text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;
@@ -447,7 +420,7 @@ const PRINT_STYLES = `
   .vehicle-total-value {
     font-size: 20px; font-weight: 800; color: #6366f1;
   }
-  
+
   .vehicle-card-body {
     padding: 20px 24px;
   }
@@ -490,8 +463,8 @@ const PRINT_STYLES = `
     border-bottom: 1px solid #f3f4f6;
     font-weight: 500;
   }
-  .pricing-table tbody td:last-child { 
-    text-align: right; 
+  .pricing-table tbody td:last-child {
+    text-align: right;
     font-weight: 600;
     font-family: 'Courier New', monospace;
   }
@@ -561,55 +534,6 @@ const PRINT_STYLES = `
   .summary-value.negative { color: #dc2626; }
   .summary-value.positive { color: #059669; }
 
-  /* History Items */
-  .history-item {
-    display: flex; align-items: flex-start; gap: 16px;
-    padding: 14px 18px;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    transition: all 0.2s ease;
-  }
-  .history-item:hover { background: #f3f4f6; }
-  .history-badge {
-    width: 32px; height: 32px; border-radius: 8px;
-    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 800; color: #fff;
-    flex-shrink: 0;
-  }
-  .history-content { flex: 1; }
-  .history-title { font-size: 13px; font-weight: 700; color: #1f2937; }
-  .history-date { font-size: 11px; color: #6b7280; margin-top: 4px; }
-  .history-amount {
-    font-size: 16px; font-weight: 800;
-    color: #dc2626; text-align: right;
-    font-family: 'Courier New', monospace;
-  }
-
-  /* PO Item */
-  .po-item {
-    display: flex; align-items: center; gap: 14px;
-    padding: 14px 18px;
-    background: #f9fafb;
-    border: 1px solid #d1d5db;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    transition: all 0.2s ease;
-  }
-  .po-item:hover { background: #f3f4f6; }
-  .po-icon {
-    width: 40px; height: 40px; border-radius: 10px;
-    background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; color: #fff; flex-shrink: 0;
-    font-weight: 700;
-  }
-  .po-content { flex: 1; }
-  .po-name { font-size: 13px; font-weight: 700; color: #1f2937; }
-  .po-meta { font-size: 11px; color: #6b7280; margin-top: 3px; }
-
   /* Footer */
   .pdf-footer {
     background: #1e293b;
@@ -632,21 +556,29 @@ const PRINT_STYLES = `
     .pdf-toolbar { display: none !important; }
     .pdf-content { max-height: none; overflow: visible; }
     .pdf-body { background: #fff; }
-    .vehicle-card { break-inside: avoid; }
-    .summary-box { break-inside: avoid; }
-    .pdf-section { break-inside: avoid; }
+    .vehicle-card { page-break-inside: avoid; break-inside: avoid-page; }
+    .summary-box { page-break-inside: avoid; break-inside: avoid-page; }
+    .pdf-section {
+      page-break-inside: avoid;
+      break-inside: avoid-page;
+      overflow: visible;
+    }
+    .pdf-section-header {
+      page-break-after: avoid;
+      break-after: avoid-page;
+    }
+    .pdf-section-body { page-break-inside: avoid; break-inside: avoid-page; }
   }
 `;
 
 // ─── Main Component ────────────────────────────────────────────────────────────
-export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory = false }: OrderPDFViewProps) {
+export default function OrderPDFView({ order, onClose, vehicleTypes }: OrderPDFViewProps) {
   const printRef = useRef<HTMLDivElement>(null);
 
   const bookingItems = order.bookingItems || [];
   const negotiationLogs = (order.negotiationLogs || []).filter(
     (l) => (l.discountAmount || 0) > 0
   );
-  const poLogs = order.poDocumentLogs || [];
   const paymentLogs = order.paymentStageFirst || [];
 
   const subtotal = bookingItems.reduce((s, i) => s + (i.subtotal || i.totalAmount || 0), 0);
@@ -657,7 +589,7 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
   const totalAdvance = paymentLogs.reduce((s, l) => s + (l.advancePayment || 0), 0);
   const balanceDue = grandTotal - totalAdvance;
 
-  const handlerName = order.handlerName || order.handlername;
+  const pipelineLabel = PIPELINE_LABELS[order.pipelineStatus] || order.pipelineStatus;
 
   const getVehicleTypeName = (vehicleTypeId: string) => {
     if (!vehicleTypeId || !vehicleTypes) return '';
@@ -691,8 +623,6 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
     }, 600);
   };
 
-  const pipelineLabel = PIPELINE_LABELS[order.pipelineStatus] || order.pipelineStatus;
-
   return (
     <>
       <style>{PRINT_STYLES}</style>
@@ -703,7 +633,7 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
           {/* Modern Toolbar */}
           <div className="pdf-toolbar">
             <div className="pdf-toolbar-left">
-              <div className="pdf-toolbar-icon">VO</div>
+              {/* <div className="pdf-toolbar-icon">V</div> */}
               <div>
                 <div className="pdf-toolbar-title">Order Summary</div>
                 <div className="pdf-toolbar-subtitle">{order.orderId}</div>
@@ -758,6 +688,12 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                         {order.orderStatus || "—"}
                       </div>
                     </div>
+                    <div className="pdf-stat-card">
+                      <div className="pdf-stat-label">Pipeline Stage</div>
+                      <div className="pdf-stat-value" style={{ fontSize: '13px' }}>
+                        {pipelineLabel}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -790,30 +726,30 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                         <div className="pdf-info-label">Email Address</div>
                         <div className="pdf-info-value">{order.email || "—"}</div>
                       </div>
-                           {order.companyName && (
-                       <div className="pdf-info-item">
-                        <div className="pdf-info-label">Company Name</div>
-                        <div className="pdf-info-value">{order.companyName}</div>
-                      </div>
-                         )}
-                          {order.designation && (
-                       <div className="pdf-info-item">
-                        <div className="pdf-info-label">Designation</div>
-                        <div className="pdf-info-value">{order.designation}</div>
-                      </div>
-                         )}
-                          {order.gstNumber && (
-                       <div className="pdf-info-item">
-                        <div className="pdf-info-label">GstNumber</div>
-                        <div className="pdf-info-value">{order.gstNumber}</div>
-                      </div>
-                         )}
-                          {order.panNumber && (
-                       <div className="pdf-info-item">
-                        <div className="pdf-info-label">PAN Number</div>
-                        <div className="pdf-info-value">{order.panNumber}</div>
-                      </div>
-                         )}
+                      {order.companyName && (
+                        <div className="pdf-info-item">
+                          <div className="pdf-info-label">Company Name</div>
+                          <div className="pdf-info-value">{order.companyName}</div>
+                        </div>
+                      )}
+                      {order.designation && (
+                        <div className="pdf-info-item">
+                          <div className="pdf-info-label">Designation</div>
+                          <div className="pdf-info-value">{order.designation}</div>
+                        </div>
+                      )}
+                      {order.gstNumber && (
+                        <div className="pdf-info-item">
+                          <div className="pdf-info-label">GST Number</div>
+                          <div className="pdf-info-value">{order.gstNumber}</div>
+                        </div>
+                      )}
+                      {order.panNumber && (
+                        <div className="pdf-info-item">
+                          <div className="pdf-info-label">PAN Number</div>
+                          <div className="pdf-info-value">{order.panNumber}</div>
+                        </div>
+                      )}
 
                       <div className="pdf-info-item full-width">
                         <div className="pdf-info-label">Address</div>
@@ -831,12 +767,6 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                           )}
                         </div>
                       </div>
-                      {/* {handlerName && (
-                        <div className="pdf-info-item">
-                          <div className="pdf-info-label">Assigned Handler</div>
-                          <div className="pdf-info-value">{handlerName}</div>
-                        </div>
-                      )} */}
                       {order.isAdminCreated && (
                         <div className="pdf-info-item">
                           <div className="pdf-info-label">Order Source</div>
@@ -871,6 +801,12 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                           ? item.otherPromoterType || "Other"
                           : item.promoterType || "—";
                       const location = [item.state, item.city].filter(Boolean).join(" / ") || "—";
+                      const promoterLanguageLabel =
+                        typeof item.promoterLanguage === "string"
+                          ? item.promoterLanguage.replace(/([a-z])([A-Z])/g, '$1 $2')
+                          : Array.isArray(item.promoterLanguage)
+                            ? item.promoterLanguage.join(", ")
+                            : "—";
 
                       return (
                         <div key={i} className="vehicle-card">
@@ -904,19 +840,24 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                                 <div className="detail-label">Campaign Type</div>
                                 <div className="detail-value">{campaignLabel}</div>
                               </div>
-                               <div className="detail-item">
-                                <div className="detail-label">Campaign Name</div>
-                                <div className="detail-value">{item.campaignName}</div>
-                              </div>
+                              {item.campaignName && (
+                                <div className="detail-item">
+                                  <div className="detail-label">Campaign Name</div>
+                                  <div className="detail-value">{item.campaignName}</div>
+                                </div>
+                              )}
                               <div className="detail-item">
                                 <div className="detail-label">State / City</div>
                                 <div className="detail-value">{location}</div>
                               </div>
-                               <div className="detail-item">
+                              <div className="detail-item">
                                 <div className="detail-label">Campaign Location</div>
-                                <div className="detail-value">{item.campaignLocation || (item.fromLocation && item.toLocation
-                                                                ? `${item.fromLocation} → ${item.toLocation}`
-                                                                : "—")}</div>
+                                <div className="detail-value">
+                                  {item.campaignLocation ||
+                                    (item.fromLocation && item.toLocation
+                                      ? `${item.fromLocation} → ${item.toLocation}`
+                                      : "—")}
+                                </div>
                               </div>
                               <div className="detail-item" style={{ gridColumn: 'span 2' }}>
                                 <div className="detail-label">Duration</div>
@@ -963,18 +904,10 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                                     <div className="detail-label">Gender</div>
                                     <div className="detail-value">{item.promoterGender || "—"}</div>
                                   </div>
-                                
-
                                   <div className="detail-item">
-                                     <div className="detail-label">Language</div>
-                                  <div className="detail-value">
-                                    {typeof item.promoterLanguage === "string"
-                                      ? item.promoterLanguage.replace(/([a-z])([A-Z])/g, '$1 $2') 
-                                      : Array.isArray(item.promoterLanguage)
-                                        ? item.promoterLanguage.join(" ")
-                                        : "—"}
+                                    <div className="detail-label">Language</div>
+                                    <div className="detail-value">{promoterLanguageLabel}</div>
                                   </div>
-                                   </div>
                                   <div className="detail-item">
                                     <div className="detail-label">Quantity</div>
                                     <div className="detail-value">{item.promoterQuantity || 0}</div>
@@ -1052,9 +985,6 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                   </div>
                 </div>
 
-
-
-
                 {/* Financial Summary */}
                 <div className="pdf-section" style={{ border: '2px solid #c7d2fe' }}>
                   <div className="pdf-section-header" style={{
@@ -1129,155 +1059,7 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                   </div>
                 </div>
 
-                {showHistory && (negotiationLogs.length > 0 || poLogs.length > 0 || paymentLogs.length > 0) && (
-                  <div style={{
-                    padding: '24px 0 8px 0',
-                    fontSize: '18px',
-                    fontWeight: 800,
-                    color: '#1e293b',
-                    letterSpacing: '-0.3px',
-                    borderBottom: '2px solid #e5e7eb',
-                    marginBottom: '24px',
-                  }}>
-                    All History Status
-                  </div>
-                )}
-
-
-                {showHistory && negotiationLogs.length > 0 && (
-                  <div className="pdf-section">
-                    <div className="pdf-section-header">
-                      <div className="pdf-section-icon" style={{ background: '#fef3c7', color: '#92400e' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                        </svg>
-                      </div>
-                      <div className="pdf-section-title">Discount Negotiation History</div>
-                    </div>
-                    <div className="pdf-section-body">
-                      {negotiationLogs.map((log, i) => (
-                        <div key={i} className="history-item">
-                          <div className="history-badge">{i + 1}</div>
-                          <div className="history-content">
-                            <div className="history-title">{log.movedBy || "Unknown"}</div>
-                            <div className="history-date">{fmtDate(log.movedAt)}</div>
-                            {log.discountNotes && (
-                              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
-                                Notes: {log.discountNotes}
-                              </div>
-                            )}
-                          </div>
-                          <div className="history-amount">
-                            −₹{fmt(log.discountAmount)}
-                          </div>
-                        </div>
-                      ))}
-
-                      {negotiationLogs.length > 1 && (
-                        <div style={{
-                          display: 'flex', justifyContent: 'flex-end', marginTop: 12
-                        }}>
-                          <div style={{
-                            background: '#fee2e2', border: '2px solid #fca5a5',
-                            borderRadius: 10, padding: '10px 20px'
-                          }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: '#991b1b' }}>
-                              Total Discount: −₹{fmt(totalDiscount)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-
-                {/* {poLogs.length > 0 && ( */}
-                {showHistory && poLogs.length > 0 && (
-                  <div className="pdf-section">
-                    <div className="pdf-section-header">
-                      <div className="pdf-section-icon" style={{ background: '#fef3c7', color: '#92400e' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                          <polyline points="14 2 14 8 20 8" />
-                        </svg>
-                      </div>
-                      <div className="pdf-section-title">PO Documents</div>
-                      <div className="pdf-section-count">{poLogs.length} document(s)</div>
-                    </div>
-                    <div className="pdf-section-body">
-                      {poLogs.map((log, i) => (
-                        <div key={log._id} className="po-item">
-                          <div className="po-icon">PO</div>
-                          <div className="po-content">
-                            <div className="po-name">Purchase Order {i + 1}</div>
-                            <div className="po-meta">
-                              Date: {fmtDate(log.poDate)}
-                              {log.uploadedBy ? ` • By: ${log.uploadedBy}` : ""}
-                            </div>
-                            {log.poNotes && (
-                              <div className="po-meta" style={{ marginTop: 3 }}>
-                                Notes: {log.poNotes}
-                              </div>
-                            )}
-                          </div>
-                          <span className="pdf-badge badge-success">Uploaded</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-
-                {/* {paymentLogs.length > 0 && ( */}
-                {showHistory && paymentLogs.length > 0 && (
-                  <div className="pdf-section">
-                    <div className="pdf-section-header">
-                      <div className="pdf-section-icon" style={{ background: '#fed7aa', color: '#9a3412' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                          <line x1="1" y1="10" x2="23" y2="10" />
-                        </svg>
-                      </div>
-                      <div className="pdf-section-title">Payment History</div>
-                    </div>
-                    <div className="pdf-section-body">
-                      {paymentLogs.map((log, i) => (
-                        <div key={log._id} className="history-item">
-                          <div className="history-badge" style={{
-                            background: 'linear-gradient(135deg, #f97316 0%, #fb923c 100%)'
-                          }}>
-                            {i + 1}
-                          </div>
-                          <div className="history-content">
-                            <div className="history-title">Payment {i + 1}</div>
-                            <div className="history-date">
-                              Date: {fmtDate(log.paymentDate)}
-                              {log.uploadedBy ? ` • By: ${log.uploadedBy}` : ""}
-                            </div>
-                            {log.paymentNotes && (
-                              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
-                                Notes: {log.paymentNotes}
-                              </div>
-                            )}
-                            <span className={`pdf-badge ${log.paymentVerification === "Verified" ? "badge-success" : "badge-warning"}`}
-                              style={{ marginTop: 6, display: 'inline-flex' }}>
-                              {log.paymentVerification === "Verified" ? "Verified" : "Pending"}
-                            </span>
-                          </div>
-                          <div className="history-amount" style={{ color: '#ea580c' }}>
-                            ₹{fmt(log.advancePayment)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-
               </div>
-
-
 
               {/* Footer */}
               <div className="pdf-footer">
@@ -1288,9 +1070,9 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, showHistory
                   <div className="footer-text" style={{ textAlign: 'right' }}>
                     Order: <strong style={{ color: 'rgba(255, 255, 255, 0.7)' }}>{order.orderId}</strong>
                   </div>
-                  <div className="footer-watermark" style={{ marginTop: 4 }}>
+                  {/* <div className="footer-watermark" style={{ marginTop: 4 }}>
                     VehicleOps Order Management System
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
