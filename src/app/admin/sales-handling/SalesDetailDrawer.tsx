@@ -25,7 +25,7 @@ import API_BASE from "../../../../baseurl";
 import { SALES_STAGE_MAP, SALES_STAGES, SalesOrder } from "./page";
 import {
   FiClipboard, FiSearch, FiFileText, FiRepeat,
-  FiCheckCircle, FiCode, FiXCircle, FiDollarSign,
+  FiCheckCircle, FiCode, FiXCircle,
 } from "react-icons/fi";
 import CodeCreationTab from "./CodeCreationTab";
 import InvoiceTab from "../operation-handling/InvoiceTab";
@@ -751,7 +751,9 @@ function OverviewTab({
                 [
                   ["Vehicle Model", getVehicleTypeName(currentVehicle.vehicleType)], // Fixed: changed 'vehicle' to 'currentVehicle'
                   ["Booking For", order.customerCategory],
-                  ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType],
+                  (currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType)
+                    ? ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType]
+                    : null,
                   [
                     "Duration",
                     currentVehicle.fromDate && currentVehicle.toDate
@@ -771,7 +773,7 @@ function OverviewTab({
                       : "—",
                   ],
               ["Campaign Location", currentVehicle.campaignLocation || `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
-              ["State / City", `${currentVehicle.state} / ${currentVehicle.city}`],
+              (currentVehicle.state || currentVehicle.city) ? ["State / City", `${currentVehicle.state || ""} / ${currentVehicle.city || ""}`] : null,
               ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
                   currentVehicle.extraKm > 0 ? ["Extra KM", `${currentVehicle.extraKm} km`] : null,
                   currentVehicle.extraHours > 0 ? ["Extra Hours", `${currentVehicle.extraHours} hours`] : null,
@@ -1094,9 +1096,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
   const commentsTabs: Array<{ key: string; label: string }> = [
     { key: "all", label: "All" },
     { key: "enquiry", label: "Enquiry" },
-    { key: "needAnalysis", label: "Need Analysis" },
     { key: "proposal", label: "Proposal & Price Quote" },
-    { key: "negotiation", label: "Negotiation" },
     { key: "closedWon", label: "PO Document" },
     { key: "projectCode", label: "Project Code Creation" },
     { key: "salesFinalClosedWon", label: "Closed Won" },
@@ -1738,42 +1738,33 @@ export default function SalesDetailDrawer({
     return vehicle?.typeName || vehicleTypeId;
   };
 
-  const canEdit = !["closedWon", "projectCodeCreation", "salesFinalClosedWon", "invoiceGeneration", "closedLost"]
+  const canEdit = !["closedWon", "projectCodeCreation", "salesFinalClosedWon", "closedLost"]
     .includes(order.salesPipelineStatus);
 
   const getNextLabel = (): string | null => {
     const s = order.salesPipelineStatus;
-    if (s === "enquiry") return "Move to Need Analysis";
-    if (s === "needAnalysis") return "Move to Proposal";
-    if (s === "proposalPriceQuote") return "Move to Negotiation";
-    if (s === "negotiationReview") return "Move to Closed Won";
+    if (s === "enquiry") return "Move to Proposal & Price Quote";
+    if (s === "proposalPriceQuote") return "Move to PO Document";
     if (s === "closedWon") return "Move to Project Code Creation";
     if (s === "projectCodeCreation") return "Move to Closed Won";
-    if (s === "salesFinalClosedWon") return "Move to Invoice Generation";
     return null;
   };
 
   const getNextStageShortLabel = (): string | null => {
     const s = order.salesPipelineStatus;
-    if (s === "enquiry") return "Need Analysis";
-    if (s === "needAnalysis") return "Proposal";
-    if (s === "proposalPriceQuote") return "Negotiation";
-    if (s === "negotiationReview") return "Closed Won";
+    if (s === "enquiry") return "Proposal & Price Quote";
+    if (s === "proposalPriceQuote") return "PO Document";
     if (s === "closedWon") return "Project Code";
     if (s === "projectCodeCreation") return "Closed Won";
-    if (s === "salesFinalClosedWon") return "Invoice Generation";
     return null;
   };
 
   const nextStageKey = () => {
     const s = order.salesPipelineStatus;
-    if (s === "enquiry") return "needAnalysis";
-    if (s === "needAnalysis") return "proposalPriceQuote";
-    if (s === "proposalPriceQuote") return "negotiationReview";
-    if (s === "negotiationReview") return "closedWon";
+    if (s === "enquiry") return "proposalPriceQuote";
+    if (s === "proposalPriceQuote") return "closedWon";
     if (s === "closedWon") return "projectCodeCreation";
     if (s === "projectCodeCreation") return "salesFinalClosedWon";
-    if (s === "salesFinalClosedWon") return "invoiceGeneration";
     return null;
   };
 
@@ -1801,9 +1792,6 @@ export default function SalesDetailDrawer({
     ...(order.salesPipelineStatus === "projectCodeCreation"
       ? [{ key: "codeCreation" as Tab, label: "Code Creation" }]
       : []),
-    ...(order.salesPipelineStatus === "invoiceGeneration"
-      ? [{ key: "invoice" as Tab, label: "Invoice" }]
-      : []),
   ];
 
 
@@ -1811,9 +1799,6 @@ export default function SalesDetailDrawer({
 
     if (order.salesPipelineStatus === "projectCodeCreation") {
       setActiveTab("codeCreation");
-    }
-    if (order.salesPipelineStatus === "invoiceGeneration") {
-      setActiveTab("invoice");
     }
   }, [order.salesPipelineStatus]);
 
@@ -2031,14 +2016,6 @@ export default function SalesDetailDrawer({
                       </button>
                     )}
 
-                    {order.salesPipelineStatus === "invoiceGeneration" && (
-                      <button
-                        onClick={() => setActiveTab("invoice")}
-                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400 text-xs font-medium hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
-                      >
-                        <FiDollarSign size={13} /> Invoice
-                      </button>
-                    )}
                   </div>
                 </div>
 

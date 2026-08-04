@@ -722,7 +722,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh }) {
       <div className="lg:sticky lg:top-4 self-start">
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Preview</p>
-          <p className="text-[10.5px] text-gray-400">What gets downloaded as PDF</p>
+
         </div>
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-950 p-3 max-h-[80vh] overflow-auto">
           <div

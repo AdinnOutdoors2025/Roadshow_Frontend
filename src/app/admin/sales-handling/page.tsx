@@ -18,7 +18,7 @@ import {
   FiFileText,
   FiRepeat,
   FiCheckCircle, FiCode,
-  FiXCircle, FiDollarSign,
+  FiXCircle,
 } from "react-icons/fi";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -80,16 +80,6 @@ export const SALES_STAGES = [
     step: 1,
   },
   {
-    key: "needAnalysis",
-    label: "Need Analysis",
-    color: "text-blue-700",
-    bg: "bg-blue-50",
-    dot: "bg-blue-500",
-    headerGrad: "from-blue-400 to-blue-400",
-    icon: FiSearch,
-    step: 2,
-  },
-  {
     key: "proposalPriceQuote",
     label: "Proposal & Price Quote",
     color: "text-violet-700",
@@ -97,29 +87,19 @@ export const SALES_STAGES = [
     dot: "bg-violet-500",
     headerGrad: "from-violet-400 to-violet-400",
     icon: FiFileText,
-    step: 3,
-  },
-  {
-    key: "negotiationReview",
-    label: "Negotiation & Review",
-    color: "text-amber-700",
-    bg: "bg-amber-50",
-    dot: "bg-amber-500",
-    headerGrad: "from-amber-400 to-amber-400",
-    icon: FiRepeat,
-    step: 4,
+    step: 2,
   },
   {
     // Key stays "closedWon" (unchanged internally/backend) — this stage's
     // actual purpose is PO document upload, so it's labeled "PO Document".
     key: "closedWon",
-    label: "PO Document",
+    label: "Order Confirmation ",
     color: "text-green-700",
     bg: "bg-green-50",
     dot: "bg-green-500",
     headerGrad: "from-green-400 to-green-400",
     icon: FiCheckCircle,
-    step: 5,
+    step: 3,
   },
   {
     key: "projectCodeCreation",
@@ -129,7 +109,7 @@ export const SALES_STAGES = [
     dot: "bg-teal-500",
     headerGrad: "from-teal-400 to-teal-400",
     icon: FiCode,
-    step: 6,
+    step: 4,
   },
   {
     // The real "Closed Won" (deal finalized), distinct from the PO Document
@@ -141,17 +121,7 @@ export const SALES_STAGES = [
     dot: "bg-emerald-500",
     headerGrad: "from-emerald-400 to-emerald-400",
     icon: FiCheckCircle,
-    step: 7,
-  },
-  {
-    key: "invoiceGeneration",
-    label: "Invoice Generation",
-    color: "text-indigo-700",
-    bg: "bg-indigo-50",
-    dot: "bg-indigo-500",
-    headerGrad: "from-indigo-400 to-indigo-400",
-    icon: FiDollarSign,
-    step: 8,
+    step: 5,
   },
   {
     key: "closedLost",
@@ -161,7 +131,7 @@ export const SALES_STAGES = [
     dot: "bg-rose-500",
     headerGrad: "from-rose-400 to-rose-400",
     icon: FiXCircle,
-    step: 9,
+    step: 6,
   },
 ];
 
@@ -743,10 +713,10 @@ export default function SalesPipelineBoard() {
     }
 
     if (
-      (toStage === "salesFinalClosedWon" || toStage === "invoiceGeneration") &&
-      ["needAnalysis", "proposalPriceQuote", "negotiationReview"].includes(fromStage)
+      toStage === "salesFinalClosedWon" &&
+      ["proposalPriceQuote"].includes(fromStage)
     ) {
-      toast.error("Cannot move directly to Closed Won/Invoice Generation stage — please move through Project Code Creation stage first!");
+      toast.error("Cannot move directly to Closed Won stage — please move through Project Code Creation stage first!");
       return;
     }
 
@@ -770,48 +740,24 @@ export default function SalesPipelineBoard() {
         return;
       }
 
-      if (toStage === "invoiceGeneration") {
-        const mailSent = ((order as any).projectMailLogs || []).length > 0;
-        const codeCreated = ((order as any).projectCodeArray || []).length > 0;
-        if (!mailSent || !codeCreated) {
-          toast.error("Please complete the Project Code Creation stage");
-          return;
-        }
-        toast.error("Please move the Closed Won stage completed");
-        return;
-      }
-
       toast.error("Cannot move back from Project Code Creation stage!");
       return;
     }
 
     if (fromStage === "salesFinalClosedWon") {
-      if (toStage === "invoiceGeneration") {
-        commitMove(order, toStage);
-        return;
-      }
-
-      toast.error("Closed Won stage can only move to Invoice Generation!");
-      return;
-    }
-
-    if (fromStage === "invoiceGeneration") {
-      toast.error("Invoice Generation is the final stage — this order cannot be moved further!");
+      toast.error("Closed Won is the final stage — this order cannot be moved further!");
       return;
     }
 
     const STAGE_ORDER_LIST = [
       "enquiry",
-      "needAnalysis",
       "proposalPriceQuote",
-      "negotiationReview",
       "closedWon",
       "projectCodeCreation",
       "salesFinalClosedWon",
-      "invoiceGeneration",
       "closedLost",
     ];
-    const LOCKED_BACK_STAGES = ["enquiry", "needAnalysis"];
+    const LOCKED_BACK_STAGES = ["enquiry"];
     const fromIndex = STAGE_ORDER_LIST.indexOf(fromStage);
     const toIndex = STAGE_ORDER_LIST.indexOf(toStage);
 
@@ -840,9 +786,9 @@ export default function SalesPipelineBoard() {
       return;
     }
 
-    if (toStage === "needAnalysis" && !order.salesHandlerName) {
+    if (toStage === "proposalPriceQuote" && !order.salesHandlerName) {
       if (currentUserIsAdmin === 0) {
-        commitMove(order, "needAnalysis");
+        commitMove(order, "proposalPriceQuote");
         return;
       }
       setHandlerName("");
@@ -852,7 +798,7 @@ export default function SalesPipelineBoard() {
     }
 
     if (!order.salesHandlerName && fromStage === "enquiry") {
-      toast.error("Please move to Need Analysis first before proceeding!");
+      toast.error("Please move to Proposal & Price Quote first before proceeding!");
       return;
     }
 
@@ -866,7 +812,7 @@ export default function SalesPipelineBoard() {
 
     if (
       toStage === "projectCodeCreation" &&
-      ["needAnalysis", "proposalPriceQuote", "negotiationReview"].includes(fromStage)
+      ["proposalPriceQuote"].includes(fromStage)
     ) {
       setPendingProjectCodeOrder(order);
       setClosedWonWarningModal(order);
@@ -898,7 +844,7 @@ export default function SalesPipelineBoard() {
       extra.handlerName = handlerName.trim();
     }
 
-    await commitMove(handlerModal, "needAnalysis", extra);
+    await commitMove(handlerModal, "proposalPriceQuote", extra);
     setHandlerModal(null);
   };
 
@@ -1104,7 +1050,7 @@ export default function SalesPipelineBoard() {
               </div>
             </div>
             <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-1">
-              Move to Need Analysis?
+              Move to Proposal & Price Quote?
             </h2>
             <p className="text-center text-xs text-gray-400 font-mono mb-5">
               {handlerModal.orderId}
@@ -1232,7 +1178,7 @@ export default function SalesPipelineBoard() {
               </div>
             </div>
             <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-1">
-              Close Won
+            Order Confirmation 
             </h2>
             <p className="text-center text-xs text-gray-400 font-mono mb-5">
               {closedWonModal.orderId}
@@ -1253,7 +1199,7 @@ export default function SalesPipelineBoard() {
                   }
                   setPoFile(f);
                 }}
-                className="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 file:font-medium hover:file:bg-green-100 transition-all"
+                className="w-full cursor-pointer text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 file:font-medium hover:file:bg-green-100 transition-all"
               />
             </div>
             <div className="mb-4">

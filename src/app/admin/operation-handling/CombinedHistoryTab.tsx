@@ -101,7 +101,7 @@ export default function CombinedHistoryTab({ order ,vehicleTypes }: { order: Ord
                                 : "border-transparent text-gray-400 hover:text-gray-600"
                         }`}
                     >
-                        Day-by-Day History
+                       TimeLine
                     </button>
                 )}
             </div>

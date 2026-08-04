@@ -253,7 +253,6 @@ export default function CustomerDetailsStep({
     const e: FormErrors = {};
     if (!data.companyName?.trim()) e.companyName = "Company name is required";
     if (!data.clientName?.trim()) e.clientName = "Client name is required";
-    if (!data.designation?.trim()) e.designation = "Designation is required";
     if (!data.phone?.trim()) e.phone = "Phone number is required";
     else if (!/^[6-9]\d{9}$/.test(data.phone.trim()))
       e.phone = "Enter a valid 10-digit mobile number";
@@ -606,7 +605,7 @@ export default function CustomerDetailsStep({
             />
           </FormField>
 
-          <FormField label="Designation" error={errors.designation} required>
+          <FormField label="Designation" error={errors.designation}>
             <select
               value={data.designation || ""}
               onChange={(e) => set("designation", e.target.value)}
