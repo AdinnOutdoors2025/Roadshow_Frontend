@@ -315,7 +315,7 @@ export default function CustomerDetailsStep({
 
   return (
     <div className="space-y-5">
-  {!editingOrder && 
+  {/* {!editingOrder && 
       <div>
       
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -340,7 +340,7 @@ export default function CustomerDetailsStep({
           </p>
         )}
       </div>
-      }
+      } */}
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">

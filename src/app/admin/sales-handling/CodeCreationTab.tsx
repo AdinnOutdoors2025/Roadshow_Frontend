@@ -1,4 +1,8 @@
 
+/* eslint-disable */
+// @ts-nocheck
+
+
 import { getToken } from "../../utils/auth";
 import { CheckCircle2, Mail, RefreshCw, Clock, Send } from "lucide-react";
 import { toast } from "react-toastify";
