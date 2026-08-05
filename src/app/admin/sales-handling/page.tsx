@@ -514,6 +514,15 @@ export default function SalesPipelineBoard() {
   const [lostFile, setLostFile] = useState<File | null>(null);
   const [lostError, setLostError] = useState("");
 
+  const [projectMailModal, setProjectMailModal] = useState<SalesOrder | null>(null);
+  const [projectMailTo, setProjectMailTo] = useState("");
+  const [projectMailCc, setProjectMailCc] = useState("");
+  const [projectMailSubject, setProjectMailSubject] = useState("");
+  const [projectMailNotes, setProjectMailNotes] = useState("");
+  const [projectMailToError, setProjectMailToError] = useState("");
+  const [projectMailCcError, setProjectMailCcError] = useState("");
+  const [projectMailSending, setProjectMailSending] = useState(false);
+
   // ── Filter state ─────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [handlerFilter, setHandlerFilter] = useState("");
@@ -674,9 +683,11 @@ export default function SalesPipelineBoard() {
       } else {
         await fetchPipeline();
       }
+      return true;
     } catch (e: any) {
       const msg = e?.response?.data?.message || "Something went wrong";
       toast.error(msg);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -820,11 +831,72 @@ export default function SalesPipelineBoard() {
     }
 
     if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
-      commitMove(order, toStage);
+      openProjectMailModal(order);
       return;
     }
 
     commitMove(order, toStage);
+  };
+
+  // ── Project Code Creation mail modal ────────────────────────────────────────
+  const openProjectMailModal = async (order: SalesOrder) => {
+    setProjectMailTo("");
+    setProjectMailCc("");
+    setProjectMailNotes("");
+    setProjectMailToError("");
+    setProjectMailCcError("");
+    setProjectMailSubject(`Project Code Creation Request - ${order.orderId} - ${order.name}`);
+    setProjectMailModal(order);
+
+    try {
+      const token = getToken();
+      const { data } = await axios.get(`${API_BASE}project-settings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProjectMailTo(data.data?.data?.defaultTo || "");
+      setProjectMailCc(data.data?.data?.defaultCc || "");
+    } catch (e) {
+      // Project setting fetch failed — leave To/CC empty, user can type manually.
+    }
+  };
+
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const isValidEmailField = (value: string) => {
+    const emails = value.split(",").map((e) => e.trim()).filter(Boolean);
+    if (emails.length === 0) return false;
+    return emails.every(isValidEmail);
+  };
+
+  const submitProjectMailModal = async () => {
+    if (!projectMailModal) return;
+    setProjectMailToError("");
+    setProjectMailCcError("");
+
+    if (!projectMailTo.trim()) {
+      setProjectMailToError("To email is required");
+      return;
+    }
+    if (!isValidEmailField(projectMailTo)) {
+      setProjectMailToError("Enter a valid email address");
+      return;
+    }
+    if (projectMailCc.trim() && !isValidEmailField(projectMailCc)) {
+      setProjectMailCcError("Enter a valid email address");
+      return;
+    }
+
+    setProjectMailSending(true);
+    try {
+      const success = await commitMove(projectMailModal, "projectCodeCreation", {
+        to: projectMailTo,
+        cc: projectMailCc,
+        subject: projectMailSubject,
+        additionalNotes: projectMailNotes,
+      });
+      if (success) setProjectMailModal(null);
+    } finally {
+      setProjectMailSending(false);
+    }
   };
 
 
@@ -1247,6 +1319,98 @@ export default function SalesPipelineBoard() {
       )}
 
 
+
+      {projectMailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center">
+                <FiCode size={28} className="text-teal-500" />
+              </div>
+            </div>
+            <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-1">
+              Move to Project Code Creation
+            </h2>
+            <p className="text-center text-xs text-gray-400 font-mono mb-5">
+              {projectMailModal.orderId}
+            </p>
+
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                To <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={projectMailTo}
+                onChange={(e) => setProjectMailTo(e.target.value)}
+                placeholder="adinn@gmail.com,adinn1@gmail.com"
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+              />
+              {projectMailToError && (
+                <p className="mt-1 text-xs text-red-500">{projectMailToError}</p>
+              )}
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                CC
+              </label>
+              <input
+                type="text"
+                value={projectMailCc}
+                onChange={(e) => setProjectMailCc(e.target.value)}
+                placeholder="adinn1@gmail.com,adinn2@gmail.com"
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+              />
+              {projectMailCcError && (
+                <p className="mt-1 text-xs text-red-500">{projectMailCcError}</p>
+              )}
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Subject
+              </label>
+              <input
+                type="text"
+                value={projectMailSubject}
+                onChange={(e) => setProjectMailSubject(e.target.value)}
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Additional Notes
+              </label>
+              <textarea
+                rows={2}
+                value={projectMailNotes}
+                onChange={(e) => setProjectMailNotes(e.target.value)}
+                placeholder="Add any additional notes for the project team..."
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setProjectMailModal(null)}
+                disabled={projectMailSending}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitProjectMailModal}
+                disabled={projectMailSending}
+                className="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-medium transition-all flex items-center justify-center gap-2"
+              >
+                {projectMailSending ? "Sending..." : "Send"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {closedWonWarningModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">

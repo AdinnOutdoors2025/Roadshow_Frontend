@@ -94,6 +94,12 @@ const navItems: NavItem[] = [
   },
 
   {
+    name: "Project Settings",
+    icon: <HiOutlineCube />,
+    path: "/admin/project-setting"
+  },
+
+  {
     name: "Vehicles",
     icon: <ListIcon />,
     subItems: [
