@@ -28,7 +28,6 @@ import {
   FiCheckCircle, FiCode, FiXCircle,
 } from "react-icons/fi";
 import CodeCreationTab from "./CodeCreationTab";
-import InvoiceTab from "../operation-handling/InvoiceTab";
 import DatePicker from "../../utils/datepicker";
 import { useVehicle } from '../../../context/vehicletypecontext';
 
@@ -2067,9 +2066,7 @@ export default function SalesDetailDrawer({
           {activeTab === "codeCreation" && (
             <CodeCreationTab order={order} onRefresh={onRefresh} />
           )}
-          {activeTab === "invoice" && (
-            <InvoiceTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
-          )}
+         
           {activeTab === "orderEditHistory" && (
             <OrderEditHistoryTab order={order} getVehicleTypeName={getVehicleTypeName} />
           )}

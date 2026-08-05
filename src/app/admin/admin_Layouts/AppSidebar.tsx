@@ -98,6 +98,11 @@ const navItems: NavItem[] = [
     icon: <HiOutlineCube />,
     path: "/admin/project-setting"
   },
+  {
+    name: "Invoice Generation",
+    icon: <HiOutlineClipboardList />,
+    path: "/admin/invoice-generation"
+  },
 
   {
     name: "Vehicles",
