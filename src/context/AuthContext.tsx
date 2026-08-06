@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { mergeGuestCartInto } from "@/lib/roadshowCart";
 
 const SESSION_DURATION_MS =
   parseFloat(process.env.NEXT_PUBLIC_SESSION_DURATION_MINUTES || "120") *
@@ -131,6 +132,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       "roadshow_session_expiry",
       String(Date.now() + SESSION_DURATION_MS)
     );
+
+    /* Vehicles picked before signing in follow the customer into their cart */
+    mergeGuestCartInto(user?._id);
+
     setOpen(false);
   }, []);
 

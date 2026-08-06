@@ -1,0 +1,650 @@
+/* ==========================================================
+   PUBLIC ROADSHOW VEHICLE LISTING
+   Card visuals follow the existing "Our Roadshow Vehicles"
+   carousel (HomePageSection1.css) so the two pages read as
+   one site — same red gradient accent, same 20px radius,
+   same pill button. Only the layout differs: a responsive
+   grid with category tabs instead of a sliding carousel.
+========================================================== */
+
+.RS_VehListPage {
+  min-height: 100vh;
+
+  padding: 48px 5% 96px;
+
+  background: #ffffff;
+  color: #000000;
+}
+
+/* ----------------------------- HERO ----------------------------- */
+
+.RS_VehListHero {
+  max-width: 900px;
+  margin: 0 auto 34px;
+
+  text-align: center;
+}
+
+.RS_VehListTitle {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 14px;
+
+  margin: 0 0 14px;
+
+  font-size: 60px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.RS_VehListTitleAccent {
+  width: fit-content;
+
+  background: linear-gradient(
+    180deg,
+    #7d0008 0%,
+    #ff0000 100%
+  );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  -webkit-text-fill-color: transparent;
+
+  font-weight: 700;
+}
+
+.RS_VehListSubtitle {
+  margin: 0;
+
+  font-size: 16px;
+  line-height: 1.6;
+  color: #575757;
+}
+
+/* ----------------------------- TABS ----------------------------- */
+
+.RS_VehListTabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  margin: 0 auto 18px;
+}
+
+.RS_VehListTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 11px 22px;
+
+  border: 1px solid #e4e4e4;
+  border-radius: 999px;
+
+  background: #ffffff;
+
+  font-size: 15px;
+  font-weight: 500;
+  color: #4a4a4f;
+
+  cursor: pointer;
+  transition:
+    color 240ms ease,
+    border-color 240ms ease,
+    background 240ms ease,
+    transform 240ms ease;
+}
+
+.RS_VehListTab:hover {
+  color: #171719;
+  border-color: #c9c9c9;
+
+  transform: translateY(-1px);
+}
+
+.RS_VehListTab--active {
+  color: #ffffff;
+  border-color: transparent;
+
+  background: linear-gradient(
+    180deg,
+    #ff0000 0%,
+    #990000 100%
+  );
+}
+
+.RS_VehListTabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 22px;
+  height: 22px;
+
+  padding: 0 6px;
+
+  border-radius: 999px;
+
+  background: rgba(0, 0, 0, 0.06);
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.RS_VehListTab--active .RS_VehListTabCount {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.RS_VehListBlurb {
+  max-width: 720px;
+  margin: 0 auto 34px;
+
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+  color: #7a7a80;
+}
+
+/* ----------------------------- GRID ----------------------------- */
+
+.RS_VehListGrid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(320px, 1fr)
+  );
+
+  gap: 24px;
+
+  margin: 0 auto;
+}
+
+.RS_VehListCard {
+  overflow: hidden;
+
+  border-radius: 20px;
+
+  background: #ffffff;
+  color: #000000;
+
+  box-shadow:
+    0 2px 10px rgba(15, 23, 42, 0.05),
+    0 12px 30px rgba(15, 23, 42, 0.06);
+
+  cursor: pointer;
+  outline: none;
+
+  transition:
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 320ms ease;
+}
+
+.RS_VehListCard:hover,
+.RS_VehListCard:focus-visible {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 4px 14px rgba(15, 23, 42, 0.07),
+    0 22px 46px rgba(15, 23, 42, 0.11);
+}
+
+.RS_VehListImgWrap {
+  position: relative;
+
+  background: #f6f6f8;
+}
+
+.RS_VehListImg {
+  display: block;
+
+  width: 100%;
+  height: 250px;
+
+  margin: auto;
+
+  object-fit: contain;
+}
+
+.RS_VehListBadge {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+
+  padding: 6px 13px;
+
+  border-radius: 999px;
+
+  background: rgba(23, 23, 25, 0.82);
+
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.RS_VehListCardBody {
+  padding: 18px;
+}
+
+.RS_VehListName {
+  margin: 0 0 6px;
+
+  overflow: hidden;
+
+  font-size: 24px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.RS_VehListRate {
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.RS_VehListMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin: 12px 0 16px;
+}
+
+.RS_VehListRating {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  padding: 4px 10px;
+
+  border-radius: 10px;
+
+  background: #f3f3f3;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.RS_VehListStar {
+  width: 14px;
+  height: 14px;
+}
+
+.RS_VehListAvail {
+  font-size: 13px;
+  color: #7a7a80;
+}
+
+.RS_VehListActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.RS_VehListSpecBtn {
+  flex: 0 0 auto;
+
+  padding: 15px 24px;
+
+  border: 1px solid #dcdcdc;
+  border-radius: 50px;
+
+  background: #ffffff;
+
+  font-size: 16px;
+  font-weight: 500;
+  color: #171719;
+
+  cursor: pointer;
+  transition:
+    border-color 240ms ease,
+    color 240ms ease;
+}
+
+.RS_VehListSpecBtn:hover {
+  border-color: #d70000;
+  color: #d70000;
+}
+
+/* Inherits the shared bubble-hover pill from HomePageSection1.css */
+.RS_VehListBookBtn {
+  padding: 15px 26px;
+  font-size: 16px;
+}
+
+.RS_VehListState {
+  padding: 70px 0;
+
+  font-size: 16px;
+  text-align: center;
+  color: #7a7a80;
+}
+
+/* ======================= SPEC POPUP ======================= */
+
+.RS_VehSpecOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+
+  padding: 20px;
+
+  overflow-y: auto;
+
+  background: rgba(0, 0, 0, 0.42);
+
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.RS_VehSpecModal {
+  position: relative;
+
+  width: min(880px, 100%);
+  margin: auto;
+
+  overflow: hidden;
+
+  border-radius: 22px;
+
+  background: #ffffff;
+
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.28);
+}
+
+.RS_VehSpecClose {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 38px;
+  height: 38px;
+
+  border: none;
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.9);
+  color: #171719;
+
+  cursor: pointer;
+  transition:
+    background 220ms ease,
+    color 220ms ease;
+}
+
+.RS_VehSpecClose:hover {
+  background: #d70000;
+  color: #ffffff;
+}
+
+.RS_VehSpecHead {
+  display: flex;
+  gap: 22px;
+
+  padding: 24px;
+
+  background: #f6f6f8;
+}
+
+.RS_VehSpecImg {
+  flex: 0 0 auto;
+
+  width: 260px;
+  height: 200px;
+
+  border-radius: 16px;
+
+  object-fit: contain;
+
+  background: #ffffff;
+}
+
+.RS_VehSpecHeadInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  min-width: 0;
+}
+
+.RS_VehSpecBadge {
+  padding: 5px 12px;
+
+  border-radius: 999px;
+
+  background: linear-gradient(
+    180deg,
+    #ff0000 0%,
+    #990000 100%
+  );
+
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.RS_VehSpecName {
+  margin: 10px 0 6px;
+
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.RS_VehSpecDesc {
+  margin: 0 0 12px;
+
+  font-size: 14px;
+  line-height: 1.6;
+  color: #575757;
+}
+
+.RS_VehSpecRate {
+  margin-bottom: 14px;
+
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.RS_VehSpecBookBtn {
+  padding: 12px 26px;
+
+  border: none;
+  border-radius: 50px;
+
+  background: #1a1a1c;
+
+  font-size: 15px;
+  font-weight: 500;
+  color: #ffffff;
+
+  cursor: pointer;
+  transition:
+    background 220ms ease,
+    transform 220ms ease;
+}
+
+.RS_VehSpecBookBtn:hover:not(:disabled) {
+  background: #d70000;
+  transform: translateY(-1px);
+}
+
+.RS_VehSpecBookBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.RS_VehSpecBody {
+  max-height: 52vh;
+
+  padding: 24px;
+
+  overflow-y: auto;
+}
+
+.RS_VehSpecGroup + .RS_VehSpecGroup {
+  margin-top: 26px;
+}
+
+.RS_VehSpecGroupTitle {
+  margin: 0 0 12px;
+
+  padding-bottom: 8px;
+
+  border-bottom: 1px solid #ededed;
+
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8b8b90;
+}
+
+.RS_VehSpecList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 10px 26px;
+
+  margin: 0;
+}
+
+.RS_VehSpecRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+
+  padding: 7px 0;
+
+  border-bottom: 1px dashed #f0f0f0;
+}
+
+.RS_VehSpecLabel {
+  flex: 0 0 auto;
+
+  font-size: 13px;
+  color: #7a7a80;
+}
+
+.RS_VehSpecValue {
+  margin: 0;
+
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  color: #171719;
+}
+
+.RS_VehSpecEmpty {
+  margin: 0;
+  padding: 30px 0;
+
+  font-size: 14px;
+  text-align: center;
+  color: #7a7a80;
+}
+
+/* --------------------------- RESPONSIVE --------------------------- */
+
+@media (max-width: 1024px) {
+  .RS_VehListTitle {
+    font-size: 46px;
+  }
+
+  .RS_VehSpecList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .RS_VehListPage {
+    padding: 34px 5% 72px;
+  }
+
+  .RS_VehListTitle {
+    font-size: 36px;
+    gap: 10px;
+  }
+
+  .RS_VehListSubtitle {
+    font-size: 14px;
+  }
+
+  .RS_VehListGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .RS_VehListImg {
+    height: 210px;
+  }
+
+  .RS_VehSpecHead {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .RS_VehSpecImg {
+    width: 100%;
+    height: 180px;
+  }
+
+  .RS_VehSpecName {
+    font-size: 23px;
+  }
+
+  .RS_VehSpecBody {
+    max-height: none;
+    padding: 20px;
+  }
+
+  .RS_VehListActions {
+    flex-wrap: wrap;
+  }
+
+  .RS_VehListSpecBtn,
+  .RS_VehListBookBtn {
+    flex: 1 1 auto;
+    padding: 13px 18px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .RS_VehListTab {
+    padding: 9px 16px;
+    font-size: 14px;
+  }
+
+  .RS_VehSpecRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .RS_VehSpecValue {
+    text-align: left;
+  }
+}

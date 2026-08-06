@@ -615,6 +615,21 @@ import {
   fetchRoadshowVehicleById,
   type RoadshowVehicle,
 } from "@/lib/roadshowVehicles";
+import { addToCart } from "@/lib/roadshowCart";
+
+/* P4 / P6 display-version descriptions (techSpecs.displayVersion) */
+const DISPLAY_VERSION_DESC: Record<string, string> = {
+  P4: "P4 · 4mm ",
+  P6: "P6 · 6mm ",
+};
+
+/* Appends a unit only when the backend value is a bare number,
+   so a value that already carries its unit is never doubled. */
+const withUnit = (value: any, unit: string): string => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  return /^[\d.]+$/.test(raw) ? `${raw} ${unit}` : raw;
+};
 
 type BookingReadyPopupProps = {
   open: boolean;
@@ -849,11 +864,27 @@ export default function VehicleDetailsPage() {
   const productFeatures = useMemo(() => {
     const specs = vehicle?.techSpecs || {};
 
+    const versionKey = String(specs?.displayVersion || "")
+      .trim()
+      .toUpperCase();
+
+    const screenSize =
+      specs?.leftRightScreenWidth && specs?.leftRightScreenHeight
+        ? `${specs.leftRightScreenWidth} × ${specs.leftRightScreenHeight} ft`
+        : "";
+
+    const gpsEnabled = (vehicle?.registrationVehicles || []).some(
+      (reg: any) => reg?.gpsEnabled
+    );
+
     return [
       {
         icon: "/images/assets/detail_page/Visibility.svg",
         title: "Visibility",
-        desc: "High road visibility",
+        desc:
+          DISPLAY_VERSION_DESC[versionKey] ||
+          versionKey ||
+          "High road visibility",
         width: 38,
         height: 38,
       },
@@ -861,7 +892,7 @@ export default function VehicleDetailsPage() {
         icon: "/images/assets/detail_page/Brightness.svg",
         title: "Brightness",
         desc:
-          specs?.brightness || "Day & Night",
+          withUnit(specs?.brightness, "nits") || "Day & Night",
         width: 58,
         height: 58,
       },
@@ -869,7 +900,9 @@ export default function VehicleDetailsPage() {
         icon: "/images/assets/detail_page/Display.svg",
         title: "Display",
         desc: specs?.numberOfScreens
-          ? `${specs.numberOfScreens} screen(s)`
+          ? [withUnit(specs.numberOfScreens, "Screens"), screenSize]
+              .filter(Boolean)
+              .join(" · ")
           : "LED Coverage",
         width: 38,
         height: 38,
@@ -878,16 +911,16 @@ export default function VehicleDetailsPage() {
         icon: "/images/assets/detail_page/Audio.svg",
         title: "Audio",
         desc:
-          specs?.audioOutput ||
+          withUnit(specs?.audioOutput, "W") ||
           "Clear Audio System",
         width: 38,
         height: 38,
       },
       {
         icon: "/images/assets/detail_page/Power.svg",
-        title: "Power",
+        title: "Power Backup ",
         desc:
-          specs?.generatorCapacity ||
+          withUnit(specs?.generatorCapacity, "KVA") ||
           "Backup Available",
         width: 40,
         height: 40,
@@ -912,8 +945,8 @@ export default function VehicleDetailsPage() {
       },
       {
         icon: "/images/assets/detail_page/Mobility.svg",
-        title: "Mobility",
-        desc: "On-the-go Reach",
+        title: "GPS Tracking",
+        desc: gpsEnabled ? "Live GPS Enabled" : "On-the-go Reach",
         width: 78,
         height: 78,
       },
@@ -980,6 +1013,14 @@ export default function VehicleDetailsPage() {
         quantity: 1,
       })
     );
+
+    /* Keep this customer's cart in sync so earlier picks are not replaced */
+    addToCart(user?._id, {
+      vehicleId: String(vehicle.id),
+      startDate: formatDateForApi(checkIn),
+      endDate: formatDateForApi(checkOut),
+      quantity: 1,
+    });
 
     router.push("/roadshow/CampaignRequest");
   };
@@ -1138,7 +1179,7 @@ export default function VehicleDetailsPage() {
 
             <div className="mt-9">
               <h3 className="mb-2 text-[20px] font-bold text-[#d70000]">
-                Available Dates
+                Select Available Dates
               </h3>
 
               <DatePicker

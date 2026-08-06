@@ -1509,30 +1509,27 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
 /* eslint-disable */
 // @ts-nocheck
-"use client";
+"use client"; 
 
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import {
+  AnimatePresence,
+  motion,
+  useScroll,
+  useMotionValueEvent,
+} from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { useCartCount } from "@/hooks/useCartCount";
 
 const navLinks = [
   { label: "Home", href: "/", icon: "home" },
-  { label: "Vehicle", href: "/vehicle", icon: "vehicle" },
+  { label: "Vehicle", href: "/roadshow/vehicles", icon: "vehicle" },
   { label: "Contact Us", href: "/roadshow/Contact", icon: "contact" },
 ];
 
@@ -1642,6 +1639,20 @@ function ChevronIcon() {
   );
 }
 
+/* Shows the stored phone with a +91 country code, without ever doubling it */
+const formatPhoneWithCode = (phone?: string): string => {
+  const raw = String(phone ?? "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("+")) return raw;
+
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return raw;
+
+  return digits.length > 10 && digits.startsWith("91")
+    ? `+${digits}`
+    : `+91 ${digits}`;
+};
+
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -1664,6 +1675,29 @@ export default function Navbar() {
 
   const navbarRef = useRef<HTMLElement | null>(null);
   const dropdownRef = useRef<HTMLElement | null>(null);
+
+  /* ---------------------------------------------------------------
+     SCROLL-REACTIVE HEADER
+     The header stays sticky at all times; it only condenses the
+     glass pill once the page is scrolled. Purely additive — while
+     the flag is false the header renders exactly as before.
+  ---------------------------------------------------------------- */
+  /* Live cart size for the badge on the menu button */
+  const cartCount = useCartCount(user?._id);
+
+  const { scrollY } = useScroll();
+
+  const [condensed, setCondensed] = useState(false);
+
+  /* Hysteresis: condense past 60px, release below 30px. A single
+     threshold makes the class flip back and forth while the user
+     hovers around it, which reads as a shake. */
+  useMotionValueEvent(scrollY, "change", (current) => {
+    setCondensed((previous) => {
+      if (previous) return current > 30;
+      return current > 60;
+    });
+  });
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -1709,7 +1743,7 @@ export default function Navbar() {
   const handleMenuItemClick = (action: string) => {
     setOpen(false);
 
-    if (action === "cart") router.push("/roadshow/my-bookings");
+    if (action === "cart") router.push("/roadshow/CampaignRequest");
     if (action === "orders") router.push("/roadshow/my-bookings");
     if (action === "signout") logoutUser();
     if (action === "signin") openAuth("login");
@@ -1805,11 +1839,11 @@ export default function Navbar() {
                 );
 
               -webkit-backdrop-filter:
-                blur(13px)
+                blur(30px)
                 saturate(130%);
 
               backdrop-filter:
-                blur(13px)
+                blur(30px)
                 saturate(130%);
 
               box-shadow:
@@ -1947,13 +1981,7 @@ export default function Navbar() {
               border: none;
               border-radius: 999px;
 
-              background:
-                linear-gradient(
-                  180deg,
-                  rgba(255, 255, 255, 0.34),
-                  rgba(226, 232, 240, 0.11)
-                );
-
+            
               box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 0.54),
                 0 3px 12px rgba(15, 23, 42, 0.025);
@@ -2021,6 +2049,61 @@ export default function Navbar() {
                 inset 0 1px 0 rgba(255, 255, 255, 0.7);
 
               transform: translate3d(0, -1px, 0);
+            }
+
+            /* ------------------------------------------------
+               NAV LABEL ROLL
+               A masked, single-line window holding two copies
+               of the label. On hover the black copy slides
+               down out of the mask while the red copy drops in
+               from above; leaving the link rolls both back.
+            ------------------------------------------------ */
+
+            .RS_SoftNavLabel {
+              position: relative;
+              display: inline-block;
+              overflow: hidden;
+
+              /* line-height:1 on the link makes this exactly one line tall,
+                 so a 100% shift lands each copy perfectly in/out of view */
+              line-height: 1;
+              vertical-align: middle;
+            }
+
+            .RS_SoftNavLabelText {
+              display: block;
+
+              transition:
+                transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+                color 420ms ease;
+            }
+
+            .RS_SoftNavLabelText--hover {
+              position: absolute;
+              left: 0;
+              top: 0;
+
+              width: 100%;
+
+              color: #d70000;
+
+              transform: translate3d(0, -100%, 0);
+            }
+
+            .RS_SoftNavLink:hover .RS_SoftNavLabelText,
+            .RS_SoftNavLink:focus-visible .RS_SoftNavLabelText {
+              transform: translate3d(0, 100%, 0);
+            }
+
+            .RS_SoftNavLink:hover .RS_SoftNavLabelText--hover,
+            .RS_SoftNavLink:focus-visible .RS_SoftNavLabelText--hover {
+              transform: translate3d(0, 0, 0);
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+              .RS_SoftNavLabelText {
+                transition: none;
+              }
             }
 
             .RS_SoftNavLink--active {
@@ -2242,11 +2325,11 @@ export default function Navbar() {
                 );
 
               -webkit-backdrop-filter:
-                blur(13px)
+                blur(30px)
                 saturate(124%);
 
               backdrop-filter:
-                blur(13px)
+                blur(30px)
                 saturate(124%);
 
               box-shadow:
@@ -2932,11 +3015,11 @@ export default function Navbar() {
                 border-radius: 19px;
 
                 -webkit-backdrop-filter:
-                  blur(9px)
+                  blur(24px)
                   saturate(120%);
 
                 backdrop-filter:
-                  blur(9px)
+                  blur(24px)
                   saturate(120%);
               }
 
@@ -2963,11 +3046,11 @@ export default function Navbar() {
                 border-radius: 20px;
 
                 -webkit-backdrop-filter:
-                  blur(9px)
+                  blur(24px)
                   saturate(118%);
 
                 backdrop-filter:
-                  blur(9px)
+                  blur(24px)
                   saturate(118%);
               }
 
@@ -3157,8 +3240,8 @@ export default function Navbar() {
             }
 
             @supports not (
-              (backdrop-filter: blur(13px)) or
-              (-webkit-backdrop-filter: blur(13px))
+              (backdrop-filter: blur(33px)) or
+              (-webkit-backdrop-filter: blur(33px))
             ) {
               .RS_SoftHeader {
                 background:
@@ -3180,11 +3263,310 @@ export default function Navbar() {
                 transition-duration: 0.01ms !important;
               }
             }
+
+            /* ================================================
+               SCROLL-REACTIVE HEADER  (additive)
+            ================================================ */
+
+            // @keyframes RS_SoftHeaderDrop {
+            //   from {
+            //     transform: translate3d(0, -140%, 0);
+            //     opacity: 0;
+            //   }
+            //   to {
+            //     transform: translate3d(0, 0, 0);
+            //     opacity: 1;
+            //   }
+            // }
+
+            /* The entrance animation lives on the root so the pill's own
+               transform stays free for the scroll condense below. */
+            .RS_SoftHeaderRoot {
+              animation: RS_SoftHeaderDrop 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+            }
+
+            /* The pill narrows visually through clip-path rather than width.
+
+               Animating the real width would resize the backdrop-filter
+               region, forcing the browser to recompute a 13px blur of
+               everything behind the pill on every frame — that is what was
+               showing up as shaking. clip-path leaves the box, and so the
+               filter region, completely untouched; it only masks what gets
+               painted. No layout, no re-blur.
+
+               clip-path also clips box-shadow, so the pill's outer shadow
+               moves to .RS_SoftHeaderRoot::after below. The inset highlight
+               stays here, since it paints inside the box and is correctly
+               trimmed to the narrower silhouette. */
+            /* One registered custom property drives every part of the
+               condense. Transitioning clip-path, transform and width
+               separately makes them drift apart: transform is cheap while
+               clip-path has to repaint a backdrop-filter layer, so the logo
+               and menu button arrive well before the pill narrows.
+
+               Animating --rs-cut instead means all four consumers below
+               recompute from the same value in the same style pass, so they
+               are synchronised by construction rather than by matching
+               durations. @property is what makes it interpolate as a
+               length; without registration a custom property would jump. */
+            @property --rs-cut {
+              syntax: "<length>";
+              inherits: true;
+              initial-value: 0px;
+            }
+
+            .RS_SoftHeaderRoot {
+              --rs-cut: 0px;
+
+              transition: --rs-cut 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+            }
+
+            .RS_SoftHeaderRoot--scrolled {
+              --rs-cut: var(--rs-pill-cut);
+            }
+
+            .RS_SoftHeader {
+              clip-path: inset(
+                0px var(--rs-cut) 0px var(--rs-cut) round 50px
+              );
+              
+            }
+
+            /* The pill's width is set literally at seven breakpoints, so it
+               is mirrored here once as a variable the shadow layer can
+               follow. These values match .RS_SoftHeader exactly. */
+            .RS_SoftHeaderRoot {
+              --rs-pill-w: min(820px, calc(100% - 28px));
+              --rs-pill-cut: 100px;
+            }
+
+            @media (min-width: 1600px) {
+              .RS_SoftHeaderRoot {
+                --rs-pill-w: min(1160px, calc(100% - 56px));
+                --rs-pill-cut: 150px;
+              }
+            }
+
+            @media (min-width: 1440px) and (max-width: 1599px) {
+              .RS_SoftHeaderRoot {
+                --rs-pill-w: min(1080px, calc(100% - 44px));
+                --rs-pill-cut: 140px;
+              }
+            }
+
+            @media (min-width: 1200px) and (max-width: 1439px) {
+              .RS_SoftHeaderRoot {
+                --rs-pill-w: min(960px, calc(100% - 34px));
+                --rs-pill-cut: 120px;
+              }
+            }
+
+            @media (min-width: 1024px) and (max-width: 1199px) {
+              .RS_SoftHeaderRoot {
+                --rs-pill-w: min(760px, calc(100% - 24px));
+                --rs-pill-cut: 80px;
+              }
+            }
+
+            @media (min-width: 901px) and (max-width: 1023px) {
+              .RS_SoftHeaderRoot {
+                --rs-pill-w: min(720px, calc(100% - 22px));
+                --rs-pill-cut: 70px;
+              }
+            }
+
+            /* Shadow-only layer sitting behind the pill, carrying the drop
+               shadow that clip-path would otherwise cut away. It has no
+               backdrop-filter, so resizing it is cheap and cannot shimmer.
+               Its width is derived from --rs-cut too, so the shadow hugs
+               the clipped silhouette on every frame. height:100% tracks the
+               pill automatically, because the root's height is exactly the
+               pill's height at every breakpoint. */
+            .RS_SoftHeaderRoot::after {
+              content: "";
+
+              position: absolute;
+              top: 0;
+              left: 50%;
+
+              width: calc(var(--rs-pill-w) - var(--rs-cut) * 2);
+              height: 100%;
+
+              border-radius: 50px;
+
+              box-shadow:
+                0 14px 28px rgba(15, 23, 42, 0.08),
+                0 4px 10px rgba(15, 23, 42, 0.04);
+
+              transform: translateX(-50%);
+              -webkit-transform: translateX(-50%);
+
+              transition: box-shadow 0.8s ease;
+
+              pointer-events: none;
+              z-index: -1;
+            }
+
+            /* Keeps the logo, centre nav and menu button on one optical
+               centre line regardless of their differing box heights.
+
+               Each also gets its own compositor layer (translateZ +
+               will-change + hidden backface). While the pill's width
+               animates, their offsets are recomputed by layout every frame
+               and would otherwise be re-rounded to whole pixels
+               independently of the pill's own offset — a ±1px wobble that
+               reads as shaking. On their own layers the browser
+               interpolates them on the GPU and the wobble disappears. */
+            /* Both read --rs-cut directly instead of carrying their own
+               transition, so they track the pill's clipped edge frame for
+               frame rather than racing it. */
+            .RS_SoftHeader > .RS_SoftBrand {
+              align-self: center;
+
+              transform: translateX(var(--rs-cut));
+              -webkit-transform: translateX(var(--rs-cut));
+            }
+
+            .RS_SoftHeader > .RS_SoftRight {
+              align-self: center;
+
+              transform: translateX(calc(var(--rs-cut) * -1));
+              -webkit-transform: translateX(calc(var(--rs-cut) * -1));
+            }
+
+            .RS_SoftBrand {
+              height: auto;
+            }
+
+            /* Centre navigation pinned to the exact middle of the pill.
+               The pill's box never resizes now, so this anchor is static
+               and needs no layer promotion of its own. */
+            .RS_SoftHeader > .RS_SoftNavigation {
+              top: 50%;
+              left: 50%;
+              right: auto;
+              bottom: auto;
+
+              margin: 0;
+
+              transform: translate(-50%, -50%);
+              -webkit-transform: translate(-50%, -50%);
+            }
+
+            /* Condensed: the logo slides right and the menu button slides
+               left, closing in on Home / Vehicle / Contact Us. Both are
+               pure GPU transforms on their own layers — no layout, no
+               repaint, and the glass behind them is never resampled.
+
+               The two distances differ because the logo is far wider than
+               the menu button, so equal travel would leave visibly unequal
+               gaps around the centre nav. */
+            /* Condensed: --rs-pill-cut is clipped off each side. The logo
+               and menu button travel exactly that same distance, so they
+               keep their original inset from the pill's visible edge and
+               nothing appears to drift or re-space. */
+            .RS_SoftHeaderRoot--scrolled::after {
+              box-shadow:
+                0 18px 40px rgba(15, 23, 42, 0.14),
+                0 6px 14px rgba(15, 23, 42, 0.07);
+            }
+
+            /* Below 900px the centre nav is hidden and the pill is already
+               tight, so nothing condenses. */
+            @media (max-width: 900px) {
+              .RS_SoftHeaderRoot {
+                --rs-pill-cut: 0px;
+              }
+            }
+
+            /* ================================================
+               CART COUNT BADGE
+            ================================================ */
+
+            .RS_SoftMenuButton {
+              position: relative;
+            }
+
+            .RS_SoftCartBadge {
+              position: absolute;
+              top: 1px;
+              right: 1px;
+
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+
+              min-width: 17px;
+              height: 17px;
+
+              padding: 0 4px;
+
+              border-radius: 999px;
+
+              font-size: 10px;
+              font-weight: 700;
+              line-height: 1;
+              letter-spacing: 0.2px;
+
+              color: #ffffff;
+              background: linear-gradient(140deg, #ff3b30, #d70000);
+
+              box-shadow:
+                0 2px 6px rgba(215, 0, 0, 0.42),
+                0 0 0 2px rgba(255, 255, 255, 0.9);
+
+              pointer-events: none;
+            }
+
+            .RS_SoftDropCount {
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+
+              min-width: 20px;
+              height: 20px;
+
+              margin-left: auto;
+              padding: 0 6px;
+
+              border-radius: 999px;
+
+              font-size: 11px;
+              font-weight: 700;
+              line-height: 1;
+
+              color: #ffffff;
+              background: linear-gradient(140deg, #ff3b30, #d70000);
+            }
+
+            /* Visually hidden, still announced by screen readers */
+            .RS_SoftSrOnly {
+              position: absolute;
+              width: 1px;
+              height: 1px;
+              padding: 0;
+              margin: -1px;
+              overflow: hidden;
+              clip-path: inset(50%);
+              white-space: nowrap;
+              border: 0;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+              .RS_SoftHeaderRoot,
+              .RS_SoftHeader {
+                transition: none;
+                animation: none;
+              }
+            }
           `,
         }}
       />
 
-      <div className="RS_SoftHeaderRoot">
+      <div
+        className={`RS_SoftHeaderRoot ${condensed ? "RS_SoftHeaderRoot--scrolled" : ""
+          }`}
+      >
         <nav
           ref={navbarRef}
           className="RS_SoftHeader"
@@ -3223,7 +3605,22 @@ export default function Navbar() {
                     <Icon name={icon} size={15} />
                   </span>
 
-                  <span>{label}</span>
+                  {/* Two stacked copies of the label — the black one rolls
+                      down out of view on hover while the red one rolls in
+                      behind it, then both roll back. The duplicate is
+                      hidden from screen readers so the name is read once. */}
+                  <span className="RS_SoftNavLabel">
+                    <span className="RS_SoftNavLabelText">
+                      {label}
+                    </span>
+
+                    <span
+                      className="RS_SoftNavLabelText RS_SoftNavLabelText--hover"
+                      aria-hidden="true"
+                    >
+                      {label}
+                    </span>
+                  </span>
                 </Link>
               );
             })}
@@ -3244,8 +3641,34 @@ export default function Navbar() {
                 <span className="RS_SoftHamburgerLine" />
                 <span className="RS_SoftHamburgerLine" />
               </span>
+
+              <AnimatePresence initial={false}>
+                {cartCount > 0 && (
+                  <motion.span
+                    key={cartCount}
+                    className="RS_SoftCartBadge"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 520,
+                      damping: 18,
+                    }}
+                  >
+                    {cartCount > 9 ? "9+" : cartCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
+
+            <span className="RS_SoftSrOnly" aria-live="polite">
+              {cartCount === 1
+                ? "1 vehicle in your cart"
+                : `${cartCount} vehicles in your cart`}
+            </span>
           </div>
+
         </nav>
       </div>
 
@@ -3335,7 +3758,7 @@ export default function Navbar() {
                   </span>
 
                   <span className="RS_SoftDropLabel">
-                    {user.phone}
+                    {formatPhoneWithCode(user.phone)}
                   </span>
                 </div>
 
@@ -3356,6 +3779,22 @@ export default function Navbar() {
                   <span className="RS_SoftDropLabel">
                     My Cart
                   </span>
+
+                  {cartCount > 0 && (
+                    <motion.span
+                      key={cartCount}
+                      className="RS_SoftDropCount"
+                      initial={{ scale: 0.6, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 520,
+                        damping: 18,
+                      }}
+                    >
+                      {cartCount}
+                    </motion.span>
+                  )}
 
                   <span className="RS_SoftDropArrow">
                     <ChevronIcon />
