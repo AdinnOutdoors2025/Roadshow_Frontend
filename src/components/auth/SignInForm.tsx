@@ -30,6 +30,7 @@ interface ApiResponse {
 const ERROR_MESSAGES: Record<string, string> = {
   ADMIN_NOT_FOUND: "Admin account not found.",
   INVALID_PASSWORD: "Incorrect password.",
+  ACCOUNT_INACTIVE: "Your account has been deactivated. Please contact the admin.",
 };
 
 const inputClass =
@@ -131,7 +132,10 @@ export default function SignInForm() {
               </div>
 
               <div>
-                <Label>Password <span className="text-error-500">*</span></Label>
+                <div className="flex items-center justify-between">
+                  <Label>Password <span className="text-error-500">*</span></Label>
+                 
+                </div>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -152,6 +156,14 @@ export default function SignInForm() {
                     )}
                   </span>
                 </div>
+                <div className="flex justify-end">
+                 <Link
+                    href="/admin/forgot-password"
+                    className="text-sm text-end text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                  >
+                    Forgot Password?
+                  </Link>
+                  </div>
               </div>
 
               {error && (

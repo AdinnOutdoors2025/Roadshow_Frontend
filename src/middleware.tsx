@@ -75,7 +75,7 @@ export function middleware(request: NextRequest): NextResponse {
   const token = request.cookies.get("adminToken")?.value;
   const { pathname } = request.nextUrl;
 
-  const adminAuthPaths = ["/admin/signin", "/admin/signup"];
+  const adminAuthPaths = ["/admin/signin", "/admin/signup", "/admin/forgot-password"];
 
   // /admin exact → redirect based on token
   if (pathname === "/admin") {

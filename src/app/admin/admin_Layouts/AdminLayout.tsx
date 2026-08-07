@@ -11,7 +11,7 @@ import Backdrop from "./Backdrop";
 import { usePathname } from "next/navigation";
 import { VehicleProvider } from "@/context/vehicletypecontext";
 
-const AUTH_PATHS = ["/admin/signin", "/admin/signup"];
+const AUTH_PATHS = ["/admin/signin", "/admin/signup", "/admin/forgot-password"];
 
 function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
