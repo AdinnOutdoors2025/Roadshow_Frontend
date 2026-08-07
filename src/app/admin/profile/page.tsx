@@ -234,7 +234,8 @@ export default function ProfilePage() {
       const decoded = jwtDecode<DecodedToken>(token);
       setUsername(decoded.username || "");
       setEmail(decoded.email || "");
-      setRoleLabel(Number(decoded.isAdmin) === 1 ? "Admin" : "Staff Admin");
+      const isAdminNum = Number(decoded.isAdmin);
+      setRoleLabel(isAdminNum === 1 ? "Admin" : isAdminNum === 2 ? "Sales" : isAdminNum === 3 ? "Operation" : "Staff Admin");
     } catch {
       // ignore decode failure — form stays blank, useAuthGuard elsewhere handles invalid tokens
     }

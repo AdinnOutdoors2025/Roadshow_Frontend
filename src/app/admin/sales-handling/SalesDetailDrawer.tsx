@@ -1752,7 +1752,7 @@ export default function SalesDetailDrawer({
   const getNextStageShortLabel = (): string | null => {
     const s = order.salesPipelineStatus;
     if (s === "enquiry") return "Proposal & Price Quote";
-    if (s === "proposalPriceQuote") return "PO Document";
+    if (s === "proposalPriceQuote") return "Order Confirmation";
     if (s === "closedWon") return "Project Code";
     if (s === "projectCodeCreation") return "Closed Won";
     return null;

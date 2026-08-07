@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import React, { useState, ChangeEvent, FormEvent } from "react";
 import { saveToken } from "@/app/utils/auth";
 import API_BASE from "../../../baseurl";
+import { jwtDecode } from "jwt-decode";
 
 interface FormState {
   username: string;
@@ -82,8 +83,19 @@ export default function SignInForm() {
      if (data.data?.token) {
       saveToken(data.data.token);
     }
-    
-      router.push("/admin/dashboard");
+
+      const role = data.data?.user?.role;
+      if (role === "admin") {
+        router.push("/admin/dashboard");
+      } else {
+        try {
+          const payload = jwtDecode<{ allowedMenus?: string[] }>(data.data!.token);
+          const firstAllowed = payload.allowedMenus?.[0];
+          router.push(firstAllowed || "/admin/no-access");
+        } catch {
+          router.push("/admin/no-access");
+        }
+      }
     } catch (err) {
       setError("Server error. Please try again.");
     } finally {
@@ -97,21 +109,21 @@ export default function SignInForm() {
         <div>
           <div className="mb-5 sm:mb-8">
             <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
-              Admin Sign In
+         Sign In  
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your credentials to access the dashboard.
+              Enter your credentials to access the panel.
             </p>
           </div>
 
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               <div>
-                <Label>Username <span className="text-error-500">*</span></Label>
+                <Label>Username or Email <span className="text-error-500">*</span></Label>
                 <input
                   type="text"
                   name="username"
-                  placeholder="Enter your username"
+                  placeholder="Enter your username or email"
                   value={form.username}
                   onChange={handleChange}
                   className={inputClass}

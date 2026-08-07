@@ -56,7 +56,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
-          {isAdmin === 1 ? "Admin" : "Staff Admin"}
+          {isAdmin === 1 ? "Admin" : isAdmin === 2 ? "Sales" : isAdmin === 3 ? "Operation" : "Staff Admin"}
         </span>
 
         <svg

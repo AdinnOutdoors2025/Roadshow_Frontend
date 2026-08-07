@@ -632,7 +632,7 @@ export default function SalesPipelineBoard() {
       const { data } = await axios.get(`${API_BASE}staff-admins`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setStaffAdmins(data.data.data || []);
+      setStaffAdmins((data.data.data || []).filter((s: any) => s.status === "active"));
     } catch { }
   };
 
@@ -798,7 +798,7 @@ export default function SalesPipelineBoard() {
     }
 
     if (toStage === "proposalPriceQuote" && !order.salesHandlerName) {
-      if (currentUserIsAdmin === 0) {
+      if (currentUserIsAdmin !== 1) {
         commitMove(order, "proposalPriceQuote");
         return;
       }
@@ -904,7 +904,7 @@ export default function SalesPipelineBoard() {
     if (!handlerModal) return;
     setHandlerError("");
 
-    const isStaff = currentUserIsAdmin === 0;
+    const isStaff = currentUserIsAdmin !== 1;
 
     if (!isStaff && !handlerName.trim()) {
       setHandlerError("Please select a handler");
@@ -1197,7 +1197,7 @@ export default function SalesPipelineBoard() {
                   onChange={(e) => setHandlerName(e.target.value)}
                   className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
-                  <option value="">-- Select staff admin --</option>
+                  <option value="">-- Select Sales User --</option>
                   {staffAdmins.map((s) => (
                     <option key={s.username} value={s.username}>
                       {s.username}
