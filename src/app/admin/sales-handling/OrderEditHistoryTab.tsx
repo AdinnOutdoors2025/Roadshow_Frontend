@@ -32,7 +32,8 @@ export default function OrderEditHistoryTab({ order, getVehicleTypeName }: Props
   const resolveHeaderLabel = (vc: SalesOrder["orderEditHistory"][number]["vehicleChanges"][number]) => {
     const typeChange = vc.changes.find((c) => c.field === "Vehicle Type");
     const rawTypeId =
-      vc.action === "removed" ? typeChange?.oldValue : typeChange?.newValue;
+      (vc.action === "removed" ? typeChange?.oldValue : typeChange?.newValue) ||
+      (vc as any).vehicleTypeId;
     const typeName = rawTypeId ? getVehicleTypeName(String(rawTypeId)) : "";
     const parts = [typeName, vc.vehicleLabel].filter(Boolean);
     return parts.join(" · ");

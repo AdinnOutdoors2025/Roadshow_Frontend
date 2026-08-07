@@ -13,6 +13,7 @@ export default function DatePicker({
   maxAge = 100,
   minDate,
   maxDate,
+  forceDown = false,
 }: {
   value: string;
   onChange: (val: string) => void;
@@ -22,6 +23,7 @@ export default function DatePicker({
   maxAge?: number;
   minDate?: string;
   maxDate?: string;
+  forceDown?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [curYear, setCurYear] = useState(new Date().getFullYear());
@@ -73,7 +75,9 @@ export default function DatePicker({
       }
 
       // ── NEW: decide whether to open upward or downward ──
-      if (ref.current) {
+      if (forceDown) {
+        setOpenUpward(false);
+      } else if (ref.current) {
         const rect = ref.current.getBoundingClientRect();
         const spaceBelow = window.innerHeight - rect.bottom;
         const spaceAbove = rect.top;

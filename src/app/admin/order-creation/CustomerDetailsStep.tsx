@@ -150,15 +150,20 @@ export default function CustomerDetailsStep({
 
       if (!res.ok) throw new Error(data2.message || "Verification failed");
 
-      // Company name + PAN auto-fill
-      onChange({ companyName: data2.data.business_name, panNumber: data2.data.business_pan || "" });
-      setErrors((p) => ({ ...p, panNumber: undefined }));
+      // Company name + PAN + Address auto-fill
+      onChange({
+        companyName: data2.data.business_name,
+        panNumber: data2.data.business_pan || "",
+        address: data2.data.business_address || "",
+      });
+      setErrors((p) => ({ ...p, panNumber: undefined, address: undefined }));
 
       onGstVerified({
         gstDetailId: data2.data.gstDetailId,
         gst_number: data2.data.gst_number,
         business_name: data2.data.business_name,
         business_pan: data2.data.business_pan,
+        business_address: data2.data.business_address,
       });
 
       setGstStatus("success");
@@ -248,7 +253,6 @@ export default function CustomerDetailsStep({
     const e: FormErrors = {};
     if (!data.companyName?.trim()) e.companyName = "Company name is required";
     if (!data.clientName?.trim()) e.clientName = "Client name is required";
-    if (!data.designation?.trim()) e.designation = "Designation is required";
     if (!data.phone?.trim()) e.phone = "Phone number is required";
     else if (!/^[6-9]\d{9}$/.test(data.phone.trim()))
       e.phone = "Enter a valid 10-digit mobile number";
@@ -311,11 +315,11 @@ export default function CustomerDetailsStep({
 
   return (
     <div className="space-y-5">
-  {!editingOrder && 
+  {/* {!editingOrder && 
       <div>
       
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Client Order Request <span className="text-gray-400 font-normal">(Optional)</span>
+          Client Order Request <span className="text-gray-400 font-normal"></span>
         </label>
         
         <select
@@ -332,11 +336,11 @@ export default function CustomerDetailsStep({
         </select>
         {selectedClientOrder && (
           <p className="mt-1.5 text-xs text-blue-600">
-            Client Order selected — Customer Type locked to Individual
+            Client Order selected 
           </p>
         )}
       </div>
-      }
+      } */}
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -601,7 +605,7 @@ export default function CustomerDetailsStep({
             />
           </FormField>
 
-          <FormField label="Designation" error={errors.designation} required>
+          <FormField label="Designation" error={errors.designation}>
             <select
               value={data.designation || ""}
               onChange={(e) => set("designation", e.target.value)}

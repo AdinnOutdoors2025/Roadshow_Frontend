@@ -634,17 +634,12 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
     if (!form.packageId) e.vehicleModel = "Select vehicle model";
     // if (!form.bookingFor) e.bookingFor = "Select booking for";
 
-    if (!form.campaignType) e.campaignType = "Select campaign type";
-
     if (form.campaignType === "Other" && !form.otherCampaignType) e.otherCampaignType = "Required";
 
-    if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
     if (!form.fromDate) e.fromDate = "Select start date";
     if (!form.toDate) e.toDate = "Select end date";
     if (form.fromDate && form.toDate && new Date(form.fromDate) >= new Date(form.toDate))
       e.toDate = "End date must be after start date";
-    if (!form.state) e.state = "Select state";
-    if (!form.city.trim()) e.city = "Enter city";
     if (!form.campaignLocation.trim()) e.campaignLocation = "Enter campaign location";
 
     if (!form.quantity || form.quantity < 1) {
@@ -1251,7 +1246,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
 
               <div id="field-campaignType">
-                <FormField label="Campaign Type" error={errors.campaignType} required>
+                <FormField label="Campaign Type" error={errors.campaignType}>
                   <select value={form.campaignType} onChange={(e) => set("campaignType", e.target.value)} className={inputClass(!!errors.campaignType)}>
                     <option value="">Select</option>
                     {campaignTypes.map((ct) => (
@@ -1264,7 +1259,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
 
               <div id="field-campaignName">
-                <FormField label="Campaign Name" error={errors.campaignName} required>
+                <FormField label="Campaign Name" error={errors.campaignName}>
                   <input
                     type="text"
                     value={form.campaignName}
@@ -1342,7 +1337,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
             <div className="grid grid-cols-2 gap-4">
 
               <div id="field-state">
-                <FormField label="State" error={errors.state} required>
+                <FormField label="State" error={errors.state}>
                   <select
                     value={form.state}
                     onChange={(e) => handleStateChange(e.target.value)}
@@ -1358,7 +1353,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
 
               <div id="field-city">
-                <FormField label="City" error={errors.city} required>
+                <FormField label="City" error={errors.city}>
                   <CitySelect
                     value={form.city}
                     options={cityOptions}

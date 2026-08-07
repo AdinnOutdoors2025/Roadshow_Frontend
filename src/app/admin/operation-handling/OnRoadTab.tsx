@@ -148,7 +148,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
           fcode: "VAM",
           days: 30,
           mailId: "vignesh032rk@gmail.com",
-          phone: "919003935122",
+          phone: "9345771779",
           userId: "ADINN12",
         },
       });
@@ -223,6 +223,21 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   // All entries including removed — used for Driver History / Campaign History (so removed vehicles' history is visible)
   const allVehicleEntriesIncludingRemoved = (order.onRoadExecutionArray || []).filter(
     (e) => e.vehicleIndex === vehicleIndex
+  );
+
+  // Only registrations that actually have at least one issue — Issue/Escalation tab list
+  const issueVehicleEntries = allVehicleEntriesIncludingRemoved.filter((entry) =>
+    (order.onRoadIssues || []).some((iss) =>
+      iss.entryId ? String(iss.entryId) === String(entry._id) : iss.vehicleRegNo === entry.vehicleRegistrationNumber
+    )
+  );
+
+  // Only registrations that actually have at least one Extra KM entry — Extra KM History tab list
+  const extraKmVehicleEntries = allVehicleEntriesIncludingRemoved.filter((entry) =>
+    (order.extraKmDetailsArray || []).some((e) => {
+      if (e.vehicleIndex !== vehicleIndex) return false;
+      return e.entryId ? String(e.entryId) === String(entry._id) : e.vehicleRegistrationNumber === entry.vehicleRegistrationNumber;
+    })
   );
 
   const fetchGpsData = async () => {
@@ -452,7 +467,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     className="flex items-center text-[13px] gap-2 px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-all"
                   >
                     <XCircle size={13} />
-                    <span>Release Vehicle</span>
+                    <span>withdraw vehicle</span>
                   </button>
 
                   {/* {savedCount < quantity && ( */}
@@ -645,13 +660,14 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                           {allVehicleEntriesIncludingRemoved
                             .filter(e => e.entryStatus === "removed")
                             .map((e, i) => {
-                              const globalIdx = allVehicleEntriesIncludingRemoved.findIndex(x => x._id === e._id);
+                              const issueIdx = issueVehicleEntries.findIndex(x => x._id === e._id);
+                              const extraKmIdx = extraKmVehicleEntries.findIndex(x => x._id === e._id);
                               return (
                                 <button
                                   key={e._id || i}
                                   onClick={() => {
-                                    setActiveIssueVehicleTab(globalIdx);
-                                    setActiveExtraKmTab(globalIdx);
+                                    if (issueIdx !== -1) setActiveIssueVehicleTab(issueIdx);
+                                    if (extraKmIdx !== -1) setActiveExtraKmTab(extraKmIdx);
                                     issueRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
                                   }}
                                   className="w-full text-left rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
@@ -823,9 +839,9 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 </div>
               </div>
 
-              {allVehicleEntriesIncludingRemoved.length > 1 && (
+              {issueVehicleEntries.length > 1 && (
                 <div className="flex gap-1 px-3 pt-3 pb-0 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
-                  {allVehicleEntriesIncludingRemoved.map((entry, i) => {
+                  {issueVehicleEntries.map((entry, i) => {
                     const entryOpenCount = vehicleIssues.filter(
                       (iss) =>
                         (iss.entryId ? String(iss.entryId) === String(entry._id) : iss.vehicleRegNo === entry.vehicleRegistrationNumber) &&
@@ -859,7 +875,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
               <div className="p-4 space-y-4 max-h-72 overflow-y-auto">
                 {(() => {
-                  const activeEntry = allVehicleEntriesIncludingRemoved[activeIssueVehicleTab];
+                  const activeEntry = issueVehicleEntries[activeIssueVehicleTab];
                   if (!activeEntry) {
                     return (
                       <p className="text-xs text-gray-400 text-center py-4">
@@ -955,9 +971,9 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 </span>
               </div>
 
-              {allVehicleEntriesIncludingRemoved.length > 1 && (
+              {extraKmVehicleEntries.length > 1 && (
                 <div className="flex gap-1 px-3 pt-3 pb-0 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
-                  {allVehicleEntriesIncludingRemoved.map((entry, i) => {
+                  {extraKmVehicleEntries.map((entry, i) => {
                     const isReleased = entry.entryStatus === "removed";
                     return (
                       <button
@@ -981,7 +997,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
               <div className="p-4 space-y-4 max-h-72 overflow-y-auto">
                 {(() => {
-                  const activeEntry = allVehicleEntriesIncludingRemoved[activeExtraKmTab];
+                  const activeEntry = extraKmVehicleEntries[activeExtraKmTab];
 
                   const entries = (order.extraKmDetailsArray || []).filter((e) => {
                     if (e.vehicleIndex !== vehicleIndex) return false;

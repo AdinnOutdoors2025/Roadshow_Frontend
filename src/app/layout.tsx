@@ -5,7 +5,7 @@ import './globals.css';
 import "flatpickr/dist/flatpickr.css";
 import { AuthProvider } from "@/context/AuthContext";
 import AuthModal from "@/components/auth/ClientAuthModal";
-import ToastProvider from "@/components/Notify/ToastProvider";
+// import GlobalToastGate from "@/components/Notify/GlobalToastGate";
 
 import Navbar from "@/components/Client/Reusable_Components/Navbar";
 import Footer from "@/components/Client/Reusable_Components/Footer";
@@ -64,7 +64,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
           async
         /> */}
-          <ToastProvider />
+          {/* <GlobalToastGate /> */}
           <AuthModal />
         </AuthProvider>
 

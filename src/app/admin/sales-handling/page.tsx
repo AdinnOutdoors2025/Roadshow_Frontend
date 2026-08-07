@@ -80,16 +80,6 @@ export const SALES_STAGES = [
     step: 1,
   },
   {
-    key: "needAnalysis",
-    label: "Need Analysis",
-    color: "text-blue-700",
-    bg: "bg-blue-50",
-    dot: "bg-blue-500",
-    headerGrad: "from-blue-400 to-blue-400",
-    icon: FiSearch,
-    step: 2,
-  },
-  {
     key: "proposalPriceQuote",
     label: "Proposal & Price Quote",
     color: "text-violet-700",
@@ -97,27 +87,19 @@ export const SALES_STAGES = [
     dot: "bg-violet-500",
     headerGrad: "from-violet-400 to-violet-400",
     icon: FiFileText,
-    step: 3,
+    step: 2,
   },
   {
-    key: "negotiationReview",
-    label: "Negotiation & Review",
-    color: "text-amber-700",
-    bg: "bg-amber-50",
-    dot: "bg-amber-500",
-    headerGrad: "from-amber-400 to-amber-400",
-    icon: FiRepeat,
-    step: 4,
-  },
-  {
+    // Key stays "closedWon" (unchanged internally/backend) — this stage's
+    // actual purpose is PO document upload, so it's labeled "PO Document".
     key: "closedWon",
-    label: "Closed Won",
+    label: "Order Confirmation ",
     color: "text-green-700",
     bg: "bg-green-50",
     dot: "bg-green-500",
     headerGrad: "from-green-400 to-green-400",
     icon: FiCheckCircle,
-    step: 5,
+    step: 3,
   },
   {
     key: "projectCodeCreation",
@@ -127,7 +109,19 @@ export const SALES_STAGES = [
     dot: "bg-teal-500",
     headerGrad: "from-teal-400 to-teal-400",
     icon: FiCode,
-    step: 6,
+    step: 4,
+  },
+  {
+    // The real "Closed Won" (deal finalized), distinct from the PO Document
+    // stage above — separate key/data (salesFinalClosedWonArray).
+    key: "salesFinalClosedWon",
+    label: "Closed Won",
+    color: "text-emerald-700",
+    bg: "bg-emerald-50",
+    dot: "bg-emerald-500",
+    headerGrad: "from-emerald-400 to-emerald-400",
+    icon: FiCheckCircle,
+    step: 5,
   },
   {
     key: "closedLost",
@@ -137,7 +131,7 @@ export const SALES_STAGES = [
     dot: "bg-rose-500",
     headerGrad: "from-rose-400 to-rose-400",
     icon: FiXCircle,
-    step: 7,
+    step: 6,
   },
 ];
 
@@ -520,6 +514,15 @@ export default function SalesPipelineBoard() {
   const [lostFile, setLostFile] = useState<File | null>(null);
   const [lostError, setLostError] = useState("");
 
+  const [projectMailModal, setProjectMailModal] = useState<SalesOrder | null>(null);
+  const [projectMailTo, setProjectMailTo] = useState("");
+  const [projectMailCc, setProjectMailCc] = useState("");
+  const [projectMailSubject, setProjectMailSubject] = useState("");
+  const [projectMailNotes, setProjectMailNotes] = useState("");
+  const [projectMailToError, setProjectMailToError] = useState("");
+  const [projectMailCcError, setProjectMailCcError] = useState("");
+  const [projectMailSending, setProjectMailSending] = useState(false);
+
   // ── Filter state ─────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [handlerFilter, setHandlerFilter] = useState("");
@@ -629,7 +632,7 @@ export default function SalesPipelineBoard() {
       const { data } = await axios.get(`${API_BASE}staff-admins`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setStaffAdmins(data.data.data || []);
+      setStaffAdmins((data.data.data || []).filter((s: any) => s.status === "active"));
     } catch { }
   };
 
@@ -680,9 +683,11 @@ export default function SalesPipelineBoard() {
       } else {
         await fetchPipeline();
       }
+      return true;
     } catch (e: any) {
       const msg = e?.response?.data?.message || "Something went wrong";
       toast.error(msg);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -718,6 +723,14 @@ export default function SalesPipelineBoard() {
       return;
     }
 
+    if (
+      toStage === "salesFinalClosedWon" &&
+      ["proposalPriceQuote"].includes(fromStage)
+    ) {
+      toast.error("Cannot move directly to Closed Won stage — please move through Project Code Creation stage first!");
+      return;
+    }
+
 
     if (fromStage === "projectCodeCreation") {
       if (toStage === "closedLost") {
@@ -727,21 +740,35 @@ export default function SalesPipelineBoard() {
         setClosedLostModal(order);
         return;
       }
+      if (toStage === "salesFinalClosedWon") {
+        const mailSent = ((order as any).projectMailLogs || []).length > 0;
+        const codeCreated = ((order as any).projectCodeArray || []).length > 0;
+        if (!mailSent || !codeCreated) {
+          toast.error("Please complete the Project Code Creation stage");
+          return;
+        }
+        commitMove(order, toStage);
+        return;
+      }
 
       toast.error("Cannot move back from Project Code Creation stage!");
       return;
     }
 
+    if (fromStage === "salesFinalClosedWon") {
+      toast.error("Closed Won is the final stage — this order cannot be moved further!");
+      return;
+    }
+
     const STAGE_ORDER_LIST = [
       "enquiry",
-      "needAnalysis",
       "proposalPriceQuote",
-      "negotiationReview",
       "closedWon",
       "projectCodeCreation",
+      "salesFinalClosedWon",
       "closedLost",
     ];
-    const LOCKED_BACK_STAGES = ["enquiry", "needAnalysis"];
+    const LOCKED_BACK_STAGES = ["enquiry"];
     const fromIndex = STAGE_ORDER_LIST.indexOf(fromStage);
     const toIndex = STAGE_ORDER_LIST.indexOf(toStage);
 
@@ -758,7 +785,7 @@ export default function SalesPipelineBoard() {
       toStage !== "projectCodeCreation" &&
       toStage !== "closedLost"
     ) {
-      toast.error("Closed Won order can only move to Project Code Creation or Closed Lost.");
+      toast.error("PO Document order can only move to Project Code Creation or Closed Lost.");
       return;
     }
 
@@ -770,9 +797,9 @@ export default function SalesPipelineBoard() {
       return;
     }
 
-    if (toStage === "needAnalysis" && !order.salesHandlerName) {
-      if (currentUserIsAdmin === 0) {
-        commitMove(order, "needAnalysis");
+    if (toStage === "proposalPriceQuote" && !order.salesHandlerName) {
+      if (currentUserIsAdmin !== 1) {
+        commitMove(order, "proposalPriceQuote");
         return;
       }
       setHandlerName("");
@@ -782,7 +809,7 @@ export default function SalesPipelineBoard() {
     }
 
     if (!order.salesHandlerName && fromStage === "enquiry") {
-      toast.error("Please move to Need Analysis first before proceeding!");
+      toast.error("Please move to Proposal & Price Quote first before proceeding!");
       return;
     }
 
@@ -796,7 +823,7 @@ export default function SalesPipelineBoard() {
 
     if (
       toStage === "projectCodeCreation" &&
-      ["needAnalysis", "proposalPriceQuote", "negotiationReview"].includes(fromStage)
+      ["proposalPriceQuote"].includes(fromStage)
     ) {
       setPendingProjectCodeOrder(order);
       setClosedWonWarningModal(order);
@@ -804,11 +831,72 @@ export default function SalesPipelineBoard() {
     }
 
     if (fromStage === "closedWon" && toStage === "projectCodeCreation") {
-      commitMove(order, toStage);
+      openProjectMailModal(order);
       return;
     }
 
     commitMove(order, toStage);
+  };
+
+  // ── Project Code Creation mail modal ────────────────────────────────────────
+  const openProjectMailModal = async (order: SalesOrder) => {
+    setProjectMailTo("");
+    setProjectMailCc("");
+    setProjectMailNotes("");
+    setProjectMailToError("");
+    setProjectMailCcError("");
+    setProjectMailSubject(`Project Code Creation Request - ${order.orderId} - ${order.name}`);
+    setProjectMailModal(order);
+
+    try {
+      const token = getToken();
+      const { data } = await axios.get(`${API_BASE}project-settings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProjectMailTo(data.data?.data?.defaultTo || "");
+      setProjectMailCc(data.data?.data?.defaultCc || "");
+    } catch (e) {
+      // Project setting fetch failed — leave To/CC empty, user can type manually.
+    }
+  };
+
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const isValidEmailField = (value: string) => {
+    const emails = value.split(",").map((e) => e.trim()).filter(Boolean);
+    if (emails.length === 0) return false;
+    return emails.every(isValidEmail);
+  };
+
+  const submitProjectMailModal = async () => {
+    if (!projectMailModal) return;
+    setProjectMailToError("");
+    setProjectMailCcError("");
+
+    if (!projectMailTo.trim()) {
+      setProjectMailToError("To email is required");
+      return;
+    }
+    if (!isValidEmailField(projectMailTo)) {
+      setProjectMailToError("Enter a valid email address");
+      return;
+    }
+    if (projectMailCc.trim() && !isValidEmailField(projectMailCc)) {
+      setProjectMailCcError("Enter a valid email address");
+      return;
+    }
+
+    setProjectMailSending(true);
+    try {
+      const success = await commitMove(projectMailModal, "projectCodeCreation", {
+        to: projectMailTo,
+        cc: projectMailCc,
+        subject: projectMailSubject,
+        additionalNotes: projectMailNotes,
+      });
+      if (success) setProjectMailModal(null);
+    } finally {
+      setProjectMailSending(false);
+    }
   };
 
 
@@ -816,7 +904,7 @@ export default function SalesPipelineBoard() {
     if (!handlerModal) return;
     setHandlerError("");
 
-    const isStaff = currentUserIsAdmin === 0;
+    const isStaff = currentUserIsAdmin !== 1;
 
     if (!isStaff && !handlerName.trim()) {
       setHandlerError("Please select a handler");
@@ -828,7 +916,7 @@ export default function SalesPipelineBoard() {
       extra.handlerName = handlerName.trim();
     }
 
-    await commitMove(handlerModal, "needAnalysis", extra);
+    await commitMove(handlerModal, "proposalPriceQuote", extra);
     setHandlerModal(null);
   };
 
@@ -1034,7 +1122,7 @@ export default function SalesPipelineBoard() {
               </div>
             </div>
             <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-1">
-              Move to Need Analysis?
+              Move to Proposal & Price Quote?
             </h2>
             <p className="text-center text-xs text-gray-400 font-mono mb-5">
               {handlerModal.orderId}
@@ -1109,7 +1197,7 @@ export default function SalesPipelineBoard() {
                   onChange={(e) => setHandlerName(e.target.value)}
                   className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
-                  <option value="">-- Select staff admin --</option>
+                  <option value="">-- Select Sales User --</option>
                   {staffAdmins.map((s) => (
                     <option key={s.username} value={s.username}>
                       {s.username}
@@ -1162,7 +1250,7 @@ export default function SalesPipelineBoard() {
               </div>
             </div>
             <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-1">
-              Close Won
+            Order Confirmation 
             </h2>
             <p className="text-center text-xs text-gray-400 font-mono mb-5">
               {closedWonModal.orderId}
@@ -1183,7 +1271,7 @@ export default function SalesPipelineBoard() {
                   }
                   setPoFile(f);
                 }}
-                className="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 file:font-medium hover:file:bg-green-100 transition-all"
+                className="w-full cursor-pointer text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 file:font-medium hover:file:bg-green-100 transition-all"
               />
             </div>
             <div className="mb-4">
@@ -1231,6 +1319,98 @@ export default function SalesPipelineBoard() {
       )}
 
 
+
+      {projectMailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center">
+                <FiCode size={28} className="text-teal-500" />
+              </div>
+            </div>
+            <h2 className="text-center text-base font-semibold text-gray-900 dark:text-white mb-1">
+              Move to Project Code Creation
+            </h2>
+            <p className="text-center text-xs text-gray-400 font-mono mb-5">
+              {projectMailModal.orderId}
+            </p>
+
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                To <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={projectMailTo}
+                onChange={(e) => setProjectMailTo(e.target.value)}
+                placeholder="adinn@gmail.com,adinn1@gmail.com"
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+              />
+              {projectMailToError && (
+                <p className="mt-1 text-xs text-red-500">{projectMailToError}</p>
+              )}
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                CC
+              </label>
+              <input
+                type="text"
+                value={projectMailCc}
+                onChange={(e) => setProjectMailCc(e.target.value)}
+                placeholder="adinn1@gmail.com,adinn2@gmail.com"
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+              />
+              {projectMailCcError && (
+                <p className="mt-1 text-xs text-red-500">{projectMailCcError}</p>
+              )}
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Subject
+              </label>
+              <input
+                type="text"
+                value={projectMailSubject}
+                onChange={(e) => setProjectMailSubject(e.target.value)}
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Additional Notes
+              </label>
+              <textarea
+                rows={2}
+                value={projectMailNotes}
+                onChange={(e) => setProjectMailNotes(e.target.value)}
+                placeholder="Add any additional notes for the project team..."
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setProjectMailModal(null)}
+                disabled={projectMailSending}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitProjectMailModal}
+                disabled={projectMailSending}
+                className="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-medium transition-all flex items-center justify-center gap-2"
+              >
+                {projectMailSending ? "Sending..." : "Send"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {closedWonWarningModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">

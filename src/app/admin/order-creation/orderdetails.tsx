@@ -124,10 +124,12 @@ export default function OrderDetailDrawer({
     order,
     onClose,
     vehicleTypes,
+    resolvedOrderStatus
 }: {
     order: Order;
     onClose: () => void;
     vehicleTypes: any;
+    resolvedOrderStatus:any
 }) {
 
     const [activeVehicleTab, setActiveVehicleTab] = useState(0);
@@ -217,7 +219,8 @@ export default function OrderDetailDrawer({
                             className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${statusCfg.color}`}
                         >
                             <span className={`h-2 w-2 rounded-full ${statusCfg.dot}`} />
-                            {order.orderStatus}
+                            {/* {order.orderStatus} */}
+                            {resolvedOrderStatus}
                         </span>
                         <button
                             onClick={onClose}

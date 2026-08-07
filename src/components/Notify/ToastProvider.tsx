@@ -23,6 +23,7 @@ export default function ToastProvider() {
           fontWeight: 500,
           maxWidth: "420px",
           boxShadow: "0 12px 35px rgba(0, 0, 0, 0.28)",
+          whiteSpace: "pre-line",
         },
 
         success: {

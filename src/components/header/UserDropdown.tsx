@@ -1,13 +1,36 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { clearToken } from "@/app/utils/auth";
+import { clearToken, getToken } from "@/app/utils/auth";
+
+interface DecodedToken {
+  username: string;
+  email: string;
+  isAdmin: number;
+}
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [username, setUsername] = useState("Roadshow Admin");
+  const [email, setEmail] = useState("");
+  const [isAdmin, setIsAdmin] = useState(1);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const decoded = jwtDecode<DecodedToken>(token);
+      setUsername(decoded.username || "Roadshow Admin");
+      setEmail(decoded.email || "");
+      setIsAdmin(Number(decoded.isAdmin));
+    } catch {
+      // ignore decode failure — keep defaults
+    }
+  }, []);
 
 function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
   e.stopPropagation();
@@ -32,7 +55,9 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
           />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">Admin</span>
+        <span className="block mr-1 font-medium text-theme-sm">
+          {isAdmin === 1 ? "Admin" : isAdmin === 2 ? "Sales" : isAdmin === 3 ? "Operation" : "Staff Admin"}
+        </span>
 
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -61,10 +86,10 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            Roadshow Admin
+            {username}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            roadshows@adinn.co.in
+            {email}
           </span>
         </div>
 
@@ -73,7 +98,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
-              href="/profile"
+              href="/admin/profile"
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <svg
@@ -94,7 +119,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
               Edit profile
             </DropdownItem>
           </li>
-          <li>
+          {/* <li>
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
@@ -118,8 +143,8 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
               </svg>
               Account settings
             </DropdownItem>
-          </li>
-          <li>
+          </li> */}
+          {/* <li>
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
@@ -143,7 +168,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
               </svg>
               Support
             </DropdownItem>
-          </li>
+          </li> */}
         </ul>
         <Link
           href="/admin/signin"

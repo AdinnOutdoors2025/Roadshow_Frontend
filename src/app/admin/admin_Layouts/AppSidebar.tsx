@@ -23,42 +23,44 @@ import {
   HiOutlineClipboardList,
   HiOutlineShoppingBag,
   HiOutlineCube,
-  HiOutlineUsers
+  HiOutlineUsers,
+  HiOutlineShieldCheck
 } from "react-icons/hi";
+import { getToken } from "../../utils/auth";
 
 type NavItem = {
   name: string;
   icon: React.ReactNode;
   path?: string;
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  key?: string;
+  subItems?: { name: string; path: string; key?: string; pro?: boolean; new?: boolean }[];
 };
 
+// `key` (or `path`, for flat items) is the permission identifier stored in
+// RolePermission.allowedMenus — must stay in sync with the checkbox list
+// rendered on the Role Permission page.
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
+    key: "/admin/dashboard",
     subItems: [{ name: "Roadshow", path: "/admin/dashboard", pro: false }],
   },
-  // {
-  //   icon: <CalenderIcon />,
-  //   name: "Calendar",
-  //   path: "/calendar",
-  // },
-  // {
-  //   icon: <UserCircleIcon />,
-  //   name: "User Profile",
-  //   path: "/profile",
-  // },
      {
-    name: "StaffAdmin",
+    name: "Sales Management",
     icon: <HiOutlineUserGroup />,
-    path: "/admin/staff-admin"
+    path: "/admin/sales-management"
   },
   {
-    name: "Client Request Order",
-    icon: <HiOutlineClipboardList />,
-    path: "/admin/client-request-order"
+    name: "Operation Management",
+    icon: <HiOutlineUserGroup />,
+    path: "/admin/operation-management"
   },
+  // {
+  //   name: "Client Request Order",
+  //   icon: <HiOutlineClipboardList />,
+  //   path: "/admin/client-request-order"
+  // },
    {
     name: "Order Creation",
      icon: <HiOutlineClipboardList />,
@@ -68,14 +70,12 @@ const navItems: NavItem[] = [
     {
     icon: <GridIcon />,
     name: "Order Handling",
-    subItems: [{ name: "Sales Handling", path: "/admin/sales-handling", pro: false },{ name: "Operation Handling", path: "/admin/operation-handling", pro: false }],
-    
+    subItems: [
+      { name: "Sales Handling", path: "/admin/sales-handling", key: "/admin/sales-handling", pro: false },
+      { name: "Operation Handling", path: "/admin/operation-handling", key: "/admin/operation-handling", pro: false },
+    ],
+
   },
-  // {
-  //   name: "Order Handling",
-  //   icon: <HiOutlineShoppingBag />,
-  //   path: "/admin/order-handling"
-  // },
     {
     name: "Package Management",
     icon: <HiOutlineCube />,
@@ -94,64 +94,94 @@ const navItems: NavItem[] = [
   },
 
   {
+    name: "Project Settings",
+    icon: <HiOutlineCube />,
+    path: "/admin/project-setting"
+  },
+  {
+    name: "Invoice Generation",
+    icon: <HiOutlineClipboardList />,
+    path: "/admin/invoice-generation"
+  },
+  {
+    name: "Role Permission",
+    icon: <HiOutlineShieldCheck />,
+    path: "/admin/role-permission"
+  },
+
+  {
     name: "Vehicles",
     icon: <ListIcon />,
     subItems: [
-      { name: "Vehicle Onboarding", path: "/admin/Vehicles/Vehicle_Onboarding", pro: false },
-      { name: "Vehicle Inventory", path: "/admin/Vehicles/Vehicle_Inventory", pro: false }
+      { name: "Vehicle Onboarding", path: "/admin/Vehicles/Vehicle_Onboarding", key: "/admin/Vehicles/Vehicle_Onboarding", pro: false },
+      { name: "Vehicle Inventory", path: "/admin/Vehicles/Vehicle_Inventory", key: "/admin/Vehicles/Vehicle_Inventory", pro: false }
     ],
 
   },
-
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/admin/basic-tables", pro: false }],
-  },
-  // {
-  //   name: "Pages",
-  //   icon: <PageIcon />,
-  //   subItems: [
-  //     { name: "Blank Page", path: "/blank", pro: false },
-  //     { name: "404 Error", path: "/error-404", pro: false },
-  //   ],
-  // },
 ];
 
-const othersItems: NavItem[] = [
-  {
-    icon: <PieChartIcon />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
-  {
-    icon: <PlugInIcon />,
-    name: "Authentication",
-    subItems: [
-      { name: "Sign In", path: "/admin/signin", pro: false },
-      { name: "Sign Up", path: "/admin/signup", pro: false },
-    ],
-  },
-];
+const othersItems: NavItem[] = [];
+
+function parseJwtPayload(token: string): { role?: string; allowedMenus?: string[] } | null {
+  try {
+    return JSON.parse(atob(token.split(".")[1]));
+  } catch {
+    return null;
+  }
+}
+
+function computeAllowedMenus(): string[] | null {
+  const token = getToken();
+  if (!token) return [];
+  const payload = parseJwtPayload(token);
+  if (!payload) return [];
+  if (payload.role === "admin") return null; // null = no restriction
+  return payload.allowedMenus || [];
+}
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
+
+  // admin role → full sidebar. sales/operation roles → only menus present in
+  // their `allowedMenus` (baked into the JWT at login by RolePermission).
+  //
+  // Server has no cookie access, so SSR always renders the safe deny-all `[]`
+  // shell. The client's very first render must produce that exact same `[]`
+  // too (React requires the pre-hydration client render to match the server
+  // HTML) — reading the cookie can only happen client-side, so the real
+  // role/allowedMenus are resolved in useEffect, right after mount. That
+  // still means the client corrects itself a beat after hydration, but it
+  // corrects FROM deny-all, never from — or to — the full unrestricted menu,
+  // so a sales/operation login never has a frame where the full admin
+  // sidebar is visible.
+  const [allowedMenus, setAllowedMenus] = useState<string[] | null>([]);
+
+  useEffect(() => {
+    setAllowedMenus(computeAllowedMenus());
+  }, []);
+
+  const menuKey = (nav: NavItem) => nav.key || nav.path || nav.name;
+  // Grouped items (subItems, no own key — e.g. "Order Handling", "Vehicles")
+  // are permission-gated per sub-item: the group stays visible if at least
+  // one sub-item is allowed, and only the allowed sub-items are shown inside it.
+  const filterByPermission = (items: NavItem[]): NavItem[] => {
+    if (allowedMenus === null) return items;
+    return items.reduce<NavItem[]>((acc, nav) => {
+      if (nav.subItems && !nav.key) {
+        const allowedSubItems = nav.subItems.filter((sub) =>
+          allowedMenus.includes(sub.key || sub.path)
+        );
+        if (allowedSubItems.length > 0) acc.push({ ...nav, subItems: allowedSubItems });
+        return acc;
+      }
+      if (allowedMenus.includes(menuKey(nav))) acc.push(nav);
+      return acc;
+    }, []);
+  };
+
+  const filteredNavItems = filterByPermission(navItems);
+  const filteredOthersItems = filterByPermission(othersItems);
 
   const renderMenuItems = (
     navItems: NavItem[],
@@ -285,7 +315,7 @@ const AppSidebar: React.FC = () => {
   useEffect(() => {
     // Check if the current path matches any submenu item
     let submenuMatched = false;
-    ["main", "others"].forEach((menuType) => {
+    ["main"].forEach((menuType) => {
       const items = menuType === "main" ? navItems : othersItems;
       items.forEach((nav, index) => {
         if (nav.subItems) {
@@ -397,24 +427,26 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots />
                 )}
               </h2>
-              {renderMenuItems(navItems, "main")}
+              {renderMenuItems(filteredNavItems, "main")}
             </div>
 
-            <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-start"
-                  }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(othersItems, "others")}
-            </div>
+            {filteredOthersItems.length > 0 && (
+              <div className="">
+                <h2
+                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
+                    ? "lg:justify-center"
+                    : "justify-start"
+                    }`}
+                >
+                  {isExpanded || isHovered || isMobileOpen ? (
+                    "Others"
+                  ) : (
+                    <HorizontaLDots />
+                  )}
+                </h2>
+                {renderMenuItems(filteredOthersItems, "others")}
+              </div>
+            )}
           </div>
         </nav>
         {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
