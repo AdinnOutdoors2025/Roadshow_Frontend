@@ -4,11 +4,9 @@
 
 import React, {
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
-import gsap from "gsap";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
@@ -63,34 +61,43 @@ const cities = [
 
 const marqueeItems = [...cities, ...cities, ...cities];
 
+// collapsedWidth is the capsule's closed width in px, so each pill
+// hugs its own title instead of every capsule sharing one width.
+// It has to be an explicit number, not `max-content`: browsers
+// cannot interpolate intrinsic sizes, so the 320 -> 400 width
+// transition would jump instead of sliding.
+// Value = 90px chrome (20 padding + 36 icon + 14 gap + 20 padding)
+// + the rendered width of the title at 22px Outfit 500. Measured off
+// the Figma frame; change the chrome in the .css and these must move
+// with it.
 const whyAdinnWorksBest = [
   {
     name: "GPS Support",
     description:
       "Live location tracking for vehicles with route visibility and movement updates throughout the campaign.",
     image: "./images/assets/HomeBanner_MainPageFinal.png",
-    collapsedWidth: 208,
+    collapsedWidth: 219,
   },
   {
     name: "RTO Certified",
     description:
       "Fully approved vehicles complying with road regulations for smooth and hassle-free campaign execution.",
     image: "./images/assets/tata ultra - 2.png",
-    collapsedWidth: 218,
+    collapsedWidth: 227,
   },
   {
     name: "One-Stop Solution",
     description:
       "From planning to execution, everything is managed in one place for a roadshow campaign.",
     image: "./images/assets/full side LED.png",
-    collapsedWidth: 266,
+    collapsedWidth: 262,
   },
   {
     name: "24/7 Support",
     description:
       "Dedicated team available anytime to monitor, coordinate, and assist throughout the campaign.",
     image: "./images/assets/HomeBanner_MainPageFinal.png",
-    collapsedWidth: 208,
+    collapsedWidth: 215,
   },
 ];
 
@@ -147,6 +154,12 @@ const ourClients = [
   },
 ];
 
+type WhyExitDirection = "exit-left" | "exit-right";
+
+// Must stay >= the longest .RS_WhyAdRS_ImageLayer animation in
+// HomePageSection1.css (--rs-img-enter-time: 1.45s).
+const WHY_IMAGE_ANIMATION_MS = 1500;
+
 export default function HomePageSection1() {
   const router = useRouter();
 
@@ -157,11 +170,19 @@ export default function HomePageSection1() {
   const [currentVehicleIndex, setCurrentVehicleIndex] = useState(0);
   const [visibleVehicleCount, setVisibleVehicleCount] = useState(4);
 
-  const [activeWhyIndex, setActiveWhyIndex] = useState<number | null>(0);
-  const whySectionRef = useRef<HTMLDivElement | null>(null);
-  const whyVehicleRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const whyTimelineRef = useRef<gsap.core.Timeline | null>(null);
-  const displayedWhyVehicleIndexRef = useRef(0);
+  // Why Adinn vehicle: pure-CSS directional in/out animation.
+  // -1 means every capsule is closed and no vehicle is shown.
+  const [activeWhyIndex, setActiveWhyIndex] = useState<number>(0);
+  const [whyExitIndex, setWhyExitIndex] = useState<number | null>(null);
+  const [whyExitDirection, setWhyExitDirection] =
+    useState<WhyExitDirection>("exit-left");
+  const [whyEnterFromLeft, setWhyEnterFromLeft] = useState(false);
+  const [isWhyFirstRender, setIsWhyFirstRender] = useState(true);
+  const [isWhyAnimating, setIsWhyAnimating] = useState(false);
+
+  const whyAnimationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   useEffect(() => {
     const gradients = [
@@ -319,197 +340,102 @@ export default function HomePageSection1() {
     }, 250);
   };
 
-  useLayoutEffect(() => {
-    const section = whySectionRef.current;
-
-    if (!section) {
-      return;
-    }
-
-    const context = gsap.context(() => {
-      whyVehicleRefs.current.forEach((vehicle, index) => {
-        if (!vehicle) {
-          return;
-        }
-
-        gsap.set(vehicle, {
-          visibility: index === 0 ? "visible" : "hidden",
-          xPercent: index === 0 ? 0 : 105,
-          scale: index === 0 ? 1 : 0.42,
-          zIndex: index === 0 ? 2 : 1,
-          transformOrigin: "52% 68%",
-          force3D: true,
-        });
-      });
-    }, section);
-
+  useEffect(() => {
     return () => {
-      whyTimelineRef.current?.kill();
-      context.revert();
+      if (whyAnimationTimerRef.current) {
+        clearTimeout(whyAnimationTimerRef.current);
+      }
     };
   }, []);
 
-  const showWhyVehicleImmediately = (nextIndex: number) => {
-    whyTimelineRef.current?.kill();
+  // The CSS animation drives the motion; this timer only clears the
+  // outgoing layer once it has finished sliding off.
+  const finishWhyImageAnimation = () => {
+    if (whyAnimationTimerRef.current) {
+      clearTimeout(whyAnimationTimerRef.current);
+    }
 
-    whyVehicleRefs.current.forEach((vehicle, index) => {
-      if (!vehicle) {
-        return;
-      }
-
-      gsap.set(vehicle, {
-        visibility: index === nextIndex ? "visible" : "hidden",
-        xPercent: index === nextIndex ? 0 : 105,
-        scale: index === nextIndex ? 1 : 0.42,
-        zIndex: index === nextIndex ? 2 : 1,
-      });
-    });
-
-    displayedWhyVehicleIndexRef.current = nextIndex;
+    whyAnimationTimerRef.current = setTimeout(() => {
+      setWhyExitIndex(null);
+      setIsWhyAnimating(false);
+    }, WHY_IMAGE_ANIMATION_MS);
   };
 
-  const animateWhyVehicle = (nextIndex: number) => {
-    const currentIndex = displayedWhyVehicleIndexRef.current;
-
-    if (currentIndex === nextIndex) {
+  const triggerWhyTransition = (
+    nextIndex: number,
+    direction: "forward" | "backward",
+  ) => {
+    if (isWhyAnimating || nextIndex === activeWhyIndex) {
       return;
     }
 
-    const currentVehicle = whyVehicleRefs.current[currentIndex];
-    const nextVehicle = whyVehicleRefs.current[nextIndex];
+    setIsWhyFirstRender(false);
 
-    if (!currentVehicle || !nextVehicle) {
-      showWhyVehicleImmediately(nextIndex);
-      return;
-    }
-
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    if (prefersReducedMotion) {
-      showWhyVehicleImmediately(nextIndex);
-      return;
-    }
-
-    whyTimelineRef.current?.kill();
-
-    const allVehicles = whyVehicleRefs.current.filter(Boolean);
-    gsap.killTweensOf(allVehicles);
-
-    whyVehicleRefs.current.forEach((vehicle, index) => {
-      if (!vehicle) {
-        return;
-      }
-
-      if (index !== currentIndex && index !== nextIndex) {
-        gsap.set(vehicle, {
-          visibility: "hidden",
-          xPercent: 105,
-          scale: 0.42,
-          zIndex: 1,
-        });
-      }
-    });
-
-    gsap.set(currentVehicle, {
-      visibility: "visible",
-      zIndex: 2,
-      force3D: true,
-    });
-
-    const nextVehicleIsAlreadyVisible =
-      window.getComputedStyle(nextVehicle).visibility !== "hidden";
-
-    if (nextVehicleIsAlreadyVisible) {
-      gsap.set(nextVehicle, {
-        visibility: "visible",
-        zIndex: 3,
-        force3D: true,
-      });
+    if (activeWhyIndex >= 0) {
+      setWhyExitIndex(activeWhyIndex);
+      setWhyExitDirection(direction === "forward" ? "exit-left" : "exit-right");
     } else {
-      gsap.set(nextVehicle, {
-        visibility: "visible",
-        xPercent: 105,
-        scale: 0.42,
-        zIndex: 3,
-        force3D: true,
-      });
+      setWhyExitIndex(null);
     }
 
-    displayedWhyVehicleIndexRef.current = nextIndex;
+    setWhyEnterFromLeft(direction === "backward");
+    setActiveWhyIndex(nextIndex);
+    setIsWhyAnimating(true);
 
-    whyTimelineRef.current = gsap.timeline({
-      defaults: {
-        overwrite: "auto",
-      },
-      onComplete: () => {
-        whyVehicleRefs.current.forEach((vehicle, index) => {
-          if (!vehicle) {
-            return;
-          }
-
-          gsap.set(vehicle, {
-            visibility: index === nextIndex ? "visible" : "hidden",
-            xPercent: index === nextIndex ? 0 : 105,
-            scale: index === nextIndex ? 1 : 0.42,
-            zIndex: index === nextIndex ? 2 : 1,
-          });
-        });
-      },
-    });
-
-    whyTimelineRef.current
-      .to(
-        currentVehicle,
-        {
-          xPercent: -118,
-          scale: 0.24,
-          duration: 0.82,
-          ease: "power3.inOut",
-          force3D: true,
-        },
-        0,
-      )
-      .to(
-        nextVehicle,
-        {
-          xPercent: 0,
-          scale: 1,
-          duration: 0.92,
-          ease: "power3.out",
-          force3D: true,
-        },
-        0.04,
-      );
-  };
-
-  const handleWhyItemClick = (index: number) => {
-    if (activeWhyIndex === index) {
-      setActiveWhyIndex(null);
-      return;
-    }
-
-    setActiveWhyIndex(index);
-    animateWhyVehicle(index);
+    finishWhyImageAnimation();
   };
 
   const handleWhyPrevious = () => {
-    const currentIndex = displayedWhyVehicleIndexRef.current;
-    const previousIndex =
-      (currentIndex - 1 + whyAdinnWorksBest.length) %
-      whyAdinnWorksBest.length;
+    if (isWhyAnimating || activeWhyIndex <= 0) {
+      return;
+    }
 
-    setActiveWhyIndex(previousIndex);
-    animateWhyVehicle(previousIndex);
+    triggerWhyTransition(activeWhyIndex - 1, "backward");
   };
 
   const handleWhyNext = () => {
-    const currentIndex = displayedWhyVehicleIndexRef.current;
-    const nextIndex = (currentIndex + 1) % whyAdinnWorksBest.length;
+    if (isWhyAnimating || activeWhyIndex >= whyAdinnWorksBest.length - 1) {
+      return;
+    }
 
-    setActiveWhyIndex(nextIndex);
-    animateWhyVehicle(nextIndex);
+    triggerWhyTransition(activeWhyIndex + 1, "forward");
+  };
+
+  const handleWhyItemClick = (index: number) => {
+    if (isWhyAnimating) {
+      return;
+    }
+
+    // Clicking the open capsule closes it and sends the vehicle out.
+    if (index === activeWhyIndex) {
+      setIsWhyFirstRender(false);
+      setWhyExitIndex(activeWhyIndex);
+      setWhyExitDirection("exit-left");
+      setActiveWhyIndex(-1);
+      setIsWhyAnimating(true);
+      finishWhyImageAnimation();
+      return;
+    }
+
+    const direction = index > activeWhyIndex ? "forward" : "backward";
+
+    triggerWhyTransition(index, direction);
+  };
+
+  const getWhyImageClass = (index: number) => {
+    if (index === whyExitIndex) {
+      return whyExitDirection;
+    }
+
+    if (index === activeWhyIndex) {
+      if (isWhyFirstRender) {
+        return "enter-from-right";
+      }
+
+      return whyEnterFromLeft ? "enter-from-left" : "enter-from-right";
+    }
+
+    return "";
   };
 
   return (
@@ -688,7 +614,7 @@ export default function HomePageSection1() {
         </div>
       </div>
 
-      <div className="mx-auto px-30">
+      <div className="mx-auto px-30 RS_WhyAdRSSectionWrap">
         <div className="RS_OurRdwHeading">
           <div className="RS_OurRdwHeadingContent1">
             Why Adinn Roadshows
@@ -698,13 +624,14 @@ export default function HomePageSection1() {
           </div>
         </div>
 
-        <div ref={whySectionRef} className="RS_WhyAdRSMain">
+        <div className="RS_WhyAdRSMain">
           <div className="RS_WhyAdRS_Left">
             <div className="RS_WhyAdRSNavRow">
               <button
                 type="button"
                 className="RS_WhyAdRSNavButton"
                 onClick={handleWhyPrevious}
+                disabled={isWhyAnimating || activeWhyIndex <= 0}
                 aria-label="Previous feature"
               >
                 <i
@@ -717,6 +644,10 @@ export default function HomePageSection1() {
                 type="button"
                 className="RS_WhyAdRSNavButton"
                 onClick={handleWhyNext}
+                disabled={
+                  isWhyAnimating ||
+                  activeWhyIndex >= whyAdinnWorksBest.length - 1
+                }
                 aria-label="Next feature"
               >
                 <i
@@ -744,29 +675,29 @@ export default function HomePageSection1() {
                     aria-expanded={isActive}
                     aria-controls={`why-adinn-description-${index}`}
                   >
-                    <span className="RS_WhyAdRSItemHeader">
+                    <span className="RS_WhyAdRS_ItemInner">
                       <span
                         className="RS_WhyAdRSContentIcon"
                         aria-hidden="true"
                       >
+                        <i className="fa-solid fa-plus" />
+                      </span>
+
+                      <span className="RS_WhyAdRS_ItemText">
+                        <span className="RS_WhyAdRS_ItemName">
+                          {feature.name}
+                        </span>
+
                         <span
-                          className={`RS_WhyAdRSIconMark ${
-                            isActive ? "is-open" : ""
+                          id={`why-adinn-description-${index}`}
+                          className={`RS_WhyAdRS_CollapseWrapper ${
+                            isActive ? "open" : ""
                           }`}
-                        />
-                      </span>
-
-                      <span className="RS_WhyAdRS_ItemName">
-                        {feature.name}
-                      </span>
-                    </span>
-
-                    <span
-                      id={`why-adinn-description-${index}`}
-                      className="RS_WhyAdRS_CollapseWrapper"
-                    >
-                      <span className="RS_WhyAdRS_ItemDesc">
-                        {feature.description}
+                        >
+                          <span className="RS_WhyAdRS_ItemDesc">
+                            {feature.description}
+                          </span>
+                        </span>
                       </span>
                     </span>
                   </button>
@@ -779,13 +710,7 @@ export default function HomePageSection1() {
             {whyAdinnWorksBest.map((feature, index) => (
               <div
                 key={`${feature.name}-vehicle`}
-                ref={(element) => {
-                  whyVehicleRefs.current[index] = element;
-                }}
-                className="RS_WhyAdRS_ImageLayer"
-                style={{
-                  visibility: index === 0 ? "visible" : "hidden",
-                }}
+                className={`RS_WhyAdRS_ImageLayer ${getWhyImageClass(index)}`}
               >
                 <img
                   src={feature.image}
@@ -798,7 +723,7 @@ export default function HomePageSection1() {
         </div>
       </div>
 
-      <div className="mx-auto px-30">
+      <div className="mx-auto px-30 RS_ClientsSectionWrap">
         <div className="RS_ClientsSection">
           <div className="RS_OurRdwHeading">
             <div className="RS_OurRdwHeadingContent1">Some of Our</div>

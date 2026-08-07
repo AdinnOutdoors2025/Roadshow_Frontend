@@ -4,7 +4,9 @@
 
 /* ── Container ── */
 .HomeBannerContainer {
-    margin: 3% auto;
+    /* margin: 3% auto; */
+    padding: 3% 0px;
+    padding-top: 8%;
 }
 
 .HomeBannerText {
@@ -167,65 +169,45 @@
     transform: translateY(1px);
 }
 
-/* ── Responsive ── */
+/* =========================================================
+   RESPONSIVE
+   Everything above this line is the large-desktop (1440px+)
+   design and is intentionally left untouched.
 
-/* Tablet */
-@media (max-width: 1024px) {
-    .HomeBannerText {
-        font-size: 52px;
-    }
+   A) STRUCTURAL  - layout/flow rules that must hold for every
+                    screen below a given width (written once).
+   B) PER-SCREEN  - font-size / size / spacing tuning, one block
+                    per device range.
+   C) MOTION      - reduced-motion accessibility.
+========================================================= */
 
-    .HomeBannerImgContainer {
-        width: 90%;
-    }
+/* ---------------------------------------------------------
+   A) STRUCTURAL
+--------------------------------------------------------- */
 
+/* Tablet portrait and below: the sub-heading image is
+   right-offset on desktop (margin-right: 47%); centre it once
+   there is no longer room for that offset. */
+@media (max-width: 991px) {
     .HomeBannerTextImg {
-        margin-right: 35%;
-    }
-
-    .HomeBannerSubImgRow {
-        gap: 16px;
-    }
-
-    .HomeBannerSubImg {
-        width: 86px;
-    }
-
-    .HomeBannerSubImgTitle {
-        font-size: 14px;
+        display: block;
+        margin-right: auto;
+        margin-left: auto;
     }
 }
 
-/* Mobile */
-@media (max-width: 640px) {
-    .HomeBannerContainer {
-        margin: 8% auto 4%;
-    }
-
+/* Phones: the 5 thumbnails no longer fit in one row, so the
+   row becomes a swipeable, snapping strip. */
+@media (max-width: 767px) {
     .HomeBannerText {
-        font-size: 34px;
         padding: 0 5%;
         line-height: 1.18;
     }
 
-    .HomeBannerTextImg {
-        margin-right: auto;
-        margin-left: auto;
-        display: block;
-        max-width: 55%;
-    }
-
-    .HomeBannerImgContainer {
-        width: 95%;
-        margin-top: 32px;
-    }
-
     .HomeBannerSubImgRow {
-        /* justify-content: flex-start; */
-        gap: 12px;
+        flex-wrap: nowrap;
         overflow-x: auto;
         overflow-y: hidden;
-        flex-wrap: nowrap;
         padding: 4px 4px 12px;
         scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
@@ -235,10 +217,225 @@
         height: 4px;
     }
 
+    .HomeBannerSubImgRow::-webkit-scrollbar-thumb {
+        border-radius: 4px;
+        background: #7057c355;
+    }
+
     .HomeBannerSubImgMain {
         flex: 0 0 auto;
-        height: 88px;
         scroll-snap-align: center;
+    }
+
+    /* Touch devices have no real hover: a tap leaves :hover
+       stuck on. Neutralise it and let .active carry the same
+       lift animation instead, so the motion still happens. */
+    .HomeBannerSubImgBtn:hover {
+        outline-color: transparent;
+        transform: translateY(0) scale(1);
+    }
+
+    .HomeBannerSubImgBtn:hover .HomeBannerSubImg {
+        opacity: 1;
+    }
+
+    .HomeBannerSubImgBtn.active {
+        outline-color: #7057c3;
+        transform: translateY(-4px) scale(1.06);
+    }
+}
+
+/* ---------------------------------------------------------
+   B) PER-SCREEN TUNING
+--------------------------------------------------------- */
+
+/* Extra Large Screens (2560px and above) - 4K Screens */
+@media (min-width: 2560px) {
+    .HomeBannerContainer {
+        padding-top: 6%;
+    }
+
+    .HomeBannerText {
+        font-size: 92px;
+    }
+
+    .HomeBannerImgContainer {
+        width: 68%;
+        margin-top: 64px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap: 28px;
+        margin-top: 28px;
+        min-height: 130px;
+    }
+
+    .HomeBannerSubImgMain {
+        height: 130px;
+    }
+
+    .HomeBannerSubImg {
+        width: 130px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size: 20px;
+    }
+}
+
+/* Large Screens (1440px - 2559px) - Large Desktop 1440
+   This is the reference design: base rules apply as-is. */
+@media (min-width: 1440px) and (max-width: 2559px) {
+    /* intentionally empty - base styles are the design */
+}
+
+/* Small Desktops (1281px - 1439px)
+   NOTE: this range is not in the original template, which
+   jumped 1280 -> 1440 and left these screens on raw desktop
+   values. Added to close that gap. */
+@media (min-width: 1281px) and (max-width: 1439px) {
+    .HomeBannerText {
+        font-size: 62px;
+    }
+
+    .HomeBannerTextImg {
+        margin-right: 44%;
+    }
+
+    .HomeBannerImgContainer {
+        width: 80%;
+        margin-top: 44px;
+    }
+
+    .HomeBannerSubImg {
+        width: 94px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size: 15px;
+    }
+}
+
+/* Laptops (1024px - 1280px) */
+@media (min-width: 1024px) and (max-width: 1280px) {
+    .HomeBannerText {
+        font-size: 52px;
+    }
+
+    .HomeBannerTextImg {
+        margin-right: 38%;
+    }
+
+    .HomeBannerImgContainer {
+        width: 88%;
+        margin-top: 40px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap: 16px;
+    }
+
+    .HomeBannerSubImg {
+        width: 88px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size: 14px;
+    }
+}
+
+/* Laptops & Small Desktops (992px - 1023px) - Tablets (Landscape) */
+@media (min-width: 992px) and (max-width: 1023px) {
+    .HomeBannerText {
+        font-size: 46px;
+    }
+
+    .HomeBannerTextImg {
+        margin-right: 32%;
+    }
+
+    .HomeBannerImgContainer {
+        width: 92%;
+        margin-top: 36px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap: 15px;
+    }
+
+    .HomeBannerSubImg {
+        width: 82px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size: 13.5px;
+    }
+}
+
+/* Tablets (768px - 991px) - Tablets (Portrait) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .HomeBannerContainer {
+        padding-top: 11%;
+    }
+
+    .HomeBannerText {
+        font-size: 42px;
+    }
+
+    .HomeBannerTextImg {
+        max-width: 46%;
+    }
+
+    .HomeBannerImgContainer {
+        width: 94%;
+        margin-top: 34px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap: 14px;
+        min-height: 92px;
+    }
+
+    .HomeBannerSubImgMain {
+        height: 92px;
+    }
+
+    .HomeBannerSubImg {
+        width: 78px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size: 13px;
+    }
+}
+
+/* Mobile Large (480px - 767px) - Small Tablets & Large Phones */
+@media (min-width: 480px) and (max-width: 767px) {
+    .HomeBannerContainer {
+        padding-top: 15%;
+        padding-bottom: 4%;
+    }
+
+    .HomeBannerText {
+        font-size: 34px;
+    }
+
+    .HomeBannerTextImg {
+        max-width: 55%;
+    }
+
+    .HomeBannerImgContainer {
+        width: 95%;
+        margin-top: 32px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap: 12px;
+        min-height: 88px;
+    }
+
+    .HomeBannerSubImgMain {
+        height: 88px;
     }
 
     .HomeBannerSubImg {
@@ -250,14 +447,37 @@
     }
 }
 
-/* Small Mobile */
-@media (max-width: 420px) {
+/* Mobile Medium (425px - 479px) - iPhone XR, Galaxy S20 */
+@media (min-width: 425px) and (max-width: 479px) {
+    .HomeBannerContainer {
+        padding-top: 17%;
+        padding-bottom: 4%;
+    }
+
     .HomeBannerText {
-        font-size: 30px;
+        font-size: 31px;
+    }
+
+    .HomeBannerTextImg {
+        max-width: 58%;
+    }
+
+    .HomeBannerImgContainer {
+        width: 96%;
+        margin-top: 28px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap: 11px;
+        min-height: 84px;
+    }
+
+    .HomeBannerSubImgMain {
+        height: 84px;
     }
 
     .HomeBannerSubImg {
-        width: 70px;
+        width: 72px;
     }
 
     .HomeBannerSubImgTitle {
@@ -265,8 +485,127 @@
     }
 }
 
-/* Motion accessibility */
+/* Mobile Small (375px - 424px) - iPhone SE, Pixel 4 */
+@media (min-width: 375px) and (max-width: 424px) {
+    .HomeBannerContainer {
+        padding-top: 19%;
+        padding-bottom: 4%;
+    }
+
+    .HomeBannerText {
+        font-size: 28px;
+    }
+
+    .HomeBannerTextImg {
+        max-width: 62%;
+    }
+
+    .HomeBannerImgContainer {
+        width: 96%;
+        margin-top: 26px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap: 10px;
+        min-height: 80px;
+    }
+
+    .HomeBannerSubImgMain {
+        height: 80px;
+    }
+
+    .HomeBannerSubImg {
+        width: 68px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size: 11px;
+    }
+}
+
+/* Extra Small (360px - 374px) */
+@media (min-width: 360px) and (max-width: 374px) {
+    .HomeBannerContainer {
+        padding-top: 20%;
+        padding-bottom: 4%;
+    }
+
+    .HomeBannerText {
+        font-size: 26px;
+    }
+
+    .HomeBannerTextImg {
+        max-width: 64%;
+    }
+
+    .HomeBannerImgContainer {
+        width: 97%;
+        margin-top: 24px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap: 10px;
+        min-height: 76px;
+    }
+
+    .HomeBannerSubImgMain {
+        height: 76px;
+    }
+
+    .HomeBannerSubImg {
+        width: 64px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size: 10.5px;
+    }
+}
+
+/* Extra Small (320px - 359px) */
+@media (min-width: 320px) and (max-width: 359px) {
+    .HomeBannerContainer {
+        padding-top: 22%;
+        padding-bottom: 4%;
+    }
+
+    .HomeBannerText {
+        font-size: 23px;
+    }
+
+    .HomeBannerTextImg {
+        max-width: 68%;
+    }
+
+    .HomeBannerImgContainer {
+        width: 98%;
+        margin-top: 22px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap: 9px;
+        min-height: 70px;
+    }
+
+    .HomeBannerSubImgMain {
+        height: 70px;
+    }
+
+    .HomeBannerSubImg {
+        width: 58px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size: 10px;
+    }
+}
+
+/* ---------------------------------------------------------
+   C) MOTION ACCESSIBILITY
+   Animations are kept alive on every screen size (including
+   phones) and only disabled here, on explicit user request.
+--------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
+
     .HomeBannerCurrentImg,
     .HomeBannerPrevImg {
         animation-duration: 1ms !important;

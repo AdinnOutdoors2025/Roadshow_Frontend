@@ -51,11 +51,11 @@ export default function RootLayout({
           {/* {children} */}
 
           {/* Smooth scrolling for every website page */}
-          {/* <GlobalSmoothScroll> */}
+          {/* <GlobalSmoothScroll>
             <main className="relative min-h-screen w-full">
-              {children}
             </main>
-          {/* </GlobalSmoothScroll> */}
+          </GlobalSmoothScroll> */}
+              {children}
 
           {/* Bootstrap JS Bundle (includes Popper) - placed before closing body */}
           {/* <script

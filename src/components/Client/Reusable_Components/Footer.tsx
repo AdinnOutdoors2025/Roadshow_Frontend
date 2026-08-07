@@ -8,6 +8,8 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import "./Footer.css";
 import '../HomePageSections/HomePageSection2.css';
 import Image from "next/image";
@@ -344,10 +346,10 @@ function Footer() {
     }
   };
 
+  useScrollLock(captchaOpen);
+
   useEffect(() => {
     if (!captchaOpen) return;
-
-    const previousOverflow = document.body.style.overflow;
 
     const handleEscape = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape" && !loading) {
@@ -355,14 +357,17 @@ function Footer() {
       }
     };
 
-    document.body.style.overflow = "hidden";
     document.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleEscape);
     };
   }, [captchaOpen, loading]);
+
+  const [mounted] = useState(
+    () => typeof document !== "undefined"
+  );
+
   const isNewsletterEmpty = email.trim().length === 0;
   return (
     <>
@@ -599,16 +604,18 @@ function Footer() {
       </footer>
 
       {/* Math CAPTCHA Popup */}
-      {captchaOpen && (
+      {captchaOpen &&
+        mounted &&
+        createPortal(
         <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/55 px-4 backdrop-blur-[5px]"
+          className="fixed inset-0 z-[200] flex overflow-y-auto bg-black/55 px-4 py-6 backdrop-blur-[5px]"
           onMouseDown={handleCaptchaOverlayClick}
         >
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="footer-captcha-title"
-            className="relative w-full max-w-[430px] overflow-hidden rounded-[28px] bg-white p-7 text-center text-black shadow-[0_30px_90px_rgba(0,0,0,0.32)] sm:p-9"
+            className="relative w-full max-w-[430px] m-auto overflow-hidden rounded-[28px] bg-white p-7 text-center text-black shadow-[0_30px_90px_rgba(0,0,0,0.32)] sm:p-9"
           >
             {/* Close */}
             <button
@@ -728,7 +735,8 @@ function Footer() {
               Generate another question
             </button> */}
           </section>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

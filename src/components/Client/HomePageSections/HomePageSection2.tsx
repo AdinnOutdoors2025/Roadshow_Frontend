@@ -452,7 +452,7 @@ function HomePageSection2() {
                                     className={`VFRCardMain bg-[#D7D7D733] rounded-[20px] p-5 shadow-sm flex flex-col justify-between min-h-[400px] ${isCenter ? "VFRCardCenter" : ""
                                         }`}
                                 >
-                                    <div className="VFRCardContent">
+                                    <div className="VFRCardContent flex-1">
                                         <div className="VFRReviewOuter">
                                             <div
                                                 className={`VFRReviewScaleBox ${isCenter

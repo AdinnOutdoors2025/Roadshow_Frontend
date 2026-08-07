@@ -11,14 +11,13 @@ export default function ClientLayout({
   return (
     <> 
       <Navbar />
-      <GlobalSmoothScroll>
-      <div>
-        {children}
-      </div>
-      <Footer />
-
-       </GlobalSmoothScroll>
-      
+       {/* Smooth scrolling for every website page */}
+          {/* <GlobalSmoothScroll> */}
+            <div>
+              {children}
+            </div>
+            <Footer />
+          {/* </GlobalSmoothScroll> */}
     </>
   );
 }

@@ -8,6 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import { baseUrl } from "../../../../BaseUrl";
 import Image from "next/image";
+import './page.css';
 
 type VehicleTypeValue =
   | string
@@ -249,8 +250,8 @@ export default function BookingRequestSubmittedPage() {
 
   return (
     <main className="min-h-screen bg-white px-4 pb-12 pt-10 font-['Outfit'] text-black sm:px-6 sm:pb-16 sm:pt-14 lg:px-8 lg:pb-20 lg:pt-16">
-      <section className="mx-auto flex w-full max-w-[1430px] flex-col items-center">
-        <header className="text-center">
+      <section className="  booking_reqThankPgMain mx-auto flex w-full max-w-[1430px] flex-col items-center">
+        <header className=" text-center">
           <h1 className="text-[28px] font-normal leading-none sm:text-[34px] lg:text-[40px]">
             Booking Request Submitted
           </h1>

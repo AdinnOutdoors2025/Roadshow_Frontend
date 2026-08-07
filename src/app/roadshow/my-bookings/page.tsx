@@ -11,6 +11,11 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { ScrollSmoother } from "gsap/ScrollSmoother";
+import "./page.css";
+
+import { baseUrl } from "../../../BaseUrl";
+import { useAuth } from "@/context/AuthContext";
 
 /* =========================================================
    UPDATE VEHICLE IMAGE PATH HERE
@@ -170,421 +175,6 @@ function FilledIcon({
 }
 
 /* =========================================================
-   SAMPLE BOOKING DATA
-========================================================= */
-
-const bookingData: Booking[] = [
-  {
-    id: "RD-20260716-024",
-    status: "Pending",
-    requestedOn: "16 Jul 2026, 11:30 AM",
-    requestedAt: "2026-07-16T11:30:00",
-    startDate: "20 Jul 2026",
-    endDate: "29 Jul 2026",
-    duration: "10 Days",
-    vehicleTypes: 2,
-    vehicleCount: 3,
-    estimatedTotal: 750000,
-
-    customer: {
-      name: "Kishore",
-      company: "ABC Company",
-      phone: "+91 98765 43210",
-      email: "example@email.com",
-    },
-
-    vehicles: [
-      {
-        name: "19 Feet Single Side LED Van",
-        startDate: "20 Jul 2026",
-        endDate: "29 Jul 2026",
-        duration: "10 Days",
-        quantity: 2,
-        ratePerDay: 25000,
-        total: 500000,
-      },
-      {
-        name: "22 Feet Double Side LED Van",
-        startDate: "20 Jul 2026",
-        endDate: "29 Jul 2026",
-        duration: "10 Days",
-        quantity: 1,
-        ratePerDay: 25000,
-        total: 250000,
-      },
-    ],
-  },
-  {
-    id: "RD-20260710-018",
-    status: "Confirmed",
-    requestedOn: "10 Jul 2026, 03:15 PM",
-    requestedAt: "2026-07-10T15:15:00",
-    startDate: "15 Jul 2026",
-    endDate: "24 Jul 2026",
-    duration: "10 Days",
-    vehicleTypes: 1,
-    vehicleCount: 1,
-    estimatedTotal: 250000,
-
-    customer: {
-      name: "Arun Kumar",
-      company: "Skyline Enterprises",
-      phone: "+91 98765 12345",
-      email: "arun@skyline.com",
-    },
-
-    vehicles: [
-      {
-        name: "19 Feet Single Side LED Van",
-        startDate: "15 Jul 2026",
-        endDate: "24 Jul 2026",
-        duration: "10 Days",
-        quantity: 1,
-        ratePerDay: 25000,
-        total: 250000,
-      },
-    ],
-  },
-  {
-    id: "RD-20260705-012",
-    status: "Ongoing",
-    requestedOn: "05 Jul 2026, 10:45 AM",
-    requestedAt: "2026-07-05T10:45:00",
-    startDate: "12 Jul 2026",
-    endDate: "22 Jul 2026",
-    duration: "10 Days",
-    vehicleTypes: 3,
-    vehicleCount: 5,
-    estimatedTotal: 1120000,
-
-    customer: {
-      name: "Pradeep",
-      company: "Bright Media",
-      phone: "+91 98765 22222",
-      email: "pradeep@brightmedia.com",
-    },
-
-    vehicles: [
-      {
-        name: "19 Feet Single Side LED Van",
-        startDate: "12 Jul 2026",
-        endDate: "22 Jul 2026",
-        duration: "10 Days",
-        quantity: 2,
-        ratePerDay: 25000,
-        total: 500000,
-      },
-      {
-        name: "22 Feet Double Side LED Van",
-        startDate: "12 Jul 2026",
-        endDate: "22 Jul 2026",
-        duration: "10 Days",
-        quantity: 2,
-        ratePerDay: 26000,
-        total: 520000,
-      },
-      {
-        name: "Tata Ace LED Van",
-        startDate: "12 Jul 2026",
-        endDate: "22 Jul 2026",
-        duration: "10 Days",
-        quantity: 1,
-        ratePerDay: 10000,
-        total: 100000,
-      },
-    ],
-  },
-  {
-    id: "RD-20260701-010",
-    status: "Pending",
-    requestedOn: "01 Jul 2026, 09:20 AM",
-    requestedAt: "2026-07-01T09:20:00",
-    startDate: "10 Jul 2026",
-    endDate: "16 Jul 2026",
-    duration: "7 Days",
-    vehicleTypes: 1,
-    vehicleCount: 2,
-    estimatedTotal: 350000,
-
-    customer: {
-      name: "Ramesh",
-      company: "Ramesh Agencies",
-      phone: "+91 98765 33333",
-      email: "ramesh@email.com",
-    },
-
-    vehicles: [
-      {
-        name: "19 Feet Single Side LED Van",
-        startDate: "10 Jul 2026",
-        endDate: "16 Jul 2026",
-        duration: "7 Days",
-        quantity: 2,
-        ratePerDay: 25000,
-        total: 350000,
-      },
-    ],
-  },
-  {
-    id: "RD-20260628-009",
-    status: "Pending",
-    requestedOn: "28 Jun 2026, 04:30 PM",
-    requestedAt: "2026-06-28T16:30:00",
-    startDate: "05 Jul 2026",
-    endDate: "11 Jul 2026",
-    duration: "7 Days",
-    vehicleTypes: 1,
-    vehicleCount: 1,
-    estimatedTotal: 175000,
-
-    customer: {
-      name: "Surya",
-      company: "Surya Marketing",
-      phone: "+91 98765 44444",
-      email: "surya@email.com",
-    },
-
-    vehicles: [
-      {
-        name: "19 Feet Single Side LED Van",
-        startDate: "05 Jul 2026",
-        endDate: "11 Jul 2026",
-        duration: "7 Days",
-        quantity: 1,
-        ratePerDay: 25000,
-        total: 175000,
-      },
-    ],
-  },
-  {
-    id: "RD-20260625-008",
-    status: "Confirmed",
-    requestedOn: "25 Jun 2026, 02:10 PM",
-    requestedAt: "2026-06-25T14:10:00",
-    startDate: "02 Jul 2026",
-    endDate: "08 Jul 2026",
-    duration: "7 Days",
-    vehicleTypes: 1,
-    vehicleCount: 1,
-    estimatedTotal: 175000,
-
-    customer: {
-      name: "Vignesh",
-      company: "Vignesh Traders",
-      phone: "+91 98765 55555",
-      email: "vignesh@email.com",
-    },
-
-    vehicles: [
-      {
-        name: "19 Feet Single Side LED Van",
-        startDate: "02 Jul 2026",
-        endDate: "08 Jul 2026",
-        duration: "7 Days",
-        quantity: 1,
-        ratePerDay: 25000,
-        total: 175000,
-      },
-    ],
-  },
-  {
-    id: "RD-20260622-007",
-    status: "Confirmed",
-    requestedOn: "22 Jun 2026, 01:40 PM",
-    requestedAt: "2026-06-22T13:40:00",
-    startDate: "28 Jun 2026",
-    endDate: "04 Jul 2026",
-    duration: "7 Days",
-    vehicleTypes: 1,
-    vehicleCount: 2,
-    estimatedTotal: 350000,
-
-    customer: {
-      name: "Naveen",
-      company: "Naveen Solutions",
-      phone: "+91 98765 66666",
-      email: "naveen@email.com",
-    },
-
-    vehicles: [
-      {
-        name: "19 Feet Single Side LED Van",
-        startDate: "28 Jun 2026",
-        endDate: "04 Jul 2026",
-        duration: "7 Days",
-        quantity: 2,
-        ratePerDay: 25000,
-        total: 350000,
-      },
-    ],
-  },
-  {
-    id: "RD-20260620-006",
-    status: "Confirmed",
-    requestedOn: "20 Jun 2026, 11:10 AM",
-    requestedAt: "2026-06-20T11:10:00",
-    startDate: "26 Jun 2026",
-    endDate: "02 Jul 2026",
-    duration: "7 Days",
-    vehicleTypes: 1,
-    vehicleCount: 1,
-    estimatedTotal: 175000,
-
-    customer: {
-      name: "Ajay",
-      company: "AJ Enterprises",
-      phone: "+91 98765 77777",
-      email: "ajay@email.com",
-    },
-
-    vehicles: [
-      {
-        name: "19 Feet Single Side LED Van",
-        startDate: "26 Jun 2026",
-        endDate: "02 Jul 2026",
-        duration: "7 Days",
-        quantity: 1,
-        ratePerDay: 25000,
-        total: 175000,
-      },
-    ],
-  },
-  {
-    id: "RD-20260618-005",
-    status: "Ongoing",
-    requestedOn: "18 Jun 2026, 05:20 PM",
-    requestedAt: "2026-06-18T17:20:00",
-    startDate: "22 Jun 2026",
-    endDate: "01 Jul 2026",
-    duration: "10 Days",
-    vehicleTypes: 2,
-    vehicleCount: 3,
-    estimatedTotal: 720000,
-
-    customer: {
-      name: "Sathish",
-      company: "Sathish Media",
-      phone: "+91 98765 88888",
-      email: "sathish@email.com",
-    },
-
-    vehicles: [
-      {
-        name: "19 Feet Single Side LED Van",
-        startDate: "22 Jun 2026",
-        endDate: "01 Jul 2026",
-        duration: "10 Days",
-        quantity: 2,
-        ratePerDay: 25000,
-        total: 500000,
-      },
-      {
-        name: "Tata Ace LED Van",
-        startDate: "22 Jun 2026",
-        endDate: "01 Jul 2026",
-        duration: "10 Days",
-        quantity: 1,
-        ratePerDay: 22000,
-        total: 220000,
-      },
-    ],
-  },
-  {
-    id: "RD-20260615-004",
-    status: "Completed",
-    requestedOn: "15 Jun 2026, 12:00 PM",
-    requestedAt: "2026-06-15T12:00:00",
-    startDate: "18 Jun 2026",
-    endDate: "24 Jun 2026",
-    duration: "7 Days",
-    vehicleTypes: 1,
-    vehicleCount: 1,
-    estimatedTotal: 175000,
-
-    customer: {
-      name: "Dinesh",
-      company: "Dinesh Groups",
-      phone: "+91 98765 99999",
-      email: "dinesh@email.com",
-    },
-
-    vehicles: [
-      {
-        name: "19 Feet Single Side LED Van",
-        startDate: "18 Jun 2026",
-        endDate: "24 Jun 2026",
-        duration: "7 Days",
-        quantity: 1,
-        ratePerDay: 25000,
-        total: 175000,
-      },
-    ],
-  },
-  {
-    id: "RD-20260612-003",
-    status: "Completed",
-    requestedOn: "12 Jun 2026, 03:30 PM",
-    requestedAt: "2026-06-12T15:30:00",
-    startDate: "15 Jun 2026",
-    endDate: "21 Jun 2026",
-    duration: "7 Days",
-    vehicleTypes: 1,
-    vehicleCount: 2,
-    estimatedTotal: 350000,
-
-    customer: {
-      name: "Manoj",
-      company: "Manoj Promotions",
-      phone: "+91 98765 10101",
-      email: "manoj@email.com",
-    },
-
-    vehicles: [
-      {
-        name: "19 Feet Single Side LED Van",
-        startDate: "15 Jun 2026",
-        endDate: "21 Jun 2026",
-        duration: "7 Days",
-        quantity: 2,
-        ratePerDay: 25000,
-        total: 350000,
-      },
-    ],
-  },
-  {
-    id: "RD-20260610-002",
-    status: "Cancelled",
-    requestedOn: "10 Jun 2026, 10:00 AM",
-    requestedAt: "2026-06-10T10:00:00",
-    startDate: "14 Jun 2026",
-    endDate: "20 Jun 2026",
-    duration: "7 Days",
-    vehicleTypes: 1,
-    vehicleCount: 1,
-    estimatedTotal: 175000,
-
-    customer: {
-      name: "Karthick",
-      company: "Karthick Advertising",
-      phone: "+91 98765 12121",
-      email: "karthick@email.com",
-    },
-
-    vehicles: [
-      {
-        name: "19 Feet Single Side LED Van",
-        startDate: "14 Jun 2026",
-        endDate: "20 Jun 2026",
-        duration: "7 Days",
-        quantity: 1,
-        ratePerDay: 25000,
-        total: 175000,
-      },
-    ],
-  },
-];
-
-/* =========================================================
    UI CONFIGURATION
 ========================================================= */
 
@@ -638,6 +228,96 @@ const statusStyles: Record<
 
 function formatINR(value: number) {
   return `₹ ${value.toLocaleString("en-IN")}`;
+}
+
+function formatBookingDate(value?: string) {
+  if (!value) return "-";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+type ClientRequestVehicleRaw = {
+  vehicleName?: string;
+  vehicleType?: { name?: string } | string | null;
+  quantity?: number;
+  fromDate?: string;
+  toDate?: string;
+  totalDays?: number;
+  pricePerDay?: number;
+  lineTotal?: number;
+};
+
+type ClientRequestRaw = {
+  _id: string;
+  clientOrderId?: string;
+  status?: string;
+  createdAt?: string;
+  estimatedTotal?: number;
+  name?: string;
+  companyName?: string;
+  phone?: string;
+  email?: string;
+  vehicleTypes?: ClientRequestVehicleRaw[];
+};
+
+/* Maps the backend's client-requests shape onto the Booking type this
+   page already renders, so the existing card/modal/filter/PDF UI below
+   doesn't need to change. */
+function mapClientRequestToBooking(request: ClientRequestRaw): Booking {
+  const vehicleTypes = Array.isArray(request.vehicleTypes)
+    ? request.vehicleTypes
+    : [];
+
+  return {
+    id: request.clientOrderId || request._id,
+    // TODO: confirm the real status values client-requests returns
+    // (set via PATCH client-requests/:id/status) and map them onto
+    // BookingStatus instead of defaulting everything to "Pending".
+    status: (request.status as BookingStatus) || "Pending",
+    requestedOn: formatBookingDate(request.createdAt),
+    requestedAt: request.createdAt || "",
+    startDate: formatBookingDate(vehicleTypes[0]?.fromDate),
+    endDate: formatBookingDate(vehicleTypes[0]?.toDate),
+    duration: vehicleTypes[0]?.totalDays
+      ? `${vehicleTypes[0].totalDays} Days`
+      : "-",
+    vehicleTypes: vehicleTypes.length,
+    vehicleCount: vehicleTypes.reduce(
+      (sum: number, vehicle) => sum + (vehicle.quantity || 0),
+      0,
+    ),
+    estimatedTotal: request.estimatedTotal || 0,
+
+    customer: {
+      name: request.name || "-",
+      company: request.companyName || "-",
+      phone: request.phone || "-",
+      email: request.email || "-",
+    },
+
+    vehicles: vehicleTypes.map((vehicle) => ({
+      name:
+        vehicle.vehicleName ||
+        (typeof vehicle.vehicleType === "object"
+          ? vehicle.vehicleType?.name
+          : undefined) ||
+        "Roadshow Vehicle",
+      startDate: formatBookingDate(vehicle.fromDate),
+      endDate: formatBookingDate(vehicle.toDate),
+      duration: vehicle.totalDays ? `${vehicle.totalDays} Days` : "-",
+      quantity: vehicle.quantity || 0,
+      ratePerDay: vehicle.pricePerDay || 0,
+      total: vehicle.lineTotal || 0,
+    })),
+  };
 }
 
 /* jsPDF's standard fonts (Helvetica/Times/Courier) use
@@ -863,16 +543,16 @@ function BookingCard({
     statusStyles[booking.status];
 
   return (
-    <article className="grid overflow-hidden rounded-[28px] bg-white/95 p-3 shadow-[0_14px_45px_rgba(31,31,38,0.055)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_55px_rgba(31,31,38,0.085)] md:grid-cols-[210px_minmax(0,1fr)]">
-      <div className="relative h-[170px] overflow-hidden rounded-[20px] bg-[#EFEFF2] md:h-full md:min-h-[155px]">
+    <article className="RS_BookingCard grid overflow-hidden rounded-[28px] bg-white/95 p-3 shadow-[0_14px_45px_rgba(31,31,38,0.055)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_55px_rgba(31,31,38,0.085)] md:grid-cols-[210px_minmax(0,1fr)]">
+      <div className="RS_BookingCardMedia relative h-[170px] overflow-hidden rounded-[20px] bg-[#EFEFF2] md:h-full md:min-h-[155px]">
         <img
           src={VEHICLE_IMAGE}
           alt="Roadshow LED vehicle"
-          className="h-full w-full object-cover"
+          className="RS_BookingCardImage h-full w-full object-cover"
         />
 
         <span
-          className={`absolute left-3 top-3 inline-flex items-center gap-2 rounded-full px-3 py-2 text-[11px] font-semibold shadow-sm ${style.badge}`}
+          className={`RS_StatusBadge absolute left-3 top-3 inline-flex items-center gap-2 rounded-full px-3 py-2 text-[11px] font-semibold shadow-sm ${style.badge}`}
         >
           <span
             className={`h-2 w-2 rounded-full ${style.dot}`}
@@ -882,35 +562,35 @@ function BookingCard({
         </span>
       </div>
 
-      <div className="grid min-w-0 gap-5 px-2 py-4 sm:px-5 md:grid-cols-2 md:gap-x-8 md:gap-y-6 xl:grid-cols-[220px_minmax(280px,1fr)_180px_150px] xl:items-center xl:gap-5">
+      <div className="RS_BookingCardBody grid min-w-0 gap-5 px-2 py-4 sm:px-5 md:grid-cols-2 md:gap-x-8 md:gap-y-6 xl:grid-cols-[220px_minmax(280px,1fr)_180px_150px] xl:items-center xl:gap-5">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#8A8A92]">
+          <p className="RS_BookingLabel text-[10px] font-medium uppercase tracking-[0.08em] text-[#8A8A92]">
             Booking ID
           </p>
 
-          <h3 className="mt-1 text-[19px] font-semibold tracking-tight text-[#17191D]">
+          <h3 className="RS_BookingId mt-1 text-[19px] font-semibold tracking-tight text-[#17191D]">
             {booking.id}
           </h3>
 
-          <p className="mt-4 text-[10px] font-medium text-[#8A8A92]">
+          <p className="RS_BookingLabel mt-4 text-[10px] font-medium text-[#8A8A92]">
             Requested on
           </p>
 
-          <p className="mt-1 text-[12px] font-medium text-[#616168]">
+          <p className="RS_BookingRequested mt-1 text-[12px] font-medium text-[#616168]">
             {booking.requestedOn}
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1 xl:justify-self-end">
+        <div className="RS_BookingMeta grid gap-3 sm:grid-cols-3 xl:grid-cols-1 xl:justify-self-end">
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFEFF2] text-[#616168]">
+            <div className="RS_BookingMetaIcon grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFEFF2] text-[#616168]">
               <FilledIcon
                 name="calendar"
                 size={16}
               />
             </div>
 
-            <p className="text-[12px] font-semibold text-[#303035]">
+            <p className="RS_BookingMetaText text-[12px] font-semibold text-[#303035]">
               {booking.startDate}
 
               <span className="mx-2 text-[#A6A6AD]">
@@ -922,27 +602,27 @@ function BookingCard({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFEFF2] text-[#616168]">
+            <div className="RS_BookingMetaIcon grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFEFF2] text-[#616168]">
               <FilledIcon
                 name="clock"
                 size={16}
               />
             </div>
 
-            <p className="text-[12px] font-medium text-[#616168]">
+            <p className="RS_BookingMetaText text-[12px] font-medium text-[#616168]">
               {booking.duration}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFEFF2] text-[#616168]">
+            <div className="RS_BookingMetaIcon grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFEFF2] text-[#616168]">
               <FilledIcon
                 name="vehicle"
                 size={17}
               />
             </div>
 
-            <p className="text-[12px] font-medium text-[#616168]">
+            <p className="RS_BookingMetaText text-[12px] font-medium text-[#616168]">
               {booking.vehicleTypes} vehicle{" "}
               {booking.vehicleTypes === 1
                 ? "type"
@@ -961,11 +641,11 @@ function BookingCard({
         </div>
 
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#8A8A92]">
+          <p className="RS_BookingLabel text-[10px] font-medium uppercase tracking-[0.08em] text-[#8A8A92]">
             Estimated Total
           </p>
 
-          <p className="mt-2 text-[21px] font-semibold tracking-tight text-[#B20D19]">
+          <p className="RS_BookingAmount mt-2 text-[21px] font-semibold tracking-tight text-[#B20D19]">
             {formatINR(
               booking.estimatedTotal,
             )}
@@ -975,7 +655,7 @@ function BookingCard({
         <BubbleButton
           onClick={onView}
           variant="light"
-          className="h-12 w-full px-5 text-[12px] font-semibold shadow-[0_4px_16px_rgba(31,31,38,0.06)]"
+          className="RS_ViewDetailsButton h-12 w-full px-5 text-[12px] font-semibold shadow-[0_4px_16px_rgba(31,31,38,0.06)]"
         >
           View Details
 
@@ -999,12 +679,12 @@ function VehicleRow({
   vehicle: Vehicle;
 }) {
   return (
-    <div className="grid gap-4 rounded-[22px] bg-[#F1F1F4] p-3 sm:p-4 lg:grid-cols-[110px_minmax(0,1fr)_190px] lg:items-center">
-      <div className="h-[100px] overflow-hidden rounded-[18px] bg-[#EDEDF0] lg:h-[82px]">
+    <div className="RS_VehicleRow grid gap-4 rounded-[22px] bg-[#F1F1F4] p-3 sm:p-4 lg:grid-cols-[110px_minmax(0,1fr)_190px] lg:items-center">
+      <div className="RS_VehicleRowMedia h-[100px] overflow-hidden rounded-[18px] bg-[#EDEDF0] lg:h-[82px]">
         <img
           src={VEHICLE_IMAGE}
           alt={vehicle.name}
-          className="h-full w-full object-cover"
+          className="RS_VehicleRowImage h-full w-full object-cover"
         />
       </div>
 
@@ -1040,7 +720,7 @@ function VehicleRow({
         </div>
       </div>
 
-      <div className="rounded-[18px] bg-white p-4">
+      <div className="RS_VehicleRowPrice rounded-[18px] bg-white p-4">
         <div className="flex items-center justify-between gap-4">
           <span className="text-[10px] font-medium text-[#8A8A92]">
             Rate / Day
@@ -1093,6 +773,12 @@ function BookingModal({
   useEffect(() => {
     const scrollY = window.scrollY;
 
+    // ScrollSmoother drives page scroll itself (see GlobalSmoothScroll.tsx),
+    // so it has to be paused directly — the body-position lock below only
+    // covers native scroll, which isn't what's moving the background here.
+    const smoother = ScrollSmoother.get();
+    smoother?.paused(true);
+
     const previousBodyPosition =
       document.body.style.position;
 
@@ -1142,6 +828,8 @@ function BookingModal({
     );
 
     return () => {
+      smoother?.paused(false);
+
       document.body.style.position =
         previousBodyPosition;
 
@@ -1182,15 +870,15 @@ function BookingModal({
       aria-modal="true"
       aria-label={`Booking details for ${booking.id}`}
       onClick={onClose}
-      className="RS_MyBookingsModal fixed inset-0 z-[9999] grid place-items-center bg-black/40 p-4 backdrop-blur-[8px] sm:p-6"
+      className="RS_MyBookingsModal RS_MyBookingsModalOverlay fixed inset-0 z-[9999] grid place-items-center bg-black/40 p-4 backdrop-blur-[8px] sm:p-6"
     >
       <div
         onClick={(event) =>
           event.stopPropagation()
         }
-        className="max-h-[calc(100dvh-2rem)] w-full max-w-[1180px] overflow-y-auto overscroll-contain rounded-[30px] bg-[#F5F5F7] shadow-[0_35px_100px_rgba(0,0,0,0.22)]"
+        className="RS_BookingModalPanel max-h-[calc(100dvh-2rem)] w-full max-w-[1180px] overflow-y-auto overscroll-contain rounded-[30px] bg-[#F5F5F7] shadow-[0_35px_100px_rgba(0,0,0,0.22)]"
       >
-        <div className="sticky top-0 z-20 bg-[#F5F5F7]/88 px-4 pb-4 pt-3 backdrop-blur-2xl sm:px-7 sm:pt-6">
+        <div className="RS_BookingModalHeader sticky top-0 z-20 bg-[#F5F5F7]/88 px-4 pb-4 pt-3 backdrop-blur-2xl sm:px-7 sm:pt-6">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
@@ -1230,9 +918,9 @@ function BookingModal({
           </div>
         </div>
 
-        <div className="px-4 pb-6 sm:px-7 sm:pb-8">
-          <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
-            <aside className="space-y-4">
+        <div className="RS_BookingModalContent px-4 pb-6 sm:px-7 sm:pb-8">
+          <div className="RS_BookingModalGrid grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
+            <aside className="RS_BookingCustomerColumn space-y-4">
               <div className="rounded-[26px] bg-white p-5 shadow-[0_10px_35px_rgba(22,27,34,0.05)]">
                 <div className="flex items-center gap-3">
                   <div className="grid h-10 w-10 place-items-center rounded-full bg-[#ECECEF] text-[#40454D]">
@@ -1318,7 +1006,7 @@ function BookingModal({
               </div>
             </aside>
 
-            <div className="space-y-4">
+            <div className="RS_BookingDetailsColumn space-y-4">
               <div className="rounded-[26px] bg-white p-4 shadow-[0_10px_35px_rgba(22,27,34,0.05)] sm:p-5">
                 <div className="flex items-center gap-3">
                   <div className="grid h-10 w-10 place-items-center rounded-full bg-[#ECECEF] text-[#40454D]">
@@ -1431,7 +1119,7 @@ function BookingModal({
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 sm:flex sm:flex-wrap sm:justify-end">
+          <div className="RS_BookingModalActions mt-5 grid gap-3 sm:flex sm:flex-wrap sm:justify-end">
             <BubbleButton
               onClick={onDownload}
               variant="light"
@@ -1502,8 +1190,76 @@ function BookingModal({
 ========================================================= */
 
 export default function MyBookingsPage() {
+  const { user, authLoading, openAuth } = useAuth();
+
   const [bookings, setBookings] =
-    useState<Booking[]>(bookingData);
+    useState<Booking[]>([]);
+
+  const [bookingsLoading, setBookingsLoading] =
+    useState(true);
+
+  const [bookingsError, setBookingsError] =
+    useState("");
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      openAuth("login");
+      return;
+    }
+
+    let active = true;
+
+    (async () => {
+      try {
+        setBookingsLoading(true);
+        setBookingsError("");
+
+        const response = await fetch(
+          `${baseUrl}/client-requests`,
+          { cache: "no-store" },
+        );
+
+        const result = await response
+          .json()
+          .catch(() => null);
+
+        if (!response.ok || !result?.success) {
+          throw new Error(
+            result?.message ||
+              "Unable to load your bookings.",
+          );
+        }
+
+        // client-requests is a staff-facing listing endpoint with no
+        // documented customer-scoped filter, so this filters by the
+        // logged-in user's phone on the client as an interim measure.
+        // Needs a real scoped backend endpoint before shipping.
+        const mine = ((result.data as ClientRequestRaw[]) || []).filter(
+          (request) => request.phone === user.phone,
+        );
+
+        if (active) {
+          setBookings(mine.map(mapClientRequestToBooking));
+        }
+      } catch (error) {
+        if (active) {
+          setBookingsError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load your bookings.",
+          );
+        }
+      } finally {
+        if (active) setBookingsLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [user, authLoading, openAuth]);
 
   const [activeTab, setActiveTab] =
     useState<StatusFilter>("All");
@@ -2088,8 +1844,8 @@ export default function MyBookingsPage() {
   return (
     <>
       <main className="RS_MyBookingsRoot min-h-screen bg-[#ffffff] px-4 pb-12 pt-[130px] text-[#111114] sm:px-6 sm:pt-[140px] lg:px-8 lg:pt-[150px]">
-        <div className="mx-auto max-w-[1440px]">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="RS_MyBookingsContainer mx-auto max-w-[1440px]">
+          <div className="RS_MyBookingsHeader flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="RS_PageTitle text-[34px] font-medium tracking-[-0.045em] text-[#0F0F12] sm:text-[40px]">
                 My Bookings
@@ -2102,8 +1858,8 @@ export default function MyBookingsPage() {
               </p>
             </div>
 
-            <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
-              <label className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full bg-white/90 px-5 shadow-[0_10px_30px_rgba(31,31,38,0.055)] backdrop-blur-xl lg:w-[320px]">
+            <div className="RS_BookingToolbar flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
+              <label className="RS_SearchBox flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full bg-white/90 px-5 shadow-[0_10px_30px_rgba(31,31,38,0.055)] backdrop-blur-xl lg:w-[320px]">
                 <FilledIcon
                   name="search"
                   size={18}
@@ -2120,12 +1876,12 @@ export default function MyBookingsPage() {
                     setCurrentPage(1);
                   }}
                   placeholder="Search by Booking ID..."
-                  className="min-w-0 flex-1 bg-transparent text-[12px] font-medium text-[#252529] outline-none placeholder:text-[#A6A6AD]"
+                  className="RS_SearchInput min-w-0 flex-1 bg-transparent text-[12px] font-medium text-[#252529] outline-none placeholder:text-[#A6A6AD]"
                 />
               </label>
 
               <div
-                className="relative"
+                className="RS_FilterWrap relative"
                 ref={filterRef}
               >
                 <BubbleButton
@@ -2136,7 +1892,7 @@ export default function MyBookingsPage() {
                     )
                   }
                   variant="white"
-                  className="h-12 w-full px-5 text-[12px] font-semibold shadow-[0_10px_30px_rgba(31,31,38,0.055)] sm:w-[150px]"
+                  className="RS_FilterButton h-12 w-full px-5 text-[12px] font-semibold shadow-[0_10px_30px_rgba(31,31,38,0.055)] sm:w-[150px]"
                 >
                   <FilledIcon
                     name="filter"
@@ -2147,7 +1903,7 @@ export default function MyBookingsPage() {
                 </BubbleButton>
 
                 {filterOpen && (
-                  <div className="absolute right-0 top-[56px] z-40 w-full min-w-[210px] rounded-[20px] bg-white p-2 shadow-[0_18px_55px_rgba(0,0,0,0.16)]">
+                  <div className="RS_FilterMenu absolute right-0 top-[56px] z-40 w-full min-w-[210px] rounded-[20px] bg-white p-2 shadow-[0_18px_55px_rgba(0,0,0,0.16)]">
                     {[
                       {
                         value:
@@ -2212,15 +1968,15 @@ export default function MyBookingsPage() {
             </div>
           </div>
 
-          <div className="mt-8 overflow-x-auto pb-2">
-            <div className="relative flex min-w-max gap-1.5 rounded-full bg-[#EDEDF0] p-1.5">
+          <div className="RS_BookingTabsViewport mt-8 overflow-x-auto pb-2">
+            <div className="RS_BookingTabs relative flex min-w-max gap-1.5 rounded-full bg-[#EDEDF0] p-1.5">
               {activeTabPillRect && (
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute z-0 rounded-full bg-white"
+                  className="RS_ActiveTabPill pointer-events-none absolute z-0 rounded-full bg-white"
                   style={{
                     top: "50%",
-                    height: 44,
+                    height: "calc(100% - 12px)",
                     left: activeTabPillRect.left,
                     width:
                       activeTabPillRect.width,
@@ -2256,12 +2012,12 @@ export default function MyBookingsPage() {
                         tab,
                       )
                     }
-                    className="relative z-10 flex h-11 min-w-[140px] items-center justify-center gap-3 rounded-full bg-transparent px-5 text-[12px] font-normal text-black transition active:scale-[0.98]"
+                    className="RS_TabButton relative z-10 flex h-11 min-w-[140px] items-center justify-center gap-3 rounded-full bg-transparent px-5 text-[12px] font-normal text-black transition active:scale-[0.98]"
                   >
                     <span>{tab}</span>
 
                     <span
-                      className={`grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-[10px] font-normal text-black ${countBg}`}
+                      className={`RS_TabCount grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-[10px] font-normal text-black ${countBg}`}
                     >
                       {
                         statusCounts[
@@ -2275,8 +2031,34 @@ export default function MyBookingsPage() {
             </div>
           </div>
 
-          <div className="mt-5 space-y-4">
-            {visibleBookings.length >
+          <div className="RS_BookingsList mt-5 space-y-4">
+            {authLoading || (user && bookingsLoading) ? (
+              <div className="rounded-[28px] bg-white px-6 py-20 text-center shadow-[0_12px_40px_rgba(25,31,40,0.06)]">
+                <p className="text-[13px] font-medium text-[#777D87]">
+                  Loading your bookings…
+                </p>
+              </div>
+            ) : !user ? (
+              <div className="rounded-[28px] bg-white px-6 py-20 text-center shadow-[0_12px_40px_rgba(25,31,40,0.06)]">
+                <p className="text-[14px] font-semibold text-[#303035]">
+                  Please sign in to view your bookings
+                </p>
+
+                <BubbleButton
+                  onClick={() => openAuth("login")}
+                  variant="light"
+                  className="mx-auto mt-6 h-11 px-6 text-[12px] font-semibold"
+                >
+                  Sign In
+                </BubbleButton>
+              </div>
+            ) : bookingsError ? (
+              <div className="rounded-[28px] bg-white px-6 py-20 text-center shadow-[0_12px_40px_rgba(25,31,40,0.06)]">
+                <p className="text-[14px] font-semibold text-[#B31C28]">
+                  {bookingsError}
+                </p>
+              </div>
+            ) : visibleBookings.length >
             0 ? (
               visibleBookings.map(
                 (booking) => (
@@ -2338,8 +2120,8 @@ export default function MyBookingsPage() {
             )}
           </div>
 
-          <div className="mt-6 flex flex-col gap-4 text-[11px] font-medium text-[#6D6D75] sm:flex-row sm:items-center sm:justify-between">
-            <p>
+          <div className="RS_BookingPagination mt-6 flex flex-col gap-4 text-[11px] font-medium text-[#6D6D75] sm:flex-row sm:items-center sm:justify-between">
+            <p className="RS_BookingResultsText">
               Showing{" "}
               {visibleBookings.length ===
               0
@@ -2360,7 +2142,7 @@ export default function MyBookingsPage() {
               bookings
             </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
+            <div className="RS_PaginationControls flex flex-wrap items-center justify-center gap-2 sm:justify-end">
               <button
                 type="button"
                 aria-label="Previous page"
@@ -2445,193 +2227,7 @@ export default function MyBookingsPage() {
         </div>
       </main>
 
-      <style jsx global>{`
-        .RS_MyBookingsRoot,
-        .RS_MyBookingsModal {
-          font-family:
-            "Outfit",
-            "Inter",
-            system-ui,
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            sans-serif;
-          font-synthesis: none;
-        }
 
-        .RS_PageTitle {
-          position: relative;
-          width: fit-content;
-        }
-
-        .RS_VehicleButton {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          isolation: isolate;
-          border: 0;
-          border-radius: 999px;
-          cursor: pointer;
-          transform: translateZ(0);
-          transition:
-            transform 180ms ease,
-            box-shadow 220ms ease,
-            color 220ms ease,
-            background-color 220ms ease;
-          -webkit-tap-highlight-color: transparent;
-        }
-
-        .RS_VehicleButton::after {
-          content: "";
-          position: absolute;
-          inset: 1px;
-          z-index: 0;
-          border-radius: inherit;
-          pointer-events: none;
-          background: linear-gradient(
-            180deg,
-            rgba(255, 255, 255, 0.38),
-            rgba(255, 255, 255, 0)
-              48%
-          );
-          opacity: 0.7;
-        }
-
-        .RS_VehicleButton--light {
-          background: #ececef;
-          color: #17171a;
-        }
-
-        .RS_VehicleButton--white {
-          background: rgba(
-            255,
-            255,
-            255,
-            0.96
-          );
-          color: #17171a;
-        }
-
-        .RS_VehicleButton--dark {
-          background: #111114;
-          color: #ffffff;
-        }
-
-        .RS_VehicleButton--danger {
-          background: #fcebed;
-          color: #a91521;
-        }
-
-        .RS_BtnBubble {
-          position: absolute;
-          z-index: 0;
-          display: block;
-          border-radius: 999px;
-          pointer-events: none;
-          background: linear-gradient(
-            135deg,
-            #d51d2b 0%,
-            #8f0712 100%
-          );
-          transition:
-            transform 0.55s
-              cubic-bezier(
-                0.25,
-                0.46,
-                0.45,
-                0.94
-              ),
-            opacity 0.55s;
-          will-change:
-            transform,
-            opacity;
-        }
-
-        .RS_BtnBubble--static {
-          width: 360px;
-          height: 360px;
-          left: 50%;
-          top: 50%;
-          opacity: 0;
-          transform: translate(
-              -50%,
-              -50%
-            )
-            scale(0);
-        }
-
-        .RS_VehicleButton:hover
-          .RS_BtnBubble--static,
-        .RS_VehicleButton:focus-visible
-          .RS_BtnBubble--static {
-          opacity: 1;
-          transform: translate(
-              -50%,
-              -50%
-            )
-            scale(1);
-        }
-
-        .RS_BtnContent {
-          position: relative;
-          z-index: 2;
-          display: flex;
-          width: 100%;
-          height: 100%;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          white-space: nowrap;
-        }
-
-        .RS_VehicleButton:hover,
-        .RS_VehicleButton:focus-visible {
-          color: #ffffff;
-          box-shadow: 0 12px 28px
-            rgba(
-              143,
-              7,
-              18,
-              0.18
-            );
-        }
-
-        .RS_VehicleButton:active {
-          transform: scale(0.975);
-        }
-
-        .RS_VehicleButton:disabled {
-          cursor: not-allowed;
-          opacity: 0.4;
-          transform: none;
-          box-shadow: none;
-        }
-
-        .RS_VehicleButton:disabled
-          .RS_BtnBubble {
-          display: none;
-        }
-
-        .RS_MyBookingsRoot
-          ::selection,
-        .RS_MyBookingsModal
-          ::selection {
-          color: #ffffff;
-          background: #b20d19;
-        }
-
-        @media (
-          prefers-reduced-motion:
-            reduce
-        ) {
-          .RS_VehicleButton,
-          .RS_BtnBubble {
-            transition-duration: 0.01ms !important;
-          }
-        }
-      `}</style>
 
       {selectedBooking && (
         <BookingModal
