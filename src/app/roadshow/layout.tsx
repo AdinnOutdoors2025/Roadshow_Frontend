@@ -9,15 +9,20 @@ export default function ClientLayout({
   children: React.ReactNode;
 }) {
   return (
-    <> 
+    <>
+      {/* Navbar portals itself to document.body (see Navbar.tsx), so it
+          deliberately sits outside GlobalSmoothScroll — ScrollSmoother puts a
+          transform on #smooth-content, and a transformed ancestor breaks
+          `position: fixed` for everything inside it. */}
       <Navbar />
-       {/* Smooth scrolling for every website page */}
-          {/* <GlobalSmoothScroll> */}
-            <div>
-              {children}
-            </div>
-            <Footer />
-          {/* </GlobalSmoothScroll> */}
+
+      {/* Smooth scrolling for every public-site page */}
+      <GlobalSmoothScroll>
+        <div>
+          {children}
+        </div>
+        <Footer />
+      </GlobalSmoothScroll>
     </>
   );
 }

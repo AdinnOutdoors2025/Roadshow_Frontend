@@ -4,13 +4,24 @@
 
 import React, {
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { motion } from "framer-motion";
 
 import "./HomePageSection1.css";
+import SplitHeading from "@/components/motion/SplitHeading";
+import RevealText from "@/components/motion/RevealText";
+import { useScrollReveal } from "@/components/motion/useScrollReveal";
+import { playPopIn } from "@/components/motion/playPopIn";
+import {
+  DISTANCE,
+  DURATION,
+  STAGGER,
+} from "@/components/motion/motionTokens";
 import HomePageSection2 from "./HomePageSection2";
 import {
   ButtonHover as ViewAllClientsButton,
@@ -101,58 +112,88 @@ const whyAdinnWorksBest = [
   },
 ];
 
+/* Every logo in public/images/assets/Client-logos, one entry per BRAND.
+
+   Each name appears exactly once on purpose — the previous list repeated
+   Kelloggs four times and Thangamayil twice, so the same logo showed up in
+   several bubbles at once. With CLIENT_BUBBLE_SLOTS below dividing this list
+   evenly, no brand can ever appear twice on screen.
+
+   The folder also holds DRA_Homes2.png and DRA_Homes3.png; both are the same
+   brand as DRA_Homes.png (and ~800KB each against its 27KB), so only the one
+   entry is listed.
+
+   To add a client: drop the file in that folder and add a line here.
+
+   `w` is the rendered width of the <img> in PIXELS — deliberately absolute, not
+   a percentage of the bubble.
+
+   That is what makes a logo overhang a small disc and sit inside a large one,
+   the way PHILIPS does in the design. Sizing logos as a share of their bubble
+   instead made every one of them scale down with its disc, so nothing ever
+   broke out and the whole orbit looked like logos dumped inside circles.
+
+   The values are NOT eyeballed and are not uniform on purpose. These PNGs are
+   exported with wildly different amounts of transparent padding — actual ink
+   covers anywhere from 32% (ITC) to 98% (Kellogg's) of the canvas width — so
+   one shared width makes some logos look huge and others tiny even though the
+   boxes are identical. That was the "ACC/Ambuja/Dalmia are big but
+   GRT/Casagrand/Bajaj are small" problem. Each number here was computed by
+   measuring the real ink bounding box of the file and solving for the width
+   that gives every logo the same visual mass.
+
+   ORDER MATTERS: the first CLIENT_BUBBLE_SLOTS entries are what shows before
+   anyone touches "View All Clients", so the best-known brands lead.
+
+   To add a client: drop the file in public/images/assets/Client-logos, add a
+   line here, and start from w: 140 — then nudge until it sits right. */
 const ourClients = [
-  {
-    name: "Philips",
-    logo: "./images/assets/RS_Client_philips_logo.png",
-    size: "text",
-  },
-  {
-    name: "Kelloggs",
-    logo: "./images/assets/RS_Client_kelloggs_logo.png",
-    size: "text-lg",
-  },
-  {
-    name: "Kelloggs",
-    logo: "./images/assets/RS_Client_kelloggs_logo.png",
-    size: "text-lg",
-  },
-  {
-    name: "Thangamayil",
-    logo: "./images/assets/RS_Client_Thangamayil.png",
-    size: "text",
-  },
-  {
-    name: "Kelloggs",
-    logo: "./images/assets/RS_Client_kelloggs_logo.png",
-    size: "text-lg",
-  },
-  {
-    name: "Thangamayil",
-    logo: "./images/assets/RS_Client_Thangamayil.png",
-    size: "text",
-  },
-  {
-    name: "Airtel",
-    logo: "./images/assets/RS_Client_Bharti_Airtel_Logo.png",
-    size: "md",
-  },
-  {
-    name: "Philips",
-    logo: "./images/assets/RS_Client_philips_logo.png",
-    size: "text",
-  },
-  {
-    name: "Airtel",
-    logo: "./images/assets/RS_Client_Bharti_Airtel_Logo.png",
-    size: "md",
-  },
-  {
-    name: "Kelloggs",
-    logo: "./images/assets/RS_Client_kelloggs_logo.png",
-    size: "text-lg",
-  },
+  // Lead with the flagship brands — these are the ones on screen by default.
+  { name: "Philips", logo: "./images/assets/Client-logos/Philips.png", w: 170 },
+  { name: "Thangamayil Jewellery", logo: "./images/assets/Client-logos/Thangamayil_Jewellery.png", w: 168 },
+  { name: "Airtel", logo: "./images/assets/Client-logos/Airtel.png", w: 133 },
+  // Kellogg's has no file in Client-logos, so it keeps its original asset path.
+  { name: "Kellogg's", logo: "./images/assets/RS_Client_kelloggs_logo.png", w: 125 },
+  { name: "ACC", logo: "./images/assets/Client-logos/ACC.png", w: 129 },
+  { name: "Bajaj", logo: "./images/assets/Client-logos/Bajaj.png", w: 154 },
+  { name: "Domino's", logo: "./images/assets/Client-logos/Dominos.png", w: 143 },
+  { name: "Hero", logo: "./images/assets/Client-logos/Hero.png", w: 133 },
+  { name: "Casagrand", logo: "./images/assets/Client-logos/Casagrand.png", w: 199 },
+  { name: "GRT Jewellers", logo: "./images/assets/Client-logos/GRT_Jewellers.png", w: 195 },
+
+  { name: "Ambuja Cement", logo: "./images/assets/Client-logos/Ambuja_Cement.png", w: 120 },
+  { name: "Dalmia Cement", logo: "./images/assets/Client-logos/Dalmia_Cement.png", w: 129 },
+  { name: "DRA Homes", logo: "./images/assets/Client-logos/DRA_Homes.png", w: 122 },
+  { name: "G Square", logo: "./images/assets/Client-logos/G_Square.png", w: 142 },
+  { name: "Havells", logo: "./images/assets/Client-logos/Havells.png", w: 222 },
+  { name: "Impex", logo: "./images/assets/Client-logos/Impex.png", w: 220 },
+  { name: "ITC", logo: "./images/assets/Client-logos/ITC.png", w: 210 },
+  { name: "KFC", logo: "./images/assets/Client-logos/KFC.png", w: 195 },
+  { name: "Lalithaa Jewellery", logo: "./images/assets/Client-logos/Lalithaa_Jewellery.png", w: 193 },
+  { name: "Maruti Suzuki", logo: "./images/assets/Client-logos/Maruti_Suzuki.png", w: 118 },
+
+  { name: "Milky Mist", logo: "./images/assets/Client-logos/Milky_Mist.png", w: 150 },
+  { name: "Nippon Paint", logo: "./images/assets/Client-logos/Nippon_Paint.png", w: 134 },
+  { name: "Poorvika", logo: "./images/assets/Client-logos/Poorvika.png", w: 184 },
+  { name: "Royal Enfield", logo: "./images/assets/Client-logos/Royal_Enfield.png", w: 188 },
+  { name: "Sree Kumaran Thangamaligai", logo: "./images/assets/Client-logos/Sree_Kumaran_Thangamaligai.png", w: 162 },
+  { name: "The Chennai Mobiles", logo: "./images/assets/Client-logos/The_Chennai_Mobiles.png", w: 113 },
+  { name: "TVS", logo: "./images/assets/Client-logos/TVS.png", w: 176 },
 ];
+
+/* The orbit has exactly this many positioned slots in the stylesheet
+   (.RS_Bubble_0 … .RS_Bubble_9). `ourClients` above is a POOL, not the set of
+   bubbles: only this many are on screen at a time and "View All Clients"
+   advances which slice of the pool is shown.
+
+   Held at 10 to match the design's spacing — 13 discs packed the orbit edge to
+   edge and lost the scattered feel. A page still never repeats a brand (10 is
+   well under the 26-brand pool); successive pages walk through the pool and
+   wrap, so every client gets shown across a few clicks.
+
+   To add clients, just append to `ourClients` above. To add a bubble, add a
+   matching .RS_Bubble_<n> rule in HomePageSection1.css and bump this number. */
+const CLIENT_BUBBLE_SLOTS = 10;
 
 type WhyExitDirection = "exit-left" | "exit-right";
 
@@ -183,6 +224,100 @@ export default function HomePageSection1() {
   const whyAnimationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+
+  const vehicleCarouselRef = useRef<HTMLDivElement | null>(null);
+  const clientsOrbitRef = useRef<HTMLDivElement | null>(null);
+  const whyListRef = useRef<HTMLDivElement | null>(null);
+
+  /* The vehicle list is fetched after mount, so the cards do not exist when the
+     hook first runs — ourRSVehicles is passed as a dep to re-create the trigger
+     once they render. */
+  useScrollReveal(vehicleCarouselRef, {
+    selector: ".RS_VehicleCardMain",
+    distance: DISTANCE.lg,
+    stagger: STAGGER.base,
+    deps: [ourRSVehicles.length, loadingVehicles],
+  });
+
+  /* Which slice of the client pool the bubbles are currently showing. */
+  const [clientOffset, setClientOffset] = useState(0);
+
+  /* One entry per bubble slot, wrapping around the pool so every slot is always
+     filled even when the pool is not a multiple of CLIENT_BUBBLE_SLOTS.
+     Derived from the offset rather than shuffled at random: a random order
+     would differ between the server and client render and trip hydration. */
+  const visibleClients = useMemo(() => {
+    if (!ourClients.length) return [];
+
+    return Array.from(
+      { length: CLIENT_BUBBLE_SLOTS },
+      (_unused, slot) => {
+        const index =
+          (clientOffset + slot) % ourClients.length;
+
+        return { ...ourClients[index], slot };
+      },
+    );
+  }, [clientOffset]);
+
+  const showMoreClients = () => {
+    if (!ourClients.length) return;
+
+    setClientOffset((current) => {
+      /* With more clients than slots, step a whole page so every bubble shows
+         a client that was not on screen before. With a pool no bigger than the
+         orbit there is no second page, so step by one instead — that reshuffles
+         which logo sits in which bubble, which still reads as a change. */
+      const step =
+        ourClients.length > CLIENT_BUBBLE_SLOTS
+          ? CLIENT_BUBBLE_SLOTS
+          : 1;
+
+      return (
+        (current + step) % ourClients.length
+      );
+    });
+  };
+
+  /* Replay the pop when the visible set changes, so the swap reads as the group
+     re-forming rather than the images silently changing. Skipped on the first
+     render — the scroll reveal below already owns that one. */
+  const hasSwappedClientsRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasSwappedClientsRef.current) {
+      hasSwappedClientsRef.current = true;
+      return;
+    }
+
+    const orbit = clientsOrbitRef.current;
+
+    if (!orbit) return;
+
+    playPopIn(
+      orbit.querySelectorAll(".RS_ClientBubble"),
+    );
+  }, [clientOffset]);
+
+  /* Bubbles pop in with a little overshoot, radiating out from the middle of
+     the orbit rather than running in DOM order — they are arranged around a
+     centre, so a left-to-right cascade reads as arbitrary. */
+  useScrollReveal(clientsOrbitRef, {
+    selector: ".RS_ClientBubble",
+    direction: "none",
+    scaleFrom: 0.5,
+    ease: "back.out(1.7)",
+    staggerFrom: "center",
+    stagger: STAGGER.tight,
+    duration: DURATION.slow,
+  });
+
+  useScrollReveal(whyListRef, {
+    selector: ".RS_WhyAdRSItem",
+    direction: "right",
+    distance: DISTANCE.base,
+    stagger: STAGGER.base,
+  });
 
   useEffect(() => {
     const gradients = [
@@ -501,14 +636,24 @@ export default function HomePageSection1() {
         id="our-roadshow-vehicles"
         className="RS_OurRdwMainSection mx-auto px-20"
       >
+        {/* Line 1 is plain black text, so it can be split into words.
+            Line 2 carries the gradient (.RS_OurRdwHeadingContent2) and must NOT
+            be split — see RevealText for why. It wipes open instead, which also
+            gives the two lines distinct movement rather than one flat effect. */}
         <div className="RS_OurRdwHeading">
-          <div className="RS_OurRdwHeadingContent1">Our Roadshow</div>
-          <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2">
+          <SplitHeading className="RS_OurRdwHeadingContent1">
+            Our Roadshow
+          </SplitHeading>
+          <RevealText
+            className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
+            effect="wipe"
+            delay={0.18}
+          >
             Vehicles
-          </div>
+          </RevealText>
         </div>
 
-        <div className="RS_CarouselWrapper">
+        <div className="RS_CarouselWrapper" ref={vehicleCarouselRef}>
           {loadingVehicles ? (
             <div className="RS_VehicleState">Loading vehicles...</div>
           ) : vehicleLoadError ? (
@@ -526,10 +671,19 @@ export default function HomePageSection1() {
                 const vehicleRate = Number(vehicle.rate ?? 0);
 
                 return (
-                  <div
+                  /* Reveal is driven by useScrollReveal on the wrapper (GSAP
+                     ScrollTrigger), not per-card whileInView — see the hook for
+                     why IntersectionObserver is unreliable under ScrollSmoother.
+                     whileHover stays on framer: hover is pointer-driven, so it
+                     never depends on scroll position. */
+                  <motion.div
                     key={vehicle.id || `${vehicle.name}-${index}`}
                     className="RS_VehicleCardMain RS_VehicleCardFlex cursor-pointer"
                     onClick={() => openVehicleDetails(vehicle.id)}
+                    whileHover={{ y: -6 }}
+                    transition={{
+                      duration: DURATION.fast,
+                    }}
                   >
                     <div>
                       <img
@@ -574,7 +728,7 @@ export default function HomePageSection1() {
                         />
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -615,13 +769,23 @@ export default function HomePageSection1() {
       </div>
 
       <div className="mx-auto px-30 RS_WhyAdRSSectionWrap">
+        {/* Different character from the vehicles section: this one focuses in
+            from a blur rather than splitting, so the two sections do not read
+            as the same effect repeated. */}
         <div className="RS_OurRdwHeading">
-          <div className="RS_OurRdwHeadingContent1">
+          <RevealText
+            className="RS_OurRdwHeadingContent1"
+            effect="blur"
+          >
             Why Adinn Roadshows
-          </div>
-          <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2">
+          </RevealText>
+          <RevealText
+            className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
+            effect="wipe"
+            delay={0.18}
+          >
             Works Best
-          </div>
+          </RevealText>
         </div>
 
         <div className="RS_WhyAdRSMain">
@@ -657,7 +821,7 @@ export default function HomePageSection1() {
               </button>
             </div>
 
-            <div className="RS_WhyAdRSList">
+            <div className="RS_WhyAdRSList" ref={whyListRef}>
               {whyAdinnWorksBest.map((feature, index) => {
                 const isActive = activeWhyIndex === index;
 
@@ -726,28 +890,47 @@ export default function HomePageSection1() {
       <div className="mx-auto px-30 RS_ClientsSectionWrap">
         <div className="RS_ClientsSection">
           <div className="RS_OurRdwHeading">
-            <div className="RS_OurRdwHeadingContent1">Some of Our</div>
-            <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2">
+            <SplitHeading
+              className="RS_OurRdwHeadingContent1"
+              type="chars"
+            >
+              Some of Our
+            </SplitHeading>
+            <RevealText
+              className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
+              effect="wipe"
+              delay={0.25}
+            >
               Clients
-            </div>
+            </RevealText>
           </div>
 
-          <div className="RS_ClientsOrbitArea">
+          <div className="RS_ClientsOrbitArea" ref={clientsOrbitRef}>
             <div className="RS_ClientCenterBubble">
               <span>Clients</span>
             </div>
 
-            {ourClients.map((client, index) => (
+            {visibleClients.map((client) => (
+              /* Keyed by SLOT, not by client: the slot is the stable thing on
+                 screen (its position comes from .RS_Bubble_<n>). Keying by the
+                 client name would remount every bubble on each swap, throwing
+                 away the elements the pop animation is running on.
+
+                 Reveal handled by useScrollReveal on .RS_ClientsOrbitArea. Safe
+                 to animate `transform` on these: .RS_ClientBubble positions
+                 itself with top/left, and only .RS_ClientLogo inside it uses a
+                 transform (the -50%/-50% centring), which is untouched. */
+              /* Widths are a share of the bubble, so a logo keeps the same
+                 visual weight in whichever slot it lands in. */
               <div
-                key={`${client.name}-${index}`}
-                className={`RS_ClientBubble RS_Bubble_${index} ${
-                  client.size === "text" ? "RS_TextLogo" : ""
-                } ${client.size === "text-lg" ? "RS_TextLgLogo" : ""}`}
+                key={client.slot}
+                className={`RS_ClientBubble RS_Bubble_${client.slot}`}
               >
                 <img
                   src={client.logo}
                   alt={client.name}
                   className="RS_ClientLogo"
+                  style={{ width: `${client.w}px` }}
                 />
               </div>
             ))}
@@ -757,6 +940,9 @@ export default function HomePageSection1() {
             <ViewAllClientsButton
               label="View All Clients"
               className="RS_ViewAllClientsBtn"
+              onClick={showMoreClients}
+              /* Nothing to swap to when there is only one logo. */
+              disabled={ourClients.length <= 1}
             />
           </div>
         </div>

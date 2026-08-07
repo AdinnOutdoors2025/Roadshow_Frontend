@@ -175,6 +175,11 @@
 }
 
 .rdsw_crfProdDetailsScroller {
+  /* Makes this the offset parent of the cards, so their offsetLeft is measured
+     in the same coordinate space as this element's scrollLeft. The
+     scroll-a-newly-added-card-into-view logic in page.tsx compares the two. */
+  position: relative;
+
   display: flex;
   width: 100%;
   gap: 12px;
@@ -2649,3 +2654,30 @@
     font-size: 11px;
   }
 }
+
+/* ==========================================================
+   DESKTOP COLUMN SCROLLING
+==========================================================
+
+   Deliberately empty — the form column gets NO max-height, NO internal
+   overflow and NO sticky positioning.
+
+   Both were tried and both were wrong:
+
+     - An internal scroll needs a bounded height, and that bound is exactly
+       what clipped the "Add More Vehicle" and "Review & Submit" controls off
+       the bottom of the column. You cannot have a self-scrolling column and an
+       always-reachable bottom from the same rule.
+     - Sticky pinned the column while its own content was taller than the
+       viewport, making everything below the fold unreachable.
+
+   So both columns just take their natural height and the document scrolls:
+   whichever side is taller sets the page height, nothing is ever clipped, and
+   when the two sides are about equal they scroll together as one page.
+
+   The sticky summary bar at the bottom (.rdsw_crfStickyBar) is unrelated and
+   still works — it relies on /roadshow/CampaignRequest opting out of GSAP
+   ScrollSmoother (see SMOOTH_SCROLL_DISABLED_PATHS in GlobalSmoothScroll.tsx),
+   because under the smoother #smooth-content is translated rather than
+   scrolled and position: sticky silently dies.
+   ========================================================== */

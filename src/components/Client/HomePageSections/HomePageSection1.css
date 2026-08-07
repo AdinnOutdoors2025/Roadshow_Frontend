@@ -848,11 +848,28 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 65px;
+
+  /* Width comes from the per-client `w` (pixels) in HomePageSection1.tsx, set
+     inline — it has to differ per logo because the source PNGs carry very
+     different amounts of transparent padding. This is only the fallback for a
+     client added without one.
+
+     Absolute px, NOT a percentage of the bubble: a logo has to render at the
+     same size in every slot so it overhangs the small discs and sits inside the
+     large ones. Percentage sizing made each logo shrink along with its disc, so
+     nothing ever broke out of its circle.
+
+     No max-height: the widths were solved so the ink lands at a consistent
+     size, and a height cap would silently scale the whole image back down and
+     undo that. */
+  width: 140px;
+
   object-fit: contain;
   pointer-events: none;
   filter: grayscale(100%);
-  opacity: 0.6;
+  /* Was 0.6 — greyed-out logos at that opacity read as washed out rather than
+     understated. Hover still lifts to full colour. */
+  opacity: 0.75;
   transform: translate(-50%, -50%);
   transition:
     filter 350ms ease,
@@ -865,6 +882,17 @@
 }
 
 
+/* WORDMARK TREATMENT
+
+   A wide, text-only logo squeezed inside a circle becomes unreadable — the disc
+   constrains the lettering to a fraction of its natural width. So for these the
+   relationship inverts: the logo is drawn LARGER than its bubble and the disc
+   fades to a soft backdrop behind it, letting the brand name carry the bubble.
+
+   overflow stays visible on .RS_ClientBubble (it is not clipped), so the extra
+   width simply spills past the circle's edge. */
+/* Legacy size flags, kept so any other caller of these classes is unaffected.
+   The clients list no longer sets them — sizing is per-client via `w`. */
 .RS_ClientBubble.RS_TextLogo .RS_ClientLogo {
   width: 130px;
   max-width: 130px;
@@ -876,75 +904,92 @@
   max-width: 130px;
 }
 
+/* Disc sizes are deliberately UNEVEN — 88px to 155px, near enough a 2x spread.
+
+   An earlier pass had them all within 118-145px, which is too tight a range to
+   register as variety: at a glance every bubble looked the same size and the
+   cluster read as a mechanical grid rather than a scattered constellation.
+
+   The sizes also alternate around the orbit so no two large discs sit next to
+   each other; that irregularity is what makes the arrangement feel organic.
+
+   Logos scale with their bubble (the widths in HomePageSection1.tsx are
+   percentages), so a small disc keeps a proportionally small logo — a wide
+   lockup in a small disc still overhangs it, exactly as PHILIPS does in the
+   design. */
 .RS_Bubble_0 {
   top: 15%;
   left: 15%;
-  width: 80px;
-  height: 80px;
+  width: 96px;
+  height: 96px;
 }
 
 .RS_Bubble_1 {
   top: -33%;
   left: 41%;
-  width: 120px;
-  height: 120px;
+  width: 142px;
+  height: 142px;
 }
 
 .RS_Bubble_2 {
   top: -36%;
   left: 58%;
-  width: 120px;
-  height: 120px;
+  width: 104px;
+  height: 104px;
 }
 
 .RS_Bubble_3 {
   top: 40%;
   left: 27%;
-  width: 100px;
-  height: 100px;
+  width: 128px;
+  height: 128px;
 }
 
 .RS_Bubble_4 {
   top: 9%;
   left: 34%;
-  width: 125px;
-  height: 125px;
+  width: 155px;
+  height: 155px;
 }
 
 .RS_Bubble_5 {
   top: -18%;
   left: 72%;
-  width: 130px;
-  height: 130px;
+  width: 98px;
+  height: 98px;
 }
 
 .RS_Bubble_6 {
   top: 20%;
   left: 64%;
-  width: 120px;
-  height: 120px;
+  width: 136px;
+  height: 136px;
 }
 
 .RS_Bubble_7 {
   top: 34%;
   left: 78%;
-  width: 85px;
-  height: 85px;
+  width: 88px;
+  height: 88px;
 }
 
 .RS_Bubble_8 {
   top: -12%;
   left: 24%;
-  width: 100px;
-  height: 100px;
+  width: 118px;
+  height: 118px;
 }
 
 .RS_Bubble_9 {
   top: -5%;
   left: 84%;
-  width: 125px;
-  height: 125px;
+  width: 148px;
+  height: 148px;
 }
+
+/* Slots 10-12 were removed: 13 discs filled the orbit edge to edge and lost the
+   breathing room the design relies on. The layout is back to the original 10,
+   which is what makes the arrangement read as scattered rather than packed. */
 
 .RS_ClientsBtnRow {
   display: flex;

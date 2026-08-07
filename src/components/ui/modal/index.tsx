@@ -1,5 +1,6 @@
 "use client";
 import React, { useRef, useEffect } from "react";
+import { ScrollSmoother } from "gsap/ScrollSmoother";
 
 interface ModalProps {
   isOpen: boolean;
@@ -47,6 +48,27 @@ export const Modal: React.FC<ModalProps> = ({
 
     return () => {
       document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
+  /* On the public site the page is scrolled by GSAP ScrollSmoother, which
+     drives scrolling from its own wheel/touch listeners — so the `overflow:
+     hidden` above does not stop the background moving behind an open modal.
+     Pausing the smoother is what actually stops it, and its paused state also
+     keeps nested scrolling alive so this modal's own content still scrolls.
+     ScrollSmoother.get() returns undefined wherever no smoother is mounted
+     (the whole admin dashboard), making this a no-op there. */
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const smoother = ScrollSmoother.get();
+
+    if (!smoother) return;
+
+    smoother.paused(true);
+
+    return () => {
+      smoother.paused(false);
     };
   }, [isOpen]);
 

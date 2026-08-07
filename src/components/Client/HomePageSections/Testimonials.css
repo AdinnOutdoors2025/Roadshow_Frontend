@@ -1,0 +1,1477 @@
+.adinn-testimonial-section {
+  --adinn-red: #e5393f;
+  --adinn-red-dark: #c91820;
+  --adinn-black: #191b20;
+  --adinn-soft-black: #2a2d31;
+  --adinn-muted: #5f646d;
+  --adinn-line: rgba(25, 27, 32, 0.1);
+  --adinn-card: rgba(255, 255, 255, 0.88);
+
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: clamp(46px, 4.8vw, 78px) 0;
+  background:
+    radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 1) 0%, rgba(246, 247, 249, 0.98) 38%, rgba(238, 240, 243, 1) 100%);
+}
+
+/* Main white rounded canvas */
+.adinn-testimonial-shell {
+  /* width: min(96vw, 1760px); */
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  /* border-radius: clamp(18px, 1.6vw, 30px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(249, 250, 252, 0.94));
+  border: 1px solid rgba(25, 27, 32, 0.08);
+  box-shadow:
+    0 24px 80px rgba(25, 27, 32, 0.08), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.9); */
+}
+
+/* Dot grid background */
+.adinn-testimonial-bg-layer {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* background:
+    radial-gradient(circle at 18% 40%, rgba(229, 57, 63, 0.08), transparent 30%),
+    radial-gradient(circle at 82% 18%, rgba(25, 27, 32, 0.06), transparent 28%); */
+}
+
+.adinn-testimonial-shell::before,
+.adinn-testimonial-shell::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 34%;
+  height: 55%;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(25, 27, 32, 0.16) 1px, transparent 1.5px);
+  background-size: 16px 16px;
+  opacity: 0.28;
+  mask-image: linear-gradient(180deg, #000, transparent 82%);
+}
+
+.adinn-testimonial-shell::before {
+  left: 0;
+}
+
+.adinn-testimonial-shell::after {
+  right: 0;
+}
+
+.adinn-testimonial-container {
+  width: min(1540px, calc(100% - 76px));
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* Heading */
+.adinn-testimonial-heading {
+  /* text-align: center; */
+  padding-top: clamp(28px, 3vw, 44px);
+}
+
+/* This section reuses the homepage heading classes for a consistent type scale,
+   but the homepage lays them out left-aligned while this block is centred.
+
+   .RS_OurRdwHeadingContent2 is `width: fit-content`, which text-align cannot
+   centre — a block narrower than its parent needs auto side margins. Without
+   this the gradient line sits hard against the left edge while the line above
+   it is centred. */
+.adinn-testimonial-heading .RS_OurRdwHeading {
+  padding-top: 0;
+}
+
+.adinn-testimonial-heading .RS_OurRdwHeadingContent2 {
+  /* margin-inline: auto; */
+}
+
+.adinn-testimonial-eyebrow {
+  display: inline-block;
+  color: #42464d;
+  font-size: clamp(13px, 0.95vw, 17px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+.adinn-testimonial-heading h2 {
+  margin: 0;
+  color: var(--adinn-black);
+  font-size: clamp(34px, 4.2vw, 62px);
+  line-height: 1;
+  letter-spacing: -0.055em;
+  font-weight: 700;
+}
+
+.adinn-testimonial-heading h2 span {
+  color: var(--adinn-red);
+}
+
+.adinn-testimonial-heading p {
+  margin: 16px auto 0;
+  color: #555b64;
+  font-size: clamp(14px, 1.05vw, 17px);
+  line-height: 1.6;
+  max-width: 560px;
+}
+
+/* Hero truck section */
+.adinn-testimonial-hero {
+  /* position: relative;
+  min-height: clamp(350px, 35vw, 560px);
+  margin-top: clamp(22px, 2.6vw, 42px); */
+  display: grid;
+  place-items: end center;
+  overflow: hidden;
+  background: url(/assets/led-truck_testimonials1.png);
+  /* background-size: cover;
+    background-position: 100% 62%;
+    background-repeat: no-repeat; */
+  /* height: 600px; */
+
+
+
+  isolation: isolate;
+  place-items: center;
+  height: clamp(420px, 38vw, 720px);
+  min-height: clamp(380px, 38vw, 100svh);
+  margin-top: clamp(22px, 2.6vw, 42px);
+  width: 125%;
+  margin: auto;
+  margin-left: -186px;
+  display: grid;
+  position: relative;
+  overflow: hidden;
+  background: #f2f3f5 !important;
+  background-position: initial !important;
+  background-repeat: no-repeat !important;
+
+}
+
+.adinn-testimonial-floor {
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  bottom: 0;
+  height: 36%;
+  /* background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(232, 234, 238, 0.85)),
+    radial-gradient(ellipse at center, rgba(25, 27, 32, 0.14), transparent 58%); */
+  /* border-top: 1px solid rgba(25, 27, 32, 0.05);
+  pointer-events: none; */
+}
+
+.adinn-testimonial-skyline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.08;
+}
+
+.adinn-testimonial-skyline svg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12%;
+  width: 100%;
+  height: 78%;
+  fill: #191b20;
+}
+
+.adinn-testimonial-truck-stage {
+  position: relative;
+  width: min(1030px, 82vw);
+  aspect-ratio: 726 / 364;
+  z-index: 3;
+  margin-bottom: clamp(8px, 1vw, 18px);
+  filter: drop-shadow(0 22px 24px rgba(25, 27, 32, 0.16));
+  transform: translateX(1.2%);
+}
+
+.adinn-testimonial-truck-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* LED screen content position based on uploaded truck image */
+.adinn-led-screen-overlay {
+  width: 82%;
+  height: 67%;
+  position: absolute;
+  top: -4.7%;
+  left: 17.1%;
+  overflow: hidden;
+  border-radius: 2px;
+  background:
+    linear-gradient(135deg, rgba(36, 39, 43, 0.98), rgba(18, 20, 23, 0.98)),
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.09), transparent 36%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 0 36px rgba(0, 0, 0, 0.42);
+}
+
+.adinn-led-screen-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1.5px),
+    linear-gradient(90deg, rgba(229, 57, 63, 0.18), transparent 40%, rgba(255, 255, 255, 0.06));
+  background-size: 9px 9px, 100% 100%;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.adinn-led-screen-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), transparent 18%, transparent 75%, rgba(0, 0, 0, 0.28)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent 20%, transparent 76%, rgba(0, 0, 0, 0.3));
+  pointer-events: none;
+}
+
+.adinn-led-screen-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  padding: clamp(16px, 2.3vw, 38px) clamp(18px, 2.8vw, 46px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.adinn-led-screen-tag {
+  width: fit-content;
+  margin-bottom: clamp(8px, 0.8vw, 12px);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(229, 57, 63, 0.9);
+  color: #ffffff;
+  font-size: clamp(8px, 0.72vw, 11px);
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.adinn-led-screen-quote {
+  margin: 0;
+  max-width: 780px;
+  color: #ffffff;
+  font-size: clamp(13px, 1.45vw, 25px);
+  line-height: 1.36;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.adinn-led-screen-bottom {
+  margin-top: clamp(12px, 1.2vw, 20px);
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.adinn-led-screen-stars {
+  display: flex;
+  gap: 4px;
+  color: #ffbd3d;
+  margin-bottom: 8px;
+}
+
+.adinn-led-screen-bottom strong {
+  display: block;
+  color: #ffffff;
+  font-size: clamp(12px, 1vw, 17px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.adinn-led-screen-bottom span {
+  display: block;
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: clamp(9px, 0.8vw, 13px);
+  line-height: 1.3;
+}
+
+.adinn-led-live-badge {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: clamp(8px, 0.66vw, 10px);
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
+/* Carousel */
+.adinn-testimonial-carousel {
+  position: relative;
+  margin-top: clamp(18px, 2vw, 32px);
+  padding-bottom: 2px;
+}
+
+.adinn-testimonial-viewport {
+  overflow: hidden;
+  margin: 0 62px;
+  padding: 8px 4px 18px;
+}
+
+.adinn-testimonial-track {
+  display: flex;
+  align-items: stretch;
+  will-change: transform;
+  cursor: grab;
+}
+
+.adinn-testimonial-track:active {
+  cursor: grabbing;
+}
+
+.adinn-testimonial-slide {
+  flex: 0 0 auto;
+}
+
+/* Card */
+.adinn-testimonial-card {
+  position: relative;
+  height: 100%;
+  min-height: 340px;
+  padding: clamp(18px, 1.6vw, 24px);
+  border-radius: 15px;
+  background: var(--adinn-card);
+  border: 1px solid rgba(25, 27, 32, 0.08);
+  box-shadow:
+    0 14px 34px rgba(25, 27, 32, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  cursor: pointer;
+  outline: none;
+  transition:
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    background 0.28s ease,
+    transform 0.28s ease;
+}
+
+.adinn-testimonial-card:hover,
+.adinn-testimonial-card:focus-visible,
+.adinn-testimonial-card.is-selected {
+  border-color: rgba(229, 57, 63, 0.34);
+  background: #ffffff;
+  box-shadow:
+    0 18px 44px rgba(25, 27, 32, 0.1),
+    0 10px 30px rgba(229, 57, 63, 0.08);
+}
+
+.adinn-testimonial-card.is-selected::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid rgba(229, 57, 63, 0.6);
+  pointer-events: none;
+}
+
+.adinn-testimonial-stars {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+  color: var(--adinn-red);
+}
+
+.adinn-testimonial-card:hover .adinn-testimonial-stars svg,
+.adinn-testimonial-card.is-selected .adinn-testimonial-stars svg {
+  animation: adinnStarPop 0.56s ease both;
+}
+
+.adinn-testimonial-card:hover .adinn-testimonial-stars svg:nth-child(2),
+.adinn-testimonial-card.is-selected .adinn-testimonial-stars svg:nth-child(2) {
+  animation-delay: 0.04s;
+}
+
+.adinn-testimonial-card:hover .adinn-testimonial-stars svg:nth-child(3),
+.adinn-testimonial-card.is-selected .adinn-testimonial-stars svg:nth-child(3) {
+  animation-delay: 0.08s;
+}
+
+.adinn-testimonial-card:hover .adinn-testimonial-stars svg:nth-child(4),
+.adinn-testimonial-card.is-selected .adinn-testimonial-stars svg:nth-child(4) {
+  animation-delay: 0.12s;
+}
+
+.adinn-testimonial-card:hover .adinn-testimonial-stars svg:nth-child(5),
+.adinn-testimonial-card.is-selected .adinn-testimonial-stars svg:nth-child(5) {
+  animation-delay: 0.16s;
+}
+
+@keyframes adinnStarPop {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+
+  45% {
+    transform: translateY(-4px) scale(1.18) rotate(-8deg);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.adinn-testimonial-quote-mark {
+  position: absolute;
+  top: 44px;
+  left: 20px;
+  color: rgba(25, 27, 32, 0.08);
+  font-family: Georgia, serif;
+  font-size: 72px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.adinn-testimonial-text {
+  position: relative;
+  z-index: 2;
+  margin: 24px 0 0;
+  color: #2c3036;
+  font-size: clamp(13px, 0.9vw, 15px);
+  line-height: 1.68;
+  font-weight: 600;
+  flex: 1;
+}
+
+.adinn-testimonial-profile {
+  position: relative;
+  z-index: 2;
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.adinn-testimonial-avatar {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  overflow: hidden;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background:
+    linear-gradient(135deg, #1d2025, #3a3f47);
+  border: 3px solid #eeeeee;
+  box-shadow: 0 8px 16px rgba(25, 27, 32, 0.12);
+}
+
+.adinn-testimonial-avatar span {
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.adinn-testimonial-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.adinn-testimonial-person h3 {
+  margin: 0;
+  color: var(--adinn-black);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.adinn-testimonial-person p {
+  margin: 4px 0 0;
+  color: var(--adinn-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.adinn-testimonial-chip {
+  position: relative;
+  z-index: 2;
+  width: fit-content;
+  margin: 22px auto 0;
+  padding: 8px 18px;
+  border-radius: 999px;
+  color: var(--adinn-black);
+  background:
+    linear-gradient(180deg, #f1f1f1, #e7e7e7);
+  border: 1px solid rgba(25, 27, 32, 0.06);
+  font-size: 10.5px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition:
+    color 0.25s ease,
+    background 0.25s ease,
+    transform 0.25s ease;
+}
+
+.adinn-testimonial-card:hover .adinn-testimonial-chip,
+.adinn-testimonial-card.is-selected .adinn-testimonial-chip {
+  color: #ffffff;
+  background: var(--adinn-black);
+  transform: translateY(-2px);
+}
+
+/* Arrows */
+.adinn-testimonial-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 6;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  border: 1px solid rgba(25, 27, 32, 0.1);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--adinn-black);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transform: translateY(-50%);
+  box-shadow:
+    0 16px 34px rgba(25, 27, 32, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.adinn-testimonial-arrow:hover {
+  background: var(--adinn-black);
+  color: #ffffff;
+  border-color: var(--adinn-black);
+  transform: translateY(-50%) scale(1.07);
+}
+
+.adinn-testimonial-arrow:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+.adinn-testimonial-arrow-left {
+  left: 0;
+}
+
+.adinn-testimonial-arrow-right {
+  right: 0;
+}
+
+/* Dots */
+.adinn-testimonial-dots {
+  margin: 12px 0 clamp(30px, 3vw, 48px);
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+.adinn-testimonial-dots button {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #c9cbd0;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    width 0.28s ease,
+    background 0.28s ease,
+    transform 0.28s ease;
+}
+
+.adinn-testimonial-dots button:hover {
+  transform: scale(1.18);
+  background: rgba(229, 57, 63, 0.42);
+}
+
+.adinn-testimonial-dots button.active {
+  width: 30px;
+  background: var(--adinn-red);
+}
+
+/* Responsive */
+@media (max-width: 1180px) {
+  .adinn-testimonial-container {
+    width: min(100% - 44px, 1540px);
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: min(980px, 92vw);
+  }
+
+  .adinn-testimonial-card {
+    min-height: 320px;
+  }
+}
+
+@media (max-width: 900px) {
+  .adinn-testimonial-shell {
+    width: min(96vw, 100%);
+  }
+
+  .adinn-testimonial-container {
+    width: min(100% - 34px, 1540px);
+  }
+
+  .adinn-testimonial-hero {
+    min-height: 360px;
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: 760px;
+    max-width: none;
+    transform: translateX(-2%);
+  }
+
+  .adinn-led-screen-quote {
+    font-size: 18px;
+  }
+
+  .adinn-testimonial-viewport {
+    margin: 0 52px;
+  }
+}
+
+@media (max-width: 640px) {
+  .adinn-testimonial-section {
+    padding: 28px 0;
+  }
+
+  .adinn-testimonial-shell {
+    border-radius: 18px;
+  }
+
+  .adinn-testimonial-container {
+    width: min(100% - 24px, 1540px);
+  }
+
+  .adinn-testimonial-heading {
+    padding-top: 30px;
+  }
+
+  .adinn-testimonial-heading h2 {
+    font-size: 34px;
+  }
+
+  .adinn-testimonial-heading p {
+    font-size: 14px;
+    max-width: 320px;
+  }
+
+  .adinn-testimonial-hero {
+    min-height: 300px;
+    margin-top: 18px;
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: 620px;
+    transform: translateX(-6%);
+  }
+
+  .adinn-led-screen-content {
+    padding: 14px 18px;
+  }
+
+  .adinn-led-screen-tag {
+    padding: 5px 9px;
+    font-size: 7px;
+    margin-bottom: 7px;
+  }
+
+  .adinn-led-screen-quote {
+    font-size: 13px;
+    line-height: 1.34;
+  }
+
+  .adinn-led-screen-bottom {
+    margin-top: 9px;
+  }
+
+  .adinn-led-screen-stars svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .adinn-led-screen-bottom strong {
+    font-size: 10px;
+  }
+
+  .adinn-led-screen-bottom span {
+    display: none;
+  }
+
+  .adinn-led-live-badge {
+    display: none;
+  }
+
+  .adinn-testimonial-carousel {
+    margin-top: 18px;
+  }
+
+  .adinn-testimonial-viewport {
+    margin: 0;
+    padding-inline: 2px;
+  }
+
+  .adinn-testimonial-card {
+    min-height: 290px;
+  }
+
+  .adinn-testimonial-arrow {
+    top: auto;
+    bottom: -66px;
+    width: 46px;
+    height: 46px;
+  }
+
+  .adinn-testimonial-arrow-left {
+    left: calc(50% - 58px);
+  }
+
+  .adinn-testimonial-arrow-right {
+    right: calc(50% - 58px);
+  }
+
+  .adinn-testimonial-dots {
+    margin-top: 78px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .adinn-testimonial-card,
+  .adinn-testimonial-arrow,
+  .adinn-testimonial-dots button,
+  .adinn-testimonial-chip {
+    transition: none;
+  }
+
+  .adinn-testimonial-card:hover .adinn-testimonial-stars svg,
+  .adinn-testimonial-card.is-selected .adinn-testimonial-stars svg {
+    animation: none;
+  }
+}
+
+
+
+
+
+
+
+
+/* =========================================================
+   FINAL OVERRIDES - LED TRUCK TESTIMONIAL AUTO SLIDER
+   Paste this at the bottom of Testimonials.css
+========================================================= */
+
+/* Keep the current truck background, but hide the hard box edges */
+.adinn-testimonial-hero {
+  /* 
+  position: relative;
+  isolation: isolate;
+  background-color: var(--testimonial-surface);
+  background-image: url("/assets/led-truck_testimonials1.png");
+  background-size: cover;
+  background-position: 100% 62%;
+  background-repeat: no-repeat; */
+}
+
+/* Left + right edge feather */
+.adinn-testimonial-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg,
+      var(--testimonial-surface) 0%,
+      rgba(242, 243, 245, 0.96) 4%,
+      rgba(242, 243, 245, 0.58) 9%,
+      rgba(242, 243, 245, 0) 17%,
+      rgba(242, 243, 245, 0) 82%,
+      rgba(242, 243, 245, 0.52) 91%,
+      rgba(242, 243, 245, 0.98) 97%,
+      var(--testimonial-surface) 100%);
+}
+
+/* Bottom floor blending so the shadow will not look boxed */
+.adinn-testimonial-hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 35%;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg,
+      var(--testimonial-surface) 0%,
+      rgba(242, 243, 245, 0.72) 8%,
+      rgba(242, 243, 245, 0) 21%,
+      rgba(242, 243, 245, 0) 79%,
+      rgba(242, 243, 245, 0.76) 92%,
+      var(--testimonial-surface) 100%),
+    linear-gradient(180deg,
+      rgba(242, 243, 245, 0) 0%,
+      rgba(238, 240, 243, 0.18) 34%,
+      rgba(236, 238, 241, 0.7) 76%,
+      var(--testimonial-floor) 100%);
+}
+
+/* This softly extends the floor below the truck */
+/* .adinn-testimonial-floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34%;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse at 54% 60%,
+      rgba(24, 27, 31, 0.16) 0%,
+      rgba(24, 27, 31, 0.1) 28%,
+      rgba(24, 27, 31, 0.03) 55%,
+      rgba(24, 27, 31, 0) 72%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(242, 243, 245, 0) 0%,
+      rgba(236, 238, 241, 0.5) 70%,
+      rgba(236, 238, 241, 0.92) 100%
+    );
+} */
+
+/* Keep LED text above the edge masks */
+.adinn-testimonial-truck-stage {
+  z-index: 3;
+}
+
+/* Hide old carousel cards completely */
+.adinn-testimonial-carousel {
+  display: none !important;
+}
+
+/* LED overlay should remain stable */
+.adinn-led-screen-overlay {
+  width: 82%;
+  height: 67%;
+  position: absolute;
+  top: -4.7%;
+  left: 17.1%;
+  z-index: 5;
+  overflow: hidden;
+}
+
+/* Soft LED scan animation */
+.adinn-led-screen-overlay::before {
+  animation: adinnLedNoise 8s linear infinite;
+}
+
+.adinn-led-screen-overlay::after {
+  z-index: 3;
+}
+
+@keyframes adinnLedNoise {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+
+  100% {
+    background-position: 90px 45px, 0 0;
+  }
+}
+
+/* Smooth content placement inside screen */
+.adinn-led-screen-content {
+  position: relative;
+  z-index: 4;
+  height: 100%;
+  padding: clamp(24px, 3vw, 54px) clamp(34px, 4.6vw, 82px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  will-change: opacity, transform, filter;
+}
+
+.adinn-led-screen-inner {
+  width: min(86%, 1080px);
+  transform: translateY(-1%);
+}
+
+/* Small progress bar on LED screen */
+/* .adinn-led-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 6;
+  width: 100%;
+  height: 3px;
+  transform-origin: left center;
+  background: linear-gradient(
+    90deg,
+    rgba(229, 57, 63, 0.95),
+    rgba(255, 189, 61, 0.95)
+  );
+  box-shadow: 0 0 16px rgba(229, 57, 63, 0.55);
+} */
+
+/* More premium tag */
+.adinn-led-screen-tag {
+  box-shadow:
+    0 8px 24px rgba(229, 57, 63, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* Quote animation-friendly typography */
+.adinn-led-screen-quote {
+  max-width: 1040px;
+  font-size: clamp(16px, 1.55vw, 30px);
+  line-height: 1.28;
+  letter-spacing: -0.045em;
+}
+
+/* Stars should animate cleanly */
+.adinn-led-screen-stars span {
+  display: inline-flex;
+  color: #ffbd3d;
+}
+
+/* Badge subtle pulse */
+.adinn-led-live-badge {
+  position: relative;
+  overflow: hidden;
+}
+
+.adinn-led-live-badge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.18),
+      transparent);
+  transform: translateX(-120%);
+  animation: adinnBadgeSweep 2.8s ease-in-out infinite;
+}
+
+@keyframes adinnBadgeSweep {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  55% {
+    transform: translateX(120%);
+  }
+
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+/* Dots now behave like carousel control */
+.adinn-testimonial-dots {
+  position: relative;
+  z-index: 8;
+  margin: clamp(-4px, -0.4vw, 0px) 0 clamp(30px, 3vw, 48px);
+}
+
+.adinn-testimonial-dots button {
+  position: relative;
+  overflow: hidden;
+  background: #c9cbd0;
+}
+
+.adinn-testimonial-dots button.active {
+  width: 32px;
+  background: var(--adinn-red);
+  box-shadow: 0 8px 18px rgba(229, 57, 63, 0.22);
+}
+
+/* Responsive screen content adjustment */
+@media (min-width: 1024px) and (max-width: 1280px) {
+
+  .adinn-led-screen-overlay {
+    z-index: 5;
+    width: 64%;
+    height: 54%;
+    position: absolute;
+    top: 8.3%;
+    left: 24.1%;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 1180px) {
+  .adinn-led-screen-content {
+    padding: clamp(22px, 3vw, 42px) clamp(30px, 4vw, 64px);
+  }
+
+  .adinn-led-screen-inner {
+    width: 86%;
+  }
+
+  .adinn-led-screen-quote {
+    font-size: clamp(15px, 1.7vw, 24px);
+  }
+}
+
+@media (max-width: 900px) {
+  .adinn-testimonial-hero::before {
+    background:
+      linear-gradient(90deg,
+        var(--testimonial-surface) 0%,
+        rgba(242, 243, 245, 0.88) 3%,
+        rgba(242, 243, 245, 0.22) 12%,
+        rgba(242, 243, 245, 0) 22%,
+        rgba(242, 243, 245, 0) 78%,
+        rgba(242, 243, 245, 0.34) 90%,
+        var(--testimonial-surface) 100%);
+  }
+
+  .adinn-led-screen-content {
+    padding: 22px 38px;
+  }
+
+  .adinn-led-screen-inner {
+    width: 88%;
+  }
+
+  .adinn-led-screen-quote {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .adinn-led-screen-content {
+    padding: 14px 22px;
+  }
+
+  .adinn-led-screen-inner {
+    width: 100%;
+  }
+
+  .adinn-led-screen-tag {
+    padding: 5px 9px;
+    font-size: 7px;
+    margin-bottom: 7px;
+  }
+
+  .adinn-led-screen-quote {
+    font-size: 12px;
+    line-height: 1.33;
+    letter-spacing: -0.025em;
+  }
+
+  .adinn-led-screen-bottom {
+    margin-top: 8px;
+  }
+
+  .adinn-led-screen-stars {
+    gap: 2px;
+    margin-bottom: 5px;
+  }
+
+  .adinn-led-screen-stars svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .adinn-led-screen-bottom strong {
+    font-size: 9.5px;
+  }
+
+  .adinn-led-screen-bottom span,
+  .adinn-led-live-badge {
+    display: none;
+  }
+
+  .adinn-led-progress {
+    height: 2px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+/* WebM background video */
+.adinn-testimonial-hero {
+  background-image: none !important;
+  background-size: auto !important;
+  background-position: initial !important;
+  background-repeat: no-repeat !important;
+}
+
+.adinn-testimonial-hero::before,
+.adinn-testimonial-hero::after {
+  display: none !important;
+}
+
+/* Actual WebM video */
+.adinn-testimonial-bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 1;
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* LED screen container over video */
+.adinn-testimonial-truck-stage {
+  position: absolute;
+  z-index: 4;
+  aspect-ratio: 16 / 7;
+  width: min(946px, 58vw);
+  height: 386px;
+  margin: 0;
+  position: absolute;
+  top: 32%;
+  left: 56.5%;
+  transform: translate(-50%, -50%);
+  filter: none;
+  background: transparent !important;
+  overflow: visible;
+}
+
+/* LED content should fill the screen area */
+.adinn-led-screen-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 5;
+  overflow: hidden;
+  border-radius: 4px;
+
+  background:
+    linear-gradient(135deg, rgba(36, 39, 43, 0.95), rgba(18, 20, 23, 0.96)),
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.09), transparent 36%);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 0 36px rgba(0, 0, 0, 0.42),
+    0 14px 42px rgba(0, 0, 0, 0.2);
+}
+
+/* Keep testimonial content above LED texture */
+.adinn-led-screen-content {
+  position: relative;
+  z-index: 4;
+}
+
+/* Hide old PNG if used */
+.adinn-testimonial-truck-img {
+  display: none !important;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .adinn-testimonial-hero {
+    height: 340px;
+    min-height: 340px;
+    margin-top: 18px;
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: 82vw;
+    aspect-ratio: 16 / 8;
+    top: 50%;
+  }
+
+  .adinn-led-screen-content {
+    padding: 14px 18px;
+  }
+
+  .adinn-led-screen-quote {
+    font-size: 12px;
+    line-height: 1.33;
+  }
+
+  .adinn-led-screen-bottom span,
+  .adinn-led-live-badge {
+    display: none;
+  }
+}
+
+
+/* RESPONSIVE FOR DESKTOP - MOBILE SCREENS  */
+@media (min-width: 1024px) and (max-width: 1280px) {
+  .adinn-testimonial-hero {
+    width: 120%;
+    height: clamp(420px, 38vw, 720px);
+    min-height: clamp(380px, 46vw, 100svh);
+    margin: auto auto auto -125px;
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: min(796px, 55vw);
+    height: 290px;
+    top: 34%;
+    left: 56.4%;
+  }
+}
+
+/* Tablets (768px - 991px) ✅ Tablets (Portrait Mode) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .adinn-road-faq-section {
+    padding: clamp(40px, 7vw, 112px) 0;
+  }
+
+  .adinn-testimonial-hero {
+    width: 145%;
+    height: clamp(473px, 38vw, 720px);
+    min-height: clamp(407px, 75vw, 100svh);
+    margin: auto auto auto -150px;
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: min(796px, 66vw);
+    height: 207px;
+    top: 38%;
+    left: 56.5%;
+  }
+
+  .adinn-testimonial-heading h2 {
+    font-size: clamp(40px, 4.2vw, 62px);
+
+  }
+
+  .adinn-testimonial-heading p {
+    font-size: clamp(20px, 1.05vw, 17px);
+  }
+}
+
+/* Mobile Large Screens (480px - 767px) ✅ Small Tablets & Large Phones */
+@media (min-width: 320px) and (max-width: 425px) {
+  .adinn-road-faq-section {
+    padding: clamp(40px, 7vw, 112px) 0;
+  }
+
+  .adinn-testimonial-hero {
+    width: 153%;
+    height: clamp(378px, 19vw, 712px);
+    min-height: clamp(236px, 38vw, 90svh);
+    margin: auto auto auto -110px;
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: min(803px, 69vw);
+    height: 135px;
+    top: 38%;
+    left: 56.5%;
+  }
+
+  .adinn-testimonial-heading h2 {
+    font-size: clamp(29px, 4.2vw, 62px);
+  }
+
+  .adinn-testimonial-heading p {
+    font-size: clamp(14px, 1.05vw, 17px);
+  }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .adinn-road-faq-section {
+    padding: clamp(40px, 7vw, 112px) 0;
+  }
+
+  .adinn-testimonial-hero {
+    width: 153%;
+    height: clamp(378px, 19vw, 712px);
+    min-height: clamp(236px, 38vw, 90svh);
+    margin: auto auto auto -110px;
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: min(803px, 69vw);
+    height: 135px;
+    top: 38%;
+    left: 56.5%;
+  }
+
+  .adinn-testimonial-heading h2 {
+    font-size: clamp(29px, 4.2vw, 62px);
+  }
+
+  .adinn-testimonial-heading p {
+    font-size: clamp(14px, 1.05vw, 17px);
+  }
+}
+
+/* Mobile Medium Screens (425px - 479px) ✅ Medium Phones (iPhone XR, Galaxy S20) */
+@media (min-width: 425px) and (max-width: 479px) {
+  .adinn-testimonial-heading h2 {
+    font-size: clamp(25px, 4.2vw, 62px);
+  }
+
+  .adinn-testimonial-heading p {
+    font-size: clamp(12px, 1.05vw, 17px);
+  }
+
+  .adinn-testimonial-hero {
+    width: 158%;
+    height: clamp(320px, 16vw, 709px);
+    min-height: clamp(228px, 31vw, 85svh);
+    margin: auto auto auto -107px;
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: min(803px, 70vw);
+    height: 129px;
+    top: 38%;
+    left: 56.5%;
+  }
+}
+
+/* Mobile Small Screens (375px - 424px) ✅ Small Phones (iPhone SE, Pixel 4) */
+@media (min-width: 375px) and (max-width: 424px) {
+  .adinn-testimonial-heading h2 {
+    font-size: clamp(30px, 4.2vw, 62px);
+  }
+
+  .adinn-testimonial-heading p {
+    font-size: clamp(13px, 1.05vw, 17px);
+  }
+
+  .adinn-testimonial-hero {
+    width: 159%;
+    height: clamp(261px, 16vw, 709px);
+    min-height: clamp(218px, 28vw, 77svh);
+    margin: auto auto auto -95px;
+  }
+
+  .adinn-led-screen-content {
+    padding: 10px 10px;
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: min(803px, 70vw);
+    height: 119px;
+    top: 38%;
+    left: 56.5%;
+  }
+}
+
+/* Extra Small Screens (360px - 374px) ✅ Extra Small Phones */
+@media (min-width: 360px) and (max-width: 374px) {
+  .adinn-testimonial-heading h2 {
+    font-size: clamp(30px, 4.2vw, 62px);
+  }
+
+  .adinn-testimonial-heading p {
+    font-size: clamp(13px, 1.05vw, 17px);
+  }
+
+  .adinn-testimonial-hero {
+    width: 160%;
+    height: clamp(261px, 16vw, 709px);
+    min-height: clamp(218px, 28vw, 77svh);
+    margin: auto auto auto -92.1px;
+  }
+
+  .adinn-led-screen-content {
+    padding: 8px;
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: min(803px, 71vw);
+    height: 106px;
+    top: 36.2%;
+    left: 56.5%;
+  }
+}
+
+@media (min-width: 320px) and (max-width: 359px) {
+  .adinn-testimonial-heading h2 {
+    font-size: clamp(27px, 4.2vw, 62px);
+  }
+
+  .adinn-testimonial-heading p {
+    font-size: clamp(12px, 1.05vw, 17px);
+  }
+
+  .adinn-testimonial-hero {
+    width: 160%;
+    height: clamp(257px, 16vw, 709px);
+    min-height: clamp(218px, 28vw, 77svh);
+    margin: auto auto auto -82.1px;
+  }
+
+  .adinn-led-screen-quote {
+    font-size: 10px;
+    line-height: 1.33;
+  }
+
+  .adinn-led-screen-content {
+    padding: 5px;
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: min(803px, 71vw);
+    height: 95px;
+    top: 38.2%;
+    left: 56.5%;
+  }
+
+  .adinn-led-screen-tag {
+    margin-bottom: 7px;
+    padding: 3px 6px;
+    font-size: 6px;
+  }
+
+  .adinn-led-screen-bottom {
+    margin-top: 2px;
+  }
+
+  .adinn-testimonial-section {
+    padding: 0px 0;
+  }
+}

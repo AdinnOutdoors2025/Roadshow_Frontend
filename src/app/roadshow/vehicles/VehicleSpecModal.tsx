@@ -16,6 +16,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import { X } from "lucide-react";
 
 import {
@@ -333,7 +334,13 @@ export default function VehicleSpecModal({
     setMounted(true);
   }, []);
 
-  /* Close on Escape and hold the background still while the popup is open */
+  /* Hold the background still while the popup is open. This has to go through
+     useScrollLock rather than setting body overflow here: ScrollSmoother drives
+     page scroll itself, so `overflow: hidden` alone does not stop it and the
+     background kept scrolling behind this modal. */
+  useScrollLock(Boolean(vehicle));
+
+  /* Close on Escape */
   useEffect(() => {
     if (!vehicle) return;
 
@@ -341,14 +348,9 @@ export default function VehicleSpecModal({
       if (event.key === "Escape") onClose();
     };
 
-    const previousOverflow =
-      document.body.style.overflow;
-
-    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [vehicle, onClose]);

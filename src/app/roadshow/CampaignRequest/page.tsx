@@ -43,9 +43,28 @@ export default function CampaignRequestPage() {
     new Map<string, HTMLElement>()
   );
 
+  /* Offsets, not DOMRects: getBoundingClientRect() is viewport-relative, so
+     horizontally scrolling the carousel between two reorders made every card
+     look like it had moved by the scroll distance and fly in from off-screen.
+     offsetLeft/offsetTop are measured against the offset parent and are
+     unaffected by scrolling. */
   const cardPositionsRef = useRef(
-    new Map<string, DOMRect>()
+    new Map<string, { left: number; top: number }>()
   );
+
+  /* Selected cards sort to the front of the row, so adding one while the
+     carousel is scrolled right pushes it off-screen to the left — it looks
+     like the card vanished. This holds the id just added so the carousel can
+     scroll it back into view once the reorder has been laid out. */
+  const lastAddedVehicleIdRef = useRef<
+    string | null
+  >(null);
+
+  const leftColumnRef =
+    useRef<HTMLElement>(null);
+
+  const rightColumnRef =
+    useRef<HTMLElement>(null);
 
   const authPromptedRef = useRef(false);
 
@@ -319,36 +338,229 @@ export default function CampaignRequestPage() {
     });
   }, [vehicles, selectedVehicleIds]);
 
-  /* FLIP animation: slide cards to their new spot instead of jumping */
+  /* FLIP animation: slide cards to their new spot instead of jumping.
+     Every card is put back at its previous offset with the transition off,
+     then released on the next frame so the browser animates the difference. */
   useLayoutEffect(() => {
-    const newPositions = new Map<string, DOMRect>();
+    const newPositions = new Map<
+      string,
+      { left: number; top: number }
+    >();
 
     cardNodesRef.current.forEach((node, id) => {
-      newPositions.set(id, node.getBoundingClientRect());
-    });
-
-    newPositions.forEach((newRect, id) => {
-      const oldRect = cardPositionsRef.current.get(id);
-      const node = cardNodesRef.current.get(id);
-
-      if (!oldRect || !node) return;
-
-      const deltaX = oldRect.left - newRect.left;
-      const deltaY = oldRect.top - newRect.top;
-
-      if (!deltaX && !deltaY) return;
-
-      node.style.transition = "none";
-      node.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-
-      requestAnimationFrame(() => {
-        node.style.transition = "transform 320ms ease";
-        node.style.transform = "";
+      newPositions.set(id, {
+        left: node.offsetLeft,
+        top: node.offsetTop,
       });
     });
 
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    /* Cleanups for cards still mid-slide, so a reorder that lands while an
+       earlier one is running does not leave stale listeners behind. */
+    const cleanups: Array<() => void> = [];
+
+    if (!prefersReducedMotion) {
+      newPositions.forEach((newPosition, id) => {
+        const oldPosition =
+          cardPositionsRef.current.get(id);
+        const node = cardNodesRef.current.get(id);
+
+        if (!oldPosition || !node) return;
+
+        const deltaX = oldPosition.left - newPosition.left;
+        const deltaY = oldPosition.top - newPosition.top;
+
+        /* Sub-pixel drift from zoom or a scrollbar appearing would otherwise
+           kick off a pointless transition on every card in the row. */
+        if (
+          Math.abs(deltaX) < 1 &&
+          Math.abs(deltaY) < 1
+        ) {
+          return;
+        }
+
+        node.style.willChange = "transform";
+        node.style.transition = "none";
+        node.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+        const frameId = requestAnimationFrame(() => {
+          node.style.transition =
+            "transform 420ms cubic-bezier(0.22, 1, 0.36, 1)";
+          node.style.transform = "";
+        });
+
+        /* Clear the inline styles once the slide finishes. Without this the
+           inline `transition` keeps overriding the card's own stylesheet
+           transitions (hover lift, shadow) for the rest of the session. */
+        const handleTransitionEnd = (
+          event: TransitionEvent
+        ) => {
+          if (event.propertyName !== "transform") return;
+
+          node.style.transition = "";
+          node.style.transform = "";
+          node.style.willChange = "";
+
+          node.removeEventListener(
+            "transitionend",
+            handleTransitionEnd
+          );
+        };
+
+        node.addEventListener(
+          "transitionend",
+          handleTransitionEnd
+        );
+
+        cleanups.push(() => {
+          cancelAnimationFrame(frameId);
+
+          node.removeEventListener(
+            "transitionend",
+            handleTransitionEnd
+          );
+        });
+      });
+    }
+
     cardPositionsRef.current = newPositions;
+
+    return () => {
+      cleanups.forEach((cleanup) => cleanup());
+    };
   }, [sortedVehicles]);
+
+  /* Bring newly added cards back into view. Runs after the FLIP layout effect
+     has reordered the row. */
+  useEffect(() => {
+    const vehicleId =
+      lastAddedVehicleIdRef.current;
+
+    if (!vehicleId) return;
+
+    lastAddedVehicleIdRef.current = null;
+
+    const scroller = productScrollerRef.current;
+
+    if (!scroller) return;
+
+    /* Rewind the row to the very start rather than to the added card itself.
+       Selected cards sort to the front, so the start is where they all live —
+       and landing on an exact card boundary is what stops the row settling
+       mid-card and leaving a sliced-off card at the left edge. */
+    const target = 0;
+
+    /* Already parked there — don't jolt the row for a sub-pixel difference. */
+    if (
+      Math.abs(scroller.scrollLeft - target) < 2
+    ) {
+      return;
+    }
+
+    const prefersReducedMotion =
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+    scroller.scrollTo({
+      left: target,
+      behavior: prefersReducedMotion
+        ? "auto"
+        : "smooth",
+    });
+  }, [sortedVehicles]);
+
+  /* Paired-column scrolling.
+
+     Each column is sticky with a `top` derived from its own height:
+
+       - Column SHORTER than the viewport -> top = TOP_GAP. It pins as soon as
+         it reaches the navbar and then waits, so it stays on screen instead of
+         leaving a block of dead whitespace while the other side scrolls on.
+
+       - Column TALLER than the viewport -> top = viewport - height - gap,
+         which is negative. Sticky then lets the column scroll all the way
+         through its own content first and only pins once its bottom edge
+         reaches the bottom of the viewport. This is what keeps "Add More
+         Vehicle" and "Review & Submit" reachable — a plain `top: 96px` would
+         pin the column immediately and strand everything below the fold.
+
+     Net effect: the shorter side finishes and holds, the taller side keeps
+     scrolling, and once both are exhausted the page scrolls on as one.
+
+     Recomputed whenever either column changes height (adding or removing a
+     vehicle does exactly that), which is why this is measured rather than
+     expressed as a static CSS rule. */
+  useEffect(() => {
+    const leftColumn = leftColumnRef.current;
+    const rightColumn = rightColumnRef.current;
+
+    if (!leftColumn || !rightColumn) return;
+
+    const TOP_GAP = 96;
+    const BOTTOM_GAP = 24;
+    const DESKTOP_MIN_WIDTH = 1024;
+
+    const applyStickyOffsets = () => {
+      const columns = [leftColumn, rightColumn];
+
+      /* Below lg the grid is a single column and the page just scrolls. */
+      if (
+        window.innerWidth < DESKTOP_MIN_WIDTH
+      ) {
+        columns.forEach((column) => {
+          column.style.position = "";
+          column.style.top = "";
+        });
+
+        return;
+      }
+
+      columns.forEach((column) => {
+        const height = column.offsetHeight;
+        const viewportHeight = window.innerHeight;
+
+        const overflowsViewport =
+          height + TOP_GAP + BOTTOM_GAP >
+          viewportHeight;
+
+        const top = overflowsViewport
+          ? viewportHeight - height - BOTTOM_GAP
+          : TOP_GAP;
+
+        column.style.position = "sticky";
+        column.style.top = `${top}px`;
+      });
+    };
+
+    applyStickyOffsets();
+
+    /* Setting position/top does not change offsetHeight, so observing the same
+       elements we write to cannot feed back into itself. */
+    const resizeObserver = new ResizeObserver(
+      applyStickyOffsets
+    );
+
+    resizeObserver.observe(leftColumn);
+    resizeObserver.observe(rightColumn);
+
+    window.addEventListener(
+      "resize",
+      applyStickyOffsets
+    );
+
+    return () => {
+      resizeObserver.disconnect();
+
+      window.removeEventListener(
+        "resize",
+        applyStickyOffsets
+      );
+    };
+  }, []);
 
   const activeDateVehicle = useMemo(
     () =>
@@ -374,6 +586,16 @@ export default function CampaignRequestPage() {
   const toggleVehicle = (
     vehicle: RoadshowVehicle
   ) => {
+    /* Read before the state update so this is a plain derived value rather
+       than a side effect inside the updater (which React may run twice). */
+    /* Stored raw, not String(...): cardNodesRef is keyed by vehicle.id as-is,
+       so coercing here would miss the lookup for any non-string id. */
+    lastAddedVehicleIdRef.current = isSelected(
+      vehicle.id
+    )
+      ? null
+      : vehicle.id;
+
     setSelectedVehicles((current) => {
       const alreadySelected = current.some(
         (item) =>
@@ -1030,7 +1252,15 @@ export default function CampaignRequestPage() {
           className=" Rdsw_CrfMainSection  grid grid-cols-1 gap-8 lg:grid-cols-[minmax(320px,0.76fr)_minmax(0,1.28fr)] lg:items-start xl:gap-10"
         >
           {/* Campaign request form */}
-          <aside className="rounded-[26px] bg-[#f7f7f8] p-5 sm:p-6 lg:sticky lg:top-24 rdsw_CrfLeftMain">
+          {/* Sticky position/top are set from JS (see the paired-column effect
+              above) because the correct offset depends on this column's
+              measured height. A static lg:sticky lg:top-24 would pin it while
+              its own content is taller than the viewport and strand Add More
+              Vehicle / Review & Submit below the fold. */}
+          <aside
+            ref={leftColumnRef}
+            className="rounded-[26px] bg-[#f7f7f8] p-5 sm:p-6 rdsw_CrfLeftMain"
+          >
             <div className="mb-7 rdsw_CrfLeftHeadingMain">
               <div className="text-[20px] font-semibold tracking-[-0.02em] text-[#1b1b1d] rdsw_CrfLeftHeading1">
                 Campaign Request Form
@@ -1394,6 +1624,7 @@ export default function CampaignRequestPage() {
           </aside>
           {/* Product details */}
           <section
+            ref={rightColumnRef}
             className="rdsw_crfProdDetailsMain min-w-0 rdsw_crfProdDetailsScrollPane"
           >
             {/* Section heading */}
