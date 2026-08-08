@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { FaRegEdit } from "react-icons/fa";
 import { MdOutlineDelete } from "react-icons/md";
 import { HiOutlinePlus, HiOutlineUserGroup } from "react-icons/hi";
@@ -32,15 +33,13 @@ export default function OperationManagementTable() {
       setLoading(true);
       setError(null);
       const token = getToken();
-      const res = await fetch(`${API_BASE}operation-users`, {
+      const { data } = await axios.get(`${API_BASE}operation-users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed to fetch operation users");
-      const data = await res.json();
       setOperationUsers(data.data.data);
       setCurrentPage(1);
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      setError(err?.response?.data?.message || "Failed to fetch operation users");
     } finally {
       setLoading(false);
     }
@@ -58,16 +57,14 @@ export default function OperationManagementTable() {
     try {
       setDeleteLoading(true);
       const token = getToken();
-      const res = await fetch(`${API_BASE}operation-users/${deletingId}`, {
-        method: "DELETE",
+      await axios.delete(`${API_BASE}operation-users/${deletingId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed to delete");
       await fetchOperationUsers();
       setShowDeleteModal(false);
       setDeletingId(null);
     } catch (err: any) {
-      alert(err.message || "Delete failed");
+      alert(err?.response?.data?.message || "Delete failed");
     } finally {
       setDeleteLoading(false);
     }

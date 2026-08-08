@@ -1,12 +1,12 @@
 "use client";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { clearToken, getToken } from "@/app/utils/auth";
 import API_BASE from "../../../baseurl";
 
-// How often an already-open tab re-checks whether the account got
-// deactivated mid-session — a JWT alone can't reflect that until it expires.
-const SESSION_CHECK_INTERVAL_MS = 60 * 1000;
+// Public admin auth pages — no token is expected here, so the guard must not
+// try to redirect away from them (e.g. signup would be unreachable otherwise).
+const PUBLIC_AUTH_PATHS = ["/admin/signin", "/admin/signup", "/admin/forgot-password"];
 
 interface JwtPayload {
   id: string;
@@ -59,8 +59,11 @@ function parseJwt(token: string): JwtPayload | null {
 // utils/auth.ts (or wherever useAuthGuard is defined)
 export function useAuthGuard(): void {
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
+    if (PUBLIC_AUTH_PATHS.some((p) => pathname.startsWith(p))) return;
+
     const token = getToken();
     if (!token) {
       router.replace("/admin/signin");   // was "/signin"
@@ -87,9 +90,12 @@ export function useAuthGuard(): void {
       router.replace("/admin/signin");
     };
 
-    const sessionCheck = setInterval(async () => {
+    const checkSession = async () => {
       const currentToken = getToken();
       if (!currentToken) return;
+      // admin role has no revocation risk worth polling for — only
+      // sales/operation logins need the live account-status check.
+      if (payload.role !== "sales" && payload.role !== "operation") return;
       try {
         const res = await fetch(`${API_BASE}admin/session-check`, {
           headers: { Authorization: `Bearer ${currentToken}` },
@@ -98,11 +104,13 @@ export function useAuthGuard(): void {
       } catch {
         // network hiccup — don't log the user out over a transient failure
       }
-    }, SESSION_CHECK_INTERVAL_MS);
+    };
+
+    // Runs once per route change/page load — not on a recurring interval.
+    checkSession();
 
     return () => {
       clearTimeout(timer);
-      clearInterval(sessionCheck);
     };
-  }, [router]);
+  }, [router, pathname]);
 }

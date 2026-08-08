@@ -20,6 +20,8 @@ import {
   Percent,
   PenLine,
   ShieldCheck,
+  Maximize  ,
+  X,
 } from "lucide-react";
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
@@ -34,11 +36,10 @@ const COMPANY = {
   addressLine2: "Madurai-625010 Tamil Nadu",
 };
 
-// Invoice-preview palette. Kept as plain hex (not Tailwind) because the
-// preview is captured pixel-for-pixel by html2canvas.
+
 const INK = "#000000";
 const MUTED = "#3f3f3f";
-const ACCENT = "#DC2626"; // Tailwind red-600 — matches the app's bg-red-600 accent
+const ACCENT = "#DC2626"; 
 const ACCENT_TINT = "#cacaca";
 const LINE = "#D9D9D9";
 const LINE_SOFT = "#E9E9E9";
@@ -51,6 +52,10 @@ const getVehicleTypeName = (id, vehicleTypes) => {
   const v = vehicleTypes.find((vt) => vt._id === id);
   return v?.typeName || "Vehicle";
 };
+
+
+const toTitleCase = (str) =>
+  str.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
 const fmtMoney = (n) =>
   (Number(n) || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -102,9 +107,7 @@ function numberToWords(input) {
   return "Rupees " + parts.join(" ") + " Only";
 }
 
-// Builds default line items, tagging every row with the vehicle-type group it
-// belongs to (groupLabel) so the preview can render one table block per
-// vehicle type, exactly like the reference design but repeated per vehicle.
+
 function buildDefaultLineItems(order, vehicleTypes) {
   const items = [];
   (order.bookingItems || []).forEach((b) => {
@@ -184,7 +187,6 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
     fmtDateInput(existing?.dueDate) || addDaysIso(fmtDateInput(existing?.invoiceDate) || fmtDateInput(new Date().toISOString()), 45)
   );
 
-  // Invoice Date select pannina udane Due Date = Invoice Date + 45 days auto-fill aagum.
   const handleInvoiceDateChange = (val) => {
     setInvoiceDate(val);
     setDueDate(addDaysIso(val, 45));
@@ -217,14 +219,36 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
   const [sgstPercent, setSgstPercent] = useState(existing?.sgstPercent ?? 9);
   const [igstPercent, setIgstPercent] = useState(existing?.igstPercent ?? 18);
 
-  // Tamil Nadu Place of Supply -> intra-state (CGST+SGST); any other state -> inter-state (IGST).
+
   const isTamilNadu = (placeOfSupply || "").trim().toLowerCase() === "tamil nadu";
-  const [discountMode, setDiscountMode] = useState(existing?.discountMode || "decrease");
-  const [discountType, setDiscountType] = useState(existing?.discountType || "percent");
-  const [discountValue, setDiscountValue] = useState(existing?.discountValue ?? 0);
-  const [discountLabel, setDiscountLabel] = useState(existing?.discountLabel || "Discount");
-  // "unsigned"  -> left side shows the "system generated, no signature required" thank-you note
-  // "signed"    -> right side reserves blank space for an authorized signature
+  const [discounts, setDiscounts] = useState(() => {
+    if (existing?.discounts?.length) {
+      return existing.discounts.map((d) => ({
+        id: uid(),
+        label: d.label || "Discount",
+        mode: d.mode || "decrease",
+        type: d.type || "percent",
+        value: d.value ?? 0,
+      }));
+    }
+    if (existing?.discountLabel || existing?.discountValue) {
+      return [{
+        id: uid(),
+        label: existing.discountLabel || "Discount",
+        mode: existing.discountMode || "decrease",
+        type: existing.discountType || "percent",
+        value: existing.discountValue ?? 0,
+      }];
+    }
+    return [{ id: uid(), label: "Discount", mode: "decrease", type: "percent", value: 0 }];
+  });
+
+  const updateDiscount = (id, patch) =>
+    setDiscounts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
+  const addDiscount = () =>
+    setDiscounts((prev) => [{ id: uid(), label: "Discount", mode: "decrease", type: "percent", value: 0 }, ...prev]);
+  const removeDiscount = (id) =>
+    setDiscounts((prev) => (prev.length > 1 ? prev.filter((d) => d.id !== id) : prev));
   const [signatureMode, setSignatureMode] = useState(existing?.signatureMode || "signed");
   const [saving, setSaving] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -243,16 +267,13 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
   );
 
   const previewRef = useRef(null);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
 
   const updateItem = (id, patch) =>
     setLineItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
 
   const addItemToGroup = (groupLabel) =>
     setLineItems((prev) => {
-      // Keep the underlying order (used by the right-side invoice preview) as
-      // append-at-bottom — new rows must appear last in the actual invoice.
-      // The left editable list displays each group reversed (newest on top)
-      // purely for editing convenience; see group.items.slice().reverse() below.
       const newItem = { id: uid(), groupLabel, description: "", hsnSac: "998361", qty: 1, rate: 0 };
       const lastIndex = prev.map((it) => it.groupLabel).lastIndexOf(groupLabel);
       if (lastIndex === -1) return [...prev, newItem];
@@ -274,10 +295,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
     [lineItems]
   );
 
-  // Group line items by vehicle-type (groupLabel) in first-seen order. Each
-  // group renders as its own mini vehicle-type table in the preview, and the
-  // "#" numbering below runs continuously across every group, matching the
-  // reference invoice's single running item count.
+
   const groupedLineItems = useMemo(() => {
     const orderSeen = [];
     const map = new Map();
@@ -302,12 +320,20 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
 
   const showGroupHeadings = groupedLineItems.length > 1;
 
-  const discountMagnitude =
-    discountType === "percent"
-      ? Math.round(subtotal * (Number(discountValue) || 0)) / 100
-      : Number(discountValue) || 0;
-  const discountAmt = discountMode === "add" ? discountMagnitude : -discountMagnitude;
-  const subtotalAfterDiscount = Math.max(subtotal + discountAmt, 0);
+  const discountsComputed = useMemo(
+    () =>
+      discounts.map((d) => {
+        const magnitude =
+          d.type === "percent"
+            ? Math.round(subtotal * (Number(d.value) || 0)) / 100
+            : Number(d.value) || 0;
+        const amt = d.mode === "add" ? magnitude : -magnitude;
+        return { ...d, magnitude, amt };
+      }),
+    [discounts, subtotal]
+  );
+  const totalDiscountAmt = discountsComputed.reduce((s, d) => s + d.amt, 0);
+  const subtotalAfterDiscount = Math.max(subtotal + totalDiscountAmt, 0);
 
   const cgstAmt = isTamilNadu ? Math.round(subtotalAfterDiscount * (Number(cgstPercent) || 0)) / 100 : 0;
   const sgstAmt = isTamilNadu ? Math.round(subtotalAfterDiscount * (Number(sgstPercent) || 0)) / 100 : 0;
@@ -330,10 +356,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
     billToGstin,
     billToPan,
     lineItems: lineItems.map(({ id, _rowNo, ...rest }) => rest),
-    discountLabel,
-    discountMode,
-    discountType,
-    discountValue,
+    discounts: discounts.map(({ id, ...rest }) => rest),
     cgstPercent,
     sgstPercent,
     igstPercent,
@@ -357,9 +380,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
     }
   };
 
-  // First time this Project Code's order has no invoiceData at all — save the
-  // auto-computed default invoice immediately (silently, no toast, no history
-  // entry — backend skips history logging on the very first save).
+
   const autoSavedRef = useRef(false);
   useEffect(() => {
     if (!disabled && !existing && order?._id && !autoSavedRef.current) {
@@ -390,10 +411,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
       const ratio = pdfWidth / canvas.width;
       const sliceHeight = Math.floor(pdfPageHeight / ratio);
 
-      // Walk every [data-avoid-break] block (each vehicle-type table, and the
-      // totals+words+signature chunk) and nudge naive page-break points
-      // upward so a break never lands inside one of them — same technique as
-      // OrderReportPDF.tsx's getSmartBreaks.
+
       const avoidBreakEls = content.querySelectorAll("[data-avoid-break]");
       const contentRect = content.getBoundingClientRect();
       const scale = canvas.width / content.offsetWidth;
@@ -481,13 +499,46 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pl-4">
-      {/* ── LEFT: Live preview (this is what gets downloaded) — scrolls independently ── */}
-      <div className="min-w-0 lg:sticky lg:top-4 self-start">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Preview</p>
 
-        </div>
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-950 p-3 lg:max-h-[calc(100vh-2rem)] overflow-auto">
+      <div
+        className={
+          previewExpanded
+            ? "fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            : "min-w-0 lg:sticky lg:top-4 self-start"
+        }
+        onClick={() => previewExpanded && setPreviewExpanded(false)}
+      >
+        {!previewExpanded && (
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Preview</p>
+            <button
+              type="button"
+              onClick={() => setPreviewExpanded(true)}
+              className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-red-600 transition-colors"
+              title="Expand preview"
+            >
+              <Maximize  size={20} />
+            </button>
+          </div>
+        )}
+        <div
+          onClick={(e) => previewExpanded && e.stopPropagation()}
+          className={
+            previewExpanded
+              ? "relative rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-950 p-3 w-full max-w-[820px] max-h-[95vh] overflow-auto"
+              : "rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-950 p-3 lg:max-h-[calc(100vh-2rem)] overflow-auto"
+          }
+        >
+          {previewExpanded && (
+            <button
+              type="button"
+              onClick={() => setPreviewExpanded(false)}
+              className="sticky top-0 float-right z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-red-600 shadow-sm"
+              title="Close"
+            >
+              <X size={16} />
+            </button>
+          )}
           <div
             ref={previewRef}
             style={{
@@ -589,16 +640,6 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
                   </div>
                 )}
                 {(gIdx === 0 || showGroupHeadings) && (
-                  // SVG header row instead of HTML text. html2canvas
-                  // re-implements CSS text layout in JS and keeps
-                  // mispositioning line-height/vertical-align (tried both
-                  // flex divs and a real <thead><th> — same bottom-heavy
-                  // offset in the exported PDF both times). An inline <svg>
-                  // with <text dominantBaseline="middle"> is laid out by the
-                  // browser's native SVG engine, so the vertical centering
-                  // is exact and survives the canvas snapshot untouched.
-                  // Column x-positions below mirror the <colgroup> widths:
-                  // 24 / 356 / 60 / 48 / 72 / 80 = 640 (content width).
                   <svg viewBox="0 0 640 32" width="100%" height="32" style={{ display: "block" }}>
                     <rect x="0" y="0" width="640" height="32" fill={ACCENT} />
                     <text x="6" y="16" dominantBaseline="middle" textAnchor="start" fill="#fff" fontFamily="Arial, Helvetica, sans-serif" fontWeight="700" fontSize="10.8">#</text>
@@ -647,27 +688,31 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
             ))}
             {/* <div style={{ height: "1.5px", background: ACCENT, marginTop: "2px" }} /> */}
 
-            {/* Totals + Total-in-words + Footer signature, kept as one
-                unbreakable chunk so the PDF page-break never lands inside it. */}
+
             <div data-avoid-break="true">
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
                 <div style={{ width: "240px", fontSize: "11.5px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 4px", color: INK }}>
                     <span>Sub Total</span><span>{fmtMoney(subtotal)}</span>
                   </div>
-                  {discountMagnitude > 0 && (
+                  {discountsComputed.some((d) => d.magnitude > 0) && (
                     <>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          padding: "3px 4px",
-                          color: discountMode === "decrease" ? "#DC2626" : "#15803d",
-                        }}
-                      >
-                        <span>{discountLabel || "Discount"} {discountType === "percent" ? `(${discountValue}%)` : ""}</span>
-                        <span>{discountMode === "decrease" ? "-" : "+"}{fmtMoney(discountMagnitude)}</span>
-                      </div>
+                      {discountsComputed
+                        .filter((d) => d.magnitude > 0)
+                        .map((d) => (
+                          <div
+                            key={d.id}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              padding: "3px 4px",
+                              color: d.mode === "decrease" ? "#DC2626" : "#15803d",
+                            }}
+                          >
+                            <span>{d.label || "Discount"} {d.type === "percent" ? `(${d.value}%)` : ""}</span>
+                            <span>{d.mode === "decrease" ? "-" : "+"}{fmtMoney(d.magnitude)}</span>
+                          </div>
+                        ))}
                       <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 4px", color: INK, fontWeight: 700 }}>
                         <span>Sub Total After Discount</span><span>{fmtMoney(subtotalAfterDiscount)}</span>
                       </div>
@@ -735,7 +780,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
         </div>
       </div>
 
-      {/* ── RIGHT: Fully editable form — scrolls independently ── */}
+
       <div className="min-w-0 space-y-5 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pr-1 self-start">
         <div className="flex items-center justify-between sticky top-0 z-10 bg-gray-50/95 dark:bg-gray-950/95 backdrop-blur -mx-1 px-1 py-2 rounded-xl">
           <div>
@@ -828,11 +873,11 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
           </p>
           <div>
             <label className={labelCls}>Name / Company</label>
-            <input value={billToName} onChange={(e) => setBillToName(e.target.value)} className={inputCls} />
+            <input value={billToName} onChange={(e) => setBillToName(toTitleCase(e.target.value))} className={inputCls} />
           </div>
           <div>
             <label className={labelCls}>Address</label>
-            <textarea value={billToAddress} onChange={(e) => setBillToAddress(e.target.value)} rows={2} className={inputCls + " resize-none"} />
+            <textarea value={billToAddress} onChange={(e) => setBillToAddress(toTitleCase(e.target.value))} rows={2} className={inputCls + " resize-none"} />
           </div>
           <div className="grid grid-cols-2 gap-3.5">
             <div>
@@ -847,44 +892,84 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
         </div>
 
         <div className={cardCls}>
-          <p className={sectionTitleCls}>
-            <Percent size={14} className="text-gray-400" /> Discount
-          </p>
-          <div>
-            <label className={labelCls}>Label</label>
-            <input value={discountLabel} onChange={(e) => setDiscountLabel(e.target.value)} placeholder="Discount" className={inputCls} />
+          <div className="flex items-center justify-between">
+            <p className={sectionTitleCls}>
+              <Percent size={14} className="text-gray-400" /> Discount
+            </p>
+            <button
+              type="button"
+              onClick={addDiscount}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600 hover:text-red-700"
+            >
+              <Plus size={13} /> Add Discount
+            </button>
           </div>
-          <div className="grid grid-cols-3 gap-3.5">
-            <div>
-              <label className={labelCls}>Mode</label>
-              <select value={discountMode} onChange={(e) => setDiscountMode(e.target.value)} className={inputCls}>
-                <option value="decrease">Decrease</option>
-                <option value="add">Add</option>
-              </select>
+
+          {discountsComputed.map((d) => (
+            <div key={d.id} className="rounded-xl border border-gray-150 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 p-3 space-y-2.5">
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <label className={labelCls}>Label</label>
+                  <input
+                    value={d.label}
+                    onChange={(e) => updateDiscount(d.id, { label: toTitleCase(e.target.value) })}
+                    placeholder="Discount"
+                    className={inputCls + " bg-white dark:bg-gray-900"}
+                  />
+                </div>
+                {discounts.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeDiscount(d.id)}
+                    className="shrink-0 mt-5 rounded-lg border border-red-200 text-red-500 p-2 hover:bg-red-50 transition-colors"
+                    aria-label="Remove discount"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className={labelCls}>Mode</label>
+                  <select value={d.mode} onChange={(e) => updateDiscount(d.id, { mode: e.target.value })} className={inputCls + " bg-white dark:bg-gray-900"}>
+                    <option value="decrease">Decrease</option>
+                    <option value="add">Add</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Type</label>
+                  <select value={d.type} onChange={(e) => updateDiscount(d.id, { type: e.target.value })} className={inputCls + " bg-white dark:bg-gray-900"}>
+                    <option value="percent">%</option>
+                    <option value="amount">₹</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Value</label>
+                  <input
+                    type="number"
+                    value={d.value === 0 ? "" : d.value}
+                    placeholder="0"
+                    onChange={(e) => updateDiscount(d.id, { value: e.target.value === "" ? 0 : Number(e.target.value) || 0 })}
+                    className={inputCls + " bg-white dark:bg-gray-900 text-right tabular-nums"}
+                  />
+                </div>
+              </div>
+              {d.magnitude > 0 && (
+                <div className="flex items-center justify-between rounded-lg bg-white dark:bg-gray-900 px-3 py-2">
+                  <span className="text-xs font-semibold text-gray-500">Discount Amount</span>
+                  <span className={"text-sm font-bold tabular-nums " + (d.mode === "decrease" ? "text-red-600" : "text-green-700 dark:text-green-400")}>
+                    {d.mode === "decrease" ? "-" : "+"}₹{fmtMoney(d.magnitude)}
+                  </span>
+                </div>
+              )}
             </div>
-            <div>
-              <label className={labelCls}>Type</label>
-              <select value={discountType} onChange={(e) => setDiscountType(e.target.value)} className={inputCls}>
-                <option value="percent">%</option>
-                <option value="amount">₹</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>Value</label>
-              <input
-                type="number"
-                value={discountValue === 0 ? "" : discountValue}
-                placeholder="0"
-                onChange={(e) => setDiscountValue(e.target.value === "" ? 0 : Number(e.target.value) || 0)}
-                className={inputCls + " text-right tabular-nums"}
-              />
-            </div>
-          </div>
-          {discountMagnitude > 0 && (
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-gray-800/40 px-3 py-2 mt-3">
-              <span className="text-xs font-semibold text-gray-500">Discount Amount</span>
-              <span className={"text-sm font-bold tabular-nums " + (discountMode === "decrease" ? "text-red-600" : "text-green-700 dark:text-green-400")}>
-                {discountMode === "decrease" ? "-" : "+"}₹{fmtMoney(discountMagnitude)}
+          ))}
+
+          {discounts.length > 1 && (
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-gray-800/40 px-3 py-2 mt-1">
+              <span className="text-xs font-semibold text-gray-500">Total Discount</span>
+              <span className={"text-sm font-bold tabular-nums " + (totalDiscountAmt < 0 ? "text-red-600" : "text-green-700 dark:text-green-400")}>
+                {totalDiscountAmt < 0 ? "-" : "+"}₹{fmtMoney(Math.abs(totalDiscountAmt))}
               </span>
             </div>
           )}
@@ -928,7 +1013,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
                       <div className="flex items-start gap-2">
                         <textarea
                           value={it.description}
-                          onChange={(e) => updateItem(it.id, { description: e.target.value })}
+                          onChange={(e) => updateItem(it.id, { description: toTitleCase(e.target.value) })}
                           placeholder="Description"
                           rows={2}
                           className={inputCls + " resize-none flex-1 bg-white"}

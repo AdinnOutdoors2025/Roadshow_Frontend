@@ -12,6 +12,9 @@ interface LineItemFieldChange {
   field: string;
   oldValue: any;
   newValue: any;
+  // Present on discount "Mode"/"Type" entries carried along purely so a
+  // sibling "Value" row can resolve its sign/format — not itself a real change.
+  unchanged?: boolean;
 }
 
 interface LineItemChange {
@@ -28,6 +31,9 @@ interface InvoiceHistoryEntry {
   action: "created" | "updated";
   changes: InvoiceHistoryChange[];
   lineItemChanges?: LineItemChange[];
+  // Same shape as lineItemChanges, one row per discount (multi-discount
+  // support) — groupLabel/description both carry the discount's Label.
+  discountChanges?: LineItemChange[];
   editedBy?: string;
   editedAt: string;
 }
@@ -138,7 +144,7 @@ export default function InvoiceHistoryTab({ invoiceHistory }: Props) {
               <span className="text-xs text-gray-400">{fmtDatetime(h.editedAt)}</span>
             </div>
 
-            {sectionKeys.length === 0 && Object.keys(lineItemGroups).length === 0 ? (
+            {sectionKeys.length === 0 && Object.keys(lineItemGroups).length === 0 && (h.discountChanges || []).length === 0 ? (
               <div className="px-4 py-3 text-sm text-gray-400">Invoice generated — no field changes.</div>
             ) : (
               <div className="p-4 space-y-4">
@@ -181,6 +187,67 @@ export default function InvoiceHistoryTab({ invoiceHistory }: Props) {
                     </div>
                   </div>
                 ))}
+
+                {(h.discountChanges || []).length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Discounts</p>
+                    <div className="rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden divide-y divide-gray-100 dark:divide-gray-800">
+                      {(h.discountChanges || []).map((dc, i) => (
+                        <div key={i} className="px-3 py-2">
+                          <div
+                            className={
+                              "flex items-center gap-1.5 text-xs font-semibold mb-1 " +
+                              (dc.action === "added"
+                                ? "text-green-600"
+                                : dc.action === "removed"
+                                  ? "text-red-500"
+                                  : "text-amber-600")
+                            }
+                          >
+                            {dc.action === "added" && <PlusCircle size={12} />}
+                            {dc.action === "removed" && <MinusCircle size={12} />}
+                            {dc.action === "edited" && <PencilLine size={12} />}
+                            {dc.action === "added" ? "Added" : dc.action === "removed" ? "Removed" : "Edited"}
+                            <span className="text-gray-500 font-normal">— {dc.description || dc.groupLabel || "Discount"}</span>
+                          </div>
+
+                          {dc.fieldChanges && dc.fieldChanges.length > 0 && (
+                            <div className="space-y-1 ml-4">
+                              {dc.fieldChanges.filter((fc) => !fc.unchanged).map((fc, j) => {
+                                if (fc.field === "Value") {
+                                  const modeFc = dc.fieldChanges.find((x) => x.field === "Mode");
+                                  const typeFc = dc.fieldChanges.find((x) => x.field === "Type");
+                                  const oldText = formatDiscountAmount(fc.oldValue, modeFc?.oldValue, typeFc?.oldValue);
+                                  const newText = formatDiscountAmount(fc.newValue, modeFc?.newValue, typeFc?.newValue);
+                                  return (
+                                    <div key={j} className="flex items-center justify-between text-[12.5px] bg-gray-50 dark:bg-gray-800/40 rounded px-2 py-1">
+                                      <span className="text-gray-500">{fc.field}</span>
+                                      <span className="text-right">
+                                        {dc.action !== "added" && <span className="text-red-500 line-through mr-2">{oldText}</span>}
+                                        {dc.action !== "removed" && <span className="text-green-600 font-medium">{newText}</span>}
+                                        {dc.action === "removed" && <span className="text-red-500 font-medium">{oldText}</span>}
+                                      </span>
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <div key={j} className="flex items-center justify-between text-[12.5px] bg-gray-50 dark:bg-gray-800/40 rounded px-2 py-1">
+                                    <span className="text-gray-500">{fc.field}</span>
+                                    <span className="text-right">
+                                      {dc.action !== "added" && <span className="text-red-500 line-through mr-2">{displayVal(fc.oldValue, fc.field)}</span>}
+                                      {dc.action !== "removed" && <span className="text-green-600 font-medium">{displayVal(fc.newValue, fc.field)}</span>}
+                                      {dc.action === "removed" && <span className="text-red-500 font-medium">{displayVal(fc.oldValue, fc.field)}</span>}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {Object.keys(lineItemGroups).length > 0 && (
                   <div>

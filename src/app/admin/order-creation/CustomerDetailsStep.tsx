@@ -9,6 +9,9 @@ import { HiOutlineUser, HiOutlineOfficeBuilding } from "react-icons/hi";
 import { designations } from "../../utils/collection.json";
 import API_BASE from "../../../../baseurl";
 
+const toTitleCase = (str: string) => str.replace(/\b\w/g, (c) => c.toUpperCase());
+const capitalizeFirstOnly = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
 interface Props {
   data: CustomerFormData;
   customerSelection: CustomerSelection;
@@ -454,11 +457,11 @@ export default function CustomerDetailsStep({
               value={data.name || ""}
               onChange={(e) => {
                 const lettersOnly = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-                set("name", lettersOnly);
+                set("name", toTitleCase(lettersOnly));
               }}
               placeholder="Enter full name"
               className={inputClass(!!errors.name)}
-            // disabled={!!selectedClientOrder} 
+            // disabled={!!selectedClientOrder}
             />
           </FormField>
 
@@ -470,7 +473,7 @@ export default function CustomerDetailsStep({
             <input
               type="email"
               value={data.email || ""}
-              onChange={(e) => set("email", e.target.value)}
+              onChange={(e) => set("email", capitalizeFirstOnly(e.target.value))}
               placeholder="customer@example.com"
               className={inputClass(!!errors.email)}
             // disabled={!!selectedClientOrder}
@@ -500,7 +503,7 @@ export default function CustomerDetailsStep({
           <FormField label="Address" error={errors.address} required={false}>
             <textarea
               value={data.address || ""}
-              onChange={(e) => set("address", e.target.value)}
+              onChange={(e) => set("address", toTitleCase(e.target.value))}
               placeholder="Enter full address"
               rows={3}
               className={inputClass(!!errors.address) + " resize-none"}
@@ -586,7 +589,7 @@ export default function CustomerDetailsStep({
             <input
               type="text"
               value={data.companyName || ""}
-              onChange={(e) => set("companyName", e.target.value)}
+              onChange={(e) => set("companyName", toTitleCase(e.target.value))}
               placeholder="Company Name"
               className={inputClass(!!errors.companyName)}
             />
@@ -598,7 +601,7 @@ export default function CustomerDetailsStep({
               value={data.clientName || ""}
               onChange={(e) => {
                 const lettersOnly = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-                set("clientName", lettersOnly);
+                set("clientName", toTitleCase(lettersOnly));
               }}
               placeholder="Enter client name"
               className={inputClass(!!errors.clientName)}
@@ -639,7 +642,7 @@ export default function CustomerDetailsStep({
             <input
               type="email"
               value={data.email || ""}
-              onChange={(e) => set("email", e.target.value)}
+              onChange={(e) => set("email", capitalizeFirstOnly(e.target.value))}
               placeholder="company@example.com"
               className={inputClass(!!errors.email)}
             />
@@ -648,7 +651,7 @@ export default function CustomerDetailsStep({
            <FormField label="Address" error={errors.address} required={false}>
             <textarea
               value={data.address || ""}
-              onChange={(e) => set("address", e.target.value)}
+              onChange={(e) => set("address", toTitleCase(e.target.value))}
               placeholder="Enter full address"
               rows={3}
               className={inputClass(!!errors.address) + " resize-none"}
