@@ -11,7 +11,9 @@ import RevealText from "@/components/motion/RevealText";
 // TESTIMONIALS SECTION
 // Testimonials.tsx exports `Testimonials` as a NAMED export and has no default
 // export, so this has to be a named import (aliased to keep the name used below).
-import { Testimonials as TestimonialsSection } from "./Testimonials";
+import { Testimonials as RdswWebTestimonialsSection } from "./Testimonials";
+import { GPSTracking as RdswWebGPSTrackingSection } from "./GPSTracking";
+
 
 function StarRating({ rating, size = 20 }) {
     const idPrefix = useId();
@@ -430,9 +432,8 @@ function HomePageSection2() {
     return (
         <>
             {/* VOICES FROM THE ROAD SECTION */}
-            <section className="w-full px-5 sm:px-8 lg:px-20 py-12 bg-[#f8f8f8]">
-                {/* .RS_VFRHeading is gradient text (background-clip: text), so
-                    it cannot be split — it wipes open instead. */}
+            {/* <section className="w-full px-5 sm:px-8 lg:px-20 py-12 bg-[#f8f8f8]">
+    
                 <div className="RS_OurRdwHeading">
                     <RevealText
                         className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2 RS_VFRHeading text-3xl lg:text-5xl"
@@ -442,7 +443,6 @@ function HomePageSection2() {
                     </RevealText>
                 </div>
 
-                {/* Responsive Carousel */}
                 <div
                     ref={viewportRef}
                     className={`VFRCarouselViewport VFRMode-${carouselMode} ${isAnimating ? "VFRCarouselMoving" : ""
@@ -503,7 +503,6 @@ function HomePageSection2() {
                     </div>
                 </div>
 
-                {/* Controls */}
                 <div className="flex justify-center lg:justify-end gap-4 mt-8">
                     <button
                         onClick={() => navigate("prev")}
@@ -521,8 +520,15 @@ function HomePageSection2() {
                         <ChevronRight />
                     </button>
                 </div>
-            </section>
+            </section> */}
 
+            <RdswWebTestimonialsSection />
+            {/* RdswWebGPSTrackingSection */}
+            <div
+            // style={{ width: '70%', margin:'auto' }}
+            >
+                <RdswWebGPSTrackingSection />
+            </div>
             {/* Roadshow Advantages */}
             <div className='RA_Main px-30 mx-auto'>
 
@@ -580,8 +586,8 @@ function HomePageSection2() {
                     </div>
                 </div>
             </div>
-            
-            <TestimonialsSection />
+
+
 
             <div className='HC_Main'>
                 <div className='px-30 mx-auto'>

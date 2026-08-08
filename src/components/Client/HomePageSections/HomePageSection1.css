@@ -859,10 +859,36 @@
      large ones. Percentage sizing made each logo shrink along with its disc, so
      nothing ever broke out of its circle.
 
+     --rs-orbit-f is the same breakpoint factor the discs use, so logos and
+     discs shrink together and the overhang is preserved at every screen size.
+
      No max-height: the widths were solved so the ink lands at a consistent
      size, and a height cap would silently scale the whole image back down and
      undo that. */
-  width: 140px;
+  /* Three independent factors, each owning one concern:
+       --rs-logo-w     per CLIENT  - cancels out that PNG's transparent padding
+                                     so every logo carries equal visual weight
+       --rs-logo-scale per SLOT    - whether this position contains its logo or
+                                     lets it break out of the disc
+       --rs-orbit-f    per SCREEN  - shrinks the whole constellation
+     Because the second is keyed to the slot rather than the brand, the
+     inside/outside rhythm of the layout stays put while "View All Clients"
+     rotates different logos through it. */
+  width: calc(
+    var(--rs-logo-w, 140px) * var(--rs-logo-scale, 0.72) *
+      var(--rs-orbit-f, 1)
+  );
+
+  /* REQUIRED for the logo to overhang its bubble at all.
+
+     Tailwind's preflight sets `img { max-width: 100% }` globally. On an
+     absolutely positioned image that 100% resolves against the containing
+     block — this bubble — so every logo was silently clamped to its own disc's
+     width no matter what `width` above asked for. A 234px logo rendered at
+     88px, which is why nothing ever broke out of its circle and why the only
+     visible size difference between logos came from how much transparent
+     padding each PNG happened to carry. */
+  max-width: none;
 
   object-fit: contain;
   pointer-events: none;
@@ -904,92 +930,244 @@
   max-width: 130px;
 }
 
-/* Disc sizes are deliberately UNEVEN — 88px to 155px, near enough a 2x spread.
+/* Disc sizes and per-slot logo scale, measured off the design.
 
-   An earlier pass had them all within 118-145px, which is too tight a range to
-   register as variety: at a glance every bubble looked the same size and the
-   cluster read as a mechanical grid rather than a scattered constellation.
+   --rs-logo-scale decides whether the position CONTAINS its logo or lets it
+   break out. Only three of the ten break out: making every logo overhang reads
+   as broken rather than designed, and making none of them overhang is the flat,
+   "logos dumped in circles" look. The design mixes the two, so this does too.
 
-   The sizes also alternate around the orbit so no two large discs sit next to
-   each other; that irregularity is what makes the arrangement feel organic.
+     scale 1.0    -> logo is far wider than the disc; the circle becomes a small
+                     accent behind a large wordmark (slots 0, 7, 8)
+     scale ~0.72  -> logo sits inside, or only just past, the disc
 
-   Logos scale with their bubble (the widths in HomePageSection1.tsx are
-   percentages), so a small disc keeps a proportionally small logo — a wide
-   lockup in a small disc still overhangs it, exactly as PHILIPS does in the
-   design. */
+   The spread is deliberately narrow (0.68-1.0, a 1.47x range). It used to run
+   0.45-1.0, i.e. 2.2x, which meant the SAME logo rendered more than twice as
+   large depending on which slot it landed in — so pressing "View All Clients"
+   made a brand like Kellogg's jump from comfortably inside to overflowing. The
+   tighter range keeps the inside/outside mix while making that shift mild
+   enough that a logo still reads as the same size wherever it lands.
+
+   Slots 0 and 7 are the smallest discs (88px) AND overhang, which is what makes
+   them the loudest positions on the board — that pairing is exactly what the
+   design does with PHILIPS and Thangamayil.
+
+   Every size is multiplied by --rs-orbit-f, which defaults to 1 on desktop and
+   is stepped down per breakpoint further below. Declaring the factor here means
+   the sizes exist in exactly ONE place: an earlier version restated all ten
+   rules inside `@media (max-width: 1280px)`, so every change made up here was
+   silently discarded on any screen narrower than that. */
 .RS_Bubble_0 {
   top: 15%;
   left: 15%;
-  width: 96px;
-  height: 96px;
+  width: calc(88px * var(--rs-orbit-f, 1));
+  height: calc(88px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 1;
 }
 
 .RS_Bubble_1 {
   top: -33%;
   left: 41%;
-  width: 142px;
-  height: 142px;
+  width: calc(122px * var(--rs-orbit-f, 1));
+  height: calc(122px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.73;
 }
 
 .RS_Bubble_2 {
   top: -36%;
   left: 58%;
-  width: 104px;
-  height: 104px;
+  width: calc(118px * var(--rs-orbit-f, 1));
+  height: calc(118px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.72;
 }
 
 .RS_Bubble_3 {
   top: 40%;
   left: 27%;
-  width: 128px;
-  height: 128px;
+  width: calc(104px * var(--rs-orbit-f, 1));
+  height: calc(104px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.68;
 }
 
 .RS_Bubble_4 {
   top: 9%;
   left: 34%;
-  width: 155px;
-  height: 155px;
+  width: calc(120px * var(--rs-orbit-f, 1));
+  height: calc(120px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.72;
 }
 
 .RS_Bubble_5 {
   top: -18%;
   left: 72%;
-  width: 98px;
-  height: 98px;
+  width: calc(118px * var(--rs-orbit-f, 1));
+  height: calc(118px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.72;
 }
 
 .RS_Bubble_6 {
   top: 20%;
   left: 64%;
-  width: 136px;
-  height: 136px;
+  width: calc(100px * var(--rs-orbit-f, 1));
+  height: calc(100px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.73;
 }
 
 .RS_Bubble_7 {
   top: 34%;
   left: 78%;
-  width: 88px;
-  height: 88px;
+  width: calc(110px * var(--rs-orbit-f, 1));
+  height: calc(110px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 1;
 }
 
 .RS_Bubble_8 {
   top: -12%;
   left: 24%;
-  width: 118px;
-  height: 118px;
+  width: calc(100px * var(--rs-orbit-f, 1));
+  height: calc(100px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.91;
 }
 
 .RS_Bubble_9 {
   top: -5%;
   left: 84%;
-  width: 148px;
-  height: 148px;
+  width: calc(118px * var(--rs-orbit-f, 1));
+  height: calc(118px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.71;
 }
 
-/* Slots 10-12 were removed: 13 discs filled the orbit edge to edge and lost the
-   breathing room the design relies on. The layout is back to the original 10,
-   which is what makes the arrangement read as scattered rather than packed. */
+/* Slots 10-14 fill the dead corners of the orbit — far left, bottom left, top
+   left, and the two gaps on the right — which were leaving the constellation
+   looking sparse and unfinished.
+
+   FIFTEEN and not sixteen: the pool is 27 brands, so 15 slots means a press of
+   "View All Clients" shows 15 fresh logos and the second press shows the
+   remaining 12 plus exactly 3 repeats to fill the board. Sixteen slots would
+   need 5 repeats, thirteen would need 12. Slot count and pool size have to be
+   chosen together or the last page turns into mostly duplicates. */
+.RS_Bubble_10 {
+  top: -25%;
+  left: 9%;
+  width: calc(118px * var(--rs-orbit-f, 1));
+  height: calc(118px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.72;
+}
+
+.RS_Bubble_11 {
+  top: 24%;
+  left: 2%;
+  width: calc(104px * var(--rs-orbit-f, 1));
+  height: calc(104px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.68;
+}
+
+.RS_Bubble_12 {
+  top: 47%;
+  left: 14%;
+  width: calc(126px * var(--rs-orbit-f, 1));
+  height: calc(126px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.95;
+}
+
+.RS_Bubble_13 {
+  top: -40%;
+  left: 88%;
+  width: calc(122px * var(--rs-orbit-f, 1));
+  height: calc(122px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.73;
+}
+
+.RS_Bubble_14 {
+  top: 36%;
+  left: 90%;
+  width: calc(108px * var(--rs-orbit-f, 1));
+  height: calc(108px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.7;
+}
+
+/* ---------------------------------------------------------------
+   IDLE DRIFT
+   A slow vertical bob so the constellation is never completely still.
+
+   This animates the independent `translate` property, NOT `transform`.
+   GSAP owns `transform` on these elements (the scroll reveal and the pop on
+   every "View All Clients" press both write inline transforms), and a CSS
+   animation on the same property would be overridden mid-reveal and then fight
+   the tween. `translate` is a separate property that the browser composes with
+   `transform`, so the two coexist: GSAP can pop a bubble while it keeps
+   drifting.
+
+   Each slot gets its own duration and a negative delay, which starts it
+   part-way through the cycle. Without that offset all fifteen would rise and
+   fall in lockstep and read as the whole section wobbling.
+   --------------------------------------------------------------- */
+@keyframes RS_ClientBubbleFloat {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -11px;
+  }
+}
+
+.RS_ClientBubble {
+  animation: RS_ClientBubbleFloat
+    var(--rs-float-dur, 6s) ease-in-out
+    var(--rs-float-delay, 0s) infinite;
+}
+
+/* Pausing on hover stops the logo sliding out from under the cursor. */
+.RS_ClientsOrbitArea:hover .RS_ClientBubble {
+  animation-play-state: paused;
+}
+
+.RS_Bubble_0  { --rs-float-dur: 7.5s;  --rs-float-delay: -0.4s; }
+.RS_Bubble_1  { --rs-float-dur: 9s;    --rs-float-delay: -2.6s; }
+.RS_Bubble_2  { --rs-float-dur: 6.8s;  --rs-float-delay: -1.2s; }
+.RS_Bubble_3  { --rs-float-dur: 8.4s;  --rs-float-delay: -3.9s; }
+.RS_Bubble_4  { --rs-float-dur: 7.1s;  --rs-float-delay: -0.9s; }
+.RS_Bubble_5  { --rs-float-dur: 9.6s;  --rs-float-delay: -4.7s; }
+.RS_Bubble_6  { --rs-float-dur: 6.4s;  --rs-float-delay: -2.1s; }
+.RS_Bubble_7  { --rs-float-dur: 8.8s;  --rs-float-delay: -5.3s; }
+.RS_Bubble_8  { --rs-float-dur: 7.8s;  --rs-float-delay: -1.7s; }
+.RS_Bubble_9  { --rs-float-dur: 9.2s;  --rs-float-delay: -3.1s; }
+.RS_Bubble_10 { --rs-float-dur: 6.6s;  --rs-float-delay: -4.2s; }
+.RS_Bubble_11 { --rs-float-dur: 8.1s;  --rs-float-delay: -0.6s; }
+.RS_Bubble_12 { --rs-float-dur: 9.9s;  --rs-float-delay: -5.8s; }
+.RS_Bubble_13 { --rs-float-dur: 7.3s;  --rs-float-delay: -2.9s; }
+.RS_Bubble_14 { --rs-float-dur: 8.6s;  --rs-float-delay: -1.4s; }
+
+/* The centre bubble drifts too, but slower and shorter — it is the anchor, so
+   it should feel heavier than the logos orbiting it. */
+/* Offset only — no -50% here. The element is centred by its existing
+   `transform: translate(-50%, -50%)`, and the browser applies the independent
+   `translate` property IN ADDITION to `transform`, so repeating the -50% would
+   shift the bubble a further half of its own size up and to the left. */
+@keyframes RS_ClientCentreFloat {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -7px;
+  }
+}
+
+.RS_ClientCenterBubble {
+  animation: RS_ClientCentreFloat 11s ease-in-out
+    infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .RS_ClientBubble,
+  .RS_ClientCenterBubble {
+    animation: none;
+  }
+}
 
 .RS_ClientsBtnRow {
   display: flex;
@@ -1086,53 +1264,11 @@
     font-size: calc(40px * var(--rs-orbit-f, 1));
   }
 
-  .RS_ClientLogo {
-    width: calc(65px * var(--rs-orbit-f, 1));
-  }
-
-  .RS_ClientBubble.RS_TextLogo .RS_ClientLogo {
-    width: calc(130px * var(--rs-orbit-f, 1));
-    max-width: none;
-  }
-
-  .RS_ClientBubble.RS_TextLgLogo .RS_ClientLogo {
-    width: calc(120px * var(--rs-orbit-f, 1));
-    max-width: none;
-  }
-
-  .RS_Bubble_0 {
-    width: calc(80px * var(--rs-orbit-f, 1));
-    height: calc(80px * var(--rs-orbit-f, 1));
-  }
-
-  .RS_Bubble_1,
-  .RS_Bubble_2,
-  .RS_Bubble_6 {
-    width: calc(120px * var(--rs-orbit-f, 1));
-    height: calc(120px * var(--rs-orbit-f, 1));
-  }
-
-  .RS_Bubble_3,
-  .RS_Bubble_8 {
-    width: calc(100px * var(--rs-orbit-f, 1));
-    height: calc(100px * var(--rs-orbit-f, 1));
-  }
-
-  .RS_Bubble_4,
-  .RS_Bubble_9 {
-    width: calc(125px * var(--rs-orbit-f, 1));
-    height: calc(125px * var(--rs-orbit-f, 1));
-  }
-
-  .RS_Bubble_5 {
-    width: calc(130px * var(--rs-orbit-f, 1));
-    height: calc(130px * var(--rs-orbit-f, 1));
-  }
-
-  .RS_Bubble_7 {
-    width: calc(85px * var(--rs-orbit-f, 1));
-    height: calc(85px * var(--rs-orbit-f, 1));
-  }
+  /* The .RS_ClientLogo and .RS_Bubble_* sizes that used to be restated here
+     have been removed. They duplicated the base rules with STALE numbers, so
+     every size change made in the base block was silently thrown away on any
+     screen 1280px or narrower. Both now apply --rs-orbit-f in their own base
+     rule, which scales them across breakpoints without a second copy. */
 }
 
 /* --- Phones: stack the Offers heading above the marquee strip

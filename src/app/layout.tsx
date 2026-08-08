@@ -1,6 +1,6 @@
 /* eslint-disable */
 // @ts-nocheck
-import { Outfit } from 'next/font/google';
+import { Outfit, Geist } from 'next/font/google';
 import './globals.css';
 import "flatpickr/dist/flatpickr.css";
 import { AuthProvider } from "@/context/AuthContext";
@@ -9,6 +9,9 @@ import AuthModal from "@/components/auth/ClientAuthModal";
 
 import Navbar from "@/components/Client/Reusable_Components/Navbar";
 import Footer from "@/components/Client/Reusable_Components/Footer";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -21,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <head>
         <link
           rel="stylesheet"

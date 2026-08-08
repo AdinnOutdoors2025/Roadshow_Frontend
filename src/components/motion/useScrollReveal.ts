@@ -97,12 +97,35 @@ export function useScrollReveal(
       fromVars.scale = scaleFrom;
     }
 
+    /* Hold any CSS animation on the targets still while they reveal. An
+       element that is already drifting (the client bubbles have an idle bob)
+       never visibly comes to rest — it arrives and immediately slides again,
+       so the settle reads as unsteady. Paused rather than cancelled, so it
+       keeps its place in the cycle and resuming does not jump. A no-op on
+       targets that have no animation. */
+    const elements = targets.filter(
+      (element): element is HTMLElement =>
+        element instanceof HTMLElement
+    );
+
+    elements.forEach((element) => {
+      element.style.animationPlayState = "paused";
+    });
+
+    const resumeCssAnimation = () => {
+      elements.forEach((element) => {
+        element.style.animationPlayState = "";
+      });
+    };
+
     /* gsap.context scopes and, on revert(), cleans up every tween and
        ScrollTrigger created inside it — important on a route change, or the
        triggers pile up and start firing against a stale DOM. */
     const context = gsap.context(() => {
       gsap.from(targets, {
         ...fromVars,
+        onComplete: resumeCssAnimation,
+        onInterrupt: resumeCssAnimation,
         duration,
         delay,
         stagger: { each: stagger, from: staggerFrom },
@@ -119,7 +142,12 @@ export function useScrollReveal(
       });
     }, container);
 
-    return () => context.revert();
+    return () => {
+      /* If the component unmounts before the trigger fires, the tween never
+         runs its onComplete — restore here so the drift is not left paused. */
+      resumeCssAnimation();
+      context.revert();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     containerRef,

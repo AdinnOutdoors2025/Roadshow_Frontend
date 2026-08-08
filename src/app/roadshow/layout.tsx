@@ -2,6 +2,7 @@
 import Navbar from '../../components/Client/Reusable_Components/Navbar';
 import Footer from '../../components/Client/Reusable_Components/Footer';
 import GlobalSmoothScroll from '@/components/GlobalSmoothScroll';
+import { SmoothScroll } from "../../components/Client/HomePageSections/SmoothScroll";
 
 export default function ClientLayout({
   children,
@@ -15,6 +16,7 @@ export default function ClientLayout({
           transform on #smooth-content, and a transformed ancestor breaks
           `position: fixed` for everything inside it. */}
       <Navbar />
+    <SmoothScroll>
 
       {/* Smooth scrolling for every public-site page */}
       <GlobalSmoothScroll>
@@ -23,6 +25,8 @@ export default function ClientLayout({
         </div>
         <Footer />
       </GlobalSmoothScroll>
+    </SmoothScroll>
+
     </>
   );
 }

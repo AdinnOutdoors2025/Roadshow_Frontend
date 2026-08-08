@@ -1526,10 +1526,22 @@ import {
 } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useCartCount } from "@/hooks/useCartCount";
+import {
+  HOME_VEHICLES_SECTION_ID,
+  scrollToSection,
+} from "./scrollToSection";
 
+/* "Vehicle" is a section link, not a route: it takes the user to the
+   "Our Roadshow Vehicles" carousel on the homepage. The dedicated
+   /roadshow/vehicles page still exists and still works if opened
+   directly — it is simply no longer what the navbar points at. */
 const navLinks = [
   { label: "Home", href: "/", icon: "home" },
-  { label: "Vehicle", href: "/roadshow/vehicles", icon: "vehicle" },
+  {
+    label: "Vehicle",
+    href: `/#${HOME_VEHICLES_SECTION_ID}`,
+    icon: "vehicle",
+  },
   { label: "Contact Us", href: "/roadshow/Contact", icon: "contact" },
 ];
 
@@ -1699,12 +1711,60 @@ export default function Navbar() {
     });
   });
 
+  /* Which section the address bar is currently pointing at. Read from
+     window rather than a router hook because the App Router does not
+     re-render on hash-only changes. Safe against hydration mismatch:
+     the navbar renders nothing until `mounted` flips. */
+  const [activeHash, setActiveHash] = useState("");
+
+  useEffect(() => {
+    const syncHash = () => setActiveHash(window.location.hash);
+
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, [pathname]);
+
   const isActive = (href: string) => {
+    const [path, hash] = href.split("#");
+
+    /* Section link — lit only when we are on its page AND its section is
+       the one in the address bar, so "Home" and "Vehicle" (both on "/")
+       never light up together. */
+    if (hash) {
+      return pathname === (path || "/") && activeHash === `#${hash}`;
+    }
+
     if (href === "/") {
-      return pathname === "/";
+      return pathname === "/" && !activeHash;
     }
 
     return pathname === href || pathname?.startsWith(`${href}/`);
+  };
+
+  /* Section links glide instead of reloading when we are already on the
+     target page; from any other page the Link navigates normally and the
+     destination scrolls itself on arrival (see HomePageSection1). */
+  const handleNavLinkClick = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    setOpen(false);
+
+    const [path, hash] = href.split("#");
+
+    if (!hash) return;
+    if (pathname !== (path || "/")) return;
+
+    event.preventDefault();
+
+    if (scrollToSection(hash)) {
+      /* replaceState, not a router push: the page is not changing, and a
+         push would put a no-op entry in the back stack. */
+      window.history.replaceState(null, "", href);
+      setActiveHash(`#${hash}`);
+    }
   };
 
   useEffect(() => {
@@ -3598,7 +3658,7 @@ export default function Navbar() {
                   href={href}
                   className={`RS_SoftNavLink ${active ? "RS_SoftNavLink--active" : ""
                     }`}
-                  onClick={() => setOpen(false)}
+                  onClick={(event) => handleNavLinkClick(event, href)}
                   aria-current={active ? "page" : undefined}
                 >
                   <span className="RS_SoftNavIcon">
@@ -3691,7 +3751,7 @@ export default function Navbar() {
                   tabIndex={open ? 0 : -1}
                   className={`RS_SoftMobileNavLink ${active ? "RS_SoftMobileNavLink--active" : ""
                     }`}
-                  onClick={() => setOpen(false)}
+                  onClick={(event) => handleNavLinkClick(event, href)}
                   aria-current={active ? "page" : undefined}
                 >
                   <span>{label}</span>

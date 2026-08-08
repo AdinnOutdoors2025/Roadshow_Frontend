@@ -8,9 +8,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-import { motion } from "framer-motion";
 
 import "./HomePageSection1.css";
 import SplitHeading from "@/components/motion/SplitHeading";
@@ -27,14 +24,16 @@ import {
   ButtonHover as ViewAllClientsButton,
 } from "../Reusable_Components/ButtonHover";
 import {
-  ButtonHover as VehicleBookNowButton,
-} from "../Reusable_Components/ButtonHover";
-import {
-  FALLBACK_VEHICLE_IMAGE,
-  fetchAllRoadshowVehicles,
-  type RoadshowVehicle,
-} from "@/lib/roadshowVehicles";
-
+  HOME_VEHICLES_SECTION_ID,
+  scrollToSection,
+} from "../Reusable_Components/scrollToSection";
+/* The vehicle grid, tabs, spec popup and its data fetch all live here now —
+   this section used to hold its own carousel and fetch. */
+import VehicleListing from "@/components/Client/VehicleListing/VehicleListing";
+// ROADSHOW WEBSITE ABOUT SECTION 
+import {About as RoadshowWebsiteAboutSection } from './About';
+import {Process as RoadshowWebsiteStreetVisibilitySection } from './Process';
+import ImpactCtaBanner from "./ImpactCtaBanner";
 const cities = [
   {
     name: "Chennai",
@@ -148,52 +147,57 @@ const whyAdinnWorksBest = [
    To add a client: drop the file in public/images/assets/Client-logos, add a
    line here, and start from w: 140 — then nudge until it sits right. */
 const ourClients = [
-  // Lead with the flagship brands — these are the ones on screen by default.
-  { name: "Philips", logo: "./images/assets/Client-logos/Philips.png", w: 170 },
-  { name: "Thangamayil Jewellery", logo: "./images/assets/Client-logos/Thangamayil_Jewellery.png", w: 168 },
-  { name: "Airtel", logo: "./images/assets/Client-logos/Airtel.png", w: 133 },
+  /* Lead with the flagship brands — these are the ones on screen by default.
+     Philips sits first and Thangamayil eighth so they land on slots 0 and 7,
+     the two 88px discs: a wide wordmark over the smallest circle is what
+     produces the big overhang those two have in the design. */
+  { name: "Philips", logo: "./images/assets/Client-logos/Philips.png", w: 140 },
+  { name: "Hero", logo: "./images/assets/Client-logos/Hero.png", w: 150 },
+  { name: "Airtel", logo: "./images/assets/Client-logos/Airtel.png", w: 210 },
   // Kellogg's has no file in Client-logos, so it keeps its original asset path.
-  { name: "Kellogg's", logo: "./images/assets/RS_Client_kelloggs_logo.png", w: 125 },
-  { name: "ACC", logo: "./images/assets/Client-logos/ACC.png", w: 129 },
-  { name: "Bajaj", logo: "./images/assets/Client-logos/Bajaj.png", w: 154 },
-  { name: "Domino's", logo: "./images/assets/Client-logos/Dominos.png", w: 143 },
-  { name: "Hero", logo: "./images/assets/Client-logos/Hero.png", w: 133 },
-  { name: "Casagrand", logo: "./images/assets/Client-logos/Casagrand.png", w: 199 },
-  { name: "GRT Jewellers", logo: "./images/assets/Client-logos/GRT_Jewellers.png", w: 195 },
+  { name: "Kellogg's", logo: "./images/assets/RS_Client_kelloggs_logo.png", w: 175 },
+  { name: "ACC", logo: "./images/assets/Client-logos/ACC.png", w: 170 },
+  { name: "Bajaj", logo: "./images/assets/Client-logos/Bajaj.png", w:250 },
+  { name: "Domino's", logo: "./images/assets/Client-logos/Dominos.png", w: 260 },
+  { name: "Thangamayil Jewellery", logo: "./images/assets/Client-logos/Thangamayil_Jewellery.png", w: 230 },
+  { name: "Casagrand", logo: "./images/assets/Client-logos/Casagrand.png", w: 270 },
+  { name: "GRT Jewellers", logo: "./images/assets/Client-logos/GRT_Jewellers.png", w: 300 },
 
-  { name: "Ambuja Cement", logo: "./images/assets/Client-logos/Ambuja_Cement.png", w: 120 },
-  { name: "Dalmia Cement", logo: "./images/assets/Client-logos/Dalmia_Cement.png", w: 129 },
-  { name: "DRA Homes", logo: "./images/assets/Client-logos/DRA_Homes.png", w: 122 },
-  { name: "G Square", logo: "./images/assets/Client-logos/G_Square.png", w: 142 },
-  { name: "Havells", logo: "./images/assets/Client-logos/Havells.png", w: 222 },
-  { name: "Impex", logo: "./images/assets/Client-logos/Impex.png", w: 220 },
-  { name: "ITC", logo: "./images/assets/Client-logos/ITC.png", w: 210 },
-  { name: "KFC", logo: "./images/assets/Client-logos/KFC.png", w: 195 },
-  { name: "Lalithaa Jewellery", logo: "./images/assets/Client-logos/Lalithaa_Jewellery.png", w: 193 },
-  { name: "Maruti Suzuki", logo: "./images/assets/Client-logos/Maruti_Suzuki.png", w: 118 },
+  { name: "Ambuja Cement", logo: "./images/assets/Client-logos/Ambuja_Cement.png", w: 110 },
+  { name: "Dalmia Cement", logo: "./images/assets/Client-logos/Dalmia_Cement.png", w: 151 },
+  { name: "DRA Homes", logo: "./images/assets/Client-logos/DRA_Homes.png", w: 160 },
+  { name: "G Square", logo: "./images/assets/Client-logos/G_Square.png", w: 180 },
+  { name: "Havells", logo: "./images/assets/Client-logos/Havells.png", w: 400 },
+  { name: "Impex", logo: "./images/assets/Client-logos/Impex.png", w: 250 },
+  { name: "ITC", logo: "./images/assets/Client-logos/ITC.png", w: 280 },
+  { name: "KFC", logo: "./images/assets/Client-logos/KFC.png", w: 220 },
+  { name: "Lalithaa Jewellery", logo: "./images/assets/Client-logos/Lalithaa_Jewellery.png", w: 300 },
+  { name: "Maruti Suzuki", logo: "./images/assets/Client-logos/Maruti_Suzuki.png", w: 200 },
 
-  { name: "Milky Mist", logo: "./images/assets/Client-logos/Milky_Mist.png", w: 150 },
-  { name: "Nippon Paint", logo: "./images/assets/Client-logos/Nippon_Paint.png", w: 134 },
-  { name: "Poorvika", logo: "./images/assets/Client-logos/Poorvika.png", w: 184 },
-  { name: "Royal Enfield", logo: "./images/assets/Client-logos/Royal_Enfield.png", w: 188 },
-  { name: "Sree Kumaran Thangamaligai", logo: "./images/assets/Client-logos/Sree_Kumaran_Thangamaligai.png", w: 162 },
-  { name: "The Chennai Mobiles", logo: "./images/assets/Client-logos/The_Chennai_Mobiles.png", w: 113 },
-  { name: "TVS", logo: "./images/assets/Client-logos/TVS.png", w: 176 },
+  { name: "Milky Mist", logo: "./images/assets/Client-logos/Milky_Mist.png", w: 145 },
+  { name: "Nippon Paint", logo: "./images/assets/Client-logos/Nippon_Paint.png", w: 170 },
+  { name: "Poorvika", logo: "./images/assets/Client-logos/Poorvika.png", w: 290 },
+  { name: "Royal Enfield", logo: "./images/assets/Client-logos/Royal_Enfield.png", w: 250 },
+  { name: "Sree Kumaran Thangamaligai", logo: "./images/assets/Client-logos/Sree_Kumaran_Thangamaligai.png", w: 300 },
+  { name: "The Chennai Mobiles", logo: "./images/assets/Client-logos/The_Chennai_Mobiles.png", w: 230 },
+  { name: "TVS", logo: "./images/assets/Client-logos/TVS.png", w: 220 },
 ];
 
 /* The orbit has exactly this many positioned slots in the stylesheet
-   (.RS_Bubble_0 … .RS_Bubble_9). `ourClients` above is a POOL, not the set of
-   bubbles: only this many are on screen at a time and "View All Clients"
+   (.RS_Bubble_0 … .RS_Bubble_14). `ourClients` above is a POOL, not the set of
+   bubbles: only this many are on screen at a time and "Explore More Brands"
    advances which slice of the pool is shown.
 
-   Held at 10 to match the design's spacing — 13 discs packed the orbit edge to
-   edge and lost the scattered feel. A page still never repeats a brand (10 is
-   well under the 26-brand pool); successive pages walk through the pool and
-   wrap, so every client gets shown across a few clicks.
+   15 is chosen against the 27-brand pool, not picked for looks. The last page
+   has to be padded with repeats to fill the board, and how many depends
+   entirely on this number: 15 slots needs 3 repeats, 16 needs 5, 13 needs 12.
+   Change one without the other and the second press turns into mostly
+   duplicates.
 
    To add clients, just append to `ourClients` above. To add a bubble, add a
-   matching .RS_Bubble_<n> rule in HomePageSection1.css and bump this number. */
-const CLIENT_BUBBLE_SLOTS = 10;
+   matching .RS_Bubble_<n> rule in HomePageSection1.css and bump this number —
+   then re-check the repeat count above. */
+const CLIENT_BUBBLE_SLOTS = 15;
 
 type WhyExitDirection = "exit-left" | "exit-right";
 
@@ -202,14 +206,10 @@ type WhyExitDirection = "exit-left" | "exit-right";
 const WHY_IMAGE_ANIMATION_MS = 1500;
 
 export default function HomePageSection1() {
-  const router = useRouter();
-
-  const [ourRSVehicles, setOurRSVehicles] = useState<RoadshowVehicle[]>([]);
-  const [loadingVehicles, setLoadingVehicles] = useState(true);
-  const [vehicleLoadError, setVehicleLoadError] = useState("");
-  const [openingVehicleId, setOpeningVehicleId] = useState<string | null>(null);
-  const [currentVehicleIndex, setCurrentVehicleIndex] = useState(0);
-  const [visibleVehicleCount, setVisibleVehicleCount] = useState(4);
+  /* The vehicle grid owns its own fetch, its own category tabs and its own
+     spec popup (see VehicleListing). All this section keeps is the signal
+     that the fetch has finished, used to time the hash scroll below. */
+  const [vehiclesReady, setVehiclesReady] = useState(false);
 
   // Why Adinn vehicle: pure-CSS directional in/out animation.
   // -1 means every capsule is closed and no vehicle is shown.
@@ -225,27 +225,26 @@ export default function HomePageSection1() {
     null,
   );
 
-  const vehicleCarouselRef = useRef<HTMLDivElement | null>(null);
   const clientsOrbitRef = useRef<HTMLDivElement | null>(null);
   const whyListRef = useRef<HTMLDivElement | null>(null);
 
-  /* The vehicle list is fetched after mount, so the cards do not exist when the
-     hook first runs — ourRSVehicles is passed as a dep to re-create the trigger
-     once they render. */
-  useScrollReveal(vehicleCarouselRef, {
-    selector: ".RS_VehicleCardMain",
-    distance: DISTANCE.lg,
-    stagger: STAGGER.base,
-    deps: [ourRSVehicles.length, loadingVehicles],
-  });
+  /* How many presses of "Explore More Brands" it takes to show the whole pool.
+     27 clients across 15 slots -> 2 pages. */
+  const CLIENT_PAGE_COUNT = Math.max(
+    1,
+    Math.ceil(
+      ourClients.length / CLIENT_BUBBLE_SLOTS,
+    ),
+  );
 
-  /* Which slice of the client pool the bubbles are currently showing. */
-  const [clientOffset, setClientOffset] = useState(0);
+  /* Which page of the client pool the bubbles are currently showing. */
+  const [clientPage, setClientPage] = useState(0);
 
-  /* One entry per bubble slot, wrapping around the pool so every slot is always
-     filled even when the pool is not a multiple of CLIENT_BUBBLE_SLOTS.
-     Derived from the offset rather than shuffled at random: a random order
-     would differ between the server and client render and trip hydration. */
+  /* One entry per bubble slot. Wrapping keeps every slot filled when the pool
+     is not an exact multiple of the slot count — only the final page repeats,
+     and only for its remainder. Derived from the page rather than shuffled at
+     random: a random order would differ between the server and client render
+     and trip hydration. */
   const visibleClients = useMemo(() => {
     if (!ourClients.length) return [];
 
@@ -253,30 +252,28 @@ export default function HomePageSection1() {
       { length: CLIENT_BUBBLE_SLOTS },
       (_unused, slot) => {
         const index =
-          (clientOffset + slot) % ourClients.length;
+          (clientPage * CLIENT_BUBBLE_SLOTS + slot) %
+          ourClients.length;
 
         return { ...ourClients[index], slot };
       },
     );
-  }, [clientOffset]);
+  }, [clientPage]);
 
   const showMoreClients = () => {
     if (!ourClients.length) return;
 
-    setClientOffset((current) => {
-      /* With more clients than slots, step a whole page so every bubble shows
-         a client that was not on screen before. With a pool no bigger than the
-         orbit there is no second page, so step by one instead — that reshuffles
-         which logo sits in which bubble, which still reads as a change. */
-      const step =
-        ourClients.length > CLIENT_BUBBLE_SLOTS
-          ? CLIENT_BUBBLE_SLOTS
-          : 1;
+    /* Cycle whole pages: 0 -> 1 -> 2 -> 0.
 
-      return (
-        (current + step) % ourClients.length
-      );
-    });
+       This replaces a rolling offset that advanced by 10 and wrapped on the
+       pool length. With 27 clients that produced 0, 10, 20, 3, 13, 23, 6 ... —
+       from the fourth press onwards each set overlapped most of a set shown two
+       presses earlier, so the same logos kept reappearing and the sequence
+       never returned to a clean start. Paging visits all 27 in three presses
+       and repeats only the 3 needed to fill out the last page. */
+    setClientPage(
+      (current) => (current + 1) % CLIENT_PAGE_COUNT,
+    );
   };
 
   /* Replay the pop when the visible set changes, so the swap reads as the group
@@ -294,19 +291,35 @@ export default function HomePageSection1() {
 
     if (!orbit) return;
 
+    /* Rise, rather than a pop in place: the new set drifts up from just below
+       its resting position, which reads as the board refilling instead of the
+       images blinking over.
+
+       No overshoot and only a slight scale change — this fires on every press
+       and repeats, so anything springy gets tiring and reads as a snap. */
     playPopIn(
       orbit.querySelectorAll(".RS_ClientBubble"),
+      {
+        rise: 26,
+        scaleFrom: 0.9,
+        duration: 0.95,
+      },
     );
-  }, [clientOffset]);
+  }, [clientPage]);
 
-  /* Bubbles pop in with a little overshoot, radiating out from the middle of
-     the orbit rather than running in DOM order — they are arranged around a
-     centre, so a left-to-right cascade reads as arbitrary. */
+  /* Bubbles ease in radiating out from the middle of the orbit rather than
+     running in DOM order — they are arranged around a centre, so a left-to-
+     right cascade reads as arbitrary.
+
+     No overshoot, and the scale starts close to 1. A `back` ease sends every
+     bubble past its resting size and back again; across fifteen staggered
+     elements that lands as a ripple of snaps rather than one settle. */
   useScrollReveal(clientsOrbitRef, {
     selector: ".RS_ClientBubble",
-    direction: "none",
-    scaleFrom: 0.5,
-    ease: "back.out(1.7)",
+    direction: "up",
+    distance: DISTANCE.sm,
+    scaleFrom: 0.9,
+    ease: "power3.out",
     staggerFrom: "center",
     stagger: STAGGER.tight,
     duration: DURATION.slow,
@@ -402,78 +415,25 @@ export default function HomePageSection1() {
     };
   }, []);
 
+  /* Landing on /#our-roadshow-vehicles from another page (navbar "Vehicle"
+     link, or a pasted URL). Two reasons the browser cannot do this itself:
+     ScrollSmoother transforms #smooth-content so the native hash jump is
+     measured against the wrong scrollport, and the grid only reaches its
+     real height once the vehicles come back from the API — a scroll fired
+     before that lands short. So wait for VehicleListing to report the fetch
+     settled, give the cards a moment to lay out, then scroll. */
   useEffect(() => {
-    const loadVehicles = async () => {
-      try {
-        setLoadingVehicles(true);
-        setVehicleLoadError("");
+    if (!vehiclesReady) return;
+    if (window.location.hash !== `#${HOME_VEHICLES_SECTION_ID}`) return;
 
-        const vehicles = await fetchAllRoadshowVehicles();
-
-        setOurRSVehicles(vehicles);
-        setCurrentVehicleIndex(0);
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unable to load vehicles.";
-
-        setVehicleLoadError(message);
-        setOurRSVehicles([]);
-        toast.error(message);
-      } finally {
-        setLoadingVehicles(false);
-      }
-    };
-
-    void loadVehicles();
-  }, []);
-
-  useEffect(() => {
-    const updateVisibleVehicleCount = () => {
-      const width = window.innerWidth;
-
-      if (width < 640) {
-        setVisibleVehicleCount(1);
-      } else if (width < 768) {
-        setVisibleVehicleCount(2);
-      } else if (width < 1024) {
-        setVisibleVehicleCount(3);
-      } else {
-        setVisibleVehicleCount(4);
-      }
-    };
-
-    updateVisibleVehicleCount();
-    window.addEventListener("resize", updateVisibleVehicleCount);
-
-    return () => {
-      window.removeEventListener("resize", updateVisibleVehicleCount);
-    };
-  }, []);
-
-  const maxVehicleIndex = Math.max(
-    0,
-    ourRSVehicles.length - visibleVehicleCount,
-  );
-
-  useEffect(() => {
-    setCurrentVehicleIndex((previousIndex) =>
-      Math.min(previousIndex, maxVehicleIndex),
-    );
-  }, [maxVehicleIndex]);
-
-  const openVehicleDetails = (vehicleId: string) => {
-    if (!vehicleId || openingVehicleId) {
-      return;
-    }
-
-    setOpeningVehicleId(vehicleId);
-
-    window.setTimeout(() => {
-      router.push(
-        `/roadshow/VehicleDetails/${encodeURIComponent(vehicleId)}`,
-      );
+    /* 250ms clears GlobalSmoothScroll's debounced ScrollTrigger.refresh()
+       (150ms) that fires when the grid changes the page height. */
+    const timerId = window.setTimeout(() => {
+      scrollToSection(HOME_VEHICLES_SECTION_ID);
     }, 250);
-  };
+
+    return () => window.clearTimeout(timerId);
+  }, [vehiclesReady]);
 
   useEffect(() => {
     return () => {
@@ -575,6 +535,7 @@ export default function HomePageSection1() {
 
   return (
     <>
+    {/* OFFERS SECTION  */}
       <section className="OffersSection flex">
         <div className="OffersHeadingMain flex items-center justify-center gap-4">
           <div className="OffersHeading">Offers</div>
@@ -631,141 +592,55 @@ export default function HomePageSection1() {
           </div>
         </div>
       </section>
+{/* CTA BANNER FOR 250+ ROADSHOW VEHICLE 10L+ IMPRESSION HIGHLIGHTS ADDED  */}
 
+<ImpactCtaBanner ctaHref="/roadshow/Contact" />
+{/* RoadshowWebsiteAboutSection  */}
+<RoadshowWebsiteAboutSection/>
+{/* RoadshowWebsiteStreetVisibilitySection  */}
+<RoadshowWebsiteStreetVisibilitySection/>
+
+
+{/* OUR ROADSHOW VEHICLES LISTING SECTION  */}
       <div
         id="our-roadshow-vehicles"
         className="RS_OurRdwMainSection mx-auto px-20"
       >
-        {/* Line 1 is plain black text, so it can be split into words.
-            Line 2 carries the gradient (.RS_OurRdwHeadingContent2) and must NOT
-            be split — see RevealText for why. It wipes open instead, which also
-            gives the two lines distinct movement rather than one flat effect. */}
-        <div className="RS_OurRdwHeading">
-          <SplitHeading className="RS_OurRdwHeadingContent1">
-            Our Roadshow
-          </SplitHeading>
-          <RevealText
-            className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
-            effect="wipe"
-            delay={0.18}
-          >
-            Vehicles
-          </RevealText>
-        </div>
+        {/* The category-segregated grid — the very same component the
+            dedicated /roadshow/vehicles page renders under its hero, so the
+            two surfaces can never drift apart. This replaced the sliding
+            carousel; `reveal` keeps the GSAP card stagger the section had
+            before. Card click opens the spec popup, and "Book This Vehicle"
+            still goes to /roadshow/VehicleDetails/[id] and on into the
+            campaign request form — that flow is untouched.
 
-        <div className="RS_CarouselWrapper" ref={vehicleCarouselRef}>
-          {loadingVehicles ? (
-            <div className="RS_VehicleState">Loading vehicles...</div>
-          ) : vehicleLoadError ? (
-            <div className="RS_VehicleState">{vehicleLoadError}</div>
-          ) : (
-            <div
-              className="RS_OurRdwVehicleList"
-              style={{
-                transform: `translateX(-${
-                  currentVehicleIndex * (100 / visibleVehicleCount)
-                }%)`,
-              }}
-            >
-              {ourRSVehicles.map((vehicle, index) => {
-                const vehicleRate = Number(vehicle.rate ?? 0);
-
-                return (
-                  /* Reveal is driven by useScrollReveal on the wrapper (GSAP
-                     ScrollTrigger), not per-card whileInView — see the hook for
-                     why IntersectionObserver is unreliable under ScrollSmoother.
-                     whileHover stays on framer: hover is pointer-driven, so it
-                     never depends on scroll position. */
-                  <motion.div
-                    key={vehicle.id || `${vehicle.name}-${index}`}
-                    className="RS_VehicleCardMain RS_VehicleCardFlex cursor-pointer"
-                    onClick={() => openVehicleDetails(vehicle.id)}
-                    whileHover={{ y: -6 }}
-                    transition={{
-                      duration: DURATION.fast,
-                    }}
-                  >
-                    <div>
-                      <img
-                        src={vehicle.image || FALLBACK_VEHICLE_IMAGE}
-                        alt={vehicle.name}
-                        className="RS_VehicleImg"
-                        onError={(event) => {
-                          event.currentTarget.src = FALLBACK_VEHICLE_IMAGE;
-                        }}
-                      />
-                    </div>
-
-                    <div className="RS_VehicleDetailsMain">
-                      <div className="RS_VehicleName">{vehicle.name}</div>
-
-                      <div className="RS_VehicleRate">
-                        {vehicleRate > 0
-                          ? `₹${vehicleRate.toLocaleString("en-IN")} /Per Day`
-                          : "Contact for price"}
-                      </div>
-
-                      <div className="RS_VehicleRatingMain flex items-center gap-1">
-                        <div className="RS_VehicleRatingValue">
-                          {vehicle.rating ?? "--"}
-                        </div>
-
-                        <img
-                          src="./images/assets/RS_VehicleRateStar.svg"
-                          className="RS_VehicleRatingImg"
-                          alt="Rating"
-                        />
-                      </div>
-
-                      <div onClick={(event) => event.stopPropagation()}>
-                        <VehicleBookNowButton
-                          label="Book Now"
-                          loadingLabel="Opening..."
-                          className="RS_VehicleButton"
-                          loading={openingVehicleId === vehicle.id}
-                          disabled={Boolean(openingVehicleId)}
-                          onClick={() => openVehicleDetails(vehicle.id)}
-                        />
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
+            The heading is handed over as a prop rather than rendered above,
+            so the category tabs can sit opposite it on the same row. The
+            markup and its animations are unchanged — only its parent is. */}
+        <VehicleListing
+          layout="carousel"
+          reveal
+          onLoaded={() => setVehiclesReady(true)}
+          heading={
+            /* Line 1 is plain black text, so it can be split into words.
+               Line 2 carries the gradient (.RS_OurRdwHeadingContent2) and must
+               NOT be split — see RevealText for why. It wipes open instead,
+               which also gives the two lines distinct movement rather than one
+               flat effect. */
+            <div className="RS_OurRdwHeading">
+              <SplitHeading className="RS_OurRdwHeadingContent1">
+                Our Roadshow
+              </SplitHeading>
+              <RevealText
+                className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
+                effect="wipe"
+                delay={0.18}
+              >
+                Vehicles
+              </RevealText>
             </div>
-          )}
-
-          <div className="RS_CarouselNavRow">
-            <button
-              type="button"
-              className="RS_CarouselBtn"
-              onClick={() =>
-                setCurrentVehicleIndex((previousIndex) =>
-                  Math.max(previousIndex - 1, 0),
-                )
-              }
-              disabled={currentVehicleIndex === 0 || loadingVehicles}
-              aria-label="Previous vehicle"
-            >
-              <i className="fa-solid fa-chevron-left" />
-            </button>
-
-            <button
-              type="button"
-              className="RS_CarouselBtn"
-              onClick={() =>
-                setCurrentVehicleIndex((previousIndex) =>
-                  Math.min(previousIndex + 1, maxVehicleIndex),
-                )
-              }
-              disabled={
-                currentVehicleIndex >= maxVehicleIndex || loadingVehicles
-              }
-              aria-label="Next vehicle"
-            >
-              <i className="fa-solid fa-chevron-right" />
-            </button>
-          </div>
-        </div>
+          }
+        />
       </div>
 
       <div className="mx-auto px-30 RS_WhyAdRSSectionWrap">
@@ -930,15 +805,26 @@ export default function HomePageSection1() {
                   src={client.logo}
                   alt={client.name}
                   className="RS_ClientLogo"
-                  style={{ width: `${client.w}px` }}
+                  /* Fed in as a custom property rather than `width` directly so
+                     the stylesheet can multiply it by --rs-orbit-f. An inline
+                     `width` would beat every breakpoint rule and leave logos at
+                     full size while their discs shrank. */
+                  style={
+                    {
+                      "--rs-logo-w": `${client.w}px`,
+                    } as React.CSSProperties
+                  }
                 />
               </div>
             ))}
           </div>
 
           <div className="RS_ClientsBtnRow">
+            {/* Not "View All Clients": the button does not open a full list,
+                it rotates the board to the next set of brands. Labelling it
+                "all" promised a page that does not exist. */}
             <ViewAllClientsButton
-              label="View All Clients"
+              label="Explore More Brands"
               className="RS_ViewAllClientsBtn"
               onClick={showMoreClients}
               /* Nothing to swap to when there is only one logo. */
