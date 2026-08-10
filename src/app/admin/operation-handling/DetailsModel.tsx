@@ -1,6 +1,4 @@
 
-
-
 /* eslint-disable */
 // @ts-nocheck
 
@@ -32,6 +30,11 @@ import ProjectExecutionHistoryTab from "./ProjectExecutionHistoryTab";
 import CombinedHistoryTab from "./CombinedHistoryTab";
 import OverviewTab from "./OverviewTab";
 import OnRoadTab from "./OnRoadTab";
+import { useVehicle } from "../../../context/vehicletypecontext";
+import VehicleUnavailable from "./VehicleUnavailableTab";
+import OrderReportPDF from "./OrderReportPDF";
+import ClientClosureTab from "./ClientClosureTab";
+import CampaignCalculatorTab from "./CampaignCalculatorTab";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -64,6 +67,8 @@ interface Order {
     clientName?: string;
     designation?: string;
     gstNumber?: string;
+    panNumber?: string;
+    invoiceData?: any;
     customerCategory?: string;
 }
 
@@ -89,22 +94,19 @@ const NEXT_STAGE: Record<string, string> = {
     todo: "projectExecution",
     projectCodeCreation: "projectExecution",
     projectExecution: "onRoad",
-    onRoad: "campaignRunning",
-    campaignRunning: "clientClosure",
-    clientClosure: "invoiceGeneration",
-    invoiceGeneration: "paymentStage2",
-    paymentStage2: "closedWon",
+    onRoad: "clientClosure",
+    clientClosure: "closedWon",
+   
 };
 
 const NEXT_LABEL: Record<string, string> = {
-    todo: "Move to Project Execution ⚙️",
-    projectCodeCreation: "Move to Project Execution ⚙️",
-    projectExecution: "Move to On Road 🚗",
-    onRoad: "Move to Campaign Running 📣",
-    campaignRunning: "Move to Client Closure 📝",
-    clientClosure: "Move to Invoice Generation 🧾",
-    invoiceGeneration: "Move to Payment Stage 2 💰",
-    paymentStage2: "Move to Closed Won 🎉",
+    todo: "Move to Project Execution ",
+    projectCodeCreation: "Move to Project Execution ",
+    projectExecution: "Move to On Road ",
+    onRoad: "Move to Client Closure ",
+    clientClosure: "Move to Invoice Generation ",
+    invoiceGeneration: "Move to Payment Stage 2 ",
+    paymentStage2: "Move to Closed Won ",
 };
 
 // ─── Formatters ─────────────────────────────────────────────────────────────────
@@ -140,7 +142,7 @@ const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
 export default function DetailDrawer({
     order, onClose, onRefresh, staffAdmins = [], currentUserIsAdmin = 1,
-    onStageMove, saving,
+    onStageMove, saving, defaultTab = "overview",
 }: {
     order: Order;
     onClose: () => void;
@@ -151,12 +153,35 @@ export default function DetailDrawer({
     saving: boolean;
 }) {
 
+
+    const STAGE_ORDER = [
+        "todo",
+        "projectCodeCreation",
+        "projectExecution",
+        "onRoad",
+        "campaignRunning",
+        "vehicleUnavailable",
+        "clientClosure",
+        "closedWon",
+        "closedLost",
+    ];
+
+
     const [activeTab, setActiveTab] = useState<Tab>("overview");
     const stage = STAGE_MAP[order.pipelineStatus];
     const StageIcon = stage?.icon || FiClipboard;
 
+    // Mirrors the kanban board's "Vehicle Unavailable" column grouping (a
+    // virtual bucket, not a real pipelineStatus — see page.tsx fetchPipeline)
+    // — an order with any currently-unavailable vehicle entry must not be
+    // stage-moved from here either, same as it can't be drag-and-dropped
+    // out of that column on the board.
+    const hasUnavailableVehicle = (order.onRoadExecutionArray || []).some(
+        (e: any) => e.unavailableStatus === true
+    );
+
     const nextStageKey = NEXT_STAGE[order.pipelineStatus];
-    const nextLabel = NEXT_LABEL[order.pipelineStatus];
+    const nextLabel = hasUnavailableVehicle ? undefined : NEXT_LABEL[order.pipelineStatus];
 
     const subtotal = order.bookingItems.reduce((s: number, i: any) => s + (i.totalAmount || 0), 0);
     const totalDiscount = (order.negotiationLogs || []).reduce((s, l) => s + (l.discountAmount || 0), 0);
@@ -165,36 +190,125 @@ export default function DetailDrawer({
     const finalAmt = taxable + gstAmt;
 
 
+    const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+
+    const hasPendingFoc = (order.campaignClosureArray || []).some(
+        (c: any) => c.type === "foc" && (c.status === "pending" || !c.status)
+    );
+
+
+
     const projectCodes = order.projectCodeArray || [];
     const hasProjectCode = projectCodes.length > 0;
+    const currentStageIndex = STAGE_ORDER.indexOf(order.pipelineStatus);
+    const projectExecutionIndex = STAGE_ORDER.indexOf("projectExecution");
+    const onRoadIndex = STAGE_ORDER.indexOf("onRoad");
 
+
+    const hasReachedProjectExecution =
+        currentStageIndex >= 0 && currentStageIndex >= projectExecutionIndex;
+
+    
+    const hasReachedOnRoad =
+        currentStageIndex >= 0 && currentStageIndex >= onRoadIndex;
 
     const tabs = [
         { key: "overview", label: "Overview" },
         { key: "comments", label: "Comments" },
         { key: "history", label: "History" },
-        ...(order.pipelineStatus === "projectExecution" || order.pipelineStatus === "onRoad"
+        ...(hasReachedProjectExecution
             ? [{ key: "projectExecution", label: "Project Execution" }]
             : []),
-        ...(order.pipelineStatus === "onRoad"
+        ...(hasReachedOnRoad
             ? [{ key: "onRoad", label: "On Road" }]
+            : []),
+        ...(hasReachedOnRoad
+            ? [{ key: "campaignCalculator", label: "Campaign Calculator" }]
+            : []),
+
+        ...(defaultTab === "VehicleUnavailable"
+            ? [{ key: "VehicleUnavailable", label: "VehicleUnavailable" }]
+            : []),
+
+        ...((order.campaignClosureArray || []).some((c: any) => c.type === "foc")
+            ? [{ key: "focRequest", label: "FOC Request" }]
+            : []),
+        ...(order.pipelineStatus === "clientClosure"
+            ? [{ key: "clientClosure", label: "Client Closure" }]
             : []),
     ];
 
 
 
-    useEffect(() => {
-        if (order.pipelineStatus === "onRoad") {
+//     const appliedDefaultTabRef = useRef<string | null>(null);
+
+// useEffect(() => {
+  
+//     if (appliedDefaultTabRef.current !== order._id) {
+//         appliedDefaultTabRef.current = order._id;
+//         if (defaultTab !== "overview") {
+//             setActiveTab(defaultTab);
+//             return;
+//         }
+//     }
+
+ 
+//     if (order.pipelineStatus === "clientClosure") {
+//         setActiveTab("clientClosure");
+//     } else if (order.pipelineStatus === "onRoad") {
+//         setActiveTab("onRoad");
+//     } else if (order.pipelineStatus === "projectExecution") {
+//         setActiveTab("projectExecution");
+//     }
+// }, [order.pipelineStatus, order._id, defaultTab]);
+
+const appliedDefaultTabRef = useRef<string | null>(null);   
+const lastPipelineStatusRef = useRef<string | null>(null);  
+
+useEffect(() => {
+    const isNewOrder = appliedDefaultTabRef.current !== order._id;
+
+  
+    if (isNewOrder) {
+        appliedDefaultTabRef.current = order._id;
+        lastPipelineStatusRef.current = order.pipelineStatus;
+
+        if (defaultTab !== "overview") {
+            setActiveTab(defaultTab);
+            return;
+        }
+
+        if (order.pipelineStatus === "clientClosure") {
+            setActiveTab("clientClosure");
+        } else if (order.pipelineStatus === "onRoad") {
             setActiveTab("onRoad");
         } else if (order.pipelineStatus === "projectExecution") {
             setActiveTab("projectExecution");
         }
-    }, [order.pipelineStatus, order._id]);
+        return;
+    }
+
+
+    if (lastPipelineStatusRef.current !== order.pipelineStatus) {
+        lastPipelineStatusRef.current = order.pipelineStatus;
+
+        if (order.pipelineStatus === "clientClosure") {
+            setActiveTab("clientClosure");
+        } else if (order.pipelineStatus === "onRoad") {
+            setActiveTab("onRoad");
+        } else if (order.pipelineStatus === "projectExecution") {
+            setActiveTab("projectExecution");
+        } else if (order.pipelineStatus === "closedWon" || order.pipelineStatus === "closedLost") {
+            setActiveTab("overview");
+        }
+    }
+
+}, [order._id, order.pipelineStatus, defaultTab]);
 
 
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
-            <div className="bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300">
+            <div className="bg-white dark:bg-gray-950 w-full sm:max-w-6xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300">
 
 
                 <div className="flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
@@ -213,7 +327,7 @@ export default function DetailDrawer({
                             <p className="text-[13px] font-mono text-gray-400 mt-0.5">{order.projectCodeArray[0].projectCode}</p>
                         </div>
 
-                    
+
                         {nextLabel && (
                             <button
                                 onClick={() => onStageMove(order, nextStageKey)}
@@ -230,18 +344,27 @@ export default function DetailDrawer({
 
                         {order.handlerName && (
                             <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-[10px] font-bold text-white">
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-[11px] font-bold text-white">
                                     {order.handlerName.charAt(0).toUpperCase()}
                                 </div>
-                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{order.handlerName}</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{order.handlerName}</span>
                             </div>
                         )}
 
+                        {hasPendingFoc && (
+                            <div className="mt-2">
+                                <span className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-200 animate-pulse">
+                                     Waiting for FOC
+                                </span>
+                            </div>
+                        )}
                         <button onClick={onClose}
                             className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
                             <X size={16} />
                         </button>
                     </div>
+
+
 
 
                     {nextLabel && (
@@ -270,6 +393,8 @@ export default function DetailDrawer({
                                 {tab.label}
                             </button>
                         ))}
+
+
                     </div>
                 </div>
 
@@ -279,7 +404,7 @@ export default function DetailDrawer({
                         <div className="flex flex-col sm:flex-row h-full min-h-0">
                             {/* Main content */}
                             <div className="flex-1 overflow-y-auto sm:border-r border-gray-100 dark:border-gray-800">
-                                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} />
+                                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} vehicleTypes={vehicleTypes} staffAdmins={staffAdmins} />
                             </div>
 
 
@@ -343,7 +468,7 @@ export default function DetailDrawer({
                                                                 {code.estimationCode}
                                                             </span>
                                                         </div>
-                                                        <p className="text-[13px] text-gray-500 mt-0.5">
+                                                        <p className="text-sm text-gray-500 mt-0.5">
                                                             {code.savedBy} · {fmtDatetime(code.savedAt)}
                                                         </p>
                                                     </div>
@@ -405,17 +530,34 @@ export default function DetailDrawer({
 
 
                     {activeTab === "onRoad" && (
-                        <OnRoadTab order={order} onRefresh={onRefresh} />
+                        <OnRoadTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
+                    )}
+
+                    {activeTab === "campaignCalculator" && (
+                        <CampaignCalculatorTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} isAdmin={currentUserIsAdmin} />
                     )}
 
                     {activeTab === "history" && (
-                        <CombinedHistoryTab order={order} />
+                        <CombinedHistoryTab order={order} vehicleTypes={vehicleTypes} />
                     )}
 
 
 
                     {activeTab === "projectExecution" && (
-                        <ProjectExecutionTab order={order} onRefresh={onRefresh} />
+                        <ProjectExecutionTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
+                    )}
+
+                    {activeTab === "VehicleUnavailable" && (
+                        <VehicleUnavailable order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
+                    )}
+
+
+                    {activeTab === "focRequest" && (
+                        <ClientClosureTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} isAdmin={currentUserIsAdmin} mode="foc" />
+                    )}
+
+                    {activeTab === "clientClosure" && (
+                        <ClientClosureTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} isAdmin={currentUserIsAdmin} mode="feedback" />
                     )}
 
                 </div>
@@ -423,3 +565,4 @@ export default function DetailDrawer({
         </div>
     );
 }
+

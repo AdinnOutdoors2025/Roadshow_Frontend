@@ -2,21 +2,23 @@
 // @ts-nocheck
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { OrderState } from "./AdminOrderForm";
-
+import { toast, Toaster } from "react-hot-toast";
 interface Props {
   order: OrderState;
   onBack: () => void;
   onSubmit: () => void;
   loading: boolean;
+  getVehicleTypeName?:any
+  editingOrder?:any
+  submitError?: string[] | null;
 }
 
-export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: Props) {
+export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,getVehicleTypeName,editingOrder, submitError }: Props) {
   const { customerSelection, vehicles } = order;
   const customer = customerSelection.customer;
-
-
+  const [activeVehicleIndex, setActiveVehicleIndex] = useState(0);
 
   const totalDiscount = vehicles.reduce((s, v) => s + ((v.pricing as any)?.additionalCuts || 0), 0);
   const taxableAmount = vehicles.reduce((s, v) => s + (v.pricing?.subtotal || 0), 0);
@@ -31,14 +33,6 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
     </div>
   );
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).replace(/ /g, "-");
-  };
-
   const formatINR = (value: string | number) => {
     const num = parseFloat(String(value).replace(/[^0-9.]/g, ""));
     if (isNaN(num) || value === "" || value === undefined) return "";
@@ -49,123 +43,166 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
     }).format(num);
   };
 
-  // Helper function to display vehicle count in a user-friendly way
-  const getVehicleCountDisplay = (count: number) => {
-    if (count === 1) return "1 Vehicle";
-    return `${count} Vehicles`;
-  };
+  const goPrev = () => setActiveVehicleIndex((i) => Math.max(0, i - 1));
+  const goNext = () => setActiveVehicleIndex((i) => Math.min(vehicles.length - 1, i + 1));
+
+  const v = vehicles[activeVehicleIndex];
+  const p = v?.pricing;
+  const totalVehicleCount = v?.quantity;
 
   return (
     <div className="space-y-5">
+      {submitError && submitError.length > 0 && (
+        <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
+          <p className="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">
+            Order could not be created — vehicle availability issue
+          </p>
+          <ul className="list-disc pl-5 space-y-0.5">
+            {submitError.map((line, idx) => (
+              <li key={idx} className="text-sm text-red-600 dark:text-red-300">
+                {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="mb-2">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Order Summary</h3>
         <p className="text-xs text-gray-400 mt-0.5">Confirm before creating order</p>
       </div>
 
-
+      {/* Customer Card */}
       <div className="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4">
-        {/* <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
-          Customer ·{" "}
-          <span className={customerSelection.type === "new" ? "text-green-500" : "text-blue-500"}>
-            {customerSelection.type === "new" ? "New" : "Existing"}
-          </span>
-        </p> */}
         <div className="space-y-1.5">
-          <Row label="Name" value={customer?.name} />
-          <Row label="Phone" value={customer?.phone} />
-          <Row label="Email" value={order.customerForm?.email || "—"} />
-          <Row label="Address" value={customer?.address || "—"} />
+          <Row label="Name" value={customer?.name || "—"} />
+          <Row label="Phone" value={`+91 ${customer?.phone || ""}`} />
+          <Row label="Email" value={customer?.email || "—"} />
+
+
+          {order.customerForm?.companyName && (
+            <Row label="Company Name" value={order.customerForm.companyName} />
+          )}
+
+          {order.customerForm?.designation && (
+            <Row label="Designation" value={order.customerForm.designation} />
+          )}
+
+          {order.customerForm?.gstNumber && (
+            <Row label="GST Number" value={order.customerForm.gstNumber} />
+          )}
+          {order.customerForm?.panNumber && (
+            <Row label="PAN Number" value={order.customerForm.panNumber} />
+          )}
+          <Row label="Address" value={order.customerForm?.address || customer?.address || "—"} />
         </div>
       </div>
 
-      {/* Vehicles Section */}
-      {order.vehicles.map((v, idx) => {
-        const p = v.pricing;
-        const totalVehicleCount = v.quantity;
+      {/* Vehicle Tabs */}
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="flex items-center border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-2">
+          <button
+            onClick={goPrev}
+            disabled={activeVehicleIndex === 0}
+            className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
 
-        return (
-          <div key={v.id} className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
-            {/* Header with Vehicle Count Badge */}
+          <div className="flex gap-5 overflow-x-auto scrollbar-hide flex-1 px-1">
+            {vehicles.map((vh, idx) => (
+              <button
+                key={vh.id}
+                onClick={() => setActiveVehicleIndex(idx)}
+                className={`relative whitespace-nowrap py-2.5 text-sm font-semibold transition-colors ${activeVehicleIndex === idx
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                  }`}
+              >
+                {idx + 1} Vehicle
+                {activeVehicleIndex === idx && (
+                  <span className="absolute left-0 right-0 -bottom-[1px] h-[2px] bg-blue-600 rounded-full" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={goNext}
+            disabled={activeVehicleIndex === vehicles.length - 1}
+            className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Active Vehicle Content */}
+        {v && (
+          <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600">
-                  {idx + 1}
+                  {activeVehicleIndex + 1}
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                  {/* <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                     {v.vehicleModel} · {v.vehicleType}
-                  </p>
+                  </p> */}
+
+                    {editingOrder ? (
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200"> {getVehicleTypeName(v.vehicleType)}</p>
+                    ) :(<p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p>)}
+
+
                   <p className="text-xs text-gray-400">
                     {v.city} · {v.fromDate} → {v.toDate}
                   </p>
                 </div>
               </div>
 
-
               <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
-                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {/* <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-                <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
-                  {totalVehicleCount}
-                </span>
+                </svg> */}
+                <span className="text-sm font-bold text-blue-700 dark:text-blue-300">{totalVehicleCount}</span>
                 <span className="text-xs text-blue-600 dark:text-blue-400">
                   {totalVehicleCount === 1 ? "Vehicle" : "Vehicles"}
                 </span>
               </div>
             </div>
 
-            {/* Details Grid */}
-            {/* <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">
-              {[
-                ["Booking For", order.customerCategory],
-                ["Campaign", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType],
-                ["Duration", v.fromDate && v.toDate
-                  ? `${new Date(v.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(v.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000)}D base${v.extraDays > 0 ? ` +${v.extraDays} D = ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + v.extraDays}D total` : ""})`
-                  : "—"],
-                ["Driving route", `${v.fromLocation} → ${v.toLocation}`],
-                ["State / City", `${v.state} / ${v.city}`],
-                ["Vehicle Count", `${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"} ✕ ${v.vehicleModel}`],
-                v.extraKm > 0 ? ["Extra KM", `${v.extraKm} km`] : null,
-                v.extraHours > 0 ? ["Extra Hours", `${v.extraHours} hours`] : null,
-                v.needPromoter ? ["Promoter", `${v.promoterType === "Other" ? v.otherPromoterType : v.promoterType} · ${v.promoterGender} · ${v.promoterLanguage} · Qty ${v.promoterQuantity}`] : null,
-                v.gstNumber ? ["GST", v.gstNumber] : null,
-              ].filter(Boolean).map(([label, value], i) => (
-                <div key={i} className="flex justify-between text-sm gap-4">
-                  <span className="text-gray-500 shrink-0">{label}</span>
-                  <span className="text-gray-800 dark:text-gray-200 font-medium text-right">{value}</span>
-                </div>
-              ))}
-            </div> */}
-
             <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">
               {(
                 [
                   ["Booking For", order.customerCategory],
-                  ["Campaign", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType],
+                  (v.campaignType === "Other" ? v.otherCampaignType : v.campaignType)
+                    ? ["Campaign", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType]
+                    : null,
                   ["Duration", v.fromDate && v.toDate
-                    ? `${new Date(v.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(v.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000)}D base${v.extraDays > 0 ? ` +${v.extraDays} D = ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + v.extraDays}D total` : ""})`
+                    ? `${new Date(v.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(v.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + 1}D base${v.extraDays > 0 ? ` +${v.extraDays} D = ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + 1 + v.extraDays}D total` : ""})`
                     : "—"],
-                  ["Driving route", `${v.fromLocation} → ${v.toLocation}`],
-                  ["State / City", `${v.state} / ${v.city}`],
+                  ["Campaign Location", v.campaignLocation],
+                  (v.state || v.city) ? ["State / City", `${v.state || ""} / ${v.city || ""}`] : null,
                   ["Vehicle Count", `${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"} ✕ ${v.vehicleModel}`],
                   v.extraKm > 0 ? ["Extra KM", `${v.extraKm} km`] : null,
                   v.extraHours > 0 ? ["Extra Hours", `${v.extraHours} hours`] : null,
                   v.needPromoter ? ["Promoter", `${v.promoterType === "Other" ? v.otherPromoterType : v.promoterType} · ${v.promoterGender} · ${v.promoterLanguage} · Qty ${v.promoterQuantity}`] : null,
                   v.gstNumber ? ["GST", v.gstNumber] : null,
-                ] as ([string, string] | null)[] 
+                ] as ([string, string] | null)[]
               )
-                .filter((item): item is [string, string] => item !== null)  
+                .filter((item): item is [string, string] => item !== null)
                 .map(([label, value], i) => (
                   <div key={i} className="flex justify-between text-sm gap-4">
                     <span className="text-gray-500 shrink-0">{label}</span>
                     <span className="text-gray-800 dark:text-gray-200 font-medium text-right">{value}</span>
                   </div>
-                ))
-              }
+                ))}
             </div>
 
-            {/* Pricing Breakdown */}
             {p && (
               <div className="border-t border-gray-100 dark:border-gray-700 pt-3 space-y-1">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Pricing Breakdown</p>
@@ -182,7 +219,7 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
                   </div>
                 ))}
 
-                {v.additionalCharges.filter(c => c.label).map(c => (
+                {v.additionalCharges.filter((c) => c.label).map((c) => (
                   <div key={c.id} className="flex justify-between text-sm">
                     <span className={c.mode === "-" ? "text-red-400" : "text-gray-600"}>{c.label}</span>
                     <span className={c.mode === "-" ? "text-red-500" : "text-gray-600"}>
@@ -208,24 +245,22 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading }: P
               </div>
             )}
           </div>
-        );
-      })}
+        )}
+      </div>
 
       {/* Order Total Section */}
       <div className="rounded-xl border border-blue-200 bg-blue-50 dark:border-blue-900/40 dark:bg-blue-900/10 p-4 space-y-1.5">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">
-            Order Total
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">Order Total</p>
           <div className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
-            <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
+            </svg> */}
             <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
-              {vehicles.reduce((sum, v) => sum + v.quantity, 0)}
+              {vehicles.reduce((sum, vh) => sum + vh.quantity, 0)}
             </span>
             <span className="text-xs text-blue-600 dark:text-blue-400">
-              {vehicles.reduce((sum, v) => sum + v.quantity, 0) === 1 ? "Vehicle" : "Vehicles Total"}
+              {vehicles.reduce((sum, vh) => sum + vh.quantity, 0) === 1 ? "Vehicle" : "Vehicles Total"}
             </span>
           </div>
         </div>

@@ -1,0 +1,51 @@
+*{
+font-family: Outfit;
+}
+
+.rdsw_VD_leftHeading{
+font-weight: 500;
+font-size: 30px;
+line-height: 100%;
+letter-spacing: 0%;
+color: #000000;
+}
+.rdsw_VD_Price, .rdsw_VD_PricePerDay{
+    font-family: Outfit;
+font-weight: 600;
+font-style: SemiBold;
+font-size: 40px;
+leading-trim: NONE;
+line-height: 100%;
+letter-spacing: 0%;
+color: #000000;
+
+}
+.rdsw_VD_PricePerDay{
+font-size: 30px;
+}
+.rdsw_VD_SideHeading{
+      background:linear-gradient(90deg, #E52B2C 0%, #7F1818 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+font-family: Outfit;
+font-weight: 400;
+font-style: Regular;
+font-size: 20px;
+leading-trim: NONE;
+line-height: 100%;
+letter-spacing: 0%;
+
+}
+.rdsw_VD_Description{
+    color: #000000;
+font-family: Outfit;
+font-weight: 400;
+font-style: Regular;
+font-size: 18px;
+leading-trim: NONE;
+line-height: 100%;
+letter-spacing: 0%;
+text-align: justify;
+
+}

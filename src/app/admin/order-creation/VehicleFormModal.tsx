@@ -12,6 +12,8 @@ import API_BASE from "../../../../baseurl";
 import DatePicker from "@/components/form/date-picker";
 import { languages } from "../../utils/collection.json";
 import CitySelect from "./cityselect";
+import { toast, Toaster } from "react-hot-toast";
+import { checkVehicleAvailability } from "../../utils/Adminorderapi";
 
 interface PackageOption {
   _id: string;
@@ -33,10 +35,13 @@ interface Props {
   editing: VehicleConfig | null;
   onSave: (v: VehicleConfig) => void;
   onClose: () => void;
+  selectedClientOrder?: any;
 }
 
 
 const uid = () => Math.random().toString(36).slice(2, 9);
+const toTitleCase = (str: string) => str.replace(/\b\w/g, (c) => c.toUpperCase());
+
 
 const BOOKING_FOR_OPTIONS = ["Individual Customer", "Agency"];
 const PROMOTER_TYPE_OPTIONS = ["Brand Promotion", "Election Campaign", "Other"];
@@ -54,8 +59,7 @@ function defaultForm(): Omit<VehicleConfig, "id"> {
     toDate: "",
     state: "",
     city: "",
-    fromLocation: "",
-    toLocation: "",
+    campaignLocation: "",
     quantity: 1,
     extraKm: 0,
     extraDays: 0,
@@ -73,6 +77,8 @@ function defaultForm(): Omit<VehicleConfig, "id"> {
     promoterQuantity: 0,
     dailyKmcharges: 0,
     campaignName: "",
+    existingImages: [],
+    existingVideos: [],
 
   };
 }
@@ -98,15 +104,25 @@ function calcPricing(
   const to = new Date(toDate);
   if (from >= to) return null;
 
-  const baseDays = Math.ceil((to.getTime() - from.getTime()) / 86400000);
+  const baseDays = Math.ceil((to.getTime() - from.getTime()) / 86400000) + 1;
   const totalDays = baseDays + (extraDays || 0);
 
   const rentalCost = pkg.perDayRentalCost * totalDays * quantity;
   const driverCost = pkg.driverCharges * totalDays * quantity;
 
+  const DEFAULT_PROMOTER_CHARGE = parseFloat(
+    process.env.NEXT_PUBLIC_DEFAULT_PROMOTER_CHARGE || "1000"
+  );
+
+  // const promoterCost = needPromoter
+  //   ? (pkg.promoterChargePerDay || 0) * totalDays * promoterQuantity
+  //   : 0;
+
   const promoterCost = needPromoter
-    ? (pkg.promoterChargePerDay || 0) * totalDays * promoterQuantity
+    ? DEFAULT_PROMOTER_CHARGE * totalDays * promoterQuantity
     : 0;
+
+
   const rtoCost = pkg.rtoCharges * quantity;
 
   const extraKmCost = extraKm > 0 ? pkg.perKmCharge * extraKm : 0;
@@ -150,7 +166,8 @@ function calcPricing(
     totalDays,
     perDayRentalCost: pkg.perDayRentalCost,
     driverCharges: pkg.driverCharges,
-    promoterChargePerDay: needPromoter ? pkg.promoterChargePerDay : 0,
+    // promoterChargePerDay: needPromoter ? pkg.promoterChargePerDay : 0,
+    promoterChargePerDay: needPromoter ? DEFAULT_PROMOTER_CHARGE : 0,
     rtoCharges: pkg.rtoCharges,
     additionalHourCharges: pkg.additionalHourCharges,
     dailyKmLimit: pkg.dailyKmLimit,
@@ -247,14 +264,14 @@ function VehicleTypeSelect({
 
 
 
-export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
+export default function VehicleFormModal({ editing, onSave, onClose, selectedClientOrder }: Props) {
   const [form, setForm] = useState<VehicleConfig>(editing ?? { id: uid(), ...defaultForm() });
   const [selectedPackage, setSelectedPackage] = useState<PackageOption | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [packageslist, setPackageslist] = useState<PackageOption[]>([]);
   const [campaignTypes, setCampaignTypes] = useState<{ _id: string, name: string }[]>([]);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
-  console.log("selectedPackage", selectedPackage)
+
 
   const [editablePackage, setEditablePackage] = useState<Record<string, string>>({});
   const [savingPkg, setSavingPkg] = useState(false);
@@ -268,10 +285,27 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   const [addCityLoading, setAddCityLoading] = useState(false);
   const [addCityError, setAddCityError] = useState("");
 
-  console.log("locationData", locationData)
+
 
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
+
+  console.log("selectedClientOrder", selectedClientOrder)
+
+
+  const IMAGE_MAX_MB = 5;
+  const VIDEO_MAX_MB = 50;
+
+  const validateFileSize = (file: File): string | null => {
+    const isVideo = file.type.startsWith("video/");
+    const fileMB = file.size / (1024 * 1024);
+    if (isVideo && fileMB > VIDEO_MAX_MB)
+      return `Video upload only 50 MB allowed. "${file.name}" is ${fileMB.toFixed(2)} MB`;
+    if (!isVideo && fileMB > IMAGE_MAX_MB)
+      return `Image upload only 5 MB allowed. "${file.name}" is ${fileMB.toFixed(2)} MB`;
+    return null;
+  };
+
 
 
   useEffect(() => {
@@ -322,22 +356,39 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
   };
 
 
+  // useEffect(() => {
+  //   if (selectedPackage) {
+  //     setEditablePackage({
+  //       perDayRentalCost: String(selectedPackage.perDayRentalCost),
+  //       driverCharges: String(selectedPackage.driverCharges),
+  //       rtoCharges: String(selectedPackage.rtoCharges),
+  //       dailyKmLimit: String(selectedPackage.dailyKmLimit),
+  //       additionalHourCharges: String(selectedPackage.additionalHourCharges),
+  //       promoterChargePerDay: String(selectedPackage.promoterChargePerDay),
+  //       perKmCharge: String(selectedPackage.perKmCharge || 0),
+  //     });
+  //     setPkgSaved(false);
+  //     setChangedKeys([]);
+  //   }
+  // }, [selectedPackage?._id]);
+
+
   useEffect(() => {
     if (selectedPackage) {
+      const DEFAULT_PROMOTER_CHARGE = process.env.NEXT_PUBLIC_DEFAULT_PROMOTER_CHARGE || "1000";
       setEditablePackage({
         perDayRentalCost: String(selectedPackage.perDayRentalCost),
         driverCharges: String(selectedPackage.driverCharges),
         rtoCharges: String(selectedPackage.rtoCharges),
         dailyKmLimit: String(selectedPackage.dailyKmLimit),
         additionalHourCharges: String(selectedPackage.additionalHourCharges),
-        promoterChargePerDay: String(selectedPackage.promoterChargePerDay),
+        promoterChargePerDay: DEFAULT_PROMOTER_CHARGE,   // ← selectedPackage.promoterChargePerDay ku badhilaa
         perKmCharge: String(selectedPackage.perKmCharge || 0),
       });
       setPkgSaved(false);
       setChangedKeys([]);
     }
   }, [selectedPackage?._id]);
-
 
   useEffect(() => {
     if (!selectedPackage) { setForm(f => ({ ...f, pricing: null })); return; }
@@ -426,6 +477,35 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     }
   }, [packageslist, editing]);
 
+  // Client Request → Order: when the selected client request has exactly one
+  // vehicle type, auto-fill the model/dates/location/quantity so the admin
+  // doesn't have to retype what the customer already requested.
+  useEffect(() => {
+    if (editing || !selectedClientOrder || packageslist.length === 0) return;
+    const vtList = selectedClientOrder.vehicleTypes || [];
+    if (vtList.length !== 1) return;
+
+    const vt = vtList[0];
+    const vtId = typeof vt.vehicleType === "object" ? vt.vehicleType?._id : vt.vehicleType;
+    const pkg = packageslist.find((p) => {
+      const pId = typeof p.vehicleType === "object" ? (p.vehicleType as any)?._id : p.vehicleType;
+      return pId === vtId;
+    });
+
+    setForm((f) => ({
+      ...f,
+      packageId: pkg ? pkg._id : f.packageId,
+      vehicleModel: pkg
+        ? (typeof pkg.vehicleType === "object" ? (pkg.vehicleType as any)?.typeName : "") || f.vehicleModel
+        : f.vehicleModel,
+      fromDate: vt.fromDate ? String(vt.fromDate).slice(0, 10) : f.fromDate,
+      toDate: vt.toDate ? String(vt.toDate).slice(0, 10) : f.toDate,
+      campaignLocation: vt.campaignLocation || f.campaignLocation,
+      quantity: vt.quantity || f.quantity,
+    }));
+    if (pkg) setSelectedPackage(pkg);
+  }, [selectedClientOrder, packageslist, editing]);
+
 
   const handleAddCity = async () => {
     if (!newCityName.trim()) {
@@ -460,7 +540,7 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
       // Update cityOptions so dropdown shows the new city
       setCityOptions(prev => [...prev, newCityName.trim()]);
 
-      // Auto-select the newly added city
+
       set("city", newCityName.trim());
 
       setNewCityName("");
@@ -523,7 +603,16 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     }));
   };
 
-
+  function formatDate(d: string) {
+    if (!d) return "—";
+    return new Date(d).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
 
 
   const updateCharge = (id: string, updates: Partial<AdditionalCharge>) => {
@@ -546,19 +635,13 @@ export default function VehicleFormModal({ editing, onSave, onClose }: Props) {
     if (!form.packageId) e.vehicleModel = "Select vehicle model";
     // if (!form.bookingFor) e.bookingFor = "Select booking for";
 
-    if (!form.campaignType) e.campaignType = "Select campaign type";
-
     if (form.campaignType === "Other" && !form.otherCampaignType) e.otherCampaignType = "Required";
 
-if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
     if (!form.fromDate) e.fromDate = "Select start date";
     if (!form.toDate) e.toDate = "Select end date";
     if (form.fromDate && form.toDate && new Date(form.fromDate) >= new Date(form.toDate))
       e.toDate = "End date must be after start date";
-    if (!form.state) e.state = "Select state";
-    if (!form.city.trim()) e.city = "Enter city";
-    if (!form.fromLocation.trim()) e.fromLocation = "Enter from location";
-    if (!form.toLocation.trim()) e.toLocation = "Enter to location";
+    if (!form.campaignLocation.trim()) e.campaignLocation = "Enter campaign location";
 
     if (!form.quantity || form.quantity < 1) {
       e.quantity = "Please add valid quantity (minimum 1)";
@@ -584,50 +667,6 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
     promoterChargePerDay: "Promoter/day",
   };
 
-  // const handleSavePackageChanges = async () => {
-  //   if (!selectedPackage) return;
-
-
-  //   const emptyFields = Object.entries(editablePackage)
-  //     .filter(([_, v]) => v === "" || v === ".")
-  //     .map(([k]) => FIELD_LABELS[k] || k);
-
-  //   if (emptyFields.length > 0) {
-  //     alert(`Please fill: ${emptyFields.join(", ")}`);
-  //     return;
-  //   }
-
-  //   setSavingPkg(true);
-  //   try {
-  //     const numericPayload = Object.fromEntries(
-  //       Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
-  //     );
-
-  //     const res = await fetch(`${API_BASE}packages/${selectedPackage._id}`, {
-  //       method: "PUT",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify(numericPayload),
-  //     });
-  //     const data = await res.json();
-  //     if (!res.ok) throw new Error(data.message || "Update failed");
-
-
-  //     const summary = changedKeys
-  //       .map(k => `${FIELD_LABELS[k]}: ₹${selectedPackage[k as keyof PackageOption]} → ₹${editablePackage[k]}`)
-  //       .join("\n");
-
-  //     setSelectedPackage(prev => prev ? { ...prev, ...numericPayload } : prev);
-  //     setPkgSaved(true);
-  //     setChangedKeys([]);
-
-  //     if (summary) alert(`✅ Package updated!\n\n${summary}`);
-
-  //   } catch (err: any) {
-  //     alert(err.message || "Failed to update package");
-  //   } finally {
-  //     setSavingPkg(false);
-  //   }
-  // };
 
 
   const handleSavePackageChanges = async () => {
@@ -648,7 +687,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
         Object.entries(editablePackage).map(([k, v]) => [k, parseFloat(v)])
       );
 
-      // ✅ Extract the vehicleType ID from selectedPackage
+
       const vehicleTypeId =
         typeof selectedPackage.vehicleType === "object"
           ? selectedPackage.vehicleType._id
@@ -675,7 +714,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
       setPkgSaved(true);
       setChangedKeys([]);
 
-      if (summary) alert(`✅ Package updated!\n\n${summary}`);
+      if (summary) alert(` Package updated!\n\n${summary}`);
 
     } catch (err: any) {
       alert(err.message || "Failed to update package");
@@ -691,15 +730,13 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
         const fieldOrder = [
           "vehicleType", "vehicleModel", "bookingFor", "gstNumber",
           "campaignType", "otherCampaignType", "fromDate", "toDate",
-          "state", "city", "fromLocation", "toLocation", "quantity",
+          "state", "city", "campaignLocation", "quantity",
           "promoterType", "otherPromoterType", "promoterGender",
           "promoterLanguage", "promoterQuantity", "packageUnsaved",
         ];
-
         const firstErrorKey = fieldOrder.find((key) =>
           document.getElementById(`field-${key}`)
         );
-
         if (firstErrorKey && scrollContainerRef.current) {
           const el = document.getElementById(`field-${firstErrorKey}`);
           if (el) {
@@ -713,6 +750,41 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
       }, 50);
       return;
     }
+
+
+    const vehicleTypeId =
+      typeof selectedPackage?.vehicleType === "object"
+        ? selectedPackage.vehicleType._id
+        : selectedPackage?.vehicleType;
+
+    console.log("vehicleTypeId", vehicleTypeId)
+
+    if (vehicleTypeId && form.fromDate && form.toDate && form.quantity > 0) {
+      try {
+        const availability = await checkVehicleAvailability({
+          vehicleType: vehicleTypeId,
+          quantity: form.quantity,
+          fromDate: form.fromDate,
+          toDate: form.toDate,
+        });
+
+        if (!availability.available) {
+          const typeName =
+            typeof selectedPackage?.vehicleType === "object"
+              ? selectedPackage.vehicleType.typeName
+              : form.vehicleModel;
+
+          toast.error(
+            `No availability: "${typeName}" has only ${availability.availableCount} vehicle(s) free for ${form.fromDate} to ${form.toDate}, but ${form.quantity} required.`
+          );
+          return;
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to check vehicle availability");
+        return;
+      }
+    }
+
 
     let finalCampaignType = form.campaignType;
     if (form.campaignType === "Other" && form.otherCampaignType.trim()) {
@@ -738,6 +810,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
 
     onSave({ ...form, campaignType: finalCampaignType });
   };
+
   const p = form.pricing;
 
 
@@ -759,7 +832,9 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
     return new Intl.NumberFormat("en-IN").format(Number(raw));
   };
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-2">
+    // <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-2">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-2">
+      <Toaster position="top-right" />
       <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
 
 
@@ -777,6 +852,113 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
           <section className="space-y-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Vehicle Selection</p>
+
+            {/* {selectedClientOrder && (
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 dark:border-indigo-900/30 dark:bg-indigo-900/10 p-4 space-y-2">
+                <p className="text-xs font-semibold text-indigo-500">
+                  Client Request · {selectedClientOrder.clientOrderId}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(selectedClientOrder.vehicleTypes || []).map((vt: any, idx: number) => {
+                    const match = vehicleTypes.find((t: any) => t._id === vt.vehicleType._id);
+                    return (
+                      <span
+                        key={idx}
+                        className="rounded-full bg-indigo-100 dark:bg-indigo-900/30 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300"
+                      >
+                        {match?.typeName || "Unknown Type"} × {vt.quantity}{" "}
+                        <span className="text-xs text-gray-500">
+                          {formatDate(vt.fromDate)?.slice(0, 10)} → {formatDate(vt.toDate)?.slice(0, 10)}
+                          {vt.totalDays ? ` · ${vt.totalDays} days` : ""}
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )} */}
+
+            {/* {selectedClientOrder && (
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 dark:border-indigo-900/30 dark:bg-indigo-900/10 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-indigo-500 flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Client Request · {selectedClientOrder.clientOrderId}
+                  </p>
+                  <span className="text-[10px] font-medium text-indigo-400 bg-white/60 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full">
+                    {(selectedClientOrder.vehicleTypes || []).length} vehicle{(selectedClientOrder.vehicleTypes || []).length > 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-2 max-h-[132px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-indigo-200 dark:scrollbar-thumb-indigo-800 scrollbar-track-transparent">
+                  {(selectedClientOrder.vehicleTypes || []).map((vt: any, idx: number) => {
+                    const match = vehicleTypes.find((t: any) => t._id === vt.vehicleType._id);
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-3 rounded-lg bg-white/70 dark:bg-indigo-950/30 border border-indigo-100/70 dark:border-indigo-900/30 px-3 py-2"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="shrink-0 rounded-full bg-indigo-600 text-white text-[10px] font-semibold h-5 w-5 flex items-center justify-center">
+                            {vt.quantity}
+                          </span>
+                          <span className="text-xs font-medium text-indigo-800 dark:text-indigo-300 truncate">
+                            {match?.typeName || "Unknown Type"}
+                          </span>
+                        </div>
+                        <span className="shrink-0 text-[11px] text-gray-500 dark:text-gray-400">
+                          {formatDate(vt.fromDate)?.slice(0, 10)} → {formatDate(vt.toDate)?.slice(0, 10)}
+                          {vt.totalDays ? ` · ${vt.totalDays}d` : ""}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )} */}
+            {selectedClientOrder && (
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 dark:border-indigo-900/30 dark:bg-indigo-900/10 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-indigo-500 flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Client Request · {selectedClientOrder.clientOrderId}
+                  </p>
+                  <span className="text-[10px] font-medium text-indigo-400 bg-white/60 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full">
+                    {(selectedClientOrder.vehicleTypes || []).length} vehicle{(selectedClientOrder.vehicleTypes || []).length > 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-2 max-h-[132px] overflow-y-auto pr-1">
+                  {(selectedClientOrder.vehicleTypes || []).map((vt: any, idx: number) => {
+                    const match = vehicleTypes.find((t: any) => t._id === vt.vehicleType._id);
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-3 rounded-lg bg-white/70 dark:bg-indigo-950/30 border border-indigo-100/70 dark:border-indigo-900/30 px-3 py-2"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                          <span className="text-xs font-medium text-indigo-800 dark:text-indigo-300 truncate">
+                            {match?.typeName || "Unknown Type"}
+                          </span>
+                          <span className="shrink-0 text-[11px] font-semibold text-indigo-500 bg-indigo-100 dark:bg-indigo-900/40 px-1.5 py-0.5 rounded">
+                            × {vt.quantity}
+                          </span>
+                        </div>
+                        <span className="shrink-0 text-[11px] text-gray-500 dark:text-gray-400">
+                          {formatDate(vt.fromDate)?.slice(0, 10)} → {formatDate(vt.toDate)?.slice(0, 10)}
+                          {vt.totalDays ? ` · ${vt.totalDays}d` : ""}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <>
               <div className="grid grid-cols-2 gap-4">
@@ -812,112 +994,6 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                   </select>
                 </FormField>
               </div>
-
-
-
-              {/* {selectedPackage && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    {[
-                      { label: "Rental/day", key: "perDayRentalCost" },
-                      { label: "Driver/day", key: "driverCharges" },
-                      { label: "RTO", key: "rtoCharges" },
-                      { label: "KM Limit", key: "dailyKmLimit", disabled: false },
-                      { label: "Extra hours", key: "additionalHourCharges" },
-                      { label: "Promoter/day", key: "promoterChargePerDay", disabled: !selectedPackage.promoterAvailable },
-                    ].map(({ label, key, disabled }) => (
-                      <div
-                        key={key}
-                        className={`relative group rounded-lg bg-blue-50 dark:bg-blue-900/20 px-2 py-2 text-center
-      ${key === "dailyKmLimit" ? "cursor-not-allowed" : ""}`} >
-
-                        {key === "dailyKmLimit" && (
-                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-10
-        hidden group-hover:flex
-        items-center gap-1
-        bg-gray-800 text-white text-[10px] rounded-md px-2 py-1 whitespace-nowrap shadow-lg">
-                            <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                              <circle cx="12" cy="12" r="10" />
-                              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                            </svg>
-                            Read only — cannot be edited
-
-                            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
-                          </div>
-                        )}
-                        <p className="text-[9px] text-gray-400 uppercase leading-tight mb-1">{label}</p>
-
-                        {disabled ? (
-                          <p className="text-xs font-bold text-gray-400">N/A</p>
-                        ) : (
-                          <>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              disabled={key === "dailyKmLimit"}
-                              value={
-                                key === "dailyKmLimit"
-                                  ? formatWithCommas(editablePackage[key as keyof typeof editablePackage] as any)
-                                  : formatINR(editablePackage[key as keyof typeof editablePackage] as any)
-                              }
-                              onChange={(e) => {
-                                const raw = e.target.value.replace(/[^0-9]/g, "");
-                                setEditablePackage(prev => ({ ...prev, [key]: raw }));
-                                setPkgSaved(false);
-
-                                const originalVal = String(selectedPackage?.[key as keyof PackageOption] ?? "");
-                                setChangedKeys(prev => {
-                                  if (raw !== originalVal) {
-                                    return prev.includes(key) ? prev : [...prev, key];
-                                  } else {
-                                    return prev.filter(k => k !== key);
-                                  }
-                                });
-                              }}
-                              className={`w-full text-xs font-bold text-center bg-transparent 
-    border-b focus:outline-none focus:border-blue-600 transition-colors
-    ${changedKeys.includes(key)
-                                  ? "border-amber-400 text-amber-600 dark:text-amber-400"
-                                  : "border-blue-300 text-blue-700 dark:text-blue-300"}`}
-                            />
-
-
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-
-
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] text-gray-400">✏️ Edit charges above to override package defaults</p>
-                    <button
-                      type="button"
-                      disabled={savingPkg || pkgSaved}
-                      onClick={handleSavePackageChanges}
-                      className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors
-          ${pkgSaved
-                          ? "bg-green-100 text-green-700"
-                          : changedKeys.length > 0
-                            ? "bg-amber-500 text-white hover:bg-amber-600"
-                            : "bg-blue-600 text-white hover:bg-blue-700"}`}
-                    >
-                      {savingPkg ? "Saving..." : pkgSaved ? "✓ Saved" : changedKeys.length > 0 ? `Update Package (${changedKeys.length})` : "Update Package"}
-                    </button>
-                  </div>
-
-
-                  {errors.packageUnsaved && (
-                    <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 px-3 py-2">
-                      <svg className="h-4 w-4 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                      </svg>
-                      <p className="text-xs text-amber-700 dark:text-amber-400">{errors.packageUnsaved}</p>
-                    </div>
-                  )}
-                </div>
-              )} */}
 
 
               {selectedPackage && (
@@ -1171,7 +1247,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
 
 
               <div id="field-campaignType">
-                <FormField label="Campaign Type" error={errors.campaignType} required>
+                <FormField label="Campaign Type" error={errors.campaignType}>
                   <select value={form.campaignType} onChange={(e) => set("campaignType", e.target.value)} className={inputClass(!!errors.campaignType)}>
                     <option value="">Select</option>
                     {campaignTypes.map((ct) => (
@@ -1182,15 +1258,15 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                 </FormField>
               </div>
 
-             
+
               <div id="field-campaignName">
-                <FormField label="Campaign Name" error={errors.campaignName} required>
+                <FormField label="Campaign Name" error={errors.campaignName}>
                   <input
                     type="text"
                     value={form.campaignName}
                     onChange={(e) => {
                       const onlyLetters = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-                      set("campaignName", onlyLetters);
+                      set("campaignName", toTitleCase(onlyLetters));
                     }}
                     placeholder="Enter campaign name"
                     className={inputClass(!!errors.campaignName)}
@@ -1250,8 +1326,8 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
 
             {form.fromDate && form.toDate && new Date(form.fromDate) < new Date(form.toDate) && (
               <p className="text-xs text-blue-500">
-                {Math.ceil((new Date(form.toDate).getTime() - new Date(form.fromDate).getTime()) / 86400000)} base day(s)
-                {form.extraDays > 0 ? ` + ${form.extraDays} extra = ${Math.ceil((new Date(form.toDate).getTime() - new Date(form.fromDate).getTime()) / 86400000) + form.extraDays} total days` : ""}
+                {Math.ceil((new Date(form.toDate).getTime() - new Date(form.fromDate).getTime()) / 86400000) + 1} base day(s)
+                {form.extraDays > 0 ? ` + ${form.extraDays} extra = ${Math.ceil((new Date(form.toDate).getTime() - new Date(form.fromDate).getTime()) / 86400000) + 1 + form.extraDays} total days` : ""}
               </p>
             )}
           </section>
@@ -1262,7 +1338,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
             <div className="grid grid-cols-2 gap-4">
 
               <div id="field-state">
-                <FormField label="State" error={errors.state} required>
+                <FormField label="State" error={errors.state}>
                   <select
                     value={form.state}
                     onChange={(e) => handleStateChange(e.target.value)}
@@ -1278,7 +1354,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
 
 
               <div id="field-city">
-                <FormField label="City" error={errors.city} required>
+                <FormField label="City" error={errors.city}>
                   <CitySelect
                     value={form.city}
                     options={cityOptions}
@@ -1302,14 +1378,9 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
               </div>
 
 
-              <div id="field-fromLocation">
-                <FormField label="From Location" error={errors.fromLocation} required>
-                  <input type="text" value={form.fromLocation} onChange={(e) => set("fromLocation", e.target.value)} placeholder="Starting point" className={inputClass(!!errors.fromLocation)} />
-                </FormField>
-              </div>
-              <div id="field-toLocation">
-                <FormField label="To Location" error={errors.toLocation} required>
-                  <input type="text" value={form.toLocation} onChange={(e) => set("toLocation", e.target.value)} placeholder="Ending point" className={inputClass(!!errors.toLocation)} />
+              <div id="field-campaignLocation">
+                <FormField label="Campaign Location" error={errors.campaignLocation} required>
+                  <input type="text" value={form.campaignLocation} onChange={(e) => set("campaignLocation", toTitleCase(e.target.value))} placeholder="Campaign location" className={inputClass(!!errors.campaignLocation)} />
                 </FormField>
               </div>
             </div>
@@ -1320,7 +1391,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
 
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                Campaign Images <span className="text-gray-400">(max 10)</span>
+                Campaign Images <span className="text-gray-400">(max 5MB)</span>
               </label>
               <label className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 py-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors">
                 <HiOutlinePlus className="h-4 w-4 text-gray-400" />
@@ -1332,11 +1403,38 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                   className="hidden"
                   onChange={(e) => {
                     const files = Array.from(e.target.files || []);
+                    const invalid = files.find(f => validateFileSize(f));
+                    if (invalid) {
+                      toast.error(validateFileSize(invalid)!);
+                      e.target.value = "";
+                      return;
+                    }
                     set("campaignImages", [...form.campaignImages, ...files].slice(0, 10) as any);
                     e.target.value = "";
                   }}
                 />
               </label>
+              {(form.existingImages || []).length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] text-gray-400">Existing images</p>
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {(form.existingImages || []).map((url: string, idx: number) => (
+                      <div key={idx} className="relative group rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100"
+                        style={{ width: "60px", height: "60px" }}>
+                        <img src={url.startsWith("http") ? url : `http://localhost:3001${url}`} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => set("existingImages", (form.existingImages || []).filter((_: any, i: number) => i !== idx) as any)}
+                          className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <IoMdClose className="h-2.5 w-2.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {form.campaignImages.length > 0 && (
                 <div className="grid grid-cols-6 gap-1.5 mt-2">
                   {(form.campaignImages as File[]).map((file, idx) => {
@@ -1370,7 +1468,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
 
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                Campaign Videos <span className="text-gray-400">(max 5)</span>
+                Campaign Videos <span className="text-gray-400">(max 50MB)</span>
               </label>
               <label className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 py-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors">
                 <HiOutlinePlus className="h-4 w-4 text-gray-400" />
@@ -1382,11 +1480,45 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                   className="hidden"
                   onChange={(e) => {
                     const files = Array.from(e.target.files || []);
+                    const invalid = files.find(f => validateFileSize(f));
+                    if (invalid) {
+                      toast.error(validateFileSize(invalid)!);
+                      e.target.value = "";
+                      return;
+                    }
                     set("campaignVideos", [...form.campaignVideos, ...files].slice(0, 5) as any);
                     e.target.value = "";
                   }}
                 />
               </label>
+              {(form.existingVideos || []).length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] text-gray-400">Existing videos</p>
+                  <div className="space-y-2">
+                    {(form.existingVideos || []).map((url: string, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-3 py-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                            <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <span className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                            {url.split("/").pop()}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => set("existingVideos", (form.existingVideos || []).filter((_: any, i: number) => i !== idx) as any)}
+                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                        >
+                          <HiOutlineTrash className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {form.campaignVideos.length > 0 && (
                 <div className="space-y-2 mt-2">
                   {(form.campaignVideos as File[]).map((file, idx) => (
@@ -1530,7 +1662,8 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                     />
                     {hasPromoter && (
                       <SummaryRow
-                        label={`Promoter (${p.totalDays}D × ${formatINR(selectedPackage.promoterChargePerDay)} × ${form.promoterQuantity} Promoter)`}
+                        // label={`Promoter (${p.totalDays}D × ${formatINR(selectedPackage.promoterChargePerDay)} × ${form.promoterQuantity} Promoter)`}
+                        label={`Promoter (${p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${form.promoterQuantity} Promoter)`}
                         val={p.promoterCost}
                         isLast={false}
                         hasCharges={form.additionalCharges.length > 0}
@@ -1575,7 +1708,7 @@ if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
                   <input
                     type="text"
                     value={charge.label}
-                    onChange={(e) => updateCharge(charge.id, { label: e.target.value })}
+                    onChange={(e) => updateCharge(charge.id, { label: toTitleCase(e.target.value) })}
                     placeholder="Label"
                     className="w-36 min-w-0 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs text-gray-700 dark:text-gray-300 outline-none focus:border-blue-400"
                   />

@@ -1,10 +1,12 @@
 "use client";
 import React, { useRef, useEffect } from "react";
+import { ScrollSmoother } from "gsap/ScrollSmoother";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   className?: string;
+  overlayClassName?: string; // Override the backdrop's bg/blur classes
   children: React.ReactNode;
   showCloseButton?: boolean; // New prop to control close button visibility
   isFullscreen?: boolean; // Default to false for backwards compatibility
@@ -15,6 +17,7 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   children,
   className,
+  overlayClassName,
   showCloseButton = true, // Default to true for backwards compatibility
   isFullscreen = false,
 }) => {
@@ -48,6 +51,27 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen]);
 
+  /* On the public site the page is scrolled by GSAP ScrollSmoother, which
+     drives scrolling from its own wheel/touch listeners — so the `overflow:
+     hidden` above does not stop the background moving behind an open modal.
+     Pausing the smoother is what actually stops it, and its paused state also
+     keeps nested scrolling alive so this modal's own content still scrolls.
+     ScrollSmoother.get() returns undefined wherever no smoother is mounted
+     (the whole admin dashboard), making this a no-op there. */
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const smoother = ScrollSmoother.get();
+
+    if (!smoother) return;
+
+    smoother.paused(true);
+
+    return () => {
+      smoother.paused(false);
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const contentClasses = isFullscreen
@@ -58,7 +82,10 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999">
       {!isFullscreen && (
         <div
-          className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"
+          className={
+            overlayClassName ||
+            "fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"
+          }
           onClick={onClose}
         ></div>
       )}

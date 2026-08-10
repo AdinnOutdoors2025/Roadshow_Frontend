@@ -1,7 +1,10 @@
+
+
 /* eslint-disable */
 // @ts-nocheck
 "use client";
 
+import { useState } from "react";
 import { CheckCircle2, Clock, User, ArrowRight, Truck, History, Tag, Phone } from "lucide-react";
 
 
@@ -175,7 +178,7 @@ function DriverStatusSummary({ entries, bookingItems }: { entries: any[]; bookin
   return (
     <div>
       <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20 border border-teal-100 dark:border-teal-800/50 mb-4">
-        <Truck size={16} className="text-teal-500" />
+        <Truck size={18} className="text-teal-500" />
         <span className="text-md font-bold text-teal-700 dark:text-teal-300">Driver Status Summary</span>
         <span className="ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-teal-100 dark:bg-teal-900/40 text-teal-700">
           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
@@ -202,9 +205,13 @@ function DriverStatusSummary({ entries, bookingItems }: { entries: any[]; bookin
               <div className="flex-1 pb-4">
                 <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-md font-semibold text-gray-800 dark:text-gray-200">
-                      {entry.driverName}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <User size={16} className="text-blue-500" />
+                      <p className="text-md font-semibold text-gray-800 dark:text-gray-200">
+                        {entry.driverName}
+                      </p>
+                      <span className="text-sm text-gray-400 font-normal">(Driver)</span>
+                    </div>
                     <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-sm font-semibold ${isActive
                       ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400"
                       : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
@@ -230,23 +237,23 @@ function DriverStatusSummary({ entries, bookingItems }: { entries: any[]; bookin
                     <Phone size={15} className="text-gray-400" />
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{entry.driverPhone}</span>
                     <span>·</span>
-                    <Truck size={15} className="text-gray-400" />
-                    <span className="text-sm  font-mono font-semibold text-teal-600 dark:text-teal-400">
+                    <Truck size={16} className="text-gray-400" />
+                    <span className="text-sm font-mono font-semibold text-teal-600 dark:text-teal-400">
                       {entry.vehicleRegistrationNumber}
                     </span>
                   </div>
 
-                  {(entry.uploadedBy || entry.uploadedAt) && (
-                    <div className="flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
-                      {entry.uploadedBy && (
-                        <>
-                          <span>Uploaded by {entry.uploadedBy}</span>
-                          <span>·</span>
-                        </>
-                      )}
-                      {entry.uploadedAt && <span>{formatUploadTime(entry.uploadedAt)}</span>}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                    <Clock size={13} className="text-gray-400" />
+                    <span>Created at: {formatUploadTime(entry.uploadedAt)}</span>
+                    {entry.uploadedBy && (
+                      <>
+                        <span>·</span>
+                        <User size={14} className="text-gray-400" />
+                        <span>Created By {entry.uploadedBy}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -258,10 +265,264 @@ function DriverStatusSummary({ entries, bookingItems }: { entries: any[]; bookin
 }
 
 
-export default function ProjectExecutionHistoryTab({ order }: { order: Order }) {
+
+function AllDriverHistorySection({
+  driverHistory,
+  driverEntries,
+  bookingItems,
+  vehicleTypes,
+}: {
+  driverHistory: any[];
+  driverEntries: any[];
+  bookingItems: any[];
+  vehicleTypes:any[];
+}) {
+  const [activeBookingTab, setActiveBookingTab] = useState(0);
+  const [activeVehicleTab, setActiveVehicleTab] = useState(0);
+
+  const fmtDt = (s?: string) => {
+    if (!s) return "—";
+    return new Date(s).toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  };
+
+    const getVehicleTypeName = (vehicleTypeId) => {
+    if (!vehicleTypeId || !vehicleTypes) return "";
+    const v = vehicleTypes.find((vt) => vt._id === vehicleTypeId);
+    return v?.typeName || vehicleTypeId;
+  };
+
+
+  if (!driverHistory || driverHistory.length === 0) return null;
+
+ 
+  const handleBookingTabChange = (idx: number) => {
+    setActiveBookingTab(idx);
+    setActiveVehicleTab(0);
+  };
+
+
+  const entriesForBooking = driverEntries.filter(
+    (e) => e.vehicleIndex === activeBookingTab
+  );
+
+
+  const activeEntry = entriesForBooking[activeVehicleTab];
+
+
+  const filteredHistory = activeEntry
+    ? driverHistory.filter(
+        (h) =>
+          h.vehicleRegistrationNumber === activeEntry.vehicleRegistrationNumber ||
+          h.changedFields?.vehicleRegistrationNumber?.old === activeEntry.vehicleRegistrationNumber ||
+          h.changedFields?.vehicleRegistrationNumber?.new === activeEntry.vehicleRegistrationNumber
+      )
+    : [];
+
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+        <History size={16} className="text-blue-500" />
+        <span className="text-sm font-bold text-gray-800 dark:text-gray-100">Driver Change History</span>
+        <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+          {driverHistory.length} total records
+        </span>
+      </div>
+
+
+
+      {bookingItems.length > 0 && (
+        <div className="flex gap-2 px-3 py-3 border-b border-gray-100 dark:border-gray-800 overflow-x-auto bg-white dark:bg-gray-900">
+          {bookingItems.map((item, i) => {
+            const count = driverEntries.filter(e => e.vehicleIndex === i).length;
+            const isActive = activeBookingTab === i;
+            return (
+              <button
+                key={i}
+                onClick={() => handleBookingTabChange(i)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all whitespace-nowrap flex-shrink-0 ${
+                  isActive
+                    ? "border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20"
+                    : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
+                }`}
+              >
+                <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-white flex-shrink-0 ${
+                  isActive ? "bg-red-500" : "bg-gray-300 dark:bg-gray-600"
+                }`} style={{ fontSize: "9px", fontWeight: 700 }}>
+                  V{i + 1}
+                </div>
+                <div className="text-left">
+                  <p className={`text-xs font-bold leading-tight ${
+                    isActive ? "text-red-700 dark:text-red-400" : "text-gray-700 dark:text-gray-300"
+                  }`}>
+                    {getVehicleTypeName(item.vehicleType)}
+                  </p>
+                   <span className={`text-xs ${activeBookingTab === i ? "text-gray-600 dark:text-gray-300" : "text-gray-400"}`}>
+                  {count} driver{count !== 1 ? "s" : ""} · {item.quantity || 1} vehicles
+                </span>
+                  <p className={`text-xs leading-tight ${
+                    isActive ? "text-red-500 dark:text-red-400" : "text-gray-400"
+                  }`}>
+                    {item.campaignName} · {item.campaignType}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+     
+      {entriesForBooking.length > 0 && (
+        <div className="flex gap-1 px-3 pt-2.5 pb-0 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
+          {entriesForBooking.map((entry, i) => (
+            <button
+              key={entry._id || i}
+              onClick={() => setActiveVehicleTab(i)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 mb-0 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${
+                activeVehicleTab === i
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                  : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              }`}
+            >
+              <div
+                className={`w-4 h-4 rounded-full flex items-center justify-center text-white flex-shrink-0 ${
+                  activeVehicleTab === i ? "bg-blue-500" : "bg-gray-300"
+                }`}
+                style={{ fontSize: "8px", fontWeight: 700 }}
+              >
+                {i + 1}
+              </div>
+              <span className="font-mono">{entry.vehicleRegistrationNumber}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+     
+      {activeEntry && (
+        <div className="flex items-center gap-3 px-4 py-2 bg-blue-50/40 dark:bg-blue-900/10 border-b border-blue-100 dark:border-blue-900/30 flex-wrap">
+          <User size={13} className="text-blue-500 flex-shrink-0" />
+          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{activeEntry.driverName}</span>
+          <span className="text-xs text-gray-400">·</span>
+          <span className="text-xs text-gray-500">{activeEntry.driverPhone}</span>
+          <span className="text-xs text-gray-400">·</span>
+          <span className="text-xs font-mono text-teal-600 dark:text-teal-400">{activeEntry.vehicleRegistrationNumber}</span>
+          <span
+            className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${
+              activeEntry.onRoadStatus === 1
+                ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                : "bg-gray-100 text-gray-400"
+            }`}
+          >
+            {activeEntry.onRoadStatus === 1 ? "On Road" : "Off Road"}
+          </span>
+        </div>
+      )}
+
+  
+      <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[400px] overflow-y-auto">
+        {!activeEntry ? (
+          <div className="p-8 text-center text-gray-400 text-sm">
+            No drivers for this booking item
+          </div>
+        ) : filteredHistory.length === 0 ? (
+          <div className="p-8 text-center text-gray-400 text-sm">
+            No history for this vehicle
+          </div>
+        ) : (
+          [...filteredHistory].reverse().map((h, i) => {
+            // "removed" fires from two different backend flows:
+            //  - Unavailable → Replace (changedFields.replacedBy set) — the old
+            //    driver/vehicle was pulled because it went unavailable.
+            //  - Plain manual release (no replacedBy) — admin released the
+            //    vehicle back to the pool directly.
+            // "created" mirrors this: changedFields.replacementFor marks a
+            // driver/vehicle that was added specifically to replace one above.
+            const isUnavailableRemoval = h.action === "removed" && !!h.changedFields?.replacedBy;
+            const isPlainRelease = h.action === "removed" && !h.changedFields?.replacedBy;
+            const isReplacementAdd = h.action === "created" && !!h.changedFields?.replacementFor;
+
+            const tag = isUnavailableRemoval
+              ? { label: "Unavailable Vehicle", icon: "!", cls: "bg-red-50 text-red-600 border-red-200", dot: "bg-red-500" }
+              : isPlainRelease
+              ? { label: "Vehicle Released", icon: "↩", cls: "bg-slate-100 text-slate-600 border-slate-300", dot: "bg-slate-400" }
+              : isReplacementAdd
+              ? { label: "Replacement Vehicle", icon: "↻", cls: "bg-indigo-50 text-indigo-600 border-indigo-200", dot: "bg-indigo-500" }
+              : h.action === "created"
+              ? { label: "Driver added", icon: "+", cls: "bg-blue-50 text-blue-600 border-blue-200", dot: "bg-blue-500" }
+              : { label: "Driver updated", icon: "↻", cls: "bg-amber-50 text-amber-600 border-amber-200", dot: "bg-amber-500" };
+
+            return (
+            <div key={h._id || i} className="p-4 flex gap-3">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold ${tag.dot}`}
+              >
+                {tag.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className={`text-xs font-semibold px-1.5 py-0.5 rounded border ${tag.cls}`}>
+                    {tag.label}
+                  </span>
+                  <span className="text-xs text-gray-400">{fmtDt(h.changedAt)}</span>
+                </div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{h.driverName}</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {h.driverPhone} ·{" "}
+                  <span className="font-mono text-teal-600 dark:text-teal-400">
+                    {h.vehicleRegistrationNumber}
+                  </span>
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">By {h.changedBy}</p>
+                {isUnavailableRemoval && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Replaced by <span className="font-mono font-semibold">{h.changedFields.replacedBy}</span>
+                  </p>
+                )}
+                {isReplacementAdd && (
+                  <p className="text-xs text-indigo-500 mt-1">
+                    Replaces <span className="font-mono font-semibold">{h.changedFields.replacementFor}</span>
+                  </p>
+                )}
+                {h.changedFields?.reason && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    <span className="font-medium">Reason:</span> {h.changedFields.reason}
+                  </p>
+                )}
+                {h.action === "updated" &&
+                  h.changedFields &&
+                  Object.keys(h.changedFields).length > 0 && (
+                    <div className="mt-2 space-y-1 pt-2 border-t border-gray-100 dark:border-gray-800">
+                      {Object.entries(h.changedFields).map(([field, val]: any) => (
+                        <p key={field} className="text-xs text-gray-500 flex items-center gap-1 flex-wrap">
+                          <span className="font-medium capitalize text-gray-600">{field}:</span>
+                          <span className="line-through text-red-400">{val.old}</span>
+                          <span className="text-gray-400">→</span>
+                          <span className="text-emerald-600 font-medium">{val.new}</span>
+                        </p>
+                      ))}
+                    </div>
+                  )}
+              </div>
+            </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function ProjectExecutionHistoryTab({ order ,vehicleTypes }: { order: Order ,vehicleTypes:string[] }) {
   const logs = [...(order.pipelineLogs || [])].reverse();
   const driverEntries = order.onRoadExecutionArray || [];
   const onRoadHistory = order.onRoadHistory || [];
+
+  
 
   if (logs.length === 0) {
     return (
@@ -276,93 +537,22 @@ export default function ProjectExecutionHistoryTab({ order }: { order: Order }) 
   }
 
   return (
-    <div className="p-4 space-y-6">
+    // <div className="p-4 space-y-6">
+    //   {driverEntries.length > 0 && (
+    //     <DriverStatusSummary entries={driverEntries} bookingItems={order.bookingItems} />
+    //   )}
+
+    // </div>
+      <div className="p-4 space-y-6">
       {driverEntries.length > 0 && (
         <DriverStatusSummary entries={driverEntries} bookingItems={order.bookingItems} />
       )}
-
-
-
-
-      {onRoadHistory.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/20 border border-sky-100 dark:border-sky-800/50 mb-4">
-            <Truck size={14} className="text-sky-500" />
-            <span className="text-sm font-bold text-sky-700 dark:text-sky-300">On Road Status Changes</span>
-            <span className="ml-auto px-2 py-0.5 rounded-full text-xs font-semibold bg-sky-100 dark:bg-sky-900/40 text-sky-700">
-              {onRoadHistory.length} events
-            </span>
-          </div>
-
-          <div className="space-y-0">
-            {[...onRoadHistory].reverse().map((h: any, i: number, arr: any[]) => {
-              const isLast = i === arr.length - 1;
-              const isCreated = h.action === "created";
-              const dotGradient = isCreated
-                ? "from-green-400 to-emerald-600"
-                : "from-amber-400 to-orange-500";
-
-              return (
-                <div key={h._id || i} className="flex items-start gap-3 relative">
-                  {!isLast && (
-                    <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-gray-100 dark:bg-gray-700" />
-                  )}
-                  <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${dotGradient} flex-shrink-0 flex items-center justify-center mt-0.5 relative z-10`}>
-                    <div className="w-2.5 h-2.5 rounded-full bg-white/70" />
-                  </div>
-                  <div className="flex-1 pb-4">
-                    <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                          Vehicle {(h.vehicleIndex ?? 0) + 1} —{" "}
-                          {isCreated ? "On Road status added" : "Details edited"}
-                        </p>
-                      </div>
-
-                      {h.action === "edited" && Object.keys(h.changedFields || {}).length > 0 && (
-                        <div className="mb-2 space-y-1">
-                          {Object.entries(h.changedFields).map(([field, val]: any) => (
-                            <div key={field} className="flex items-center gap-2 text-xs">
-                              <span className="text-gray-500 w-20 capitalize">
-                                {field === "driverName" ? "Driver Name"
-                                  : field === "driverPhone" ? "Phone"
-                                    : field === "vehicleRegistrationNumber" ? "Reg. No"
-                                      : field === "onRoadStatus" ? "Status"
-                                        : field}:
-                              </span>
-                              <span className="line-through text-red-500">
-                                {field === "onRoadStatus" ? (val.old === 1 ? "On Road" : "Off Road") : (val.old || "—")}
-                              </span>
-                              <span className="text-gray-400">→</span>
-                              <span className="text-green-600 font-semibold">
-                                {field === "onRoadStatus" ? (val.new === 1 ? "On Road" : "Off Road") : val.new}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">{h.driverName}</span>
-                        <span>·</span>
-                        <span>{h.driverPhone}</span>
-                        <span>·</span>
-                        <span className="font-mono text-sky-700 dark:text-sky-400">{h.vehicleRegistrationNumber}</span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
-                        <span>By {h.changedBy || "—"}</span>
-                        <span>·</span>
-                        <span>{fmtDatetime(h.changedAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+    <AllDriverHistorySection
+        driverHistory={order.onRoadDriverHistory || []}
+        driverEntries={order.onRoadExecutionArray || []}
+        bookingItems={order.bookingItems || []}
+        vehicleTypes={vehicleTypes}
+      />
     </div>
   );
 }

@@ -7,8 +7,10 @@ import { CustomerFormData, CustomerSelection, GstDetail } from "./AdminOrderForm
 import FormField, { inputClass } from "../../../components/reusableFormField";
 import { HiOutlineUser, HiOutlineOfficeBuilding } from "react-icons/hi";
 import { designations } from "../../utils/collection.json";
-import { Customer, createCustomer, searchCustomers } from "../../utils/Adminorderapi";
 import API_BASE from "../../../../baseurl";
+
+const toTitleCase = (str: string) => str.replace(/\b\w/g, (c) => c.toUpperCase());
+const capitalizeFirstOnly = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 
 interface Props {
   data: CustomerFormData;
@@ -22,7 +24,10 @@ interface Props {
   gstVerified: boolean;
   onGstVerified: (detail: GstDetail) => void;
   onGstVerifiedChange: (val: boolean) => void;
-   onGstDetailsReset: () => void;
+  onGstDetailsReset: () => void;
+  selectedClientOrder: any | null;
+  onSelectClientOrder: (co: any | null) => void;
+  editingOrder?:any
 }
 
 
@@ -33,7 +38,8 @@ type FormErrors = Partial<
     | "companyName"
     | "clientName"
     | "designation"
-    | "gstNumber",
+    | "gstNumber"
+    | "panNumber",
     string
   >
 >;
@@ -51,13 +57,76 @@ export default function CustomerDetailsStep({
   onGstVerifiedChange,
   onGstVerified,
   onGstDetailsReset,
+  selectedClientOrder,
+  onSelectClientOrder,
+  editingOrder
+
 }: Props) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [globalError, setGlobalError] = useState("");
   const [gstVerifying, setGstVerifying] = useState(false);
   const [gstStatus, setGstStatus] = useState<"idle" | "success" | "error">("idle");
   const [gstMessage, setGstMessage] = useState("");
+  const [clientOrders, setClientOrders] = useState<any[]>([]);
 
+
+  React.useEffect(() => {
+    fetch(`${API_BASE}client-requests`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.data)) {
+          setClientOrders(d.data.filter((c: any) => c.status === 0 || c.status === 1));
+        }
+      })
+      .catch(() => { });
+  }, []);
+
+  // const handleClientOrderSelect = (id: string) => {
+  //   if (!id) {
+  //     onSelectClientOrder(null);
+  //     return;
+  //   }
+  //   const co = clientOrders.find((c) => c._id === id);
+  //   if (!co) return;
+  //   onSelectClientOrder(co);
+  //   onCategoryChange("individual");
+  //   onChange({ name: co.name, email: co.email, phone: co.phone });
+  //   setErrors({});
+  // };
+
+
+  const handleClientOrderSelect = (id: string) => {
+    if (!id) {
+      onSelectClientOrder(null);
+      onCategoryChange("individual");
+      onChange({
+        name: "",
+        phone: "",
+        email: "",
+        address: "",
+        companyName: "",
+        clientName: "",
+        designation: "",
+        gstNumber: "",
+        panNumber: "",
+      });
+      onGstDetailsReset();
+      onGstVerifiedChange(true);
+      setGstStatus("idle");
+      setGstMessage("");
+      setErrors({});
+      return;
+    }
+    const co = clientOrders.find((c) => c._id === id);
+    if (!co) return;
+    onSelectClientOrder(co);
+    if (customerCategory === "organization") {
+      onChange({ clientName: co.name, email: co.email, phone: co.phone });
+    } else {
+      onChange({ name: co.name, email: co.email, phone: co.phone });
+    }
+    setErrors({});
+  };
 
   const handleGstVerify = async () => {
     const gst = data.gstNumber?.trim();
@@ -84,13 +153,20 @@ export default function CustomerDetailsStep({
 
       if (!res.ok) throw new Error(data2.message || "Verification failed");
 
-      // Company name auto-fill
-      onChange({ companyName: data2.data.business_name });
+      // Company name + PAN + Address auto-fill
+      onChange({
+        companyName: data2.data.business_name,
+        panNumber: data2.data.business_pan || "",
+        address: data2.data.business_address || "",
+      });
+      setErrors((p) => ({ ...p, panNumber: undefined, address: undefined }));
 
       onGstVerified({
         gstDetailId: data2.data.gstDetailId,
         gst_number: data2.data.gst_number,
         business_name: data2.data.business_name,
+        business_pan: data2.data.business_pan,
+        business_address: data2.data.business_address,
       });
 
       setGstStatus("success");
@@ -117,8 +193,6 @@ export default function CustomerDetailsStep({
   };
 
 
-
-
   // const handleCategorySwitch = (cat: "individual" | "organization") => {
   //   if (cat === customerCategory) return;
   //   onCategoryChange(cat);
@@ -126,8 +200,10 @@ export default function CustomerDetailsStep({
   //   setGlobalError("");
   //   setGstStatus("idle");
   //   setGstMessage("");
+  //   onGstVerifiedChange(true);
   //   onCustomerChange({ customer: null, type: "" });
   // };
+
 
   const handleCategorySwitch = (cat: "individual" | "organization") => {
     if (cat === customerCategory) return;
@@ -138,7 +214,24 @@ export default function CustomerDetailsStep({
     setGstMessage("");
     onGstVerifiedChange(true);
     onCustomerChange({ customer: null, type: "" });
+
+    if (selectedClientOrder) {
+      if (cat === "organization") {
+        onChange({
+          clientName: selectedClientOrder.name,
+          email: selectedClientOrder.email,
+          phone: selectedClientOrder.phone,
+        });
+      } else {
+        onChange({
+          name: selectedClientOrder.name,
+          email: selectedClientOrder.email,
+          phone: selectedClientOrder.phone,
+        });
+      }
+    }
   };
+
 
   const validateIndividual = (): boolean => {
     const e: FormErrors = {};
@@ -154,33 +247,15 @@ export default function CustomerDetailsStep({
     return Object.keys(e).length === 0;
   };
 
-  // const validateOrganization = (): boolean => {
-  //   const e: FormErrors = {};
-  //   if (!data.companyName?.trim()) e.companyName = "Company name is required";
-  //   if (!data.clientName?.trim()) e.clientName = "Client name is required";
-  //   if (!data.designation?.trim()) e.designation = "Designation is required";
-  //   if (!data.phone?.trim()) e.phone = "Phone number is required";
-  //   else if (!/^[6-9]\d{9}$/.test(data.phone.trim()))
-  //     e.phone = "Enter a valid 10-digit mobile number";
-  //   if (!data.email?.trim()) e.email = "Email is required";
-  //   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim()))
-  //     e.email = "Enter a valid email address";
-  //   if (!data.gstNumber?.trim()) e.gstNumber = "GST number is required";
-  //   else if (
-  //     !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(
-  //       data.gstNumber.trim()
-  //     )
-  //   )
-  //     e.gstNumber = "Enter a valid GST number (e.g. 22AAAAA0000A1Z5)";
-  //   setErrors(e);
-  //   return Object.keys(e).length === 0;
-  // };
+
+
+
+
 
   const validateOrganization = (): boolean => {
     const e: FormErrors = {};
     if (!data.companyName?.trim()) e.companyName = "Company name is required";
     if (!data.clientName?.trim()) e.clientName = "Client name is required";
-    if (!data.designation?.trim()) e.designation = "Designation is required";
     if (!data.phone?.trim()) e.phone = "Phone number is required";
     else if (!/^[6-9]\d{9}$/.test(data.phone.trim()))
       e.phone = "Enter a valid 10-digit mobile number";
@@ -191,9 +266,15 @@ export default function CustomerDetailsStep({
     else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(data.gstNumber.trim()))
       e.gstNumber = "Enter a valid GST number (e.g. 22AAAAA0000A1Z5)";
     else if (!gstVerified) e.gstNumber = "Please verify the GST number";
+    if (!data.panNumber?.trim()) e.panNumber = "PAN number will be auto-filled after GST verification";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
+
+
+
+
+
   const handleNext = () => {
     setGlobalError("");
     const valid =
@@ -202,19 +283,30 @@ export default function CustomerDetailsStep({
         : validateOrganization();
     if (!valid) return;
 
-    const customerPayload =
-      customerCategory === "individual"
+    let customerPayload;
+
+    if (selectedClientOrder) {
+      // Use client order data
+      customerPayload = {
+        name: selectedClientOrder.name,
+        phone: selectedClientOrder.phone,
+        email: selectedClientOrder.email,
+        address: data.address || "",
+      };
+    } else {
+      customerPayload = customerCategory === "individual"
         ? {
           name: data.name,
           phone: data.phone,
-          address: data.address,
           email: data.email,
+          address: data.address,
         }
         : {
           name: data.clientName,
           phone: data.phone,
           email: data.email,
         };
+    }
 
     onCustomerChange({
       customer: { ...customerPayload } as any,
@@ -224,12 +316,34 @@ export default function CustomerDetailsStep({
     onNext();
   };
 
-
-
-
   return (
     <div className="space-y-5">
-
+  {/* {!editingOrder && 
+      <div>
+      
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Client Order Request <span className="text-gray-400 font-normal"></span>
+        </label>
+        
+        <select
+          value={selectedClientOrder?._id || ""}
+          onChange={(e) => handleClientOrderSelect(e.target.value)}
+          className={inputClass(false)}
+        >
+          <option value="">-- Select Client Order --</option>
+          {clientOrders.map((co) => (
+            <option key={co._id} value={co._id}>
+              {co.clientOrderId} — {co.name}
+            </option>
+          ))}
+        </select>
+        {selectedClientOrder && (
+          <p className="mt-1.5 text-xs text-blue-600">
+            Client Order selected 
+          </p>
+        )}
+      </div>
+      } */}
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -246,8 +360,10 @@ export default function CustomerDetailsStep({
               <button
                 key={cat}
                 type="button"
+                // disabled={!!selectedClientOrder}
                 onClick={() => handleCategorySwitch(cat)}
                 className={`rounded-xl border-2 px-4 py-4 text-sm font-medium transition-all text-left
+                
                   ${isActive
                     ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
                     : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
@@ -275,8 +391,8 @@ export default function CustomerDetailsStep({
       </div>
 
       {/* ── Individual Fields ── */}
-      {customerCategory === "individual" && (
-        <div className="space-y-4">
+      {/* {customerCategory === "individual" && (
+        <div className={`space-y-4`} >
           <FormField label="Customer Name" error={errors.name} required>
             <input
               type="text"
@@ -327,6 +443,74 @@ export default function CustomerDetailsStep({
             />
           </FormField>
         </div>
+      )} */}
+
+      {customerCategory === "individual" && (
+        <div className={`space-y-4`} >
+          <FormField
+            label="Customer Name"
+            error={errors.name}
+          // required={!selectedClientOrder} 
+          >
+            <input
+              type="text"
+              value={data.name || ""}
+              onChange={(e) => {
+                const lettersOnly = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                set("name", toTitleCase(lettersOnly));
+              }}
+              placeholder="Enter full name"
+              className={inputClass(!!errors.name)}
+            // disabled={!!selectedClientOrder}
+            />
+          </FormField>
+
+          <FormField
+            label="Email"
+            error={errors.email}
+          // required={!selectedClientOrder}
+          >
+            <input
+              type="email"
+              value={data.email || ""}
+              onChange={(e) => set("email", capitalizeFirstOnly(e.target.value))}
+              placeholder="customer@example.com"
+              className={inputClass(!!errors.email)}
+            // disabled={!!selectedClientOrder}
+            />
+          </FormField>
+
+          <FormField
+            label="Phone Number"
+            error={errors.phone}
+          // required={!selectedClientOrder}
+          >
+            <div className="flex">
+              <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400">
+                +91
+              </span>
+              <input
+                type="tel"
+                value={data.phone || ""}
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                placeholder="e.g. 9876543210"
+                className={inputClass(!!errors.phone) + " rounded-l-none"}
+              // disabled={!!selectedClientOrder}
+              />
+            </div>
+          </FormField>
+
+          <FormField label="Address" error={errors.address} required={false}>
+            <textarea
+              value={data.address || ""}
+              onChange={(e) => set("address", toTitleCase(e.target.value))}
+              placeholder="Enter full address"
+              rows={3}
+              className={inputClass(!!errors.address) + " resize-none"}
+            // disabled={!!selectedClientOrder}
+            />
+          </FormField>
+        </div>
       )}
 
 
@@ -342,10 +526,11 @@ export default function CustomerDetailsStep({
                 value={data.gstNumber || ""}
                 onChange={(e) => {
                   set("gstNumber", e.target.value.toUpperCase());
+                  set("panNumber", "");
                   setGstStatus("idle");
                   setGstMessage("");
                   onGstVerifiedChange(false);
-                    onGstDetailsReset(); 
+                  onGstDetailsReset();
 
                 }}
                 placeholder="e.g. 22AAAAA0000A1Z5"
@@ -387,12 +572,24 @@ export default function CustomerDetailsStep({
             )}
           </FormField>
 
+          <FormField label="PAN Number" error={errors.panNumber} required>
+            <input
+              type="text"
+              value={data.panNumber || ""}
+              readOnly
+              placeholder="Auto-filled after GST verification"
+              className={inputClass(!!errors.panNumber) + " bg-gray-50 dark:bg-gray-800 cursor-not-allowed"}
+            />
+          </FormField>
+
+        
+
 
           <FormField label="Company Name" error={errors.companyName} required>
             <input
               type="text"
               value={data.companyName || ""}
-              onChange={(e) => set("companyName", e.target.value)}
+              onChange={(e) => set("companyName", toTitleCase(e.target.value))}
               placeholder="Company Name"
               className={inputClass(!!errors.companyName)}
             />
@@ -404,14 +601,14 @@ export default function CustomerDetailsStep({
               value={data.clientName || ""}
               onChange={(e) => {
                 const lettersOnly = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-                set("clientName", lettersOnly);
+                set("clientName", toTitleCase(lettersOnly));
               }}
               placeholder="Enter client name"
               className={inputClass(!!errors.clientName)}
             />
           </FormField>
 
-          <FormField label="Designation" error={errors.designation} required>
+          <FormField label="Designation" error={errors.designation}>
             <select
               value={data.designation || ""}
               onChange={(e) => set("designation", e.target.value)}
@@ -445,14 +642,26 @@ export default function CustomerDetailsStep({
             <input
               type="email"
               value={data.email || ""}
-              onChange={(e) => set("email", e.target.value)}
+              onChange={(e) => set("email", capitalizeFirstOnly(e.target.value))}
               placeholder="company@example.com"
               className={inputClass(!!errors.email)}
             />
           </FormField>
+
+           <FormField label="Address" error={errors.address} required={false}>
+            <textarea
+              value={data.address || ""}
+              onChange={(e) => set("address", toTitleCase(e.target.value))}
+              placeholder="Enter full address"
+              rows={3}
+              className={inputClass(!!errors.address) + " resize-none"}
+            />
+          </FormField>
+
         </div>
       )}
 
+       
       {globalError && (
         <p className="text-xs text-red-500">{globalError}</p>
       )}

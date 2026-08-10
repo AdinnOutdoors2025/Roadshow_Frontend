@@ -12,7 +12,7 @@ import {
     StickyNote, Eye, Trash2, ImageIcon,
     PlusCircle, MessageSquare, MoreHorizontal,
     AlertTriangle, History, XCircle,
-    Folder,
+    Folder, RotateCcw, CheckCheck, UserCog,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import axios from "axios";
@@ -21,6 +21,7 @@ import toast from "react-hot-toast";
 import API_BASE from "../../../../baseurl";
 import { useVehicle } from '../../../context/vehicletypecontext';
 import { ChevronLeft } from "lucide-react";
+import DatePicker from "../../utils/datepicker";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -56,12 +57,76 @@ interface Order {
     customerCategory?: string;
 }
 
-export default function OverviewTab({ order, onRefresh, onStageMove }: {
+export default function OverviewTab({ order, onRefresh, onStageMove, vehicleTypes, staffAdmins = [] }: {
     order: Order; onRefresh: () => Promise<void>;
     onStageMove: (order: Order, toStage: string) => void;
+    staffAdmins?: { username: string }[];
 }) {
 
-    const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+    // ── Handler reassignment / handover ──────────────────────────────────────
+    const [showHandoverModal, setShowHandoverModal] = useState(false);
+    const [showHandoverHistory, setShowHandoverHistory] = useState(false);
+    const [handoverNewHandler, setHandoverNewHandler] = useState("");
+    const [handoverIsTemporary, setHandoverIsTemporary] = useState(true);
+    const [handoverLeaveStart, setHandoverLeaveStart] = useState("");
+    const [handoverLeaveEnd, setHandoverLeaveEnd] = useState("");
+    const [handoverReason, setHandoverReason] = useState("");
+    const [handoverSaving, setHandoverSaving] = useState(false);
+    const opsHandlerAssignmentHistory: any[] = (order as any).opsHandlerAssignmentHistory || [];
+    const activeTemporaryHandover = opsHandlerAssignmentHistory.find(
+        (h: any) => h.status === "active" && h.isTemporary
+    );
+
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const oneYearAheadIso = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    const submitHandover = async () => {
+        if (!handoverNewHandler.trim()) { toast.error("Select the new handler"); return; }
+        if (!handoverReason.trim()) { toast.error("Reason is required"); return; }
+        if (handoverIsTemporary && (!handoverLeaveStart || !handoverLeaveEnd)) {
+            toast.error("Leave start and end dates are required"); return;
+        }
+        setHandoverSaving(true);
+        try {
+            const token = getToken();
+            await axios.patch(
+                `${API_BASE}admin/pipeline/${order._id}/reassign-handler`,
+                {
+                    newHandler: handoverNewHandler.trim(),
+                    isTemporary: handoverIsTemporary,
+                    leaveStartDate: handoverIsTemporary ? handoverLeaveStart : null,
+                    leaveEndDate: handoverIsTemporary ? handoverLeaveEnd : null,
+                    reason: handoverReason.trim(),
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success("Handler reassigned");
+            setShowHandoverModal(false);
+            setHandoverNewHandler(""); setHandoverLeaveStart(""); setHandoverLeaveEnd(""); setHandoverReason("");
+            await onRefresh();
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Failed to reassign handler");
+        } finally {
+            setHandoverSaving(false);
+        }
+    };
+
+    const resolveHandover = async (assignmentId: string, makePermanent: boolean) => {
+        try {
+            const token = getToken();
+            await axios.patch(
+                `${API_BASE}admin/pipeline/${order._id}/handover/${assignmentId}/resolve`,
+                { makePermanent },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success(makePermanent ? "Handover made permanent" : "Order returned to previous handler");
+            await onRefresh();
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Failed to resolve handover");
+        }
+    };
+
+    // const { vehicleTypes, fetchVehicleTypes } = useVehicle();
     const [openItems, setOpenItems] = useState<Record<number, boolean>>({});
     const [activeVehicleTab, setActiveVehicleTab] = useState<number>(0);
     const tabsContainerRef = useRef<HTMLDivElement>(null);
@@ -70,29 +135,29 @@ export default function OverviewTab({ order, onRefresh, onStageMove }: {
     };
 
     const fmt = (n?: number | null) =>
-    n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
+        n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
 
-const fmtDatetime = (s?: string) =>
-    s
-        ? new Date(s).toLocaleString("en-IN", {
-            day: "2-digit", month: "short", year: "numeric",
-            hour: "2-digit", minute: "2-digit",
-        })
-        : "—";
+    const fmtDatetime = (s?: string) =>
+        s
+            ? new Date(s).toLocaleString("en-IN", {
+                day: "2-digit", month: "short", year: "numeric",
+                hour: "2-digit", minute: "2-digit",
+            })
+            : "—";
 
-const fmtRelative = (s?: string) => {
-    if (!s) return "";
-    const diff = Date.now() - new Date(s).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-};
+    const fmtRelative = (s?: string) => {
+        if (!s) return "";
+        const diff = Date.now() - new Date(s).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 60) return `${mins}m ago`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `${hrs}h ago`;
+        return `${Math.floor(hrs / 24)}d ago`;
+    };
 
-    useEffect(() => {
-        fetchVehicleTypes()
-    }, [])
+    // useEffect(() => {
+    //     fetchVehicleTypes()
+    // }, [])
 
 
     const currentVehicle = order.bookingItems[activeVehicleTab];
@@ -149,6 +214,13 @@ const fmtRelative = (s?: string) => {
         const vehicle = vehicleTypes.find((vt: any) => vt._id === vehicleTypeId);
         return vehicle?.typeName || vehicleTypeId;
     };
+
+      const baseDays =
+  Math.ceil(
+    (new Date(currentVehicle.toDate).getTime() -
+      new Date(currentVehicle.fromDate).getTime()) /
+      86400000
+  ) + 1;
 
     return (
 
@@ -219,6 +291,212 @@ const fmtRelative = (s?: string) => {
                     </div>
                 </div>
             </div>
+
+            {/* Handler Assignment */}
+            {order?.pipelineStatus !== "todo" && (
+            <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center gap-2">
+                        <UserCog size={15} className="text-gray-400" />
+                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Handler Assignment</h3>
+                    </div>
+                    <button
+                        onClick={() => setShowHandoverModal(true)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-violet-400 hover:text-violet-600 text-[12px] font-semibold"
+                    >
+                        <RotateCcw size={12} /> Reassign
+                    </button>
+                </div>
+                <div className="p-4 space-y-3">
+                    {order.handlerName ? (
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                                {order.handlerName.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.handlerName}</p>
+                                {activeTemporaryHandover && (
+                                    <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Temporary handover</p>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-gray-400">No handler assigned yet</p>
+                    )}
+
+                    {activeTemporaryHandover && (
+                        <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                            <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                                Covering for <span className="font-semibold">{activeTemporaryHandover.previousHandler}</span> (
+                                {activeTemporaryHandover.leaveStartDate ? fmtDatetime(activeTemporaryHandover.leaveStartDate).split(",")[0] : ""}
+                                {" – "}
+                                {activeTemporaryHandover.leaveEndDate ? fmtDatetime(activeTemporaryHandover.leaveEndDate).split(",")[0] : ""})
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                                <button
+                                    onClick={() => resolveHandover(activeTemporaryHandover._id, false)}
+                                    className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 text-[10px] font-semibold"
+                                >
+                                    <RotateCcw size={10} /> Return
+                                </button>
+                                <button
+                                    onClick={() => resolveHandover(activeTemporaryHandover._id, true)}
+                                    className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-semibold"
+                                >
+                                    <CheckCheck size={10} /> Make Permanent
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {opsHandlerAssignmentHistory.length > 0 && (
+                        <button
+                            onClick={() => setShowHandoverHistory((v) => !v)}
+                            className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600"
+                        >
+                            <History size={11} /> Handover history ({opsHandlerAssignmentHistory.length})
+                        </button>
+                    )}
+                    {showHandoverHistory && (
+                        <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+                            {opsHandlerAssignmentHistory.slice().reverse().map((h: any) => {
+                                const statusStyle =
+                                    h.status === "madePermanent"
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                                        : h.status === "reverted"
+                                            ? "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                                            : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800";
+                                const statusLabel =
+                                    h.status === "madePermanent" ? "Made Permanent"
+                                        : h.status === "reverted" ? "Reverted"
+                                            : "Active";
+                                return (
+                                    <div
+                                        key={h._id}
+                                        className="rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-2.5"
+                                    >
+                                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                                            <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                <span>{h.previousHandler || "—"}</span>
+                                                <ChevronRight size={13} className="text-gray-400 flex-shrink-0" />
+                                                <span>{h.newHandler}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="px-1.5 py-0.5 rounded-md text-[11px] font-medium border bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400">
+                                                    {h.isTemporary ? "Temporary" : "Permanent"}
+                                                </span>
+                                                <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-semibold border ${statusStyle}`}>
+                                                    {statusLabel}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <p className="text-[13px] text-gray-600 dark:text-gray-300 mt-1.5">{h.reason}</p>
+                                        <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-1">
+                                            {fmtDatetime(h.assignedAt)} · by {h.assignedBy}
+                                        </p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+            )}
+
+            {showHandoverModal && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+                    <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-5">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-base font-bold text-gray-900 dark:text-white">Reassign Handler</h3>
+                            <button onClick={() => setShowHandoverModal(false)} className="text-gray-400 hover:text-gray-600">
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-xs font-semibold text-gray-500">New Handler</label>
+                                <select
+                                    value={handoverNewHandler}
+                                    onChange={(e) => setHandoverNewHandler(e.target.value)}
+                                    className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+                                >
+                                    <option value="">Select handler...</option>
+                                    {staffAdmins.map((s) => (
+                                        <option key={s.username} value={s.username}>{s.username}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <input
+                                    id="opsHandoverTemp"
+                                    type="checkbox"
+                                    checked={handoverIsTemporary}
+                                    onChange={(e) => setHandoverIsTemporary(e.target.checked)}
+                                />
+                                <label htmlFor="opsHandoverTemp" className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                                    Temporary (e.g. leave handover) — return or make permanent later
+                                </label>
+                            </div>
+
+                            {handoverIsTemporary && (
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="text-xs font-semibold text-gray-500">Leave Start (From Date)</label>
+                                        <div className="mt-1">
+                                            <DatePicker
+                                                value={handoverLeaveStart}
+                                                onChange={setHandoverLeaveStart}
+                                                minDate={todayIso}
+                                                maxDate={handoverLeaveEnd || oneYearAheadIso}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold text-gray-500">Leave End (To Date)</label>
+                                        <div className="mt-1">
+                                            <DatePicker
+                                                value={handoverLeaveEnd}
+                                                onChange={setHandoverLeaveEnd}
+                                                minDate={handoverLeaveStart || todayIso}
+                                                maxDate={oneYearAheadIso}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-xs font-semibold text-gray-500">Reason</label>
+                                <textarea
+                                    value={handoverReason}
+                                    onChange={(e) => setHandoverReason(e.target.value)}
+                                    rows={2}
+                                    placeholder="e.g. Handler on leave, manager reassignment..."
+                                    className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-2 pt-1">
+                                <button
+                                    onClick={submitHandover}
+                                    disabled={handoverSaving}
+                                    className="flex-1 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-semibold"
+                                >
+                                    {handoverSaving ? "Saving..." : "Reassign"}
+                                </button>
+                                <button
+                                    onClick={() => setShowHandoverModal(false)}
+                                    className="flex-1 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-semibold"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Order Details */}
 
@@ -294,10 +572,28 @@ const fmtRelative = (s?: string) => {
                                     ["Vehicle Model", getVehicleTypeName(currentVehicle.vehicleType)], // Fixed: changed 'vehicle' to 'currentVehicle'
                                     ["Booking For", order.customerCategory],
                                     ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType],
-                                    ["Duration", currentVehicle.fromDate && currentVehicle.toDate
-                                        ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000)}D base${currentVehicle.extraDays > 0 ? ` +${currentVehicle.extraDays} D = ${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000) + currentVehicle.extraDays}D total` : ""})`
-                                        : "—"],
-                                    ["Driving route", `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
+                                    // ["Duration", currentVehicle.fromDate && currentVehicle.toDate
+                                    //     ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000)}D base${currentVehicle.extraDays > 0 ? ` +${currentVehicle.extraDays} D = ${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000) + currentVehicle.extraDays}D total` : ""})`
+                                    //     : "—"],
+                                    [
+                                        "Duration",
+                                        currentVehicle.fromDate && currentVehicle.toDate
+                                            ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric",
+                                            })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric",
+                                            })} (${baseDays}D base${currentVehicle.extraDays > 0
+                                                ? ` +${currentVehicle.extraDays}D = ${baseDays + currentVehicle.extraDays
+                                                }D total`
+                                                : ""
+                                            })`
+                                            : "—",
+                                    ],
+                                    ["Campaign Location", currentVehicle.campaignLocation || `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
                                     ["State / City", `${currentVehicle.state} / ${currentVehicle.city}`],
                                     ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
                                     currentVehicle.extraKm > 0 ? ["Extra KM", `${currentVehicle.extraKm} km`] : null,
@@ -376,7 +672,7 @@ const fmtRelative = (s?: string) => {
                                     </div>
                                 )}
 
-                                {(currentVehicle.additionalCharges || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
+                                {(currentVehicle.additionalFields || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
                                     <div key={fIdx} className="flex justify-between items-center py-1">
                                         <span className={c.mode === "-" ? "text-red-500 text-md" : "text-gray-600 dark:text-gray-400 text-md"}>
                                             {c.label}
@@ -443,27 +739,143 @@ const fmtRelative = (s?: string) => {
             </div>
 
             {/* Closed Lost */}
-            {order.salesPipelineStatus === "closedLost" && (order.closedLostArray || []).length > 0 && (
-                <div className="rounded-xl border border-rose-100 dark:border-rose-800/50 overflow-hidden">
-                    <div className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border-b border-rose-100 dark:border-rose-800/50">
-                        <XCircle size={13} className="text-rose-500" />
-                        <h3 className="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider">Closed Lost — Reason</h3>
+            {order?.pipelineStatus === "closedLost" &&
+                order?.orderClosedLostArray?.length > 0 && (
+                    <div className="rounded-xl border border-rose-100 dark:border-rose-800/50 overflow-hidden">
+                        <div className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border-b border-rose-100 dark:border-rose-800/50">
+                            <XCircle size={13} className="text-rose-500" />
+                            <h3 className="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider">
+                                Closed Lost — Reason
+                            </h3>
+                        </div>
+
+                        <div className="p-4 space-y-3">
+                            {order.orderClosedLostArray.map((item, index) => (
+                                <div
+                                    key={item._id || index}
+                                    className="p-3 rounded-lg border border-rose-200 bg-rose-50"
+                                >
+                                    <div>
+                                        <span className="font-semibold">Reason:</span>
+                                        <p>{item.reason || "-"}</p>
+                                    </div>
+
+                                    <div className="mt-2 text-xs text-gray-500">
+                                        Uploaded By: {item.uploadedBy || "-"}
+                                    </div>
+
+                                    <div className="text-xs text-gray-500">
+                                        Uploaded At: {fmtDatetime(item.uploadedAt)}
+                                    </div>
+
+                                    {item.document ? (
+                                        <div className="mt-2">
+                                            <DocItem
+                                                docPath={item.document}
+                                                label="Supporting Document"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <p className="mt-2 text-xs text-gray-400">
+                                            No document uploaded
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    <div className="p-4 space-y-2">
-                        {order.closedLostArray.map((item, i) => (
-                            <div key={i} className="p-3 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200/50">
-                                <p className="text-sm font-semibold text-rose-700 flex items-center gap-1.5 mb-1">
-                                    <AlertTriangle size={12} /> Reason:
-                                </p>
-                                <p className="text-sm text-gray-700 dark:text-gray-300">{item.reason}</p>
-                                <p className="text-[11px] text-gray-400 mt-1">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
-                                {item.document && <div className="mt-2"><DocItem docPath={item.document} label="Supporting Document" /></div>}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+                )}
         </div>
 
+    );
+}
+
+
+function DocItem({ docPath, label, notes, by, at }: {
+    docPath: string; label: string; notes?: string; by?: string; at?: string;
+}) {
+
+    // const getFileUrl = (p: string) => {
+    //     if (!p) return "";
+    //     if (p.startsWith("http")) return p;
+    //     return `http://localhost:3001${p.startsWith("/") ? p : `/${p}`}`;
+    // };
+
+    const getFileUrl = (p: string) => {
+        if (!p) return "";
+        if (p.startsWith("http")) return p;
+        const path = p.startsWith("/") ? p : `/${p}`;
+
+        const encodedPath = path
+            .split("/")
+            .map((segment) => encodeURIComponent(segment))
+            .join("/");
+        return `http://localhost:3001${encodedPath}`;
+    };
+
+    const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
+
+    const [preview, setPreview] = useState(false);
+    const url = getFileUrl(docPath);
+    if (!docPath) return null;
+    return (
+        <>
+            {preview && <DocPreviewModal url={url} label={label} onClose={() => setPreview(false)} />}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50 hover:shadow-sm transition-all">
+                <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                    {isImage(docPath)
+                        ? <ImageIcon size={16} className="text-blue-500" />
+                        : <FileText size={16} className="text-blue-500" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{label}</p>
+                    {notes && <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"><StickyNote size={12} /> {notes}</p>}
+                    {by && <p className="text-[11px] text-gray-400 mt-0.5">By {by} · {fmtDatetime(at)}</p>}
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => setPreview(true)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-sky-500 hover:bg-sky-50 transition-all">
+                        <Eye size={14} />
+                    </button>
+                    <a href={url} download target="_blank" rel="noreferrer"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-green-500 hover:bg-green-50 transition-all">
+                        <Download size={14} />
+                    </a>
+                </div>
+            </div>
+        </>
+    );
+}
+
+function DocPreviewModal({ url, label, onClose }: { url: string; label: string; onClose: () => void }) {
+    const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
+    const img = isImage(url);
+    return (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{label}</p>
+                    <div className="flex items-center gap-2">
+                        <a href={url} download target="_blank" rel="noreferrer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-sky-600 hover:bg-sky-50 transition-all">
+                            <Download size={13} /> Download
+                        </a>
+                        <button onClick={onClose}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-all">
+                            <X size={16} />
+                        </button>
+                    </div>
+                </div>
+                <div className="relative" style={{ height: "calc(90vh - 60px)" }}>
+                    {img ? (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-100 p-4">
+                            <img src={url} alt={label} className="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
+                        </div>
+                    ) : (
+                        <iframe src={url} className="w-full h-full" title={label} />
+                    )}
+                </div>
+            </div>
+        </div>
     );
 }

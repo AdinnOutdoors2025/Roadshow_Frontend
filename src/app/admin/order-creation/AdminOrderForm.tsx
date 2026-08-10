@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { toast, Toaster } from "react-hot-toast";
 import { IoMdClose } from "react-icons/io";
 import { HiOutlineUser, HiOutlineTruck, HiOutlineClipboardList, HiOutlinePhone } from "react-icons/hi";
 import CustomerDetailsStep from "./CustomerDetailsStep";
 import VehicleListStep from "./VehicleListStep";
 import OrderSummaryStep from "./OrderSummaryStep";
-import { Customer, PricingPreview } from "../../utils/Adminorderapi";
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 export interface CustomerFormData {
@@ -18,11 +18,12 @@ export interface CustomerFormData {
   clientName?: string;
   designation?: string;
   gstNumber?: string;
+  panNumber?: string;
 }
 
 export interface CustomerSelection {
   type: "existing" | "new" | "";
-  customer: Customer | null;
+  customer: any;
 }
 
 export interface AdditionalCharge {
@@ -46,8 +47,7 @@ export interface VehicleConfig {
   toDate: string;
   state: string;
   city: string;
-  fromLocation: string;
-  toLocation: string;
+  campaignLocation: string;
   quantity: number;
   extraKm: number;
   extraDays: number;
@@ -57,7 +57,7 @@ export interface VehicleConfig {
   campaignImages: File[];
   campaignVideos: File[];
   additionalCharges: AdditionalCharge[];
-  pricing: PricingPreview | null;
+  pricing: any;
   gstNumber: string;
   extraHours: number;
   promoterGender: string;
@@ -65,12 +65,16 @@ export interface VehicleConfig {
   promoterQuantity: number;
   dailyKmcharges: any;
   campaignName: string;
+  existingImages?: string[];
+  existingVideos?: string[];
 }
 
 export interface GstDetail {
   gstDetailId: string;
   gst_number: string;
   business_name: string;
+  business_pan?: string;
+  business_address?: string;
 }
 export interface OrderState {
   customerForm: CustomerFormData;
@@ -80,6 +84,7 @@ export interface OrderState {
   individualForm: CustomerFormData;
   organizationForm: CustomerFormData;
   gstDetails: GstDetail[];
+  selectedClientOrder: any | null;
 }
 
 const STEPS = [
@@ -91,7 +96,7 @@ const STEPS = [
 const defaultOrder: OrderState = {
   customerForm: {
     name: "", phone: "", address: "", email: "",
-    companyName: "", clientName: "", designation: "", gstNumber: ""
+    companyName: "", clientName: "", designation: "", gstNumber: "", panNumber: ""
   },
   customerSelection: { type: "", customer: null },
   customerCategory: "individual",
@@ -101,36 +106,170 @@ const defaultOrder: OrderState = {
   },
   organizationForm: {
     name: "", phone: "", address: "", email: "",
-    companyName: "", clientName: "", designation: "", gstNumber: ""
+    companyName: "", clientName: "", designation: "", gstNumber: "", panNumber: ""
   },
 
   gstDetails: [],
+  selectedClientOrder: null,
 };
+
+
 
 interface Props {
   onClose: () => void;
   onSuccess: (orderId: string) => void;
+  editingOrder?: any;
+  getVehicleTypeName?:any
 }
 
-export default function AdminOrderForm({ onClose, onSuccess }: Props) {
-  const [step, setStep] = useState(0);
-  const [order, setOrder] = useState<OrderState>(defaultOrder);
-  const [submitting, setSubmitting] = useState(false);
-  const [gstVerified, setGstVerified] = useState(false);
+  const uid = () => Math.random().toString(36).slice(2, 9);
 
-  console.log("order", order)
+export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVehicleTypeName }: Props) {
+  const [step, setStep] = useState(0);
+  // const [order, setOrder] = useState<OrderState>(defaultOrder);
+  const [order, setOrder] = useState<OrderState>(
+    editingOrder ? buildStateFromOrder(editingOrder) : defaultOrder
+  );
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string[] | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  // const [gstVerified, setGstVerified] = useState(false);
+  const [gstVerified, setGstVerified] = useState(
+  !!editingOrder && editingOrder.customerType === 1
+);
+
 
   const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
+
+
+
+
+  function buildStateFromOrder(o: any): OrderState {
+    const isOrg = o.customerType === 1;
+
+    const customerForm: CustomerFormData = {
+      name: isOrg ? "" : o.name || "",
+      phone: o.phone || "",
+      address: o.address || "",
+      email: o.email || "",
+      companyName: o.companyName || "",
+      clientName: isOrg ? (o.clientName || o.name || "") : "",
+      designation: o.designation || "",
+      gstNumber: o.gstNumber || "",
+      panNumber: o.panNumber || "",
+    };
+
+    return {
+      customerForm,
+      customerSelection: {
+        type: "existing",
+        customer: {
+          name: o.name,
+          phone: o.phone,
+          email: o.email,
+          address: o.address || "",
+        },
+      },
+      customerCategory: isOrg ? "organization" : "individual",
+      individualForm: isOrg ? defaultOrder.individualForm : customerForm,
+      organizationForm: isOrg ? customerForm : defaultOrder.organizationForm,
+      gstDetails: (o.gstVerifyDetails || []).map((g: any) => ({
+        gstDetailId: g.gstDetailId,
+        gst_number: g.gst_number,
+        business_name: g.business_name,
+        business_pan: g.business_pan,
+      })),
+      selectedClientOrder: null,
+    
+      vehicles: (o.bookingItems || []).map((item: any) => {
+ 
+
+  const additionalCuts = (item.additionalFields || [])
+    .filter((f: any) => f.mode === "-")
+    .reduce((s: number, f: any) => s + (Number(f.amount) || 0), 0);
+
+  return {
+    id: uid(),
+    packageId: String(item.packageId?._id || item.packageId || ""),
+    vehicleType: item.vehicleType || "",
+    vehicleModel: item.vehicleModel || "",
+    bookingFor: item.bookingFor || "",
+    campaignType: item.campaignType || "",
+    otherCampaignType: item.otherCampaignType || "",
+    campaignName: item.campaignName || "",
+    fromDate: item.fromDate ? String(item.fromDate).slice(0, 10) : "",
+    toDate: item.toDate ? String(item.toDate).slice(0, 10) : "",
+    state: item.state || "",
+    city: item.city || "",
+    campaignLocation: item.campaignLocation || (item.fromLocation && item.toLocation ? `${item.fromLocation} → ${item.toLocation}` : ""),
+    quantity: item.quantity || 1,
+    extraKm: item.extraKm || 0,
+    extraDays: item.extraDays || 0,
+    extraHours: item.extraHours || 0,
+    needPromoter: !!item.needPromoter,
+    promoterType: item.promoterType || "",
+    otherPromoterType: item.otherPromoterType || "",
+    promoterGender: item.promoterGender || "",
+    promoterLanguage: item.promoterLanguage || [],
+    promoterQuantity: item.promoterQuantity || 0,
+    campaignImages: [],
+    campaignVideos: [],
+    existingImages: item.campaignImages || [],
+    existingVideos: item.campaignVideos || [],
+    additionalCharges: (item.additionalFields || []).map((f: any) => ({
+      id: uid(),
+      label: f.label || "",
+      mode: f.mode || "+",
+      amount: f.amount || 0,
+      reduceType: "amount" as const,
+      discountPercent: 0,
+    })),
+
+
+    pricing: {
+      totalDays: item.totalDays || 0,
+      perDayRentalCost: item.perDayRentalCost || 0,
+      driverCharges: item.driverCharges || 0,
+      promoterChargePerDay: item.promoterChargePerDay || 0,
+      rtoCharges: item.rtoCharges || 0,
+      additionalHourCharges: item.additionalHourCharges || 0,
+      dailyKmLimit: item.dailyKmLimit || 0,
+      dailyKmcharges: item.dailyKmcharges || 0,
+      rentalCost: item.rentalCost || 0,
+      driverCost: item.driverCost || 0,
+      promoterCost: item.promoterCost || 0,
+      rtoCost: item.rtoCost || 0,
+      extraKmCost: item.extraKmCost || 0,
+      extraHourCost: item.extraHourCost || 0,
+      subtotal: item.subtotal || 0,
+      taxableAmount: item.totalAmount || 0,
+      additionalCuts,
+      additionalNet: item.additionalNet || 0,
+      gstAmount: 0,
+      totalAmount: item.totalAmount || 0,
+    },
+
+    gstNumber: item.gstNumber || "",
+    dailyKmcharges: item.dailyKmcharges || 0,
+  };
+}),
+    };
+  }
+
   const handleSubmit = async () => {
     const { customerSelection, vehicles } = order;
-    if (!customerSelection.customer) return;
+    if (!customerSelection.customer) {
+      toast.error("Customer details missing — please go back and fill Customer Details again.");
+      return;
+    }
     try {
       setSubmitting(true);
+      setSubmitError(null);
       const token = getToken();
       const formData = new FormData();
-      // gstVerifyDetails append
+    
       formData.append(
         "gstVerifyDetails",
         JSON.stringify(
@@ -138,6 +277,7 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
             gstDetailId: g.gstDetailId,
             gst_number: g.gst_number,
             business_name: g.business_name,
+            business_pan: g.business_pan,
           }))
         )
       );
@@ -152,6 +292,7 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
       formData.append("clientName", order.customerForm.clientName || "");
       formData.append("designation", order.customerForm.designation || "");
       formData.append("gstNumber", order.customerForm.gstNumber || "");
+      formData.append("panNumber", order.customerForm.panNumber || "");
 
       vehicles.forEach((v, i) => {
         const vData = {
@@ -165,8 +306,7 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
           toDate: v.toDate,
           state: v.state,
           city: v.city,
-          fromLocation: v.fromLocation,
-          toLocation: v.toLocation,
+          campaignLocation: v.campaignLocation,
           quantity: v.quantity,
           extraKm: v.extraKm,
           extraDays: v.extraDays,
@@ -184,6 +324,9 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
           })),
         };
 
+        formData.append(`existingImages_${i}`, JSON.stringify(v.existingImages || []));
+        formData.append(`existingVideos_${i}`, JSON.stringify(v.existingVideos || []));
+
         formData.append(`vehicle_${i}`, JSON.stringify(vData));
 
         (v.campaignImages as File[]).forEach((file) => {
@@ -194,16 +337,41 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
         });
       });
 
-      const res = await fetch(`${API_BASE}admin/orders/create`, {
-        method: "POST",
+      const url = editingOrder
+        ? `${API_BASE}admin/orders/${editingOrder._id}`
+        : `${API_BASE}admin/orders/create`;
+
+      const res = await fetch(url, {
+        method: editingOrder ? "PUT" : "POST",
         body: formData,
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed");
+
+      if (order.selectedClientOrder?._id) {
+        try {
+          await fetch(`${API_BASE}client-requests/${order.selectedClientOrder._id}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: 2 }),
+          });
+        } catch (err) {
+          console.error("Failed to update client request status", err);
+        }
+      }
+
       onSuccess(data.data.orderId);
     } catch (err: any) {
-      alert(err.message || "Failed to create order");
+      const msg = err.message || "Failed to create order";
+      const lines = msg.split("\n").filter((l: string) => l.trim());
+      if (lines.length > 1) {
+        lines.forEach((line: string) => toast.error(line, { duration: 6000 }));
+      } else {
+        toast.error(msg, { duration: 6000 });
+      }
+      setSubmitError(lines);
+      contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setSubmitting(false);
     }
@@ -216,15 +384,18 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
       : order.customerForm.clientName ?? "";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2">
-      <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+    // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-2">
+      <Toaster position="top-right" />
+
+      <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
 
         {/* Header */}
         <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-                Create Admin Order
+                {editingOrder ? `Edit Order · ${editingOrder.orderId}` : "Create Admin Order"}
               </h2>
               {order.customerSelection.customer && (
                 <p className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
@@ -290,13 +461,17 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-        
+        <div ref={contentRef} className="flex-1 overflow-y-auto px-6 py-5">
+
 
           {step === 0 && (
             <CustomerDetailsStep
               gstDetails={order.gstDetails}
-            
+              selectedClientOrder={order.selectedClientOrder}
+              onSelectClientOrder={(co) =>
+                setOrder((p) => ({ ...p, selectedClientOrder: co }))
+              }
+
               onGstVerified={(detail) =>
                 setOrder((p) => ({
                   ...p,
@@ -338,7 +513,9 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
                   };
                 });
                 setGstVerified(false);
+                
               }}
+               editingOrder={editingOrder}
             />
           )}
           {step === 1 && (
@@ -347,6 +524,9 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
               onChange={(vehicles) => setOrder((p) => ({ ...p, vehicles }))}
               onNext={next}
               onBack={back}
+              selectedClientOrder={order.selectedClientOrder}
+              getVehicleTypeName={getVehicleTypeName}
+              editingOrder={editingOrder}
             />
           )}
           {step === 2 && (
@@ -355,6 +535,9 @@ export default function AdminOrderForm({ onClose, onSuccess }: Props) {
               onBack={back}
               onSubmit={handleSubmit}
               loading={submitting}
+               getVehicleTypeName={getVehicleTypeName}
+              editingOrder={editingOrder}
+              submitError={submitError}
             />
           )}
         </div>

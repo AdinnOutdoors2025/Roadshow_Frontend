@@ -1,9 +1,13 @@
 
+/* eslint-disable */
+// @ts-nocheck
+
+
 import { getToken } from "../../utils/auth";
 import { CheckCircle2, Mail, RefreshCw, Clock, Send } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast, Toaster } from "react-hot-toast";
 import API_BASE from "../../../../baseurl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SalesOrder } from "./page";
 import axios from "axios";
 
@@ -60,6 +64,24 @@ export default function CodeCreationTab({
   const [codeSavedSuccess, setCodeSavedSuccess] = useState(false);
   const [rightPanel, setRightPanel] = useState<"preview" | "codeForm">("preview");
 
+  // ── Auto-fill To/CC from Project Settings default ────────────────────────
+  useEffect(() => {
+    const fetchProjectSetting = async () => {
+      try {
+        const token = getToken();
+        const { data } = await axios.get(`${API_BASE}project-settings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setTo(data.data?.data?.defaultTo || "");
+        setCc(data.data?.data?.defaultCc || "");
+      } catch (e) {
+        // Project setting fetch failed — leave To/CC empty, admin can type manually.
+      }
+    };
+    fetchProjectSetting();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── Mail logs from order ─────────────────────────────────────────────────
   const mailLogs: ProjectMailLog[] = (order as any).projectMailLogs || [];
   const hasSentBefore = mailLogs.length > 0;
@@ -87,6 +109,17 @@ export default function CodeCreationTab({
   const hasPoDoc = (order.closedWonArray || []).some(
     (i: any) => i.salesPoDocument
   );
+
+
+  const formatINR = (value: string | number) => {
+  const num = parseFloat(String(value).replace(/[^0-9.]/g, ""));
+  if (isNaN(num) || value === "" || value === undefined) return "";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(num);
+};
 
 
   const senderName = order.salesHandlerName || "Team";
@@ -180,7 +213,7 @@ export default function CodeCreationTab({
 
   return (
     <div className="h-full flex flex-col">
-   
+     <Toaster position="top-right" />
       <div className="flex-shrink-0 flex items-start justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
         <div>
           <p className="text-[13px] font-bold text-red-600 uppercase tracking-widest mb-0.5">
@@ -364,7 +397,7 @@ export default function CodeCreationTab({
                   </label>
                   <input
                     value={to}
-                    placeholder="adinn@gmail.com"
+                    placeholder="adinn@gmail.com,adinn1@gmail.com"
                     onChange={(e) => {
                       setTo(e.target.value);
                       if (!e.target.value.trim()) {
@@ -392,7 +425,7 @@ export default function CodeCreationTab({
                   </label>
                   <input
                     value={cc}
-                    placeholder="adinn1@gmail.com"
+                    placeholder="adinn1@gmail.com,adinn2@gmail.com"
                     onChange={(e) => {
                       setCc(e.target.value);
                       if (!e.target.value.trim()) {
@@ -559,7 +592,6 @@ export default function CodeCreationTab({
                 </span>
               )}
             </div>
-
 
             {/* Subject — bordered card */}
             <div className="mx-4 mt-4 mb-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
@@ -730,10 +762,11 @@ export default function CodeCreationTab({
                           : "—",
                       ],
                       [
-                        "Route",
-                        v.fromLocation && v.toLocation
-                          ? `${v.fromLocation} → ${v.toLocation}`
-                          : null,
+                        "Campaign Location",
+                        v.campaignLocation ||
+                          (v.fromLocation && v.toLocation
+                            ? `${v.fromLocation} → ${v.toLocation}`
+                            : null),
                       ],
                       [
                         "State / City",
@@ -812,6 +845,18 @@ export default function CodeCreationTab({
                         </span>
                       </div>
                     )}
+
+                     {(v.additionalFields || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
+                  <div key={fIdx} className="flex justify-between items-center py-1 text-sm">
+                    <span className={c.mode === "-" ? "text-red-500 text-md" : "text-gray-600 dark:text-gray-400 text-sm"}>
+                      {c.label}
+                    </span>
+                    <span className={c.mode === "-" ? "text-red-600 font-medium" : "font-semibold text-gray-800 dark:text-gray-200"}>
+                      {c.mode === "-" ? "-" : "+"}
+                      {formatINR(c.amount)}
+                    </span>
+                  </div>
+                ))}
                     <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-100 dark:border-gray-700 mt-1">
                       <span className="text-gray-700 dark:text-gray-300">
                         Vehicle {idx + 1} Total

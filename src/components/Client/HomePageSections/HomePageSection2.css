@@ -406,41 +406,984 @@
 
 
 
-/* RESPONSIVE  */
+/* =========================================================
+   RESPONSIVE
+   Everything above this line is the large-desktop (1440px+)
+   design and is intentionally left untouched.
 
+   A) STRUCTURAL  - layout/flow rules that must hold for every
+                    screen below a given width (written once).
+   B) PER-SCREEN  - font-size / size / spacing tuning, one block
+                    per device range.
+   C) MOTION      - reduced-motion accessibility.
+========================================================= */
 
-/* Responsive Media Queries */
-/* Extra Large Screens (2560px and above) ✅ Large Screens (4K Screens)  */
+/* ---------------------------------------------------------
+   A) STRUCTURAL
+--------------------------------------------------------- */
+
+/* NOTE - Help Center height is deliberately left at the base
+   fixed 1000px on every screen.
+   .HC_Main uses background-size: cover, which re-scales the
+   image whenever the box height changes. If the height is
+   auto, opening an FAQ answer grows the box and the background
+   visibly zooms. A fixed height keeps the background stable and
+   the accordion simply fills reserved space. Content measures
+   well under 1000px at every width down to 320px, so nothing
+   clips. If a longer answer is ever added and overflows, raise
+   this fixed height per breakpoint - do NOT switch it to auto. */
+
+/* Voices From The Road: the review box is a min-height, so a
+   card whose text wraps to more lines pushes its star row
+   further down than its neighbours - the rows end up zig-zagged
+   across the carousel. Below large-desktop the cards get narrow
+   enough for this to show, so anchor the star row to the bottom
+   of the card content instead: every card is the same height, so
+   every star row lines up. */
+@media (max-width: 1439px) {
+    .VFRCardContent {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .VFRReviewOuter {
+        flex: 1 1 auto;
+    }
+}
+
+/* Roadshow Advantages is a 2-column row with a fixed 700px
+   height on desktop. Below tablet-landscape it stacks. */
+@media (max-width: 991px) {
+    .RA_LeftRightMain {
+        height: auto;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 40px;
+        padding-bottom: 12%;
+    }
+
+    .RA_leftMain {
+        width: 100%;
+        max-width: 500px;
+    }
+
+    /* Desktop is a flat 400px -> 500px capsule. Mirror that ratio
+       in % so the 1.4s width transition is still visible, and cap
+       at 500px so the capsules never look oversized. */
+    .RS_RA_Item {
+        width: 80%;
+        max-width: 500px;
+    }
+
+    .RS_RA_Item.active {
+        width: 100%;
+    }
+
+    .RA_leftContentDesc {
+        width: 100%;
+    }
+
+    /* Stacked text wraps to more lines than the 200px desktop
+       cap allows - raise it or the description gets cut off. */
+    .RA_collapseWrapper.open {
+        max-height: 360px;
+    }
+
+    .RA_RightMain {
+        width: 100%;
+        max-width: 560px;
+        text-align: center;
+    }
+
+    .RA_RightSecondContentInsideMain {
+        margin: 6% auto;
+    }
+
+    .RA_RightContent2Main {
+        margin-right: auto;
+        margin-left: auto;
+    }
+
+    .RA_RightVanImg {
+        width: 100%;
+        max-width: 480px;
+        margin-right: auto;
+        margin-left: auto;
+    }
+
+    /* FAQ rows are 70% wide on desktop - full width once stacked. */
+    .HC_FAQ_QnAnsMain {
+        width: 100%;
+    }
+
+    .HC_FAQ_TopRow {
+        gap: 14px;
+    }
+
+    .HC_FAQ_Answer_Wrapper.open {
+        max-height: 560px;
+    }
+}
+
+/* Phones: answers wrap to many more lines again. */
+@media (max-width: 479px) {
+    .RA_collapseWrapper.open {
+        max-height: 440px;
+    }
+
+    .HC_FAQ_Answer_Wrapper.open {
+        max-height: 720px;
+    }
+}
+
+/* ---------------------------------------------------------
+   B) PER-SCREEN TUNING
+--------------------------------------------------------- */
+
+/* Extra Large Screens (2560px and above) - 4K Screens */
 @media (min-width: 2560px) {
+    .VFRReviewText {
+        font-size: 20px;
+    }
+
+    .RA_leftContentHeading {
+        font-size: 52px;
+    }
+
+    .RA_leftContentDesc {
+        width: 620px;
+        font-size: 30px;
+    }
+
+    .RA_leftContentIcon {
+        width: 70px;
+        height: 70px;
+        font-size: 44px;
+    }
+
+    .RS_RA_Item {
+        width: 520px;
+    }
+
+    .RS_RA_Item.active {
+        width: 660px;
+    }
+
+    .RA_RightContent1 {
+        font-size: 66px;
+    }
+
+    .RA_RightSecondContent1 {
+        font-size: 24px;
+    }
+
+    .RA_RightContent2InpBtn {
+        font-size: 30px;
+    }
+
+    .HC_HeadingContent1 {
+        font-size: 90px;
+        line-height: 124px;
+    }
+
+    .HC_HeadingContent2 {
+        font-size: 38px;
+    }
+
+    .HC_FAQ_Question {
+        font-size: 30px;
+    }
+
+    .HC_FAQ_Question_Arrow {
+        font-size: 36px;
+    }
+
+    .HC_FAQ_Answer {
+        font-size: 20px;
+    }
 }
 
-/* Large Screens (1400px - 2559px) ✅ Large Desktop Screens 1440*/
+/* Large Screens (1440px - 2559px) - Large Desktop 1440
+   This is the reference design: base rules apply as-is. */
 @media (min-width: 1440px) and (max-width: 2559px) {
+    /* intentionally empty - base styles are the design */
 }
 
+/* Small Desktops (1281px - 1439px)
+   NOTE: this range is not in the original template, which
+   jumped 1280 -> 1440 and left these screens on raw desktop
+   values. Added to close that gap. */
+@media (min-width: 1281px) and (max-width: 1439px) {
+    .VFRReviewText {
+        font-size: 14px;
+    }
 
+    /* Give the column exactly the room the base 400px -> 500px
+       capsules need, and leave the capsule widths on the base
+       rules so the UI matches large desktop 1:1. */
+    .RA_leftMain {
+        width: 45%;
+        min-width: 500px;
+    }
+
+    .RA_leftContentHeading {
+        font-size: 36px;
+    }
+
+    .RA_leftContentDesc {
+        width: 100%;
+        font-size: 21px;
+    }
+
+    .RA_RightContent1 {
+        font-size: 44px;
+    }
+
+    .HC_HeadingContent1 {
+        font-size: 62px;
+        line-height: 90px;
+    }
+
+    .HC_HeadingContent2 {
+        font-size: 27px;
+    }
+
+    .HC_FAQ_Question {
+        font-size: 22px;
+    }
+}
+
+/* Laptops (1024px - 1280px) */
 @media (min-width: 1024px) and (max-width: 1280px) {
- 
+    /* The original file had width: 70% here, which was harmless
+       while the capsules were a fixed 400px. Sized to the capsule
+       instead so they stay at the base 400px -> 500px and match
+       the large-desktop UI exactly. */
+    .RA_leftMain {
+        align-content: center;
+        width: 45%;
+        min-width: 500px;
+        height: 78%;
+    }
+
+    .RA_Main {
+        padding-right: 48px;
+        padding-left: 48px;
+    }
+
+    .HC_Main > div {
+        padding-right: 48px;
+        padding-left: 48px;
+    }
+
+    .HC_FAQMain {
+        padding-right: 0;
+        padding-left: 0;
+        margin: 6% auto;
+    }
+
+    /* Above ~1184px the carousel is still in 5-up desktop mode,
+       which leaves each small card only ~173px wide - the review
+       has to come down or it overflows onto the star row.
+       Below that the carousel drops to 3-up tablet mode and the
+       higher-specificity .VFRMode-tablet rule (15px) takes over,
+       which is correct for those wider cards. */
+    .VFRReviewText {
+        font-size: 13px;
+    }
+
+    .RA_LeftRightMain {
+        height: 640px;
+    }
+
+    .RA_leftContentMain {
+        padding: 24px;
+        border-radius: 48px;
+    }
+
+    .RA_leftContentHeading {
+        font-size: 32px;
+    }
+
+    .RA_leftContentDesc {
+        width: 100%;
+        font-size: 19px;
+    }
+
+    .RA_leftContentIcon {
+        width: 48px;
+        height: 48px;
+        font-size: 28px;
+    }
+
+    .RA_RightContent1 {
+        font-size: 38px;
+    }
+
+    .RA_RightSecondContent1 {
+        font-size: 17px;
+    }
+
+    .RA_RightContent2InpBtn {
+        padding: 8px 24px;
+        font-size: 21px;
+    }
+
+    .RA_RightVanImg {
+        width: 380px;
+    }
+
+    .HC_HeadingContent1 {
+        font-size: 54px;
+        line-height: 78px;
+    }
+
+    .HC_HeadingContent2 {
+        font-size: 24px;
+    }
+
+    .HC_FAQ_QnAnsMain {
+        width: 84%;
+    }
+
+    .HC_FAQ_Question {
+        font-size: 21px;
+    }
+
+    .HC_FAQ_Question_Arrow {
+        font-size: 26px;
+    }
+
+    .HC_FAQ_Answer {
+        font-size: 15.5px;
+    }
 }
-/* Laptops & Small Desktops (992px - 1024px)  ✅ Tablets (Landscape Mode) */
+
+/* Laptops & Small Desktops (992px - 1023px) - Tablets (Landscape) */
 @media (min-width: 992px) and (max-width: 1023px) {
+    .RA_Main {
+        padding-right: 40px;
+        padding-left: 40px;
+    }
+
+    .HC_Main > div {
+        padding-right: 40px;
+        padding-left: 40px;
+    }
+
+    .HC_FAQMain {
+        padding-right: 0;
+        padding-left: 0;
+        margin: 6% auto;
+    }
+
+    .VFRReviewText {
+        font-size: 15px;
+    }
+
+    .RA_LeftRightMain {
+        height: 600px;
+    }
+
+    /* Last row layout before the section stacks - still sized to
+       the base 400px -> 500px capsules. */
+    .RA_leftMain {
+        width: 48%;
+        min-width: 500px;
+    }
+
+    .RA_leftContentMain {
+        padding: 22px;
+        border-radius: 44px;
+    }
+
+    .RA_leftContentHeading {
+        font-size: 29px;
+    }
+
+    .RA_leftContentDesc {
+        width: 100%;
+        font-size: 18px;
+    }
+
+    .RA_leftContentIcon {
+        width: 46px;
+        height: 46px;
+        font-size: 26px;
+    }
+
+    .RA_RightContent1 {
+        font-size: 34px;
+    }
+
+    .RA_RightSecondContent1 {
+        font-size: 16px;
+    }
+
+    .RA_RightContent2InpBtn {
+        padding: 8px 22px;
+        font-size: 20px;
+    }
+
+    .RA_RightVanImg {
+        width: 330px;
+    }
+
+    .HC_HeadingContent1 {
+        font-size: 48px;
+        line-height: 70px;
+    }
+
+    .HC_HeadingContent2 {
+        font-size: 22px;
+    }
+
+    .HC_FAQ_QnAnsMain {
+        width: 90%;
+    }
+
+    .HC_FAQ_Question {
+        font-size: 20px;
+    }
+
+    .HC_FAQ_Question_Arrow {
+        font-size: 25px;
+    }
+
+    .HC_FAQ_Answer {
+        font-size: 15px;
+    }
 }
-/* Tablets (768px - 991px) ✅ Tablets (Portrait Mode) */
+
+/* Tablets (768px - 991px) - Tablets (Portrait) */
 @media (min-width: 768px) and (max-width: 991px) {
+    .RA_Main {
+        padding-right: 30px;
+        padding-left: 30px;
+    }
+
+    .HC_Main > div {
+        padding-right: 30px;
+        padding-left: 30px;
+    }
+
+    .HC_FAQMain {
+        padding-right: 0;
+        padding-left: 0;
+        margin: 8% auto;
+    }
+
+    .VFRReviewText {
+        font-size: 15px;
+    }
+
+    .RA_leftContentMain {
+        padding: 22px;
+        border-radius: 44px;
+    }
+
+    .RA_leftContentHeading {
+        font-size: 30px;
+    }
+
+    .RA_leftContentDesc {
+        font-size: 18px;
+    }
+
+    .RA_leftContentIcon {
+        width: 46px;
+        height: 46px;
+        font-size: 26px;
+    }
+
+    .RA_RightContent1 {
+        font-size: 36px;
+    }
+
+    .RA_RightSecondContent1 {
+        font-size: 16px;
+    }
+
+    .RA_RightContent2InpBtn {
+        padding: 8px 22px;
+        font-size: 20px;
+    }
+
+    .HC_HeadingContent1 {
+        font-size: 44px;
+        line-height: 62px;
+    }
+
+    .HC_HeadingContent2 {
+        font-size: 21px;
+    }
+
+    .HC_FAQ_Question {
+        font-size: 19px;
+    }
+
+    .HC_FAQ_Question_Arrow {
+        font-size: 24px;
+    }
+
+    .HC_FAQ_Answer {
+        font-size: 15px;
+    }
 }
-/* Mobile Large Screens (480px - 767px) ✅ Small Tablets & Large Phones */
+
+/* Mobile Large (480px - 767px) - Small Tablets & Large Phones */
 @media (min-width: 480px) and (max-width: 767px) {
+    .RA_Main {
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+
+    .HC_Main > div {
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+
+    .HC_FAQMain {
+        padding-right: 0;
+        padding-left: 0;
+        margin: 10% auto;
+    }
+
+    .VFRReviewText {
+        font-size: 14px;
+    }
+
+    .RA_leftContentMain {
+        padding: 18px;
+        border-radius: 36px;
+    }
+
+    .RA_leftContentHeading {
+        font-size: 26px;
+    }
+
+    .RA_leftContentDesc {
+        padding: 12px 0;
+        font-size: 16px;
+    }
+
+    .RA_leftContentIcon {
+        width: 42px;
+        height: 42px;
+        font-size: 23px;
+    }
+
+    .RS_RA_Item {
+        border-radius: 44px;
+    }
+
+    .RA_RightContent1 {
+        font-size: 30px;
+    }
+
+    .RA_RightSecondContent1 {
+        font-size: 15px;
+    }
+
+    .RA_RightContent2InpBtn {
+        padding: 7px 20px;
+        font-size: 18px;
+    }
+
+    .HC_HeadingContent1 {
+        font-size: 36px;
+        line-height: 50px;
+    }
+
+    .HC_HeadingContent2 {
+        font-size: 18px;
+    }
+
+    .HC_FAQ_QnAnsMain {
+        padding: 16px 0;
+    }
+
+    .HC_FAQ_Question {
+        font-size: 17px;
+    }
+
+    .HC_FAQ_Question_Arrow {
+        font-size: 21px;
+    }
+
+    .HC_FAQ_Answer {
+        font-size: 14.5px;
+    }
 }
-/* Mobile Medium Screens (425px - 479px) ✅ Medium Phones (iPhone XR, Galaxy S20) */
+
+/* Mobile Medium (425px - 479px) - iPhone XR, Galaxy S20 */
 @media (min-width: 425px) and (max-width: 479px) {
+    .RA_Main {
+        padding-right: 16px;
+        padding-left: 16px;
+    }
+
+    .HC_Main > div {
+        padding-right: 16px;
+        padding-left: 16px;
+    }
+
+    .HC_FAQMain {
+        padding-right: 0;
+        padding-left: 0;
+        margin: 10% auto;
+    }
+
+    .VFRReviewText {
+        font-size: 13.5px;
+    }
+
+    .RA_leftContentMain {
+        padding: 16px;
+        border-radius: 32px;
+    }
+
+    .RA_leftContentHeading {
+        font-size: 24px;
+    }
+
+    .RA_leftContentDesc {
+        padding: 12px 0;
+        font-size: 15px;
+    }
+
+    .RA_leftContentIcon {
+        width: 38px;
+        height: 38px;
+        font-size: 21px;
+    }
+
+    .RS_RA_Item {
+        border-radius: 40px;
+    }
+
+    .RA_RightContent1 {
+        font-size: 27px;
+    }
+
+    .RA_RightSecondContent1 {
+        font-size: 14px;
+    }
+
+    .RA_RightContent2InpBtn {
+        padding: 7px 18px;
+        font-size: 17px;
+    }
+
+    .HC_HeadingContent1 {
+        font-size: 32px;
+        line-height: 44px;
+    }
+
+    .HC_HeadingContent2 {
+        font-size: 17px;
+    }
+
+    .HC_FAQ_QnAnsMain {
+        padding: 15px 0;
+    }
+
+    .HC_FAQ_Question {
+        font-size: 16px;
+    }
+
+    .HC_FAQ_Question_Arrow {
+        font-size: 20px;
+    }
+
+    .HC_FAQ_Answer {
+        font-size: 14px;
+    }
 }
-/* Mobile Small Screens (375px - 424px) ✅ Small Phones (iPhone SE, Pixel 4) */
+
+/* Mobile Small (375px - 424px) - iPhone SE, Pixel 4 */
 @media (min-width: 375px) and (max-width: 424px) {
+    .RA_Main {
+        padding-right: 14px;
+        padding-left: 14px;
+    }
+
+    .HC_Main > div {
+        padding-right: 14px;
+        padding-left: 14px;
+    }
+
+    .HC_FAQMain {
+        padding-right: 0;
+        padding-left: 0;
+        margin: 12% auto;
+    }
+
+    .VFRReviewText {
+        font-size: 13.5px;
+    }
+
+    .RA_leftContentMain {
+        padding: 15px;
+        border-radius: 30px;
+    }
+
+    .RA_leftContentHeading {
+        font-size: 22px;
+    }
+
+    .RA_leftContentDesc {
+        padding: 10px 0;
+        font-size: 14.5px;
+    }
+
+    .RA_leftContentIcon {
+        width: 36px;
+        height: 36px;
+        font-size: 20px;
+    }
+
+    .RS_RA_Item {
+        border-radius: 38px;
+    }
+
+    .RA_RightContent1 {
+        font-size: 25px;
+    }
+
+    .RA_RightSecondContent1 {
+        font-size: 14px;
+    }
+
+    .RA_RightContent2Input {
+        height: 36px;
+    }
+
+    .RA_RightContent2InpBtn {
+        padding: 6px 16px;
+        font-size: 16px;
+    }
+
+    .HC_HeadingContent1 {
+        font-size: 29px;
+        line-height: 40px;
+    }
+
+    .HC_HeadingContent2 {
+        font-size: 16px;
+    }
+
+    .HC_FAQ_QnAnsMain {
+        padding: 14px 0;
+    }
+
+    .HC_FAQ_Question {
+        font-size: 15px;
+    }
+
+    .HC_FAQ_Question_Arrow {
+        font-size: 19px;
+    }
+
+    .HC_FAQ_Answer {
+        font-size: 13.5px;
+    }
 }
-/* Extra Small Screens (360px - 374px) ✅ Extra Small Phones */
+
+/* Extra Small (360px - 374px) */
 @media (min-width: 360px) and (max-width: 374px) {
+    .RA_Main {
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+
+    .HC_Main > div {
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+
+    .HC_FAQMain {
+        padding-right: 0;
+        padding-left: 0;
+        margin: 12% auto;
+    }
+
+    .VFRReviewText {
+        font-size: 13px;
+    }
+
+    .RA_leftContentMain {
+        padding: 14px;
+        border-radius: 28px;
+    }
+
+    .RA_leftContentHeading {
+        font-size: 21px;
+    }
+
+    .RA_leftContentDesc {
+        padding: 10px 0;
+        font-size: 14px;
+    }
+
+    .RA_leftContentIcon {
+        width: 34px;
+        height: 34px;
+        font-size: 19px;
+    }
+
+    .RS_RA_Item {
+        border-radius: 36px;
+    }
+
+    .RA_RightContent1 {
+        font-size: 23px;
+    }
+
+    .RA_RightSecondContent1 {
+        font-size: 13.5px;
+    }
+
+    .RA_RightContent2Input {
+        height: 34px;
+    }
+
+    .RA_RightContent2InpBtn {
+        padding: 6px 15px;
+        font-size: 15px;
+    }
+
+    .HC_HeadingContent1 {
+        font-size: 27px;
+        line-height: 38px;
+    }
+
+    .HC_HeadingContent2 {
+        font-size: 15px;
+    }
+
+    .HC_FAQ_QnAnsMain {
+        padding: 13px 0;
+    }
+
+    .HC_FAQ_Question {
+        font-size: 14.5px;
+    }
+
+    .HC_FAQ_Question_Arrow {
+        font-size: 18px;
+    }
+
+    .HC_FAQ_Answer {
+        font-size: 13px;
+    }
 }
+
+/* Extra Small (320px - 359px) */
 @media (min-width: 320px) and (max-width: 359px) {
+    .RA_Main {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .HC_Main > div {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .HC_FAQMain {
+        padding-right: 0;
+        padding-left: 0;
+        margin: 14% auto;
+    }
+
+    .VFRReviewText {
+        font-size: 12.5px;
+    }
+
+    .RA_leftContentMain {
+        padding: 12px;
+        border-radius: 26px;
+    }
+
+    .RA_leftContentHeading {
+        font-size: 19px;
+    }
+
+    .RA_leftContentDesc {
+        padding: 8px 0;
+        font-size: 13px;
+    }
+
+    .RA_leftContentIcon {
+        width: 32px;
+        height: 32px;
+        font-size: 17px;
+    }
+
+    .RS_RA_Item {
+        border-radius: 34px;
+    }
+
+    .RA_RightContent1 {
+        font-size: 21px;
+    }
+
+    .RA_RightSecondContent1 {
+        font-size: 13px;
+    }
+
+    .RA_RightContent2Input {
+        height: 32px;
+    }
+
+    .RA_RightContent2InpBtn {
+        padding: 5px 13px;
+        font-size: 14px;
+    }
+
+    .HC_HeadingContent1 {
+        font-size: 24px;
+        line-height: 34px;
+    }
+
+    .HC_HeadingContent2 {
+        font-size: 14px;
+    }
+
+    .HC_FAQ_QnAnsMain {
+        padding: 12px 0;
+    }
+
+    .HC_FAQ_Question {
+        font-size: 13.5px;
+    }
+
+    .HC_FAQ_Question_Arrow {
+        font-size: 17px;
+    }
+
+    .HC_FAQ_Answer {
+        font-size: 12.5px;
+    }
+}
+
+/* ---------------------------------------------------------
+   C) MOTION ACCESSIBILITY
+   The VFR carousel, the Advantages capsule expand/rotate and
+   the FAQ accordion all stay animated on every screen size,
+   including phones. They are only disabled here.
+--------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+
+    .RS_RA_Item,
+    .RA_collapseWrapper,
+    .RA_leftContentIcon,
+    .HC_FAQ_Answer_Wrapper,
+    .HC_FAQ_Question_Arrow {
+        transition-duration: 1ms !important;
+    }
 }
 
 

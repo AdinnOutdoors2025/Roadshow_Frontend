@@ -6,6 +6,13 @@ import Image from "next/image";
 import './HomePageSection1.css';
 import './HomePageSection2.css';
 import { ChevronLeft, ChevronRight, Star, UserCircle2 } from "lucide-react";
+import SplitHeading from "@/components/motion/SplitHeading";
+import RevealText from "@/components/motion/RevealText";
+// TESTIMONIALS SECTION
+// Testimonials.tsx exports `Testimonials` as a NAMED export and has no default
+// export, so this has to be a named import (aliased to keep the name used below).
+import { Testimonials as RdswWebTestimonialsSection } from "./Testimonials";
+import { GPSTracking as RdswWebGPSTrackingSection } from "./GPSTracking";
 
 
 function StarRating({ rating, size = 20 }) {
@@ -308,6 +315,7 @@ function useCarousel(length) {
 // ─── Main Component ──────────────────────────────────────────────────────────
 function HomePageSection2() {
     // VOICES FROM THE ROAD SECTION
+    const [activeAdvantage, setActiveAdvantage] = useState<number | null>(null);
     const testimonials = [
         {
             id: 1,
@@ -424,14 +432,17 @@ function HomePageSection2() {
     return (
         <>
             {/* VOICES FROM THE ROAD SECTION */}
-            <section className="w-full px-5 sm:px-8 lg:px-20 py-12 bg-[#f8f8f8]">
+            {/* <section className="w-full px-5 sm:px-8 lg:px-20 py-12 bg-[#f8f8f8]">
+    
                 <div className="RS_OurRdwHeading">
-                    <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2 RS_VFRHeading text-3xl lg:text-5xl">
+                    <RevealText
+                        className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2 RS_VFRHeading text-3xl lg:text-5xl"
+                        effect="wipe"
+                    >
                         Voices From The Road
-                    </div>
+                    </RevealText>
                 </div>
 
-                {/* Responsive Carousel */}
                 <div
                     ref={viewportRef}
                     className={`VFRCarouselViewport VFRMode-${carouselMode} ${isAnimating ? "VFRCarouselMoving" : ""
@@ -451,7 +462,7 @@ function HomePageSection2() {
                                     className={`VFRCardMain bg-[#D7D7D733] rounded-[20px] p-5 shadow-sm flex flex-col justify-between min-h-[400px] ${isCenter ? "VFRCardCenter" : ""
                                         }`}
                                 >
-                                    <div className="VFRCardContent">
+                                    <div className="VFRCardContent flex-1">
                                         <div className="VFRReviewOuter">
                                             <div
                                                 className={`VFRReviewScaleBox ${isCenter
@@ -492,7 +503,6 @@ function HomePageSection2() {
                     </div>
                 </div>
 
-                {/* Controls */}
                 <div className="flex justify-center lg:justify-end gap-4 mt-8">
                     <button
                         onClick={() => navigate("prev")}
@@ -510,14 +520,21 @@ function HomePageSection2() {
                         <ChevronRight />
                     </button>
                 </div>
-            </section>
+            </section> */}
 
+            <RdswWebTestimonialsSection />
+            {/* RdswWebGPSTrackingSection */}
+            <div
+            // style={{ width: '70%', margin:'auto' }}
+            >
+                <RdswWebGPSTrackingSection />
+            </div>
             {/* Roadshow Advantages */}
             <div className='RA_Main px-30 mx-auto'>
 
                 <div className="RS_OurRdwHeading">
-                    <div className="RS_OurRdwHeadingContent1">Roadshow</div>
-                    <div className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2">Advantages</div>
+                    <SplitHeading className="RS_OurRdwHeadingContent1">Roadshow</SplitHeading>
+                    <RevealText className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2" effect="wipe" delay={0.18}>Advantages</RevealText>
                 </div>
 
                 <div className='flex gap-4 justify-around RA_LeftRightMain'>
@@ -533,7 +550,7 @@ function HomePageSection2() {
                                     <div className='RA_leftContentHeading'>{RA.name}</div>
                                     <div className='RA_leftContentIcon'>
                                         {/* <i className={`fa-solid ${activeIndex === idx ? 'fa-xmark' : 'fa-plus'}`}></i> */}
-                                        <i className='fa-solid fa-plus'></i>
+                                        <i className="fa-solid fa-plus"></i>
                                     </div>
                                 </div>
 
@@ -570,13 +587,14 @@ function HomePageSection2() {
                 </div>
             </div>
 
-            {/* HELP CENTER */}
+
+
             <div className='HC_Main'>
                 <div className='px-30 mx-auto'>
 
                     <div className="HC_headingMain">
-                        <div className="HC_HeadingContent1">Help Center</div>
-                        <div className="HC_HeadingContent2">Find quick answers to common questions about our services, process, and support.</div>
+                        <SplitHeading className="HC_HeadingContent1">Help Center</SplitHeading>
+                        <SplitHeading className="HC_HeadingContent2" delay={0.12}>Find quick answers to common questions about our services, process, and support.</SplitHeading>
                     </div>
 
                     <div className='px-30 mx-auto HC_FAQMain'>

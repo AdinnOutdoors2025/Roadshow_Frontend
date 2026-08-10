@@ -3,7 +3,18 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import "./HomeBanner.css";
+
+import SplitHeading from "@/components/motion/SplitHeading";
+import {
+  DISTANCE,
+  DURATION,
+  STAGGER,
+  fadeIn,
+  fadeScale,
+  staggerContainer,
+} from "@/components/motion/motionTokens";
 
 const bannerItems = [
     {
@@ -24,12 +35,12 @@ const bannerItems = [
     {
         id: 4,
         image: "./images/assets/single side edited (1)_NEW.png",
-        title: "3 Sided 19ft",
+        title: "Single Side 19ft",
     },
     {
         id: 5,
         image: "./images/assets/full side LED edited (1)_NEW.png",
-        title: "Full Side Led",
+        title: "3 Sided 19ft",
     },
 ];
 
@@ -77,28 +88,53 @@ function HomeBanner() {
     return (
         <>
             <div className="HomeBannerContainer">
-                {/* Heading */}
-                <div className="HomeBannerText">
+                {/* Heading — reveals word by word, each rising from behind a mask */}
+                <SplitHeading className="HomeBannerText">
                     Take{" "}
                     <span className="HomeBannerTextSpan">
                         Your Brand
                     </span>{" "}
                     to the Streets
-                </div>
+                </SplitHeading>
 
                 {/* Sub-text image */}
-                <div>
+                <motion.div
+                    initial={{ opacity: 0, y: DISTANCE.sm }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                        duration: DURATION.base,
+                        delay: 0.35,
+                        ease: [0.22, 1, 0.36, 1],
+                    }}
+                >
                     <img
                         src="./images/assets/BannerTextImg.png"
                         alt="Roadshow Logo"
                         className="HomeBannerTextImg"
                     />
-                </div>
+                </motion.div>
 
-                {/* Image section */}
-                <div className="HomeBannerImgContainer">
+                {/* Image section.
+
+                    data-speed is a GSAP ScrollSmoother effect (enabled via
+                    `effects: true` in GlobalSmoothScroll) — below 1 the block
+                    drifts slightly slower than the page for a little depth.
+
+                    It lives on the OUTER container on purpose: ScrollSmoother
+                    writes `transform` on whatever carries data-speed, and the
+                    inner wrapper's scale-in is written by framer-motion. Both
+                    on one element and they would fight over the same property. */}
+                <div
+                    className="HomeBannerImgContainer"
+                    data-speed="0.92"
+                >
                     {/* Main image smooth crossfade */}
-                    <div className="HomeBannerMainImgWrapper">
+                    <motion.div
+                        className="HomeBannerMainImgWrapper"
+                        variants={fadeScale(0.96, DURATION.slow)}
+                        initial="hidden"
+                        animate="visible"
+                    >
                         {previousImg && (
                             <img
                                 src={previousImg}
@@ -115,12 +151,33 @@ function HomeBanner() {
                             className="HomeBannerMainImg HomeBannerCurrentImg"
                             draggable="false"
                         />
-                    </div>
+                    </motion.div>
 
-                    {/* Sub images */}
-                    <div className="HomeBannerSubImgRow">
+                    {/* Sub images.
+
+                        The row and its items become motion elements in place
+                        rather than gaining wrappers — .HomeBannerSubImgRow is a
+                        flex container whose `gap` applies to its direct
+                        children, so an inserted wrapper would change the
+                        spacing. */}
+                    <motion.div
+                        className="HomeBannerSubImgRow"
+                        variants={staggerContainer(
+                            STAGGER.base,
+                            0.5
+                        )}
+                        initial="hidden"
+                        animate="visible"
+                    >
                         {bannerItems.map((item, idx) => (
-                            <div key={item.id} className="HomeBannerSubImgMain">
+                            <motion.div
+                                key={item.id}
+                                className="HomeBannerSubImgMain"
+                                variants={fadeIn(
+                                    "up",
+                                    DISTANCE.sm
+                                )}
+                            >
                                 <button
                                     type="button"
                                     onClick={() => handleSubClick(item, idx)}
@@ -140,9 +197,9 @@ function HomeBanner() {
                                         {item.title}
                                     </div>
                                 </button>
-                            </div>
+                            </motion.div>
                         ))}
-                    </div>
+                    </motion.div>
                 </div>
             </div>
 

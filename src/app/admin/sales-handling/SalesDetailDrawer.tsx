@@ -14,11 +14,12 @@ import {
   PlusCircle, ImageIcon, Video,
   Users, BadgeCheck, Banknote,
   AlertTriangle, History, MoreHorizontal,
-  MessageSquare, RotateCcw, CheckCheck,
+  MessageSquare, RotateCcw, CheckCheck, UserCog,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import axios from "axios";
 import { getToken } from "../../utils/auth";
+import { jwtDecode } from "jwt-decode";
 import toast from "react-hot-toast";
 import API_BASE from "../../../../baseurl";
 import { SALES_STAGE_MAP, SALES_STAGES, SalesOrder } from "./page";
@@ -27,6 +28,27 @@ import {
   FiCheckCircle, FiCode, FiXCircle,
 } from "react-icons/fi";
 import CodeCreationTab from "./CodeCreationTab";
+import DatePicker from "../../utils/datepicker";
+import { useVehicle } from '../../../context/vehicletypecontext';
+
+
+// ── File size limits ──────────────────────────────────────────────────────────
+const IMAGE_MIMES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const IMAGE_MAX_MB = 5;
+const DOC_MAX_MB = 10;
+
+const validateFileSize = (file: File): string | null => {
+  const isImage = IMAGE_MIMES.includes(file.type);
+  const maxMB = isImage ? IMAGE_MAX_MB : DOC_MAX_MB;
+  const fileMB = file.size / (1024 * 1024);
+  if (fileMB > maxMB) {
+    return isImage
+      ? `Image size ${fileMB.toFixed(2)} MB exceeds the ${IMAGE_MAX_MB} MB limit`
+      : `Document size ${fileMB.toFixed(2)} MB exceeds the ${DOC_MAX_MB} MB limit`;
+  }
+  return null;
+};
+
 
 
 // ── Formatters ────────────────────────────────────────────────────────────────
@@ -72,17 +94,28 @@ const fmtStageDuration = (s?: string) => {
   return `${Math.floor(hrs / 24)}d ${hrs % 24}h in Current Stage`;
 };
 
+// const getFileUrl = (p: string) => {
+//   if (!p) return "";
+//   if (p.startsWith("http")) return p;
+//   return `http://localhost:3001${p.startsWith("/") ? p : `/${p}`}`;
+// };
+
 const getFileUrl = (p: string) => {
   if (!p) return "";
   if (p.startsWith("http")) return p;
-  return `http://localhost:3001${p.startsWith("/") ? p : `/${p}`}`;
+  const path = p.startsWith("/") ? p : `/${p}`;
+
+  const encodedPath = path
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `http://localhost:3001${encodedPath}`;
 };
 
 const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
 
-type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation";
-
+type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation" | "invoice" | "dateConflict" | "orderEditHistory";
 
 function DocPreviewModal({ url, label, onClose }: { url: string; label: string; onClose: () => void }) {
   const img = isImage(url);
@@ -159,10 +192,20 @@ function DragDropFile({ file, onFile, onRemove, accept = ".pdf,.jpg,.jpeg,.png",
   const [dragging, setDragging] = useState(false);
   const ext = file?.name.split(".").pop()?.toLowerCase();
 
+  // const onDrop = useCallback((e: React.DragEvent) => {
+  //   e.preventDefault(); setDragging(false);
+  //   const f = e.dataTransfer.files?.[0];
+  //   if (f) onFile(f);
+  // }, [onFile]);
+
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragging(false);
     const f = e.dataTransfer.files?.[0];
-    if (f) onFile(f);
+    if (f) {
+      const err = validateFileSize(f);
+      if (err) { toast.error(err); return; }
+      onFile(f);
+    }
   }, [onFile]);
 
   return !file ? (
@@ -173,7 +216,15 @@ function DragDropFile({ file, onFile, onRemove, accept = ".pdf,.jpg,.jpeg,.png",
       <p className="text-xs text-gray-400">{label || "Click or drag to upload"}</p>
       <p className="text-[10px] text-gray-300 mt-0.5">PDF, JPG, PNG</p>
       <input ref={ref} type="file" accept={accept} className="hidden"
-        onChange={(e) => onFile(e.target.files?.[0] || null)} />
+        // onChange={(e) => onFile(e.target.files?.[0] || null)} />
+        onChange={(e) => {
+          const f = e.target.files?.[0] || null;
+          if (f) {
+            const err = validateFileSize(f);
+            if (err) { toast.error(err); e.target.value = ""; return; }
+          }
+          onFile(f);
+        }} />
     </label>
   ) : (
     <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200">
@@ -283,13 +334,19 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
 
   const campaignLabel = item.campaignType === "Other"
     ? (item.otherCampaignType || "Other") : (item.campaignType || "—");
-  const drivingRoute = item.fromLocation && item.toLocation
-    ? `${item.fromLocation} → ${item.toLocation}` : null;
+  const drivingRoute = item.campaignLocation || (item.fromLocation && item.toLocation
+    ? `${item.fromLocation} → ${item.toLocation}` : null);
   const locationLabel = [item.state, item.city].filter(Boolean).join(" / ") || "—";
+
   const getImageUrl = (path: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    return `http://localhost:3001${path.startsWith('/') ? path : `/${path}`}`;
+    const p = path.startsWith('/') ? path : `/${path}`;
+    const encodedPath = p
+      .split('/')
+      .map((segment) => encodeURIComponent(segment))
+      .join('/');
+    return `http://localhost:3001${encodedPath}`;
   };
 
   return (
@@ -313,7 +370,7 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
               { label: "Campaign", value: campaignLabel },
               { label: "Location", value: locationLabel },
               item.fromDate && { label: "Duration", value: `${fmtDate(item.fromDate)} → ${fmtDate(item.toDate)} (${item.totalDays}d)` },
-              drivingRoute && { label: "Route", value: drivingRoute },
+              drivingRoute && { label: "Campaign Location", value: drivingRoute },
               item.extraKm > 0 && { label: "Extra KM", value: `${item.extraKm} km` },
               item.extraHours > 0 && { label: "Extra Hours", value: `${item.extraHours} hrs` },
             ].filter(Boolean).map((f: any, i) => (
@@ -365,24 +422,34 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
 
 
 
-import { useVehicle } from '../../../context/vehicletypecontext';
+
 import PipelineHistoryTab from "./PipelineHistoryTab";
 import { ChevronLeft } from "lucide-react";
+import DateConflictTab from "./DateConflictTab";
+import AdminOrderForm from "../order-creation/AdminOrderForm";
+import OrderEditHistoryTab from "./OrderEditHistoryTab";
 
 
 function OverviewTab({
-  order, onRefresh, onStageMove,
+  order, onRefresh, onStageMove, getVehicleTypeName, onOpenHandover, onResolveHandover,
 }: {
   order: SalesOrder; onRefresh: () => Promise<void>;
   onStageMove: (order: SalesOrder, toStage: string) => void;
+  getVehicleTypeName: any;
+  onOpenHandover?: () => void;
+  onResolveHandover?: (assignmentId: string, makePermanent: boolean) => void;
 }) {
-  const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+
   const [activeVehicleTab, setActiveVehicleTab] = useState<number>(0);
+  const [showHandoverHistory, setShowHandoverHistory] = useState(false);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchVehicleTypes()
-  }, [])
+  const handlerAssignmentHistory: any[] = (order as any).handlerAssignmentHistory || [];
+  const activeTemporaryHandover = handlerAssignmentHistory.find(
+    (h: any) => h.status === "active" && h.isTemporary
+  );
+
+
 
   const stageIdx = SALES_STAGES.findIndex((s) => s.key === order.salesPipelineStatus);
   const stage = SALES_STAGE_MAP[order.salesPipelineStatus];
@@ -392,11 +459,7 @@ function OverviewTab({
   const gstAmt = Math.floor(taxable * 0.18);
   const finalAmt = taxable + gstAmt;
 
-  const getVehicleTypeName = (vehicleTypeId: string) => {
-    if (!vehicleTypeId || !vehicleTypes) return "";
-    const vehicle = vehicleTypes.find((vt: any) => vt._id === vehicleTypeId);
-    return vehicle?.typeName || vehicleTypeId;
-  };
+
 
 
   const currentVehicle = order.bookingItems[activeVehicleTab];
@@ -427,9 +490,17 @@ function OverviewTab({
     }
   }, [activeVehicleTab]);
 
+
+  const baseDays =
+  Math.ceil(
+    (new Date(currentVehicle.toDate).getTime() -
+      new Date(currentVehicle.fromDate).getTime()) /
+      86400000
+  ) + 1;
+
   return (
     <div className="p-4 space-y-4">
- 
+
       <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
           <User size={16} className="text-gray-400" />
@@ -494,11 +565,124 @@ function OverviewTab({
         </div>
       </div>
 
-   
+      {/* Handler Assignment */}
+      {order.salesPipelineStatus !== "enquiry" && (
+      <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <UserCog size={15} className="text-gray-400" />
+            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Handler Assignment</h3>
+          </div>
+          {onOpenHandover && (
+            <button
+              onClick={onOpenHandover}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-violet-400 hover:text-violet-600 text-[12px] font-semibold"
+            >
+              <RotateCcw size={12} /> Reassign
+            </button>
+          )}
+        </div>
+        <div className="p-4 space-y-3">
+          {order.salesHandlerName ? (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                {order.salesHandlerName.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.salesHandlerName}</p>
+                {activeTemporaryHandover && (
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Temporary handover</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">No handler assigned yet</p>
+          )}
+
+          {activeTemporaryHandover && (
+            <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+              <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                Covering for <span className="font-semibold">{activeTemporaryHandover.previousHandler}</span> (
+                {activeTemporaryHandover.leaveStartDate ? fmtDatetime(activeTemporaryHandover.leaveStartDate).split(",")[0] : ""}
+                {" – "}
+                {activeTemporaryHandover.leaveEndDate ? fmtDatetime(activeTemporaryHandover.leaveEndDate).split(",")[0] : ""})
+              </p>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <button
+                  onClick={() => onResolveHandover?.(activeTemporaryHandover._id, false)}
+                  className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 text-[10px] font-semibold"
+                >
+                  <RotateCcw size={10} /> Return
+                </button>
+                <button
+                  onClick={() => onResolveHandover?.(activeTemporaryHandover._id, true)}
+                  className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-semibold"
+                >
+                  <CheckCheck size={10} /> Make Permanent
+                </button>
+              </div>
+            </div>
+          )}
+
+          {handlerAssignmentHistory.length > 0 && (
+            <button
+              onClick={() => setShowHandoverHistory((v) => !v)}
+              className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600"
+            >
+              <History size={11} /> Handover history ({handlerAssignmentHistory.length})
+            </button>
+          )}
+          {showHandoverHistory && (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+              {handlerAssignmentHistory.slice().reverse().map((h: any) => {
+                const statusStyle =
+                  h.status === "madePermanent"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                    : h.status === "reverted"
+                      ? "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                      : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800";
+                const statusLabel =
+                  h.status === "madePermanent" ? "Made Permanent"
+                    : h.status === "reverted" ? "Reverted"
+                      : "Active";
+                return (
+                  <div
+                    key={h._id}
+                    className="rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-2.5"
+                  >
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                        <span>{h.previousHandler || "—"}</span>
+                        <ChevronRight size={13} className="text-gray-400 flex-shrink-0" />
+                        <span>{h.newHandler}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-1.5 py-0.5 rounded-md text-[11px] font-medium border bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400">
+                          {h.isTemporary ? "Temporary" : "Permanent"}
+                        </span>
+                        <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-semibold border ${statusStyle}`}>
+                          {statusLabel}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[13px] text-gray-600 dark:text-gray-300 mt-1.5">{h.reason}</p>
+                    <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-1">
+                      {fmtDatetime(h.assignedAt)} · by {h.assignedBy}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+      )}
+
+
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-     
+
         <div className="relative flex items-center bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-      
+
           <button
             onClick={() => scrollTabs('left')}
             className="absolute left-0 z-10 flex items-center justify-center w-8 h-full bg-gradient-to-r from-gray-50 dark:from-gray-800/50 to-transparent hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all disabled:opacity-30"
@@ -507,7 +691,7 @@ function OverviewTab({
             <ChevronLeft size={18} className="text-gray-600 dark:text-gray-400" />
           </button>
 
-       
+
           <div
             ref={tabsContainerRef}
             className="flex overflow-x-auto scrollbar-hide gap-1 px-8"
@@ -547,7 +731,7 @@ function OverviewTab({
             })}
           </div>
 
-       
+
           <button
             onClick={() => scrollTabs('right')}
             className="absolute right-0 z-10 flex items-center justify-center w-8 h-full bg-gradient-to-l from-gray-50 dark:from-gray-800/50 to-transparent hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all"
@@ -557,39 +741,56 @@ function OverviewTab({
           </button>
         </div>
 
-    
+
         {currentVehicle && (
           <div className="p-4 space-y-3">
-           
+
             <div className="space-y-1.5 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg">
               {(
                 [
                   ["Vehicle Model", getVehicleTypeName(currentVehicle.vehicleType)], // Fixed: changed 'vehicle' to 'currentVehicle'
                   ["Booking For", order.customerCategory],
-                  ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType],
-                  ["Duration", currentVehicle.fromDate && currentVehicle.toDate
-                    ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000)}D base${currentVehicle.extraDays > 0 ? ` +${currentVehicle.extraDays} D = ${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000) + currentVehicle.extraDays}D total` : ""})`
-                    : "—"],
-                  ["Driving route", `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
-                  ["State / City", `${currentVehicle.state} / ${currentVehicle.city}`],
-                  ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
+                  (currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType)
+                    ? ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType]
+                    : null,
+                  [
+                    "Duration",
+                    currentVehicle.fromDate && currentVehicle.toDate
+                      ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })} (${baseDays}D base${currentVehicle.extraDays > 0
+                        ? ` +${currentVehicle.extraDays}D = ${baseDays + currentVehicle.extraDays
+                        }D total`
+                        : ""
+                      })`
+                      : "—",
+                  ],
+              ["Campaign Location", currentVehicle.campaignLocation || `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
+              (currentVehicle.state || currentVehicle.city) ? ["State / City", `${currentVehicle.state || ""} / ${currentVehicle.city || ""}`] : null,
+              ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
                   currentVehicle.extraKm > 0 ? ["Extra KM", `${currentVehicle.extraKm} km`] : null,
                   currentVehicle.extraHours > 0 ? ["Extra Hours", `${currentVehicle.extraHours} hours`] : null,
-                  currentVehicle.needPromoter ? ["Promoter", `${currentVehicle.promoterType === "Other" ? currentVehicle.otherPromoterType : currentVehicle.promoterType} · ${currentVehicle.promoterGender} · ${currentVehicle.promoterLanguage} · Qty ${currentVehicle.promoterQuantity}`] : null,
-                  currentVehicle.gstNumber ? ["GST", currentVehicle.gstNumber] : null,
-                ] as ([string, string] | null)[]
+              currentVehicle.needPromoter ? ["Promoter", `${currentVehicle.promoterType === "Other" ? currentVehicle.otherPromoterType : currentVehicle.promoterType} · ${currentVehicle.promoterGender} · ${currentVehicle.promoterLanguage} · Qty ${currentVehicle.promoterQuantity}`] : null,
+              currentVehicle.gstNumber ? ["GST", currentVehicle.gstNumber] : null,
+              ] as ([string, string] | null)[]
               )
                 .filter((item): item is [string, string] => item !== null)
                 .map(([label, value], i) => (
-                  <div key={i} className="flex justify-between text-md gap-4">
-                    <span className="text-gray-500 shrink-0">{label}</span>
-                    <span className="text-gray-800 dark:text-gray-200 font-medium text-right">{value}</span>
-                  </div>
-                ))
+              <div key={i} className="flex justify-between text-md gap-4">
+                <span className="text-gray-500 shrink-0">{label}</span>
+                <span className="text-gray-800 dark:text-gray-200 font-medium text-right">{value}</span>
+              </div>
+              ))
               }
             </div>
 
-         
+
             <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
               <p className="text-md font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                 <IndianRupee size={14} />
@@ -649,7 +850,7 @@ function OverviewTab({
                   </div>
                 )}
 
-                {(currentVehicle.additionalCharges || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
+                {(currentVehicle.additionalFields || []).filter((c: any) => c.label).map((c: any, fIdx: number) => (
                   <div key={fIdx} className="flex justify-between items-center py-1">
                     <span className={c.mode === "-" ? "text-red-500 text-md" : "text-gray-600 dark:text-gray-400 text-md"}>
                       {c.label}
@@ -725,7 +926,7 @@ function OverviewTab({
                   <AlertTriangle size={12} /> Reason:
                 </p>
                 <p className="text-sm text-gray-700 dark:text-gray-300">{item.reason}</p>
-                <p className="text-[11px] text-gray-400 mt-1">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
+                <p className="text-xs text-gray-400 mt-1">By {item.uploadedBy} · {fmtDatetime(item.uploadedAt)}</p>
                 {item.document && <div className="mt-2"><DocItem docPath={item.document} label="Supporting Document" /></div>}
               </div>
             ))}
@@ -743,7 +944,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // ── Enquiry Name Modal state ───────────────────────────────────────────
+
   const [showNameModal, setShowNameModal] = useState(false);
   const [enquiryName, setEnquiryName] = useState(order.enquiryName || "");
   const [nameInput, setNameInput] = useState("");
@@ -751,10 +952,11 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
   const [savingName, setSavingName] = useState(false);
 
   const isEnquiry = order.salesPipelineStatus === "enquiry";
+  const [commentsTab, setCommentsTab] = useState("all");
 
- 
+
   const allComments: Array<{
-    text: string; by: string; at: string; stage: string; docPath?: string;
+    text: string; by: string; at: string; stage: string; stageGroup: string; docPath?: string;
   }> = [];
 
   (order.enquiryArray || []).forEach((item) => {
@@ -764,6 +966,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Enquiry",
+        stageGroup: "enquiry",
         docPath: item.document,
       });
     }
@@ -776,6 +979,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Need Analysis",
+        stageGroup: "needAnalysis",
         docPath: item.analysisDocument,
       });
     }
@@ -788,6 +992,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Proposal",
+        stageGroup: "proposal",
         docPath: item.proposalDocument,
       });
     }
@@ -800,6 +1005,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Negotiation",
+        stageGroup: "negotiation",
         docPath: item.document,
       });
     }
@@ -811,8 +1017,62 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         text: item.salesPoNotes || "",
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
-        stage: "Closed Won",
+        stage: "PO Document",
+        stageGroup: "closedWon",
         docPath: item.salesPoDocument,
+        isMandatoryPO: true,
+      });
+    }
+  });
+
+  (order.poCommentsArray || []).forEach((item) => {
+    if (item.notes || item.document) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "PO Comment",
+        stageGroup: "closedWon",
+        docPath: item.document,
+      });
+    }
+  });
+
+  (order.projectCodeCommentsArray || []).forEach((item) => {
+    if (item.notes || item.document) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Project Code Creation",
+        stageGroup: "projectCode",
+        docPath: item.document,
+      });
+    }
+  });
+
+  (order.salesFinalClosedWonArray || []).forEach((item) => {
+    if (item.notes || item.document) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Closed Won",
+        stageGroup: "salesFinalClosedWon",
+        docPath: item.document,
+      });
+    }
+  });
+
+  (order.closedLostCommentsArray || []).forEach((item) => {
+    if (item.notes || item.document) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Closed Lost",
+        stageGroup: "closedLost",
+        docPath: item.document,
       });
     }
   });
@@ -824,12 +1084,27 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
         stage: "Closed Lost",
+        stageGroup: "closedLost",
         docPath: item.document,
       });
     }
   });
 
   allComments.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+
+  const commentsTabs: Array<{ key: string; label: string }> = [
+    { key: "all", label: "All" },
+    { key: "enquiry", label: "Enquiry" },
+    { key: "proposal", label: "Proposal & Price Quote" },
+    { key: "closedWon", label: "PO Document" },
+    { key: "projectCode", label: "Project Code Creation" },
+    { key: "salesFinalClosedWon", label: "Closed Won" },
+  ];
+
+  const filteredComments =
+    commentsTab === "all"
+      ? allComments
+      : allComments.filter((c) => c.stageGroup === commentsTab);
 
   // ── Enquiry name confirm & save ────────────────────────────────────────
   const handleNameConfirm = async () => {
@@ -857,7 +1132,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
     }
   };
 
- 
+
   const submitComment = async (uploadedByName: string) => {
     setSaving(true);
     try {
@@ -865,19 +1140,40 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
       const fd = new FormData();
       fd.append("stage", order.salesPipelineStatus);
 
+      // const notesFieldMap: Record<string, string> = {
+      //   enquiry: "enquiryNotes",
+      //   needAnalysis: "analysisNotes",
+      //   proposalPriceQuote: "proposalNotes",
+      //   negotiationReview: "negotiationNotes",
+      //   closedWon: "salesPoNotes",
+      // };
+      // const docFieldMap: Record<string, string> = {
+      //   enquiry: "enquiryDocument",
+      //   needAnalysis: "analysisDocument",
+      //   proposalPriceQuote: "proposalDocument",
+      //   negotiationReview: "negotiationDocument",
+      //   closedWon: "salesPoDocument",
+      // };
+
       const notesFieldMap: Record<string, string> = {
         enquiry: "enquiryNotes",
         needAnalysis: "analysisNotes",
         proposalPriceQuote: "proposalNotes",
         negotiationReview: "negotiationNotes",
-        closedWon: "salesPoNotes",
+        closedWon: "poCommentNotes",
+        projectCodeCreation: "projectCodeCommentNotes",
+        salesFinalClosedWon: "salesFinalClosedWonNotes",
+        closedLost: "closedLostCommentNotes",
       };
       const docFieldMap: Record<string, string> = {
         enquiry: "enquiryDocument",
         needAnalysis: "analysisDocument",
         proposalPriceQuote: "proposalDocument",
         negotiationReview: "negotiationDocument",
-        closedWon: "salesPoDocument",
+        closedWon: "poCommentDocument",
+        projectCodeCreation: "projectCodeCommentDocument",
+        salesFinalClosedWon: "salesFinalClosedWonDocument",
+        closedLost: "closedLostCommentDocument",
       };
 
       const notesField = notesFieldMap[order.salesPipelineStatus] || "analysisNotes";
@@ -885,7 +1181,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
 
       fd.append(notesField, comment.trim());
 
-    
+
       if (isEnquiry) {
         fd.append("enquiryName", uploadedByName);
       }
@@ -908,11 +1204,18 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
     }
   };
 
- 
+
   const handleAddComment = async () => {
     if (!comment.trim() && !file) return;
-  
+
     if (isEnquiry && !enquiryName) {
+      const token = getToken();
+      const loggedInUsername = token ? (jwtDecode(token) as any)?.username : "";
+      if (loggedInUsername) {
+        setEnquiryName(loggedInUsername);
+        await submitComment(loggedInUsername);
+        return;
+      }
       setNameInput("");
       setNameError("");
       setShowNameModal(true);
@@ -926,12 +1229,12 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
   return (
     <div className="p-4 space-y-4">
 
-    
+
       {showNameModal && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4">
-           
-          
+
+
             <input
               type="text"
               value={nameInput}
@@ -965,13 +1268,13 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         </div>
       )}
 
-   
+
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
           <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
             Add a comment · <span className="text-gray-400">{stageLabel}</span>
           </p>
-        
+
           {isEnquiry && enquiryName && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50">
               <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
@@ -997,7 +1300,14 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
                 className="hidden"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  const f = e.target.files?.[0] || null;
+                  if (f) {
+                    const err = validateFileSize(f);
+                    if (err) { toast.error(err); e.target.value = ""; return; }
+                  }
+                  setFile(f);
+                }}
               />
             </label>
             {file && (
@@ -1019,14 +1329,29 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         </div>
       </div>
 
-    
+
       <div>
         <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Comments History</h3>
-        {allComments.length === 0 ? (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {commentsTabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setCommentsTab(t.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                commentsTab === t.key
+                  ? "bg-blue-600 border-blue-600 text-white"
+                  : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {filteredComments.length === 0 ? (
           <div className="text-center py-8 text-gray-400 text-sm">No comments yet</div>
         ) : (
           <div className="space-y-3">
-            {allComments.map((c, i) => {
+            {/* {allComments.map((c, i) => {
               const initials = c.by.charAt(0).toUpperCase();
               const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500"];
               const color = colors[c.by.charCodeAt(0) % colors.length];
@@ -1055,6 +1380,38 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
                   </div>
                 </div>
               );
+            })} */}
+            {filteredComments.map((c, i) => {
+              const initials = c.by.charAt(0).toUpperCase();
+              const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500"];
+              const color = colors[c.by.charCodeAt(0) % colors.length];
+              return (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-transparent hover:border-gray-100 dark:hover:border-gray-700/50 transition-all">
+                  <div className={`w-9 h-9 rounded-full ${color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+                    {initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{c.by}</span>
+                      <span
+                        className={`text-sm px-1.5 py-0.5 rounded-full ${c.isMandatoryPO
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-semibold"
+                          : "text-gray-400 bg-gray-100 dark:bg-gray-700"
+                          }`}
+                      >
+                        {c.isMandatoryPO && "✓ "}{c.stage}
+                      </span>
+                    </div>
+                    {c.text && <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">{c.text}</p>}
+                    {c.docPath && (
+                      <div className="mt-1">
+                        <DocItem docPath={c.docPath} label={c.isMandatoryPO ? "Sales PO Document" : "Attached Document"} />
+                      </div>
+                    )}
+                    <p className="text-[13px] text-gray-400 mt-1">{fmtDatetime(c.at)}</p>
+                  </div>
+                </div>
+              );
             })}
           </div>
         )}
@@ -1075,8 +1432,47 @@ function DocumentsTab({
   const [poSaving, setPoSaving] = useState(false);
   const [showPoForm, setShowPoForm] = useState(false);
 
+  // ── PO document correction — open until Project Code is created ─────────
+  const hasProjectCode =
+    order.salesPipelineStatus === "projectCodeCreation" ||
+    ((order as any).projectCodeArray || []).length > 0;
+  const poDocumentEditHistory: any[] = (order as any).poDocumentEditHistory || [];
+  const [showPoEdit, setShowPoEdit] = useState(false);
+  const [showPoEditHistory, setShowPoEditHistory] = useState(false);
+  const [poEditFile, setPoEditFile] = useState<File | null>(null);
+  const [poEditReason, setPoEditReason] = useState("");
+  const [poEditSaving, setPoEditSaving] = useState(false);
+
+  const handlePoDocumentEdit = async () => {
+    if (!poEditFile) { toast.error("Select the corrected PO document"); return; }
+    const sizeErr = validateFileSize(poEditFile);
+    if (sizeErr) { toast.error(sizeErr); return; }
+    if (!poEditReason.trim()) { toast.error("Reason for correction is required"); return; }
+    setPoEditSaving(true);
+    try {
+      const token = getToken();
+      const fd = new FormData();
+      fd.append("poDocument", poEditFile);
+      fd.append("reason", poEditReason.trim());
+      await axios.patch(`${API_BASE}sales/pipeline/${order._id}/po-document`, fd, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("PO document corrected");
+      setShowPoEdit(false);
+      setPoEditFile(null);
+      setPoEditReason("");
+      await onRefresh();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Failed to update PO document");
+    } finally {
+      setPoEditSaving(false);
+    }
+  };
+
   const handlePoUpload = async () => {
     if (!poFile) { toast.error("Please select a PO document"); return; }
+    const sizeErr = validateFileSize(poFile);
+    if (sizeErr) { toast.error(sizeErr); return; }
     setPoSaving(true);
     try {
       const token = getToken();
@@ -1126,7 +1522,7 @@ function DocumentsTab({
     <div className="p-4 space-y-4">
 
 
-     
+
       {sections.length === 0 ? (
         <div className="text-center py-10 text-gray-400">
           <FileText size={32} className="mx-auto mb-2 opacity-30" />
@@ -1150,6 +1546,100 @@ function DocumentsTab({
                   at={doc.at}
                 />
               ))}
+
+              {section.label === "PO Documents" && (
+                <div className="pt-1">
+                  <div className="flex items-center gap-2">
+                    {!hasProjectCode && (
+                      <button
+                        onClick={() => setShowPoEdit((v) => !v)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[12px] font-semibold"
+                      >
+                        <FileEdit size={12} /> Edit PO Document
+                      </button>
+                    )}
+                    {poDocumentEditHistory.length > 0 && (
+                      <button
+                        onClick={() => setShowPoEditHistory((v) => !v)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-[12px] font-semibold"
+                      >
+                        <History size={12} /> Edit History ({poDocumentEditHistory.length})
+                      </button>
+                    )}
+                  </div>
+
+                  {showPoEditHistory && poDocumentEditHistory.length > 0 && (
+                    <div className="mt-3 space-y-2.5">
+                      {poDocumentEditHistory.slice().reverse().map((h: any, hi: number) => (
+                        <div key={h._id} className="rounded-xl border border-amber-100 dark:border-amber-900/40 bg-amber-50/30 dark:bg-amber-900/10 p-2.5">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold">
+                              <FileEdit size={10} /> Correction #{poDocumentEditHistory.length - hi}
+                            </span>
+                            <span className="text-[11px] text-gray-400">{fmtDatetime(h.editedAt)}</span>
+                          </div>
+                          <DocItem
+                            docPath={h.document}
+                            label="PO Document"
+                            by={h.editedBy}
+                            at={h.editedAt}
+                          />
+                          <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-2 flex items-start gap-1">
+                            <StickyNote size={12} className="mt-0.5 flex-shrink-0 text-gray-400" />
+                            <span><span className="font-semibold text-gray-700 dark:text-gray-300">Reason:</span> <span className="italic">{h.reason}</span></span>
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {showPoEdit && !hasProjectCode && (
+                    <div className="mt-3 space-y-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10 p-3">
+                      <div>
+                        <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                          <Upload size={11} />PO Document
+                        </p>
+                        <DragDropFile
+                          file={poEditFile}
+                          onFile={setPoEditFile}
+                          onRemove={() => setPoEditFile(null)}
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          label="Click or drag to upload corrected PO"
+                        />
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                          <StickyNote size={11} /> Reason for Correction
+                        </p>
+                        <textarea
+                          value={poEditReason}
+                          onChange={(e) => setPoEditReason(e.target.value)}
+                          placeholder="e.g. Wrong PO number, incorrect amount..."
+                          rows={2}
+                          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-amber-300"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handlePoDocumentEdit}
+                          disabled={poEditSaving}
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white text-[12px] font-semibold transition-all"
+                        >
+                          <CheckCircle2 size={13} /> {poEditSaving ? "Saving..." : "Save Changes"}
+                        </button>
+                        <button
+                          onClick={() => { setShowPoEdit(false); setPoEditFile(null); setPoEditReason(""); }}
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-[12px] font-semibold transition-all"
+                        >
+                          <X size={13} /> Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))
@@ -1158,47 +1648,122 @@ function DocumentsTab({
   );
 }
 
-
 export default function SalesDetailDrawer({
   order, onClose, onRefresh, onStageMove, staffAdmins, currentUserIsAdmin, saving,
+  onOpenConflictOrder, highlightOrderId,
 }: {
   order: SalesOrder; onClose: () => void; onRefresh: () => Promise<void>;
   onStageMove: (order: SalesOrder, toStage: string) => void;
   staffAdmins: { username: string }[];
   currentUserIsAdmin: number;
   saving: boolean;
+  onOpenConflictOrder?: (orderObjectId: string) => void;
+  highlightOrderId?: string | null;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const stage = SALES_STAGE_MAP[order.salesPipelineStatus];
   const stageIdx = SALES_STAGES.findIndex((s) => s.key === order.salesPipelineStatus);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+
+  // ── Handler handover / reassignment ────────────────────────────────────
+  const [showHandoverModal, setShowHandoverModal] = useState(false);
+  const [handoverNewHandler, setHandoverNewHandler] = useState("");
+  const [handoverIsTemporary, setHandoverIsTemporary] = useState(true);
+  const [handoverLeaveStart, setHandoverLeaveStart] = useState("");
+  const [handoverLeaveEnd, setHandoverLeaveEnd] = useState("");
+  const [handoverReason, setHandoverReason] = useState("");
+  const [handoverSaving, setHandoverSaving] = useState(false);
+  const handlerAssignmentHistory: any[] = (order as any).handlerAssignmentHistory || [];
+  const activeTemporaryHandover = handlerAssignmentHistory.find(
+    (h: any) => h.status === "active" && h.isTemporary
+  );
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const oneYearAheadIso = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  const submitHandover = async () => {
+    if (!handoverNewHandler.trim()) { toast.error("Select the new handler"); return; }
+    if (!handoverReason.trim()) { toast.error("Reason is required"); return; }
+    if (handoverIsTemporary && (!handoverLeaveStart || !handoverLeaveEnd)) {
+      toast.error("Leave start and end dates are required"); return;
+    }
+    setHandoverSaving(true);
+    try {
+      const token = getToken();
+      await axios.patch(
+        `${API_BASE}sales/pipeline/${order._id}/reassign-handler`,
+        {
+          newHandler: handoverNewHandler.trim(),
+          isTemporary: handoverIsTemporary,
+          leaveStartDate: handoverIsTemporary ? handoverLeaveStart : null,
+          leaveEndDate: handoverIsTemporary ? handoverLeaveEnd : null,
+          reason: handoverReason.trim(),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Handler reassigned");
+      setShowHandoverModal(false);
+      setHandoverNewHandler(""); setHandoverLeaveStart(""); setHandoverLeaveEnd(""); setHandoverReason("");
+      await onRefresh();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to reassign handler");
+    } finally {
+      setHandoverSaving(false);
+    }
+  };
+
+  const resolveHandover = async (assignmentId: string, makePermanent: boolean) => {
+    try {
+      const token = getToken();
+      await axios.patch(
+        `${API_BASE}sales/pipeline/${order._id}/handover/${assignmentId}/resolve`,
+        { makePermanent },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(makePermanent ? "Handover made permanent" : "Order returned to previous handler");
+      await onRefresh();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to resolve handover");
+    }
+  };
+
+  useEffect(() => {
+    fetchVehicleTypes()
+  }, [])
+
+  const getVehicleTypeName = (vehicleTypeId: string) => {
+    if (!vehicleTypeId || !vehicleTypes) return "";
+    const vehicle = vehicleTypes.find((vt: any) => vt._id === vehicleTypeId);
+    return vehicle?.typeName || vehicleTypeId;
+  };
+
+  const canEdit = !["closedWon", "projectCodeCreation", "salesFinalClosedWon", "closedLost"]
+    .includes(order.salesPipelineStatus);
 
   const getNextLabel = (): string | null => {
     const s = order.salesPipelineStatus;
-    if (s === "enquiry") return "Move to Need Analysis";
-    if (s === "needAnalysis") return "Move to Proposal";
-    if (s === "proposalPriceQuote") return "Move to Negotiation";
-    if (s === "negotiationReview") return "Move to Closed Won";
+    if (s === "enquiry") return "Move to Proposal & Price Quote";
+    if (s === "proposalPriceQuote") return "Move to PO Document";
     if (s === "closedWon") return "Move to Project Code Creation";
+    if (s === "projectCodeCreation") return "Move to Closed Won";
     return null;
   };
 
   const getNextStageShortLabel = (): string | null => {
     const s = order.salesPipelineStatus;
-    if (s === "enquiry") return "Need Analysis";
-    if (s === "needAnalysis") return "Proposal";
-    if (s === "proposalPriceQuote") return "Negotiation";
-    if (s === "negotiationReview") return "Closed Won";
+    if (s === "enquiry") return "Proposal & Price Quote";
+    if (s === "proposalPriceQuote") return "Order Confirmation";
     if (s === "closedWon") return "Project Code";
+    if (s === "projectCodeCreation") return "Closed Won";
     return null;
   };
 
   const nextStageKey = () => {
     const s = order.salesPipelineStatus;
-    if (s === "enquiry") return "needAnalysis";
-    if (s === "needAnalysis") return "proposalPriceQuote";
-    if (s === "proposalPriceQuote") return "negotiationReview";
-    if (s === "negotiationReview") return "closedWon";
+    if (s === "enquiry") return "proposalPriceQuote";
+    if (s === "proposalPriceQuote") return "closedWon";
     if (s === "closedWon") return "projectCodeCreation";
+    if (s === "projectCodeCreation") return "salesFinalClosedWon";
     return null;
   };
 
@@ -1218,7 +1783,11 @@ export default function SalesDetailDrawer({
     { key: "overview", label: "Overview" },
     { key: "comments", label: "Comments" },
     { key: "pipeline", label: "Pipeline History" },
-    { key: "documents", label: isPoStage ? "PO Document" : "" },
+    ...(isPoStage ? [{ key: "documents" as Tab, label: "PO Document" }] : []),
+    ...(order.hasDateConflict ? [{ key: "dateConflict" as Tab, label: "Date Conflict" }] : []),
+    ...((order.orderEditHistory || []).length > 0
+      ? [{ key: "orderEditHistory" as Tab, label: "Edit History" }]
+      : []),
     ...(order.salesPipelineStatus === "projectCodeCreation"
       ? [{ key: "codeCreation" as Tab, label: "Code Creation" }]
       : []),
@@ -1232,7 +1801,7 @@ export default function SalesDetailDrawer({
     }
   }, [order.salesPipelineStatus]);
 
- 
+
   const subtotal = order.bookingItems.reduce((s: number, i: any) => s + (i.totalAmount || 0), 0);
   const totalNegotiated = (order.salesNegotiationArray || []).reduce((s, n) => s + (n.amount || 0), 0);
   const taxable = subtotal - totalNegotiated;
@@ -1246,24 +1815,31 @@ export default function SalesDetailDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
-      <div className="bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300">
+      {/* <div className="bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300"> */}
 
-      
+      <div className={`bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300 transition-all ${highlightOrderId === order._id ? "ring-4 ring-amber-400" : ""
+        }`}>
+
         <div className="flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">
-    
+
           <div className="flex items-center gap-3 px-4 py-3">
-      
+
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${stage?.headerGrad || "from-gray-500 to-gray-600"}`}>
               <StageIcon size={15} className="text-white" />
             </div>
 
-        
+
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-base font-bold text-gray-900 dark:text-white">Sales Order</span>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[13px] font-semibold ${stage?.bg || "bg-gray-100"} ${stage?.color || "text-gray-700"}`}>
                   {stage?.label || order.salesPipelineStatus}
                 </span>
+                {(order.companyName || order.clientName) && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[13px] font-bold text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/30 truncate">
+                    {order.companyName || order.clientName}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2 text-[13px] text-gray-400 mt-0.5">
                 <span className="font-mono">{order.orderId}</span>
@@ -1273,7 +1849,16 @@ export default function SalesDetailDrawer({
               </div>
             </div>
 
-            {/* Move to next stage */}
+            {canEdit && (
+              <button
+                onClick={() => setShowEditForm(true)}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600 text-sm font-semibold transition-all whitespace-nowrap"
+              >
+                <FileEdit size={13} /> Edit
+              </button>
+            )}
+
+
             {nextShort && (
               <button
                 onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
@@ -1287,7 +1872,7 @@ export default function SalesDetailDrawer({
               </button>
             )}
 
-       
+
             {order.salesHandlerName && (
               <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
                 <div className={`w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-[10px] font-bold text-white`}>
@@ -1297,14 +1882,14 @@ export default function SalesDetailDrawer({
               </div>
             )}
 
-       
+
             <button onClick={onClose}
               className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
               <X size={16} />
             </button>
           </div>
 
-       
+
           {nextShort && (
             <div className="sm:hidden flex items-center gap-2 px-4 pb-3">
               <button
@@ -1329,31 +1914,38 @@ export default function SalesDetailDrawer({
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-3 py-2.5 text-md font-medium border-b-2 transition-all -mb-px whitespace-nowrap ${activeTab === tab.key
+                className={`flex items-center gap-1.5 px-3 py-2.5 text-md font-medium border-b-2 transition-all -mb-px whitespace-nowrap ${activeTab === tab.key
                   ? "border-red-500 text-red-600 dark:text-red-400"
                   : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   }`}
               >
                 {tab.label}
+                {tab.key === "dateConflict" && order.hasDateConflict && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                )}
               </button>
             ))}
           </div>
         </div>
 
-       
+
         <div className="flex-1 overflow-y-auto">
 
 
           {activeTab === "overview" && (
             <div className="flex flex-col sm:flex-row h-full min-h-0">
-            
+
               <div className="flex-1 overflow-y-auto sm:border-r border-gray-100 dark:border-gray-800">
-                <OverviewTab order={order} onRefresh={onRefresh} onStageMove={onStageMove} />
+                <OverviewTab
+                  order={order} onRefresh={onRefresh} onStageMove={onStageMove} getVehicleTypeName={getVehicleTypeName}
+                  onOpenHandover={() => setShowHandoverModal(true)}
+                  onResolveHandover={resolveHandover}
+                />
               </div>
 
-           
+
               <div className="w-full sm:w-[260px] flex-shrink-0 overflow-y-auto p-4 space-y-3 bg-gray-50/50 dark:bg-gray-900/40">
-          
+
                 <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Current Stage</p>
@@ -1370,10 +1962,13 @@ export default function SalesDetailDrawer({
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.salesHandlerName}</p>
-                        {/* <p className="text-[10px] text-gray-400">Sales Executive</p> */}
+                        {activeTemporaryHandover && (
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Temporary handover</p>
+                        )}
                       </div>
                     </div>
                   )}
+
                   {order.updatedAt && (
                     <p className="text-[13px] text-gray-400 mt-2">
                       Updated On<br />
@@ -1401,7 +1996,7 @@ export default function SalesDetailDrawer({
                     >
                       <MessageSquare size={13} /> Add Comment
                     </button>
-                   
+
                     {["closedWon", "projectCodeCreation"].includes(order.salesPipelineStatus) && (
                       <button
                         onClick={() => setActiveTab("documents")}
@@ -1419,6 +2014,7 @@ export default function SalesDetailDrawer({
                         <FiCode size={13} /> Code Creation
                       </button>
                     )}
+
                   </div>
                 </div>
 
@@ -1469,6 +2065,125 @@ export default function SalesDetailDrawer({
           )}
           {activeTab === "codeCreation" && (
             <CodeCreationTab order={order} onRefresh={onRefresh} />
+          )}
+         
+          {activeTab === "orderEditHistory" && (
+            <OrderEditHistoryTab order={order} getVehicleTypeName={getVehicleTypeName} />
+          )}
+
+          {activeTab === "dateConflict" && (
+            <DateConflictTab order={order} onOpenConflictOrder={onOpenConflictOrder} />
+          )}
+
+
+          {showEditForm && (
+            <AdminOrderForm
+              editingOrder={order}
+              onClose={() => setShowEditForm(false)}
+              onSuccess={async () => {
+                setShowEditForm(false);
+                toast.success("Order updated successfully!");
+                await onRefresh();
+              }}
+              getVehicleTypeName={getVehicleTypeName}
+            />
+          )}
+
+          {showHandoverModal && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+              <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white">Reassign Handler</h3>
+                  <button onClick={() => setShowHandoverModal(false)} className="text-gray-400 hover:text-gray-600">
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500">New Handler</label>
+                    <select
+                      value={handoverNewHandler}
+                      onChange={(e) => setHandoverNewHandler(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+                    >
+                      <option value="">Select handler...</option>
+                      {staffAdmins
+                        .filter((s) => s.username !== order.salesHandlerName)
+                        .map((s) => (
+                          <option key={s.username} value={s.username}>{s.username}</option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="handoverTemp"
+                      type="checkbox"
+                      checked={handoverIsTemporary}
+                      onChange={(e) => setHandoverIsTemporary(e.target.checked)}
+                    />
+                    <label htmlFor="handoverTemp" className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                      Temporary (e.g. leave handover) — return or make permanent later
+                    </label>
+                  </div>
+
+                  {handoverIsTemporary && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500">Leave Start (From Date)</label>
+                        <div className="mt-1">
+                          <DatePicker
+                            value={handoverLeaveStart}
+                            onChange={setHandoverLeaveStart}
+                            minDate={todayIso}
+                            maxDate={handoverLeaveEnd || oneYearAheadIso}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500">Leave End (To Date)</label>
+                        <div className="mt-1">
+                          <DatePicker
+                            value={handoverLeaveEnd}
+                            onChange={setHandoverLeaveEnd}
+                            minDate={handoverLeaveStart || todayIso}
+                            maxDate={oneYearAheadIso}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500">Reason</label>
+                    <textarea
+                      value={handoverReason}
+                      onChange={(e) => setHandoverReason(e.target.value)}
+                      rows={2}
+                      placeholder="e.g. Handler on leave, manager reassignment..."
+                      className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      onClick={submitHandover}
+                      disabled={handoverSaving}
+                      className="flex-1 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-semibold"
+                    >
+                      {handoverSaving ? "Saving..." : "Reassign"}
+                    </button>
+                    <button
+                      onClick={() => setShowHandoverModal(false)}
+                      className="flex-1 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-semibold"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
         </div>

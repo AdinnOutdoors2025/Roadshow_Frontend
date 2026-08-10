@@ -1,6 +1,4 @@
 
-
-
 /* eslint-disable */
 // @ts-nocheck
 
@@ -56,6 +54,22 @@ interface Order {
     customerCategory?: string;
 }
 
+const IMAGE_MIMES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const IMAGE_MAX_MB = 5;
+const DOC_MAX_MB = 10;
+
+const validateFileSize = (file: File): string | null => {
+    const isImage = IMAGE_MIMES.includes(file.type);
+    const fileMB = file.size / (1024 * 1024);
+    if (isImage && fileMB > IMAGE_MAX_MB)
+        return `Image upload only 5 MB allowed. "${file.name}" is ${fileMB.toFixed(2)} MB`;
+    if (!isImage && fileMB > DOC_MAX_MB)
+        return `PDF document upload only 10 MB allowed. "${file.name}" is ${fileMB.toFixed(2)} MB`;
+    return null;
+};
+
+
+
 const STAGE_MAP: Record<string, { label: string; gradient: string; color: string; bg: string }> = {
 
     todo: { label: "To-Do", gradient: "from-slate-400 to-slate-500", color: "text-slate-700", bg: "bg-slate-100" },
@@ -87,6 +101,7 @@ export default function CommentsTab({ order, onRefresh }: { order: Order; onRefr
 
     const isTodo = order.pipelineStatus === "todo";
     const stageLabel = STAGE_MAP[order.pipelineStatus]?.label || order.pipelineStatus;
+    const [commentsTab, setCommentsTab] = useState("all");
 
     const fmtDatetime = (s?: string) =>
         s
@@ -97,7 +112,7 @@ export default function CommentsTab({ order, onRefresh }: { order: Order; onRefr
             : "—";
 
     const allComments: Array<{
-        text: string; by: string; at: string; stage: string; docPath?: string;
+        text: string; by: string; at: string; stage: string; stageGroup: string; docPath?: string;
     }> = [];
 
     (order.todoArray || []).forEach((item: any) => {
@@ -107,6 +122,7 @@ export default function CommentsTab({ order, onRefresh }: { order: Order; onRefr
                 by: item.uploadedBy || "—",
                 at: item.uploadedAt,
                 stage: "To-Do",
+                stageGroup: "todo",
                 docPath: item.document || undefined,
             });
         }
@@ -119,6 +135,7 @@ export default function CommentsTab({ order, onRefresh }: { order: Order; onRefr
                 by: item.uploadedBy || "—",
                 at: item.uploadedAt,
                 stage: "Project Execution",
+                stageGroup: "projectExecution",
                 docPath: item.document || undefined,
             });
         }
@@ -131,12 +148,50 @@ export default function CommentsTab({ order, onRefresh }: { order: Order; onRefr
                 by: item.uploadedBy || "—",
                 at: item.uploadedAt,
                 stage: "On Road",
+                stageGroup: "onRoad",
                 docPath: item.document || undefined,
             });
         }
     });
 
+    (order.clientClosureCommentsArray || []).forEach((item: any) => {
+        if (item.notes || item.document) {
+            allComments.push({ text: item.notes || "", by: item.uploadedBy || "—", at: item.uploadedAt, stage: "Client Closure", stageGroup: "clientClosure", docPath: item.document || undefined });
+        }
+    });
+    (order.closedWonCommentsArray || []).forEach((item: any) => {
+        if (item.notes || item.document) {
+            allComments.push({ text: item.notes || "", by: item.uploadedBy || "—", at: item.uploadedAt, stage: "Closed Won", stageGroup: "closedWon", docPath: item.document || undefined });
+        }
+    });
+    (order.closedLostCommentsArray || []).forEach((item: any) => {
+        if (item.notes || item.document) {
+            allComments.push({ text: item.notes || "", by: item.uploadedBy || "—", at: item.uploadedAt, stage: "Closed Lost", stageGroup: "closedLost", docPath: item.document || undefined });
+        }
+    });
+
+        (order.orderClosedWonArray || []).forEach((item: any) => {
+        if (item.notes || item.document) {
+            allComments.push({ text: item.notes || "", by: item.uploadedBy || "—", at: item.uploadedAt, stage: "Closed Won", stageGroup: "closedWon", docPath: item.document || undefined });
+        }
+    });
+
     allComments.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+
+    const commentsTabs: Array<{ key: string; label: string }> = [
+        { key: "all", label: "All" },
+        { key: "todo", label: "To-Do" },
+        { key: "projectExecution", label: "Project Execution" },
+        { key: "onRoad", label: "On Road" },
+        { key: "clientClosure", label: "Client Closure" },
+        { key: "closedWon", label: "Closed Won" },
+        { key: "closedLost", label: "Closed Lost" },
+    ];
+
+    const filteredComments =
+        commentsTab === "all"
+            ? allComments
+            : allComments.filter((c) => c.stageGroup === commentsTab);
 
     // ── Submit comment (actual API call) ───────────────────────────────────
     const submitComment = async (byName: string) => {
@@ -288,11 +343,26 @@ export default function CommentsTab({ order, onRefresh }: { order: Order; onRefr
             {/* ── Comments History ── */}
             <div>
                 <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Comments History</h3>
-                {allComments.length === 0 ? (
+                <div className="flex flex-wrap gap-2 mb-3">
+                    {commentsTabs.map((t) => (
+                        <button
+                            key={t.key}
+                            onClick={() => setCommentsTab(t.key)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                                commentsTab === t.key
+                                    ? "bg-blue-600 border-blue-600 text-white"
+                                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            }`}
+                        >
+                            {t.label}
+                        </button>
+                    ))}
+                </div>
+                {filteredComments.length === 0 ? (
                     <div className="text-center py-8 text-gray-400 text-sm">No comments yet</div>
                 ) : (
                     <div className="space-y-3">
-                        {allComments.map((c, i) => {
+                        {filteredComments.map((c, i) => {
                             const initials = (c.by || "?").charAt(0).toUpperCase();
                             const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500"];
                             const color = colors[(c.by || "").charCodeAt(0) % colors.length];
@@ -339,7 +409,11 @@ function DragDropFile({ file, onFile, onRemove, accept = ".pdf,.jpg,.jpeg,.png",
     const onDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault(); setDragging(false);
         const f = e.dataTransfer.files?.[0];
-        if (f) onFile(f);
+        if (f) {
+            const err = validateFileSize(f);
+            if (err) { toast.error(err); return; }
+            onFile(f);
+        }
     }, [onFile]);
 
     return !file ? (
@@ -353,7 +427,14 @@ function DragDropFile({ file, onFile, onRemove, accept = ".pdf,.jpg,.jpeg,.png",
             <p className="text-xs text-gray-400">{label || "Click or drag to upload"}</p>
             <p className="text-[11px] text-gray-300 mt-0.5">PDF, JPG, PNG</p>
             <input ref={ref} type="file" accept={accept} className="hidden"
-                onChange={(e) => onFile(e.target.files?.[0] || null)} />
+                onChange={(e) => {
+                    const f = e.target.files?.[0] || null;
+                    if (f) {
+                        const err = validateFileSize(f);
+                        if (err) { toast.error(err); e.target.value = ""; return; }
+                    }
+                    onFile(f);
+                }} />
         </label>
     ) : (
         <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200">
@@ -382,18 +463,30 @@ function DocItem({ docPath, label, notes, by, at }: {
     docPath: string; label: string; notes?: string; by?: string; at?: string;
 }) {
 
-    const getFileUrl = (p: string) => {
-    if (!p) return "";
-    if (p.startsWith("http")) return p;
-    return `http://localhost:3001${p.startsWith("/") ? p : `/${p}`}`;
-};
+    // const getFileUrl = (p: string) => {
+    //     if (!p) return "";
+    //     if (p.startsWith("http")) return p;
+    //     return `http://localhost:3001${p.startsWith("/") ? p : `/${p}`}`;
+    // };
 
-const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
+    const getFileUrl = (p: string) => {
+        if (!p) return "";
+        if (p.startsWith("http")) return p;
+        const path = p.startsWith("/") ? p : `/${p}`;
+
+        const encodedPath = path
+            .split("/")
+            .map((segment) => encodeURIComponent(segment))
+            .join("/");
+        return `http://localhost:3001${encodedPath}`;
+    };
+
+    const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
     const [preview, setPreview] = useState(false);
     const url = getFileUrl(docPath);
     if (!docPath) return null;
-    return (        
+    return (
         <>
             {preview && <DocPreviewModal url={url} label={label} onClose={() => setPreview(false)} />}
             <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50 hover:shadow-sm transition-all">

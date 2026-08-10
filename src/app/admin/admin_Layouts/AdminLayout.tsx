@@ -9,14 +9,22 @@ import AppHeader from "./AppHeader";
 import AppSidebar from "./AppSidebar";
 import Backdrop from "./Backdrop";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { VehicleProvider } from "@/context/vehicletypecontext";
+import { registerAxiosAuthInterceptor } from "@/app/utils/axiosAuthInterceptor";
+import { useAuthGuard } from "@/app/utils/useAuthGuard";
 
-const AUTH_PATHS = ["/admin/signin", "/admin/signup"];
+const AUTH_PATHS = ["/admin/signin", "/admin/signup", "/admin/forgot-password"];
 
 function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+
+  // Single compulsory check point for every admin page — no per-page opt-in
+  // needed, and it doesn't matter whether that page's own data calls use
+  // fetch or axios (session-check itself always uses fetch, see useAuthGuard).
+  useAuthGuard();
 
   // Auth pages: just render children — the (auth)/layout.tsx handles their UI
   if (isAuthPage) {
@@ -26,16 +34,26 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const mainContentMargin = isMobileOpen
     ? "ml-0"
     : isExpanded || isHovered
-    ? "lg:ml-[290px]"
-    : "lg:ml-[90px]";
+      ? "lg:ml-[290px]"
+      : "lg:ml-[90px]";
 
   return (
-    <div className="min-h-screen xl:flex">
+    // <div className="min-h-screen xl:flex">
+    //   <AppSidebar />
+    //   <Backdrop />
+    //   <div className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
+    //     <AppHeader />
+    //     <div className="p-2 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+    //       {children}
+    //     </div>
+    //   </div>
+    // </div>
+    <div className="min-h-screen xl:flex overflow-x-hidden">
       <AppSidebar />
       <Backdrop />
-      <div className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
+      <div className={`flex-1 min-w-0 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
         <AppHeader />
-        <div className="p-2 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+        <div className="p-2 mx-auto max-w-(--breakpoint-2xl) md:p-6 min-w-0">
           {children}
         </div>
       </div>
@@ -44,15 +62,23 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    registerAxiosAuthInterceptor();
+  }, []);
+
   return (
     <ThemeProvider>
       <SidebarProvider>
-        <VehicleProvider>
-        <SearchProvider>
-          <AdminShell>{children}</AdminShell>
-        </SearchProvider>
-      </VehicleProvider>
-    </SidebarProvider>
-  </ThemeProvider>
+      
+          <SearchProvider>
+            <AdminShell>
+                <VehicleProvider>
+              {children}
+              </VehicleProvider>
+              </AdminShell>
+          </SearchProvider>
+       
+      </SidebarProvider>
+    </ThemeProvider>
   );
 }

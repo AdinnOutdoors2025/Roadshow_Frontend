@@ -4,7 +4,12 @@ import { History } from "lucide-react";
 import { SALES_STAGE_MAP, SalesOrder } from "./page";
 
 export default function PipelineHistoryTab({ order }: { order: SalesOrder }) {
-    const logs = [...(order.salesPipelineLogs || [])].reverse();
+    const logs = [...(order.salesPipelineLogs || [])]
+        .filter((log: any) =>
+            log.logType !== "edit" &&
+            !(log.notes || "").startsWith("Order details edited by")
+        )
+        .reverse();
 
     const fmtDatetime = (s?: string) =>
         s
