@@ -287,8 +287,16 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
     })
     : "—";
 
-  const isIgnitionOn = gpsVehicle?.ignitionStatus === "ON";
   const distanceCovered = gpsVehicle?.distanceCovered ?? 0;
+
+  const positionLabel =
+    gpsVehicle?.position === "M"
+      ? "Moving"
+      : gpsVehicle?.position === "P"
+      ? "Parking"
+      : gpsVehicle?.position === "S"
+      ? "Idle"
+      : "Unavailable";
 
 
   const vehicleIssues = (order.onRoadIssues || []).filter(
@@ -448,14 +456,22 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
               <span className="text-md font-semibold text-gray-800 dark:text-gray-100">
                 Vehicle {String(index + 1).padStart(2, "0")}
               </span>
-              {isIgnitionOn ? (
+              {positionLabel === "Moving" ? (
                 <span className="flex items-center gap-1 text-sm font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Running
+                  Moving
+                </span>
+              ) : positionLabel === "Parking" ? (
+                <span className="flex items-center gap-1 text-sm font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
+                  Parking
+                </span>
+              ) : positionLabel === "Idle" ? (
+                <span className="flex items-center gap-1 text-sm font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
+                  Idle
                 </span>
               ) : (
                 <span className="flex items-center gap-1 text-sm font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700">
-                  Offline
+                  Unavailable
                 </span>
               )}
             </div>
