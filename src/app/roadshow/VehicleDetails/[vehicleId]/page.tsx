@@ -592,6 +592,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import {
   useParams,
@@ -608,11 +609,27 @@ import {
   formatDateRange,
 } from "@/app/utils/currency";
 import { useAuth } from "@/context/AuthContext";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import {
   FALLBACK_VEHICLE_IMAGE,
   fetchRoadshowVehicleById,
   type RoadshowVehicle,
 } from "@/lib/roadshowVehicles";
+import { addToCart } from "@/lib/roadshowCart";
+
+/* P4 / P6 display-version descriptions (techSpecs.displayVersion) */
+const DISPLAY_VERSION_DESC: Record<string, string> = {
+  P4: "P4 · 4mm ",
+  P6: "P6 · 6mm ",
+};
+
+/* Appends a unit only when the backend value is a bare number,
+   so a value that already carries its unit is never doubled. */
+const withUnit = (value: any, unit: string): string => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  return /^[\d.]+$/.test(raw) ? `${raw} ${unit}` : raw;
+};
 
 type BookingReadyPopupProps = {
   open: boolean;
@@ -622,6 +639,7 @@ type BookingReadyPopupProps = {
   checkOut: Date | null;
   onClose: () => void;
   onContinue: () => void;
+  continuing?: boolean;
 };
 
 function BookingReadyPopup({
@@ -632,12 +650,16 @@ function BookingReadyPopup({
   checkOut,
   onClose,
   onContinue,
+  continuing = false,
 }: BookingReadyPopupProps) {
+  const [mounted] = useState(
+    () => typeof document !== "undefined"
+  );
+
+  useScrollLock(open);
+
   useEffect(() => {
     if (!open) return;
-
-    const previousOverflow =
-      document.body.style.overflow;
 
     const closeWithEscape = (
       event: KeyboardEvent
@@ -645,17 +667,12 @@ function BookingReadyPopup({
       if (event.key === "Escape") onClose();
     };
 
-    document.body.style.overflow = "hidden";
-
     document.addEventListener(
       "keydown",
       closeWithEscape
     );
 
     return () => {
-      document.body.style.overflow =
-        previousOverflow;
-
       document.removeEventListener(
         "keydown",
         closeWithEscape
@@ -663,22 +680,26 @@ function BookingReadyPopup({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-150 flex items-center justify-center bg-black/50 px-4 backdrop-blur-xs"
+      className="fixed inset-0 z-9999 flex overflow-y-auto bg-black/35 px-4 py-6 backdrop-blur-[1px]"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
+        if (
+          event.target === event.currentTarget &&
+          !continuing
+        ) {
           onClose();
         }
       }}
     >
-      <section className="relative w-full max-w-110 rounded-[28px] bg-white p-7 text-center shadow-[0_28px_80px_rgba(0,0,0,0.24)] sm:p-9">
+      <section className="relative w-full max-w-110 m-auto rounded-[28px] bg-white p-7 text-center shadow-[0_28px_80px_rgba(0,0,0,0.24)] sm:p-9">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-[#f2f2f2] text-[20px] text-black"
+          disabled={continuing}
+          className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-[#f2f2f2] text-[20px] text-black disabled:cursor-not-allowed disabled:opacity-40"
         >
           ×
         </button>
@@ -718,12 +739,18 @@ function BookingReadyPopup({
         <button
           type="button"
           onClick={onContinue}
-          className="mt-6 w-full rounded-full bg-black px-7 py-3.5 text-[14px] font-semibold text-white transition hover:bg-[#d70000]"
+          disabled={continuing}
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-black px-7 py-3.5 text-[14px] font-semibold text-white transition hover:bg-[#d70000] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Continue Booking
+          {continuing && (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+          )}
+
+          {continuing ? "Redirecting..." : "Continue Booking"}
         </button>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -766,6 +793,9 @@ export default function VehicleDetailsPage() {
     useState(false);
 
   const [bookingReadyOpen, setBookingReadyOpen] =
+    useState(false);
+
+  const [redirectingToCampaign, setRedirectingToCampaign] =
     useState(false);
 
   const loginModalOpenedRef = useRef(false);
@@ -819,9 +849,9 @@ export default function VehicleDetailsPage() {
     setWaitingForLogin(false);
 
     if (user) {
-      toast.success(
-        "Login successful. Continue booking."
-      );
+      // toast.success(
+      //   "Login successful. Continue booking."
+      // );
 
       setBookingReadyOpen(true);
     }
@@ -834,11 +864,27 @@ export default function VehicleDetailsPage() {
   const productFeatures = useMemo(() => {
     const specs = vehicle?.techSpecs || {};
 
+    const versionKey = String(specs?.displayVersion || "")
+      .trim()
+      .toUpperCase();
+
+    const screenSize =
+      specs?.leftRightScreenWidth && specs?.leftRightScreenHeight
+        ? `${specs.leftRightScreenWidth} × ${specs.leftRightScreenHeight} ft`
+        : "";
+
+    const gpsEnabled = (vehicle?.registrationVehicles || []).some(
+      (reg: any) => reg?.gpsEnabled
+    );
+
     return [
       {
         icon: "/images/assets/detail_page/Visibility.svg",
         title: "Visibility",
-        desc: "High road visibility",
+        desc:
+          DISPLAY_VERSION_DESC[versionKey] ||
+          versionKey ||
+          "High road visibility",
         width: 38,
         height: 38,
       },
@@ -846,7 +892,7 @@ export default function VehicleDetailsPage() {
         icon: "/images/assets/detail_page/Brightness.svg",
         title: "Brightness",
         desc:
-          specs?.brightness || "Day & Night",
+          withUnit(specs?.brightness, "nits") || "Day & Night",
         width: 58,
         height: 58,
       },
@@ -854,7 +900,9 @@ export default function VehicleDetailsPage() {
         icon: "/images/assets/detail_page/Display.svg",
         title: "Display",
         desc: specs?.numberOfScreens
-          ? `${specs.numberOfScreens} screen(s)`
+          ? [withUnit(specs.numberOfScreens, "Screens"), screenSize]
+              .filter(Boolean)
+              .join(" · ")
           : "LED Coverage",
         width: 38,
         height: 38,
@@ -863,16 +911,16 @@ export default function VehicleDetailsPage() {
         icon: "/images/assets/detail_page/Audio.svg",
         title: "Audio",
         desc:
-          specs?.audioOutput ||
+          withUnit(specs?.audioOutput, "W") ||
           "Clear Audio System",
         width: 38,
         height: 38,
       },
       {
         icon: "/images/assets/detail_page/Power.svg",
-        title: "Power",
+        title: "Power Backup ",
         desc:
-          specs?.generatorCapacity ||
+          withUnit(specs?.generatorCapacity, "KVA") ||
           "Backup Available",
         width: 40,
         height: 40,
@@ -897,8 +945,8 @@ export default function VehicleDetailsPage() {
       },
       {
         icon: "/images/assets/detail_page/Mobility.svg",
-        title: "Mobility",
-        desc: "On-the-go Reach",
+        title: "GPS Tracking",
+        desc: gpsEnabled ? "Live GPS Enabled" : "On-the-go Reach",
         width: 78,
         height: 78,
       },
@@ -943,9 +991,16 @@ export default function VehicleDetailsPage() {
   };
 
   const handleContinueBooking = () => {
-    if (!vehicle || !checkIn || !checkOut) {
+    if (
+      !vehicle ||
+      !checkIn ||
+      !checkOut ||
+      redirectingToCampaign
+    ) {
       return;
     }
+
+    setRedirectingToCampaign(true);
 
     sessionStorage.setItem(
       "roadshow_booking_draft",
@@ -959,7 +1014,13 @@ export default function VehicleDetailsPage() {
       })
     );
 
-    setBookingReadyOpen(false);
+    /* Keep this customer's cart in sync so earlier picks are not replaced */
+    addToCart(user?._id, {
+      vehicleId: String(vehicle.id),
+      startDate: formatDateForApi(checkIn),
+      endDate: formatDateForApi(checkOut),
+      quantity: 1,
+    });
 
     router.push("/roadshow/CampaignRequest");
   };
@@ -1005,7 +1066,7 @@ export default function VehicleDetailsPage() {
   return (
     <>
       <main className="min-h-screen bg-white text-black">
-        <section className="mx-auto grid max-w-355 grid-cols-1 gap-20 px-4 pb-14 pt-20 lg:grid-cols-[1.12fr_0.88fr]">
+        <section className="mx-auto grid max-w-355 grid-cols-1 gap-20 px-4 pb-14 pt-30 lg:grid-cols-[1.12fr_0.88fr]">
           <div>
             <h1 className="mb-5 text-[25px] font-bold">
               {vehicle.name}
@@ -1118,7 +1179,7 @@ export default function VehicleDetailsPage() {
 
             <div className="mt-9">
               <h3 className="mb-2 text-[20px] font-bold text-[#d70000]">
-                Available Dates
+                Select Available Dates
               </h3>
 
               <DatePicker
@@ -1167,6 +1228,7 @@ export default function VehicleDetailsPage() {
           setBookingReadyOpen(false)
         }
         onContinue={handleContinueBooking}
+        continuing={redirectingToCampaign}
       />
     </>
   );

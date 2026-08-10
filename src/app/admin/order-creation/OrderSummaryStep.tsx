@@ -1,6 +1,5 @@
-
-
-
+/* eslint-disable */
+// @ts-nocheck
 "use client";
 
 import React, { useState } from "react";
@@ -13,9 +12,10 @@ interface Props {
   loading: boolean;
   getVehicleTypeName?:any
   editingOrder?:any
+  submitError?: string[] | null;
 }
 
-export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,getVehicleTypeName,editingOrder }: Props) {
+export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,getVehicleTypeName,editingOrder, submitError }: Props) {
   const { customerSelection, vehicles } = order;
   const customer = customerSelection.customer;
   const [activeVehicleIndex, setActiveVehicleIndex] = useState(0);
@@ -52,6 +52,21 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
 
   return (
     <div className="space-y-5">
+      {submitError && submitError.length > 0 && (
+        <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
+          <p className="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">
+            Order could not be created — vehicle availability issue
+          </p>
+          <ul className="list-disc pl-5 space-y-0.5">
+            {submitError.map((line, idx) => (
+              <li key={idx} className="text-sm text-red-600 dark:text-red-300">
+                {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="mb-2">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Order Summary</h3>
         <p className="text-xs text-gray-400 mt-0.5">Confirm before creating order</p>
@@ -150,9 +165,9 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
               </div>
 
               <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
-                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {/* <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
+                </svg> */}
                 <span className="text-sm font-bold text-blue-700 dark:text-blue-300">{totalVehicleCount}</span>
                 <span className="text-xs text-blue-600 dark:text-blue-400">
                   {totalVehicleCount === 1 ? "Vehicle" : "Vehicles"}
@@ -164,12 +179,14 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
               {(
                 [
                   ["Booking For", order.customerCategory],
-                  ["Campaign", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType],
+                  (v.campaignType === "Other" ? v.otherCampaignType : v.campaignType)
+                    ? ["Campaign", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType]
+                    : null,
                   ["Duration", v.fromDate && v.toDate
                     ? `${new Date(v.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(v.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + 1}D base${v.extraDays > 0 ? ` +${v.extraDays} D = ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + 1 + v.extraDays}D total` : ""})`
                     : "—"],
                   ["Campaign Location", v.campaignLocation],
-                  ["State / City", `${v.state} / ${v.city}`],
+                  (v.state || v.city) ? ["State / City", `${v.state || ""} / ${v.city || ""}`] : null,
                   ["Vehicle Count", `${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"} ✕ ${v.vehicleModel}`],
                   v.extraKm > 0 ? ["Extra KM", `${v.extraKm} km`] : null,
                   v.extraHours > 0 ? ["Extra Hours", `${v.extraHours} hours`] : null,
@@ -236,9 +253,9 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">Order Total</p>
           <div className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
-            <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
+            </svg> */}
             <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
               {vehicles.reduce((sum, vh) => sum + vh.quantity, 0)}
             </span>

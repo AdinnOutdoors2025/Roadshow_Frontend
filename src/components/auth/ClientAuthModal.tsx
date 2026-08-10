@@ -14,6 +14,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 import { useAuth } from "@/context/AuthContext";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import "./ClientAuthModal.css";
 
 type AuthFlow = "login" | "signup";
@@ -81,6 +82,9 @@ export default function ClientAuthModal() {
             window.clearTimeout(timerId);
         };
     }, [screen, resendTimer]);
+
+    useScrollLock(open);
+
     if (!open) return null;
 
     const getErrorMessage = (

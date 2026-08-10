@@ -19,6 +19,7 @@ import {
 import { useState, useRef, useCallback, useEffect } from "react";
 import axios from "axios";
 import { getToken } from "../../utils/auth";
+import { jwtDecode } from "jwt-decode";
 import toast from "react-hot-toast";
 import API_BASE from "../../../../baseurl";
 import { SALES_STAGE_MAP, SALES_STAGES, SalesOrder } from "./page";
@@ -114,7 +115,7 @@ const getFileUrl = (p: string) => {
 const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
 
-type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation" | "dateConflict" | "orderEditHistory";
+type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation" | "invoice" | "dateConflict" | "orderEditHistory";
 
 function DocPreviewModal({ url, label, onClose }: { url: string; label: string; onClose: () => void }) {
   const img = isImage(url);
@@ -749,7 +750,9 @@ function OverviewTab({
                 [
                   ["Vehicle Model", getVehicleTypeName(currentVehicle.vehicleType)], // Fixed: changed 'vehicle' to 'currentVehicle'
                   ["Booking For", order.customerCategory],
-                  ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType],
+                  (currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType)
+                    ? ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType]
+                    : null,
                   [
                     "Duration",
                     currentVehicle.fromDate && currentVehicle.toDate
@@ -769,7 +772,7 @@ function OverviewTab({
                       : "—",
                   ],
               ["Campaign Location", currentVehicle.campaignLocation || `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
-              ["State / City", `${currentVehicle.state} / ${currentVehicle.city}`],
+              (currentVehicle.state || currentVehicle.city) ? ["State / City", `${currentVehicle.state || ""} / ${currentVehicle.city || ""}`] : null,
               ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
                   currentVehicle.extraKm > 0 ? ["Extra KM", `${currentVehicle.extraKm} km`] : null,
                   currentVehicle.extraHours > 0 ? ["Extra Hours", `${currentVehicle.extraHours} hours`] : null,
@@ -1014,7 +1017,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         text: item.salesPoNotes || "",
         by: item.uploadedBy || "—",
         at: item.uploadedAt,
-        stage: "Closed Won — PO Document",
+        stage: "PO Document",
         stageGroup: "closedWon",
         docPath: item.salesPoDocument,
         isMandatoryPO: true,
@@ -1043,6 +1046,19 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         at: item.uploadedAt,
         stage: "Project Code Creation",
         stageGroup: "projectCode",
+        docPath: item.document,
+      });
+    }
+  });
+
+  (order.salesFinalClosedWonArray || []).forEach((item) => {
+    if (item.notes || item.document) {
+      allComments.push({
+        text: item.notes || "",
+        by: item.uploadedBy || "—",
+        at: item.uploadedAt,
+        stage: "Closed Won",
+        stageGroup: "salesFinalClosedWon",
         docPath: item.document,
       });
     }
@@ -1079,11 +1095,10 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
   const commentsTabs: Array<{ key: string; label: string }> = [
     { key: "all", label: "All" },
     { key: "enquiry", label: "Enquiry" },
-    { key: "needAnalysis", label: "Need Analysis" },
     { key: "proposal", label: "Proposal & Price Quote" },
-    { key: "negotiation", label: "Negotiation" },
-    { key: "closedWon", label: "Closed Won" },
+    { key: "closedWon", label: "PO Document" },
     { key: "projectCode", label: "Project Code Creation" },
+    { key: "salesFinalClosedWon", label: "Closed Won" },
   ];
 
   const filteredComments =
@@ -1147,6 +1162,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         negotiationReview: "negotiationNotes",
         closedWon: "poCommentNotes",
         projectCodeCreation: "projectCodeCommentNotes",
+        salesFinalClosedWon: "salesFinalClosedWonNotes",
         closedLost: "closedLostCommentNotes",
       };
       const docFieldMap: Record<string, string> = {
@@ -1156,6 +1172,7 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
         negotiationReview: "negotiationDocument",
         closedWon: "poCommentDocument",
         projectCodeCreation: "projectCodeCommentDocument",
+        salesFinalClosedWon: "salesFinalClosedWonDocument",
         closedLost: "closedLostCommentDocument",
       };
 
@@ -1192,6 +1209,13 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
     if (!comment.trim() && !file) return;
 
     if (isEnquiry && !enquiryName) {
+      const token = getToken();
+      const loggedInUsername = token ? (jwtDecode(token) as any)?.username : "";
+      if (loggedInUsername) {
+        setEnquiryName(loggedInUsername);
+        await submitComment(loggedInUsername);
+        return;
+      }
       setNameInput("");
       setNameError("");
       setShowNameModal(true);
@@ -1713,36 +1737,33 @@ export default function SalesDetailDrawer({
     return vehicle?.typeName || vehicleTypeId;
   };
 
-  const canEdit = !["closedWon", "projectCodeCreation", "closedLost"]
+  const canEdit = !["closedWon", "projectCodeCreation", "salesFinalClosedWon", "closedLost"]
     .includes(order.salesPipelineStatus);
 
   const getNextLabel = (): string | null => {
     const s = order.salesPipelineStatus;
-    if (s === "enquiry") return "Move to Need Analysis";
-    if (s === "needAnalysis") return "Move to Proposal";
-    if (s === "proposalPriceQuote") return "Move to Negotiation";
-    if (s === "negotiationReview") return "Move to Closed Won";
+    if (s === "enquiry") return "Move to Proposal & Price Quote";
+    if (s === "proposalPriceQuote") return "Move to PO Document";
     if (s === "closedWon") return "Move to Project Code Creation";
+    if (s === "projectCodeCreation") return "Move to Closed Won";
     return null;
   };
 
   const getNextStageShortLabel = (): string | null => {
     const s = order.salesPipelineStatus;
-    if (s === "enquiry") return "Need Analysis";
-    if (s === "needAnalysis") return "Proposal";
-    if (s === "proposalPriceQuote") return "Negotiation";
-    if (s === "negotiationReview") return "Closed Won";
+    if (s === "enquiry") return "Proposal & Price Quote";
+    if (s === "proposalPriceQuote") return "Order Confirmation";
     if (s === "closedWon") return "Project Code";
+    if (s === "projectCodeCreation") return "Closed Won";
     return null;
   };
 
   const nextStageKey = () => {
     const s = order.salesPipelineStatus;
-    if (s === "enquiry") return "needAnalysis";
-    if (s === "needAnalysis") return "proposalPriceQuote";
-    if (s === "proposalPriceQuote") return "negotiationReview";
-    if (s === "negotiationReview") return "closedWon";
+    if (s === "enquiry") return "proposalPriceQuote";
+    if (s === "proposalPriceQuote") return "closedWon";
     if (s === "closedWon") return "projectCodeCreation";
+    if (s === "projectCodeCreation") return "salesFinalClosedWon";
     return null;
   };
 
@@ -1993,6 +2014,7 @@ export default function SalesDetailDrawer({
                         <FiCode size={13} /> Code Creation
                       </button>
                     )}
+
                   </div>
                 </div>
 
@@ -2044,6 +2066,7 @@ export default function SalesDetailDrawer({
           {activeTab === "codeCreation" && (
             <CodeCreationTab order={order} onRefresh={onRefresh} />
           )}
+         
           {activeTab === "orderEditHistory" && (
             <OrderEditHistoryTab order={order} getVehicleTypeName={getVehicleTypeName} />
           )}
@@ -2085,9 +2108,11 @@ export default function SalesDetailDrawer({
                       className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
                     >
                       <option value="">Select handler...</option>
-                      {staffAdmins.map((s) => (
-                        <option key={s.username} value={s.username}>{s.username}</option>
-                      ))}
+                      {staffAdmins
+                        .filter((s) => s.username !== order.salesHandlerName)
+                        .map((s) => (
+                          <option key={s.username} value={s.username}>{s.username}</option>
+                        ))}
                     </select>
                   </div>
 

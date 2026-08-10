@@ -337,6 +337,7 @@
   isolation: isolate;
   width: 60%;
   max-width: 1140px;
+
   height: 798px;
   margin: 0 auto 5%;
   overflow: hidden;
@@ -379,9 +380,14 @@
       cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.RS_WhyAdRSNavButton:hover {
+.RS_WhyAdRSNavButton:hover:not(:disabled) {
   background: #d0d0d6;
   transform: scale(1.06);
+}
+
+.RS_WhyAdRSNavButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
 }
 
 .RS_WhyAdRSNavButton:focus-visible,
@@ -394,225 +400,213 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 18px;
+  gap: 30px;
 }
 
-/* Capsule */
+/* =========================================================
+   Capsule - ported from the live reference build
+   (roadshowfrontend.netlify.app, df1e4db8ebc15dba.css)
+
+   Height follows the content, exactly like the Figma prototype:
+   the capsule grows as the description reveals and the ones below
+   are pushed down. The overlay experiment (a ::before pill growing
+   out of flow) is gone - it kept the list still but the open panel
+   covered the capsule underneath it.
+
+   The push is kept smooth by the timing, not by geometry - see
+   .RS_WhyAdRS_CollapseWrapper below.
+
+   Each capsule hugs its own title via --collapsed-width, set
+   inline from whyAdinnWorksBest[].collapsedWidth in the .tsx, and
+   opens out to a common 400px.
+========================================================= */
 
 .RS_WhyAdRSItem {
-  --collapsed-width: 208px;
+  --collapsed-width: 219px;
 
   position: relative;
-  display: block;
+  z-index: 9;
+  display: flex;
   width: var(--collapsed-width);
-  height: 70px;
+  align-items: flex-start;
   overflow: hidden;
-  padding: 0;
+  padding: 12px 20px;
   border: 0;
-  border-radius: 38px;
+  border-radius: 30px;
   box-sizing: border-box;
   background: #d7d7de;
   color: #000000;
   text-align: left;
   cursor: pointer;
   transform: translateZ(0);
-  transform-origin: left center;
+  will-change: width;
   backface-visibility: hidden;
 
   transition:
-    width 760ms cubic-bezier(0.22, 1, 0.36, 1),
-    height 760ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-radius 760ms
+    background 350ms ease,
+    width 800ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 800ms
       cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .RS_WhyAdRSItem:hover {
-  background: #d7d7de;
+  background: #cbcbd2;
 }
 
 .RS_WhyAdRSItem.active {
-  width: 380px;
-  height: 148px;
-  border-radius: 38px;
+  width: 400px;
+  border-radius: 30px;
   background: #d7d7de;
 }
 
-/* Capsule top row */
+/* Icon + text as one row, icon aligned to the title's first line. */
 
-.RS_WhyAdRSItemHeader {
+.RS_WhyAdRS_ItemInner {
   display: flex;
   width: 100%;
-  height: 70px;
-  align-items: center;
-
-  /* Reduced space */
-  gap: 10px;
-  padding: 0 11px;
-
-  box-sizing: border-box;
-  transform-origin: left center;
-
-  transition:
-    transform 650ms
-      cubic-bezier(0.22, 1, 0.36, 1);
+  align-items: flex-start;
+  gap: 14px;
 }
 
-.RS_WhyAdRSItem.active
-  .RS_WhyAdRSItemHeader {
-  transform: scale(1);
-}
-
-/* White circle */
+/* White circle - the plus glyph rotates 45deg into a cross */
 
 .RS_WhyAdRSContentIcon {
   display: flex;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   background: #ffffff;
-  transform: scale(1);
-  transform-origin: center;
-  backface-visibility: hidden;
-
-  transition:
-    transform 650ms
-      cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* Complete circle scales down when opened */
-
-.RS_WhyAdRSItem.active
-  .RS_WhyAdRSContentIcon {
-  transform: scale(0.9);
-}
-
-/* Plus and close mark */
-
-.RS_WhyAdRSIconMark {
-  position: relative;
-  display: block;
-  width: 22px;
-  height: 22px;
+  font-size: 21px;
   transform: rotate(0deg);
-  transform-origin: center;
-  backface-visibility: hidden;
 
   transition:
-    transform 650ms
+    transform 850ms
       cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.RS_WhyAdRSIconMark::before,
-.RS_WhyAdRSIconMark::after {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: block;
-  border-radius: 0;
-  background: #000000;
-  content: "";
-  transform: translate(-50%, -50%);
-}
-
-/* Bold, flat horizontal line */
-
-.RS_WhyAdRSIconMark::before {
-  width: 20px;
-  height: 4px;
-}
-
-/* Bold, flat vertical line */
-
-.RS_WhyAdRSIconMark::after {
-  width: 4px;
-  height: 20px;
-}
-
-.RS_WhyAdRSIconMark.is-open {
+.RS_WhyAdRSItem.active .RS_WhyAdRSContentIcon {
   transform: rotate(45deg);
 }
 
-/* Capsule title */
+/* Title + description share one column, so the description lines
+   up under the title instead of being indented by hand. */
+
+.RS_WhyAdRS_ItemText {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
 
 .RS_WhyAdRS_ItemName {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
+  padding-top: 4px;
   color: #000000;
   font-family: Outfit, sans-serif;
   font-size: 22px;
   font-weight: 500;
-  line-height: 1;
+  line-height: 100%;
+  letter-spacing: 0;
   white-space: nowrap;
-  transform-origin: left center;
-
-  transition:
-    transform 650ms
-      cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.RS_WhyAdRSItem.active
-  .RS_WhyAdRS_ItemName {
-  transform: scale(1);
-}
+/* Description mask - a 0fr -> 1fr grid row, so it reveals to its
+   natural height with no hard-coded max-height to outgrow.
 
-/* Description mask */
+   The two properties that change the capsule's height -
+   grid-template-rows and padding-top - share one duration and one
+   easing curve, and there is deliberately NO transition-delay on
+   .open. The reference build delayed the reveal by 220ms while the
+   close ran immediately, so switching capsules made the list
+   collapse first and expand after: a visible shrink-then-grow
+   bounce. On the same clock, the capsule closing and the capsule
+   opening cancel each other out and the items below them barely
+   move at all. Do not reintroduce a delay here. */
 
 .RS_WhyAdRS_CollapseWrapper {
   display: grid;
-  width: 100%;
-  min-height: 0;
   overflow: hidden;
+  padding-top: 0;
   grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-5px);
+  will-change: grid-template-rows, opacity, transform;
 
   transition:
-    grid-template-rows 760ms
+    grid-template-rows 2s
+      cubic-bezier(0.22, 1, 0.36, 1),
+    padding-top 2s
+      cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 300ms ease,
+    transform 2s
       cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.RS_WhyAdRSItem.active
-  .RS_WhyAdRS_CollapseWrapper {
+.RS_WhyAdRS_CollapseWrapper.open {
+  padding-top: 6px;
   grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .RS_WhyAdRS_ItemDesc {
-  display: block;
+  width: 280px;
+  max-width: 100%;
   min-height: 0;
   overflow: hidden;
-  padding: 0 24px 14px 65px;
-  color: #000000;
+  color: #333333;
   font-family: Outfit, sans-serif;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 400;
-  line-height: 1.3;
-  transform:
-    translateY(-12px)
-    scale(0.94);
-  transform-origin: left top;
-
-  transition:
-    transform 650ms
-      cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.RS_WhyAdRSItem.active
-  .RS_WhyAdRS_ItemDesc {
-  transform:
-    translateY(0)
-    scale(1);
-  transition-delay: 80ms;
+  line-height: 1.5;
+  transform: translateZ(0);
 }
 
 /* Vehicle mask */
 
+/* Soft veil over the vehicle - fades it into the card at the left
+   edge and along the bottom. Sits above .RS_WhyAdRS_Right (z 5) and
+   below .RS_WhyAdRS_Left (z 20). */
+.RS_WhyAdRSMain::after {
+  position: absolute;
+  z-index: 6;
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      90deg,
+      #eeedf0f2 0%,
+      #eeedf0a6 4%,
+      #eeedf000 18%
+    ),
+    linear-gradient(
+      #eeedf000 72%,
+      #eeedf08c 88%,
+      #eeedf0 100%
+    );
+}
+
 .RS_WhyAdRS_Right {
+  /* Tuning knobs for the vehicle in/out animation. */
+  --rs-img-small-scale: 0.5;
+  --rs-img-active-scale: 1.4;
+  --rs-img-enter-time: 1.45s;
+  --rs-img-exit-time: 1.25s;
+  --rs-img-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
   position: absolute;
   z-index: 5;
   inset: 0;
-  overflow: hidden;
+
+  /* The card itself clips; letting this box overflow means the
+     vehicle can travel fully off-stage without a hard edge. */
+  overflow: visible;
   pointer-events: none;
 }
 
@@ -622,10 +616,31 @@
   left: 38%;
   width: 68%;
   height: 68%;
-  visibility: hidden;
-  transform-origin: 52% 68%;
-  will-change: transform;
+
+  /* Resting pose is translate3d(0,0,0) scale(1), so top/left above
+     stay the single source of truth for where the vehicle sits -
+     including every responsive override further down this file. */
+  opacity: 0;
+  transform: translate3d(135%, 48%, 0)
+    scale(var(--rs-img-small-scale));
+  transform-origin: 50% 50%;
+  filter: blur(12px);
+  will-change: transform, opacity, filter;
   backface-visibility: hidden;
+
+  /* Feathers the vehicle's edges instead of cutting them off. */
+  -webkit-mask-image: radial-gradient(
+    86% 74% at 50% 52%,
+    #000000 0% 58%,
+    #000000b8 76%,
+    #00000000 100%
+  );
+  mask-image: radial-gradient(
+    86% 74% at 50% 52%,
+    #000000 0% 58%,
+    #000000b8 76%,
+    #00000000 100%
+  );
 }
 
 .RS_WhyAdRS_ImageLayer img {
@@ -636,6 +651,116 @@
   object-position: center;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+/* --- Vehicle in/out, direction driven -------------------------
+   The vehicle sweeps in diagonally from off-stage bottom-right (or
+   bottom-left), scaling up and un-blurring as it arrives, and
+   leaves the same way. The class is set by getWhyImageClass() in
+   HomePageSection1.tsx:
+
+     forward  (Next / clicking a later capsule)
+       outgoing -> .exit-left      incoming -> .enter-from-right
+     backward (Prev / clicking an earlier capsule)
+       outgoing -> .exit-right     incoming -> .enter-from-left
+
+   A layer with no class sits at the base opacity: 0, and `forwards`
+   fill holds the incoming vehicle at its resting pose.
+   Keep WHY_IMAGE_ANIMATION_MS in the .tsx >= --rs-img-enter-time,
+   or the outgoing layer is cleared mid-flight. */
+
+.RS_WhyAdRS_ImageLayer.enter-from-right,
+.RS_WhyAdRS_ImageLayer.enter-from-left {
+  z-index: 2;
+}
+
+.RS_WhyAdRS_ImageLayer.exit-left,
+.RS_WhyAdRS_ImageLayer.exit-right {
+  z-index: 1;
+}
+
+.RS_WhyAdRS_ImageLayer.enter-from-right {
+  animation: RS_WhyVehicleEnterFromBottomRight
+    var(--rs-img-enter-time) var(--rs-img-ease) forwards;
+}
+
+.RS_WhyAdRS_ImageLayer.enter-from-left {
+  animation: RS_WhyVehicleEnterFromBottomLeft
+    var(--rs-img-enter-time) var(--rs-img-ease) forwards;
+}
+
+.RS_WhyAdRS_ImageLayer.exit-left {
+  animation: RS_WhyVehicleExitToBottomLeft
+    var(--rs-img-exit-time) var(--rs-img-ease) forwards;
+}
+
+.RS_WhyAdRS_ImageLayer.exit-right {
+  animation: RS_WhyVehicleExitToBottomRight
+    var(--rs-img-exit-time) var(--rs-img-ease) forwards;
+}
+
+@keyframes RS_WhyVehicleEnterFromBottomRight {
+  0% {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate3d(150%, 55%, 0)
+      scale(var(--rs-img-small-scale));
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0)
+      scale(var(--rs-img-active-scale));
+  }
+}
+
+@keyframes RS_WhyVehicleEnterFromBottomLeft {
+  0% {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate3d(-150%, 55%, 0)
+      scale(var(--rs-img-small-scale));
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0)
+      scale(var(--rs-img-active-scale));
+  }
+}
+
+@keyframes RS_WhyVehicleExitToBottomLeft {
+  0% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0)
+      scale(var(--rs-img-active-scale));
+  }
+
+  to {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate3d(-150%, 55%, 0)
+      scale(var(--rs-img-small-scale));
+  }
+}
+
+@keyframes RS_WhyVehicleExitToBottomRight {
+  0% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0)
+      scale(var(--rs-img-active-scale));
+  }
+
+  to {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate3d(150%, 55%, 0)
+      scale(var(--rs-img-small-scale));
+  }
 }
 
 /* =========================================================
@@ -723,11 +848,54 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 65px;
+
+  /* Width comes from the per-client `w` (pixels) in HomePageSection1.tsx, set
+     inline — it has to differ per logo because the source PNGs carry very
+     different amounts of transparent padding. This is only the fallback for a
+     client added without one.
+
+     Absolute px, NOT a percentage of the bubble: a logo has to render at the
+     same size in every slot so it overhangs the small discs and sits inside the
+     large ones. Percentage sizing made each logo shrink along with its disc, so
+     nothing ever broke out of its circle.
+
+     --rs-orbit-f is the same breakpoint factor the discs use, so logos and
+     discs shrink together and the overhang is preserved at every screen size.
+
+     No max-height: the widths were solved so the ink lands at a consistent
+     size, and a height cap would silently scale the whole image back down and
+     undo that. */
+  /* Three independent factors, each owning one concern:
+       --rs-logo-w     per CLIENT  - cancels out that PNG's transparent padding
+                                     so every logo carries equal visual weight
+       --rs-logo-scale per SLOT    - whether this position contains its logo or
+                                     lets it break out of the disc
+       --rs-orbit-f    per SCREEN  - shrinks the whole constellation
+     Because the second is keyed to the slot rather than the brand, the
+     inside/outside rhythm of the layout stays put while "View All Clients"
+     rotates different logos through it. */
+  width: calc(
+    var(--rs-logo-w, 140px) * var(--rs-logo-scale, 0.72) *
+      var(--rs-orbit-f, 1)
+  );
+
+  /* REQUIRED for the logo to overhang its bubble at all.
+
+     Tailwind's preflight sets `img { max-width: 100% }` globally. On an
+     absolutely positioned image that 100% resolves against the containing
+     block — this bubble — so every logo was silently clamped to its own disc's
+     width no matter what `width` above asked for. A 234px logo rendered at
+     88px, which is why nothing ever broke out of its circle and why the only
+     visible size difference between logos came from how much transparent
+     padding each PNG happened to carry. */
+  max-width: none;
+
   object-fit: contain;
   pointer-events: none;
   filter: grayscale(100%);
-  opacity: 0.6;
+  /* Was 0.6 — greyed-out logos at that opacity read as washed out rather than
+     understated. Hover still lifts to full colour. */
+  opacity: 0.75;
   transform: translate(-50%, -50%);
   transition:
     filter 350ms ease,
@@ -740,6 +908,17 @@
 }
 
 
+/* WORDMARK TREATMENT
+
+   A wide, text-only logo squeezed inside a circle becomes unreadable — the disc
+   constrains the lettering to a fraction of its natural width. So for these the
+   relationship inverts: the logo is drawn LARGER than its bubble and the disc
+   fades to a soft backdrop behind it, letting the brand name carry the bubble.
+
+   overflow stays visible on .RS_ClientBubble (it is not clipped), so the extra
+   width simply spills past the circle's edge. */
+/* Legacy size flags, kept so any other caller of these classes is unaffected.
+   The clients list no longer sets them — sizing is per-client via `w`. */
 .RS_ClientBubble.RS_TextLogo .RS_ClientLogo {
   width: 130px;
   max-width: 130px;
@@ -751,74 +930,243 @@
   max-width: 130px;
 }
 
+/* Disc sizes and per-slot logo scale, measured off the design.
+
+   --rs-logo-scale decides whether the position CONTAINS its logo or lets it
+   break out. Only three of the ten break out: making every logo overhang reads
+   as broken rather than designed, and making none of them overhang is the flat,
+   "logos dumped in circles" look. The design mixes the two, so this does too.
+
+     scale 1.0    -> logo is far wider than the disc; the circle becomes a small
+                     accent behind a large wordmark (slots 0, 7, 8)
+     scale ~0.72  -> logo sits inside, or only just past, the disc
+
+   The spread is deliberately narrow (0.68-1.0, a 1.47x range). It used to run
+   0.45-1.0, i.e. 2.2x, which meant the SAME logo rendered more than twice as
+   large depending on which slot it landed in — so pressing "View All Clients"
+   made a brand like Kellogg's jump from comfortably inside to overflowing. The
+   tighter range keeps the inside/outside mix while making that shift mild
+   enough that a logo still reads as the same size wherever it lands.
+
+   Slots 0 and 7 are the smallest discs (88px) AND overhang, which is what makes
+   them the loudest positions on the board — that pairing is exactly what the
+   design does with PHILIPS and Thangamayil.
+
+   Every size is multiplied by --rs-orbit-f, which defaults to 1 on desktop and
+   is stepped down per breakpoint further below. Declaring the factor here means
+   the sizes exist in exactly ONE place: an earlier version restated all ten
+   rules inside `@media (max-width: 1280px)`, so every change made up here was
+   silently discarded on any screen narrower than that. */
 .RS_Bubble_0 {
   top: 15%;
   left: 15%;
-  width: 80px;
-  height: 80px;
+  width: calc(88px * var(--rs-orbit-f, 1));
+  height: calc(88px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 1;
 }
 
 .RS_Bubble_1 {
   top: -33%;
   left: 41%;
-  width: 120px;
-  height: 120px;
+  width: calc(122px * var(--rs-orbit-f, 1));
+  height: calc(122px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.73;
 }
 
 .RS_Bubble_2 {
   top: -36%;
   left: 58%;
-  width: 120px;
-  height: 120px;
+  width: calc(118px * var(--rs-orbit-f, 1));
+  height: calc(118px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.72;
 }
 
 .RS_Bubble_3 {
   top: 40%;
   left: 27%;
-  width: 100px;
-  height: 100px;
+  width: calc(104px * var(--rs-orbit-f, 1));
+  height: calc(104px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.68;
 }
 
 .RS_Bubble_4 {
   top: 9%;
   left: 34%;
-  width: 125px;
-  height: 125px;
+  width: calc(120px * var(--rs-orbit-f, 1));
+  height: calc(120px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.72;
 }
 
 .RS_Bubble_5 {
   top: -18%;
   left: 72%;
-  width: 130px;
-  height: 130px;
+  width: calc(118px * var(--rs-orbit-f, 1));
+  height: calc(118px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.72;
 }
 
 .RS_Bubble_6 {
   top: 20%;
   left: 64%;
-  width: 120px;
-  height: 120px;
+  width: calc(100px * var(--rs-orbit-f, 1));
+  height: calc(100px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.73;
 }
 
 .RS_Bubble_7 {
   top: 34%;
   left: 78%;
-  width: 85px;
-  height: 85px;
+  width: calc(110px * var(--rs-orbit-f, 1));
+  height: calc(110px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 1;
 }
 
 .RS_Bubble_8 {
   top: -12%;
   left: 24%;
-  width: 100px;
-  height: 100px;
+  width: calc(100px * var(--rs-orbit-f, 1));
+  height: calc(100px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.91;
 }
 
 .RS_Bubble_9 {
   top: -5%;
   left: 84%;
-  width: 125px;
-  height: 125px;
+  width: calc(118px * var(--rs-orbit-f, 1));
+  height: calc(118px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.71;
+}
+
+/* Slots 10-14 fill the dead corners of the orbit — far left, bottom left, top
+   left, and the two gaps on the right — which were leaving the constellation
+   looking sparse and unfinished.
+
+   FIFTEEN and not sixteen: the pool is 27 brands, so 15 slots means a press of
+   "View All Clients" shows 15 fresh logos and the second press shows the
+   remaining 12 plus exactly 3 repeats to fill the board. Sixteen slots would
+   need 5 repeats, thirteen would need 12. Slot count and pool size have to be
+   chosen together or the last page turns into mostly duplicates. */
+.RS_Bubble_10 {
+  top: -25%;
+  left: 9%;
+  width: calc(118px * var(--rs-orbit-f, 1));
+  height: calc(118px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.72;
+}
+
+.RS_Bubble_11 {
+  top: 24%;
+  left: 2%;
+  width: calc(104px * var(--rs-orbit-f, 1));
+  height: calc(104px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.68;
+}
+
+.RS_Bubble_12 {
+  top: 47%;
+  left: 14%;
+  width: calc(126px * var(--rs-orbit-f, 1));
+  height: calc(126px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.95;
+}
+
+.RS_Bubble_13 {
+  top: -40%;
+  left: 88%;
+  width: calc(122px * var(--rs-orbit-f, 1));
+  height: calc(122px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.73;
+}
+
+.RS_Bubble_14 {
+  top: 36%;
+  left: 90%;
+  width: calc(108px * var(--rs-orbit-f, 1));
+  height: calc(108px * var(--rs-orbit-f, 1));
+  --rs-logo-scale: 0.7;
+}
+
+/* ---------------------------------------------------------------
+   IDLE DRIFT
+   A slow vertical bob so the constellation is never completely still.
+
+   This animates the independent `translate` property, NOT `transform`.
+   GSAP owns `transform` on these elements (the scroll reveal and the pop on
+   every "View All Clients" press both write inline transforms), and a CSS
+   animation on the same property would be overridden mid-reveal and then fight
+   the tween. `translate` is a separate property that the browser composes with
+   `transform`, so the two coexist: GSAP can pop a bubble while it keeps
+   drifting.
+
+   Each slot gets its own duration and a negative delay, which starts it
+   part-way through the cycle. Without that offset all fifteen would rise and
+   fall in lockstep and read as the whole section wobbling.
+   --------------------------------------------------------------- */
+@keyframes RS_ClientBubbleFloat {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -11px;
+  }
+}
+
+.RS_ClientBubble {
+  animation: RS_ClientBubbleFloat
+    var(--rs-float-dur, 6s) ease-in-out
+    var(--rs-float-delay, 0s) infinite;
+}
+
+/* Pausing on hover stops the logo sliding out from under the cursor. */
+.RS_ClientsOrbitArea:hover .RS_ClientBubble {
+  animation-play-state: paused;
+}
+
+.RS_Bubble_0  { --rs-float-dur: 7.5s;  --rs-float-delay: -0.4s; }
+.RS_Bubble_1  { --rs-float-dur: 9s;    --rs-float-delay: -2.6s; }
+.RS_Bubble_2  { --rs-float-dur: 6.8s;  --rs-float-delay: -1.2s; }
+.RS_Bubble_3  { --rs-float-dur: 8.4s;  --rs-float-delay: -3.9s; }
+.RS_Bubble_4  { --rs-float-dur: 7.1s;  --rs-float-delay: -0.9s; }
+.RS_Bubble_5  { --rs-float-dur: 9.6s;  --rs-float-delay: -4.7s; }
+.RS_Bubble_6  { --rs-float-dur: 6.4s;  --rs-float-delay: -2.1s; }
+.RS_Bubble_7  { --rs-float-dur: 8.8s;  --rs-float-delay: -5.3s; }
+.RS_Bubble_8  { --rs-float-dur: 7.8s;  --rs-float-delay: -1.7s; }
+.RS_Bubble_9  { --rs-float-dur: 9.2s;  --rs-float-delay: -3.1s; }
+.RS_Bubble_10 { --rs-float-dur: 6.6s;  --rs-float-delay: -4.2s; }
+.RS_Bubble_11 { --rs-float-dur: 8.1s;  --rs-float-delay: -0.6s; }
+.RS_Bubble_12 { --rs-float-dur: 9.9s;  --rs-float-delay: -5.8s; }
+.RS_Bubble_13 { --rs-float-dur: 7.3s;  --rs-float-delay: -2.9s; }
+.RS_Bubble_14 { --rs-float-dur: 8.6s;  --rs-float-delay: -1.4s; }
+
+/* The centre bubble drifts too, but slower and shorter — it is the anchor, so
+   it should feel heavier than the logos orbiting it. */
+/* Offset only — no -50% here. The element is centred by its existing
+   `transform: translate(-50%, -50%)`, and the browser applies the independent
+   `translate` property IN ADDITION to `transform`, so repeating the -50% would
+   shift the bubble a further half of its own size up and to the left. */
+@keyframes RS_ClientCentreFloat {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -7px;
+  }
+}
+
+.RS_ClientCenterBubble {
+  animation: RS_ClientCentreFloat 11s ease-in-out
+    infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .RS_ClientBubble,
+  .RS_ClientCenterBubble {
+    animation: none;
+  }
 }
 
 .RS_ClientsBtnRow {
@@ -841,21 +1189,420 @@
 
 /* =========================================================
    RESPONSIVE
+   Everything above this line is the large-desktop (1440px+)
+   design and is intentionally left untouched.
+
+   A) STRUCTURAL  - layout/flow rules that must hold for every
+                    screen below a given width (written once).
+   B) PER-SCREEN  - font-size / size / spacing tuning, one block
+                    per device range.
+   C) MOTION      - reduced-motion accessibility.
 ========================================================= */
 
-@media (max-width: 1280px) {
-  .RS_WhyAdRSMain {
-    width: calc(100% - 48px);
-  }
-}
+/* ---------------------------------------------------------
+   A) STRUCTURAL
+--------------------------------------------------------- */
 
-@media (max-width: 1024px) {
+/* --- Vehicle carousel card width ---
+   These MUST stay in sync with visibleVehicleCount in
+   HomePageSection1.tsx (<640 = 1, <768 = 2, <1024 = 3,
+   else 4), because the track is translated by
+   100 / visibleVehicleCount percent. The previous rule used
+   max-width: 1024px while the JS switches below 1024, so at
+   exactly 1024px the cards and the translation disagreed. */
+@media (min-width: 768px) and (max-width: 1023px) {
   .RS_VehicleCardFlex {
     flex: 0 0 calc((100% - 40px) / 3);
   }
 }
 
+@media (min-width: 640px) and (max-width: 767px) {
+  .RS_VehicleCardFlex {
+    flex: 0 0 calc((100% - 20px) / 2);
+  }
+}
+
+@media (max-width: 639px) {
+  .RS_VehicleCardFlex {
+    flex: 0 0 100%;
+  }
+}
+
+/* --- Why Adinn: capsules go full width once the panel is no
+   longer a fixed 405px column beside the vehicle. --- */
 @media (max-width: 1023px) {
+  .RS_WhyAdRSList {
+    width: 100%;
+  }
+
+  .RS_WhyAdRSItem,
+  .RS_WhyAdRSItem.active {
+    width: 100%;
+  }
+
+  /* Base pins the description to 280px to match the 320px capsule;
+     once the capsule is full width, let it fill too. */
+  .RS_WhyAdRS_ItemDesc {
+    width: 100%;
+  }
+}
+
+/* --- Clients orbit: scale the whole constellation down with a
+   single factor instead of re-writing 10 bubble rules per
+   breakpoint. --rs-orbit-f is set per screen in section B.
+   The bubbles keep their % positions, so the orbit layout and
+   the RS_InsetGlowBottom animation are preserved exactly. --- */
+@media (max-width: 1280px) {
+  .RS_ClientsOrbitArea {
+    height: calc(380px * var(--rs-orbit-f, 1));
+  }
+
+  .RS_ClientCenterBubble {
+    width: calc(180px * var(--rs-orbit-f, 1));
+    height: calc(180px * var(--rs-orbit-f, 1));
+    border-width: calc(10px * var(--rs-orbit-f, 1));
+    font-size: calc(40px * var(--rs-orbit-f, 1));
+  }
+
+  /* The .RS_ClientLogo and .RS_Bubble_* sizes that used to be restated here
+     have been removed. They duplicated the base rules with STALE numbers, so
+     every size change made in the base block was silently thrown away on any
+     screen 1280px or narrower. Both now apply --rs-orbit-f in their own base
+     rule, which scales them across breakpoints without a second copy. */
+}
+
+/* --- Phones: stack the Offers heading above the marquee strip
+   and centre the carousel arrows. --- */
+@media (max-width: 767px) {
+  .OffersSection {
+    flex-direction: column;
+  }
+
+  .OffersHeadingMain {
+    justify-content: flex-start;
+  }
+
+  .RS_CarouselNavRow {
+    float: none;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  /* Touch has no hover: keep the pill highlight reachable via
+     :active so the transition still plays on a tap. */
+  .OffersPill:active {
+    border-color: #ffffff;
+    background: linear-gradient(98.03deg, #c71a38 6.31%, #700a1c 92.14%);
+    transform: scale(1.06);
+  }
+}
+
+/* ---------------------------------------------------------
+   B) PER-SCREEN TUNING
+--------------------------------------------------------- */
+
+/* Extra Large Screens (2560px and above) - 4K Screens */
+@media (min-width: 2560px) {
+  .OffersHeading {
+    font-size: 88px;
+  }
+
+  .OffersHeadingMain {
+    padding: 28px 120px;
+  }
+
+  .OffersBadgeContent {
+    font-size: 52px;
+  }
+
+  .OffersPill {
+    width: 240px;
+    padding: 8px 0;
+  }
+
+  .OffersPillIcon {
+    height: 66px;
+  }
+
+  .OffersPillName {
+    font-size: 28px;
+  }
+
+  .OffersMarquee {
+    gap: 40px;
+  }
+
+  .RS_OurRdwHeadingContent1 {
+    font-size: 80px;
+  }
+
+  .RS_VehicleImg {
+    height: 440px;
+  }
+
+  .RS_VehicleName {
+    font-size: 32px;
+  }
+
+  .RS_VehicleRate {
+    font-size: 29px;
+  }
+
+  .RS_VehicleRatingValue {
+    font-size: 22px;
+  }
+
+  .RS_VehicleRatingImg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .RS_VehicleButton {
+    padding: 18px 38px;
+    font-size: 22px;
+  }
+
+  .RS_CarouselBtn {
+    width: 54px;
+    height: 54px;
+    font-size: 30px;
+  }
+
+  .RS_ClientsOrbitArea {
+    height: 460px;
+  }
+
+  .RS_ClientCenterBubble {
+    width: 220px;
+    height: 220px;
+    font-size: 48px;
+  }
+
+  .RS_ViewAllClientsBtn {
+    padding: 34px 42px;
+    font-size: 34px;
+  }
+}
+
+/* Large Screens (1440px - 2559px) - Large Desktop 1440
+   This is the reference design: base rules apply as-is. */
+@media (min-width: 1440px) and (max-width: 2559px) {
+  /* intentionally empty - base styles are the design */
+}
+
+/* Small Desktops (1281px - 1439px)
+   NOTE: this range is not in the original template, which
+   jumped 1280 -> 1440 and left these screens on raw desktop
+   values. Added to close that gap. */
+@media (min-width: 1281px) and (max-width: 1439px) {
+  .OffersHeading {
+    font-size: 58px;
+  }
+
+  .OffersHeadingMain {
+    padding: 20px 60px;
+  }
+
+  .OffersPill {
+    width: 165px;
+  }
+
+  .OffersPillIcon {
+    height: 46px;
+  }
+
+  .OffersPillName {
+    font-size: 20px;
+  }
+
+  .RS_OurRdwHeadingContent1 {
+    font-size: 54px;
+  }
+
+  .RS_VehicleImg {
+    height: 300px;
+  }
+
+  .RS_VehicleName {
+    font-size: 24px;
+  }
+
+  .RS_VehicleRate {
+    font-size: 22px;
+  }
+
+  .RS_VehicleButton {
+    padding: 13px 26px;
+    font-size: 17px;
+  }
+
+  /* The left panel is a fixed 405px column; pull it in a bit so
+     the vehicle image keeps its breathing room. */
+  .RS_WhyAdRS_Left {
+    left: 64px;
+  }
+
+  .RS_ViewAllClientsBtn {
+    padding: 26px 32px;
+    font-size: 25px;
+  }
+}
+
+/* Laptops (1024px - 1280px) */
+@media (min-width: 1024px) and (max-width: 1280px) {
+  .RS_ClientsSection {
+    --rs-orbit-f: 0.9;
+  }
+
+  .RS_OurRdwMainSection {
+    padding-right: 48px;
+    padding-left: 48px;
+  }
+
+  .RS_WhyAdRSSectionWrap,
+  .RS_ClientsSectionWrap {
+    padding-right: 48px;
+    padding-left: 48px;
+  }
+
+  .OffersHeading {
+    font-size: 50px;
+  }
+
+  .OffersHeadingMain {
+    padding: 20px 40px;
+  }
+
+  .OffersBadgeContent {
+    font-size: 32px;
+  }
+
+  .OffersPill {
+    width: 150px;
+  }
+
+  .OffersPillIcon {
+    height: 44px;
+  }
+
+  .OffersPillName {
+    font-size: 18px;
+  }
+
+  .RS_OurRdwHeadingContent1 {
+    font-size: 46px;
+  }
+
+  .RS_VehicleImg {
+    height: 250px;
+  }
+
+  .RS_VehicleName {
+    font-size: 21px;
+  }
+
+  .RS_VehicleRate {
+    font-size: 19px;
+  }
+
+  .RS_VehicleRatingValue {
+    font-size: 16px;
+  }
+
+  .RS_VehicleRatingImg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .RS_VehicleButton {
+    padding: 12px 22px;
+    font-size: 16px;
+  }
+
+  .RS_CarouselBtn {
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+  }
+
+  .RS_WhyAdRSMain {
+    width: calc(100% - 48px);
+  }
+
+  .RS_WhyAdRS_Left {
+    left: 64px;
+  }
+
+  .RS_ViewAllClientsBtn {
+    padding: 22px 28px;
+    font-size: 22px;
+  }
+}
+
+/* Laptops & Small Desktops (992px - 1023px) - Tablets (Landscape) */
+@media (min-width: 992px) and (max-width: 1023px) {
+  .RS_ClientsSection {
+    --rs-orbit-f: 0.8;
+  }
+
+  .RS_OurRdwMainSection,
+  .RS_WhyAdRSSectionWrap,
+  .RS_ClientsSectionWrap {
+    padding-right: 40px;
+    padding-left: 40px;
+  }
+
+  .OffersHeading {
+    font-size: 44px;
+  }
+
+  .OffersHeadingMain {
+    padding: 20px 32px;
+  }
+
+  .OffersBadgeContent {
+    font-size: 28px;
+  }
+
+  .OffersPill {
+    width: 140px;
+  }
+
+  .OffersPillIcon {
+    height: 42px;
+  }
+
+  .OffersPillName {
+    font-size: 17px;
+  }
+
+  .RS_OurRdwHeadingContent1 {
+    font-size: 42px;
+  }
+
+  .RS_VehicleImg {
+    height: 250px;
+  }
+
+  .RS_VehicleName {
+    font-size: 22px;
+  }
+
+  .RS_VehicleRate {
+    font-size: 20px;
+  }
+
+  .RS_VehicleButton {
+    padding: 12px 22px;
+    font-size: 16px;
+  }
+
+  .RS_CarouselBtn {
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+  }
+
   .RS_WhyAdRSMain {
     width: calc(100% - 40px);
     height: 900px;
@@ -874,11 +1621,24 @@
     width: 86%;
     height: 45%;
   }
+
+  .RS_ViewAllClientsBtn {
+    padding: 20px 26px;
+    font-size: 20px;
+  }
 }
 
-@media (max-width: 768px) {
-  .RS_VehicleCardFlex {
-    flex: 0 0 calc((100% - 20px) / 2);
+/* Tablets (768px - 991px) - Tablets (Portrait) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .RS_ClientsSection {
+    --rs-orbit-f: 0.65;
+  }
+
+  .RS_OurRdwMainSection,
+  .RS_WhyAdRSSectionWrap,
+  .RS_ClientsSectionWrap {
+    padding-right: 30px;
+    padding-left: 30px;
   }
 
   .OffersHeading {
@@ -889,18 +1649,201 @@
     padding: 20px 30px;
   }
 
+  .OffersBadgeContent {
+    font-size: 26px;
+  }
+
+  .OffersStrip {
+    padding: 14px 20px;
+  }
+
+  .OffersPill {
+    width: 130px;
+  }
+
+  .OffersPillIcon {
+    height: 38px;
+  }
+
   .OffersPillName {
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .OffersMarquee {
+    gap: 20px;
     animation-duration: 14s;
+  }
+
+  .RS_OurRdwHeadingContent1 {
+    font-size: 38px;
+  }
+
+  .RS_VehicleImg {
+    height: 220px;
+  }
+
+  .RS_VehicleName {
+    font-size: 20px;
+  }
+
+  .RS_VehicleRate {
+    font-size: 18px;
+  }
+
+  .RS_VehicleRatingValue {
+    font-size: 16px;
+  }
+
+  .RS_VehicleRatingImg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .RS_VehicleButton {
+    padding: 11px 20px;
+    font-size: 15px;
+  }
+
+  .RS_CarouselBtn {
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+  }
+
+  .RS_CarouselNavRow {
+    gap: 22px;
+  }
+
+  .RS_WhyAdRSMain {
+    width: calc(100% - 32px);
+    height: 860px;
+    border-radius: 44px;
+  }
+
+  .RS_WhyAdRS_Left {
+    top: 48px;
+    left: 36px;
+    width: calc(100% - 72px);
+  }
+
+  .RS_WhyAdRS_ItemName {
+    font-size: 20px;
+  }
+
+  .RS_WhyAdRS_ItemDesc {
+    font-size: 16px;
+  }
+
+  .RS_WhyAdRS_ImageLayer {
+    top: 53%;
+    left: 6%;
+    width: 90%;
+    height: 42%;
+  }
+
+  .RS_ViewAllClientsBtn {
+    padding: 18px 24px;
+    font-size: 19px;
   }
 }
 
-@media (max-width: 640px) {
-  .RS_VehicleCardFlex {
-    flex: 0 0 100%;
+/* Mobile Large (480px - 767px) - Small Tablets & Large Phones */
+@media (min-width: 480px) and (max-width: 767px) {
+  .RS_ClientsSection {
+    --rs-orbit-f: 0.5;
+  }
+
+  .RS_OurRdwMainSection,
+  .RS_WhyAdRSSectionWrap,
+  .RS_ClientsSectionWrap {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .RS_OurRdwHeading {
+    padding: 8% 0;
+  }
+
+  .OffersSection {
+    padding-top: 30px;
+  }
+
+  .OffersHeading {
+    font-size: 34px;
+  }
+
+  .OffersHeadingMain {
+    padding: 16px 20px;
+  }
+
+  .OffersBadgeContent {
+    font-size: 22px;
+  }
+
+  .OffersHeadImgContainer svg {
+    width: 54px;
+    height: 54px;
+  }
+
+  .OffersStrip {
+    padding: 14px 16px;
+  }
+
+  .OffersPill {
+    width: 120px;
+  }
+
+  .OffersPillIcon {
+    height: 34px;
+  }
+
+  .OffersPillName {
+    font-size: 14px;
+  }
+
+  .OffersMarquee {
+    gap: 18px;
+    animation-duration: 16s;
+  }
+
+  .RS_OurRdwHeadingContent1 {
+    font-size: 32px;
+  }
+
+  .RS_VehicleImg {
+    height: 200px;
+  }
+
+  .RS_VehicleName {
+    font-size: 19px;
+  }
+
+  .RS_VehicleRate {
+    font-size: 17px;
+  }
+
+  .RS_VehicleRatingValue {
+    font-size: 15px;
+  }
+
+  .RS_VehicleRatingImg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .RS_VehicleButton {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  .RS_CarouselBtn {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .RS_CarouselNavRow {
+    gap: 20px;
   }
 
   .RS_WhyAdRSMain {
@@ -916,34 +1859,27 @@
   }
 
   .RS_WhyAdRSList {
-    width: 100%;
-    gap: 14px;
+    gap: 24px;
+  }
+
+  .RS_WhyAdRSItem {
+    padding: 11px 18px;
+  }
+
+  .RS_WhyAdRS_ItemInner {
+    gap: 13px;
   }
 
   .RS_WhyAdRSItem,
   .RS_WhyAdRSItem.active {
-    width: 100%;
-  }
-
-  .RS_WhyAdRSItem {
-    height: 64px;
-    border-radius: 32px;
-  }
-
-  .RS_WhyAdRSItem.active {
-    height: 138px;
-  }
-
-  .RS_WhyAdRSItemHeader {
-    height: 64px;
-    gap: 10px;
-    padding: 0 10px;
+    border-radius: 28px;
   }
 
   .RS_WhyAdRSContentIcon {
-    width: 42px;
-    height: 42px;
-    flex-basis: 42px;
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    font-size: 20px;
   }
 
   .RS_WhyAdRS_ItemName {
@@ -951,7 +1887,6 @@
   }
 
   .RS_WhyAdRS_ItemDesc {
-    padding: 0 16px 14px 62px;
     font-size: 15px;
   }
 
@@ -961,16 +1896,657 @@
     width: 100%;
     height: 38%;
   }
+
+  .RS_ViewAllClientsBtn {
+    padding: 16px 22px;
+    font-size: 17px;
+  }
 }
 
+/* Mobile Medium (425px - 479px) - iPhone XR, Galaxy S20 */
+@media (min-width: 425px) and (max-width: 479px) {
+  .RS_ClientsSection {
+    --rs-orbit-f: 0.45;
+  }
+
+  .RS_OurRdwMainSection,
+  .RS_WhyAdRSSectionWrap,
+  .RS_ClientsSectionWrap {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .RS_OurRdwHeading {
+    padding: 9% 0;
+  }
+
+  .OffersSection {
+    padding-top: 28px;
+  }
+
+  .OffersHeading {
+    font-size: 30px;
+  }
+
+  .OffersHeadingMain {
+    padding: 14px 18px;
+  }
+
+  .OffersBadgeContent {
+    font-size: 20px;
+  }
+
+  .OffersHeadImgContainer svg {
+    width: 50px;
+    height: 50px;
+  }
+
+  .OffersStrip {
+    padding: 12px 14px;
+  }
+
+  .OffersPill {
+    width: 110px;
+  }
+
+  .OffersPillIcon {
+    height: 32px;
+  }
+
+  .OffersPillName {
+    font-size: 13px;
+  }
+
+  .OffersMarquee {
+    gap: 16px;
+    animation-duration: 17s;
+  }
+
+  .RS_OurRdwHeadingContent1 {
+    font-size: 29px;
+  }
+
+  .RS_VehicleImg {
+    height: 190px;
+  }
+
+  .RS_VehicleName {
+    font-size: 18px;
+  }
+
+  .RS_VehicleRate {
+    font-size: 16px;
+  }
+
+  .RS_VehicleRatingImg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .RS_VehicleButton {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  .RS_CarouselBtn {
+    width: 35px;
+    height: 35px;
+    font-size: 18px;
+  }
+
+  .RS_WhyAdRSMain {
+    width: calc(100% - 20px);
+    height: 800px;
+    border-radius: 34px;
+  }
+
+  .RS_WhyAdRS_Left {
+    top: 30px;
+    left: 18px;
+    width: calc(100% - 36px);
+  }
+
+  .RS_WhyAdRSList {
+    gap: 22px;
+  }
+
+  .RS_WhyAdRSItem {
+    padding: 10px 16px;
+  }
+
+  .RS_WhyAdRS_ItemInner {
+    gap: 12px;
+  }
+
+  .RS_WhyAdRSItem,
+  .RS_WhyAdRSItem.active {
+    border-radius: 26px;
+  }
+
+  .RS_WhyAdRSContentIcon {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    font-size: 19px;
+  }
+
+  .RS_WhyAdRS_ItemName {
+    font-size: 18px;
+  }
+
+  .RS_WhyAdRS_ItemDesc {
+    font-size: 14.5px;
+  }
+
+  .RS_WhyAdRS_ImageLayer {
+    top: 56%;
+    left: 1%;
+    width: 100%;
+    height: 37%;
+  }
+
+  .RS_ViewAllClientsBtn {
+    padding: 15px 20px;
+    font-size: 16px;
+  }
+}
+
+/* Mobile Small (375px - 424px) - iPhone SE, Pixel 4 */
+@media (min-width: 375px) and (max-width: 424px) {
+  .RS_ClientsSection {
+    --rs-orbit-f: 0.4;
+  }
+
+  .RS_OurRdwMainSection,
+  .RS_WhyAdRSSectionWrap,
+  .RS_ClientsSectionWrap {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .RS_OurRdwHeading {
+    padding: 9% 0;
+  }
+
+  .OffersSection {
+    padding-top: 26px;
+  }
+
+  .OffersHeading {
+    font-size: 27px;
+  }
+
+  .OffersHeadingMain {
+    padding: 14px 16px;
+  }
+
+  .OffersBadgeContent {
+    font-size: 18px;
+  }
+
+  .OffersHeadImgContainer svg {
+    width: 46px;
+    height: 46px;
+  }
+
+  .OffersStrip {
+    padding: 12px 12px;
+  }
+
+  .OffersPill {
+    width: 104px;
+  }
+
+  .OffersPillIcon {
+    height: 30px;
+  }
+
+  .OffersPillName {
+    font-size: 12.5px;
+  }
+
+  .OffersMarquee {
+    gap: 15px;
+    animation-duration: 18s;
+  }
+
+  .RS_OurRdwHeadingContent1 {
+    font-size: 26px;
+  }
+
+  .RS_VehicleImg {
+    height: 175px;
+  }
+
+  .RS_VehicleName {
+    font-size: 17px;
+  }
+
+  .RS_VehicleRate {
+    font-size: 15px;
+  }
+
+  .RS_VehicleRatingValue {
+    font-size: 14px;
+  }
+
+  .RS_VehicleRatingImg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .RS_VehicleButton {
+    padding: 9px 16px;
+    font-size: 13.5px;
+  }
+
+  .RS_CarouselBtn {
+    width: 34px;
+    height: 34px;
+    font-size: 17px;
+  }
+
+  .RS_CarouselNavRow {
+    gap: 18px;
+    padding: 8px;
+  }
+
+  .RS_WhyAdRSMain {
+    width: calc(100% - 18px);
+    height: 780px;
+    border-radius: 32px;
+  }
+
+  .RS_WhyAdRS_Left {
+    top: 28px;
+    left: 16px;
+    width: calc(100% - 32px);
+  }
+
+  .RS_WhyAdRSList {
+    gap: 20px;
+  }
+
+  .RS_WhyAdRSItem {
+    padding: 10px 15px;
+  }
+
+  .RS_WhyAdRS_ItemInner {
+    gap: 11px;
+  }
+
+  .RS_WhyAdRSItem,
+  .RS_WhyAdRSItem.active {
+    border-radius: 25px;
+  }
+
+  .RS_WhyAdRSContentIcon {
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    font-size: 18px;
+  }
+
+  .RS_WhyAdRS_ItemName {
+    font-size: 17px;
+  }
+
+  .RS_WhyAdRS_ItemDesc {
+    font-size: 14px;
+  }
+
+  .RS_WhyAdRS_ImageLayer {
+    top: 56%;
+    left: 0;
+    width: 100%;
+    height: 36%;
+  }
+
+  .RS_ViewAllClientsBtn {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+}
+
+/* Extra Small (360px - 374px) */
+@media (min-width: 360px) and (max-width: 374px) {
+  .RS_ClientsSection {
+    --rs-orbit-f: 0.38;
+  }
+
+  .RS_OurRdwMainSection,
+  .RS_WhyAdRSSectionWrap,
+  .RS_ClientsSectionWrap {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .RS_OurRdwHeading {
+    padding: 10% 0;
+  }
+
+  .OffersSection {
+    padding-top: 24px;
+  }
+
+  .OffersHeading {
+    font-size: 25px;
+  }
+
+  .OffersHeadingMain {
+    padding: 12px 14px;
+  }
+
+  .OffersBadgeContent {
+    font-size: 17px;
+  }
+
+  .OffersHeadImgContainer svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  .OffersStrip {
+    padding: 12px 10px;
+  }
+
+  .OffersPill {
+    width: 98px;
+  }
+
+  .OffersPillIcon {
+    height: 28px;
+  }
+
+  .OffersPillName {
+    font-size: 12px;
+  }
+
+  .OffersMarquee {
+    gap: 14px;
+    animation-duration: 18s;
+  }
+
+  .RS_OurRdwHeadingContent1 {
+    font-size: 24px;
+  }
+
+  .RS_VehicleImg {
+    height: 165px;
+  }
+
+  .RS_VehicleName {
+    font-size: 16px;
+  }
+
+  .RS_VehicleRate {
+    font-size: 14px;
+  }
+
+  .RS_VehicleRatingValue {
+    font-size: 14px;
+  }
+
+  .RS_VehicleRatingImg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .RS_VehicleButton {
+    padding: 9px 16px;
+    font-size: 13px;
+  }
+
+  .RS_CarouselBtn {
+    width: 33px;
+    height: 33px;
+    font-size: 16px;
+  }
+
+  .RS_CarouselNavRow {
+    gap: 16px;
+    padding: 8px;
+  }
+
+  .RS_WhyAdRSMain {
+    width: calc(100% - 16px);
+    height: 765px;
+    border-radius: 30px;
+  }
+
+  .RS_WhyAdRS_Left {
+    top: 26px;
+    left: 15px;
+    width: calc(100% - 30px);
+  }
+
+  .RS_WhyAdRSList {
+    gap: 18px;
+  }
+
+  .RS_WhyAdRSItem {
+    padding: 9px 14px;
+  }
+
+  .RS_WhyAdRS_ItemInner {
+    gap: 10px;
+  }
+
+  .RS_WhyAdRSItem,
+  .RS_WhyAdRSItem.active {
+    border-radius: 24px;
+  }
+
+  .RS_WhyAdRSContentIcon {
+    width: 29px;
+    min-width: 29px;
+    height: 29px;
+    font-size: 17px;
+  }
+
+  .RS_WhyAdRS_ItemName {
+    font-size: 16px;
+  }
+
+  .RS_WhyAdRS_ItemDesc {
+    font-size: 13.5px;
+  }
+
+  .RS_WhyAdRS_ImageLayer {
+    top: 57%;
+    left: 0;
+    width: 100%;
+    height: 35%;
+  }
+
+  .RS_ViewAllClientsBtn {
+    padding: 13px 18px;
+    font-size: 14.5px;
+  }
+}
+
+/* Extra Small (320px - 359px) */
+@media (min-width: 320px) and (max-width: 359px) {
+  .RS_ClientsSection {
+    --rs-orbit-f: 0.34;
+  }
+
+  .RS_OurRdwMainSection,
+  .RS_WhyAdRSSectionWrap,
+  .RS_ClientsSectionWrap {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .RS_OurRdwHeading {
+    padding: 10% 0;
+  }
+
+  .OffersSection {
+    padding-top: 22px;
+  }
+
+  .OffersHeading {
+    font-size: 22px;
+  }
+
+  .OffersHeadingMain {
+    padding: 12px 12px;
+    gap: 10px;
+  }
+
+  .OffersBadgeContent {
+    font-size: 15px;
+  }
+
+  .OffersHeadImgContainer svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .OffersStrip {
+    padding: 10px 8px;
+  }
+
+  .OffersPill {
+    width: 88px;
+  }
+
+  .OffersPillIcon {
+    height: 26px;
+  }
+
+  .OffersPillName {
+    font-size: 11px;
+  }
+
+  .OffersMarquee {
+    gap: 12px;
+    animation-duration: 19s;
+  }
+
+  .RS_OurRdwHeadingContent1 {
+    font-size: 22px;
+  }
+
+  .RS_VehicleImg {
+    height: 150px;
+  }
+
+  .RS_VehicleName {
+    font-size: 15px;
+  }
+
+  .RS_VehicleRate {
+    font-size: 13.5px;
+  }
+
+  .RS_VehicleRatingValue {
+    font-size: 13px;
+  }
+
+  .RS_VehicleRatingImg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .RS_VehicleDetailsMain {
+    padding: 12px;
+  }
+
+  .RS_VehicleButton {
+    padding: 8px 15px;
+    font-size: 12.5px;
+  }
+
+  .RS_CarouselBtn {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .RS_CarouselNavRow {
+    gap: 14px;
+    padding: 7px;
+  }
+
+  .RS_WhyAdRSMain {
+    width: calc(100% - 14px);
+    height: 740px;
+    border-radius: 28px;
+  }
+
+  .RS_WhyAdRS_Left {
+    top: 24px;
+    left: 13px;
+    width: calc(100% - 26px);
+  }
+
+  .RS_WhyAdRSList {
+    gap: 16px;
+  }
+
+  .RS_WhyAdRSItem {
+    padding: 9px 13px;
+  }
+
+  .RS_WhyAdRS_ItemInner {
+    gap: 10px;
+  }
+
+  .RS_WhyAdRSItem,
+  .RS_WhyAdRSItem.active {
+    border-radius: 23px;
+  }
+
+  .RS_WhyAdRSContentIcon {
+    width: 27px;
+    min-width: 27px;
+    height: 27px;
+    font-size: 16px;
+  }
+
+  .RS_WhyAdRS_ItemName {
+    font-size: 15px;
+  }
+
+  .RS_WhyAdRS_ItemDesc {
+    font-size: 13px;
+  }
+
+  .RS_WhyAdRS_ImageLayer {
+    top: 58%;
+    left: 0;
+    width: 100%;
+    height: 34%;
+  }
+
+  .RS_ViewAllClientsBtn {
+    padding: 12px 18px;
+    font-size: 13.5px;
+  }
+}
+
+/* ---------------------------------------------------------
+   C) MOTION ACCESSIBILITY
+   The marquee, badge spin, vehicle in/out, capsule expand and
+   client glow all stay active on every screen size, including
+   phones. They are only disabled here.
+--------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .RS_WhyAdRSItem,
-  .RS_WhyAdRSItemHeader,
   .RS_WhyAdRSContentIcon,
-  .RS_WhyAdRSIconMark,
-  .RS_WhyAdRS_ItemName,
-  .RS_WhyAdRS_CollapseWrapper,
-  .RS_WhyAdRS_ItemDesc {
+  .RS_WhyAdRS_CollapseWrapper {
     transition: none;
+  }
+
+  /* The vehicle in/out used to check prefers-reduced-motion in JS
+     via GSAP; now that it is pure CSS it is handled here. */
+  .RS_WhyAdRS_ImageLayer.enter-from-right,
+  .RS_WhyAdRS_ImageLayer.enter-from-left,
+  .RS_WhyAdRS_ImageLayer.exit-left,
+  .RS_WhyAdRS_ImageLayer.exit-right {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
   }
 }

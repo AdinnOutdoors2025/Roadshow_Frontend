@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { IoMdClose } from "react-icons/io";
 import API_BASE from "../../../../baseurl";
 import { inputClass, selectClass } from "../../../components/reusableFormField";
 import FormField from "../../../components/reusableFormField";
 import { getToken } from "../../utils/auth";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { toast, Toaster } from "react-hot-toast";
 
-export interface StaffAdmin {
+export interface OperationUser {
   _id?: string;
   username: string;
   email: string;
@@ -18,12 +20,17 @@ export interface StaffAdmin {
 }
 
 interface Props {
-  editingStaffAdmin: StaffAdmin | null;
+  editingOperationUser: OperationUser | null;
   onSuccess: () => void;
   onClose: () => void;
 }
 
-const defaultForm: StaffAdmin = {
+const FRIENDLY_ERRORS: Record<string, string> = {
+  USERNAME_ALREADY_EXISTS: "This username is already taken.",
+  EMAIL_ALREADY_EXISTS: "This email is already registered.",
+};
+
+const defaultForm: OperationUser = {
   username: "",
   email: "",
   password: "",
@@ -31,23 +38,23 @@ const defaultForm: StaffAdmin = {
   status: "active",
 };
 
-export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onClose }: Props) {
-  const [form, setForm] = useState<StaffAdmin>(defaultForm);
+export default function OperationUserFormModal({ editingOperationUser, onSuccess, onClose }: Props) {
+  const [form, setForm] = useState<OperationUser>(defaultForm);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof StaffAdmin, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof OperationUser, string>>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const isEdit = !!editingStaffAdmin;
+  const isEdit = !!editingOperationUser;
 
   useEffect(() => {
-    setForm(editingStaffAdmin ? { ...editingStaffAdmin, password: "" } : defaultForm);
+    setForm(editingOperationUser ? { ...editingOperationUser, password: "" } : defaultForm);
     setErrors({});
     setConfirmPassword("");
-  }, [editingStaffAdmin]);
+  }, [editingOperationUser]);
 
-  const handleChange = (field: keyof StaffAdmin, value: any) => {
+  const handleChange = (field: keyof OperationUser, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
@@ -55,7 +62,7 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof StaffAdmin, string>> = {};
+    const newErrors: Partial<Record<keyof OperationUser, string>> = {};
     if (!form.username.trim()) newErrors.username = "Username is required";
     if (!form.email.trim()) newErrors.email = "Email is required";
     else if (!EMAIL_REGEX.test(form.email.trim())) newErrors.email = "Enter a valid email";
@@ -81,25 +88,19 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
       if (form.password) payload.password = form.password;
 
       const url = isEdit
-        ? `${API_BASE}staff-admins/${editingStaffAdmin!._id}`
-        : `${API_BASE}staff-admins/`;
+        ? `${API_BASE}operation-users/${editingOperationUser!._id}`
+        : `${API_BASE}operation-users/`;
 
-      const res = await fetch(url, {
-        method: isEdit ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData?.message || "Failed to save");
+      const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+      if (isEdit) {
+        await axios.put(url, payload, { headers });
+      } else {
+        await axios.post(url, payload, { headers });
       }
       onSuccess();
     } catch (err: any) {
-      alert(err.message || "Something went wrong");
+       const message = err?.response?.data?.message || err.message;
+       toast.error(FRIENDLY_ERRORS[message] || message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -107,12 +108,13 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+       <Toaster position="top-right" />
       <div className="relative w-full max-w-md max-h-[70vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
 
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-            {isEdit ? "Edit Staff Admin" : "Add Staff Admin"}
+            {isEdit ? "Edit Operation User" : "Add Operation User"}
           </h2>
           <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-600">
             <IoMdClose />
@@ -125,24 +127,10 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
               type="text"
               value={form.username}
               onChange={(e) => handleChange("username", e.target.value)}
-              placeholder="e.g. staffjohn"
+              placeholder="e.g. john"
               className={inputClass(!!errors.username)}
             />
           </FormField>
-
-          {/* <FormField
-            label={isEdit ? "New Password (optional)" : "Password"}
-            error={errors.password}
-            required={!isEdit}
-          >
-            <input
-              type="password"
-              value={form.password || ""}
-              onChange={(e) => handleChange("password", e.target.value)}
-              placeholder={isEdit ? "Leave blank to keep current" : "Min 6 characters"}
-              className={inputClass(!!errors.password)}
-            />
-          </FormField> */}
 
           <FormField label={isEdit ? "New Password (optional)" : "Password"}>
             <div className="relative">
@@ -205,7 +193,7 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
               type="email"
               value={form.email}
               onChange={(e) => handleChange("email", e.target.value)}
-              placeholder="e.g. staffjohn@example.com"
+              placeholder="e.g. opsjohn@example.com"
               className={inputClass(!!errors.email)}
             />
           </FormField>
@@ -247,7 +235,7 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
             )}
-            {isEdit ? "Update" : "Add Staff Admin"}
+            {isEdit ? "Update" : "Add Operation User"}
           </button>
         </div>
       </div>

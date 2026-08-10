@@ -3,6 +3,8 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, } from "react";
+import { createPortal } from "react-dom";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import { isBefore } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight, Minus, Plus, Send, SquarePen, X, } from "lucide-react";
 import toast from "react-hot-toast";
@@ -16,6 +18,8 @@ import '../../../components/Client/HomePageSections/HomePageSection1.css';
 import { useModal } from "@/hooks/useModal";
 import { useAuth } from "@/context/AuthContext";
 import { FALLBACK_VEHICLE_IMAGE, fetchAllRoadshowVehicles, type RoadshowVehicle, } from "@/lib/roadshowVehicles";
+import { clearCart, mergeGuestCartInto, readCart, writeCart, type CartItem, } from "@/lib/roadshowCart";
+import { AnimatePresence, motion } from "framer-motion";
 import { GST_Percentage } from '../../../BaseUrl'
 import "./page.css";
 import { formatCurrency, formatDate, formatDateForApi, getInclusiveDayCount, parseStoredDate, toSafeNumber, } from "@/app/utils/currency";
@@ -29,7 +33,7 @@ type SelectedVehicle = RoadshowVehicle & {
 
 /* CAMPAIGN REQUEST PAGE */
 export default function CampaignRequestPage() {
-    const router = useRouter();
+  const router = useRouter();
   const { user, openAuth, authLoading } = useAuth();
 
   const productScrollerRef =
@@ -39,11 +43,44 @@ export default function CampaignRequestPage() {
     new Map<string, HTMLElement>()
   );
 
+  /* Offsets, not DOMRects: getBoundingClientRect() is viewport-relative, so
+     horizontally scrolling the carousel between two reorders made every card
+     look like it had moved by the scroll distance and fly in from off-screen.
+     offsetLeft/offsetTop are measured against the offset parent and are
+     unaffected by scrolling. */
   const cardPositionsRef = useRef(
-    new Map<string, DOMRect>()
+    new Map<string, { left: number; top: number }>()
   );
 
+  /* Selected cards sort to the front of the row, so adding one while the
+     carousel is scrolled right pushes it off-screen to the left — it looks
+     like the card vanished. This holds the id just added so the carousel can
+     scroll it back into view once the reorder has been laid out. */
+  const lastAddedVehicleIdRef = useRef<
+    string | null
+  >(null);
+
+  const leftColumnRef =
+    useRef<HTMLElement>(null);
+
+  const rightColumnRef =
+    useRef<HTMLElement>(null);
+
   const authPromptedRef = useRef(false);
+
+  /* Guards the cart-persist effect until the saved cart has been restored */
+  const cartHydratedRef = useRef(false);
+
+  /* Which customer's cart is currently loaded into selectedVehicles */
+  const cartUserKeyRef = useRef<string | null>(null);
+
+  /* Saved rows the current catalogue response didn't return — kept so the
+     persist effect can write them back instead of dropping them */
+  const unmatchedCartRef = useRef<CartItem[]>([]);
+
+  /* The exact array hydration handed to state, so the persist effect can
+     tell it apart from the previous customer's stale selection */
+  const hydratedSelectionRef = useRef<SelectedVehicle[] | null>(null);
 
   const [vehicles, setVehicles] = useState<
     RoadshowVehicle[]
@@ -73,6 +110,8 @@ export default function CampaignRequestPage() {
     closeModal: closeReviewModal,
   } = useModal();
 
+  useScrollLock(isReviewOpen);
+
   useEffect(() => {
     if (!isReviewOpen) return;
 
@@ -83,11 +122,9 @@ export default function CampaignRequestPage() {
     };
 
     document.addEventListener("keydown", handleEscape);
-    document.body.style.overflow = "hidden";
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
     };
   }, [isReviewOpen, closeReviewModal]);
 
@@ -149,49 +186,6 @@ export default function CampaignRequestPage() {
 
         setVehicles(apiVehicles || []);
 
-        const storedDraft =
-          sessionStorage.getItem(
-            "roadshow_booking_draft"
-          );
-
-        if (!storedDraft) return;
-
-        let draft = null;
-
-        try {
-          draft = JSON.parse(storedDraft);
-        } catch {
-          sessionStorage.removeItem(
-            "roadshow_booking_draft"
-          );
-
-          return;
-        }
-
-        const initialVehicle =
-          apiVehicles.find(
-            (vehicle) =>
-              String(vehicle.id) ===
-              String(draft?.vehicleId)
-          );
-
-        if (!initialVehicle) return;
-
-        setSelectedVehicles([
-          {
-            ...initialVehicle,
-            startDate: parseStoredDate(
-              draft?.startDate
-            ),
-            endDate: parseStoredDate(
-              draft?.endDate
-            ),
-            quantity: Math.max(
-              Number(draft?.quantity || 1),
-              1
-            ),
-          },
-        ]);
       } catch (error) {
         console.error(
           "Campaign vehicle loading error:",
@@ -217,6 +211,114 @@ export default function CampaignRequestPage() {
     };
   }, []);
 
+  /* Restore the signed-in customer's own cart once the vehicle list and the
+     auth session are both resolved. Re-runs when the customer changes, so
+     signing in as someone else swaps in that person's saved selection. */
+  useEffect(() => {
+    if (authLoading) return;
+    if (!vehicles.length) return;
+
+    const userKey = String(user?._id || "guest");
+
+    if (
+      cartHydratedRef.current &&
+      cartUserKeyRef.current === userKey
+    ) {
+      return;
+    }
+
+    /* Anything picked before signing in joins this customer's own cart */
+    const savedCart = user?._id
+      ? mergeGuestCartInto(user._id)
+      : readCart(user?._id);
+
+    const restoredVehicles = savedCart
+      .map((item) => {
+        const matchedVehicle = vehicles.find(
+          (vehicle) =>
+            String(vehicle.id) ===
+            String(item.vehicleId)
+        );
+
+        if (!matchedVehicle) return null;
+
+        return {
+          ...matchedVehicle,
+          startDate: parseStoredDate(
+            item.startDate
+          ),
+          endDate: parseStoredDate(
+            item.endDate
+          ),
+          quantity: Math.max(
+            Number(item.quantity || 1),
+            1
+          ),
+        };
+      })
+      .filter(Boolean) as SelectedVehicle[];
+
+    /* A vehicle missing from this catalogue response (temporarily hidden,
+       or the request failed part way) must not silently erase the saved
+       row — hold it aside and write it back untouched. */
+    const restoredIds = new Set(
+      restoredVehicles.map((vehicle) =>
+        String(vehicle.id)
+      )
+    );
+
+    unmatchedCartRef.current = savedCart.filter(
+      (item) =>
+        !restoredIds.has(String(item.vehicleId))
+    );
+
+    hydratedSelectionRef.current = restoredVehicles;
+
+    setSelectedVehicles(restoredVehicles);
+
+    cartUserKeyRef.current = userKey;
+    cartHydratedRef.current = true;
+  }, [vehicles, user, authLoading]);
+
+  /* Persist the on-screen selection against the current customer. Held back
+     until that customer's cart has been restored, otherwise the initial
+     empty selection — or, on a customer switch, the previous customer's
+     still-rendered selection — would overwrite what they had saved. */
+  useEffect(() => {
+    const userKey = String(user?._id || "guest");
+
+    if (!cartHydratedRef.current) return;
+    if (cartUserKeyRef.current !== userKey) return;
+
+    /* Both effects react to `user`, and this one runs in the same commit as
+       hydration, before React has applied the restored list. Wait for that
+       exact array to arrive before writing anything. */
+    if (hydratedSelectionRef.current) {
+      if (
+        selectedVehicles !==
+        hydratedSelectionRef.current
+      ) {
+        return;
+      }
+
+      hydratedSelectionRef.current = null;
+    }
+
+    writeCart(user?._id, [
+      ...selectedVehicles.map((vehicle) => ({
+        vehicleId: String(vehicle.id),
+        startDate: vehicle.startDate
+          ? formatDateForApi(vehicle.startDate)
+          : null,
+        endDate: vehicle.endDate
+          ? formatDateForApi(vehicle.endDate)
+          : null,
+        quantity: vehicle.quantity,
+      })),
+      ...unmatchedCartRef.current,
+    ]);
+  }, [selectedVehicles, user]);
+
   const selectedVehicleIds = useMemo(
     () =>
       new Set(
@@ -236,36 +338,229 @@ export default function CampaignRequestPage() {
     });
   }, [vehicles, selectedVehicleIds]);
 
-  /* FLIP animation: slide cards to their new spot instead of jumping */
+  /* FLIP animation: slide cards to their new spot instead of jumping.
+     Every card is put back at its previous offset with the transition off,
+     then released on the next frame so the browser animates the difference. */
   useLayoutEffect(() => {
-    const newPositions = new Map<string, DOMRect>();
+    const newPositions = new Map<
+      string,
+      { left: number; top: number }
+    >();
 
     cardNodesRef.current.forEach((node, id) => {
-      newPositions.set(id, node.getBoundingClientRect());
-    });
-
-    newPositions.forEach((newRect, id) => {
-      const oldRect = cardPositionsRef.current.get(id);
-      const node = cardNodesRef.current.get(id);
-
-      if (!oldRect || !node) return;
-
-      const deltaX = oldRect.left - newRect.left;
-      const deltaY = oldRect.top - newRect.top;
-
-      if (!deltaX && !deltaY) return;
-
-      node.style.transition = "none";
-      node.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-
-      requestAnimationFrame(() => {
-        node.style.transition = "transform 320ms ease";
-        node.style.transform = "";
+      newPositions.set(id, {
+        left: node.offsetLeft,
+        top: node.offsetTop,
       });
     });
 
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    /* Cleanups for cards still mid-slide, so a reorder that lands while an
+       earlier one is running does not leave stale listeners behind. */
+    const cleanups: Array<() => void> = [];
+
+    if (!prefersReducedMotion) {
+      newPositions.forEach((newPosition, id) => {
+        const oldPosition =
+          cardPositionsRef.current.get(id);
+        const node = cardNodesRef.current.get(id);
+
+        if (!oldPosition || !node) return;
+
+        const deltaX = oldPosition.left - newPosition.left;
+        const deltaY = oldPosition.top - newPosition.top;
+
+        /* Sub-pixel drift from zoom or a scrollbar appearing would otherwise
+           kick off a pointless transition on every card in the row. */
+        if (
+          Math.abs(deltaX) < 1 &&
+          Math.abs(deltaY) < 1
+        ) {
+          return;
+        }
+
+        node.style.willChange = "transform";
+        node.style.transition = "none";
+        node.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+        const frameId = requestAnimationFrame(() => {
+          node.style.transition =
+            "transform 420ms cubic-bezier(0.22, 1, 0.36, 1)";
+          node.style.transform = "";
+        });
+
+        /* Clear the inline styles once the slide finishes. Without this the
+           inline `transition` keeps overriding the card's own stylesheet
+           transitions (hover lift, shadow) for the rest of the session. */
+        const handleTransitionEnd = (
+          event: TransitionEvent
+        ) => {
+          if (event.propertyName !== "transform") return;
+
+          node.style.transition = "";
+          node.style.transform = "";
+          node.style.willChange = "";
+
+          node.removeEventListener(
+            "transitionend",
+            handleTransitionEnd
+          );
+        };
+
+        node.addEventListener(
+          "transitionend",
+          handleTransitionEnd
+        );
+
+        cleanups.push(() => {
+          cancelAnimationFrame(frameId);
+
+          node.removeEventListener(
+            "transitionend",
+            handleTransitionEnd
+          );
+        });
+      });
+    }
+
     cardPositionsRef.current = newPositions;
+
+    return () => {
+      cleanups.forEach((cleanup) => cleanup());
+    };
   }, [sortedVehicles]);
+
+  /* Bring newly added cards back into view. Runs after the FLIP layout effect
+     has reordered the row. */
+  useEffect(() => {
+    const vehicleId =
+      lastAddedVehicleIdRef.current;
+
+    if (!vehicleId) return;
+
+    lastAddedVehicleIdRef.current = null;
+
+    const scroller = productScrollerRef.current;
+
+    if (!scroller) return;
+
+    /* Rewind the row to the very start rather than to the added card itself.
+       Selected cards sort to the front, so the start is where they all live —
+       and landing on an exact card boundary is what stops the row settling
+       mid-card and leaving a sliced-off card at the left edge. */
+    const target = 0;
+
+    /* Already parked there — don't jolt the row for a sub-pixel difference. */
+    if (
+      Math.abs(scroller.scrollLeft - target) < 2
+    ) {
+      return;
+    }
+
+    const prefersReducedMotion =
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+    scroller.scrollTo({
+      left: target,
+      behavior: prefersReducedMotion
+        ? "auto"
+        : "smooth",
+    });
+  }, [sortedVehicles]);
+
+  /* Paired-column scrolling.
+
+     Each column is sticky with a `top` derived from its own height:
+
+       - Column SHORTER than the viewport -> top = TOP_GAP. It pins as soon as
+         it reaches the navbar and then waits, so it stays on screen instead of
+         leaving a block of dead whitespace while the other side scrolls on.
+
+       - Column TALLER than the viewport -> top = viewport - height - gap,
+         which is negative. Sticky then lets the column scroll all the way
+         through its own content first and only pins once its bottom edge
+         reaches the bottom of the viewport. This is what keeps "Add More
+         Vehicle" and "Review & Submit" reachable — a plain `top: 96px` would
+         pin the column immediately and strand everything below the fold.
+
+     Net effect: the shorter side finishes and holds, the taller side keeps
+     scrolling, and once both are exhausted the page scrolls on as one.
+
+     Recomputed whenever either column changes height (adding or removing a
+     vehicle does exactly that), which is why this is measured rather than
+     expressed as a static CSS rule. */
+  useEffect(() => {
+    const leftColumn = leftColumnRef.current;
+    const rightColumn = rightColumnRef.current;
+
+    if (!leftColumn || !rightColumn) return;
+
+    const TOP_GAP = 96;
+    const BOTTOM_GAP = 24;
+    const DESKTOP_MIN_WIDTH = 1024;
+
+    const applyStickyOffsets = () => {
+      const columns = [leftColumn, rightColumn];
+
+      /* Below lg the grid is a single column and the page just scrolls. */
+      if (
+        window.innerWidth < DESKTOP_MIN_WIDTH
+      ) {
+        columns.forEach((column) => {
+          column.style.position = "";
+          column.style.top = "";
+        });
+
+        return;
+      }
+
+      columns.forEach((column) => {
+        const height = column.offsetHeight;
+        const viewportHeight = window.innerHeight;
+
+        const overflowsViewport =
+          height + TOP_GAP + BOTTOM_GAP >
+          viewportHeight;
+
+        const top = overflowsViewport
+          ? viewportHeight - height - BOTTOM_GAP
+          : TOP_GAP;
+
+        column.style.position = "sticky";
+        column.style.top = `${top}px`;
+      });
+    };
+
+    applyStickyOffsets();
+
+    /* Setting position/top does not change offsetHeight, so observing the same
+       elements we write to cannot feed back into itself. */
+    const resizeObserver = new ResizeObserver(
+      applyStickyOffsets
+    );
+
+    resizeObserver.observe(leftColumn);
+    resizeObserver.observe(rightColumn);
+
+    window.addEventListener(
+      "resize",
+      applyStickyOffsets
+    );
+
+    return () => {
+      resizeObserver.disconnect();
+
+      window.removeEventListener(
+        "resize",
+        applyStickyOffsets
+      );
+    };
+  }, []);
 
   const activeDateVehicle = useMemo(
     () =>
@@ -291,6 +586,16 @@ export default function CampaignRequestPage() {
   const toggleVehicle = (
     vehicle: RoadshowVehicle
   ) => {
+    /* Read before the state update so this is a plain derived value rather
+       than a side effect inside the updater (which React may run twice). */
+    /* Stored raw, not String(...): cardNodesRef is keyed by vehicle.id as-is,
+       so coercing here would miss the lookup for any non-string id. */
+    lastAddedVehicleIdRef.current = isSelected(
+      vehicle.id
+    )
+      ? null
+      : vehicle.id;
+
     setSelectedVehicles((current) => {
       const alreadySelected = current.some(
         (item) =>
@@ -764,184 +1069,198 @@ export default function CampaignRequestPage() {
 
 
   const handleConfirmSend = async () => {
-  if (submitting) return;
+    if (submitting) return;
 
-  try {
-    setSubmitting(true);
+    try {
+      setSubmitting(true);
 
-    const storedDraft = sessionStorage.getItem(
-      "roadshow_booking_draft"
-    );
+      const storedDraft = sessionStorage.getItem(
+        "roadshow_booking_draft"
+      );
 
-    let campaignMeta: {
-      campaignType?: string;
-      location?: string;
-      route?: string;
-      addOns?: string[];
-    } = {};
+      let campaignMeta: {
+        campaignType?: string;
+        location?: string;
+        route?: string;
+        addOns?: string[];
+      } = {};
 
-    if (storedDraft) {
-      try {
-        const parsedDraft = JSON.parse(storedDraft);
+      if (storedDraft) {
+        try {
+          const parsedDraft = JSON.parse(storedDraft);
 
-        campaignMeta = {
-          campaignType:
-            typeof parsedDraft?.campaignType === "string"
-              ? parsedDraft.campaignType.trim()
-              : "",
+          campaignMeta = {
+            campaignType:
+              typeof parsedDraft?.campaignType === "string"
+                ? parsedDraft.campaignType.trim()
+                : "",
 
-          location:
-            typeof parsedDraft?.location === "string"
-              ? parsedDraft.location.trim()
-              : "",
+            location:
+              typeof parsedDraft?.location === "string"
+                ? parsedDraft.location.trim()
+                : "",
 
-          route:
-            typeof parsedDraft?.route === "string"
-              ? parsedDraft.route.trim()
-              : "",
+            route:
+              typeof parsedDraft?.route === "string"
+                ? parsedDraft.route.trim()
+                : "",
 
-          addOns: Array.isArray(parsedDraft?.addOns)
-            ? parsedDraft.addOns.filter(
+            addOns: Array.isArray(parsedDraft?.addOns)
+              ? parsedDraft.addOns.filter(
                 (item: unknown) =>
                   typeof item === "string" && item.trim()
               )
-            : [],
-        };
-      } catch {
-        // Optional campaign metadata is unavailable.
+              : [],
+          };
+        } catch {
+          // Optional campaign metadata is unavailable.
+        }
       }
-    }
 
-    const payload = {
-      name: clientDetails.name.trim(),
+      const payload = {
+        name: clientDetails.name.trim(),
 
-      email: clientDetails.email
-        .trim()
-        .toLowerCase(),
+        email: clientDetails.email
+          .trim()
+          .toLowerCase(),
 
-      phone: clientDetails.phone.replace(
-        /\D/g,
-        ""
-      ),
+        phone: clientDetails.phone.replace(
+          /\D/g,
+          ""
+        ),
 
-      userId: user?._id,
+        userId: user?._id,
 
-      campaignType:
-        campaignMeta.campaignType ||
-        "Roadshow Campaign",
+        campaignType:
+          campaignMeta.campaignType ||
+          "Roadshow Campaign",
 
-      location: campaignMeta.location || "",
+        location: campaignMeta.location || "",
 
-      route: campaignMeta.route || "",
+        route: campaignMeta.route || "",
 
-      addOns: campaignMeta.addOns || [],
+        addOns: campaignMeta.addOns || [],
 
-      vehicleTypes: bookingRows.map(
-        (vehicle) => ({
-          vehicleId: vehicle.id,
+        vehicleTypes: bookingRows.map(
+          (vehicle) => ({
+            vehicleId: vehicle.id,
 
-          vehicleType:
-            vehicle.vehicleTypeId ||
-            vehicle.id,
+            vehicleType:
+              vehicle.vehicleTypeId ||
+              vehicle.id,
 
-          vehicleName: vehicle.name,
+            vehicleName: vehicle.name,
 
-          quantity: vehicle.quantity,
+            quantity: vehicle.quantity,
 
-          campaignLocation: campaignMeta.location || "",
+            fromDate: formatDateForApi(
+              vehicle.startDate
+            ),
 
-          fromDate: formatDateForApi(
-            vehicle.startDate
-          ),
+            toDate: formatDateForApi(
+              vehicle.endDate
+            ),
 
-          toDate: formatDateForApi(
-            vehicle.endDate
-          ),
+            pricePerDay: toSafeNumber(
+              vehicle.rate
+            ),
 
-          pricePerDay: toSafeNumber(
-            vehicle.rate
-          ),
+            lineTotal: toSafeNumber(
+              vehicle.total
+            ),
+          })
+        ),
 
-          lineTotal: toSafeNumber(
-            vehicle.total
-          ),
-        })
-      ),
+        subtotal: grandTotal,
 
-      subtotal: grandTotal,
+        gstPercentage: GST_PERCENT,
 
-      gstPercentage: GST_PERCENT,
+        gstAmount,
 
-      gstAmount,
+        estimatedTotal,
+      };
 
-      estimatedTotal,
-    };
+      const response = await fetch(
+        `${baseUrl}/client-requests`,
+        {
+          method: "POST",
 
-    const response = await fetch(
-      `${baseUrl}/client-requests`,
-      {
-        method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
 
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify(payload),
-      }
-    );
-
-    const result = await response
-      .json()
-      .catch(() => null);
-
-    if (
-      !response.ok ||
-      !result?.success ||
-      !result?.data?._id
-    ) {
-      throw new Error(
-        result?.message ||
-          "Unable to submit the campaign request."
+          body: JSON.stringify(payload),
+        }
       );
+
+      const result = await response
+        .json()
+        .catch(() => null);
+
+      if (
+        !response.ok ||
+        !result?.success ||
+        !result?.data?._id
+      ) {
+        throw new Error(
+          result?.message ||
+          "Unable to submit the campaign request."
+        );
+      }
+
+      sessionStorage.setItem(
+        "roadshow_last_client_request",
+        JSON.stringify(result.data)
+      );
+
+      /* The request is placed — the saved cart is no longer needed */
+      cartHydratedRef.current = false;
+      unmatchedCartRef.current = [];
+      hydratedSelectionRef.current = null;
+      clearCart(user?._id);
+
+      closeReviewModal();
+
+      toast.success(
+        "Booking request submitted successfully."
+      );
+
+      router.push(
+        `/roadshow/booking-request-submitted/${result.data._id}`
+      );
+    } catch (error) {
+      console.error(
+        "Campaign request error:",
+        error
+      );
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to submit the campaign request."
+      );
+    } finally {
+      setSubmitting(false);
     }
-
-    sessionStorage.setItem(
-      "roadshow_last_client_request",
-      JSON.stringify(result.data)
-    );
-
-    closeReviewModal();
-
-    toast.success(
-      "Booking request submitted successfully."
-    );
-
-    router.push(
-      `/roadshow/booking-request-submitted/${result.data._id}`
-    );
-  } catch (error) {
-    console.error(
-      "Campaign request error:",
-      error
-    );
-
-    toast.error(
-      error instanceof Error
-        ? error.message
-        : "Unable to submit the campaign request."
-    );
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
 
   return (
-    <main className="min-h-screen bg-white pb-20 pt-8 text-[#171719] sm:pt-10 lg:pt-14">
+    <main className="min-h-screen bg-white  pt-8 text-[#171719] sm:pt-10 lg:pt-14">
       <section className="mx-auto w-full  px-4 sm:px-6 lg:px-8 xl:px-12">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(320px,0.76fr)_minmax(0,1.28fr)] lg:items-start xl:gap-10">
+        <div
+          className=" Rdsw_CrfMainSection  grid grid-cols-1 gap-8 lg:grid-cols-[minmax(320px,0.76fr)_minmax(0,1.28fr)] lg:items-start xl:gap-10"
+        >
           {/* Campaign request form */}
-          <aside className="rounded-[26px] bg-[#f7f7f8] p-5 sm:p-6 lg:sticky lg:top-24 rdsw_CrfLeftMain">
+          {/* Sticky position/top are set from JS (see the paired-column effect
+              above) because the correct offset depends on this column's
+              measured height. A static lg:sticky lg:top-24 would pin it while
+              its own content is taller than the viewport and strand Add More
+              Vehicle / Review & Submit below the fold. */}
+          <aside
+            ref={leftColumnRef}
+            className="rounded-[26px] bg-[#f7f7f8] p-5 sm:p-6 rdsw_CrfLeftMain"
+          >
             <div className="mb-7 rdsw_CrfLeftHeadingMain">
               <div className="text-[20px] font-semibold tracking-[-0.02em] text-[#1b1b1d] rdsw_CrfLeftHeading1">
                 Campaign Request Form
@@ -1303,10 +1622,11 @@ export default function CampaignRequestPage() {
 
             </div>
           </aside>
-
           {/* Product details */}
-          {/* Product details */}
-          <section className="rdsw_crfProdDetailsMain min-w-0">
+          <section
+            ref={rightColumnRef}
+            className="rdsw_crfProdDetailsMain min-w-0 rdsw_crfProdDetailsScrollPane"
+          >
             {/* Section heading */}
             <div className="rdsw_crfProdDetailsHeadingWrapper">
               <p className="rdsw_crfProdDetails1stHeading">
@@ -1631,56 +1951,118 @@ export default function CampaignRequestPage() {
         />
       )}
 
-      {isReviewOpen && (
-        <div className="fixed inset-0 z-99999 flex items-center justify-center overflow-y-auto">
-          <div
-            className="fixed inset-0 h-full w-full bg-black/35 backdrop-blur-[1px]"
-            onClick={closeReviewModal}
-          />
-
-          <div
-            className="rdsw_reviewModalShell relative w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={closeReviewModal}
-              aria-label="Close"
-              className="rdsw_reviewModalCloseBtn absolute right-3 top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full sm:right-6 sm:top-6 sm:h-11 sm:w-11"
+      {/* Sticky cart summary — appears only once a vehicle is added and
+          hides while the review modal is open so it cannot overlap it. */}
+      <AnimatePresence>
+        {selectedVehicles.length > 0 &&
+          !isReviewOpen && (
+            <motion.div
+              className="rdsw_crfStickyBar"
+              initial={{ y: 90, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 90, opacity: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 320,
+                damping: 32,
+              }}
             >
-              <X size={20} strokeWidth={2.25} />
-            </button>
+              <div className="rdsw_crfStickyBarInner">
+                <div className="rdsw_crfStickyBarInfo">
+                  <span className="rdsw_crfStickyBarCount">
+                    {selectedVehicles.length}
+                  </span>
 
-            <div className="rdsw_reviewModalLayout">
-              {/* Left side: independently scrollable when many vehicles are selected */}
-              <section className="rdsw_reviewLeftPanel">
-                <h2 className="rdsw_reviewTitle">
-                  Review Your Order &amp; Confirm
-                </h2>
+                  <span className="rdsw_crfStickyBarLabel">
+                    {selectedVehicles.length === 1
+                      ? "Vehicle added"
+                      : "Vehicles added"}
+                  </span>
+                </div>
 
-                <section className="rdsw_reviewSection">
-                  <div className="rdsw_reviewSectionHeading">
-                    <span
-                      className="rdsw_reviewHeadingDot"
-                      aria-hidden="true"
-                    >
-                      <i className="fa-regular fa-circle-user"></i>
-                    </span>
-                    <h3>Contact Details</h3>
-                  </div>
+                <div className="rdsw_crfStickyBarTotal">
+                  <span className="rdsw_crfStickyBarTotalLabel">
+                    Estimated Total
+                  </span>
 
-                  <div className="rdsw_reviewContactDetails">
-                    <div className="rdsw_reviewContactRow">
-                      <span className="rdsw_reviewContactLabel">
-                        Name
+                  <span className="rdsw_crfStickyBarTotalValue">
+                    {formatCurrency(
+                      estimatedTotal
+                    )}
+                  </span>
+
+                  <span className="rdsw_crfStickyBarTotalNote">
+                    incl. {GST_PERCENT}% GST
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleReviewSubmit}
+                  disabled={submitting}
+                  className="rdsw_crfStickyBarButton"
+                >
+                  {submitting
+                    ? "Submitting..."
+                    : "Review & Submit"}
+                </button>
+              </div>
+            </motion.div>
+          )}
+      </AnimatePresence>
+
+      {isReviewOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-99999 flex overflow-y-auto">
+            <div
+              className="fixed inset-0 h-full w-full bg-black/35 backdrop-blur-[1px]"
+              onClick={closeReviewModal}
+            />
+
+            <div
+              className="rdsw_reviewModalShell relative w-full m-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={closeReviewModal}
+                aria-label="Close"
+                className="rdsw_reviewModalCloseBtn absolute right-3 top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full sm:right-6 sm:top-6 sm:h-11 sm:w-11"
+              >
+                <X size={20} strokeWidth={2.25} />
+              </button>
+
+              <div className="rdsw_reviewModalLayout">
+                {/* Left side: independently scrollable when many vehicles are selected */}
+                <section className="rdsw_reviewLeftPanel">
+                  <h2 className="rdsw_reviewTitle">
+                    Review Your Order &amp; Confirm
+                  </h2>
+
+                  <section className="rdsw_reviewSection">
+                    <div className="rdsw_reviewSectionHeading">
+                      <span
+                        className="rdsw_reviewHeadingDot"
+                        aria-hidden="true"
+                      >
+                        <i className="fa-regular fa-circle-user"></i>
                       </span>
-
-                      <span className="rdsw_reviewContactValue">
-                        - {clientDetails.name || "—"}
-                      </span>
+                      <h3>Contact Details</h3>
                     </div>
 
-                    {/* <div className="rdsw_reviewContactRow">
+                    <div className="rdsw_reviewContactDetails">
+                      <div className="rdsw_reviewContactRow">
+                        <span className="rdsw_reviewContactLabel">
+                          Name
+                        </span>
+
+                        <span className="rdsw_reviewContactValue">
+                          - {clientDetails.name || "—"}
+                        </span>
+                      </div>
+
+                      {/* <div className="rdsw_reviewContactRow">
                   <span className="rdsw_reviewContactLabel">
                     Company Name
                   </span>
@@ -1690,244 +2072,254 @@ export default function CampaignRequestPage() {
                   </span>
                 </div> */}
 
-                    <div className="rdsw_reviewContactRow">
-                      <span className="rdsw_reviewContactLabel">
-                        Phone Number
-                      </span>
+                      <div className="rdsw_reviewContactRow">
+                        <span className="rdsw_reviewContactLabel">
+                          Phone Number
+                        </span>
 
-                      <span className="rdsw_reviewContactValue">
-                        - {reviewPhoneNumber}
-                      </span>
+                        <span className="rdsw_reviewContactValue">
+                          - {reviewPhoneNumber}
+                        </span>
+                      </div>
+
+                      <div className="rdsw_reviewContactRow">
+                        <span className="rdsw_reviewContactLabel">
+                          Email Address
+                        </span>
+
+                        <span className="rdsw_reviewContactValue">
+                          - {clientDetails.email || "—"}
+                        </span>
+                      </div>
                     </div>
+                  </section>
 
-                    <div className="rdsw_reviewContactRow">
-                      <span className="rdsw_reviewContactLabel">
-                        Email Address
-                      </span>
-
-                      <span className="rdsw_reviewContactValue">
-                        - {clientDetails.email || "—"}
-                      </span>
-                    </div>
-                  </div>
-                </section>
-
-                <section className="rdsw_reviewSection rdsw_reviewVehicleSection">
-                  <div className="rdsw_reviewSectionHeading">
-                    <span
-                      className="rdsw_reviewHeadingDot"
-                      aria-hidden="true"
-                    >
-                      <i className="fa-regular fa-circle-check"></i>
-                    </span>
-                    <h3>Selected Vehicles</h3>
-                  </div>
-
-                  <div className="rdsw_reviewVehicleList">
-                    {bookingRows.map(
-                      (vehicle, index) => (
-                        <article
-                          key={vehicle.id}
-                          className="rdsw_reviewVehicleCard"
-                          style={{
-                            animationDelay: `${index * 70
-                              }ms`,
-                          }}
-                        >
-                          <div className="rdsw_reviewVehicleInfoColumn">
-                            <div>
-                              <p className="rdsw_reviewVehicleLabel">
-                                Vehicle Type {index + 1}
-                              </p>
-
-                              <p className="rdsw_reviewVehicleName">
-                                {vehicle.name}
-                              </p>
-                            </div>
-
-                            <div>
-                              <p className="rdsw_reviewVehicleLabel">
-                                Vehicle Quantity
-                              </p>
-
-                              <p className="rdsw_reviewVehicleValue">
-                                {vehicle.quantity}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="rdsw_reviewVehicleInfoColumn">
-                            <div>
-                              <p className="rdsw_reviewVehicleLabel">
-                                Start Date
-                              </p>
-
-                              <p className="rdsw_reviewVehicleValue">
-                                {formatDate(
-                                  vehicle.startDate,
-                                  {
-                                    pattern:
-                                      "dd MMM yyyy",
-                                    fallback: "—",
-                                  }
-                                )}
-                              </p>
-                            </div>
-
-                            <div>
-                              <p className="rdsw_reviewVehicleLabel">
-                                Rate Per Day
-                              </p>
-
-                              <p className="rdsw_reviewVehicleValue">
-                                {formatCurrency(
-                                  vehicle.rate
-                                )}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="rdsw_reviewVehicleInfoColumn">
-                            <div>
-                              <p className="rdsw_reviewVehicleLabel">
-                                End Date
-                              </p>
-
-                              <p className="rdsw_reviewVehicleValue">
-                                {formatDate(
-                                  vehicle.endDate,
-                                  {
-                                    pattern:
-                                      "dd MMM yyyy",
-                                    fallback: "—",
-                                  }
-                                )}
-                              </p>
-                            </div>
-
-                            <div>
-                              <p className="rdsw_reviewVehicleLabel">
-                                Duration
-                              </p>
-
-                              <p className="rdsw_reviewVehicleValue">
-                                {vehicle.days}{" "}
-                                {vehicle.days === 1
-                                  ? "Day"
-                                  : "Days"}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="rdsw_reviewVehicleTotal">
-                            <p className="rdsw_reviewVehicleTotalLabel">
-                              Vehicle Total
-                            </p>
-
-                            <p className="rdsw_reviewVehicleTotalValue">
-                              {formatCurrency(
-                                vehicle.total
-                              )}
-                            </p>
-                          </div>
-                        </article>
-                      )
-                    )}
-                  </div>
-                </section>
-              </section>
-
-              {/* Right side: sticky pricing summary and actions */}
-              <aside className="rdsw_reviewRightColumn">
-                <div className="rdsw_reviewPricingCard">
-                  <h3 className="rdsw_reviewPricingTitle">
-                    Pricing Summary
-                  </h3>
-
-                  <div className="rdsw_reviewPricingRows">
-                    <div className="rdsw_reviewPricingRow">
-                      <span>Subtotal</span>
-
-                      <span>
-                        {formatCurrency(
-                          grandTotal
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="rdsw_reviewPricingRow">
-                      <span>GST {GST_PERCENT}%</span>
-
-                      <span>
-                        {formatCurrency(
-                          gstAmount
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="rdsw_reviewPricingRow rdsw_reviewPricingTotalRow">
-                      <span>Estimated Total</span>
-
-                      <strong>
-                        {formatCurrency(
-                          estimatedTotal
-                        )}
-                      </strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rdsw_reviewActions">
-                  <button
-                    type="button"
-                    onClick={closeReviewModal}
-                    className="rdsw_reviewActionButton rdsw_reviewEditButton"
-                  >
-
-                    <Image
-                      src="/images/assets/CRF_RequestEditBtn.svg"
-                      alt=""
-                      width={18}
-                      height={18}
-                      className="rdsw_crfProdDetailsCheckMark rdsw_reviewEditReqIcon"
-                    />
-
-                    <span>Edit Details</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleConfirmSend}
-                    disabled={submitting}
-                    className="rdsw_reviewActionButton rdsw_reviewSendButton"
-                  >
-                    {submitting ? (
+                  <section className="rdsw_reviewSection rdsw_reviewVehicleSection">
+                    <div className="rdsw_reviewSectionHeading">
                       <span
-                        className="rdsw_reviewSendSpinner"
+                        className="rdsw_reviewHeadingDot"
                         aria-hidden="true"
-                      />
-                    ) : (
+                      >
+                        <i className="fa-regular fa-circle-check"></i>
+                      </span>
+                      <h3>Selected Vehicles</h3>
+                    </div>
+
+                    <div className="rdsw_reviewVehicleList">
+                      {bookingRows.map(
+                        (vehicle, index) => (
+                          <article
+                            key={vehicle.id}
+                            className="rdsw_reviewVehicleCard"
+                            style={{
+                              animationDelay: `${index * 70
+                                }ms`,
+                            }}
+                          >
+                            <div className="rdsw_reviewVehicleInfoColumn">
+                              <div>
+                                <p className="rdsw_reviewVehicleLabel">
+                                  Vehicle Type {index + 1}
+                                </p>
+
+                                <p className="rdsw_reviewVehicleName">
+                                  {vehicle.name}
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="rdsw_reviewVehicleLabel">
+                                  Vehicle Quantity
+                                </p>
+
+                                <p className="rdsw_reviewVehicleValue">
+                                  {vehicle.quantity}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="rdsw_reviewVehicleInfoColumn">
+                              <div>
+                                <p className="rdsw_reviewVehicleLabel">
+                                  Start Date
+                                </p>
+
+                                <p className="rdsw_reviewVehicleValue">
+                                  {formatDate(
+                                    vehicle.startDate,
+                                    {
+                                      pattern:
+                                        "dd MMM yyyy",
+                                      fallback: "—",
+                                    }
+                                  )}
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="rdsw_reviewVehicleLabel">
+                                  Rate Per Day
+                                </p>
+
+                                <p className="rdsw_reviewVehicleValue">
+                                  {formatCurrency(
+                                    vehicle.rate
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="rdsw_reviewVehicleInfoColumn">
+                              <div>
+                                <p className="rdsw_reviewVehicleLabel">
+                                  End Date
+                                </p>
+
+                                <p className="rdsw_reviewVehicleValue">
+                                  {formatDate(
+                                    vehicle.endDate,
+                                    {
+                                      pattern:
+                                        "dd MMM yyyy",
+                                      fallback: "—",
+                                    }
+                                  )}
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="rdsw_reviewVehicleLabel">
+                                  Duration
+                                </p>
+
+                                <p className="rdsw_reviewVehicleValue">
+                                  {vehicle.days}{" "}
+                                  {vehicle.days === 1
+                                    ? "Day"
+                                    : "Days"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="rdsw_reviewVehicleTotal">
+                              <p className="rdsw_reviewVehicleTotalLabel">
+                                Vehicle Total
+                              </p>
+
+                              <p className="rdsw_reviewVehicleTotalValue">
+                                {formatCurrency(
+                                  vehicle.total
+                                )}
+                              </p>
+                            </div>
+                          </article>
+                        )
+                      )}
+                    </div>
+                  </section>
+                </section>
+
+                {/* Right side: sticky pricing summary and actions */}
+                <aside className="rdsw_reviewRightColumn">
+                  <div className="rdsw_reviewPricingCard">
+                    <h3 className="rdsw_reviewPricingTitle">
+                      Pricing Summary
+                    </h3>
+
+                    <div className="rdsw_reviewPricingRows">
+                      <div className="rdsw_reviewPricingRow">
+                        <span>Subtotal</span>
+
+                        <span>
+                          {formatCurrency(
+                            grandTotal
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="rdsw_reviewPricingRow">
+                        <span>GST {GST_PERCENT}%</span>
+
+                        <span>
+                          {formatCurrency(
+                            gstAmount
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="rdsw_reviewPricingRow rdsw_reviewPricingTotalRow">
+                        <span>Estimated Total</span>
+
+                        <strong>
+                          {formatCurrency(
+                            estimatedTotal
+                          )}
+                        </strong>
+                      </div>
+                      <p className="rdsw_reviewPricingNote">
+                        Note: This is an estimated cost. The final quotation may vary based on campaign requirements, branding, fabrication, logistics, and other applicable charges.
+                      </p>
+                    </div>
+
+
+                  </div>
+
+                  {/* <p className="rdsw_reviewPricingNote">
+                    Note: This is an estimated cost. The final quotation may vary based on campaign requirements, branding, fabrication, logistics, and other applicable charges.
+                  </p> */}
+
+                  <div className="rdsw_reviewActions">
+                    <button
+                      type="button"
+                      onClick={closeReviewModal}
+                      className="rdsw_reviewActionButton rdsw_reviewEditButton"
+                    >
 
                       <Image
-                        src="/images/assets/CRF_RequestSendBtn.svg"
+                        src="/images/assets/CRF_RequestEditBtn.svg"
                         alt=""
                         width={18}
                         height={18}
                         className="rdsw_crfProdDetailsCheckMark rdsw_reviewEditReqIcon"
                       />
-                    )}
-                    <span>
-                      {submitting
-                        ? "Sending..."
-                        : "Send Request"}
-                    </span>
-                  </button>
-                </div>
-              </aside>
+
+                      <span>Edit Details</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleConfirmSend}
+                      disabled={submitting}
+                      className="rdsw_reviewActionButton rdsw_reviewSendButton"
+                    >
+                      {submitting ? (
+                        <span
+                          className="rdsw_reviewSendSpinner"
+                          aria-hidden="true"
+                        />
+                      ) : (
+
+                        <Image
+                          src="/images/assets/CRF_RequestSendBtn.svg"
+                          alt=""
+                          width={18}
+                          height={18}
+                          className="rdsw_crfProdDetailsCheckMark rdsw_reviewEditReqIcon"
+                        />
+                      )}
+                      <span>
+                        {submitting
+                          ? "Sending..."
+                          : "Send Request"}
+                      </span>
+                    </button>
+                  </div>
+                </aside>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </main>
   );
 }

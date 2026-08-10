@@ -3,6 +3,7 @@ import PipelineHistoryTab from "./PipelineHistoryTab";
 import ProjectExecutionHistoryTab from "./ProjectExecutionHistoryTab";
 import UnavailableHistoryTab from "./UnavailableHistoryTab";
 import DayByDayHistoryTab from "./DayByDayHistoryTab";
+import TimelineHoursTab from "./TimelineHoursTab";
 
 interface Order {
     _id: string;
@@ -38,7 +39,7 @@ interface Order {
 }
 
 export default function CombinedHistoryTab({ order ,vehicleTypes }: { order: Order , vehicleTypes:string[]}) {
-    const [activeHistoryTab, setActiveHistoryTab] = useState<"pipeline" | "execution" | "unavailable" | "dayByDay">("pipeline");
+    const [activeHistoryTab, setActiveHistoryTab] = useState<"pipeline" | "execution" | "unavailable" | "dayByDay" | "timelineHours">("pipeline");
 
    const showExecution =
         order.pipelineStatus === "projectExecution" || order.pipelineStatus === "onRoad";
@@ -101,7 +102,20 @@ export default function CombinedHistoryTab({ order ,vehicleTypes }: { order: Ord
                                 : "border-transparent text-gray-400 hover:text-gray-600"
                         }`}
                     >
-                        Day-by-Day History
+                       TimeLine
+                    </button>
+                )}
+
+                {showDayByDay && (
+                    <button
+                        onClick={() => setActiveHistoryTab("timelineHours")}
+                        className={`px-4 py-2 text-md font-medium border-b-2 transition-all -mb-px ${
+                            activeHistoryTab === "timelineHours"
+                                ? "border-teal-500 text-teal-600 dark:text-teal-400"
+                                : "border-transparent text-gray-400 hover:text-gray-600"
+                        }`}
+                    >
+                       Timeline Hours
                     </button>
                 )}
             </div>
@@ -118,6 +132,9 @@ export default function CombinedHistoryTab({ order ,vehicleTypes }: { order: Ord
                 )}
                 {activeHistoryTab === "dayByDay" && showDayByDay && (
                     <DayByDayHistoryTab order={order}  vehicleTypes={vehicleTypes}/>
+                )}
+                {activeHistoryTab === "timelineHours" && showDayByDay && (
+                    <TimelineHoursTab order={order} vehicleTypes={vehicleTypes} />
                 )}
             </div>
         </div>

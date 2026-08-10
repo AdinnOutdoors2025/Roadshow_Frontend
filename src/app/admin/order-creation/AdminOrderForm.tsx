@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { toast, Toaster } from "react-hot-toast";
 import { IoMdClose } from "react-icons/io";
 import { HiOutlineUser, HiOutlineTruck, HiOutlineClipboardList, HiOutlinePhone } from "react-icons/hi";
@@ -74,6 +74,7 @@ export interface GstDetail {
   gst_number: string;
   business_name: string;
   business_pan?: string;
+  business_address?: string;
 }
 export interface OrderState {
   customerForm: CustomerFormData;
@@ -130,6 +131,8 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
     editingOrder ? buildStateFromOrder(editingOrder) : defaultOrder
   );
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string[] | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   // const [gstVerified, setGstVerified] = useState(false);
   const [gstVerified, setGstVerified] = useState(
   !!editingOrder && editingOrder.customerType === 1
@@ -257,9 +260,13 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
 
   const handleSubmit = async () => {
     const { customerSelection, vehicles } = order;
-    if (!customerSelection.customer) return;
+    if (!customerSelection.customer) {
+      toast.error("Customer details missing — please go back and fill Customer Details again.");
+      return;
+    }
     try {
       setSubmitting(true);
+      setSubmitError(null);
       const token = getToken();
       const formData = new FormData();
     
@@ -356,7 +363,15 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
 
       onSuccess(data.data.orderId);
     } catch (err: any) {
-      toast.error(err.message || "Failed to create order");
+      const msg = err.message || "Failed to create order";
+      const lines = msg.split("\n").filter((l: string) => l.trim());
+      if (lines.length > 1) {
+        lines.forEach((line: string) => toast.error(line, { duration: 6000 }));
+      } else {
+        toast.error(msg, { duration: 6000 });
+      }
+      setSubmitError(lines);
+      contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setSubmitting(false);
     }
@@ -371,8 +386,9 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
   return (
     // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2">
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-2">
-        <Toaster position="top-right" />
-      <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+      <Toaster position="top-right" />
+
+      <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
 
         {/* Header */}
         <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
@@ -445,7 +461,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div ref={contentRef} className="flex-1 overflow-y-auto px-6 py-5">
 
 
           {step === 0 && (
@@ -521,6 +537,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
               loading={submitting}
                getVehicleTypeName={getVehicleTypeName}
               editingOrder={editingOrder}
+              submitError={submitError}
             />
           )}
         </div>

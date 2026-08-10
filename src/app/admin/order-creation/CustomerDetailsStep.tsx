@@ -9,6 +9,9 @@ import { HiOutlineUser, HiOutlineOfficeBuilding } from "react-icons/hi";
 import { designations } from "../../utils/collection.json";
 import API_BASE from "../../../../baseurl";
 
+const toTitleCase = (str: string) => str.replace(/\b\w/g, (c) => c.toUpperCase());
+const capitalizeFirstOnly = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
 interface Props {
   data: CustomerFormData;
   customerSelection: CustomerSelection;
@@ -150,15 +153,20 @@ export default function CustomerDetailsStep({
 
       if (!res.ok) throw new Error(data2.message || "Verification failed");
 
-      // Company name + PAN auto-fill
-      onChange({ companyName: data2.data.business_name, panNumber: data2.data.business_pan || "" });
-      setErrors((p) => ({ ...p, panNumber: undefined }));
+      // Company name + PAN + Address auto-fill
+      onChange({
+        companyName: data2.data.business_name,
+        panNumber: data2.data.business_pan || "",
+        address: data2.data.business_address || "",
+      });
+      setErrors((p) => ({ ...p, panNumber: undefined, address: undefined }));
 
       onGstVerified({
         gstDetailId: data2.data.gstDetailId,
         gst_number: data2.data.gst_number,
         business_name: data2.data.business_name,
         business_pan: data2.data.business_pan,
+        business_address: data2.data.business_address,
       });
 
       setGstStatus("success");
@@ -248,7 +256,6 @@ export default function CustomerDetailsStep({
     const e: FormErrors = {};
     if (!data.companyName?.trim()) e.companyName = "Company name is required";
     if (!data.clientName?.trim()) e.clientName = "Client name is required";
-    if (!data.designation?.trim()) e.designation = "Designation is required";
     if (!data.phone?.trim()) e.phone = "Phone number is required";
     else if (!/^[6-9]\d{9}$/.test(data.phone.trim()))
       e.phone = "Enter a valid 10-digit mobile number";
@@ -311,11 +318,11 @@ export default function CustomerDetailsStep({
 
   return (
     <div className="space-y-5">
-  {!editingOrder && 
+  {/* {!editingOrder && 
       <div>
       
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Client Order Request <span className="text-gray-400 font-normal">(Optional)</span>
+          Client Order Request <span className="text-gray-400 font-normal"></span>
         </label>
         
         <select
@@ -332,11 +339,11 @@ export default function CustomerDetailsStep({
         </select>
         {selectedClientOrder && (
           <p className="mt-1.5 text-xs text-blue-600">
-            Client Order selected — Customer Type locked to Individual
+            Client Order selected 
           </p>
         )}
       </div>
-      }
+      } */}
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -450,11 +457,11 @@ export default function CustomerDetailsStep({
               value={data.name || ""}
               onChange={(e) => {
                 const lettersOnly = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-                set("name", lettersOnly);
+                set("name", toTitleCase(lettersOnly));
               }}
               placeholder="Enter full name"
               className={inputClass(!!errors.name)}
-            // disabled={!!selectedClientOrder} 
+            // disabled={!!selectedClientOrder}
             />
           </FormField>
 
@@ -466,7 +473,7 @@ export default function CustomerDetailsStep({
             <input
               type="email"
               value={data.email || ""}
-              onChange={(e) => set("email", e.target.value)}
+              onChange={(e) => set("email", capitalizeFirstOnly(e.target.value))}
               placeholder="customer@example.com"
               className={inputClass(!!errors.email)}
             // disabled={!!selectedClientOrder}
@@ -496,7 +503,7 @@ export default function CustomerDetailsStep({
           <FormField label="Address" error={errors.address} required={false}>
             <textarea
               value={data.address || ""}
-              onChange={(e) => set("address", e.target.value)}
+              onChange={(e) => set("address", toTitleCase(e.target.value))}
               placeholder="Enter full address"
               rows={3}
               className={inputClass(!!errors.address) + " resize-none"}
@@ -582,7 +589,7 @@ export default function CustomerDetailsStep({
             <input
               type="text"
               value={data.companyName || ""}
-              onChange={(e) => set("companyName", e.target.value)}
+              onChange={(e) => set("companyName", toTitleCase(e.target.value))}
               placeholder="Company Name"
               className={inputClass(!!errors.companyName)}
             />
@@ -594,14 +601,14 @@ export default function CustomerDetailsStep({
               value={data.clientName || ""}
               onChange={(e) => {
                 const lettersOnly = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-                set("clientName", lettersOnly);
+                set("clientName", toTitleCase(lettersOnly));
               }}
               placeholder="Enter client name"
               className={inputClass(!!errors.clientName)}
             />
           </FormField>
 
-          <FormField label="Designation" error={errors.designation} required>
+          <FormField label="Designation" error={errors.designation}>
             <select
               value={data.designation || ""}
               onChange={(e) => set("designation", e.target.value)}
@@ -635,7 +642,7 @@ export default function CustomerDetailsStep({
             <input
               type="email"
               value={data.email || ""}
-              onChange={(e) => set("email", e.target.value)}
+              onChange={(e) => set("email", capitalizeFirstOnly(e.target.value))}
               placeholder="company@example.com"
               className={inputClass(!!errors.email)}
             />
@@ -644,7 +651,7 @@ export default function CustomerDetailsStep({
            <FormField label="Address" error={errors.address} required={false}>
             <textarea
               value={data.address || ""}
-              onChange={(e) => set("address", e.target.value)}
+              onChange={(e) => set("address", toTitleCase(e.target.value))}
               placeholder="Enter full address"
               rows={3}
               className={inputClass(!!errors.address) + " resize-none"}

@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { FaRegEdit } from "react-icons/fa";
 import { MdOutlineDelete } from "react-icons/md";
 import { HiOutlinePlus, HiOutlineUserGroup } from "react-icons/hi";
 import { HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi";
 import API_BASE from "../../../../baseurl";
-import StaffAdminFormModal from "./StaffAdminFormModal";
+import OperationUserFormModal from "./OperationUserFormModal";
 import DeleteConfirmModal from "./DeleteModal";
 import { getToken } from "../../utils/auth";
 
@@ -14,60 +15,56 @@ import { getToken } from "../../utils/auth";
 const HEADERS = ["S.NO", "Username", "Email", "Phone", "Role", "Status", "Actions"];
 const ITEMS_PER_PAGE = 10;
 
-export default function StaffAdminTable() {
-  const [staffAdmins, setStaffAdmins] = useState<any[]>([]);
+export default function OperationManagementTable() {
+  const [operationUsers, setOperationUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   const [showFormModal, setShowFormModal] = useState(false);
-  const [editingStaffAdmin, setEditingStaffAdmin] = useState<any | null>(null);
+  const [editingOperationUser, setEditingOperationUser] = useState<any | null>(null);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const fetchStaffAdmins = async () => {
+  const fetchOperationUsers = async () => {
     try {
       setLoading(true);
       setError(null);
       const token = getToken();
-      const res = await fetch(`${API_BASE}staff-admins`, {
+      const { data } = await axios.get(`${API_BASE}operation-users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed to fetch staff admins");
-      const data = await res.json();
-      setStaffAdmins(data.data.data);
+      setOperationUsers(data.data.data);
       setCurrentPage(1);
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      setError(err?.response?.data?.message || "Failed to fetch operation users");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchStaffAdmins(); }, []);
+  useEffect(() => { fetchOperationUsers(); }, []);
 
-  const totalItems = staffAdmins.length;
+  const totalItems = operationUsers.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentItems = staffAdmins.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const currentItems = operationUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const handleDeleteConfirm = async () => {
     if (!deletingId) return;
     try {
       setDeleteLoading(true);
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE}staff-admins/${deletingId}`, {
-        method: "DELETE",
+      const token = getToken();
+      await axios.delete(`${API_BASE}operation-users/${deletingId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed to delete");
-      await fetchStaffAdmins();
+      await fetchOperationUsers();
       setShowDeleteModal(false);
       setDeletingId(null);
     } catch (err: any) {
-      alert(err.message || "Delete failed");
+      alert(err?.response?.data?.message || "Delete failed");
     } finally {
       setDeleteLoading(false);
     }
@@ -82,14 +79,14 @@ export default function StaffAdminTable() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/30">
             <HiOutlineUserGroup className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           </span>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">Staff Admin Management</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white">Operation Management</h3>
         </div>
         <button
-          onClick={() => { setEditingStaffAdmin(null); setShowFormModal(true); }}
+          onClick={() => { setEditingOperationUser(null); setShowFormModal(true); }}
           className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 active:scale-95 transition-all"
         >
           <HiOutlinePlus className="h-4 w-4 stroke-2" />
-          Add Staff Admin
+          Add Operation User
         </button>
       </div>
 
@@ -104,7 +101,7 @@ export default function StaffAdminTable() {
         {!loading && error && (
           <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
             <p className="text-sm text-red-700">{error}</p>
-            <button onClick={fetchStaffAdmins} className="ml-2 text-sm font-medium underline">Retry</button>
+            <button onClick={fetchOperationUsers} className="ml-2 text-sm font-medium underline">Retry</button>
           </div>
         )}
 
@@ -125,47 +122,47 @@ export default function StaffAdminTable() {
                   {currentItems.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-5 py-16 text-center text-sm text-gray-500">
-                        No staff admins found.
+                        No operation users found.
                       </td>
                     </tr>
                   ) : (
-                    currentItems.map((sa, idx) => (
+                    currentItems.map((ou, idx) => (
                       <tr
-                        key={sa._id}
+                        key={ou._id}
                         className={`group transition-colors hover:bg-blue-50/40 dark:hover:bg-blue-900/10 ${idx % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50/50 dark:bg-gray-800/20"
                           }`}
                       >
                         <td className="px-5 py-4 text-gray-600 dark:text-gray-300">{startIndex + idx + 1}</td>
-                        <td className="px-5 py-4 font-medium text-gray-800 dark:text-gray-200">{sa.username}</td>
-                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300">{sa.email || "—"}</td>
-                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300">{sa.phone || "—"}</td>
+                        <td className="px-5 py-4 font-medium text-gray-800 dark:text-gray-200">{ou.username}</td>
+                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300">{ou.email || "—"}</td>
+                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300">{ou.phone || "—"}</td>
                         <td className="px-5 py-4">
                           <span className="inline-flex items-center rounded-lg bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                            Staff Admin
+                            Operation
                           </span>
                         </td>
                         <td className="px-5 py-4">
                           <span
                             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-                            style={sa.status === "active"
+                            style={ou.status === "active"
                               ? { background: "#dcfce7", color: "#15803d" }
                               : { background: "#fee2e2", color: "#dc2626" }
                             }
                           >
-                            <span className={`h-1.5 w-1.5 rounded-full ${sa.status === "active" ? "bg-green-500 animate-pulse" : "bg-red-400"}`} />
-                            {sa.status === "active" ? "Active" : "Inactive"}
+                            <span className={`h-1.5 w-1.5 rounded-full ${ou.status === "active" ? "bg-green-500 animate-pulse" : "bg-red-400"}`} />
+                            {ou.status === "active" ? "Active" : "Inactive"}
                           </span>
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                             <button
-                              onClick={() => { setEditingStaffAdmin(sa); setShowFormModal(true); }}
+                              onClick={() => { setEditingOperationUser(ou); setShowFormModal(true); }}
                               className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800"
                             >
                               <FaRegEdit className="h-3.5 w-3.5" />
                             </button>
                             <button
-                              onClick={() => { setDeletingId(sa._id!); setShowDeleteModal(true); }}
+                              onClick={() => { setDeletingId(ou._id!); setShowDeleteModal(true); }}
                               className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-red-400 hover:bg-red-50 hover:text-red-600 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800"
                             >
                               <MdOutlineDelete className="h-4 w-4" />
@@ -205,10 +202,10 @@ export default function StaffAdminTable() {
       </div>
 
       {showFormModal && (
-        <StaffAdminFormModal
-          editingStaffAdmin={editingStaffAdmin}
-          onSuccess={() => { setShowFormModal(false); fetchStaffAdmins(); }}
-          onClose={() => { setShowFormModal(false); setEditingStaffAdmin(null); }}
+        <OperationUserFormModal
+          editingOperationUser={editingOperationUser}
+          onSuccess={() => { setShowFormModal(false); fetchOperationUsers(); }}
+          onClose={() => { setShowFormModal(false); setEditingOperationUser(null); }}
         />
       )}
 

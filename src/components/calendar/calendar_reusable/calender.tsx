@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect,  useMemo, useCallback, } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback, } from "react";
+import { createPortal } from "react-dom";
+import toast from "react-hot-toast";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import {
   addMonths,
   endOfMonth,
@@ -71,6 +74,10 @@ export default function Calendar({
 }: DatePickerProps) {
   const [internalOpen, setInternalOpen] =
     useState(false);
+
+  const [mounted] = useState(
+    () => typeof document !== "undefined"
+  );
 
   const minSelectableDate = useMemo(
     () => startOfDay(minimumDate ?? new Date()),
@@ -179,28 +186,39 @@ export default function Calendar({
     setCalendarOpen,
   ]);
 
-  useEffect(() => {
-    if (
-      !isOpen ||
-      popupMode !== "dialog"
-    ) {
-      return;
-    }
-
-    const previousOverflow =
-      document.body.style.overflow;
-
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow =
-        previousOverflow;
-    };
-  }, [isOpen, popupMode]);
+  useScrollLock(isOpen && popupMode === "dialog");
 
   const handleClear = () => {
     setCheckIn(null);
     setCheckOut(null);
+  };
+
+  // Fires when a click completes the range (a valid end date is set),
+  // so the calendar can auto-close with a confirmation toast instead of
+  // requiring the user to hit "Close" manually.
+  const completeRangeSelection = (
+    start: Date,
+    end: Date
+  ) => {
+    setCheckOut(end);
+    setCalendarOpen(false);
+
+    const dayCount = getInclusiveDayCount(
+      start,
+      end
+    );
+
+    const rangeLabel = isSameDay(start, end)
+      ? format(start, "dd MMM yyyy")
+      : `${format(start, "dd MMM yyyy")} - ${format(
+        end,
+        "dd MMM yyyy"
+      )}`;
+
+    toast.success(
+      `${dayCount} ${dayCount === 1 ? "day" : "days"
+      } selected: ${rangeLabel}`
+    );
   };
 
   const handleDateSelect = (date: Date) => {
@@ -232,7 +250,7 @@ export default function Calendar({
       }
 
       // Selecting the same day is allowed as a one-day campaign.
-      setCheckOut(selectedDate);
+      completeRangeSelection(start, selectedDate);
       return;
     }
 
@@ -243,7 +261,7 @@ export default function Calendar({
     }
 
     if (isAfter(selectedDate, start)) {
-      setCheckOut(selectedDate);
+      completeRangeSelection(start, selectedDate);
       return;
     }
 
@@ -328,9 +346,9 @@ export default function Calendar({
               startTime !== null &&
               endTime !== null &&
               currentTime >=
-                Math.min(startTime, endTime) &&
+              Math.min(startTime, endTime) &&
               currentTime <=
-                Math.max(startTime, endTime);
+              Math.max(startTime, endTime);
 
             return (
               <button
@@ -346,18 +364,16 @@ export default function Calendar({
                 className={`
                   flex h-10 w-10 items-center justify-center
                   rounded-[20px] text-lg transition
-                  ${
-                    isPast
-                      ? "cursor-not-allowed bg-white text-gray-300 opacity-40"
-                      : isSelectedRange
-                        ? "bg-black font-semibold text-white"
-                        : "bg-white font-normal text-gray-800 hover:bg-gray-200"
+                  ${isPast
+                    ? "cursor-not-allowed bg-white text-gray-300 opacity-40"
+                    : isSelectedRange
+                      ? "bg-black font-semibold text-white"
+                      : "bg-white font-normal text-gray-800 hover:bg-gray-200"
                   }
-                  ${
-                    isSelectedStart ||
+                  ${isSelectedStart ||
                     isSelectedEnd
-                      ? "ring-2 ring-black ring-offset-1"
-                      : ""
+                    ? "ring-2 ring-black ring-offset-1"
+                    : ""
                   }
                 `}
               >
@@ -384,8 +400,8 @@ export default function Calendar({
       ref={calendarRef}
       className={
         popupMode === "dialog"
-          ? "fixed left-1/2 top-1/2 z-160 max-h-[calc(100vh-24px)] w-[calc(100vw-24px)] max-w-190 -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-4 shadow-[0_30px_90px_rgba(0,0,0,0.28)] sm:p-6"
-          : "absolute left-1/2 top-full z-50 mt-2 max-h-[calc(100vh-24px)] w-[calc(100vw-24px)] max-w-190 -translate-x-1/2 overflow-y-auto rounded-2xl bg-white p-4 shadow-lg sm:p-6"
+          ? "fixed left-1/2 top-1/2 z-9999 max-h-[calc(100vh-24px)] w-[calc(100vw-24px)] max-w-190 -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-4 shadow-[0_30px_90px_rgba(0,0,0,0.28)] sm:p-6 rdsw-thin-scrollbar"
+          : "absolute left-1/2 top-full z-50 mt-2 max-h-[calc(100vh-24px)] w-[calc(100vw-24px)] max-w-190 -translate-x-1/2 overflow-y-auto rounded-2xl bg-white p-4 shadow-lg sm:p-6 rdsw-thin-scrollbar"
       }
     >
       <div className="mb-2 flex items-center justify-between gap-3">
@@ -454,95 +470,104 @@ export default function Calendar({
   );
 
   return (
-    <div
-      className={`relative w-full ${
-        showInputCard
-          ? "flex justify-center"
-          : ""
-      }`}
-    >
-      {showInputCard && (
-        <div
-          className="mx-auto w-full max-w-4xl bg-white p-6"
-          style={{
-            borderRadius: "20px",
-            boxShadow:
-              "0 10px 25px rgba(0,0,0,0.1)",
-          }}
-        >
-          <h2 className="mb-4 text-xl font-semibold">
-            {daysSelected}{" "}
-            {daysSelected === 1
-              ? "day"
-              : "days"}{" "}
-            selected
-          </h2>
+    <>
+      <div
+        className={`relative w-full ${showInputCard
+            ? "flex justify-center"
+            : ""
+          }`}
+      >
+        {showInputCard && (
+          <div
+            className="mx-auto w-full max-w-4xl bg-white p-6"
+            style={{
+              borderRadius: "20px",
+              boxShadow:
+                "0 10px 25px rgba(0,0,0,0.1)",
+            }}
+          >
+            <h2 className="mb-4 text-xl font-semibold">
+              {daysSelected}{" "}
+              {daysSelected === 1
+                ? "day"
+                : "days"}{" "}
+              selected
+            </h2>
 
-          <div className="mb-6 flex flex-col gap-6 sm:flex-row">
-            <div className="flex flex-1 flex-col">
-              <label className="mb-1 text-[20px] font-normal">
-                Start-Date
-              </label>
+            <div className="mb-6 flex flex-col gap-6 sm:flex-row">
+              <div className="flex flex-1 flex-col">
+                <label className="mb-1 text-[20px] font-normal">
+                  Start-Date
+                </label>
 
-              <input
-                type="text"
-                readOnly
-                value={formatDate(checkIn, {
-                  pattern: "dd/MM/yyyy",
-                })}
-                onClick={() =>
-                  setCalendarOpen(!isOpen)
-                }
-                placeholder="Select date"
-                className="w-full cursor-pointer px-4 py-3"
-                style={{
-                  borderRadius: "10px",
-                  border:
-                    "0.5px solid #d1d5db",
-                  backgroundColor: "#fff",
-                }}
-              />
-            </div>
+                <input
+                  type="text"
+                  readOnly
+                  value={formatDate(checkIn, {
+                    pattern: "dd/MM/yyyy",
+                  })}
+                  onClick={() =>
+                    setCalendarOpen(!isOpen)
+                  }
+                  placeholder="Select date"
+                  className="w-full cursor-pointer px-4 py-3"
+                  style={{
+                    borderRadius: "10px",
+                    border:
+                      "0.5px solid #d1d5db",
+                    backgroundColor: "#fff",
+                  }}
+                />
+              </div>
 
-            <div className="flex flex-1 flex-col">
-              <label className="mb-1 text-[20px] font-normal">
-                End-Date
-              </label>
+              <div className="flex flex-1 flex-col">
+                <label className="mb-1 text-[20px] font-normal">
+                  End-Date
+                </label>
 
-              <input
-                type="text"
-                readOnly
-                value={formatDate(checkOut, {
-                  pattern: "dd/MM/yyyy",
-                })}
-                onClick={() =>
-                  setCalendarOpen(!isOpen)
-                }
-                placeholder="Select date"
-                className="w-full cursor-pointer px-4 py-3"
-                style={{
-                  borderRadius: "10px",
-                  border:
-                    "0.5px solid #d1d5db",
-                  backgroundColor: "#fff",
-                }}
-              />
+                <input
+                  type="text"
+                  readOnly
+                  value={formatDate(checkOut, {
+                    pattern: "dd/MM/yyyy",
+                  })}
+                  onClick={() =>
+                    setCalendarOpen(!isOpen)
+                  }
+                  placeholder="Select date"
+                  className="w-full cursor-pointer px-4 py-3"
+                  style={{
+                    borderRadius: "10px",
+                    border:
+                      "0.5px solid #d1d5db",
+                    backgroundColor: "#fff",
+                  }}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {isOpen && popupMode === "dialog" && (
-        <button
-          type="button"
-          aria-label="Close calendar"
-          onClick={() =>
-            setCalendarOpen(false)
-          }
-          className="fixed inset-0 z-150 cursor-default bg-black/35 backdrop-blur-[1px]"
-        />
-      )}
-      {isOpen && calendarPanel}
-    </div>
+        {isOpen && popupMode === "dropdown" && calendarPanel}
+      </div>
+
+      {isOpen &&
+        popupMode === "dialog" &&
+        mounted &&
+        createPortal(
+          <>
+            <button
+              type="button"
+              aria-label="Close calendar"
+              onClick={() =>
+                setCalendarOpen(false)
+              }
+              className="fixed inset-0 z-150 cursor-default bg-black/35 backdrop-blur-[1px]"
+            />
+            {calendarPanel}
+          </>,
+          document.body,
+        )}
+    </>
   );
 }

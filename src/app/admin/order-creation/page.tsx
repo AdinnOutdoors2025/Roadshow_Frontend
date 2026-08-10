@@ -1011,6 +1011,11 @@ const STATUS_CONFIG: Record<string, { color: string; dot: string }> = {
 // field that stays "Pending" even after the order reaches Closed Won/Lost.
 const displayOrderStatus = (order: Order): "Pending" | "Confirmed" | "Cancelled" | "Completed" => {
   if (order.pipelineStatus === "closedWon") return "Completed";
+  if (
+    order.salesPipelineStatus === "salesFinalClosedWon" ||
+    order.salesPipelineStatus === "invoiceGeneration"
+  )
+    return "Completed";
   if (order.pipelineStatus === "closedLost" || order.salesPipelineStatus === "closedLost") return "Cancelled";
   return order.orderStatus;
 };
@@ -1301,7 +1306,7 @@ export default function OrdersPage() {
           </select>
 
 
-          <select
+          {/* <select
             value={itemsPerPage}
             onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
             className="text-sm rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
@@ -1309,7 +1314,7 @@ export default function OrdersPage() {
             {LIMIT_OPTIONS.map((n) => (
               <option key={n} value={n}>Show {n}</option>
             ))}
-          </select>
+          </select> */}
 
           <button
             onClick={handleApplyFilters}
@@ -1629,14 +1634,14 @@ export default function OrdersPage() {
                             <div className="flex flex-col gap-1.5 max-h-[100px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
                               {(order.bookingItems || []).map((item, i) => (
                                 <div key={i} className="flex flex-col">
-                                  <span className="text-[12px] text-gray-400 leading-none mb-0.5">
+                                  {/* <span className="text-[12px] text-gray-400 leading-none mb-0.5">
                                     Vehicle {i + 1}
-                                  </span>
+                                  </span> */}
                                   <span
                                     className="text-xs text-gray-600 dark:text-gray-300 truncate max-w-[120px]"
                                     title={`${item.city}${item.state ? ", " + item.state : ""}`}
                                   >
-                                    {item.city || "—"}
+                                    {item.campaignLocation || "—"}
                                   </span>
                                 </div>
                               ))}
@@ -1831,6 +1836,7 @@ export default function OrdersPage() {
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
           vehicleTypes={vehicleTypes}
+          resolvedOrderStatus={displayOrderStatus(selectedOrder)}
         />
       )}
 

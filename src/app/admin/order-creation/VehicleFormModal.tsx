@@ -40,6 +40,7 @@ interface Props {
 
 
 const uid = () => Math.random().toString(36).slice(2, 9);
+const toTitleCase = (str: string) => str.replace(/\b\w/g, (c) => c.toUpperCase());
 
 
 const BOOKING_FOR_OPTIONS = ["Individual Customer", "Agency"];
@@ -634,17 +635,12 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
     if (!form.packageId) e.vehicleModel = "Select vehicle model";
     // if (!form.bookingFor) e.bookingFor = "Select booking for";
 
-    if (!form.campaignType) e.campaignType = "Select campaign type";
-
     if (form.campaignType === "Other" && !form.otherCampaignType) e.otherCampaignType = "Required";
 
-    if (!form.campaignName.trim()) e.campaignName = "Enter campaign name";
     if (!form.fromDate) e.fromDate = "Select start date";
     if (!form.toDate) e.toDate = "Select end date";
     if (form.fromDate && form.toDate && new Date(form.fromDate) >= new Date(form.toDate))
       e.toDate = "End date must be after start date";
-    if (!form.state) e.state = "Select state";
-    if (!form.city.trim()) e.city = "Enter city";
     if (!form.campaignLocation.trim()) e.campaignLocation = "Enter campaign location";
 
     if (!form.quantity || form.quantity < 1) {
@@ -987,7 +983,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                       const label =
                         typeof pkg.vehicleType === "object" && pkg.vehicleType !== null
                           ? pkg.vehicleType.typeName
-                          : vehicleTypes.find((t) => t._id === pkg.vehicleType)?.typeName ?? pkg.vehicleType;
+                          : vehicleTypes.find((t : any) => t._id === pkg.vehicleType)?.typeName ?? pkg.vehicleType;
 
                       return (
                         <option key={pkg._id} value={pkg._id}>
@@ -1251,7 +1247,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
 
               <div id="field-campaignType">
-                <FormField label="Campaign Type" error={errors.campaignType} required>
+                <FormField label="Campaign Type" error={errors.campaignType}>
                   <select value={form.campaignType} onChange={(e) => set("campaignType", e.target.value)} className={inputClass(!!errors.campaignType)}>
                     <option value="">Select</option>
                     {campaignTypes.map((ct) => (
@@ -1264,13 +1260,13 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
 
               <div id="field-campaignName">
-                <FormField label="Campaign Name" error={errors.campaignName} required>
+                <FormField label="Campaign Name" error={errors.campaignName}>
                   <input
                     type="text"
                     value={form.campaignName}
                     onChange={(e) => {
                       const onlyLetters = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-                      set("campaignName", onlyLetters);
+                      set("campaignName", toTitleCase(onlyLetters));
                     }}
                     placeholder="Enter campaign name"
                     className={inputClass(!!errors.campaignName)}
@@ -1342,7 +1338,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
             <div className="grid grid-cols-2 gap-4">
 
               <div id="field-state">
-                <FormField label="State" error={errors.state} required>
+                <FormField label="State" error={errors.state}>
                   <select
                     value={form.state}
                     onChange={(e) => handleStateChange(e.target.value)}
@@ -1358,7 +1354,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
 
               <div id="field-city">
-                <FormField label="City" error={errors.city} required>
+                <FormField label="City" error={errors.city}>
                   <CitySelect
                     value={form.city}
                     options={cityOptions}
@@ -1384,7 +1380,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
               <div id="field-campaignLocation">
                 <FormField label="Campaign Location" error={errors.campaignLocation} required>
-                  <input type="text" value={form.campaignLocation} onChange={(e) => set("campaignLocation", e.target.value)} placeholder="Campaign location" className={inputClass(!!errors.campaignLocation)} />
+                  <input type="text" value={form.campaignLocation} onChange={(e) => set("campaignLocation", toTitleCase(e.target.value))} placeholder="Campaign location" className={inputClass(!!errors.campaignLocation)} />
                 </FormField>
               </div>
             </div>
@@ -1712,7 +1708,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                   <input
                     type="text"
                     value={charge.label}
-                    onChange={(e) => updateCharge(charge.id, { label: e.target.value })}
+                    onChange={(e) => updateCharge(charge.id, { label: toTitleCase(e.target.value) })}
                     placeholder="Label"
                     className="w-36 min-w-0 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs text-gray-700 dark:text-gray-300 outline-none focus:border-blue-400"
                   />

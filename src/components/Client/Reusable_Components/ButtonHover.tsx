@@ -80,10 +80,84 @@ export function ButtonHover({
       }px`;
     };
 
+    /* Last known pointer position, and whether this button's bubble is
+       currently expanded. Both feed watchPointer() below. */
+    const pointer = { x: -1, y: -1 };
+
+    let expanded = false;
+    let frameId = 0;
+
+    const collapseBubble = () => {
+      expanded = false;
+
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+        frameId = 0;
+      }
+
+      bubble.style.transition =
+        "transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.55s ease";
+
+      bubble.style.transform =
+        "scale(0)";
+
+      bubble.style.opacity = "0";
+    };
+
+    /* Why this exists: the public site scrolls through GSAP ScrollSmoother,
+       which TRANSLATES #smooth-content rather than scrolling it. The button
+       slides out from under a cursor that never moved, so the browser fires
+       no mouseleave and the bubble stayed filled — a red "Book Now" that
+       followed the reader into the next section until they happened to hover
+       and leave that same button again.
+
+       Scroll events are not enough either (the smoother, Lenis and a trackpad
+       fling all report differently), so while a bubble is up we simply
+       hit-test the pointer every frame. It runs for one button at a time, only
+       while it is filled, and stops the moment it collapses. */
+    const watchPointer = () => {
+      frameId = 0;
+
+      if (!expanded) return;
+
+      const under =
+        pointer.x >= 0
+          ? document.elementFromPoint(
+              pointer.x,
+              pointer.y
+            )
+          : null;
+
+      if (!under || !btn.contains(under)) {
+        collapseBubble();
+        return;
+      }
+
+      frameId =
+        requestAnimationFrame(watchPointer);
+    };
+
+    const handlePointerMove = (
+      event: PointerEvent
+    ) => {
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+    };
+
     const handleMouseEnter = (
       event: MouseEvent
     ) => {
       if (btn.disabled) return;
+
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+
+      expanded = true;
+
+      if (!frameId) {
+        frameId =
+          requestAnimationFrame(watchPointer);
+      }
 
       placeBubble(event);
 
@@ -109,6 +183,8 @@ export function ButtonHover({
       event: MouseEvent
     ) => {
       if (btn.disabled) {
+        expanded = false;
+
         bubble.style.transform =
           "scale(0)";
 
@@ -119,13 +195,13 @@ export function ButtonHover({
 
       placeBubble(event);
 
-      bubble.style.transition =
-        "transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.55s ease";
+      collapseBubble();
+    };
 
-      bubble.style.transform =
-        "scale(0)";
-
-      bubble.style.opacity = "0";
+    /* Alt-tabbing away, or the pointer leaving the window entirely, both end
+       the hover without a mouseleave on the button itself. */
+    const handleWindowBlur = () => {
+      if (expanded) collapseBubble();
     };
 
     btn.addEventListener(
@@ -138,7 +214,22 @@ export function ButtonHover({
       handleMouseLeave
     );
 
+    window.addEventListener(
+      "pointermove",
+      handlePointerMove,
+      { passive: true }
+    );
+
+    window.addEventListener(
+      "blur",
+      handleWindowBlur
+    );
+
     return () => {
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
+
       btn.removeEventListener(
         "mouseenter",
         handleMouseEnter
@@ -147,6 +238,16 @@ export function ButtonHover({
       btn.removeEventListener(
         "mouseleave",
         handleMouseLeave
+      );
+
+      window.removeEventListener(
+        "pointermove",
+        handlePointerMove
+      );
+
+      window.removeEventListener(
+        "blur",
+        handleWindowBlur
       );
     };
   }, []);

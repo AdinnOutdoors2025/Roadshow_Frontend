@@ -486,10 +486,10 @@ export default function PipelineBoard() {
   const fetchStaffList = async () => {
     try {
       const token = getToken();
-      const { data } = await axios.get(`${API_BASE}staff-admins`, {
+      const { data } = await axios.get(`${API_BASE}operation-users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setStaffAdmins(data.data.data || []);
+      setStaffAdmins((data.data.data || []).filter((s: any) => s.status === "active"));
     } catch { }
   };
 
@@ -640,7 +640,7 @@ export default function PipelineBoard() {
     }
 
     if (fromStage === "todo" && toStage === "projectExecution") {
-      if (currentUserIsAdmin === 0) {
+      if (currentUserIsAdmin !== 1) {
         commitMove(order, toStage);
         return;
       }
@@ -941,7 +941,7 @@ export default function PipelineBoard() {
                 onChange={(e) => setHandlerName(e.target.value)}
                 className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
               >
-                <option value="">-- Select staff admin --</option>
+                <option value="">-- Select Operation User --</option>
                 {staffAdmins.map((s) => (
                   <option key={s.username} value={s.username}>
                     {s.username}
