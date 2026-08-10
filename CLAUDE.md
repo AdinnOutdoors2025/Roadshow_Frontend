@@ -81,7 +81,7 @@ Inside `src/app/admin`, each business feature is a folder with `page.tsx` plus c
 
 ### Two route trees, two audiences
 
-- **`src/app/roadshow/*`** — public client-facing pages (campaign request form, vehicle detail pages at `roadshow/VehicleDetails/[vehicleId]`). Wrapped by `src/app/roadshow/layout.tsx` (Navbar/Footer). The homepage (`src/app/page.tsx`) separately composes `src/components/Client/*` sections directly (it does not live under `roadshow/`).
+- **`src/app/roadshow/*`** — public client-facing pages (campaign request form, vehicle detail pages at `${baseUrl}/roadshow/VehicleDetails/[vehicleId]`). Wrapped by `src/app/roadshow/layout.tsx` (Navbar/Footer). The homepage (`src/app/page.tsx`) separately composes `src/components/Client/*` sections directly (it does not live under `roadshow/`).
 - **`src/app/admin/*`** — the admin dashboard. Route groups: `(auth)` for `/admin/signin` and `/admin/signup`, `(full-width-pages)/(error-pages)` for full-bleed pages like `error-404`. Everything else is a flat feature folder under `admin/`.
 
 ### Admin provider/layout nesting
