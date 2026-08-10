@@ -212,9 +212,9 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
       .catch(() => {});
   }, []);
   const [billToName, setBillToName] = useState(existing?.billToName || order.companyName || order.clientName || order.name || "");
-  const [billToAddress, setBillToAddress] = useState(existing?.billToAddress || order.address || "");
-  const [billToGstin, setBillToGstin] = useState(existing?.billToGstin || order.gstNumber || "");
-  const [billToPan, setBillToPan] = useState(existing?.billToPan || order.panNumber || "");
+  const [billToAddress, setBillToAddress] = useState(existing ? (existing.billToAddress || "") : (order.address || ""));
+  const [billToGstin, setBillToGstin] = useState(existing ? (existing.billToGstin || "") : (order.gstNumber || ""));
+  const [billToPan, setBillToPan] = useState(existing ? (existing.billToPan || "") : (order.panNumber || ""));
   const [cgstPercent, setCgstPercent] = useState(existing?.cgstPercent ?? 9);
   const [sgstPercent, setSgstPercent] = useState(existing?.sgstPercent ?? 9);
   const [igstPercent, setIgstPercent] = useState(existing?.igstPercent ?? 18);
@@ -343,9 +343,10 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
   const rounding = Math.round((roundedTotal - rawTotal) * 100) / 100;
   const totalInWords = numberToWords(roundedTotal);
 
-  const invoiceNumber = existing?.invoiceNumber || `ASI-${order.orderId}`;
+  const [invoiceNumber, setInvoiceNumber] = useState(existing?.invoiceNumber || `ASI-${order.orderId}`);
 
   const buildPayload = () => ({
+    invoiceNumber,
     invoiceDate,
     dueDate,
     poNumber,
@@ -364,14 +365,37 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
     signatureMode,
   });
 
+  const lastSavedSnapshotRef = useRef(JSON.stringify(buildPayload()));
+  const currentSnapshot = JSON.stringify(buildPayload());
+  const isDirty = currentSnapshot !== lastSavedSnapshotRef.current;
+
   const handleSave = async (silent = false) => {
     if (disabled) return;
+    if (!silent) {
+      const requiredFields = [
+        [invoiceNumber, "Invoice Number is required"],
+        [invoiceDate, "Invoice Date is required"],
+        [dueDate, "Due Date is required"],
+        [poNumber, "P.O.# is required"],
+        [projectName, "Project Name is required"],
+        [placeOfSupply, "Place of Supply is required"],
+        [billToName, "Bill To Name / Company is required"],
+      ];
+      for (const [value, message] of requiredFields) {
+        if (!String(value || "").trim()) {
+          toast.error(message);
+          return;
+        }
+      }
+    }
     setSaving(true);
     try {
-      await axios.patch(`${API_BASE}admin/pipeline/${order._id}/invoice`, buildPayload(), {
+      const payload = buildPayload();
+      await axios.patch(`${API_BASE}admin/pipeline/${order._id}/invoice`, payload, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (!silent) toast.success("Invoice saved");
+      lastSavedSnapshotRef.current = JSON.stringify(payload);
       if (onRefresh) await onRefresh();
     } catch (err) {
       if (!silent) toast.error(err?.response?.data?.message || "Failed to save invoice");
@@ -732,9 +756,9 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
                       <span>IGST18 ({igstPercent}%)</span><span>{fmtMoney(igstAmt)}</span>
                     </div>
                   )}
-                  {/* <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 4px", color: INK }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 4px", color: INK }}>
                     <span>Rounding</span><span>{fmtMoney(rounding)}</span>
-                  </div> */}
+                  </div>
                   <div
                     style={{
                       display: "flex",
@@ -801,7 +825,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
             <button
               type="button"
               onClick={() => handleDownload()}
-              disabled={downloading || disabled}
+              disabled={downloading || disabled || isDirty}
               className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-60 transition-colors"
             >
               <Download size={13} /> {downloading ? "Generating…" : "Download Invoice"}
@@ -817,11 +841,11 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
           </p>
           <div className="grid grid-cols-2 gap-3.5">
             <div>
-              <label className={labelCls}>Invoice Number</label>
-              <input value={invoiceNumber} readOnly className={inputCls + " bg-gray-50 dark:bg-gray-800 cursor-not-allowed text-gray-500"} />
+              <label className={labelCls}>Invoice Number <span className="text-red-500">*</span></label>
+              <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Invoice Date</label>
+              <label className={labelCls}>Invoice Date <span className="text-red-500">*</span></label>
               <DatePicker
                 value={invoiceDate}
                 onChange={handleInvoiceDateChange}
@@ -831,7 +855,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
               />
             </div>
             <div>
-              <label className={labelCls}>Due Date</label>
+              <label className={labelCls}>Due Date <span className="text-red-500">*</span></label>
               <DatePicker
                 value={dueDate}
                 onChange={setDueDate}
@@ -841,15 +865,15 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
               />
             </div>
             <div>
-              <label className={labelCls}>P.O.#</label>
+              <label className={labelCls}>P.O.# <span className="text-red-500">*</span></label>
               <input value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="PO Number" className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Project Name</label>
+              <label className={labelCls}>Project Name <span className="text-red-500">*</span></label>
               <input value={projectName} onChange={(e) => setProjectName(e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Place of Supply</label>
+              <label className={labelCls}>Place of Supply <span className="text-red-500">*</span></label>
               <select
                 value={placeOfSupply}
                 onChange={(e) => setPlaceOfSupply(e.target.value)}
@@ -872,12 +896,12 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
             <User2 size={14} className="text-gray-400" /> Bill To
           </p>
           <div>
-            <label className={labelCls}>Name / Company</label>
+            <label className={labelCls}>Name / Company <span className="text-red-500">*</span></label>
             <input value={billToName} onChange={(e) => setBillToName(toTitleCase(e.target.value))} className={inputCls} />
           </div>
           <div>
             <label className={labelCls}>Address</label>
-            <textarea value={billToAddress} onChange={(e) => setBillToAddress(toTitleCase(e.target.value))} rows={2} className={inputCls + " resize-none"} />
+            <textarea value={billToAddress} onChange={(e) => setBillToAddress(toTitleCase(e.target.value))} rows={2} autoComplete="off" name="invoice-bill-to-address" className={inputCls + " resize-none"} />
           </div>
           <div className="grid grid-cols-2 gap-3.5">
             <div>

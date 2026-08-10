@@ -188,14 +188,14 @@ export default function DateConflictTab({
             // Status filter
             if (statusFilter && getStatusKey(c) !== statusFilter) return false;
 
-            // Booking dates filter (overlap logic)
+            // Booking dates filter (entry must be fully inside the selected range)
             if (bookingFrom) {
                 const bFrom = new Date(bookingFrom + "T00:00:00");
-                if (new Date(c.toDate) < bFrom) return false;
+                if (new Date(c.fromDate) < bFrom) return false;
             }
             if (bookingTo) {
                 const bTo = new Date(bookingTo + "T23:59:59");
-                if (new Date(c.fromDate) > bTo) return false;
+                if (new Date(c.toDate) > bTo) return false;
             }
 
             // Created At filter
@@ -211,6 +211,9 @@ export default function DateConflictTab({
             return true;
         });
     }, [activeGroup, search, statusFilter, bookingFrom, bookingTo, createdFrom, createdTo]);
+
+    // Sum of the "Qty" column across the currently filtered table rows.
+    const totalOrderVehicleCount = filteredEntries.reduce((sum, c) => sum + (c.quantity || 1), 0);
 
     // Filter maarina page 1 ku reset pannurom
     useEffect(() => {
@@ -331,7 +334,7 @@ export default function DateConflictTab({
                             {activeGroup.availability.error ? (
                                 <p className="text-xs text-gray-500">{activeGroup.availability.error}</p>
                             ) : (
-                                <div className="grid grid-cols-3 gap-2 text-center">
+                                <div className="grid grid-cols-4 gap-2 text-center">
                                     <div className="rounded-lg bg-white/60 dark:bg-black/10 py-2">
                                         <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
                                             {activeGroup.availability.totalFleet ?? "—"}
@@ -351,7 +354,13 @@ export default function DateConflictTab({
                                         <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
                                             {activeGroup.availability.requiredQuantity}
                                         </p>
-                                        <p className="text-[11px] text-gray-500">Order Vehicle Count</p>
+                                        <p className="text-[11px] text-gray-500">This Order Vehicle Count</p>
+                                    </div>
+                                    <div className="rounded-lg bg-white/60 dark:bg-black/10 py-2">
+                                        <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
+                                            {totalOrderVehicleCount}
+                                        </p>
+                                        <p className="text-[11px] text-gray-500">Total Order Vehicle Count</p>
                                     </div>
                                 </div>
                             )}

@@ -19,7 +19,7 @@ interface LineItemFieldChange {
 
 interface LineItemChange {
   groupLabel: string;
-  action: "added" | "removed" | "edited";
+  action: "added" | "removed" | "edited" | "renamed";
   description: string;
   hsnSac: string;
   qty: number;
@@ -201,17 +201,33 @@ export default function InvoiceHistoryTab({ invoiceHistory }: Props) {
                                 ? "text-green-600"
                                 : dc.action === "removed"
                                   ? "text-red-500"
-                                  : "text-amber-600")
+                                  : dc.action === "renamed"
+                                    ? "text-blue-600"
+                                    : "text-amber-600")
                             }
                           >
                             {dc.action === "added" && <PlusCircle size={12} />}
                             {dc.action === "removed" && <MinusCircle size={12} />}
+                            {dc.action === "renamed" && <PencilLine size={12} />}
                             {dc.action === "edited" && <PencilLine size={12} />}
-                            {dc.action === "added" ? "Added" : dc.action === "removed" ? "Removed" : "Edited"}
-                            <span className="text-gray-500 font-normal">— {dc.description || dc.groupLabel || "Discount"}</span>
+                            {dc.action === "added"
+                              ? "Added"
+                              : dc.action === "removed"
+                                ? "Removed"
+                                : dc.action === "renamed"
+                                  ? "Renamed"
+                                  : "Edited"}
+                            {dc.action === "renamed" ? (
+                              <span className="text-gray-500 font-normal">
+                                — <span className="text-red-500 line-through">{dc.fieldChanges?.[0]?.oldValue}</span>{" "}
+                                → <span className="text-green-600 font-medium">{dc.fieldChanges?.[0]?.newValue}</span>
+                              </span>
+                            ) : (
+                              <span className="text-gray-500 font-normal">— {dc.description || dc.groupLabel || "Discount"}</span>
+                            )}
                           </div>
 
-                          {dc.fieldChanges && dc.fieldChanges.length > 0 && (
+                          {dc.action !== "renamed" && dc.fieldChanges && dc.fieldChanges.length > 0 && (
                             <div className="space-y-1 ml-4">
                               {dc.fieldChanges.filter((fc) => !fc.unchanged).map((fc, j) => {
                                 if (fc.field === "Value") {
