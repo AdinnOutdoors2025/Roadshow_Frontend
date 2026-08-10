@@ -16,14 +16,11 @@ import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import "./ClientAuthModal.css";
-
+import { baseUrl } from "@/BaseUrl";
 type AuthFlow = "login" | "signup";
 
 const OTP_LENGTH = 6;
 const RESEND_TIME = 30;
-
-const BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function ClientAuthModal() {
     const {
@@ -168,7 +165,7 @@ export default function ClientAuthModal() {
                 currentFlow === "signup" ? "register" : "login";
 
             await axios.post(
-                `${BASE_URL}/api/client-auth/send-otp`,
+                `${baseUrl}/api/client-auth/send-otp`,
                 {
                     name: name.trim(),
                     email: email.trim(),
@@ -250,7 +247,7 @@ export default function ClientAuthModal() {
             setOtpErrorMessage("");
 
             const response = await axios.post(
-                `${BASE_URL}/api/client-auth/verify-otp`,
+                `${baseUrl}/api/client-auth/verify-otp`,
                 {
                     phone: phone.replace(/\D/g, ""),
                     otp,
