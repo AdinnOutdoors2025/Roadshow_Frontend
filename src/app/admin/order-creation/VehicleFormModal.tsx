@@ -40,6 +40,7 @@ interface Props {
 
 
 const uid = () => Math.random().toString(36).slice(2, 9);
+const toTitleCase = (str: string) => str.replace(/\b\w/g, (c) => c.toUpperCase());
 
 
 const BOOKING_FOR_OPTIONS = ["Individual Customer", "Agency"];
@@ -1265,7 +1266,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                     value={form.campaignName}
                     onChange={(e) => {
                       const onlyLetters = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-                      set("campaignName", onlyLetters);
+                      set("campaignName", toTitleCase(onlyLetters));
                     }}
                     placeholder="Enter campaign name"
                     className={inputClass(!!errors.campaignName)}
@@ -1379,7 +1380,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
               <div id="field-campaignLocation">
                 <FormField label="Campaign Location" error={errors.campaignLocation} required>
-                  <input type="text" value={form.campaignLocation} onChange={(e) => set("campaignLocation", e.target.value)} placeholder="Campaign location" className={inputClass(!!errors.campaignLocation)} />
+                  <input type="text" value={form.campaignLocation} onChange={(e) => set("campaignLocation", toTitleCase(e.target.value))} placeholder="Campaign location" className={inputClass(!!errors.campaignLocation)} />
                 </FormField>
               </div>
             </div>
@@ -1707,7 +1708,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                   <input
                     type="text"
                     value={charge.label}
-                    onChange={(e) => updateCharge(charge.id, { label: e.target.value })}
+                    onChange={(e) => updateCharge(charge.id, { label: toTitleCase(e.target.value) })}
                     placeholder="Label"
                     className="w-36 min-w-0 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs text-gray-700 dark:text-gray-300 outline-none focus:border-blue-400"
                   />

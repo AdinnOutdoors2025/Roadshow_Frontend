@@ -388,7 +388,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-2">
       <Toaster position="top-right" />
 
-      <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+      <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
 
         {/* Header */}
         <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">

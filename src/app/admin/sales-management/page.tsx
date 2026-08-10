@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { FaRegEdit } from "react-icons/fa";
 import { MdOutlineDelete } from "react-icons/md";
 import { HiOutlinePlus, HiOutlineUserGroup } from "react-icons/hi";
@@ -32,15 +33,13 @@ export default function StaffAdminTable() {
       setLoading(true);
       setError(null);
       const token = getToken();
-      const res = await fetch(`${API_BASE}staff-admins`, {
+      const { data } = await axios.get(`${API_BASE}staff-admins`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed to fetch staff admins");
-      const data = await res.json();
       setStaffAdmins(data.data.data);
       setCurrentPage(1);
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      setError(err?.response?.data?.message || "Failed to fetch staff admins");
     } finally {
       setLoading(false);
     }
@@ -57,17 +56,15 @@ export default function StaffAdminTable() {
     if (!deletingId) return;
     try {
       setDeleteLoading(true);
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE}staff-admins/${deletingId}`, {
-        method: "DELETE",
+      const token = getToken();
+      await axios.delete(`${API_BASE}staff-admins/${deletingId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed to delete");
       await fetchStaffAdmins();
       setShowDeleteModal(false);
       setDeletingId(null);
     } catch (err: any) {
-      alert(err.message || "Delete failed");
+      alert(err?.response?.data?.message || "Delete failed");
     } finally {
       setDeleteLoading(false);
     }

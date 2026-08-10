@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { IoMdClose } from "react-icons/io";
 import API_BASE from "../../../../baseurl";
 import { inputClass, selectClass } from "../../../components/reusableFormField";
@@ -90,22 +91,16 @@ export default function StaffAdminFormModal({ editingStaffAdmin, onSuccess, onCl
         ? `${API_BASE}staff-admins/${editingStaffAdmin!._id}`
         : `${API_BASE}staff-admins/`;
 
-      const res = await fetch(url, {
-        method: isEdit ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData?.message || "Failed to save");
+      const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+      if (isEdit) {
+        await axios.put(url, payload, { headers });
+      } else {
+        await axios.post(url, payload, { headers });
       }
       onSuccess();
     } catch (err: any) {
-       toast.error(FRIENDLY_ERRORS[err.message] || err.message || "Something went wrong");
+       const message = err?.response?.data?.message || err.message;
+       toast.error(FRIENDLY_ERRORS[message] || message || "Something went wrong");
     } finally {
       setLoading(false);
     }

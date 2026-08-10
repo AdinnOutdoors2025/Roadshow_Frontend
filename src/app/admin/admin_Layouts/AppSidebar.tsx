@@ -36,9 +36,7 @@ type NavItem = {
   subItems?: { name: string; path: string; key?: string; pro?: boolean; new?: boolean }[];
 };
 
-// `key` (or `path`, for flat items) is the permission identifier stored in
-// RolePermission.allowedMenus — must stay in sync with the checkbox list
-// rendered on the Role Permission page.
+
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
@@ -47,12 +45,12 @@ const navItems: NavItem[] = [
     subItems: [{ name: "Roadshow", path: "/admin/dashboard", pro: false }],
   },
      {
-    name: "Sales Management",
+    name: "Sales User Management",
     icon: <HiOutlineUserGroup />,
     path: "/admin/sales-management"
   },
   {
-    name: "Operation Management",
+    name: "Operation User Management",
     icon: <HiOutlineUserGroup />,
     path: "/admin/operation-management"
   },

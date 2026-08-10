@@ -166,9 +166,9 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
               </div>
 
               <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
-                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {/* <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
+                </svg> */}
                 <span className="text-sm font-bold text-blue-700 dark:text-blue-300">{totalVehicleCount}</span>
                 <span className="text-xs text-blue-600 dark:text-blue-400">
                   {totalVehicleCount === 1 ? "Vehicle" : "Vehicles"}
@@ -254,9 +254,9 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">Order Total</p>
           <div className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
-            <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
+            </svg> */}
             <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
               {vehicles.reduce((sum, vh) => sum + vh.quantity, 0)}
             </span>
