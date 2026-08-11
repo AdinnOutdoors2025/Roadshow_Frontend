@@ -1,0 +1,513 @@
+/* -------------------------------------------------------------------------- */
+/*                         REVIEW ORDER  —  PAGE STYLES                       */
+/* -------------------------------------------------------------------------- */
+/*  Shares the campaign-details palette and rhythm (rdsw_cd*) so the three     */
+/*  steps read as one flow; class names are prefixed rdsw_ro* so neither page  */
+/*  can restyle the other.                                                     */
+
+.rdsw_roPage {
+  min-height: 100vh;
+  background: #ffffff;
+  color: #171719;
+  font-family: "Outfit", sans-serif;
+  padding: 32px 16px 80px;
+}
+
+.rdsw_roLoading {
+  display: flex;
+  min-height: 60vh;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #666666;
+  font-family: "Outfit", sans-serif;
+  font-size: 16px;
+}
+
+.rdsw_roShell {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1430px;
+}
+
+/* ── Header / stepper ──────────────────────────────────────────────────── */
+
+.rdsw_roPageHeader {
+  margin-bottom: 22px;
+}
+
+.rdsw_roSteps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 22px;
+  margin-bottom: 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.rdsw_roStep {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #a0a0a0;
+  white-space: nowrap;
+}
+
+.rdsw_roStep span {
+  display: inline-flex;
+  height: 22px;
+  width: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #eeeeef;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8b8b8b;
+}
+
+.rdsw_roStepDone {
+  color: #575757;
+}
+
+.rdsw_roStepDone span {
+  background: #1a1a1c;
+  color: #ffffff;
+}
+
+.rdsw_roStepActive {
+  color: #1b1b1d;
+  font-weight: 600;
+}
+
+.rdsw_roStepActive span {
+  background: #d70000;
+  color: #ffffff;
+}
+
+.rdsw_roPageTitle {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: #1b1b1d;
+}
+
+.rdsw_roPageSubtitle {
+  margin-top: 8px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #787878;
+}
+
+/* ── Media warning ─────────────────────────────────────────────────────── */
+
+.rdsw_roWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 18px;
+  border: 1px solid #f5d7a8;
+  border-radius: 14px;
+  background: #fdf6e8;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #8a6100;
+}
+
+/* ── Layout ────────────────────────────────────────────────────────────── */
+
+.rdsw_roLayout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.rdsw_roMain {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ── Sections ──────────────────────────────────────────────────────────── */
+
+.rdsw_roSection {
+  border-radius: 22px;
+  background: #f7f7f8;
+  padding: 18px;
+}
+
+.rdsw_roSectionHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e6e6e8;
+  color: #575757;
+}
+
+.rdsw_roSectionHead h2 {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #1b1b1d;
+}
+
+.rdsw_roVerifiedBadge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #e7f6ec;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #1a7f37;
+}
+
+/* ── Detail rows ───────────────────────────────────────────────────────── */
+
+.rdsw_roDetailGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  padding-top: 14px;
+}
+
+.rdsw_roDetail {
+  min-width: 0;
+}
+
+.rdsw_roDetail > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a0a0a0;
+}
+
+.rdsw_roDetail > strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #1b1b1d;
+  overflow-wrap: anywhere;
+}
+
+.rdsw_roMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.02em;
+}
+
+/* ── Vehicle cards ─────────────────────────────────────────────────────── */
+
+.rdsw_roVehicleList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 14px;
+}
+
+.rdsw_roVehicleCard {
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.rdsw_roVehicleHead {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eeeeef;
+}
+
+.rdsw_roVehicleImage {
+  height: 56px;
+  width: 56px;
+  border-radius: 13px;
+  object-fit: cover;
+  background: #f3f3f4;
+}
+
+.rdsw_roVehicleHeadInfo {
+  min-width: 0;
+}
+
+.rdsw_roVehicleEyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a0a0a0;
+}
+
+.rdsw_roVehicleName {
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #1b1b1d;
+}
+
+.rdsw_roVehicleMeta {
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: #8b8b8b;
+}
+
+.rdsw_roVehicleTotal {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  border-radius: 11px;
+  background: #f7f7f8;
+  padding: 8px 11px;
+}
+
+.rdsw_roVehicleTotal span {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #a0a0a0;
+}
+
+.rdsw_roVehicleTotal strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1b1b1d;
+}
+
+.rdsw_roVehicleBody {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 13px;
+  padding-top: 13px;
+}
+
+.rdsw_roMediaNames {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.rdsw_roMediaNames li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 400;
+  color: #8b8b8b;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ── Pricing summary ───────────────────────────────────────────────────── */
+
+.rdsw_roSummaryCard {
+  border-radius: 22px;
+  background: #f7f7f8;
+  padding: 18px;
+}
+
+.rdsw_roSummaryTitle {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #1b1b1d;
+}
+
+.rdsw_roSummaryRows {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rdsw_roSummaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12.5px;
+  color: #575757;
+}
+
+.rdsw_roSummaryRow > span:last-child {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #1b1b1d;
+  font-variant-numeric: tabular-nums;
+}
+
+.rdsw_roSummaryDivider {
+  margin-top: 4px;
+  border-top: 1px solid #dcdcde;
+  padding-top: 12px;
+  font-weight: 600;
+  color: #1b1b1d;
+}
+
+.rdsw_roSummaryTotalRow {
+  margin-top: 4px;
+  border-top: 1px solid #1b1b1d;
+  padding-top: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1b1b1d;
+}
+
+.rdsw_roSummaryTotalRow strong {
+  font-size: 19px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rdsw_roSummaryNote {
+  margin-top: 14px;
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: #9a9a9a;
+}
+
+.rdsw_roSubmitButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  border-radius: 999px;
+  background: #1a1a1c;
+  padding: 14px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  transition: background-color 0.2s ease;
+}
+
+.rdsw_roSubmitButton:hover:not(:disabled) {
+  background: #d70000;
+}
+
+.rdsw_roSubmitButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.rdsw_roEditButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: #dedee1;
+  padding: 12px 22px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #202020;
+  transition: background-color 0.2s ease;
+}
+
+.rdsw_roEditButton:hover:not(:disabled) {
+  background: #cfcfd2;
+}
+
+.rdsw_roEditButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+
+@media (min-width: 640px) {
+  .rdsw_roPage {
+    padding: 40px 24px 90px;
+  }
+
+  .rdsw_roSection,
+  .rdsw_roSummaryCard {
+    padding: 22px;
+  }
+
+  .rdsw_roDetailGrid,
+  .rdsw_roVehicleBody {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rdsw_roDetailWide {
+    grid-column: 1 / -1;
+  }
+
+  .rdsw_roVehicleHead {
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+  }
+
+  .rdsw_roVehicleImage {
+    height: 64px;
+    width: 64px;
+  }
+
+  .rdsw_roVehicleTotal {
+    grid-column: auto;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    background: transparent;
+    padding: 0;
+  }
+
+  .rdsw_roPageTitle {
+    font-size: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .rdsw_roPage {
+    padding: 56px 32px 110px;
+  }
+
+  .rdsw_roLayout {
+    grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.62fr);
+    gap: 26px;
+  }
+
+  /* Pins once it reaches the navbar — the detail column is always taller. */
+  .rdsw_roSummary {
+    position: sticky;
+    top: 96px;
+  }
+
+  .rdsw_roVehicleBody {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .rdsw_roPageTitle {
+    font-size: 38px;
+  }
+}

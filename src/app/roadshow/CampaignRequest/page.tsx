@@ -22,13 +22,77 @@ import { clearCart, mergeGuestCartInto, readCart, writeCart, type CartItem, } fr
 import { AnimatePresence, motion } from "framer-motion";
 import { GST_Percentage } from '../../../BaseUrl'
 import "./page.css";
-import { formatCurrency, formatDate, formatDateForApi, getInclusiveDayCount, parseStoredDate, toSafeNumber, } from "@/app/utils/currency";
+import { formatCurrency, formatDate, formatDateForApi, getInclusiveDayCount, parseStoredDate, toSafeDate, toSafeNumber, } from "@/app/utils/currency";
 import { useRouter } from "next/navigation";
 import { baseUrl } from "../../../BaseUrl";
 type SelectedVehicle = RoadshowVehicle & {
   startDate: Date | null;
   endDate: Date | null;
   quantity: number;
+};
+
+/* The earliest date an over-booked vehicle type frees up again.
+
+   Registrations that are currently unavailable carry either an explicit
+   `availableFrom` (set when staff mark one Unavailable) or a booking window
+   whose `toDate` is the last committed day — so the day after it is the first
+   free one. The soonest of those is the useful answer: it is when the NEXT
+   vehicle of this type comes back, not when all of them do.
+
+   Returns null when nothing is dated, in which case the caller shows the
+   plain "our team will confirm" wording instead of inventing a date. */
+const getNextAvailableDate = (
+  vehicle: SelectedVehicle
+): Date | null => {
+  const registrations = Array.isArray(
+    vehicle?.registrationVehicles
+  )
+    ? vehicle.registrationVehicles
+    : [];
+
+  const candidates: Date[] = [];
+
+  registrations.forEach((registration) => {
+    const status = String(
+      registration?.statusAvailability?.currentStatus || ""
+    )
+      .trim()
+      .toLowerCase();
+
+    /* Already bookable — it is not what the customer is waiting on */
+    if (
+      status === "available" &&
+      registration?.activeStatus !== false
+    ) {
+      return;
+    }
+
+    const availableFrom = toSafeDate(
+      registration?.statusAvailability?.availableFrom
+    );
+
+    if (availableFrom) {
+      candidates.push(availableFrom);
+
+      return;
+    }
+
+    const bookedUntil = toSafeDate(
+      registration?.statusAvailability?.toDate
+    );
+
+    if (bookedUntil) {
+      candidates.push(
+        new Date(bookedUntil.getTime() + 86400000)
+      );
+    }
+  });
+
+  if (!candidates.length) return null;
+
+  return candidates.reduce((earliest, current) =>
+    current < earliest ? current : earliest
+  );
 };
 
 /* CAMPAIGN REQUEST PAGE */
@@ -973,6 +1037,22 @@ export default function CampaignRequestPage() {
     openReviewModal();
   };
 
+  /* Step 1 of the campaign flow now ends here rather than at the review
+     modal: Customer Details + Vehicle Selection → Campaign Details →
+     Review Order. The selection is already persisted to the cart by the
+     effect above, so the next page picks it up with nothing handed over.
+
+     handleReviewSubmit and the review modal below are deliberately left in
+     place — the same validation runs first, and the modal remains a working
+     one-page fallback. */
+  const handleContinueToCampaignDetails = () => {
+    if (submitting) return;
+
+    if (!validateForm()) return;
+
+    router.push("/roadshow/campaign-details");
+  };
+
   // const handleConfirmSend = async () => {
   //   if (submitting) return;
 
@@ -1570,6 +1650,50 @@ export default function CampaignRequestPage() {
                         <p className=" rdsw_crfQtyDesc mt-1 text-[11px] text-[#aaaaaa]">
                           Select required vehicles
                         </p>
+
+                        {/* Availability is advisory, not a gate. Requesting
+                            more than the fleet currently shows as free is a
+                            normal booking — admin resolves it when the order
+                            is worked, so the stepper stays enabled and this
+                            note explains the position instead of blocking it.
+
+                            Rendered inside the existing label column so the
+                            surrounding flex row keeps its two children and
+                            its layout is untouched. */}
+                        {(() => {
+                          const shortfall =
+                            vehicle.quantity >
+                            toSafeNumber(
+                              vehicle.availableVehicles
+                            );
+
+                          if (!shortfall) return null;
+
+                          const nextAvailable =
+                            getNextAvailableDate(vehicle);
+
+                          return (
+                            <p className="rdsw_crfQtyAvailabilityNote mt-1 text-[10.5px] leading-[1.45] text-[#8a6100]">
+                              {toSafeNumber(
+                                vehicle.availableVehicles
+                              )}{" "}
+                              available now
+                              {nextAvailable
+                                ? ` · more available from ${formatDate(
+                                  nextAvailable,
+                                  {
+                                    pattern:
+                                      "dd MMM yyyy",
+                                    fallback: "",
+                                  }
+                                )}`
+                                : ""}
+                              . You can still request this
+                              quantity — our team will confirm
+                              it.
+                            </p>
+                          );
+                        })()}
                       </div>
 
                       <div className="rdsw_crfQtyBtnMain flex shrink-0 items-center gap-2 rounded-full bg-[#f3f3f4] p-1">
@@ -1611,11 +1735,12 @@ export default function CampaignRequestPage() {
                               }
                             )
                           }
-                          disabled={
-                            vehicle.availableVehicles > 0 &&
-                            vehicle.quantity >=
-                            vehicle.availableVehicles
-                          }
+                          /* Previously disabled once quantity reached
+                             availableVehicles, which hard-blocked any
+                             partially-booked type. Availability is now
+                             surfaced as the note above instead: the
+                             customer requests what they need and admin
+                             resolves the shortfall on the order. */
                           className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-black shadow-sm transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-black"
                           aria-label="Increase quantity"
                         >
@@ -1645,12 +1770,12 @@ export default function CampaignRequestPage() {
               </button> */}
               <VehicleCrfSubmitBtn
                 type="button"
-                label="Submit"
+                label="Continue"
                 loadingLabel="Submitting..."
                 loading={submitting}
                 disabled={submitting}
-                ariaLabel="Submit campaign request"
-                onClick={handleReviewSubmit}
+                ariaLabel="Continue to campaign details"
+                onClick={handleContinueToCampaignDetails}
                 className="RS_VehicleButton rdsw_crfVehSubmitBtn flex items-center justify-center gap-2 rounded-full bg-[#1a1a1c] px-6 py-3 text-[12px] font-semibold  transition disabled:cursor-not-allowed disabled:opacity-60"
               />
 
@@ -2060,13 +2185,13 @@ export default function CampaignRequestPage() {
 
                 <button
                   type="button"
-                  onClick={handleReviewSubmit}
+                  onClick={handleContinueToCampaignDetails}
                   disabled={submitting}
                   className="rdsw_crfStickyBarButton"
                 >
                   {submitting
                     ? "Submitting..."
-                    : "Review & Submit"}
+                    : "Campaign Details"}
                 </button>
               </div>
             </motion.div>

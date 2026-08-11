@@ -819,3 +819,98 @@
         transition: none;
     }
 }
+
+/*   SHORT DESKTOP / LAPTOP — REACHABILITY FIXES
+
+     Appended rather than edited in place so every rule above keeps its
+     original value and simply loses where these override by source order.
+
+     Two things went wrong on a small desktop window:
+
+     1. `.client-auth-box` carries `min-height: 610px`, which beats
+        `height: min(730px, 88vh)` on any viewport under roughly 693px tall.
+        The box then grows past the centred, non-scrolling overlay and is
+        clipped equally at the top and the bottom, taking the Continue
+        button with it.
+
+     2. Only the accountType and signupAgency screens scrolled their own
+        content. Login, signup and OTP had no scroll container at all, so
+        once they outgrew the panel there was simply no way to reach the
+        bottom of the form.
+
+     The fix shrinks the content rather than re-aligning anything: the box
+     is allowed to be shorter, and the content column inside it scrolls. */
+
+@media (min-width: 721px) {
+    .client-auth-box {
+        min-height: 0;
+        max-height: calc(100vh - 64px);
+    }
+
+    /* Derived from the viewport, NOT a percentage — see the note on
+       .client-auth-content[data-screen="accountType"] above for why a
+       percentage resolves against the wrong number here. 280px is the
+       tallest the panel's own vertical padding ever gets (120 + 60) plus
+       headroom, so this always errs on the safe side.
+
+       The two data-screen rules above are more specific and keep their own
+       larger caps untouched. */
+    .client-auth-content {
+        max-height: min(540px, calc(100vh - 280px));
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .client-auth-content::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/*   RIGHT IMAGE PANEL — UNCROPPED BANNER
+
+     `.client-auth-banner` sets `height: 50% !important` with
+     `object-fit: cover`. Next's `fill` prop absolutely positions the image
+     across the panel, so halving its height and then cropping to cover
+     trimmed the artwork on every side — the banner read as cut off.
+
+     Filling the panel and containing the SVG shows all of it; the panel's
+     own gradient background covers whatever the aspect ratio leaves over,
+     which is what that gradient was always there for. The selector is one
+     level more specific so it wins against the existing !important. */
+
+.client-auth-right .client-auth-banner {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0;
+    padding: 20px;
+    object-fit: contain;
+    object-position: center center;
+}
+
+/* The panel narrows faster than it shortens as the window shrinks, so the
+   padding is what starts eating the artwork first — give it back. */
+@media (max-width: 1100px) {
+    .client-auth-right .client-auth-banner {
+        padding: 14px;
+    }
+}
+
+@media (max-width: 860px) {
+    .client-auth-right .client-auth-banner {
+        padding: 10px;
+    }
+}
+
+/* Short windows: the box is height-constrained rather than width-constrained,
+   so the image has width to spare and only needs its vertical padding back. */
+@media (max-height: 760px) and (min-width: 721px) {
+    .client-auth-right .client-auth-banner {
+        padding: 10px 18px;
+    }
+}

@@ -25,6 +25,12 @@ type GlobalSmoothScrollProps = {
    `overflow: hidden` (globals.css) as the scrollport and break sticky anyway. */
 const SMOOTH_SCROLL_DISABLED_PATHS = [
   "/roadshow/CampaignRequest",
+
+  /* The remaining two steps of the same booking flow. Both are built around
+     a sticky summary column and campaign-details also has a sticky action
+     bar, so they need the same opt-out for exactly the reason above. */
+  "/roadshow/campaign-details",
+  "/roadshow/review-order",
 ];
 
 export default function GlobalSmoothScroll({

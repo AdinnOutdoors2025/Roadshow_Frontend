@@ -1,0 +1,873 @@
+/* -------------------------------------------------------------------------- */
+/*                  REVIEW YOUR ROADSHOW BOOKING  —  POPUP STYLES             */
+/* -------------------------------------------------------------------------- */
+/*  TYPE SCALE: every size is derived from the tokens on .rdsw_rvShell, and    */
+/*  the breakpoints at the bottom only redefine those tokens plus the grid.    */
+/*  One place to change how the popup scales from a 360px phone to a 27"       */
+/*  monitor — fonts, buttons, images and padding all follow together.          */
+
+.rdsw_rvOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 12px;
+
+  /* The overlay itself scrolls when the shell cannot shrink any further
+     (very short viewports), so the popup is never clipped with no way out. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.rdsw_rvBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.55);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.rdsw_rvShell {
+  --rv-micro: 11px;
+  --rv-label: 12px;
+  --rv-body: 13px;
+  --rv-strong: 14px;
+  --rv-heading: 15.5px;
+  --rv-title: 20px;
+  --rv-total: 22px;
+  --rv-pad: 14px;
+  --rv-gap: 14px;
+  --rv-radius: 16px;
+  --rv-image: 132px;
+  --rv-btn: 13.5px;
+
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(1180px, 100%);
+
+  /* Capped, not fixed: short viewports shrink it and the columns inside
+     scroll; tall ones let it size to its content. */
+  max-height: min(94vh, 980px);
+  margin: auto;
+
+  overflow: hidden;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow:
+    0 30px 80px rgba(15, 23, 42, 0.28),
+    0 6px 20px rgba(15, 23, 42, 0.1);
+  font-family: "Outfit", sans-serif;
+  color: #171719;
+  animation: rdsw_rvPopIn 0.24s ease-out;
+}
+
+@keyframes rdsw_rvPopIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rdsw_rvShell {
+    animation: none;
+  }
+}
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+
+.rdsw_rvHeader {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #eeeeef;
+  padding: var(--rv-pad) var(--rv-pad) calc(var(--rv-pad) - 3px);
+}
+
+.rdsw_rvHeaderCopy {
+  min-width: 0;
+}
+
+.rdsw_rvTitle {
+  font-size: var(--rv-title);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: #171719;
+}
+
+.rdsw_rvSubtitle {
+  margin-top: 4px;
+  font-size: var(--rv-body);
+  color: #8b8b90;
+}
+
+.rdsw_rvClose {
+  display: inline-flex;
+  height: 34px;
+  width: 34px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e6e6e8;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #575757;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.rdsw_rvClose:hover:not(:disabled) {
+  background: #171719;
+  color: #ffffff;
+}
+
+.rdsw_rvClose:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ── Body ──────────────────────────────────────────────────────────────── */
+
+/* Below 1024px this is the single scroll container. On desktop it stops
+   scrolling and hands that job to the two columns (see the media query at
+   the bottom) so the pricing card stays put while the vehicle list scrolls. */
+.rdsw_rvBody {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--rv-gap);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--rv-pad);
+  background: #fafafa;
+}
+
+.rdsw_rvLeft,
+.rdsw_rvRight {
+  min-width: 0;
+  min-height: 0;
+}
+
+.rdsw_rvLeft {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rv-gap);
+}
+
+/* ── Media warning ─────────────────────────────────────────────────────── */
+
+.rdsw_rvWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  border: 1px solid #f5d7a8;
+  border-radius: 14px;
+  background: #fdf6e8;
+  padding: 12px 14px;
+  font-size: var(--rv-body);
+  line-height: 1.5;
+  color: #8a6100;
+}
+
+/* ── Quick facts ───────────────────────────────────────────────────────── */
+
+.rdsw_rvFactRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--rv-gap);
+  border: 1px solid #eeeeef;
+  border-radius: var(--rv-radius);
+  background: #ffffff;
+  padding: var(--rv-pad);
+}
+
+.rdsw_rvFact {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+}
+
+.rdsw_rvFactIcon {
+  display: inline-flex;
+  height: 34px;
+  width: 34px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.rdsw_rvFactIconBlue {
+  background: #eaf1ff;
+  color: #2563eb;
+}
+
+.rdsw_rvFactIconIndigo {
+  background: #eef0ff;
+  color: #4f46e5;
+}
+
+.rdsw_rvFactIconGreen {
+  background: #e7f6ec;
+  color: #1a7f37;
+}
+
+.rdsw_rvFactIconRed {
+  background: #fdeaec;
+  color: #d70000;
+}
+
+.rdsw_rvFactBody {
+  min-width: 0;
+}
+
+.rdsw_rvFactLabel {
+  font-size: var(--rv-label);
+  font-weight: 600;
+  color: #171719;
+}
+
+.rdsw_rvFactValue {
+  margin-top: 2px;
+  font-size: var(--rv-body);
+  color: #575757;
+  overflow-wrap: anywhere;
+}
+
+.rdsw_rvFactMeta {
+  font-size: var(--rv-label);
+  color: #8b8b90;
+  overflow-wrap: anywhere;
+}
+
+.rdsw_rvFactHighlight {
+  margin-top: 3px;
+  font-size: var(--rv-label);
+  font-weight: 600;
+  color: #1a7f37;
+}
+
+.rdsw_rvMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.02em;
+}
+
+/* ── Vehicle panel ─────────────────────────────────────────────────────── */
+
+.rdsw_rvPanel {
+  border: 1px solid #eeeeef;
+  border-radius: var(--rv-radius);
+  background: #ffffff;
+  padding: var(--rv-pad);
+}
+
+.rdsw_rvPanelHead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #2563eb;
+}
+
+.rdsw_rvPanelHead h3 {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--rv-heading);
+  font-weight: 600;
+  color: #171719;
+}
+
+.rdsw_rvPanelCount {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #eaf1ff;
+  padding: 4px 11px;
+  font-size: var(--rv-label);
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.rdsw_rvVehicleList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 13px;
+}
+
+.rdsw_rvVehicleCard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  border: 1px solid #eeeeef;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.rdsw_rvVehicleMedia {
+  position: relative;
+  min-width: 0;
+}
+
+.rdsw_rvVehicleBadge {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  border-radius: 6px;
+  background: #2563eb;
+  padding: 3px 8px;
+  font-size: var(--rv-micro);
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.rdsw_rvVehicleImage {
+  height: var(--rv-image);
+  width: 100%;
+  border-radius: 11px;
+  object-fit: cover;
+  background: #f3f3f4;
+}
+
+.rdsw_rvVehicleInfo {
+  min-width: 0;
+}
+
+/* Name and the per-vehicle edit control share a row */
+.rdsw_rvVehicleTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.rdsw_rvVehicleName {
+  min-width: 0;
+  font-size: var(--rv-heading);
+  font-weight: 600;
+  line-height: 1.25;
+  color: #171719;
+}
+
+/* Jumps straight to this vehicle's step in the form behind the popup */
+.rdsw_rvVehicleEdit {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #cfdcfa;
+  border-radius: 999px;
+  background: #f2f6ff;
+  padding: 6px 12px;
+  font-size: var(--rv-label);
+  font-weight: 600;
+  color: #2563eb;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.rdsw_rvVehicleEdit:hover:not(:disabled) {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.rdsw_rvVehicleEdit:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.rdsw_rvVehicleGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 11px;
+}
+
+.rdsw_rvStat {
+  min-width: 0;
+  border: 1px solid #f0f0f1;
+  border-radius: 10px;
+  padding: 7px 9px;
+}
+
+.rdsw_rvStat > span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--rv-micro);
+  color: #a0a0a5;
+}
+
+.rdsw_rvStat > strong {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--rv-body);
+  font-weight: 600;
+  color: #171719;
+}
+
+.rdsw_rvStatAmount {
+  border-color: #dbe6ff;
+  background: #f2f6ff;
+}
+
+.rdsw_rvStatAmount > strong {
+  color: #1d4ed8;
+}
+
+.rdsw_rvVehicleMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 11px;
+  border-top: 1px solid #f0f0f1;
+  padding-top: 10px;
+}
+
+.rdsw_rvVehicleMeta p {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: var(--rv-body);
+  line-height: 1.45;
+  color: #575757;
+  overflow-wrap: anywhere;
+}
+
+.rdsw_rvVehicleMeta p > span {
+  font-size: var(--rv-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a0a0a5;
+}
+
+/* ── Notes ─────────────────────────────────────────────────────────────── */
+
+.rdsw_rvNotes {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid #f5e3bd;
+  border-radius: 14px;
+  background: #fffaf0;
+  padding: 13px 14px;
+  color: #a9781a;
+}
+
+.rdsw_rvNotesTitle {
+  font-size: var(--rv-label);
+  font-weight: 600;
+  color: #8a6100;
+}
+
+.rdsw_rvNotesBody {
+  margin-top: 3px;
+  font-size: var(--rv-body);
+  line-height: 1.5;
+  color: #9a7433;
+}
+
+/* ── Pricing ───────────────────────────────────────────────────────────── */
+
+.rdsw_rvPricingCard {
+  border: 1px solid #eeeeef;
+  border-radius: var(--rv-radius);
+  background: #ffffff;
+  padding: var(--rv-pad);
+}
+
+.rdsw_rvPricingHead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.rdsw_rvPricingHead h3 {
+  font-size: var(--rv-heading);
+  font-weight: 600;
+  color: #171719;
+}
+
+.rdsw_rvPricingRows {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.rdsw_rvPricingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--rv-body);
+  color: #575757;
+}
+
+.rdsw_rvPricingRow > span:last-child {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #171719;
+  font-variant-numeric: tabular-nums;
+}
+
+.rdsw_rvPricingDivider {
+  margin-top: 3px;
+  border-top: 1px solid #eeeeef;
+  padding-top: 11px;
+}
+
+.rdsw_rvTotalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 13px;
+  border-top: 1px solid #e6e6e8;
+  padding-top: 13px;
+  font-size: var(--rv-strong);
+  font-weight: 600;
+  color: #171719;
+}
+
+.rdsw_rvTotalRow strong {
+  font-size: var(--rv-total);
+  font-weight: 700;
+  color: #d70000;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Callouts ──────────────────────────────────────────────────────────── */
+
+.rdsw_rvCallout {
+  margin-top: 12px;
+  border-radius: 12px;
+  padding: 11px 12px;
+}
+
+.rdsw_rvCalloutRed {
+  border: 1px dashed #f4c9ce;
+  background: #fef7f8;
+}
+
+.rdsw_rvCalloutGreen {
+  border: 1px solid #d6efdf;
+  background: #f4fbf6;
+}
+
+.rdsw_rvCalloutTitle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--rv-label);
+  font-weight: 600;
+  color: #171719;
+}
+
+.rdsw_rvCalloutRed .rdsw_rvCalloutTitle {
+  color: #c2313d;
+}
+
+.rdsw_rvCalloutGreen .rdsw_rvCalloutTitle {
+  color: #1a7f37;
+}
+
+.rdsw_rvCalloutBody {
+  margin-top: 3px;
+  font-size: var(--rv-body);
+  line-height: 1.5;
+  color: #8b8b90;
+}
+
+/* ── Actions ───────────────────────────────────────────────────────────── */
+
+.rdsw_rvActions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.rdsw_rvEditBtn,
+.rdsw_rvSendBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 11px;
+  padding: 13px 16px;
+  font-size: var(--rv-btn);
+  font-weight: 600;
+  transition: background-color 0.18s ease, color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.rdsw_rvEditBtn {
+  border: 1px solid #cfdcfa;
+  background: #ffffff;
+  color: #2563eb;
+}
+
+.rdsw_rvEditBtn:hover:not(:disabled) {
+  background: #f2f6ff;
+}
+
+.rdsw_rvSendBtn {
+  border: 1px solid transparent;
+  background: linear-gradient(140deg, #ff3b30, #d70000);
+  color: #ffffff;
+}
+
+.rdsw_rvSendBtn:hover:not(:disabled) {
+  background: linear-gradient(140deg, #e5352b, #b80000);
+}
+
+.rdsw_rvEditBtn:disabled,
+.rdsw_rvSendBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.rdsw_rvTerms {
+  margin-top: 11px;
+  text-align: center;
+  font-size: var(--rv-micro);
+  line-height: 1.5;
+  color: #a0a0a5;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────
+   Small phones first: one column, the whole body scrolls, image is short so
+   the stat grid is reachable without a long scroll past artwork. */
+
+@media (min-width: 480px) {
+  .rdsw_rvShell {
+    --rv-pad: 16px;
+    --rv-image: 150px;
+  }
+
+  .rdsw_rvVehicleGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .rdsw_rvOverlay {
+    padding: 22px 20px;
+  }
+
+  .rdsw_rvShell {
+    --rv-label: 12.5px;
+    --rv-body: 13.5px;
+    --rv-strong: 15px;
+    --rv-heading: 16.5px;
+    --rv-title: 23px;
+    --rv-total: 24px;
+    --rv-pad: 18px;
+    --rv-gap: 16px;
+
+    border-radius: 22px;
+  }
+
+  .rdsw_rvFactRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 20px;
+  }
+
+  .rdsw_rvVehicleCard {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .rdsw_rvVehicleImage {
+    height: 100%;
+    min-height: var(--rv-image);
+  }
+
+  .rdsw_rvActions {
+    grid-template-columns: 1fr 1.25fr;
+  }
+}
+
+/* Desktop: the body stops scrolling and each column scrolls itself, so the
+   pricing card and Send Request stay reachable however long the vehicle list
+   gets.
+
+   TWO things are required for that and BOTH were missing before:
+
+     - grid-template-rows: minmax(0, 1fr) — without an explicitly constrained
+       row the implicit `auto` row sizes to its content, so the row grows past
+       the fixed-height body and is simply clipped by `overflow: hidden`. The
+       columns never become scrollable because they are never over-full.
+
+     - min-height: 0 on the columns (set above) — a grid item's default
+       `min-height: auto` refuses to shrink below its content for the same
+       reason.
+
+   The other half of the fix is `data-lenis-prevent` in the markup: Lenis
+   preventDefault()s every wheel event while it is stopped (which
+   useScrollLock does for any open popup), so without that attribute these
+   containers are scrollable but nothing can actually scroll them. */
+@media (min-width: 1024px) {
+  .rdsw_rvShell {
+    --rv-image: 160px;
+  }
+
+  .rdsw_rvBody {
+    grid-template-columns: minmax(0, 1.72fr) minmax(330px, 0.68fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 18px;
+    overflow: hidden;
+  }
+
+  .rdsw_rvLeft,
+  .rdsw_rvRight {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 5px;
+  }
+
+  .rdsw_rvLeft::-webkit-scrollbar,
+  .rdsw_rvRight::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .rdsw_rvLeft::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .rdsw_rvLeft::-webkit-scrollbar-thumb,
+  .rdsw_rvRight::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #d2d2d6;
+  }
+
+  .rdsw_rvFactRow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Small laptop — the scale used to jump straight from 1024 to 1440, so
+   every 1100–1439px screen sat at the tablet size. */
+@media (min-width: 1200px) {
+  .rdsw_rvShell {
+    --rv-micro: 11.5px;
+    --rv-label: 13.5px;
+    --rv-body: 15px;
+    --rv-strong: 16px;
+    --rv-heading: 18px;
+    --rv-title: 25px;
+    --rv-total: 28px;
+    --rv-btn: 15px;
+    --rv-pad: 20px;
+    --rv-image: 168px;
+
+    width: min(1260px, 100%);
+  }
+
+  .rdsw_rvClose {
+    height: 38px;
+    width: 38px;
+  }
+
+  .rdsw_rvFactIcon {
+    height: 38px;
+    width: 38px;
+  }
+}
+
+/* Large desktop */
+@media (min-width: 1440px) {
+  .rdsw_rvShell {
+    --rv-micro: 12.5px;
+    --rv-label: 14.5px;
+    --rv-body: 16px;
+    --rv-strong: 17.5px;
+    --rv-heading: 20px;
+    --rv-title: 28px;
+    --rv-total: 32px;
+    --rv-btn: 16px;
+    --rv-pad: 24px;
+    --rv-gap: 20px;
+    --rv-radius: 18px;
+    --rv-image: 190px;
+
+    width: min(1400px, 100%);
+  }
+
+  .rdsw_rvVehicleCard {
+    grid-template-columns: 240px minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .rdsw_rvBody {
+    grid-template-columns: minmax(0, 1.75fr) minmax(400px, 0.66fr);
+  }
+
+  .rdsw_rvStat {
+    padding: 9px 12px;
+  }
+
+  .rdsw_rvEditBtn,
+  .rdsw_rvSendBtn {
+    padding: 15px 20px;
+  }
+
+  .rdsw_rvClose,
+  .rdsw_rvFactIcon {
+    height: 42px;
+    width: 42px;
+  }
+
+  .rdsw_rvVehicleEdit {
+    padding: 8px 15px;
+  }
+}
+
+@media (min-width: 1800px) {
+  .rdsw_rvShell {
+    --rv-label: 15px;
+    --rv-body: 17px;
+    --rv-strong: 18.5px;
+    --rv-heading: 21.5px;
+    --rv-title: 31px;
+    --rv-total: 35px;
+    --rv-btn: 17px;
+    --rv-pad: 26px;
+    --rv-image: 210px;
+
+    width: min(1560px, 100%);
+  }
+
+  .rdsw_rvVehicleCard {
+    grid-template-columns: 270px minmax(0, 1fr);
+  }
+}
+
+/* Short laptop screens: the popup is already capped at 94vh, but the fixed
+   header eats into that — trimming it buys back a row of content. */
+@media (max-height: 780px) and (min-width: 1024px) {
+  .rdsw_rvShell {
+    --rv-pad: 14px;
+    --rv-image: 130px;
+    --rv-title: 21px;
+    --rv-total: 23px;
+  }
+
+  .rdsw_rvVehicleCard {
+    grid-template-columns: 170px minmax(0, 1fr);
+  }
+}

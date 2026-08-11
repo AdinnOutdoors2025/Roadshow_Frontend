@@ -515,9 +515,18 @@ export default function ClientAuthModal() {
     };
 
     return (
+        /* `data-lenis-prevent` below is required for the content column to
+           scroll at all. Lenis wraps the roadshow layout and drives scrolling
+           from its own wheel listener; while it is stopped — which
+           useScrollLock does whenever this popup is open — it calls
+           preventDefault() on EVERY wheel event, so a nested `overflow-y:
+           auto` container is scrollable and yet nothing can scroll it. Lenis
+           checks the whole composed path, so declaring it on the overlay
+           covers the form column, the account-type cards and the GST panel. */
         <div
             className="client-auth-overlay"
             onClick={handleOverlayClick}
+            data-lenis-prevent
         >
             <section
                 className="client-auth-box"

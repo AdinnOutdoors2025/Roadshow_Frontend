@@ -26,6 +26,24 @@ type ClientRequestVehicle = {
   fromDate: string;
   toDate: string;
   totalDays?: number;
+
+  /* Campaign fields captured by the Campaign Details step. Every one is
+     optional — a request placed before that step existed simply has none
+     of them, and each block below renders only when its data is present. */
+  campaignType?: string;
+  campaignName?: string;
+  campaignLocation?: string;
+  pricePerDay?: number;
+  lineTotal?: number;
+  rentalCost?: number;
+  needPromoter?: boolean;
+  promoterType?: string;
+  promoterGender?: string;
+  promoterLanguage?: string[];
+  promoterQuantity?: number;
+  promoterCost?: number;
+  campaignImages?: string[];
+  campaignVideos?: string[];
 };
 
 type ClientRequest = {
@@ -39,6 +57,57 @@ type ClientRequest = {
   route?: string;
   addOns?: string[];
   vehicleTypes: ClientRequestVehicle[];
+
+  /* Billing identity — populated only for GST-verified agencies */
+  customerCategory?: "individual" | "organization";
+  gstNumber?: string;
+  companyName?: string;
+  panNumber?: string;
+
+  /* Totals as stored by the endpoint */
+  subtotal?: number;
+  gstPercentage?: number;
+  gstAmount?: number;
+  cgstAmount?: number;
+  sgstAmount?: number;
+  igstAmount?: number;
+  promoterTotal?: number;
+  estimatedTotal?: number;
+
+  status?: number;
+  createdAt?: string;
+};
+
+/* 0 / 1 / 2 as defined on the ClientRequestOrder schema */
+const STATUS_LABELS: Record<number, string> = {
+  0: "Request Submitted",
+  1: "In Progress",
+  2: "Converted to Order",
+};
+
+/** "₹1,25,000.00" — matches the Review Order breakdown the customer just saw. */
+const formatMoney = (value?: number) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value) || 0);
+
+const formatDateTime = (value?: string) => {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 };
 
 const formatDate = (value?: string) => {
@@ -323,6 +392,187 @@ export default function BookingRequestSubmittedPage() {
               ) : null}
             </div>
 
+            {/* ── Booking status & submission ────────────────────────────
+                Additive: the endpoint has always returned `status` and
+                `createdAt`; this page simply did not show them. */}
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:mt-5 lg:gap-5">
+              <article className="min-h-[112px] rounded-[10px] border border-[#e3e3e3] bg-white px-5 py-5 sm:min-h-[118px] lg:min-h-[126px] lg:px-6 lg:py-6">
+                <p className="text-[13px] font-normal leading-none text-black sm:text-[14px] lg:text-[16px]">
+                  Booking Status
+                </p>
+                <p className="mt-3 break-words text-[16px] font-normal leading-[1.35] text-black sm:text-[18px] lg:text-[20px]">
+                  {STATUS_LABELS[Number(request.status ?? 0)] ||
+                    "Request Submitted"}
+                </p>
+              </article>
+
+              <article className="min-h-[112px] rounded-[10px] border border-[#e3e3e3] bg-white px-5 py-5 sm:min-h-[118px] lg:min-h-[126px] lg:px-6 lg:py-6">
+                <p className="text-[13px] font-normal leading-none text-black sm:text-[14px] lg:text-[16px]">
+                  Submitted On
+                </p>
+                <p className="mt-3 break-words text-[16px] font-normal leading-[1.35] text-black sm:text-[18px] lg:text-[20px]">
+                  {formatDateTime(request.createdAt)}
+                </p>
+              </article>
+            </div>
+
+            {/* ── Client & GST details ───────────────────────────────────── */}
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:mt-5 lg:gap-5">
+              <article className="rounded-[10px] border border-[#e3e3e3] bg-white px-5 py-5 lg:px-6 lg:py-6">
+                <p className="text-[13px] font-normal leading-none text-black sm:text-[14px] lg:text-[16px]">
+                  Client Details
+                </p>
+
+                <p className="mt-3 break-words text-[16px] font-normal leading-[1.45] text-black sm:text-[18px] lg:text-[20px]">
+                  <span className="block">{request.name || "—"}</span>
+                  <span className="block">{request.email || "—"}</span>
+                  <span className="block">{formatPhone(request.phone)}</span>
+                </p>
+              </article>
+
+              {request.gstNumber ? (
+                <article className="rounded-[10px] border border-[#e3e3e3] bg-white px-5 py-5 lg:px-6 lg:py-6">
+                  <p className="text-[13px] font-normal leading-none text-black sm:text-[14px] lg:text-[16px]">
+                    GST Details
+                  </p>
+
+                  <p className="mt-3 break-words text-[16px] font-normal leading-[1.45] text-black sm:text-[18px] lg:text-[20px]">
+                    <span className="block">{request.gstNumber}</span>
+                    <span className="block">
+                      {request.companyName || "—"}
+                    </span>
+                    <span className="block">
+                      PAN {request.panNumber || "—"}
+                    </span>
+                  </p>
+                </article>
+              ) : null}
+            </div>
+
+            {/* ── Per-vehicle campaign details ───────────────────────────── */}
+            {request.vehicleTypes?.length ? (
+              <div className="mt-3 grid grid-cols-1 gap-3 lg:mt-5 lg:gap-5">
+                {request.vehicleTypes.map((vehicle, index) => (
+                  <article
+                    key={`${vehicle.vehicleId || index}`}
+                    className="rounded-[10px] border border-[#e3e3e3] bg-white px-5 py-5 lg:px-6 lg:py-6"
+                  >
+                    <p className="text-[13px] font-normal leading-none text-black sm:text-[14px] lg:text-[16px]">
+                      Vehicle {index + 1} · {getVehicleName(vehicle)}
+                    </p>
+
+                    <div className="mt-3 grid grid-cols-1 gap-2 text-[15px] font-normal leading-[1.45] text-black sm:grid-cols-2 sm:text-[17px] lg:text-[18px]">
+                      <span className="block">
+                        Quantity: {vehicle.quantity}
+                      </span>
+
+                      <span className="block">
+                        Dates: {formatDate(vehicle.fromDate)} →{" "}
+                        {formatDate(vehicle.toDate)}
+                      </span>
+
+                      {vehicle.campaignName ? (
+                        <span className="block">
+                          Campaign: {vehicle.campaignName}
+                        </span>
+                      ) : null}
+
+                      {vehicle.campaignType ? (
+                        <span className="block">
+                          Campaign Type: {vehicle.campaignType}
+                        </span>
+                      ) : null}
+
+                      {vehicle.campaignLocation ? (
+                        <span className="block">
+                          Location: {vehicle.campaignLocation}
+                        </span>
+                      ) : null}
+
+                      {vehicle.needPromoter ? (
+                        <span className="block">
+                          Promoter: {vehicle.promoterType || "—"}
+                          {vehicle.promoterGender
+                            ? ` · ${vehicle.promoterGender}`
+                            : ""}
+                          {vehicle.promoterLanguage?.length
+                            ? ` · ${vehicle.promoterLanguage.join(", ")}`
+                            : ""}
+                          {vehicle.promoterQuantity
+                            ? ` · Qty ${vehicle.promoterQuantity}`
+                            : ""}
+                        </span>
+                      ) : null}
+
+                      {vehicle.lineTotal ? (
+                        <span className="block">
+                          Line Total: {formatMoney(vehicle.lineTotal)}
+                        </span>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : null}
+
+            {/* ── Pricing breakdown ──────────────────────────────────────── */}
+            {request.estimatedTotal ? (
+              <article className="mt-3 rounded-[10px] border border-[#e3e3e3] bg-white px-5 py-5 lg:mt-5 lg:px-6 lg:py-6">
+                <p className="text-[13px] font-normal leading-none text-black sm:text-[14px] lg:text-[16px]">
+                  Pricing Breakdown
+                </p>
+
+                <div className="mt-4 flex flex-col gap-2 text-[15px] font-normal text-black sm:text-[17px] lg:text-[18px]">
+                  <div className="flex items-center justify-between gap-4">
+                    <span>Taxable Amount</span>
+                    <span>{formatMoney(request.subtotal)}</span>
+                  </div>
+
+                  {request.promoterTotal ? (
+                    <div className="flex items-center justify-between gap-4">
+                      <span>Promoter Charges (included)</span>
+                      <span>{formatMoney(request.promoterTotal)}</span>
+                    </div>
+                  ) : null}
+
+                  {/* CGST/SGST when the split was stored, otherwise the flat
+                      GST line every earlier request carries. */}
+                  {request.cgstAmount || request.sgstAmount ? (
+                    <>
+                      <div className="flex items-center justify-between gap-4">
+                        <span>
+                          CGST {(Number(request.gstPercentage) || 0) / 2}%
+                        </span>
+                        <span>{formatMoney(request.cgstAmount)}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4">
+                        <span>
+                          SGST {(Number(request.gstPercentage) || 0) / 2}%
+                        </span>
+                        <span>{formatMoney(request.sgstAmount)}</span>
+                      </div>
+                    </>
+                  ) : request.igstAmount ? (
+                    <div className="flex items-center justify-between gap-4">
+                      <span>IGST {request.gstPercentage || 0}%</span>
+                      <span>{formatMoney(request.igstAmount)}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-4">
+                      <span>GST {request.gstPercentage || 0}%</span>
+                      <span>{formatMoney(request.gstAmount)}</span>
+                    </div>
+                  )}
+
+                  <div className="mt-2 flex items-center justify-between gap-4 border-t border-[#e3e3e3] pt-3 font-medium">
+                    <span>Grand Total</span>
+                    <span>{formatMoney(request.estimatedTotal)}</span>
+                  </div>
+                </div>
+              </article>
+            ) : null}
+
             <p className="mt-6 text-center text-[14px] font-normal leading-[1.5] text-black sm:text-[16px] lg:mt-7 lg:text-[20px]">
               Booking updates will be sent to {request.email || "your registered email"} and {formatPhone(request.phone)}.
             </p>
@@ -334,6 +584,43 @@ export default function BookingRequestSubmittedPage() {
             >
               Plan Another Campaign
             </button>
+
+            {/* Secondary actions. Download Summary is deliberately inert and
+                labelled as such rather than hidden — it is a known upcoming
+                feature, and a disabled control says that more honestly than
+                a missing one. */}
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    `/roadshow/my-bookings?request=${encodeURIComponent(
+                      request.clientOrderId
+                    )}`
+                  )
+                }
+                className="flex h-[56px] w-full items-center justify-center rounded-[10px] border border-[#1a1a1c] bg-[#1a1a1c] px-4 text-[15px] font-normal text-white transition duration-200 hover:bg-[#d70000] hover:border-[#d70000] focus:outline-none focus:ring-2 focus:ring-black/20 sm:text-[16px]"
+              >
+                View Booking
+              </button>
+
+              <button
+                type="button"
+                disabled
+                title="Downloadable summaries are coming soon"
+                className="flex h-[56px] w-full cursor-not-allowed items-center justify-center rounded-[10px] border border-[#e3e3e3] bg-white px-4 text-[15px] font-normal text-[#a0a0a0] sm:text-[16px]"
+              >
+                Download Summary
+              </button>
+
+              <button
+                type="button"
+                onClick={() => router.push("/roadshow/my-bookings")}
+                className="flex h-[56px] w-full items-center justify-center rounded-[10px] border border-[#d2d2d7] bg-white px-4 text-[15px] font-normal text-black transition duration-200 hover:bg-[#f3f3f4] focus:outline-none focus:ring-2 focus:ring-black/20 sm:text-[16px]"
+              >
+                Back to Orders
+              </button>
+            </div>
           </div>
         </section>
       </section>

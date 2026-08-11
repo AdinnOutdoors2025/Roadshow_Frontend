@@ -1,0 +1,1720 @@
+/* -------------------------------------------------------------------------- */
+/*                       CAMPAIGN DETAILS  —  PAGE STYLES                     */
+/* -------------------------------------------------------------------------- */
+/*  Palette, radii and rhythm are taken from the existing public pages         */
+/*  (CampaignRequest / booking-request-submitted) so this page reads as part   */
+/*  of the same site: #f7f7f8 panels, #1a1a1c primary, #d70000 accent on       */
+/*  hover, generous radii, Outfit throughout.                                  */
+/*                                                                            */
+/*  TYPE SCALE: every size below is derived from the five tokens declared on   */
+/*  .rdsw_cdPage rather than hard-coded, and the breakpoints at the bottom     */
+/*  only redefine those tokens (plus the grid columns). That is what lets the  */
+/*  page grow properly on a large desktop instead of rendering at a phone      */
+/*  scale on a 27" monitor — change a token once and the whole page follows.   */
+
+.rdsw_cdPage {
+  --cd-label: 12px;
+  --cd-body: 14px;
+  --cd-field: 14.5px;
+  --cd-title: 17px;
+  --cd-heading: 28px;
+  --cd-gap: 18px;
+  --cd-pad: 18px;
+  --cd-radius: 22px;
+
+  /* Icons scale with the type, driven from one token — see the `svg` rule
+     under Fields. Lucide writes width/height as attributes, which CSS
+     overrides, so this reaches every icon on the page. */
+  --cd-icon: 17px;
+
+  --cd-alert-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 8v4'/%3E%3Cpath d='M12 16h.01'/%3E%3C/svg%3E");
+
+  min-height: 100vh;
+  background: #ffffff;
+  color: #171719;
+  font-family: "Outfit", sans-serif;
+  padding: 32px 16px 150px;
+}
+
+.rdsw_cdLoading {
+  display: flex;
+  min-height: 60vh;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #666666;
+  font-family: "Outfit", sans-serif;
+  font-size: 16px;
+}
+
+.rdsw_cdShell {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1560px;
+}
+
+/* ── Header / stepper ──────────────────────────────────────────────────── */
+
+.rdsw_cdPageHeader {
+  padding-top: 5%;
+  margin-bottom: 26px;
+}
+
+.rdsw_cdSteps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 24px;
+  margin-bottom: 18px;
+  padding: 0;
+  list-style: none;
+}
+
+/* Each step is a real button — 1 goes back to vehicle selection, 3 opens
+   the review popup — so it gets a hit area and a hover state. */
+.rdsw_cdStep {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 999px;
+  padding: 5px 10px 5px 5px;
+  font-size: var(--cd-label);
+  font-weight: 500;
+  color: #a0a0a0;
+  white-space: nowrap;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.rdsw_cdStep:hover {
+  background: #f2f2f3;
+  color: #575757;
+}
+
+.rdsw_cdStep span {
+  display: inline-flex;
+  height: 28px;
+  width: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #eeeeef;
+  font-size: calc(var(--cd-label) - 1px);
+  font-weight: 600;
+  color: #8b8b8b;
+}
+
+.rdsw_cdStepDone {
+  color: #575757;
+}
+
+.rdsw_cdStepDone span {
+  background: #1a1a1c;
+  color: #ffffff;
+}
+
+.rdsw_cdStepActive {
+  color: #1b1b1d;
+  font-weight: 600;
+}
+
+.rdsw_cdStepActive span {
+  background: #d70000;
+  color: #ffffff;
+}
+
+.rdsw_cdPageTitle {
+  font-size: var(--cd-heading);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: #1b1b1d;
+}
+
+.rdsw_cdPageSubtitle {
+  margin-top: 9px;
+  max-width: 780px;
+  font-size: var(--cd-body);
+  line-height: 1.55;
+  color: #787878;
+}
+
+/* ── Layout ────────────────────────────────────────────────────────────── */
+
+.rdsw_cdLayout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--cd-gap);
+  align-items: start;
+}
+
+.rdsw_cdCardList {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--cd-gap);
+}
+
+/* ── Vehicle card ──────────────────────────────────────────────────────── */
+
+.rdsw_cdCard {
+  border-radius: var(--cd-radius);
+  background: #f7f7f8;
+  padding: var(--cd-pad);
+}
+
+.rdsw_cdCardHeader {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  align-items: center;
+  gap: 15px;
+  padding-bottom: 17px;
+  border-bottom: 1px solid #e6e6e8;
+}
+
+.rdsw_cdCardImageWrap {
+  position: relative;
+  height: 78px;
+  width: 78px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.rdsw_cdCardImage {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.rdsw_cdCardIndex {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  display: inline-flex;
+  height: 20px;
+  width: 20px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #1a1a1c;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.rdsw_cdCardHeadInfo {
+  min-width: 0;
+}
+
+.rdsw_cdCardEyebrow {
+  font-size: calc(var(--cd-label) - 1.5px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a0a0a0;
+}
+
+.rdsw_cdCardTitle {
+  margin-top: 4px;
+  overflow: hidden;
+  font-size: calc(var(--cd-title) + 1px);
+  font-weight: 600;
+  line-height: 1.25;
+  color: #1b1b1d;
+  text-overflow: ellipsis;
+}
+
+.rdsw_cdCardRate {
+  margin-top: 4px;
+  font-size: var(--cd-body);
+  font-weight: 600;
+  color: #d70000;
+}
+
+.rdsw_cdCardRate span {
+  margin-left: 4px;
+  font-size: calc(var(--cd-body) - 2px);
+  font-weight: 400;
+  color: #8b8b8b;
+}
+
+.rdsw_cdCardHeadTotal {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 11px 13px;
+}
+
+.rdsw_cdCardHeadTotalLabel {
+  font-size: calc(var(--cd-label) - 1.5px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a0a0a0;
+}
+
+.rdsw_cdCardHeadTotalValue {
+  font-size: calc(var(--cd-title) + 1px);
+  font-weight: 700;
+  color: #1b1b1d;
+}
+
+.rdsw_cdCardHeadTotalNote {
+  font-size: calc(var(--cd-label) - 0.5px);
+  color: #8b8b8b;
+}
+
+/* ── Sections ──────────────────────────────────────────────────────────── */
+
+.rdsw_cdSection {
+  padding-top: 17px;
+}
+
+.rdsw_cdSection + .rdsw_cdSection {
+  margin-top: 5px;
+  border-top: 1px solid #e6e6e8;
+}
+
+.rdsw_cdSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: calc(var(--cd-label) - 0.5px);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #575757;
+}
+
+.rdsw_cdSectionNote {
+  margin-top: 6px;
+  font-size: calc(var(--cd-body) - 1px);
+  line-height: 1.5;
+  color: #8b8b8b;
+}
+
+.rdsw_cdSectionNote strong {
+  color: #1b1b1d;
+  font-weight: 600;
+}
+
+/* ── Icons ─────────────────────────────────────────────────────────────────
+   Lucide renders width/height as ATTRIBUTES, which CSS wins against, so one
+   token resizes every icon in the page as the breakpoints scale up — the
+   icons were staying at their hard-coded 13–16px while the type around them
+   grew. Scoped to .rdsw_cdShell so the date picker (which portals to
+   document.body) is untouched. The few icons that are deliberately smaller
+   than body text opt out below. */
+
+.rdsw_cdShell svg {
+  width: var(--cd-icon);
+  height: var(--cd-icon);
+}
+
+.rdsw_cdRailTick svg {
+  width: 11px;
+  height: 11px;
+}
+
+.rdsw_cdStepperBtn svg,
+.rdsw_cdMediaRemove svg {
+  width: 14px;
+  height: 14px;
+}
+
+.rdsw_cdRailPencil {
+  width: calc(var(--cd-icon) - 3px);
+  height: calc(var(--cd-icon) - 3px);
+}
+
+/* ── Fields ────────────────────────────────────────────────────────────── */
+
+/* An explicit column count per breakpoint, capped by a max-width on the grid
+   itself — 1 up on phones, 2 on tablets, 3 from 1024px.
+
+   Fractional columns with no cap are what made a "Select" stretch to 500px+;
+   auto-fill fixed the stretch but gave an unpredictable count, so Campaign
+   Location kept dropping to its own row on desktop. Fixed columns + a capped
+   grid width give both: Campaign Type / Name / Location sit on one row, and
+   each control stays a sensible width. */
+.rdsw_cdGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 14px;
+  max-width: 380px;
+}
+
+.rdsw_cdField {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.rdsw_cdFieldLabel {
+  display: block;
+  margin-bottom: 7px;
+  font-size: var(--cd-label);
+  font-weight: 500;
+  color: #777777;
+}
+
+.rdsw_cdFieldLabel i {
+  color: #d70000;
+  font-style: normal;
+}
+
+/* Filled fields rather than bare underlines: on a page-width form an
+   underline gives no sense of where the control starts and ends, and the
+   click target is ambiguous. A bordered box with a focus ring reads as
+   something you type into and shows state (rest / hover / focus / error)
+   clearly. `select` keeps a custom chevron because a native arrow does not
+   follow the border colour. */
+.rdsw_cdInput {
+  height: 46px;
+  width: 100%;
+  border: 1.5px solid #e2e2e5;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0 14px;
+  font-family: inherit;
+  font-size: var(--cd-field);
+  color: #171719;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+select.rdsw_cdInput {
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23777777' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  cursor: pointer;
+}
+
+.rdsw_cdInput::placeholder {
+  color: #a8a8ad;
+}
+
+.rdsw_cdInput:hover:not(:disabled) {
+  border-color: #c6c6cb;
+}
+
+.rdsw_cdInput:focus {
+  border-color: #1a1a1c;
+  box-shadow: 0 0 0 3.5px rgba(26, 26, 28, 0.09);
+}
+
+.rdsw_cdPlaceholder {
+  color: #a8a8ad;
+}
+
+/* ── Errors ────────────────────────────────────────────────────────────────
+   The message carries its own alert glyph and sits in a tinted pill so it
+   reads as a state rather than as more body copy, and the field it belongs
+   to turns red with it. `:has()` does that from the markup that is already
+   there — the alternative was threading an error class through every one of
+   the nine fields by hand. */
+
+.rdsw_cdError {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: calc(var(--cd-label) - 0.5px);
+  font-weight: 500;
+  line-height: 1.4;
+  color: #c2313d;
+}
+
+.rdsw_cdError::before {
+  content: "";
+  flex-shrink: 0;
+  height: 14px;
+  width: 14px;
+  margin-top: 0.5px;
+  background-color: currentColor;
+  -webkit-mask: var(--cd-alert-icon) center / contain no-repeat;
+  mask: var(--cd-alert-icon) center / contain no-repeat;
+}
+
+/* Fields and the date button flag themselves when they own an error */
+.rdsw_cdField:has(> .rdsw_cdError) .rdsw_cdInput,
+.rdsw_cdSection:has(> .rdsw_cdError) .rdsw_cdDateButton {
+  border-color: #e8737f;
+  background: #fffafa;
+}
+
+.rdsw_cdField:has(> .rdsw_cdError) .rdsw_cdInput:focus {
+  border-color: #d70000;
+  box-shadow: 0 0 0 3.5px rgba(215, 0, 0, 0.13);
+}
+
+/* ── Language multi-select ─────────────────────────────────────────────── */
+
+.rdsw_cdLanguageTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rdsw_cdLanguageTrigger > span:first-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rdsw_cdLanguagePanel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.rdsw_cdLanguageOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  padding: 8px 9px;
+  font-size: calc(var(--cd-field) - 1px);
+  color: #333333;
+  cursor: pointer;
+}
+
+.rdsw_cdLanguageOption:hover {
+  background: #f3f3f4;
+}
+
+.rdsw_cdLanguageOption input {
+  height: 15px;
+  width: 15px;
+  accent-color: #d70000;
+}
+
+/* ── Vehicle quantity ──────────────────────────────────────────────────── */
+
+.rdsw_cdQtyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.rdsw_cdQtyCopy {
+  min-width: 0;
+}
+
+/* Stepper + swap link pinned to the right edge of the row, which is what
+   fills the dead space the card used to leave on wide screens. */
+.rdsw_cdQtyActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.rdsw_cdQtyNote {
+  max-width: 560px;
+  margin-top: 10px;
+  border-radius: 10px;
+  background: #fdf6e8;
+  padding: 8px 11px;
+  font-size: calc(var(--cd-label) - 0.5px);
+  line-height: 1.45;
+  color: #8a6100;
+}
+
+.rdsw_cdChangeVehicle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #dcdcde;
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 9px 16px;
+  font-size: calc(var(--cd-body) - 1px);
+  font-weight: 600;
+  color: #575757;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+.rdsw_cdChangeVehicle:hover {
+  border-color: #1a1a1c;
+  color: #1b1b1d;
+}
+
+/* ── Dates ─────────────────────────────────────────────────────────────── */
+
+.rdsw_cdDateButton {
+  display: flex;
+  width: 100%;
+  max-width: 560px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  border: 1px solid #dcdcde;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 13px 15px;
+  font-size: var(--cd-field);
+  font-weight: 500;
+  color: #222222;
+  text-align: left;
+  transition: border-color 0.2s ease;
+}
+
+.rdsw_cdDateButton:hover {
+  border-color: #1a1a1c;
+}
+
+.rdsw_cdDateText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rdsw_cdDateEdit {
+  flex-shrink: 0;
+  font-size: var(--cd-label);
+  font-weight: 600;
+  color: #d70000;
+}
+
+/* ── Promoter toggle ───────────────────────────────────────────────────── */
+
+.rdsw_cdToggleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.rdsw_cdToggleCopy {
+  min-width: 0;
+}
+
+.rdsw_cdToggle {
+  position: relative;
+  flex-shrink: 0;
+  height: 26px;
+  width: 48px;
+  border-radius: 999px;
+  background: #d4d4d6;
+  transition: background-color 0.2s ease;
+}
+
+.rdsw_cdToggleOn {
+  background: #d70000;
+}
+
+.rdsw_cdToggleKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  height: 20px;
+  width: 20px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.rdsw_cdToggleOn .rdsw_cdToggleKnob {
+  transform: translateX(22px);
+}
+
+/* ── Stepper (promoter quantity) ───────────────────────────────────────── */
+
+.rdsw_cdStepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 5px;
+}
+
+.rdsw_cdStepperBtn {
+  display: inline-flex;
+  height: 32px;
+  width: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #f3f3f4;
+  color: #000000;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.rdsw_cdStepperBtn:hover:not(:disabled) {
+  background: #1a1a1c;
+  color: #ffffff;
+}
+
+.rdsw_cdStepperBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.rdsw_cdStepperValue {
+  min-width: 24px;
+  text-align: center;
+  font-size: var(--cd-field);
+  font-weight: 600;
+}
+
+/* ── Media ─────────────────────────────────────────────────────────────── */
+
+.rdsw_cdMediaGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 14px;
+  max-width: 420px;
+}
+
+.rdsw_cdMediaHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.rdsw_cdMediaLabel {
+  font-size: var(--cd-label);
+  font-weight: 500;
+  color: #777777;
+}
+
+.rdsw_cdMediaLimit {
+  font-size: calc(var(--cd-label) - 1.5px);
+  color: #a0a0a0;
+}
+
+.rdsw_cdMediaDropzone {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px dashed #c9c9cc;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 18px 14px;
+  font-size: calc(var(--cd-body) - 1px);
+  font-weight: 500;
+  color: #8b8b8b;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.rdsw_cdMediaDropzone:hover:not(:disabled) {
+  border-color: #1a1a1c;
+  color: #1b1b1d;
+}
+
+.rdsw_cdMediaList {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 0;
+  list-style: none;
+}
+
+.rdsw_cdMediaItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 11px;
+  background: #ffffff;
+  padding: 7px 10px;
+}
+
+/* The thumbnail is a button — it opens the lightbox */
+.rdsw_cdMediaThumbBtn {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  border-radius: 8px;
+  line-height: 0;
+}
+
+.rdsw_cdMediaThumb {
+  height: 34px;
+  width: 34px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f3f3f4;
+}
+
+.rdsw_cdMediaThumbVideo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #8b8b8b;
+}
+
+/* Play badge appears on hover/focus so the thumbnail reads as openable */
+.rdsw_cdMediaThumbPlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(20, 20, 22, 0.55);
+  color: #ffffff;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.rdsw_cdMediaThumbBtn:hover .rdsw_cdMediaThumbPlay,
+.rdsw_cdMediaThumbBtn:focus-visible .rdsw_cdMediaThumbPlay {
+  opacity: 1;
+}
+
+.rdsw_cdMediaName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: calc(var(--cd-body) - 1.5px);
+  color: #333333;
+  white-space: nowrap;
+  text-align: left;
+  text-overflow: ellipsis;
+  transition: color 0.18s ease;
+}
+
+.rdsw_cdMediaName:hover {
+  color: #171719;
+  text-decoration: underline;
+}
+
+/* ── Media lightbox ────────────────────────────────────────────────────────
+   Portalled to document.body (see CampaignMediaUpload) so the card's own
+   overflow and stacking cannot clip it. */
+
+.rdsw_cdLightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+}
+
+.rdsw_cdLightboxBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 8, 10, 0.82);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.rdsw_cdLightboxShell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(1080px, 100%);
+  max-height: 92vh;
+  font-family: "Outfit", sans-serif;
+}
+
+.rdsw_cdLightboxBar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  color: #ffffff;
+}
+
+.rdsw_cdLightboxName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rdsw_cdLightboxCount {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.rdsw_cdLightboxClose {
+  display: inline-flex;
+  height: 36px;
+  width: 36px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.rdsw_cdLightboxClose:hover {
+  background: #ffffff;
+  color: #171719;
+}
+
+.rdsw_cdLightboxStage {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.rdsw_cdLightboxMedia {
+  max-height: 78vh;
+  max-width: 100%;
+  border-radius: 14px;
+  background: #000000;
+  object-fit: contain;
+}
+
+.rdsw_cdLightboxNav {
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  height: 42px;
+  width: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(20, 20, 22, 0.6);
+  color: #ffffff;
+  transition: background-color 0.18s ease;
+}
+
+.rdsw_cdLightboxNav:hover {
+  background: rgba(20, 20, 22, 0.9);
+}
+
+.rdsw_cdLightboxNavPrev {
+  left: 10px;
+}
+
+.rdsw_cdLightboxNavNext {
+  right: 10px;
+}
+
+@media (min-width: 768px) {
+  .rdsw_cdLightboxNavPrev {
+    left: -54px;
+  }
+
+  .rdsw_cdLightboxNavNext {
+    right: -54px;
+  }
+}
+
+.rdsw_cdMediaSize {
+  flex-shrink: 0;
+  font-size: calc(var(--cd-label) - 1px);
+  color: #a0a0a0;
+}
+
+.rdsw_cdMediaRemove {
+  display: inline-flex;
+  height: 24px;
+  width: 24px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #f3f3f3;
+  color: #a00000;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.rdsw_cdMediaRemove:hover:not(:disabled) {
+  background: #d70000;
+  color: #ffffff;
+}
+
+/* ── Vehicle rail (stepper) ────────────────────────────────────────────────
+   Only one vehicle's form is on screen at a time; this rail is both the
+   progress readout and the navigation between them. Chips scroll
+   horizontally rather than wrapping, so ten vehicles read the same as two.
+   Horizontal overflow is safe here — Lenis runs with the default vertical
+   gesture orientation and leaves sideways wheel/touch alone. */
+
+.rdsw_cdRailWrap {
+  border-radius: var(--cd-radius);
+  background: #f7f7f8;
+  padding: var(--cd-pad);
+}
+
+.rdsw_cdRailHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 14px;
+}
+
+.rdsw_cdRailTitle {
+  font-size: var(--cd-title);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #1b1b1d;
+}
+
+.rdsw_cdRailMeta {
+  font-size: var(--cd-body);
+  font-weight: 500;
+  color: #8b8b8b;
+}
+
+.rdsw_cdRailProgress {
+  position: relative;
+  height: 5px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e4e4e6;
+}
+
+.rdsw_cdRailProgress > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff3b30, #d70000);
+  transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rdsw_cdRail {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.rdsw_cdRail::-webkit-scrollbar {
+  height: 5px;
+}
+
+.rdsw_cdRail::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #d2d2d6;
+}
+
+.rdsw_cdRailItem {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  max-width: 260px;
+  border: 1px solid #e2e2e5;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 8px 12px 8px 8px;
+  text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rdsw_cdRailItem:hover {
+  border-color: #b9b9be;
+}
+
+.rdsw_cdRailItemActive {
+  border-color: #1a1a1c;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+}
+
+.rdsw_cdRailItemError {
+  border-color: #f0b6bb;
+  background: #fff7f7;
+}
+
+.rdsw_cdRailThumb {
+  position: relative;
+  display: block;
+  height: 42px;
+  width: 42px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #f3f3f4;
+}
+
+.rdsw_cdRailThumb img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.rdsw_cdRailTick {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: inline-flex;
+  height: 17px;
+  width: 17px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: #1a7f37;
+  color: #ffffff;
+}
+
+.rdsw_cdRailCopy {
+  display: block;
+  min-width: 0;
+}
+
+.rdsw_cdRailIndex {
+  display: block;
+  font-size: calc(var(--cd-label) - 1.5px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a0a0a0;
+}
+
+.rdsw_cdRailName {
+  display: block;
+  overflow: hidden;
+  font-size: var(--cd-body);
+  font-weight: 600;
+  line-height: 1.25;
+  color: #1b1b1d;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rdsw_cdRailPencil {
+  flex-shrink: 0;
+  color: #a0a0a0;
+}
+
+.rdsw_cdRailItemActive .rdsw_cdRailPencil {
+  color: #d70000;
+}
+
+/* ── Step navigation ───────────────────────────────────────────────────── */
+
+.rdsw_cdStepNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-radius: var(--cd-radius);
+  background: #f7f7f8;
+  padding: 12px var(--cd-pad);
+}
+
+.rdsw_cdStepNavBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: #e4e4e7;
+  padding: 12px 20px;
+  font-size: var(--cd-body);
+  font-weight: 600;
+  color: #202020;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.rdsw_cdStepNavBtn:hover:not(:disabled) {
+  background: #d5d5d9;
+}
+
+.rdsw_cdStepNavBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.rdsw_cdStepNavBtnPrimary {
+  background: #1a1a1c;
+  color: #ffffff;
+}
+
+.rdsw_cdStepNavBtnPrimary:hover:not(:disabled) {
+  background: #d70000;
+}
+
+.rdsw_cdStepNavCount {
+  flex-shrink: 0;
+  font-size: var(--cd-body);
+  font-weight: 600;
+  color: #8b8b8b;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Replaces Previous / count when there is nothing to step through — one
+   vehicle, or "apply to all" collapsing them into a single set. */
+.rdsw_cdStepNavNote {
+  min-width: 0;
+  font-size: var(--cd-body);
+  font-weight: 500;
+  color: #8b8b8b;
+}
+
+/* ── Apply to all ──────────────────────────────────────────────────────── */
+
+.rdsw_cdApplyAll {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 18px;
+  border: 1px solid #d9e7d9;
+  border-radius: 14px;
+  background: #f2f8f2;
+  padding: 14px 15px;
+  cursor: pointer;
+}
+
+.rdsw_cdApplyAll input {
+  margin-top: 2px;
+  height: 16px;
+  width: 16px;
+  flex-shrink: 0;
+  accent-color: #1a7f37;
+}
+
+.rdsw_cdApplyAll > span {
+  font-size: var(--cd-body);
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1b1b1d;
+}
+
+.rdsw_cdApplyAll em {
+  display: block;
+  margin-top: 4px;
+  font-size: calc(var(--cd-body) - 2px);
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.45;
+  color: #6b7d6b;
+}
+
+/* ── Summary ───────────────────────────────────────────────────────────── */
+
+.rdsw_cdSummaryCard {
+  border-radius: var(--cd-radius);
+  background: #f7f7f8;
+  padding: var(--cd-pad);
+}
+
+.rdsw_cdSummaryTitle {
+  font-size: var(--cd-title);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #1b1b1d;
+}
+
+.rdsw_cdSummaryRows {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.rdsw_cdSummaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--cd-body);
+  color: #575757;
+}
+
+.rdsw_cdSummaryRow > span:last-child {
+  font-weight: 600;
+  color: #1b1b1d;
+  font-variant-numeric: tabular-nums;
+}
+
+.rdsw_cdSummaryTotalRow {
+  margin-top: 5px;
+  border-top: 1px solid #dcdcde;
+  padding-top: 13px;
+  font-size: calc(var(--cd-body) + 1px);
+  font-weight: 600;
+  color: #1b1b1d;
+}
+
+.rdsw_cdSummaryTotalRow strong {
+  font-size: calc(var(--cd-title) + 3px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rdsw_cdSummaryNote {
+  margin-top: 15px;
+  font-size: calc(var(--cd-label) - 1px);
+  line-height: 1.55;
+  color: #9a9a9a;
+}
+
+/* ── Back action ───────────────────────────────────────────────────────── */
+/*  Review lives in the floating bar below, so this row only carries Back.  */
+
+.rdsw_cdActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.rdsw_cdBackButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  background: #dedee1;
+  padding: 13px 24px;
+  font-size: var(--cd-body);
+  font-weight: 600;
+  color: #202020;
+  transition: background-color 0.2s ease;
+}
+
+.rdsw_cdBackButton:hover {
+  background: #cfcfd2;
+}
+
+/* ── Floating summary bar ──────────────────────────────────────────────────
+   Fixed rather than sticky: the page is a tall column of cards, and a
+   sticky bar anchored to the end of the document only appears once the
+   customer has already scrolled past everything it summarises. */
+
+/* Sticky, NOT fixed. Fixed pinned the bar to the viewport for the whole
+   document, so it sat on top of the "Launch your campaign now" band and the
+   footer once the customer scrolled past the form. Sticky keeps it pinned
+   only while this section is on screen and lets it scroll away with the
+   content — the same behaviour .rdsw_crfStickyBar has on the previous step. */
+.rdsw_cdStickyBar {
+  position: sticky;
+  bottom: 0;
+  z-index: 90;
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+.rdsw_cdStickyBarInner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 12px 14px 12px 20px;
+
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+
+  box-shadow:
+    0 16px 38px rgba(15, 23, 42, 0.16),
+    0 4px 12px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+  pointer-events: auto;
+}
+
+.rdsw_cdStickyBarInfo {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.rdsw_cdStickyBarCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: var(--cd-label);
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+  background: linear-gradient(140deg, #ff3b30, #d70000);
+}
+
+.rdsw_cdStickyBarLabel {
+  font-size: var(--cd-body);
+  font-weight: 600;
+  color: #4a4a4f;
+  white-space: nowrap;
+}
+
+.rdsw_cdStickyBarTotal {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 9px;
+  min-width: 0;
+}
+
+.rdsw_cdStickyBarTotalLabel {
+  font-size: calc(var(--cd-label) - 0.5px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8b8b90;
+  white-space: nowrap;
+}
+
+.rdsw_cdStickyBarTotalValue {
+  font-size: calc(var(--cd-title) + 2px);
+  font-weight: 700;
+  color: #171719;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.rdsw_cdStickyBarTotalNote {
+  font-size: calc(var(--cd-label) - 1px);
+  color: #9a9a9f;
+  white-space: nowrap;
+}
+
+.rdsw_cdStickyBarButton {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: #1a1a1c;
+  padding: 13px 26px;
+  font-size: var(--cd-body);
+  font-weight: 600;
+  color: #ffffff;
+  transition: background-color 0.2s ease;
+}
+
+.rdsw_cdStickyBarButton:hover {
+  background: #d70000;
+}
+
+/* Narrow phones: the pill becomes a card so the total and the button are
+   not squeezed onto one 320px-wide line. */
+@media (max-width: 560px) {
+  .rdsw_cdStickyBarInner {
+    border-radius: 20px;
+    padding: 13px 15px;
+  }
+
+  .rdsw_cdStickyBarTotal {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
+
+  .rdsw_cdStickyBarButton {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+
+@media (min-width: 640px) {
+  .rdsw_cdPage {
+    --cd-heading: 32px;
+    --cd-pad: 22px;
+
+    /* The summary bar is sticky inside the flow now, not fixed over it, so
+       the page no longer needs to reserve a bar's height of dead space. */
+    padding: 40px 24px 40px;
+  }
+
+  .rdsw_cdCardHeader {
+    grid-template-columns: 90px minmax(0, 1fr) auto;
+  }
+
+  .rdsw_cdCardImageWrap {
+    height: 90px;
+    width: 90px;
+  }
+
+  .rdsw_cdCardHeadTotal {
+    grid-column: auto;
+    align-items: flex-end;
+    text-align: right;
+    background: transparent;
+    padding: 0;
+  }
+
+  .rdsw_cdGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 780px;
+  }
+
+  .rdsw_cdMediaGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 860px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .rdsw_cdPage {
+    --cd-heading: 38px;
+    --cd-gap: 22px;
+
+    padding: 52px 32px 52px;
+  }
+
+  .rdsw_cdLayout {
+    grid-template-columns: minmax(0, 1.62fr) minmax(320px, 0.66fr);
+  }
+
+  /* The summary trails the cards on its own, then pins once it reaches the
+     navbar — the card column is always the taller of the two. */
+  .rdsw_cdSummary {
+    position: sticky;
+    top: 96px;
+  }
+
+  /* Campaign Type / Campaign Name / Campaign Location on one row. The
+     max-width stops three columns from becoming three very wide columns on
+     a large monitor. */
+  .rdsw_cdGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 1120px;
+  }
+}
+
+/* ── Large desktop ─────────────────────────────────────────────────────────
+   The page was legible but visibly under-scaled here: a 12px label on a
+   1500px-wide column reads as fine print. These two steps grow the tokens
+   (and only the tokens) so the whole page keeps its proportions. */
+
+@media (min-width: 1280px) {
+  .rdsw_cdPage {
+    --cd-label: 14px;
+    --cd-body: 16px;
+    --cd-field: 17px;
+    --cd-title: 21px;
+    --cd-heading: 44px;
+    --cd-gap: 24px;
+    --cd-pad: 26px;
+    --cd-radius: 24px;
+    --cd-icon: 19px;
+    padding: 60px 40px 60px;
+    padding-bottom: 5px !important;
+  }
+
+  .rdsw_cdCardImageWrap {
+    height: 104px;
+    width: 104px;
+  }
+
+  .rdsw_cdCardHeader {
+    grid-template-columns: 104px minmax(0, 1fr) auto;
+  }
+
+  .rdsw_cdInput {
+    height: 54px;
+    border-radius: 14px;
+    padding: 0 16px;
+  }
+
+  select.rdsw_cdInput {
+    background-size: 19px 19px;
+  }
+
+  .rdsw_cdStep span {
+    height: 32px;
+    width: 32px;
+  }
+
+  .rdsw_cdStepNavBtn,
+  .rdsw_cdStickyBarButton,
+  .rdsw_cdBackButton {
+    padding: 15px 28px;
+  }
+
+  .rdsw_cdGrid {
+    gap: 20px 24px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .rdsw_cdPage {
+    --cd-label: 15px;
+    --cd-body: 17.5px;
+    --cd-field: 18px;
+    --cd-title: 23px;
+    --cd-heading: 50px;
+    --cd-pad: 30px;
+    --cd-icon: 21px;
+
+    padding: 68px 48px 68px;
+  }
+
+  .rdsw_cdLayout {
+    grid-template-columns: minmax(0, 1.68fr) minmax(360px, 0.62fr);
+  }
+
+  .rdsw_cdInput {
+    height: 58px;
+  }
+
+  select.rdsw_cdInput {
+    background-size: 21px 21px;
+  }
+
+  .rdsw_cdCardImageWrap {
+    height: 118px;
+    width: 118px;
+  }
+
+  .rdsw_cdCardHeader {
+    grid-template-columns: 118px minmax(0, 1fr) auto;
+  }
+
+  .rdsw_cdStep span {
+    height: 34px;
+    width: 34px;
+  }
+
+  .rdsw_cdRailThumb {
+    height: 58px;
+    width: 58px;
+  }
+
+  .rdsw_cdStepNavBtn,
+  .rdsw_cdStickyBarButton,
+  .rdsw_cdBackButton {
+    padding: 16px 32px;
+  }
+
+  .rdsw_cdToggle {
+    height: 30px;
+    width: 54px;
+  }
+
+  .rdsw_cdToggleKnob {
+    height: 24px;
+    width: 24px;
+  }
+
+  .rdsw_cdToggleOn .rdsw_cdToggleKnob {
+    transform: translateX(24px);
+  }
+
+  .rdsw_cdStepperBtn {
+    height: 36px;
+    width: 36px;
+  }
+
+  /* Still three across, just a touch wider per control */
+  .rdsw_cdGrid {
+    max-width: 1280px;
+  }
+
+  .rdsw_cdMediaGrid {
+    max-width: 960px;
+  }
+
+  .rdsw_cdRailThumb {
+    height: 52px;
+    width: 52px;
+  }
+
+  .rdsw_cdRailItem {
+    max-width: 300px;
+    padding: 10px 15px 10px 10px;
+  }
+}
+
+/* ── Phones ────────────────────────────────────────────────────────────────
+   The step nav is the primary way through the form on a small screen, so it
+   gets full-width targets rather than three items squeezed onto one line. */
+
+@media (max-width: 560px) {
+  .rdsw_cdStepNav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .rdsw_cdStepNavBtn {
+    justify-content: center;
+    padding: 13px 14px;
+  }
+
+  .rdsw_cdStepNavCount {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    text-align: center;
+  }
+
+  /* Replaces Previous + count entirely, so it takes the whole first row */
+  .rdsw_cdStepNavNote {
+    grid-column: 1 / -1;
+    text-align: center;
+  }
+
+  .rdsw_cdQtyRow {
+    gap: 12px;
+  }
+
+  .rdsw_cdRailItem {
+    max-width: 210px;
+  }
+
+  .rdsw_cdRailName {
+    max-width: 118px;
+  }
+
+  /* The stepper header and the vehicle card both carry the vehicle name at
+     this width — dropping the rail's own heading avoids saying it twice in
+     the small amount of space available. */
+  .rdsw_cdRailMeta {
+    font-size: calc(var(--cd-body) - 1px);
+  }
+}

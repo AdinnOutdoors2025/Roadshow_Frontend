@@ -2681,3 +2681,142 @@
    because under the smoother #smooth-content is translated rather than
    scrolled and position: sticky silently dies.
    ========================================================== */
+
+/* ==========================================================
+   STICKY CART SUMMARY BAR — RESPONSIVE SCALE
+
+   Appended, not edited in place: every rule above keeps its original value
+   and simply loses to these where they overlap.
+
+   The bar only ever had a base size and a <=640px block, so on a 1440px+
+   monitor it still rendered at its phone scale — a 12px label and a 17px
+   total inside a bar nearly a metre wide. These steps grow the type, the
+   pill and the button together as the viewport does.
+========================================================== */
+
+@media (min-width: 1024px) {
+  .rdsw_crfStickyBarInner {
+    width: min(1120px, 100%);
+    gap: 18px;
+    padding: 14px 16px 14px 22px;
+  }
+
+  .rdsw_crfStickyBarCount {
+    min-width: 30px;
+    height: 30px;
+    font-size: 13px;
+  }
+
+  .rdsw_crfStickyBarLabel {
+    font-size: 14px;
+  }
+
+  .rdsw_crfStickyBarTotalLabel {
+    font-size: 12px;
+  }
+
+  .rdsw_crfStickyBarTotalValue {
+    font-size: 20px;
+  }
+
+  .rdsw_crfStickyBarTotalNote {
+    font-size: 12px;
+  }
+
+  .rdsw_crfStickyBarButton {
+    padding: 14px 30px;
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .rdsw_crfStickyBarInner {
+    width: min(1240px, 100%);
+    gap: 20px;
+    padding: 15px 18px 15px 24px;
+  }
+
+  .rdsw_crfStickyBarCount {
+    min-width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .rdsw_crfStickyBarLabel {
+    font-size: 15px;
+  }
+
+  .rdsw_crfStickyBarTotalLabel {
+    font-size: 12.5px;
+  }
+
+  .rdsw_crfStickyBarTotalValue {
+    font-size: 22px;
+  }
+
+  .rdsw_crfStickyBarTotalNote {
+    font-size: 12.5px;
+  }
+
+  .rdsw_crfStickyBarButton {
+    padding: 15px 34px;
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .rdsw_crfStickyBarInner {
+    width: min(1400px, 100%);
+    gap: 24px;
+    padding: 17px 20px 17px 28px;
+  }
+
+  .rdsw_crfStickyBarCount {
+    min-width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .rdsw_crfStickyBarLabel {
+    font-size: 16.5px;
+  }
+
+  .rdsw_crfStickyBarTotalLabel {
+    font-size: 13.5px;
+  }
+
+  .rdsw_crfStickyBarTotalValue {
+    font-size: 25px;
+  }
+
+  .rdsw_crfStickyBarTotalNote {
+    font-size: 13.5px;
+  }
+
+  .rdsw_crfStickyBarButton {
+    padding: 17px 40px;
+    font-size: 16.5px;
+  }
+}
+
+/* Tablet / small laptop — between the existing <=640px block and 1024px the
+   bar had nothing of its own, so it sat at the phone scale here too. */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .rdsw_crfStickyBarInner {
+    gap: 16px;
+    padding: 13px 15px 13px 20px;
+  }
+
+  .rdsw_crfStickyBarLabel {
+    font-size: 13px;
+  }
+
+  .rdsw_crfStickyBarTotalValue {
+    font-size: 18.5px;
+  }
+
+  .rdsw_crfStickyBarButton {
+    padding: 13px 26px;
+    font-size: 13px;
+  }
+}
