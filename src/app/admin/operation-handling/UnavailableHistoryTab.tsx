@@ -21,7 +21,7 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
         return v?.typeName || "Vehicle";
     };
 
-  
+
     const vehiclesWithHistory = (order.bookingItems || [])
         .map((item: any, idx: number) => ({ item, idx }))
         .filter(({ idx }: any) =>
@@ -38,7 +38,7 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
             (order.onRoadUnavailableHistory || [])
                 .filter((h: any) => h.vehicleIndex === activeVehicle.idx)
                 .map((h: any) => h.vehicleRegNo)
-          )] as string[]
+        )] as string[]
         : [];
 
     const currentRegNo = activeRegNo || regNosForVehicle[0] || null;
@@ -61,7 +61,7 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
 
     return (
         <div className="p-4 space-y-4">
-           
+
             <div className="flex items-center justify-between">
                 <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
                     Unavailable History
@@ -71,7 +71,7 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
                 </span>
             </div>
 
-       
+
             {vehiclesWithHistory.length > 1 && (
                 <div className="flex gap-2 flex-wrap">
                     {vehiclesWithHistory.map(({ item, idx }: any, i: number) => (
@@ -81,15 +81,13 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
                                 setActiveVehicleIdx(i);
                                 setActiveRegNo(null);
                             }}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold transition-all ${
-                                activeVehicleIdx === i
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold transition-all ${activeVehicleIdx === i
                                     ? "border-red-300 bg-red-50 text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-400"
                                     : "border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400"
-                            }`}
+                                }`}
                         >
-                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-bold ${
-                                activeVehicleIdx === i ? "bg-red-500" : "bg-gray-400"
-                            }`}>
+                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-bold ${activeVehicleIdx === i ? "bg-red-500" : "bg-gray-400"
+                                }`}>
                                 V{idx + 1}
                             </div>
                             <div className="text-left">
@@ -101,7 +99,7 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
                 </div>
             )}
 
-          
+
             {vehiclesWithHistory.length === 1 && activeVehicle && (
                 <div className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40">
                     <div className="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
@@ -118,18 +116,17 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
                 </div>
             )}
 
-          
+
             {regNosForVehicle.length > 1 && (
                 <div className="flex gap-1 flex-wrap border-b border-gray-100 dark:border-gray-800 pb-0">
                     {regNosForVehicle.map((regNo: string, i: number) => (
                         <button
                             key={regNo}
                             onClick={() => setActiveRegNo(regNo)}
-                            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all ${
-                                currentRegNo === regNo
+                            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all ${currentRegNo === regNo
                                     ? "border-red-500 text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20"
                                     : "border-transparent text-gray-400 hover:text-gray-600"
-                            }`}
+                                }`}
                         >
                             <div className="w-4 h-4 rounded-full bg-red-400 flex items-center justify-center text-white" style={{ fontSize: "9px" }}>
                                 {i + 1}
@@ -140,7 +137,7 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
                 </div>
             )}
 
-          
+
             {regNosForVehicle.length === 1 && currentRegNo && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800/40 rounded-lg border border-gray-100 dark:border-gray-700">
                     <span className="text-xs font-mono font-semibold text-gray-700 dark:text-gray-300">{currentRegNo}</span>
@@ -151,7 +148,7 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
                 </div>
             )}
 
-          
+
             <div className="space-y-3">
                 {filteredHistory.length === 0 && (
                     <p className="text-sm text-gray-400 text-center py-6">No records found</p>
@@ -159,34 +156,33 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
                 {filteredHistory.map((h: any, i: number) => (
                     <div
                         key={h._id || i}
-                        className={`rounded-xl border p-4 space-y-2 ${
-                            h.status === "unavailable"
+                        className={`rounded-xl border p-4 space-y-2 ${h.status === "unavailable"
                                 ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10"
                                 : "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10"
-                        }`}
+                            }`}
                     >
-                       
+
                         <div className="flex items-center justify-between">
                             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                                 {h.driverName} — <span className="font-mono">{h.vehicleRegNo}</span>
                             </p>
                             <div className="flex items-center gap-1.5">
-                                {h.eventType === "replaced" && (
+                                {h.eventType === "replaced" ? (
                                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
                                         Replaced
                                     </span>
+                                ) : (
+                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${h.status === "unavailable"
+                                            ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                                            : "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                        }`}>
+                                        {h.status === "unavailable" ? "Unavailable" : "Available"}
+                                    </span>
                                 )}
-                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                                    h.status === "unavailable"
-                                        ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                                        : "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                }`}>
-                                    {h.status === "unavailable" ? "Unavailable" : "Available"}
-                                </span>
                             </div>
                         </div>
 
-                       
+
                         <div className="space-y-1">
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                                 <span className="font-medium">Reason:</span> {h.reason}

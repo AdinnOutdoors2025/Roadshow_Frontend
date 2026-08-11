@@ -20,6 +20,20 @@ import { getToken } from "../../utils/auth";
 import toast from "react-hot-toast";
 import API_BASE from "../../../../baseurl";
 
+// Decodes the logged-in username straight from the admin JWT (same approach
+// as useAuthGuard.tsx's parseJwt) so comment uploads don't need a manual
+// "enter your name" prompt.
+function getLoggedInUsername(): string {
+    try {
+        const token = getToken();
+        if (!token) return "Admin";
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return payload?.username || "Admin";
+    } catch {
+        return "Admin";
+    }
+}
+
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface Order {
@@ -91,12 +105,8 @@ export default function CommentsTab({ order, onRefresh }: { order: Order; onRefr
     const [saving, setSaving] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
 
-    // ── Name Modal state ───────────────────────────────────────────────────
-    const [showNameModal, setShowNameModal] = useState(false);
-    const [uploaderName, setUploaderName] = useState(order.todoUploadedBy || "");
-    const [nameInput, setNameInput] = useState("");
-    const [nameError, setNameError] = useState("");
-    const [savingName, setSavingName] = useState(false);
+    // Login username is the uploader — no manual name entry.
+    const uploaderName = getLoggedInUsername();
     const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
     const isTodo = order.pipelineStatus === "todo";
@@ -221,84 +231,11 @@ export default function CommentsTab({ order, onRefresh }: { order: Order; onRefr
 
     const handleAddCommentClick = () => {
         if (!comment.trim() && !file) return;
-        if (isTodo && !uploaderName) {
-            setNameInput("");
-            setNameError("");
-            setShowNameModal(true);
-            return;
-        }
-        submitComment(uploaderName || "");
-    };
-
-
-    const handleNameConfirm = async () => {
-        if (!nameInput.trim()) {
-            setNameError("Name is required");
-            return;
-        }
-        const name = nameInput.trim();
-        setSavingName(true);
-        try {
-            const token = getToken();
-            await axios.patch(
-                `${API_BASE}admin/pipeline/${order._id}/todo-uploader`,
-                { todoUploadedBy: name },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            setUploaderName(name);
-            setShowNameModal(false);
-            await onRefresh();
-            submitComment(name);
-        } catch (e: any) {
-            setNameError(e?.response?.data?.message || "Save failed, try again");
-        } finally {
-            setSavingName(false);
-        }
+        submitComment(uploaderName);
     };
 
     return (
         <div className="p-4 space-y-4">
-
-
-            {showNameModal && (
-                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4">
-                        <div className="flex items-center gap-3">
-
-
-                        </div>
-                        <input
-                            type="text"
-                            value={nameInput}
-                            onChange={(e) => { setNameInput(e.target.value); setNameError(""); }}
-                            onKeyDown={(e) => e.key === "Enter" && handleNameConfirm()}
-                            placeholder="Please Enter Your Name"
-                            autoFocus
-                            className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        />
-                        {nameError && (
-                            <p className="text-xs text-red-500 flex items-center gap-1">
-                                <AlertCircle size={12} /> {nameError}
-                            </p>
-                        )}
-                        <div className="flex gap-2 pt-1">
-                            <button
-                                onClick={() => setShowNameModal(false)}
-                                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all font-medium"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleNameConfirm}
-                                disabled={savingName}
-                                className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-sm font-semibold text-white transition-all"
-                            >
-                                {savingName ? "Saving..." : "Confirm & Upload"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* ── Add Comment Box ── */}
             <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">

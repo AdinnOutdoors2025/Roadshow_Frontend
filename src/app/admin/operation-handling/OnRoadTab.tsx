@@ -39,6 +39,16 @@ const fmtDate = (s) => {
   });
 };
 
+    const formatINR = (value: string | number) => {
+        const num = parseFloat(String(value).replace(/[^0-9.]/g, ""));
+        if (isNaN(num) || value === "" || value === undefined) return "";
+        return new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 0,
+        }).format(num);
+    };
+
 const fmtDatetime = (s) => {
   if (!s) return "—";
   return new Date(s).toLocaleString("en-IN", {
@@ -1040,7 +1050,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                             {regNo} {isCurrentReg ? "(current)" : "(old)"}
                           </span>
                           <span className="text-xs text-gray-400">
-                            {groupTotalKm} km · {groupTotalHrs} hrs · ₹{groupTotalCost.toFixed(2)}
+                            {groupTotalKm} km · {groupTotalHrs} hrs · {formatINR(groupTotalCost)}
                           </span>
                         </div>
 
@@ -1061,7 +1071,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                                 </p>
                               </div>
                               <span className="text-sm font-bold text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
-                                ₹{(e.totalCost || 0).toFixed(2)}
+                                {formatINR(e.totalCost)}
                               </span>
                             </div>
 
@@ -1078,8 +1088,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                                 </svg>
                                 Extra Hours: <b className="text-gray-800 dark:text-gray-200">{e.extraHours} hrs</b>
                               </span>
-                              <span className="pl-4.5">KM cost: ₹{(e.extraKmCost || 0).toFixed(2)}</span>
-                              <span className="pl-4.5">Hour cost: ₹{(e.extraHourCost || 0).toFixed(2)}</span>
+                           <span className="pl-4.5">KM cost: {formatINR(e.extraKmCost)}</span>
+                          <span className="pl-4.5">Hour cost: {formatINR(e.extraHourCost)}</span>
                             </div>
 
                             <div className="flex items-center justify-between flex-wrap gap-1.5 pt-2 border-t border-gray-50 dark:border-gray-800">
@@ -1098,12 +1108,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                                 })}
                               </span>
                             </div>
-                            <p className="mt-1.5 text-[11px] text-gray-400 leading-snug">
-                              {e.distributionMethod === "split"
-                                ? "Split: total divided evenly across each day in this range."
-                                : "Daily: this full amount applies on every day in this range."}
-                              {" "}Shown cost is the flat package-rate reference — the actual amount billed per day (see Campaign Calculator → Daily Timeline) is lower on days where the purchased Extra KM/Hours pool still has balance.
-                            </p>
+                           
                           </div>
                         ))}
                       </div>

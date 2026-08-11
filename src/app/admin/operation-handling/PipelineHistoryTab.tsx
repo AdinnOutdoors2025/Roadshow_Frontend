@@ -105,6 +105,12 @@ export default function PipelineHistoryTab({ order }: { order: Order }) {
                         const toLabel = toS?.label || log.toStage;
                         const dotColor = toS?.gradient || "from-gray-400 to-gray-500";
                         const isLast = i === logs.length - 1;
+                        // "Started at To-Do" (the very first log entry) should read the
+                        // Project Code created date, matching the board card's "Created At" —
+                        // not the raw document-creation timestamp on pipelineLogs[0].movedAt.
+                        const displayMovedAt = !log.fromStage
+                            ? (order.projectCodeArray?.[0]?.savedAt || log.movedAt)
+                            : log.movedAt;
 
                         return (
                             <div key={i} className="flex items-start gap-3 relative">
@@ -128,7 +134,7 @@ export default function PipelineHistoryTab({ order }: { order: Order }) {
                                             <span>By {log.movedBy || "—"}</span>
                                             {log.handlerName && <><span>·</span><span>Handler: {log.handlerName}</span></>}
                                             <span>·</span>
-                                            <span>{fmtDatetime(log.movedAt)}</span>
+                                            <span>{fmtDatetime(displayMovedAt)}</span>
                                         </div>
                                     </div>
                                 </div>

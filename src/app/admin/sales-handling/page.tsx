@@ -514,6 +514,10 @@ export default function SalesPipelineBoard() {
   const [lostFile, setLostFile] = useState<File | null>(null);
   const [lostError, setLostError] = useState("");
 
+  // Date Conflict tab: "Edit" on a conflicting order switches the drawer to
+  // that order and asks SalesDetailDrawer to auto-open its edit form.
+  const [pendingEditOrderId, setPendingEditOrderId] = useState<string | null>(null);
+
   const [projectMailModal, setProjectMailModal] = useState<SalesOrder | null>(null);
   const [projectMailTo, setProjectMailTo] = useState("");
   const [projectMailCc, setProjectMailCc] = useState("");
@@ -957,6 +961,30 @@ export default function SalesPipelineBoard() {
     }
   };
 
+  // Date Conflict tab "Closed Lost" button — reuses the same stage-move
+  // pipeline as the kanban board, targeting the conflicting order (not
+  // necessarily the order whose drawer is currently open).
+  const handleClosedLostConflictOrder = (orderObjectId: string) => {
+    const target = Object.values(grouped).flat().find((o) => o._id === orderObjectId);
+    if (target) {
+      handleStageMove(target, "closedLost");
+    } else {
+      toast.error("Order not found in current board view. Refresh to try.");
+    }
+  };
+
+  // Date Conflict tab "Edit" button — switches the drawer to the conflicting
+  // order and asks SalesDetailDrawer to auto-open its edit form.
+  const handleEditConflictOrder = (orderObjectId: string) => {
+    const target = Object.values(grouped).flat().find((o) => o._id === orderObjectId);
+    if (target) {
+      setDrawerOrder(target);
+      setPendingEditOrderId(orderObjectId);
+    } else {
+      toast.error("Order not found in current board view. Refresh to try.");
+    }
+  };
+
   const handleDrawerRefresh = async () => {
     const token = getToken();
     const { data } = await axios.get(`${API_BASE}sales/pipeline`, {
@@ -1109,6 +1137,10 @@ export default function SalesPipelineBoard() {
           saving={saving}
           onOpenConflictOrder={handleOpenConflictOrder}
           highlightOrderId={highlightOrderId}
+          onClosedLostConflictOrder={handleClosedLostConflictOrder}
+          onEditConflictOrder={handleEditConflictOrder}
+          editOrderId={pendingEditOrderId}
+          onEditOrderHandled={() => setPendingEditOrderId(null)}
         />
       )}
 

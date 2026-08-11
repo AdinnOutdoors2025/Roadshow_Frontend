@@ -63,7 +63,7 @@ export default function PipelineHistoryTab({ order }: { order: SalesOrder }) {
                                         {log.handlerName && (
                                             <>
                                                 <span>·</span>
-                                                <span>Handler: {log.handlerName}</span>
+                                                <span>Assigned By: {log.handlerName}</span>
                                             </>
                                         )}
                                         <span>·</span>

@@ -20,7 +20,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import axios from "axios";
 import { getToken } from "../../utils/auth";
 import { jwtDecode } from "jwt-decode";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import API_BASE from "../../../../baseurl";
 import { SALES_STAGE_MAP, SALES_STAGES, SalesOrder } from "./page";
 import {
@@ -1650,7 +1650,8 @@ function DocumentsTab({
 
 export default function SalesDetailDrawer({
   order, onClose, onRefresh, onStageMove, staffAdmins, currentUserIsAdmin, saving,
-  onOpenConflictOrder, highlightOrderId,
+  onOpenConflictOrder, highlightOrderId, onClosedLostConflictOrder, onEditConflictOrder,
+  editOrderId, onEditOrderHandled,
 }: {
   order: SalesOrder; onClose: () => void; onRefresh: () => Promise<void>;
   onStageMove: (order: SalesOrder, toStage: string) => void;
@@ -1659,12 +1660,26 @@ export default function SalesDetailDrawer({
   saving: boolean;
   onOpenConflictOrder?: (orderObjectId: string) => void;
   highlightOrderId?: string | null;
+  onClosedLostConflictOrder?: (orderObjectId: string) => void;
+  onEditConflictOrder?: (orderObjectId: string) => void;
+  editOrderId?: string | null;
+  onEditOrderHandled?: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const stage = SALES_STAGE_MAP[order.salesPipelineStatus];
   const stageIdx = SALES_STAGES.findIndex((s) => s.key === order.salesPipelineStatus);
   const [showEditForm, setShowEditForm] = useState(false);
   const { vehicleTypes, fetchVehicleTypes } = useVehicle();
+
+  // Date Conflict tab "Edit" button on a conflicting order routed us here —
+  // auto-open the edit form once this order is actually showing.
+  useEffect(() => {
+    if (editOrderId && editOrderId === order._id) {
+      setShowEditForm(true);
+      onEditOrderHandled?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editOrderId, order._id]);
 
   // ── Handler handover / reassignment ────────────────────────────────────
   const [showHandoverModal, setShowHandoverModal] = useState(false);
@@ -1770,6 +1785,15 @@ export default function SalesDetailDrawer({
   const nextLabel = getNextLabel();
   const nextShort = getNextStageShortLabel();
 
+  // Single shared handler for every "Move to Next Stage" trigger (header
+  // button, mobile button, Overview Quick Actions button) so validation
+  // (and its toast.error on failure, e.g. incomplete Project Code Creation)
+  // behaves identically no matter which button/tab it's clicked from.
+  const handleMoveToNext = () => {
+    const ns = nextStageKey();
+    if (ns) onStageMove(order, ns);
+  };
+
 
   const stageReached = (key: string) => {
     const idx = SALES_STAGES.findIndex((s) => s.key === key);
@@ -1815,6 +1839,11 @@ export default function SalesDetailDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+      {/* Mounted with the drawer itself (not any one tab) so "Move to Next
+          Stage" validation toasts show consistently no matter which tab is
+          active — react-hot-toast's default z-index (9999) sits above the
+          modal's z-50 backdrop. */}
+      <Toaster position="top-right" />
       {/* <div className="bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300"> */}
 
       <div className={`bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300 transition-all ${highlightOrderId === order._id ? "ring-4 ring-amber-400" : ""
@@ -1861,7 +1890,7 @@ export default function SalesDetailDrawer({
 
             {nextShort && (
               <button
-                onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
+                onClick={handleMoveToNext}
                 disabled={saving}
                 className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold transition-all whitespace-nowrap"
               >
@@ -1893,7 +1922,7 @@ export default function SalesDetailDrawer({
           {nextShort && (
             <div className="sm:hidden flex items-center gap-2 px-4 pb-3">
               <button
-                onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
+                onClick={handleMoveToNext}
                 disabled={saving}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-semibold transition-all"
               >
@@ -1983,7 +2012,7 @@ export default function SalesDetailDrawer({
                   <div className="space-y-2">
                     {nextShort && (
                       <button
-                        onClick={() => { const ns = nextStageKey(); if (ns) onStageMove(order, ns); }}
+                        onClick={handleMoveToNext}
                         disabled={saving}
                         className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 disabled:opacity-60 text-white dark:text-gray-900 text-sm font-medium transition-all"
                       >
@@ -2072,7 +2101,12 @@ export default function SalesDetailDrawer({
           )}
 
           {activeTab === "dateConflict" && (
-            <DateConflictTab order={order} onOpenConflictOrder={onOpenConflictOrder} />
+            <DateConflictTab
+              order={order}
+              onOpenConflictOrder={onOpenConflictOrder}
+              onClosedLostConflictOrder={onClosedLostConflictOrder}
+              onEditConflictOrder={onEditConflictOrder}
+            />
           )}
 
 
