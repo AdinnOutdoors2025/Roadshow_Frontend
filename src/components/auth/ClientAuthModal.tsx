@@ -12,15 +12,30 @@ import React, {
 import Image from "next/image";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { useAuth } from "@/context/AuthContext";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import "./ClientAuthModal.css";
+import AccountTypeStep, { ClientAccountType } from "./AccountTypeStep";
+import GstVerifyPanel from "@/components/gst/GstVerifyPanel";
+import { GstBusiness, isGstBlocked } from "@/lib/gst";
+// Env-driven base URL — `@/BaseUrl` hardcodes localhost and breaks in production.
+// import API_BASE from "../../../baseurl";
 import { baseUrl } from "@/BaseUrl";
+
 type AuthFlow = "login" | "signup";
 
 const OTP_LENGTH = 6;
 const RESEND_TIME = 30;
+
+/** Screen slide/fade used between login → account type → form → OTP. */
+const screenMotion = {
+    initial: { opacity: 0, y: 14 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -10 },
+    transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const },
+};
 
 export default function ClientAuthModal() {
     const {
@@ -33,8 +48,15 @@ export default function ClientAuthModal() {
 
     const [authFlow, setAuthFlow] = useState<AuthFlow>("login");
 
+    /* Agency signup: one question, then GST does the rest of the typing */
+    const [accountType, setAccountType] =
+        useState<ClientAccountType | null>(null);
+    const [gstNumber, setGstNumber] = useState("");
+    const [gstBusiness, setGstBusiness] =
+        useState<GstBusiness | null>(null);
+
     const [name, setName] = useState("");
-    const [phone, setPhone] = useState("7092558277");
+    const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [resendTimer, setResendTimer] = useState(RESEND_TIME);
     const [otpDigits, setOtpDigits] = useState<string[]>(
@@ -48,8 +70,13 @@ export default function ClientAuthModal() {
     const otpInputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
     useEffect(() => {
-        if (screen === "login" || screen === "signup") {
-            setAuthFlow(screen);
+        if (screen === "login") {
+            setAuthFlow("login");
+        } else if (screen === "signup" || screen === "signupAgency") {
+            setAuthFlow("signup");
+        }
+
+        if (screen !== "otp") {
             setOtpDigits(Array(OTP_LENGTH).fill(""));
             setOtpError(false);
             setOtpErrorMessage("");
@@ -62,6 +89,9 @@ export default function ClientAuthModal() {
             setOtpError(false);
             setOtpErrorMessage("");
             setLoading(false);
+            setAccountType(null);
+            setGstNumber("");
+            setGstBusiness(null);
         }
     }, [open]);
     useEffect(() => {
@@ -101,12 +131,35 @@ export default function ClientAuthModal() {
         });
     };
 
+    const isAgencySignup = accountType === "agency";
+
     const validateBeforeOtp = (flow: AuthFlow): boolean => {
         const cleanPhone = phone.replace(/\D/g, "");
 
         if (flow === "signup" && !name.trim()) {
-            showValidationError("Please enter your full name.");
+            showValidationError(
+                isAgencySignup
+                    ? "Please enter the contact person's name."
+                    : "Please enter your full name."
+            );
             return false;
+        }
+
+        /* Agency identity is proven by an Active GSTIN — no manual business entry */
+        if (flow === "signup" && isAgencySignup) {
+            if (!gstBusiness) {
+                showValidationError(
+                    "Please verify your GST number to continue."
+                );
+                return false;
+            }
+
+            if (isGstBlocked(gstBusiness)) {
+                showValidationError(
+                    `This GST registration is "${gstBusiness.status}". An Active GSTIN is required.`
+                );
+                return false;
+            }
         }
 
         if (!cleanPhone) {
@@ -171,6 +224,18 @@ export default function ClientAuthModal() {
                     email: email.trim(),
                     phone: phone.replace(/\D/g, ""),
                     mode,
+                    /* Agency registrations carry their verified GST identity */
+                    ...(currentFlow === "signup"
+                        ? {
+                            accountType: accountType || "individual",
+                            ...(isAgencySignup && gstBusiness
+                                ? {
+                                    gstNumber: gstBusiness.gst_number,
+                                    gstDetailId: gstBusiness.gstDetailId,
+                                }
+                                : {}),
+                        }
+                        : {}),
                 }
             );
 
@@ -267,8 +332,26 @@ export default function ClientAuthModal() {
                 }
             );
 
+            /*
+             * Prefer whatever the backend returns; fall back to the identity we
+             * just verified so an agency signup still behaves as an agency even
+             * before the API echoes these fields back.
+             */
+            const verifiedUser = response.data.user || {};
+
             loginUser(
-                response.data.user,
+                {
+                    ...verifiedUser,
+                    accountType:
+                        verifiedUser.accountType ||
+                        accountType ||
+                        "individual",
+                    gstDetailId:
+                        verifiedUser.gstDetailId ||
+                        gstBusiness?.gstDetailId,
+                    business:
+                        verifiedUser.business || gstBusiness || null,
+                },
                 response.data.token
             );
         } catch (error: unknown) {
@@ -290,15 +373,29 @@ export default function ClientAuthModal() {
         }
     };
 
-    const changeScreen = (nextScreen: AuthFlow) => {
+    const changeScreen = (
+        nextScreen:
+            | "login"
+            | "accountType"
+            | "signup"
+            | "signupAgency"
+            | "otp"
+    ) => {
         toast.dismiss();
 
-        setAuthFlow(nextScreen);
         setOtpDigits(Array(OTP_LENGTH).fill(""));
         setOtpError(false);
         setOtpErrorMessage("");
         setResendTimer(RESEND_TIME);
         setScreen(nextScreen);
+    };
+
+    /** Account type chosen → route to the plain or the GST-verified form. */
+    const handleAccountTypeContinue = () => {
+        if (!accountType) return;
+        changeScreen(
+            accountType === "agency" ? "signupAgency" : "signup"
+        );
     };
 
     const handleCloseAuth = () => {
@@ -449,7 +546,16 @@ export default function ClientAuthModal() {
                         />
                     </div>
 
-                    <div className="client-auth-content">
+                    <div
+                        className="client-auth-content"
+                        data-screen={screen}
+                    >
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.div
+                            key={screen}
+                            className="client-auth-screen"
+                            {...screenMotion}
+                        >
                         {screen === "login" && (
                             <>
                                 <h2
@@ -507,7 +613,7 @@ export default function ClientAuthModal() {
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            changeScreen("signup")
+                                            changeScreen("accountType")
                                         }
                                         disabled={loading}
                                     >
@@ -515,6 +621,18 @@ export default function ClientAuthModal() {
                                     </button>
                                 </p>
                             </>
+                        )}
+
+                        {screen === "accountType" && (
+                            <AccountTypeStep
+                                value={accountType}
+                                onSelect={setAccountType}
+                                onContinue={handleAccountTypeContinue}
+                                onBackToLogin={() =>
+                                    changeScreen("login")
+                                }
+                                disabled={loading}
+                            />
                         )}
 
                         {screen === "signup" && (
@@ -610,6 +728,152 @@ export default function ClientAuthModal() {
                                     >
                                         Sign In
                                     </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            changeScreen("accountType")
+                                        }
+                                        disabled={loading}
+                                    >
+                                        Change account type
+                                    </button>
+                                </p>
+                            </>
+                        )}
+
+                        {screen === "signupAgency" && (
+                            <>
+                                <h2
+                                    id="client-auth-title"
+                                    className="client-auth-title"
+                                >
+                                    Agency Sign Up
+                                </h2>
+
+                                <p className="client-auth-accounttype-question">
+                                    Verify your GST — we&apos;ll fill in the rest.
+                                </p>
+
+                                <div className="client-auth-gst">
+                                    <GstVerifyPanel
+                                        variant="light"
+                                        value={gstNumber}
+                                        onChange={setGstNumber}
+                                        onVerified={setGstBusiness}
+                                        onCleared={() =>
+                                            setGstBusiness(null)
+                                        }
+                                        business={gstBusiness}
+                                        disabled={loading}
+                                        requireActive
+                                        /* Typing a valid 15-char GSTIN verifies
+                                           on its own — no extra click needed */
+                                        autoVerify
+                                        /* Fixed-height modal: identity only,
+                                           no registration metadata rows */
+                                        compact
+                                        helperText="Enter your 15-character GSTIN. Business name, PAN and address are fetched automatically."
+                                    />
+                                </div>
+
+                                <div className="client-auth-fields">
+                                    <input
+                                        type="text"
+                                        autoComplete="name"
+                                        placeholder="Contact Person Name"
+                                        value={name}
+                                        disabled={loading}
+                                        onChange={(event) => {
+                                            setName(event.target.value);
+
+                                            toast.dismiss(
+                                                "client-auth-validation"
+                                            );
+                                        }}
+                                    />
+
+                                    <input
+                                        type="tel"
+                                        inputMode="numeric"
+                                        autoComplete="tel"
+                                        placeholder="Mobile Number"
+                                        value={phone}
+                                        maxLength={10}
+                                        disabled={loading}
+                                        onChange={(event) => {
+                                            setPhone(
+                                                event.target.value
+                                                    .replace(/\D/g, "")
+                                                    .slice(0, 10)
+                                            );
+
+                                            toast.dismiss(
+                                                "client-auth-validation"
+                                            );
+                                        }}
+                                    />
+
+                                    <input
+                                        type="email"
+                                        autoComplete="email"
+                                        placeholder="Email Address"
+                                        value={email}
+                                        disabled={loading}
+                                        onChange={(event) => {
+                                            setEmail(event.target.value);
+
+                                            toast.dismiss(
+                                                "client-auth-validation"
+                                            );
+                                        }}
+                                        onKeyDown={(event) => {
+                                            if (
+                                                event.key === "Enter" &&
+                                                !loading
+                                            ) {
+                                                sendOtp("signup");
+                                            }
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Deliberately NOT disabled on an unverified
+                                    GST — a dead button gives no reason why.
+                                    validateBeforeOtp explains what's missing. */}
+                                <button
+                                    type="button"
+                                    className="client-auth-continue"
+                                    onClick={() => sendOtp("signup")}
+                                    disabled={loading}
+                                >
+                                    {loading
+                                        ? "Sending OTP..."
+                                        : "Continue"}
+                                </button>
+
+                                <p className="client-auth-switch">
+                                    Already have an account?
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            changeScreen("login")
+                                        }
+                                        disabled={loading}
+                                    >
+                                        Sign In
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            changeScreen("accountType")
+                                        }
+                                        disabled={loading}
+                                    >
+                                        Change account type
+                                    </button>
                                 </p>
                             </>
                         )}
@@ -635,9 +899,11 @@ export default function ClientAuthModal() {
                                         type="button"
                                         onClick={() =>
                                             changeScreen(
-                                                authFlow === "signup"
-                                                    ? "signup"
-                                                    : "login"
+                                                authFlow !== "signup"
+                                                    ? "login"
+                                                    : isAgencySignup
+                                                        ? "signupAgency"
+                                                        : "signup"
                                             )
                                         }
                                         disabled={loading}
@@ -735,7 +1001,7 @@ export default function ClientAuthModal() {
                                             changeScreen(
                                                 authFlow === "signup"
                                                     ? "login"
-                                                    : "signup"
+                                                    : "accountType"
                                             )
                                         }
                                     >
@@ -746,6 +1012,8 @@ export default function ClientAuthModal() {
                                 </p>
                             </>
                         )}
+                        </motion.div>
+                      </AnimatePresence>
 
                         <footer className="client-auth-footer">
                             By continuing, you agree to Adinn

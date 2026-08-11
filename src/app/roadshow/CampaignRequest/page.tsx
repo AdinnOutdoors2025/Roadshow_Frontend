@@ -34,7 +34,10 @@ type SelectedVehicle = RoadshowVehicle & {
 /* CAMPAIGN REQUEST PAGE */
 export default function CampaignRequestPage() {
   const router = useRouter();
-  const { user, openAuth, authLoading } = useAuth();
+  const { user, openAuth, authLoading, isAgency } = useAuth();
+
+  /* Agencies verified their GST at signup — nothing here is re-typed */
+  const agencyBusiness = isAgency ? user?.business || null : null;
 
   const productScrollerRef =
     useRef<HTMLDivElement>(null);
@@ -782,6 +785,7 @@ export default function CampaignRequestPage() {
   }, [grandTotal, gstAmount]);
 
   const reviewCompanyName =
+    agencyBusiness?.business_name ||
     user?.companyName ||
     user?.company ||
     user?.organizationName ||
@@ -1131,6 +1135,25 @@ export default function CampaignRequestPage() {
 
         userId: user?._id,
 
+        /* Agency orders arrive at admin already GST-verified — no re-entry */
+        customerCategory: isAgency
+          ? "organization"
+          : "individual",
+
+        ...(agencyBusiness
+          ? {
+            gstNumber: agencyBusiness.gst_number,
+            gstDetailId: user?.gstDetailId,
+            companyName:
+              agencyBusiness.business_name,
+            panNumber:
+              agencyBusiness.business_pan || "",
+            address:
+              agencyBusiness.business_address ||
+              "",
+          }
+          : {}),
+
         campaignType:
           campaignMeta.campaignType ||
           "Roadshow Campaign",
@@ -1268,6 +1291,41 @@ export default function CampaignRequestPage() {
             </div>
 
             <div className="space-y-5">
+              {/* Agency identity, already proven by GST at signup — read-only */}
+              {agencyBusiness && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
+                  <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      GST Verified Agency
+                    </span>
+
+                    <span className="font-mono text-[11px] font-semibold tracking-wider text-[#575757]">
+                      {agencyBusiness.gst_number}
+                    </span>
+                  </div>
+
+                  <p className="text-[14px] font-bold leading-tight text-[#1b1b1d]">
+                    {agencyBusiness.business_name}
+                  </p>
+
+                  {agencyBusiness.business_address && (
+                    <p className="mt-1 text-[11.5px] leading-snug text-[#575757]">
+                      {agencyBusiness.business_address}
+                    </p>
+                  )}
+
+                  {agencyBusiness.business_pan && (
+                    <p className="mt-1 text-[11.5px] text-[#575757]">
+                      PAN{" "}
+                      <span className="font-semibold text-[#1b1b1d]">
+                        {agencyBusiness.business_pan}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+
               <label className="block">
                 {/* <span className="mb-2 block text-[11px] font-medium text-[#575757]">
                   Full Name / Company Name *
@@ -1285,7 +1343,11 @@ export default function CampaignRequestPage() {
                       })
                     )
                   }
-                  placeholder="Full Name / Company Name *"
+                  placeholder={
+                    agencyBusiness
+                      ? "Contact Person Name *"
+                      : "Full Name / Company Name *"
+                  }
                   className="rdw_crf_inputs h-10 w-full border-b border-[#aaaaaa] bg-transparent px-0 text-[13px] text-black outline-none transition placeholder:text-[#a0a0a0] focus:border-black"
                 />
               </label>

@@ -8,6 +8,8 @@ import FormField, { inputClass } from "../../../components/reusableFormField";
 import { HiOutlineUser, HiOutlineOfficeBuilding } from "react-icons/hi";
 import { designations } from "../../utils/collection.json";
 import API_BASE from "../../../../baseurl";
+import GstVerifyPanel from "../../../components/gst/GstVerifyPanel";
+import { GstBusiness, normalizeGst } from "../../../lib/gst";
 
 const toTitleCase = (str: string) => str.replace(/\b\w/g, (c) => c.toUpperCase());
 const capitalizeFirstOnly = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -64,9 +66,8 @@ export default function CustomerDetailsStep({
 }: Props) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [globalError, setGlobalError] = useState("");
-  const [gstVerifying, setGstVerifying] = useState(false);
-  const [gstStatus, setGstStatus] = useState<"idle" | "success" | "error">("idle");
-  const [gstMessage, setGstMessage] = useState("");
+  const [, setGstStatus] = useState<"idle" | "success" | "error">("idle");
+  const [, setGstMessage] = useState("");
   const [clientOrders, setClientOrders] = useState<any[]>([]);
 
 
@@ -128,57 +129,42 @@ export default function CustomerDetailsStep({
     setErrors({});
   };
 
-  const handleGstVerify = async () => {
-    const gst = data.gstNumber?.trim();
-    if (!gst) {
-      setErrors((p) => ({ ...p, gstNumber: "GST number required to verify" }));
-      return;
-    }
-    if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gst)) {
-      setErrors((p) => ({ ...p, gstNumber: "Enter a valid GST number first" }));
-      return;
-    }
+  /**
+   * The already-verified record for the GST number currently in the form.
+   * Rendering this straight from `gstDetails` means an order that arrived
+   * pre-verified (agency booking, or an order being edited) shows the green
+   * card immediately instead of asking the admin to verify again.
+   */
+  const verifiedBusiness: GstBusiness | null = React.useMemo(() => {
+    const current = normalizeGst(data.gstNumber || "");
+    if (!current) return null;
 
-    setGstVerifying(true);
-    setGstStatus("idle");
-    setGstMessage("");
+    const match = (gstDetails || []).find(
+      (g) => normalizeGst(g.gst_number) === current
+    );
+    return (match as GstBusiness) || null;
+  }, [data.gstNumber, gstDetails]);
 
-    try {
-      const res = await fetch(`${API_BASE}gstdetails/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gst_number: gst }),
-      });
-      const data2 = await res.json();
+  /** Verification succeeded — auto-fill everything the admin would have typed. */
+  const handlePanelVerified = (business: GstBusiness) => {
+    onChange({
+      companyName: business.business_name,
+      panNumber: business.business_pan || "",
+      address: business.business_address || "",
+    });
 
-      if (!res.ok) throw new Error(data2.message || "Verification failed");
+    setErrors((p) => ({
+      ...p,
+      gstNumber: undefined,
+      panNumber: undefined,
+      address: undefined,
+    }));
 
-      // Company name + PAN + Address auto-fill
-      onChange({
-        companyName: data2.data.business_name,
-        panNumber: data2.data.business_pan || "",
-        address: data2.data.business_address || "",
-      });
-      setErrors((p) => ({ ...p, panNumber: undefined, address: undefined }));
+    onGstVerified(business);
 
-      onGstVerified({
-        gstDetailId: data2.data.gstDetailId,
-        gst_number: data2.data.gst_number,
-        business_name: data2.data.business_name,
-        business_pan: data2.data.business_pan,
-        business_address: data2.data.business_address,
-      });
-
-      setGstStatus("success");
-      setGstMessage("GST verified successfully");
-      onGstVerifiedChange(true);
-    } catch (err: any) {
-      setGstStatus("error");
-      setGstMessage(err.message || "GST verification failed");
-      onGstVerifiedChange(false);
-    } finally {
-      setGstVerifying(false);
-    }
+    setGstStatus("success");
+    setGstMessage("GST verified successfully");
+    onGstVerifiedChange(true);
   };
 
   const set = (field: keyof CustomerFormData, val: string) => {
@@ -519,58 +505,30 @@ export default function CustomerDetailsStep({
       {customerCategory === "organization" && (
         <div className="space-y-4">
 
-          <FormField label="GST Number" error={errors.gstNumber} required>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={data.gstNumber || ""}
-                onChange={(e) => {
-                  set("gstNumber", e.target.value.toUpperCase());
-                  set("panNumber", "");
-                  setGstStatus("idle");
-                  setGstMessage("");
-                  onGstVerifiedChange(false);
-                  onGstDetailsReset();
+          {/* Shared panel — same component the public agency signup uses, so a
+              GST already verified there is restored from cache without a
+              second API call and the admin just clicks Next. */}
+          <GstVerifyPanel
+            value={data.gstNumber || ""}
+            business={verifiedBusiness}
+            onChange={(gst) => {
+              set("gstNumber", gst);
+              setGstMessage("");
+            }}
+            onVerified={handlePanelVerified}
+            onCleared={() => {
+              set("panNumber", "");
+              setGstStatus("idle");
+              setGstMessage("");
+              onGstVerifiedChange(false);
+              onGstDetailsReset();
+            }}
+            helperText="Company name, PAN and address are filled in automatically."
+          />
 
-                }}
-                placeholder="e.g. 22AAAAA0000A1Z5"
-                maxLength={15}
-                className={inputClass(!!errors.gstNumber) + " flex-1"}
-              />
-              <button
-                type="button"
-                onClick={handleGstVerify}
-                disabled={gstVerifying}
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition-colors"
-              >
-                {gstVerifying ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                ) : null}
-                {gstVerifying ? "Verifying..." : "Verify"}
-              </button>
-            </div>
-
-
-            {gstStatus === "success" && (
-              <p className="mt-1.5 flex items-center gap-1 text-xs text-green-600">
-                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                {gstMessage}
-              </p>
-            )}
-            {gstStatus === "error" && (
-              <p className="mt-1.5 flex items-center gap-1 text-xs text-red-500">
-                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-                {gstMessage}
-              </p>
-            )}
-          </FormField>
+          {errors.gstNumber && (
+            <p className="-mt-1 text-xs text-red-500">{errors.gstNumber}</p>
+          )}
 
           <FormField label="PAN Number" error={errors.panNumber} required>
             <input

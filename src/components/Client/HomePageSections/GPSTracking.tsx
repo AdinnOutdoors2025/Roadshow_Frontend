@@ -1578,7 +1578,7 @@ export function GPSTracking() {
           <Reveal delay={4}>
             <BleedButton
               type="button"
-              className="btn-primary
+              className="
                 mt-9
                 !h-auto
                 !px-6

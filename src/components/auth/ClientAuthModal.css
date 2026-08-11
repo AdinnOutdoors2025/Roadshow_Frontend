@@ -113,6 +113,198 @@
     max-width: 330px;
 }
 
+/* Account-type cards and the GST panel need more room than the plain forms.
+
+   These two screens can outgrow the fixed box height on short viewports, so
+   the content column scrolls itself rather than the panel around it: with
+   `max-height: 100%` the column is never taller than its parent, so
+   .client-auth-left keeps its original `align-items: center` and nothing is
+   clipped. The scrollbar is hidden (the design has none) and
+   `overscroll-behavior: contain` stops the scroll chaining to the page. */
+.client-auth-content[data-screen="accountType"],
+.client-auth-content[data-screen="signupAgency"] {
+    max-width: 420px;
+    /* Derived from the viewport, NOT `100%`: .client-auth-left is a grid item
+       that grows past the box height when its content overflows, so a
+       percentage resolves against the wrong number and never caps anything.
+       Mirrors .client-auth-box's own `min(730px, 88vh)` minus its 180px of
+       vertical padding, rounded down so it always errs on the safe side. */
+    max-height: min(530px, calc(88vh - 200px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.client-auth-content[data-screen="accountType"]::-webkit-scrollbar,
+.client-auth-content[data-screen="signupAgency"]::-webkit-scrollbar {
+    display: none;
+}
+
+/* The 54px display title costs ~90px of a 730px box — the taller screens
+   trade it for a compact heading so the Continue button stays in view. */
+.client-auth-content[data-screen="accountType"] .client-auth-title,
+.client-auth-content[data-screen="signupAgency"] .client-auth-title {
+    margin-bottom: 14px;
+    font-size: clamp(30px, 2.6vw, 38px);
+    letter-spacing: -1px;
+}
+
+/*   ACCOUNT TYPE CHOOSER (Individual vs Agency) */
+.client-auth-accounttype-question {
+    margin: -8px 0 18px;
+    color: #2B3333;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.client-auth-accounttype-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.client-auth-accounttype-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+
+    width: 100%;
+    padding: 15px 15px 15px 16px;
+    text-align: left;
+    background: #EFF3F6;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition:
+        border-color 160ms ease,
+        background 160ms ease,
+        box-shadow 160ms ease;
+}
+
+.client-auth-accounttype-card:hover:not(:disabled) {
+    background: #E8EEF3;
+}
+
+.client-auth-accounttype-card.is-selected {
+    background: #fff;
+    border-color: #E4002B;
+    box-shadow: 0 0 0 3px rgba(228, 0, 43, 0.12);
+}
+
+.client-auth-accounttype-card:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.client-auth-accounttype-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    width: 38px;
+    height: 38px;
+    color: #6B7280;
+    background: #fff;
+    border-radius: 10px;
+    transition: color 160ms ease, background 160ms ease;
+}
+
+.client-auth-accounttype-card.is-selected .client-auth-accounttype-icon {
+    color: #fff;
+    background: #E4002B;
+}
+
+.client-auth-accounttype-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.client-auth-accounttype-text strong {
+    color: #17171b;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.client-auth-accounttype-text small {
+    color: #6B7280;
+    font-size: 12.5px;
+    font-weight: 400;
+    line-height: 1.45;
+}
+
+.client-auth-accounttype-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    width: 19px;
+    height: 19px;
+    margin-top: 2px;
+    margin-left: auto;
+    color: #fff;
+    background: transparent;
+    border: 1.5px solid #C7D0D8;
+    border-radius: 50%;
+    transition: background 160ms ease, border-color 160ms ease;
+}
+
+.client-auth-accounttype-card.is-selected .client-auth-accounttype-check {
+    background: #E4002B;
+    border-color: #E4002B;
+}
+
+.client-auth-continue-inner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/*   AGENCY GST PANEL */
+.client-auth-gst {
+    margin-bottom: 14px;
+}
+
+/* The shared panel is responsive on its own, but inside this narrow column
+   the detail grid must stay single-column at every width. */
+.client-auth-gst .grid {
+    grid-template-columns: 1fr !important;
+}
+
+/* The agency screen carries the most content of any screen here, and the
+   box height is fixed — these tighten spacing (not alignment) so everything
+   through the Continue button stays inside it. */
+.client-auth-content[data-screen="signupAgency"] .client-auth-fields {
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.client-auth-content[data-screen="signupAgency"] .client-auth-fields input {
+    height: 44px;
+}
+
+.client-auth-content[data-screen="signupAgency"] .client-auth-accounttype-question,
+.client-auth-content[data-screen="accountType"] .client-auth-accounttype-question {
+    margin-bottom: 14px;
+}
+
+.client-auth-content[data-screen="signupAgency"] .client-auth-footer,
+.client-auth-content[data-screen="accountType"] .client-auth-footer {
+    margin-top: 16px;
+}
+
+.client-auth-screen {
+    width: 100%;
+}
+
 /*   TITLE AND TEXT */
 .client-auth-title {
     margin: 0 0 22px;

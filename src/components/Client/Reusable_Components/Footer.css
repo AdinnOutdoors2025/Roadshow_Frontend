@@ -99,7 +99,176 @@
     font-weight: 300;
     font-size: 16px;
 }
+/* =========================================================
+   FOOTER CAPTCHA — PROFESSIONAL MOTION
+   Does not modify the existing footer layout or styling.
+========================================================= */
 
+.FooterCaptchaOverlay {
+  animation: FooterCaptchaOverlayIn 220ms ease-out both;
+}
+
+.FooterCaptchaModal {
+  animation: FooterCaptchaModalIn 380ms
+    cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  transform-origin: center;
+}
+
+.FooterCaptchaShield {
+  animation: FooterCaptchaShieldIn 520ms
+    cubic-bezier(0.16, 1, 0.3, 1) 70ms both;
+}
+
+.FooterCaptchaShieldInner {
+  transition:
+    transform 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.FooterCaptchaShield:hover
+  .FooterCaptchaShieldInner {
+  transform: scale(1.06);
+
+  box-shadow:
+    0 8px 22px rgba(215, 0, 0, 0.2);
+}
+
+.FooterCaptchaContent {
+  animation: FooterCaptchaContentIn 420ms
+    cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
+}
+
+.FooterCaptchaQuestion {
+  animation: FooterCaptchaContentIn 420ms
+    cubic-bezier(0.16, 1, 0.3, 1) 150ms both;
+}
+
+.FooterCaptchaInput {
+  animation: FooterCaptchaContentIn 420ms
+    cubic-bezier(0.16, 1, 0.3, 1) 190ms both;
+}
+
+.FooterCaptchaAction {
+  animation: FooterCaptchaContentIn 420ms
+    cubic-bezier(0.16, 1, 0.3, 1) 230ms both;
+}
+
+.FooterCaptchaSecurityNote {
+  animation: FooterCaptchaContentIn 420ms
+    cubic-bezier(0.16, 1, 0.3, 1) 270ms both;
+}
+
+.FooterCaptchaError {
+  animation: FooterCaptchaErrorIn 240ms
+    ease-out both;
+}
+
+/* Overlay */
+
+@keyframes FooterCaptchaOverlayIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Main popup */
+
+@keyframes FooterCaptchaModalIn {
+  0% {
+    opacity: 0;
+    transform:
+      translateY(18px)
+      scale(0.97);
+  }
+
+  100% {
+    opacity: 1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+/* Shield */
+
+@keyframes FooterCaptchaShieldIn {
+  0% {
+    opacity: 0;
+    transform:
+      translateY(8px)
+      scale(0.8);
+  }
+
+  65% {
+    opacity: 1;
+    transform:
+      translateY(-2px)
+      scale(1.04);
+  }
+
+  100% {
+    opacity: 1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+/* Content stagger */
+
+@keyframes FooterCaptchaContentIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Error */
+
+@keyframes FooterCaptchaErrorIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   RESPECT REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .FooterCaptchaOverlay,
+  .FooterCaptchaModal,
+  .FooterCaptchaShield,
+  .FooterCaptchaContent,
+  .FooterCaptchaQuestion,
+  .FooterCaptchaInput,
+  .FooterCaptchaAction,
+  .FooterCaptchaSecurityNote,
+  .FooterCaptchaError {
+    animation: none !important;
+  }
+
+  .FooterCaptchaShieldInner,
+  .FooterCaptchaAction {
+    transition: none !important;
+  }
+}
 
 /* RESPONSIVE ADDITIONS — FOOTER */
 

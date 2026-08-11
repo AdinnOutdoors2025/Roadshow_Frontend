@@ -5,7 +5,7 @@ import './globals.css';
 import "flatpickr/dist/flatpickr.css";
 import { AuthProvider } from "@/context/AuthContext";
 import AuthModal from "@/components/auth/ClientAuthModal";
-// import GlobalToastGate from "@/components/Notify/GlobalToastGate";
+import GlobalToastGate from "@/components/Notify/GlobalToastGate";
 
 import Navbar from "@/components/Client/Reusable_Components/Navbar";
 import Footer from "@/components/Client/Reusable_Components/Footer";
@@ -71,7 +71,11 @@ export default function RootLayout({
           crossOrigin="anonymous"
           async
         /> */}
-          {/* <GlobalToastGate /> */}
+          {/* Public-site <Toaster/>. Without this nothing renders the toasts
+              that CampaignRequest, the auth modal, my-bookings etc. fire —
+              they reach react-hot-toast's store and are never displayed.
+              Skips /admin, which mounts its own per page. */}
+          <GlobalToastGate />
           <AuthModal />
         </AuthProvider>
 

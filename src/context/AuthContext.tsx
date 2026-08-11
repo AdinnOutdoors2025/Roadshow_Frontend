@@ -22,6 +22,20 @@ const IDLE_TIMEOUT_MS =
   60 *
   1000;
 
+/** Business snapshot copied from the GST record at signup — see src/lib/gst.ts */
+interface ClientBusiness {
+  gst_number: string;
+  business_name: string;
+  business_pan?: string;
+  business_address?: string;
+  business_entity_type?: string;
+  business_registration_type?: string;
+  business_registration_date?: string;
+  business_department_code?: string;
+  nature_of_business?: string;
+  status?: string;
+}
+
 interface User {
   _id: string;
   name: string;
@@ -29,16 +43,28 @@ interface User {
   phone: string;
   userType: number;
   status: string;
+  /** "agency" users are GST-verified and book on behalf of clients. */
+  accountType?: "individual" | "agency";
+  gstDetailId?: string;
+  business?: ClientBusiness | null;
 }
+
+/**
+ * Signup is a two-step funnel for agencies: pick the account type, then either
+ * the plain form ("signup") or the GST-verified one ("signupAgency").
+ */
+type AuthScreen = "login" | "accountType" | "signup" | "signupAgency" | "otp";
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   authLoading: boolean;
   open: boolean;
-  screen: "login" | "signup" | "otp";
-  setScreen: (screen: "login" | "signup" | "otp") => void;
-  openAuth: (screen?: "login" | "signup") => void;
+  screen: AuthScreen;
+  /** True when the signed-in customer is a verified agency. */
+  isAgency: boolean;
+  setScreen: (screen: AuthScreen) => void;
+  openAuth: (screen?: AuthScreen) => void;
   closeAuth: () => void;
   loginUser: (user: User, token: string) => void;
   logoutUser: () => void;
@@ -48,7 +74,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [open, setOpen] = useState(false);
-  const [screen, setScreen] = useState<"login" | "signup" | "otp">("login");
+  const [screen, setScreen] = useState<AuthScreen>("login");
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -113,13 +139,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [user]);
 
-  const openAuth = useCallback(
-    (screenType: "login" | "signup" = "login") => {
-      setScreen(screenType);
-      setOpen(true);
-    },
-    []
-  );
+  const openAuth = useCallback((screenType: AuthScreen = "login") => {
+    setScreen(screenType);
+    setOpen(true);
+  }, []);
 
   const closeAuth = useCallback(() => setOpen(false), []);
 
@@ -155,6 +178,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         authLoading,
         open,
         screen,
+        isAgency: user?.accountType === "agency",
         setScreen,
         openAuth,
         closeAuth,

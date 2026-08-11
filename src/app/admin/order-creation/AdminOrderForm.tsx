@@ -69,12 +69,19 @@ export interface VehicleConfig {
   existingVideos?: string[];
 }
 
+/** Full GST record — see src/lib/gst.ts (GstBusiness) for the canonical shape. */
 export interface GstDetail {
   gstDetailId: string;
   gst_number: string;
   business_name: string;
   business_pan?: string;
   business_address?: string;
+  business_entity_type?: string;
+  business_registration_type?: string;
+  business_registration_date?: string;
+  business_department_code?: string;
+  nature_of_business?: string;
+  status?: string;
 }
 export interface OrderState {
   customerForm: CustomerFormData;
