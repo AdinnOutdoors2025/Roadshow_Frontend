@@ -123,7 +123,11 @@ function calcPricing(
     : 0;
 
 
-  const rtoCost = pkg.rtoCharges * quantity;
+  /* RTO charges are not priced in order-creation for now — kept at 0
+     rather than removed from the pricing shape, so every screen that
+     reads p.rtoCost (VehicleListStep, OrderSummaryStep, print,
+     orderdetails) just shows 0 without needing its own change. */
+  const rtoCost = 0;
 
   const extraKmCost = extraKm > 0 ? pkg.perKmCharge * extraKm : 0;
   const extraHourCost = extraHours > 0 ? pkg.additionalHourCharges * extraHours : 0;
@@ -1639,11 +1643,17 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                 const hasPromoter = form.needPromoter;
 
 
+                const hasRto = p.rtoCost > 0;
+
                 const lastRow = hasExtraHours
                   ? "extraHours"
                   : hasExtraKm
                     ? "extraKm"
-                    : "rto";
+                    : hasRto
+                      ? "rto"
+                      : hasPromoter
+                        ? "promoter"
+                        : "rental";
 
                 const makeCharge = (): AdditionalCharge => ({
                   id: uid(), label: "", mode: "+",
@@ -1656,7 +1666,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                     <SummaryRow
                       label={`Rental (${p.totalDays}D × ${formatINR(selectedPackage.perDayRentalCost)} × Qty ${form.quantity})`}
                       val={p.rentalCost}
-                      isLast={false}
+                      isLast={lastRow === "rental"}
                       hasCharges={form.additionalCharges.length > 0}
                       onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
                     />
@@ -1665,18 +1675,20 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                         // label={`Promoter (${p.totalDays}D × ${formatINR(selectedPackage.promoterChargePerDay)} × ${form.promoterQuantity} Promoter)`}
                         label={`Promoter (${p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${form.promoterQuantity} Promoter)`}
                         val={p.promoterCost}
-                        isLast={false}
+                        isLast={lastRow === "promoter"}
                         hasCharges={form.additionalCharges.length > 0}
                         onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
                       />
                     )}
-                    <SummaryRow
-                      label="RTO Charges"
-                      val={p.rtoCost}
-                      isLast={lastRow === "rto"}
-                      hasCharges={form.additionalCharges.length > 0}
-                      onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
-                    />
+                    {hasRto && (
+                      <SummaryRow
+                        label="RTO Charges"
+                        val={p.rtoCost}
+                        isLast={lastRow === "rto"}
+                        hasCharges={form.additionalCharges.length > 0}
+                        onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
+                      />
+                    )}
                     {hasExtraKm && (
                       <SummaryRow
                         label={`Extra KM / K (${form.extraKm.toLocaleString('en-IN')} × ${formatINR(selectedPackage.perKmCharge)})`}

@@ -1,0 +1,69 @@
+/* =========================================================
+   VIEW SUMMARY PDF PAGE
+========================================================= */
+
+.RS_ViewSummaryRoot {
+  overflow-x: hidden;
+}
+
+.RS_ViewSummaryContainer {
+  animation: RS_ViewSummaryFadeUp 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.RS_ViewSummaryBack {
+  animation: RS_ViewSummaryFadeUp 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.RS_ViewSummaryPanel {
+  animation: RS_ViewSummaryFadeUp 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 110ms;
+}
+
+.RS_ViewSummaryDownload {
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    background-color 200ms ease;
+}
+
+.RS_ViewSummaryDownload:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(215, 0, 0, 0.22);
+}
+
+.RS_ViewSummaryDownload:active {
+  transform: scale(0.97);
+}
+
+@keyframes RS_ViewSummaryFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 639px) {
+  .RS_ViewSummaryRoot {
+    padding-top: 108px !important;
+  }
+
+  .RS_ViewSummaryFrame {
+    height: 65vh !important;
+    min-height: 420px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .RS_ViewSummaryContainer,
+  .RS_ViewSummaryBack,
+  .RS_ViewSummaryPanel,
+  .RS_ViewSummaryDownload {
+    animation: none !important;
+    transition: none !important;
+  }
+}

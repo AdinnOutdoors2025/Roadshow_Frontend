@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo, useCallback, } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback, } from "react";
 import { createPortal } from "react-dom";
 import toast from "react-hot-toast";
 import { useScrollLock } from "@/hooks/useScrollLock";
@@ -90,12 +90,37 @@ export default function Calendar({
     );
 
   const calendarRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const previousOpenRef = useRef(false);
 
   const isControlled = open !== undefined;
   const isOpen = isControlled
     ? Boolean(open)
     : internalOpen;
+
+  /* Dropdown mode (Vehicle Details) anchors below the trigger by default.
+     On a long page the trigger can sit low enough that the panel opens
+     mostly off-screen, forcing a scroll to use it. Flipping it above the
+     trigger when there isn't room below — measured once the panel has
+     mounted, before paint, so there's no visible jump — keeps it usable
+     wherever the trigger happens to be. Dialog mode is unaffected: it's
+     centered in the viewport regardless. */
+  const [openUpward, setOpenUpward] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!isOpen || popupMode !== "dropdown") return;
+
+    const wrapper = wrapperRef.current;
+    const panel = calendarRef.current;
+    if (!wrapper || !panel) return;
+
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const panelHeight = panel.offsetHeight;
+    const spaceBelow = window.innerHeight - wrapperRect.bottom;
+    const spaceAbove = wrapperRect.top;
+
+    setOpenUpward(panelHeight > spaceBelow && spaceAbove > spaceBelow);
+  }, [isOpen, popupMode]);
 
   const setCalendarOpen = useCallback(
     (nextOpen: boolean) => {
@@ -401,7 +426,9 @@ export default function Calendar({
       className={
         popupMode === "dialog"
           ? "fixed left-1/2 top-1/2 z-9999 max-h-[calc(100vh-24px)] w-[calc(100vw-24px)] max-w-190 -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-4 shadow-[0_30px_90px_rgba(0,0,0,0.28)] sm:p-6 rdsw-thin-scrollbar"
-          : "absolute left-1/2 top-full z-50 mt-2 max-h-[calc(100vh-24px)] w-[calc(100vw-24px)] max-w-190 -translate-x-1/2 overflow-y-auto rounded-2xl bg-white p-4 shadow-lg sm:p-6 rdsw-thin-scrollbar"
+          : `absolute left-1/2 z-50 max-h-[calc(100vh-24px)] w-[calc(100vw-24px)] max-w-190 -translate-x-1/2 overflow-y-auto rounded-2xl bg-white p-4 shadow-lg sm:p-6 rdsw-thin-scrollbar ${
+              openUpward ? "bottom-full mb-2" : "top-full mt-2"
+            }`
       }
     >
       <div className="mb-2 flex items-center justify-between gap-3">
@@ -472,6 +499,7 @@ export default function Calendar({
   return (
     <>
       <div
+        ref={wrapperRef}
         className={`relative w-full ${showInputCard
             ? "flex justify-center"
             : ""

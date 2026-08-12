@@ -1066,13 +1066,23 @@ export default function VehicleDetailsPage() {
   return (
     <>
       <main className="min-h-screen bg-white text-black">
-        <section className="mx-auto grid max-w-355 grid-cols-1 gap-20 px-4 pb-14 pt-30 lg:grid-cols-[1.12fr_0.88fr]">
-          <div>
+        <section className="mx-auto grid max-w-355 grid-cols-1 gap-20 px-4 pb-14 pt-12 lg:grid-cols-[1.12fr_0.88fr]">
+          {/* Sticky on large screens only. The grid row is already as tall
+              as the (taller) details column on the right, because grid
+              items stretch to fill their row by default and nothing here
+              overrides that — that stretched height is exactly the room a
+              sticky child needs to pin near the top of the viewport and
+              travel with the scroll until the right column runs out,
+              instead of sitting at its own short height with empty grid
+              space below it. Do NOT add self-start/h-fit here: that would
+              shrink this cell back to its content height and remove the
+              room sticky needs. */}
+          <div className="lg:sticky lg:top-12">
             <h1 className="mb-5 text-[25px] font-bold">
               {vehicle.name}
             </h1>
 
-            <div className="relative flex min-h-140 items-center justify-center overflow-hidden rounded-[34px] bg-[#f5f4f7] py-10">
+            <div className="relative flex min-h-140 items-center justify-center overflow-hidden rounded-[34px] bg-[#f5f4f7] py-6">
               <img
                 src={images[currentImageIndex]}
                 alt={vehicle.name}
@@ -1187,6 +1197,7 @@ export default function VehicleDetailsPage() {
                 checkOut={checkOut}
                 setCheckIn={setCheckIn}
                 setCheckOut={setCheckOut}
+                popupMode="dialog"
               />
 
               {/* <button

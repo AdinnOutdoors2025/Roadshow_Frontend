@@ -209,7 +209,7 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
                 {[
                   { label: `Rental (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × ${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"})`, val: p.rentalCost },
                   v.needPromoter && p.promoterCost > 0 ? { label: `Promoter (${p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${v.promoterQuantity})`, val: p.promoterCost } : null,
-                  { label: "RTO Charges", val: p.rtoCost },
+                  p.rtoCost > 0 ? { label: "RTO Charges", val: p.rtoCost } : null,
                   (p as any).extraKmCost > 0 ? { label: `Extra KM (${v.extraKm} × ₹${(p as any).dailyKmcharges || ""})`, val: (p as any).extraKmCost } : null,
                   (p as any).extraHourCost > 0 ? { label: `Extra Hours (${v.extraHours} × ${formatINR(p.additionalHourCharges)})`, val: (p as any).extraHourCost } : null,
                 ].filter(Boolean).map((row: any, i) => (

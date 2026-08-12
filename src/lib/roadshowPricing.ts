@@ -129,8 +129,12 @@ export const priceVehicleLine = (
 
   const promoterCost = promoterChargePerDay * days * promoterQuantity;
 
-  const rtoCharges = toSafeNumber(vehicle.packageDetails?.rtoCharges);
-  const rtoCost = rtoCharges * quantity;
+  /* RTO charges are not priced on the public booking flow for now — kept
+     at 0 rather than removed from the shape, so Review Order / the PDF /
+     the backend payload can start pricing this again later without a
+     shape change. */
+  const rtoCharges = 0;
+  const rtoCost = 0;
 
   const lineTotal = rentalCost + promoterCost + rtoCost;
 

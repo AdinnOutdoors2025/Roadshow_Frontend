@@ -239,7 +239,8 @@ function PricingBreakdown({ vehicle: v, formatINR }: { vehicle: VehicleConfig; f
   ];
   if (v.needPromoter && p.promoterCost > 0)
     rows.push({ label: `Promoter (${p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${v.promoterQuantity} promoter)`, amount: p.promoterCost });
-  rows.push({ label: "RTO Charges", amount: p.rtoCost });
+  if (p.rtoCost > 0)
+    rows.push({ label: "RTO Charges", amount: p.rtoCost });
   if ((p as any).extraKmCost > 0)
     rows.push({ label: `Extra KM / K (${v.extraKm} × ${formatINR((p as any).dailyKmcharges || 0)})`, amount: (p as any).extraKmCost });
   if ((p as any).extraHourCost > 0)

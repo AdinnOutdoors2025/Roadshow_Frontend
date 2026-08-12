@@ -279,11 +279,15 @@ export default function VehicleListing({
     }, 250);
   };
 
-  /* One row's worth of placeholders, so the skeleton occupies roughly the
-     space the real cards are about to take rather than a line of text that
-     the grid then shoves aside. */
+  /* Rendered through .RS_VehListGrid's own auto-fill CSS (see
+     RS_VehListSkelClip below) rather than a JS-measured count, so the
+     skeleton's column count can never disagree with the real cards' —
+     the same browser layout decides both. More than any realistic
+     viewport fits in one row of 320px-min cards; the clip wrapper hides
+     the overflow rows. */
+  const SKELETON_CARD_COUNT = 12;
   const skeletonCards = Array.from(
-    { length: Math.max(1, visibleCount) },
+    { length: SKELETON_CARD_COUNT },
     (_unused, index) => index
   );
 
@@ -358,19 +362,32 @@ export default function VehicleListing({
         <div ref={viewportRef}>
         {loading ? (
           <>
-            <div className="RS_VehListGrid" aria-hidden="true">
-              {skeletonCards.map((index) => (
-                <div key={index} className="RS_VehListSkeleton">
-                  <div className="RS_VehListSkelImg" />
+            {/* Always the plain auto-fill grid, whatever `layout` the real
+                cards will end up using — isCarousel isn't knowable yet (it
+                depends on the vehicle count the fetch hasn't returned), so
+                there's no reliable JS answer for "how many fit" at this
+                point. Letting the grid's own minmax(320px,1fr) columns
+                decide, then clipping to one row's height, means the
+                skeleton and the real row are always sized by the exact
+                same browser algorithm. */}
+            <div
+              className="RS_VehListSkelClip"
+              aria-hidden="true"
+            >
+              <div className="RS_VehListGrid">
+                {skeletonCards.map((index) => (
+                  <div key={index} className="RS_VehListSkeleton">
+                    <div className="RS_VehListSkelImg" />
 
-                  <div className="RS_VehListSkelBody">
-                    <span className="RS_VehListSkelLine RS_VehListSkelLine--wide" />
-                    <span className="RS_VehListSkelLine RS_VehListSkelLine--mid" />
-                    <span className="RS_VehListSkelChip" />
-                    <span className="RS_VehListSkelBtn" />
+                    <div className="RS_VehListSkelBody">
+                      <span className="RS_VehListSkelLine RS_VehListSkelLine--wide" />
+                      <span className="RS_VehListSkelLine RS_VehListSkelLine--mid" />
+                      <span className="RS_VehListSkelChip" />
+                      <span className="RS_VehListSkelBtn" />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             {/* The visual skeleton is aria-hidden, so announce the wait */}
