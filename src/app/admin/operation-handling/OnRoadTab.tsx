@@ -96,8 +96,14 @@ const getImageUrl = (url) => {
 // Single source of truth for a registration-number's current status tag,
 // used across the Issue, Extra KM, Driver History and Campaign History
 // panels so chained replacements are never ambiguous.
-function getRegStatus(entry) {
+function getRegStatus(entry, unavailableHistory = []) {
   if (!entry) return { label: "—", cls: "bg-gray-100 text-gray-400 border-gray-200" };
+  const wasReplaced = (unavailableHistory || []).some(
+    (h) => h.eventType === "replaced" && h.vehicleRegNo === entry.vehicleRegistrationNumber
+  );
+  if (wasReplaced) {
+    return { label: "Replaced", cls: "bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800" };
+  }
   if (entry.entryStatus === "removed") {
     return { label: "Released", cls: "bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600" };
   }
@@ -110,8 +116,8 @@ function getRegStatus(entry) {
   return { label: "Assigned", cls: "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800" };
 }
 
-function RegStatusBadge({ entry, className = "" }) {
-  const { label, cls } = getRegStatus(entry);
+function RegStatusBadge({ entry, unavailableHistory = [], className = "" }) {
+  const { label, cls } = getRegStatus(entry, unavailableHistory);
   return (
     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border leading-none ${cls} ${className}`}>
       {label}
@@ -226,7 +232,19 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const vehicleIssues = (order.onRoadIssues || []).filter(
     (iss) => iss.vehicleIndex === vehicleIndex
   );
-  const openIssues = vehicleIssues.filter((iss) => iss.status === "open");
+  // A vehicle that's been replaced/marked unavailable is no longer the
+  // team's active concern — its still-"open" issue shouldn't keep inflating
+  // the "Open issues" stat card / header badge forever. Only count issues
+  // against entries that are currently active (not removed, not unavailable).
+  const activeEntriesForVehicle = (order.onRoadExecutionArray || []).filter(
+    (e) => e.vehicleIndex === vehicleIndex && e.entryStatus !== "removed" && !e.unavailableStatus
+  );
+  const openIssues = vehicleIssues.filter((iss) => {
+    if (iss.status !== "open") return false;
+    return activeEntriesForVehicle.some((e) =>
+      iss.entryId ? String(iss.entryId) === String(e._id) : iss.vehicleRegNo === e.vehicleRegistrationNumber
+    );
+  });
   const resolvedIssues = vehicleIssues.filter((iss) => iss.status === "resolved");
 
   const vehicles = (order.bookingItems || [])
@@ -568,8 +586,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               iconBg="bg-emerald-50 dark:bg-emerald-900/20"
               iconColor="text-emerald-500"
               label="Route covered"
-              value="68%"
-              sub={<><TrendingUp size={11} /> Today's progress</>}
+              value="0%"
+              // sub={<><TrendingUp size={11} /> Today's progress</>}
               subColor="text-emerald-600 dark:text-emerald-400"
             />
 
@@ -766,6 +784,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   <DriverHistoryPanel
                     vehicleEntries={allVehicleEntriesIncludingRemoved}
                     driverHistory={order.onRoadDriverHistory || []}
+                    unavailableHistory={order.onRoadUnavailableHistory || []}
                     vehicleIndex={vehicleIndex}
                   />
                 ) : (
@@ -930,7 +949,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                           V{i + 1}
                         </div>
                         <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-                        <RegStatusBadge entry={entry} />
+                        <RegStatusBadge entry={entry} unavailableHistory={order.onRoadUnavailableHistory || []} />
                         {entryOpenCount > 0 && (
                           <span className="ml-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
                             {entryOpenCount}
@@ -1057,7 +1076,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                           V{i + 1}
                         </div>
                         <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-                        <RegStatusBadge entry={entry} />
+                        <RegStatusBadge entry={entry} unavailableHistory={order.onRoadUnavailableHistory || []} />
                       </button>
                     );
                   })}
@@ -1215,7 +1234,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   );
 }
 
-function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
+function DriverHistoryPanel({ vehicleEntries, driverHistory, unavailableHistory = [], vehicleIndex }) {
   const [activeVehicleTab, setActiveVehicleTab] = useState(0);
 
   const fmtDt = (s) => {
@@ -1259,7 +1278,7 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
                 V{i + 1}
               </div>
               <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-              <RegStatusBadge entry={entry} />
+              <RegStatusBadge entry={entry} unavailableHistory={unavailableHistory} />
             </button>
           ))}
         </div>
@@ -1275,7 +1294,7 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{activeEntry.driverName || "—"}</p>
             <p className="text-xs text-gray-400 font-mono">{activeEntry.vehicleRegistrationNumber} · {activeEntry.driverPhone}</p>
           </div>
-          <RegStatusBadge entry={activeEntry} className="!text-xs !px-2 !py-0.5 flex-shrink-0" />
+          <RegStatusBadge entry={activeEntry} unavailableHistory={unavailableHistory} className="!text-xs !px-2 !py-0.5 flex-shrink-0" />
         </div>
       )}
 
