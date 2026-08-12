@@ -16,6 +16,7 @@ import "./page.css";
 
 import { baseUrl } from "../../../BaseUrl";
 import { useAuth } from "@/context/AuthContext";
+import { clientAuthHeaders } from "@/lib/roadshowAuthToken";
 
 /* =========================================================
    UPDATE VEHICLE IMAGE PATH HERE
@@ -1190,7 +1191,7 @@ function BookingModal({
 ========================================================= */
 
 export default function MyBookingsPage() {
-  const { user, authLoading, openAuth } = useAuth();
+  const { user, token, authLoading, openAuth } = useAuth();
 
   const [bookings, setBookings] =
     useState<Booking[]>([]);
@@ -1216,9 +1217,19 @@ export default function MyBookingsPage() {
         setBookingsLoading(true);
         setBookingsError("");
 
+        // The scoped endpoint the note here used to ask for. This screen
+        // was pulling `client-requests` — the staff-facing listing of
+        // EVERY customer's bookings, contact details, GSTINs and prices —
+        // into the browser and filtering it down by phone number. The
+        // filter hid the other customers from the screen, not from the
+        // response. `/mine` returns only the token holder's records, so
+        // nothing that is not theirs is ever sent.
         const response = await fetch(
-          `${baseUrl}/client-requests`,
-          { cache: "no-store" },
+          `${baseUrl}/client-requests/mine`,
+          {
+            cache: "no-store",
+            headers: clientAuthHeaders(token),
+          },
         );
 
         const result = await response
@@ -1232,16 +1243,12 @@ export default function MyBookingsPage() {
           );
         }
 
-        // client-requests is a staff-facing listing endpoint with no
-        // documented customer-scoped filter, so this filters by the
-        // logged-in user's phone on the client as an interim measure.
-        // Needs a real scoped backend endpoint before shipping.
-        const mine = ((result.data as ClientRequestRaw[]) || []).filter(
-          (request) => request.phone === user.phone,
-        );
-
         if (active) {
-          setBookings(mine.map(mapClientRequestToBooking));
+          setBookings(
+            ((result.data as ClientRequestRaw[]) || []).map(
+              mapClientRequestToBooking,
+            ),
+          );
         }
       } catch (error) {
         if (active) {
@@ -1259,7 +1266,10 @@ export default function MyBookingsPage() {
     return () => {
       active = false;
     };
-  }, [user, authLoading, openAuth]);
+    /* Re-fetches when the token changes too, so signing in as someone
+       else loads that customer's bookings instead of keeping the last
+       ones on screen. */
+  }, [user, token, authLoading, openAuth]);
 
   const [activeTab, setActiveTab] =
     useState<StatusFilter>("All");

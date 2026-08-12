@@ -21,7 +21,7 @@ export const GST_Percentage = "18";
   true  = Production / Live
   false = Localhost
 */
-const IS_LIVE = false;
+const IS_LIVE = true;
 
 const LOCAL_MAIL_IMAGE_URL =
   "http://localhost:3000";

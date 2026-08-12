@@ -53,10 +53,25 @@ export type VehicleCampaignDetails = {
   campaignVideos: CampaignMediaMeta[];
 };
 
+/** One vehicle's own campaign dates, as stored in the cart. */
+export type CampaignDateRange = {
+  startDate: string | null;
+  endDate: string | null;
+};
+
 export type CampaignDraft = {
   vehicles: Record<string, VehicleCampaignDetails>;
   /* Which vehicle's details were last copied across, for the checkbox state */
   appliedToAllFrom: string | null;
+
+  /* ── What each vehicle had before "apply to all" was ticked ────────────
+     Unticking used to only drop the link and leave the copies behind, so a
+     customer who ticked the box to look at it could never get their own
+     typing back. These two hold every OTHER vehicle's details and dates as
+     they were the moment it was ticked, and unticking puts them back
+     exactly. Both are null whenever the box is clear. */
+  appliedSnapshot: Record<string, VehicleCampaignDetails> | null;
+  appliedDates: Record<string, CampaignDateRange> | null;
 };
 
 const isBrowser = (): boolean => typeof window !== "undefined";
@@ -149,7 +164,47 @@ const normalizeDetails = (
 export const emptyDraft = (): CampaignDraft => ({
   vehicles: {},
   appliedToAllFrom: null,
+  appliedSnapshot: null,
+  appliedDates: null,
 });
+
+/** Reads back a persisted snapshot, or null when there is not a usable one. */
+const normalizeSnapshot = (
+  value: unknown
+): Record<string, VehicleCampaignDetails> | null => {
+  if (!value || typeof value !== "object") return null;
+
+  const source = value as Record<string, unknown>;
+  const snapshot: Record<string, VehicleCampaignDetails> = {};
+
+  Object.keys(source).forEach((vehicleId) => {
+    snapshot[vehicleId] = normalizeDetails(vehicleId, source[vehicleId]);
+  });
+
+  return Object.keys(snapshot).length ? snapshot : null;
+};
+
+const normalizeDates = (
+  value: unknown
+): Record<string, CampaignDateRange> | null => {
+  if (!value || typeof value !== "object") return null;
+
+  const source = value as Record<string, unknown>;
+  const dates: Record<string, CampaignDateRange> = {};
+
+  Object.keys(source).forEach((vehicleId) => {
+    const range = source[vehicleId] as Record<string, unknown> | null;
+
+    if (!range || typeof range !== "object") return;
+
+    dates[vehicleId] = {
+      startDate: range.startDate ? String(range.startDate) : null,
+      endDate: range.endDate ? String(range.endDate) : null,
+    };
+  });
+
+  return Object.keys(dates).length ? dates : null;
+};
 
 /** Reads a customer's saved campaign draft. Never throws. */
 export const readCampaignDraft = (
@@ -182,12 +237,22 @@ export const readCampaignDraft = (
       );
     });
 
+    const appliedToAllFrom =
+      typeof parsed.appliedToAllFrom === "string"
+        ? parsed.appliedToAllFrom
+        : null;
+
     return {
       vehicles,
-      appliedToAllFrom:
-        typeof parsed.appliedToAllFrom === "string"
-          ? parsed.appliedToAllFrom
-          : null,
+      appliedToAllFrom,
+      /* Only meaningful while the box is ticked — a snapshot without a
+         source vehicle has nothing to be restored by. */
+      appliedSnapshot: appliedToAllFrom
+        ? normalizeSnapshot(parsed.appliedSnapshot)
+        : null,
+      appliedDates: appliedToAllFrom
+        ? normalizeDates(parsed.appliedDates)
+        : null,
     };
   } catch {
     window.localStorage.removeItem(storageKey);
@@ -231,12 +296,32 @@ export const reconcileDraftWithVehicles = (
       draft.vehicles[vehicleId] || emptyCampaignDetails(vehicleId);
   });
 
+  const appliedToAllFrom =
+    draft.appliedToAllFrom && keep.has(draft.appliedToAllFrom)
+      ? draft.appliedToAllFrom
+      : null;
+
+  /* Snapshot entries for vehicles that have since left the cart are dropped
+     with them, so a later restore cannot resurrect a removed vehicle. */
+  const pruneByKey = <T>(
+    source: Record<string, T> | null
+  ): Record<string, T> | null => {
+    if (!appliedToAllFrom || !source) return null;
+
+    const pruned: Record<string, T> = {};
+
+    keep.forEach((vehicleId) => {
+      if (source[vehicleId]) pruned[vehicleId] = source[vehicleId];
+    });
+
+    return Object.keys(pruned).length ? pruned : null;
+  };
+
   return {
     vehicles,
-    appliedToAllFrom:
-      draft.appliedToAllFrom && keep.has(draft.appliedToAllFrom)
-        ? draft.appliedToAllFrom
-        : null,
+    appliedToAllFrom,
+    appliedSnapshot: pruneByKey(draft.appliedSnapshot),
+    appliedDates: pruneByKey(draft.appliedDates),
   };
 };
 
@@ -250,7 +335,10 @@ export const reconcileDraftWithVehicles = (
 export const applyDetailsToAll = (
   draft: CampaignDraft,
   sourceVehicleId: string,
-  vehicleIds: string[]
+  vehicleIds: string[],
+  /* Each vehicle's current dates, snapshotted alongside the details so
+     unticking gives those back too. Dates live in the cart, not here. */
+  currentDates: Record<string, CampaignDateRange> = {}
 ): CampaignDraft => {
   const source = draft.vehicles[sourceVehicleId];
 
@@ -260,10 +348,21 @@ export const applyDetailsToAll = (
     ...draft.vehicles,
   };
 
+  /* Taken BEFORE anything is overwritten — this is what unticking restores */
+  const appliedSnapshot: Record<string, VehicleCampaignDetails> = {};
+  const appliedDates: Record<string, CampaignDateRange> = {};
+
   vehicleIds.forEach((vehicleId) => {
     const id = String(vehicleId);
 
     if (id === String(sourceVehicleId)) return;
+
+    appliedSnapshot[id] = draft.vehicles[id] || emptyCampaignDetails(id);
+
+    appliedDates[id] = currentDates[id] || {
+      startDate: null,
+      endDate: null,
+    };
 
     vehicles[id] = {
       ...source,
@@ -275,7 +374,50 @@ export const applyDetailsToAll = (
     };
   });
 
-  return { ...draft, vehicles, appliedToAllFrom: String(sourceVehicleId) };
+  return {
+    ...draft,
+    vehicles,
+    appliedToAllFrom: String(sourceVehicleId),
+    appliedSnapshot,
+    appliedDates,
+  };
+};
+
+/**
+ * Undoes applyDetailsToAll — every vehicle other than the source gets back
+ * the details it had before the box was ticked.
+ *
+ * The source vehicle keeps what it has: those are the customer's own values,
+ * typed on that card, and were never a copy of anything.
+ *
+ * With no snapshot to work from (a draft saved before this existed) the
+ * details are left exactly as they are and only the link is dropped, which
+ * is precisely the old behaviour — never worse than it was.
+ */
+export const restoreDetailsFromSnapshot = (
+  draft: CampaignDraft
+): CampaignDraft => {
+  const cleared = {
+    ...draft,
+    appliedToAllFrom: null,
+    appliedSnapshot: null,
+    appliedDates: null,
+  };
+
+  if (!draft.appliedSnapshot) return cleared;
+
+  const vehicles: Record<string, VehicleCampaignDetails> = {
+    ...draft.vehicles,
+  };
+
+  Object.keys(draft.appliedSnapshot).forEach((vehicleId) => {
+    /* Never resurrect a vehicle that is no longer in the draft */
+    if (!vehicles[vehicleId]) return;
+
+    vehicles[vehicleId] = draft.appliedSnapshot![vehicleId];
+  });
+
+  return { ...cleared, vehicles };
 };
 
 export const clearCampaignDraft = (userId?: string | null): void => {
@@ -369,6 +511,30 @@ export const clearAllMedia = (): void => {
   previewUrls.forEach((url) => URL.revokeObjectURL(url));
   previewUrls.clear();
   mediaStore.clear();
+};
+
+/* Which customer the files currently in mediaStore belong to.
+   The store is keyed by vehicleId alone, so without this a second customer
+   signing in on the same tab would inherit the first one's uploads for any
+   vehicle they both happen to have in their cart. */
+let mediaOwnerKey: string | null = null;
+
+/**
+ * Hands the media store to a customer, discarding the previous one's files.
+ *
+ * A no-op on the first call and on every call for the same customer, so
+ * moving between Campaign Details and Review Order — which remounts both
+ * pages — keeps the files that were just picked. Only an actual customer
+ * change clears them.
+ */
+export const ensureMediaOwner = (userId?: string | null): void => {
+  const key = String(userId ?? "").trim() || GUEST_DRAFT_KEY;
+
+  if (mediaOwnerKey === key) return;
+
+  if (mediaOwnerKey !== null) clearAllMedia();
+
+  mediaOwnerKey = key;
 };
 
 /**

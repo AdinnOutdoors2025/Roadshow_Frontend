@@ -17,6 +17,7 @@ import '../../../components/Client/HomePageSections/HomePageSection1.css';
 
 import { useModal } from "@/hooks/useModal";
 import { useAuth } from "@/context/AuthContext";
+import { clientAuthHeaders } from "@/lib/roadshowAuthToken";
 import { FALLBACK_VEHICLE_IMAGE, fetchAllRoadshowVehicles, type RoadshowVehicle, } from "@/lib/roadshowVehicles";
 import { clearCart, mergeGuestCartInto, readCart, writeCart, type CartItem, } from "@/lib/roadshowCart";
 import { AnimatePresence, motion } from "framer-motion";
@@ -1288,8 +1289,11 @@ export default function CampaignRequestPage() {
         {
           method: "POST",
 
+          /* Customer-authenticated now — the backend takes the owner from
+             this token rather than from the payload's userId. */
           headers: {
             "Content-Type": "application/json",
+            ...clientAuthHeaders(),
           },
 
           body: JSON.stringify(payload),

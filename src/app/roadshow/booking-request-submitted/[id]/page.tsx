@@ -8,6 +8,8 @@ import { useParams, useRouter } from "next/navigation";
 
 import { baseUrl } from "../../../../BaseUrl";
 import Image from "next/image";
+import { useAuth } from "@/context/AuthContext";
+import { clientAuthHeaders } from "@/lib/roadshowAuthToken";
 import './page.css';
 
 type VehicleTypeValue =
@@ -76,6 +78,21 @@ type ClientRequest = {
 
   status?: number;
   createdAt?: string;
+
+  /* Populated by the endpoint as { _id, name, email, phone }; older
+     responses may still carry the raw id string. */
+  userId?: string | { _id?: string } | null;
+};
+
+/** The owner's id, whether the endpoint populated it or returned it raw. */
+const ownerIdOf = (request: ClientRequest | null): string => {
+  const owner = request?.userId;
+
+  if (!owner) return "";
+
+  return typeof owner === "object"
+    ? String(owner._id || "")
+    : String(owner);
 };
 
 /* 0 / 1 / 2 as defined on the ClientRequestOrder schema */
@@ -154,11 +171,44 @@ export default function BookingRequestSubmittedPage() {
     ? params.id[0]
     : params?.id;
 
+  const { user, authLoading } = useAuth();
+
   const [request, setRequest] = useState<ClientRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  /* ── Owner gate ────────────────────────────────────────────────────────
+     This page renders a booking in full — name, email, phone, GSTIN, PAN,
+     company, every campaign and the whole price breakdown — and used to do
+     it for anyone holding the URL, signed in or not. Worse, it kept doing
+     it after a logout: the fetch had already run, so signing out (or
+     dismissing the login popup) left the previous customer's details on
+     screen for whoever was at the browser next.
+
+     The booking is now cleared the moment there is no signed-in customer,
+     and re-fetched per customer, so it is never shown to anyone but its
+     owner. The endpoint enforces the same rule server-side. */
   useEffect(() => {
+    if (authLoading) return;
+    if (user) return;
+
+    setRequest(null);
+    setError("Please sign in to view this booking request.");
+    setLoading(false);
+
+    /* The offline fallback copy is the other way this data survives a
+       logout — drop it with the rest. */
+    try {
+      sessionStorage.removeItem("roadshow_last_client_request");
+    } catch {
+      /* Storage blocked — nothing cached to clear */
+    }
+  }, [user, authLoading]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) return;
+
     if (!requestMongoId) {
       setError("Booking request ID is missing.");
       setLoading(false);
@@ -177,6 +227,10 @@ export default function BookingRequestSubmittedPage() {
           {
             method: "GET",
             cache: "no-store",
+            /* The endpoint is customer-authenticated now and answers
+               "not found" for a booking that is not this customer's, so
+               the owner check below is enforced server-side too. */
+            headers: clientAuthHeaders(),
           }
         );
 
@@ -186,6 +240,16 @@ export default function BookingRequestSubmittedPage() {
           throw new Error(
             result?.message || "Unable to load the booking request."
           );
+        }
+
+        /* The endpoint hands the record to anyone who asks, so the owner
+           check happens here. An id that is not this customer's reads as
+           "not found" rather than "not yours" — confirming a booking
+           exists is itself something a stranger should not learn. */
+        const ownerId = ownerIdOf(result.data);
+
+        if (ownerId && ownerId !== String(user._id)) {
+          throw new Error("The booking request could not be found.");
         }
 
         if (active) {
@@ -200,7 +264,14 @@ export default function BookingRequestSubmittedPage() {
           try {
             const parsed = JSON.parse(fallback) as ClientRequest;
 
-            if (parsed?._id === requestMongoId) {
+            const fallbackOwnerId = ownerIdOf(parsed);
+
+            /* Same rule for the cached copy — a fallback written before
+               this customer signed in must not be shown to them. */
+            if (
+              parsed?._id === requestMongoId &&
+              (!fallbackOwnerId || fallbackOwnerId === String(user._id))
+            ) {
               if (active) setRequest(parsed);
               return;
             }
@@ -226,7 +297,9 @@ export default function BookingRequestSubmittedPage() {
     return () => {
       active = false;
     };
-  }, [requestMongoId]);
+    /* Re-runs on a customer switch, so the page never keeps showing a
+       booking that belonged to whoever was signed in before. */
+  }, [requestMongoId, user, authLoading]);
 
   const vehicleSummary = useMemo(() => {
     if (!request?.vehicleTypes?.length) return "—";

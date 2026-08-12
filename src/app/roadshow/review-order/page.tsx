@@ -44,6 +44,7 @@ import { clearCart, readCart } from "@/lib/roadshowCart";
 import {
   clearCampaignDraft,
   emptyCampaignDetails,
+  ensureMediaOwner,
   getMedia,
   hasPendingMedia,
   readCampaignDraft,
@@ -86,7 +87,11 @@ export default function ReviewOrderPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const authPromptedRef = useRef(false);
-  const hydratedRef = useRef(false);
+
+  /* WHICH customer this page has been built for. A plain boolean never
+     re-ran when the signed-in customer changed, so signing in as someone
+     else left the previous customer's order on the review screen. */
+  const hydratedUserKeyRef = useRef<string | null>(null);
 
   /* ── Auth gate ─────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -109,10 +114,19 @@ export default function ReviewOrderPage() {
     authPromptedRef.current = false;
   }, [user, authLoading, openAuth]);
 
-  /* ── Rebuild the order from cart + draft ───────────────────────────── */
+  /* ── Rebuild the order from cart + draft ─────────────────────────────
+     Re-runs on a customer switch so the review screen shows the order of
+     whoever is signed in now. */
   useEffect(() => {
     if (authLoading) return;
-    if (hydratedRef.current) return;
+
+    const userKey = String(user?._id || "guest");
+
+    if (hydratedUserKeyRef.current === userKey) return;
+
+    /* Claimed up front, not after the fetch, so a re-render while the
+       catalogue is still loading cannot start a second one. */
+    hydratedUserKeyRef.current = userKey;
 
     let componentMounted = true;
 
@@ -158,7 +172,9 @@ export default function ReviewOrderPage() {
           restored.map((vehicle) => String(vehicle.id))
         );
 
-        hydratedRef.current = true;
+        /* Files are held per vehicle, not per customer — hand the store
+           over so a new customer cannot inherit the last one's uploads. */
+        ensureMediaOwner(user?._id);
 
         setSelectedVehicles(restored);
         setDraft(reconciled);
@@ -169,6 +185,10 @@ export default function ReviewOrderPage() {
         setMediaMissing(hasPendingMedia(reconciled));
       } catch (error) {
         console.error("Review order loading error:", error);
+
+        /* Release the claim so the next render can try again rather than
+           leaving the customer on a permanently empty review screen. */
+        hydratedUserKeyRef.current = null;
 
         toast.error(
           error instanceof Error
@@ -250,7 +270,7 @@ export default function ReviewOrderPage() {
       /* The request is placed — neither the cart nor the draft is needed */
       clearCart(user?._id);
       clearCampaignDraft(user?._id);
-      hydratedRef.current = false;
+      hydratedUserKeyRef.current = null;
 
       toast.success("Booking request submitted successfully.");
 

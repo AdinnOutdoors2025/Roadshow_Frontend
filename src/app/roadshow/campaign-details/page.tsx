@@ -47,10 +47,12 @@ import {
   clearCampaignDraft,
   copyMediaToAll,
   emptyCampaignDetails,
+  ensureMediaOwner,
   getMedia,
   hasPendingMedia,
   readCampaignDraft,
   reconcileDraftWithVehicles,
+  restoreDetailsFromSnapshot,
   setMedia,
   toMediaMeta,
   writeCampaignDraft,
@@ -148,6 +150,8 @@ export default function CampaignDetailsPage() {
   const [draft, setDraft] = useState(() => ({
     vehicles: {},
     appliedToAllFrom: null,
+    appliedSnapshot: null,
+    appliedDates: null,
   }));
   const [mediaByVehicle, setMediaByVehicle] = useState({});
   const [campaignTypes, setCampaignTypes] = useState<string[]>([]);
@@ -167,12 +171,34 @@ export default function CampaignDetailsPage() {
   const stepperRef = useRef<HTMLDivElement>(null);
 
   const authPromptedRef = useRef(false);
-  const hydratedRef = useRef(false);
+
+  /* WHICH customer this page has been hydrated for, not merely whether it
+     has been. A plain boolean never re-ran when the signed-in customer
+     changed, so signing out and back in as someone else left the previous
+     customer's vehicles on screen — and the persist effect below then wrote
+     them into the NEW customer's storage key. Keyed on the user id, the
+     effect re-runs on every switch and swaps in that person's own cart. */
+  const hydratedUserKeyRef = useRef<string | null>(null);
+
+  /* The exact draft object hydration produced. The persist effect refuses to
+     write until React has committed it, otherwise the outgoing customer's
+     draft would be saved under the incoming customer's key. */
+  const hydratedDraftRef = useRef<unknown>(null);
 
   /* Latest draft, readable from callbacks that must not depend on it (and
      must not read state inside a reducer). Kept in sync below. */
   const draftRef = useRef(draft);
   draftRef.current = draft;
+
+  /* Each vehicle's own files as they were just before "apply to all" was
+     ticked, so unticking hands them back along with the typed details.
+
+     Deliberately a ref and not part of the persisted draft: File objects
+     cannot be serialised, which is the same reason the media store itself
+     is tab-lifetime only. Refreshing the page while the box is ticked
+     therefore restores the typed details but leaves the copied files in
+     place — the campaign copy is what customers actually retype. */
+  const mediaSnapshotRef = useRef<Record<string, unknown> | null>(null);
 
   /* ── Auth gate ─────────────────────────────────────────────────────────
      Same contract as CampaignRequest: prompt once, never loop. */
@@ -257,11 +283,17 @@ export default function CampaignDetailsPage() {
     };
   }, []);
 
-  /* ── Rebuild the selection from the saved cart ───────────────────────── */
+  /* ── Rebuild the selection from the saved cart ─────────────────────────
+     Re-runs whenever the signed-in customer changes, so logging out and in
+     as someone else loads THAT person's cart and campaign copy instead of
+     leaving the previous one on screen. */
   useEffect(() => {
     if (authLoading) return;
     if (!vehicles.length) return;
-    if (hydratedRef.current) return;
+
+    const userKey = String(user?._id || "guest");
+
+    if (hydratedUserKeyRef.current === userKey) return;
 
     const savedCart = readCart(user?._id);
 
@@ -289,6 +321,10 @@ export default function CampaignDetailsPage() {
       .filter(Boolean);
 
     if (!restored.length) {
+      /* Claim the key before leaving, or the effect re-fires on the way out
+         and toasts the same message again. */
+      hydratedUserKeyRef.current = userKey;
+
       toast.error("Select at least one campaign vehicle first.");
       router.replace("/roadshow/CampaignRequest");
       return;
@@ -301,6 +337,11 @@ export default function CampaignDetailsPage() {
       vehicleIds
     );
 
+    /* Files are held per vehicle, not per customer — hand the store over
+       before reading it so a new customer cannot inherit the last one's
+       uploads for a vehicle they both selected. */
+    ensureMediaOwner(user?._id);
+
     /* Mirror the in-memory media store into state so removals re-render */
     const media = {};
 
@@ -308,17 +349,38 @@ export default function CampaignDetailsPage() {
       media[vehicleId] = getMedia(vehicleId);
     });
 
-    hydratedRef.current = true;
+    hydratedUserKeyRef.current = userKey;
+    hydratedDraftRef.current = reconciled;
+
+    /* Belongs to the customer who just left — never offer it to this one */
+    mediaSnapshotRef.current = null;
 
     setSelectedVehicles(restored);
     setDraft(reconciled);
     setMediaByVehicle(media);
+
+    /* A customer switch must not leave the stepper parked on the previous
+       customer's vehicle 3, or their validation errors on screen. */
+    setActiveIndex(0);
+    setErrors({});
   }, [vehicles, user, authLoading, router]);
 
-  /* Persist campaign copy on every edit — held back until hydration has
-     run, so the initial empty draft cannot overwrite saved typing. */
+  /* Persist campaign copy on every edit — held back until THIS customer's
+     draft has been restored, so neither the initial empty draft nor the
+     previous customer's still-rendered one can overwrite saved typing. */
   useEffect(() => {
-    if (!hydratedRef.current) return;
+    const userKey = String(user?._id || "guest");
+
+    if (hydratedUserKeyRef.current !== userKey) return;
+
+    /* Both effects react to `user`, and this one runs in the same commit as
+       hydration, before React has applied the restored draft. Wait for that
+       exact object to arrive before writing anything. */
+    if (hydratedDraftRef.current) {
+      if (draft !== hydratedDraftRef.current) return;
+
+      hydratedDraftRef.current = null;
+    }
 
     writeCampaignDraft(user?._id, draft);
   }, [draft, user]);
@@ -391,11 +453,19 @@ export default function CampaignDetailsPage() {
         return { ...current, vehicles };
       }
 
+      /* Editing any other card means they are no longer all the same.
+         The snapshot goes with the link: choosing to change one card is a
+         deliberate divergence, so the others keep the values they are
+         showing rather than silently springing back — which is exactly
+         what the card's own note promises. */
+      mediaSnapshotRef.current = null;
+
       return {
         ...current,
         vehicles: { ...current.vehicles, [id]: updated },
-        /* Editing any other card means they are no longer all the same */
         appliedToAllFrom: null,
+        appliedSnapshot: null,
+        appliedDates: null,
       };
     });
 
@@ -475,16 +545,92 @@ export default function CampaignDetailsPage() {
     (sourceVehicleId, checked) => {
       const id = String(sourceVehicleId);
 
-      if (!checked) {
-        setDraft((current) => ({ ...current, appliedToAllFrom: null }));
-        return;
-      }
-
       const vehicleIds = selectedVehicles.map((vehicle) =>
         String(vehicle.id)
       );
 
-      setDraft((current) => applyDetailsToAll(current, id, vehicleIds));
+      /* ── Unticking: hand every other vehicle back what it had ────────────
+         Only the copies go. Whatever the customer typed on each card before
+         ticking the box returns — details, dates and files — and the source
+         card keeps its own values, which were never a copy of anything. */
+      if (!checked) {
+        const snapshotDates = draftRef.current.appliedDates;
+        const snapshotMedia = mediaSnapshotRef.current;
+
+        setDraft((current) => restoreDetailsFromSnapshot(current));
+
+        if (snapshotMedia) {
+          const nextMedia = {};
+
+          Object.keys(snapshotMedia).forEach((vehicleId) => {
+            const bucket = snapshotMedia[vehicleId];
+
+            setMedia(vehicleId, bucket);
+            nextMedia[vehicleId] = bucket;
+          });
+
+          setMediaByVehicle((current) => ({ ...current, ...nextMedia }));
+
+          mediaSnapshotRef.current = null;
+        }
+
+        if (snapshotDates) {
+          setSelectedVehicles((current) => {
+            const next = current.map((vehicle) => {
+              const range = snapshotDates[String(vehicle.id)];
+
+              if (!range) return vehicle;
+
+              return {
+                ...vehicle,
+                startDate: parseStoredDate(range.startDate),
+                endDate: parseStoredDate(range.endDate),
+              };
+            });
+
+            persistCart(next);
+
+            return next;
+          });
+        }
+
+        toast.success("Each vehicle is back to its own campaign details.");
+
+        return;
+      }
+
+      /* ── Ticking: snapshot first, then copy ─────────────────────────── */
+      const currentDates = {};
+
+      selectedVehicles.forEach((vehicle) => {
+        currentDates[String(vehicle.id)] = {
+          startDate: vehicle.startDate
+            ? formatDateForApi(vehicle.startDate)
+            : null,
+          endDate: vehicle.endDate
+            ? formatDateForApi(vehicle.endDate)
+            : null,
+        };
+      });
+
+      const mediaSnapshot = {};
+
+      vehicleIds.forEach((vehicleId) => {
+        if (vehicleId === id) return;
+
+        const bucket = getMedia(vehicleId);
+
+        mediaSnapshot[vehicleId] = {
+          images: [...bucket.images],
+          videos: [...bucket.videos],
+        };
+      });
+
+      mediaSnapshotRef.current = mediaSnapshot;
+
+      setDraft((current) =>
+        applyDetailsToAll(current, id, vehicleIds, currentDates)
+      );
 
       copyMediaToAll(id, vehicleIds);
 
@@ -750,7 +896,8 @@ export default function CampaignDetailsPage() {
       /* The request is placed — neither the cart nor the draft is needed */
       clearCart(user?._id);
       clearCampaignDraft(user?._id);
-      hydratedRef.current = false;
+      hydratedUserKeyRef.current = null;
+      hydratedDraftRef.current = null;
 
       setReviewOpen(false);
 
@@ -846,11 +993,12 @@ export default function CampaignDetailsPage() {
               each chip shows the vehicle, whether its details are complete,
               and jumps straight to it. */}
           <div className="rdsw_cdCardList" ref={stepperRef}>
-            {/* With "apply to all" checked every vehicle shares one set of
-                campaign details, so there is nothing to step through — the
-                rail and the Next Vehicle button are hidden and the only way
-                on is Review Order. Unchecking brings them straight back. */}
-            {rows.length > 1 && !appliedToAll && (
+            {/* The rail stays put whether or not "apply to all" is checked.
+                Hiding it on check took the customer's only way of SEEING
+                where those details landed — they had to uncheck the box to
+                look, which is exactly what they were trying to avoid. With
+                it visible they can walk both vehicles and confirm. */}
+            {rows.length > 1 && (
               <div className="rdsw_cdRailWrap">
                 <div className="rdsw_cdRailHead">
                   <p className="rdsw_cdRailTitle">
@@ -858,7 +1006,9 @@ export default function CampaignDetailsPage() {
                   </p>
 
                   <p className="rdsw_cdRailMeta">
-                    {completedCount} of {rows.length} completed
+                    {appliedToAll
+                      ? `Shared across all ${rows.length} vehicles`
+                      : `${completedCount} of ${rows.length} completed`}
                   </p>
                 </div>
 
@@ -949,7 +1099,13 @@ export default function CampaignDetailsPage() {
                   languageOptions={LANGUAGE_OPTIONS}
                   errors={errors[String(activeRow.vehicle.id)]}
                   showApplyToAll={rows.length > 1}
-                  appliedToAll={
+                  /* Checked on EVERY card while the details are shared, not
+                     just the one they were copied from — a customer stepping
+                     to vehicle 2 and finding the box empty reads it as "this
+                     one did not get them". Unchecking from any card unlinks
+                     them all, which handleApplyToAll already does. */
+                  appliedToAll={appliedToAll}
+                  isApplySource={
                     draft.appliedToAllFrom ===
                     String(activeRow.vehicle.id)
                   }
@@ -982,11 +1138,9 @@ export default function CampaignDetailsPage() {
 
             {/* ── Step navigation ──────────────────────────────────────── */}
             <div className="rdsw_cdStepNav">
-              {appliedToAll || rows.length === 1 ? (
+              {rows.length === 1 ? (
                 <span className="rdsw_cdStepNavNote">
-                  {appliedToAll
-                    ? `These details apply to all ${rows.length} vehicles`
-                    : "One vehicle in this campaign"}
+                  One vehicle in this campaign
                 </span>
               ) : (
                 <>
@@ -1000,13 +1154,23 @@ export default function CampaignDetailsPage() {
                     Previous
                   </button>
 
-                  <span className="rdsw_cdStepNavCount">
-                    {activeIndex + 1} / {rows.length}
-                  </span>
+                  {/* Sharing is stated ALONGSIDE the navigation now, not
+                      instead of it, so the customer keeps both the fact and
+                      the means to go and check it. Each state keeps the
+                      class it already had, so nothing about the bar moves. */}
+                  {appliedToAll ? (
+                    <span className="rdsw_cdStepNavNote">
+                      These details apply to all {rows.length} vehicles
+                    </span>
+                  ) : (
+                    <span className="rdsw_cdStepNavCount">
+                      {activeIndex + 1} / {rows.length}
+                    </span>
+                  )}
                 </>
               )}
 
-              {!appliedToAll && activeIndex < rows.length - 1 ? (
+              {activeIndex < rows.length - 1 ? (
                 <button
                   type="button"
                   onClick={goToNextVehicle}

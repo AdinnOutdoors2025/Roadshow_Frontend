@@ -358,9 +358,14 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
 
       if (order.selectedClientOrder?._id) {
         try {
+          /* Staff-only route now — without the admin token this silently
+             stopped marking the request converted. */
           await fetch(`${API_BASE}client-requests/${order.selectedClientOrder._id}/status`, {
             method: "PATCH",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${getToken()}`,
+            },
             body: JSON.stringify({ status: 2 }),
           });
         } catch (err) {

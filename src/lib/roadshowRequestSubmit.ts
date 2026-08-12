@@ -15,6 +15,7 @@
 /*  absent, so nothing about the existing contract moved.                      */
 
 import { baseUrl } from "@/BaseUrl";
+import { clientAuthHeaders } from "@/lib/roadshowAuthToken";
 
 /** "Others" campaign types and "Other" promoter types resolve to what was typed. */
 export const resolveCampaignType = (details) =>
@@ -95,6 +96,15 @@ export const buildClientRequestPayload = ({
       vehicleId: vehicle.id,
       vehicleType: vehicle.vehicleTypeId || vehicle.id,
       vehicleName: vehicle.name,
+
+      /* The package this vehicle was priced from. The request itself does
+         not need it, but the Order the backend raises alongside does —
+         every rate on a booking item (rental, RTO, per-km, hourly, KM
+         limit) is read from the package server-side rather than trusted
+         from here, exactly as admin order creation does it. */
+      packageId: vehicle.packageDetails?._id || "",
+      vehicleModel: vehicle.packageDetails?.vehicleModel || "",
+
       quantity: line.quantity,
       campaignLocation: details.campaignLocation.trim(),
       fromDate: formatDateForApi(vehicle.startDate),
@@ -172,8 +182,13 @@ export const submitClientRequest = async ({
     });
   });
 
+  /* POST client-requests is customer-authenticated now — the backend takes
+     the owner from this token rather than from the payload's userId, so a
+     booking can only ever be filed against the customer who is signed in.
+     No Content-Type here on purpose: fetch sets the multipart boundary. */
   const response = await fetch(`${baseUrl}/client-requests`, {
     method: "POST",
+    headers: clientAuthHeaders(),
     body: formData,
   });
 

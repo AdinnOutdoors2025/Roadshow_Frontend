@@ -8,6 +8,7 @@ import FormField, { inputClass } from "../../../components/reusableFormField";
 import { HiOutlineUser, HiOutlineOfficeBuilding } from "react-icons/hi";
 import { designations } from "../../utils/collection.json";
 import API_BASE from "../../../../baseurl";
+import { getToken } from "../../utils/auth";
 import GstVerifyPanel from "../../../components/gst/GstVerifyPanel";
 import { GstBusiness, normalizeGst } from "../../../lib/gst";
 
@@ -72,7 +73,11 @@ export default function CustomerDetailsStep({
 
 
   React.useEffect(() => {
-    fetch(`${API_BASE}client-requests`)
+    /* Staff-only route now — the listing exposes every customer's contact
+       details and prices, so it no longer answers an anonymous call. */
+    fetch(`${API_BASE}client-requests`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
       .then((r) => r.json())
       .then((d) => {
         if (d.success && Array.isArray(d.data)) {
@@ -121,11 +126,27 @@ export default function CustomerDetailsStep({
     const co = clientOrders.find((c) => c._id === id);
     if (!co) return;
     onSelectClientOrder(co);
+
+    /* An agency booking arrives already GST-verified, carrying its company
+       name, PAN and address. Copying only name/email/phone made the admin
+       retype all of it and verify the same GSTIN a second time. Each field
+       is spread in only when the request actually has it, so a blank on the
+       request can never wipe something already typed here. */
+    const fromRequest = {
+      email: co.email,
+      phone: co.phone,
+      ...(co.address ? { address: co.address } : {}),
+      ...(co.gstNumber ? { gstNumber: co.gstNumber } : {}),
+      ...(co.panNumber ? { panNumber: co.panNumber } : {}),
+      ...(co.companyName ? { companyName: co.companyName } : {}),
+    };
+
     if (customerCategory === "organization") {
-      onChange({ clientName: co.name, email: co.email, phone: co.phone });
+      onChange({ clientName: co.name, ...fromRequest });
     } else {
-      onChange({ name: co.name, email: co.email, phone: co.phone });
+      onChange({ name: co.name, ...fromRequest });
     }
+
     setErrors({});
   };
 

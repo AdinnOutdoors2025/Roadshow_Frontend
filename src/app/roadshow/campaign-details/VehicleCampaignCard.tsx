@@ -48,6 +48,10 @@ export default function VehicleCampaignCard({
   errors,
   showApplyToAll,
   appliedToAll,
+  /* True only on the card the shared details were copied FROM. The checkbox
+     reads checked on every card while they are shared; this just changes the
+     wording so the other cards explain where their values came from. */
+  isApplySource,
   onApplyToAllChange,
   onDetailsChange,
   onMediaChange,
@@ -619,8 +623,9 @@ export default function VehicleCampaignCard({
           <span>
             Apply these campaign details to all selected vehicles
             <em>
-              Copies campaign type, name, dates, location, media and promoter
-              details across. Each vehicle stays editable afterwards.
+              {appliedToAll && !isApplySource
+                ? "These values are shared with the other vehicles. Changing anything on this card unlinks it and leaves the rest as they are."
+                : "Copies campaign type, name, dates, location, media and promoter details across. Each vehicle stays editable afterwards."}
             </em>
           </span>
         </label>
