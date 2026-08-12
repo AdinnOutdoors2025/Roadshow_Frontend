@@ -498,6 +498,7 @@ export default function SalesPipelineBoard() {
 
   const dragOrder = useRef<SalesOrder | null>(null);
   const dragFrom = useRef<string>("");
+  const suppressCardClick = useRef(false);
 
   // ── Modals state ─────────────────────────────────────────────────────────
   const [handlerModal, setHandlerModal] = useState<SalesOrder | null>(null);
@@ -1066,7 +1067,7 @@ export default function SalesPipelineBoard() {
 
   return (
     <div className="flex flex-col h-full">
-      <Toaster position="top-right" />
+      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
 
       <SalesFilterBar
         search={search} setSearch={setSearch}
@@ -1118,8 +1119,18 @@ export default function SalesPipelineBoard() {
               onDragStart={(order, key) => {
                 dragOrder.current = order;
                 dragFrom.current = key;
+                suppressCardClick.current = true;
+                setTimeout(() => {
+                  suppressCardClick.current = false;
+                }, 300);
               }}
-              onCardClick={setDrawerOrder}
+              onCardClick={(order) => {
+                if (suppressCardClick.current) {
+                  suppressCardClick.current = false;
+                  return;
+                }
+                setDrawerOrder(order);
+              }}
             />
           ))}
         </div>

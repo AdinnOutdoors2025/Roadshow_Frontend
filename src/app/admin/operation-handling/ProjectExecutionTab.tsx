@@ -242,7 +242,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
     const e = {};
     if (!driverName.trim()) e.driverName = "Driver name required";
     else if (!/^[a-zA-Z\s]+$/.test(driverName.trim())) e.driverName = "Only letters allowed";
-    if (!driverPhone.trim()) e.driverPhone = "Phone required";
+    if (!driverPhone.trim()) e.driverPhone = "Phone No required";
     else if (!/^\d{10}$/.test(driverPhone)) e.driverPhone = "Enter valid 10-digit number";
     if (!regNo.trim()) e.regNo = "Registration number required";
     if (!vehicleDocId) e.regNo = "Select a vehicle from the list (don't type manually)";

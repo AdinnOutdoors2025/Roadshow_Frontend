@@ -1839,11 +1839,10 @@ export default function SalesDetailDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
-      {/* Mounted with the drawer itself (not any one tab) so "Move to Next
-          Stage" validation toasts show consistently no matter which tab is
-          active — react-hot-toast's default z-index (9999) sits above the
-          modal's z-50 backdrop. */}
-      <Toaster position="top-right" />
+      {/* Toasts are rendered by the app-wide <ToastProvider/> (z-index 99999,
+          above this modal's z-50 backdrop) — do not mount a local <Toaster/>
+          here, react-hot-toast renders every toast on every mounted
+          instance, which caused duplicate/stuck toast popups. */}
       {/* <div className="bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300"> */}
 
       <div className={`bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300 transition-all ${highlightOrderId === order._id ? "ring-4 ring-amber-400" : ""

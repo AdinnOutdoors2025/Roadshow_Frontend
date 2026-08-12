@@ -174,8 +174,10 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
       const payload = res.data?.data;
       setData(payload);
       const days = payload?.days || [];
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const todayEntry = days.find((d: any) => d.date === todayKey);
       const lastActive = [...days].reverse().find((d: any) => d.dayTotal > 0);
-      setSelectedDate((lastActive || days[days.length - 1])?.date || null);
+      setSelectedDate((todayEntry || lastActive || days[days.length - 1])?.date || null);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to load campaign calculator");
     } finally {
