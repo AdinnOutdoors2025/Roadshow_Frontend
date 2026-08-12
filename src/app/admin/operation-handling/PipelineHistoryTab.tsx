@@ -132,7 +132,7 @@ export default function PipelineHistoryTab({ order }: { order: Order }) {
                                         )}
                                         <div className="flex items-center gap-1.5 mt-1 text-sm text-gray-400 flex-wrap">
                                             <span>By {log.movedBy || "—"}</span>
-                                            {log.handlerName && <><span>·</span><span>Handler: {log.handlerName}</span></>}
+                                            {log.handlerName && <><span>·</span><span>Assigned By: {log.handlerName}</span></>}
                                             <span>·</span>
                                             <span>{fmtDatetime(displayMovedAt)}</span>
                                         </div>

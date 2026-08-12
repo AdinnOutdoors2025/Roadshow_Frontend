@@ -289,7 +289,7 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
                     <div className="flex flex-col items-end gap-2.5 flex-shrink-0">
 
 
-                        <div className="flex items-center gap-1.5">
+                        {/* <div className="flex items-center gap-1.5">
                             <span className="text-sm text-gray-400">GPS</span>
                             {isOnRoad ? (
                                 <>
@@ -306,7 +306,7 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
                                     </span>
                                 </>
                             )}
-                        </div>
+                        </div> */}
 
 
                         <div className="flex flex-col gap-1.5">

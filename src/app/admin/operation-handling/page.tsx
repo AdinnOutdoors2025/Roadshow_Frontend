@@ -51,7 +51,6 @@ const STAGES = [
   { key: "todo", label: "To-Do", color: "text-slate-700", bg: "bg-slate-100", dot: "bg-slate-400", headerGrad: "from-slate-400 to-slate-500" },
   { key: "projectExecution", label: "Project Execution", color: "text-teal-700", bg: "bg-teal-50", dot: "bg-teal-500", headerGrad: "from-teal-400 to-teal-600" },
   { key: "onRoad", label: "On Road", color: "text-sky-700", bg: "bg-sky-50", dot: "bg-sky-500", headerGrad: "from-sky-400 to-sky-600" },
-  { key: "vehicleUnavailable", label: "Vehicle Unavailable", color: "text-red-700", bg: "bg-red-50", dot: "bg-red-400", headerGrad: "from-red-400 to-red-500" },
   { key: "clientClosure", label: "Client Closure & Feedback", color: "text-pink-700", bg: "bg-pink-50", dot: "bg-pink-500", headerGrad: "from-pink-400 to-pink-600" },
   { key: "closedWon", label: "Closed Won", color: "text-green-700", bg: "bg-green-50", dot: "bg-green-500", headerGrad: "from-green-400 to-green-600" },
   { key: "closedLost", label: "Closed Lost", color: "text-rose-700", bg: "bg-rose-50", dot: "bg-rose-400", headerGrad: "from-rose-400 to-rose-500" },
@@ -148,7 +147,7 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
         {fmt(finalNet)}
       </p>
 
-      {stageKey === "vehicleUnavailable" && (
+      {stageKey === "onRoad" && unavailableCount > 0 && (
         <div className="flex items-center gap-2 mt-2 mb-2">
           <span className="flex items-center gap-1 p-1 text-xs font-semibold rounded-full bg-red-50 text-red-600 border border-red-200">
             {unavailableCount} Unavailable
@@ -556,13 +555,6 @@ export default function PipelineBoard() {
   const onDrop = (toStage: string) => {
     const order = dragOrder.current;
     if (!order || dragFrom.current === toStage) return;
-    // Vehicle Unavailable is a virtual column (grouped by unavailable-vehicle
-    // count, not a real pipelineStatus) that only exists to surface history —
-    // cards sitting there must not be draggable to any other stage.
-    if (dragFrom.current === "vehicleUnavailable") {
-      toast.error("Cannot move a Vehicle Unavailable card — resolve/replace the vehicle first.");
-      return;
-    }
     handleStageMove(order, toStage);
   };
 
@@ -592,11 +584,6 @@ export default function PipelineBoard() {
 
     if (fromStage === "closedWon") {
       toast.error("Not Move the Stage");
-      return;
-    }
-
-    if (toStage === "vehicleUnavailable") {
-      toast.error("Cannot move to Vehicle Unavailable. This stage only displays unavailable vehicle history.");
       return;
     }
 
@@ -773,14 +760,12 @@ export default function PipelineBoard() {
               }}
               onCardClick={(order) => {
                 const hasPendingFoc = orderHasPendingFoc(order);
-                // A stage column with its own dedicated tab (Vehicle
-                // Unavailable, Client Closure) always opens that tab first —
-                // a pending FOC badge should only redirect to Client Closure
-                // for columns that don't already have a more specific tab
-                // (On Road, or any other generic stage).
-                if (stage.key === "vehicleUnavailable") {
-                  setDefaultTab("VehicleUnavailable");
-                } else if (stage.key === "clientClosure") {
+                // A stage column with its own dedicated tab (Client Closure)
+                // always opens that tab first — a pending FOC badge should
+                // only redirect to Client Closure for columns that don't
+                // already have a more specific tab (On Road, or any other
+                // generic stage).
+                if (stage.key === "clientClosure") {
                   setDefaultTab("clientClosure");
                 } else if (stage.key === "onRoad") {
                   setDefaultTab(hasPendingFoc ? "focRequest" : "onRoad");

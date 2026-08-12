@@ -33,6 +33,46 @@ const NO_DATA_META = { label: "No Data", bar: "bg-gray-300 dark:bg-gray-700", do
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const STATUS_CHIP: Record<string, string> = {
+  "On Road": "bg-emerald-100 text-emerald-700",
+  Unavailable: "bg-red-100 text-red-700",
+  Released: "bg-gray-200 text-gray-600",
+  Replaced: "bg-red-100 text-red-700",
+  Removed: "bg-gray-200 text-gray-600",
+};
+
+// Same category/timestamp map used by the TimeLine tab (DayByDayHistoryTab.tsx)
+// so both tabs agree on which reg is the "current" one for a given day.
+const CATEGORY_TIMESTAMP: Record<string, (e: any) => string> = {
+  driverChangeHistory: (e) => e.changedAt,
+  issueHistory: (e) => (e.status === "resolved-today" ? e.resolvedAt || e.createdAt : e.createdAt),
+  extraKmHistory: (e) => e.updatedAt,
+  dailyHoursHistory: (e) => e.loggedAt,
+  unavailableHistory: (e) => e.reportedAt,
+};
+
+// Walking a reg's own chronological events, decide status "as of" a given day
+// (inclusive) — mirrors DayByDayHistoryTab.tsx's computeRegSnapshot so the
+// TimeLine and Timeline Hours tabs never disagree on which reg is active.
+function computeRegSnapshot(eventsUpToDay: any[]) {
+  let status = "On Road";
+  let statusDay: string | null = null;
+  for (let i = eventsUpToDay.length - 1; i >= 0; i--) {
+    const e = eventsUpToDay[i];
+    if (e._category === "unavailableHistory") {
+      status = e.eventType === "replaced" ? "Replaced" : e.status === "unavailable" ? "Unavailable" : "On Road";
+      statusDay = e._day;
+      break;
+    }
+    if (e._category === "driverChangeHistory" && /removed/i.test(e.eventType || "")) {
+      status = "Removed";
+      statusDay = e._day;
+      break;
+    }
+  }
+  return { status, statusDay };
+}
+
 // IST midnight → midnight window for the given yyyy-mm-dd day key.
 function dayWindowUTC(day: string) {
   const fromDateUTC = new Date(`${day}T00:00:00+05:30`).getTime();
@@ -97,11 +137,31 @@ export default function TimelineHoursTab({ order, vehicleTypes }: { order: { _id
     return v?.typeName || vehicleTypeId;
   };
 
-  // Per vehicle type: full campaign day list.
+  // Per vehicle type: full campaign day list + every event tagged & grouped by
+  // entry, same as the TimeLine tab — so a reg that was Replaced on day N
+  // drops out of later days' roster and the incoming reg takes its place.
   const perVehicleType = useMemo(() => {
     if (!data?.vehicleTypes) return {};
-    const out: Record<number, { days: string[] }> = {};
+    const out: Record<number, { days: string[]; eventsByReg: Record<string, any[]> }> = {};
+
     data.vehicleTypes.forEach((vt: any) => {
+      const allEvents: any[] = [];
+      Object.keys(CATEGORY_TIMESTAMP).forEach((catKey) => {
+        (data[catKey] || []).forEach((e: any) => {
+          if (e.vehicleIndex !== vt.vehicleIndex) return;
+          allEvents.push({ ...e, _category: catKey, _timestamp: CATEGORY_TIMESTAMP[catKey](e), _day: e.day });
+        });
+      });
+      allEvents.sort((a, b) => new Date(a._timestamp || 0).getTime() - new Date(b._timestamp || 0).getTime());
+
+      const eventsByReg: Record<string, any[]> = {};
+      allEvents.forEach((e) => {
+        const key = e.entryId || e.vehicleRegistrationNumber;
+        if (!key) return;
+        if (!eventsByReg[key]) eventsByReg[key] = [];
+        eventsByReg[key].push(e);
+      });
+
       const days: string[] = [];
       const from = vt.fromDate?.slice(0, 10);
       const to = vt.toDate?.slice(0, 10);
@@ -114,10 +174,33 @@ export default function TimelineHoursTab({ order, vehicleTypes }: { order: { _id
           cur = d.toISOString().slice(0, 10);
         }
       }
-      out[vt.vehicleIndex] = { days };
+      allEvents.forEach((e) => {
+        if (e._day && !days.includes(e._day)) days.push(e._day);
+      });
+      days.sort();
+
+      out[vt.vehicleIndex] = { days, eventsByReg };
     });
     return out;
   }, [data]);
+
+  // Reg roster active on a given day, with status — mirrors DayByDayHistoryTab.tsx.
+  const dayRowsFor = (vehicleIndex: number, activeDay: string) => {
+    const { eventsByReg } = perVehicleType[vehicleIndex] || { eventsByReg: {} };
+    return Object.keys(eventsByReg)
+      .map((entryKey) => {
+        const events = eventsByReg[entryKey];
+        const eventsUpToDay = events.filter((e) => (e._day || "") <= activeDay);
+        if (eventsUpToDay.length === 0) return null;
+        const snapshot = computeRegSnapshot(eventsUpToDay);
+        if (snapshot.status !== "On Road" && snapshot.statusDay !== activeDay) return null;
+        const displayReg = [...eventsUpToDay].reverse().find((e) => e.vehicleRegistrationNumber)?.vehicleRegistrationNumber
+          || events[0]?.vehicleRegistrationNumber || entryKey;
+        return { reg: displayReg, entryKey, firstDay: eventsUpToDay[0]._day, status: snapshot.status };
+      })
+      .filter(Boolean)
+      .sort((a: any, b: any) => (a.firstDay || "").localeCompare(b.firstDay || ""));
+  };
 
   const fetchGpsHistory = async (reg: string, day: string) => {
     const key = `${reg}:${day}`;
@@ -148,8 +231,10 @@ export default function TimelineHoursTab({ order, vehicleTypes }: { order: { _id
       const activeDay = dayTab[vt.vehicleIndex] || days[0];
       if (!activeDay) return;
       const dayKey = `${vt.vehicleIndex}:${activeDay}`;
-      const regs: string[] = vt.registrationNumbers || [];
-      const activeReg = regTab[dayKey] || regs[0];
+      const dayRows = dayRowsFor(vt.vehicleIndex, activeDay);
+      const activeEntryKey = regTab[dayKey] || dayRows[0]?.entryKey;
+      const activeRow = dayRows.find((r: any) => r.entryKey === activeEntryKey);
+      const activeReg = activeRow?.reg;
       if (!activeReg) return;
       fetchGpsHistory(activeReg, activeDay);
     });
@@ -186,10 +271,10 @@ export default function TimelineHoursTab({ order, vehicleTypes }: { order: { _id
         const { days } = perVehicleType[vt.vehicleIndex] || { days: [] };
         const activeDay = dayTab[vt.vehicleIndex] || days[0];
         const dayKey = `${vt.vehicleIndex}:${activeDay}`;
-        const regs: string[] = (vt.registrationNumbers || []).map((r: any) =>
-          typeof r === "string" ? r : r.registrationNumber
-        ).filter(Boolean);
-        const activeReg = regTab[dayKey] || regs[0];
+        const dayRows = dayRowsFor(vt.vehicleIndex, activeDay);
+        const activeEntryKey = regTab[dayKey] || dayRows[0]?.entryKey;
+        const activeRow = dayRows.find((r: any) => r.entryKey === activeEntryKey);
+        const activeReg = activeRow?.reg;
         const gpsKey = activeReg && activeDay ? `${activeReg}:${activeDay}` : null;
 
         const gps = gpsKey ? gpsCache[gpsKey] : null;
@@ -211,7 +296,7 @@ export default function TimelineHoursTab({ order, vehicleTypes }: { order: { _id
                     {getVehicleTypeName(vt.vehicleType)}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {regs.length} vehicle{regs.length !== 1 ? "s" : ""} · {days.length} day{days.length !== 1 ? "s" : ""}
+                    {(vt.registrationNumbers || []).length} vehicle{(vt.registrationNumbers || []).length !== 1 ? "s" : ""} · {days.length} day{days.length !== 1 ? "s" : ""}
                   </p>
                 </div>
               </div>
@@ -240,22 +325,27 @@ export default function TimelineHoursTab({ order, vehicleTypes }: { order: { _id
                       ))}
                     </div>
 
-                    {regs.length === 0 ? (
-                      <p className="text-sm text-gray-400 text-center py-8">No vehicles for this campaign.</p>
+                    {dayRows.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-8">No vehicles active on this day.</p>
                     ) : (
                       <>
                         <div className="flex flex-wrap gap-1.5">
-                          {regs.map((reg) => (
+                          {dayRows.map((row: any) => (
                             <button
-                              key={reg}
-                              onClick={() => setRegTab((p) => ({ ...p, [dayKey]: reg }))}
-                              className={`px-3 py-1.5 rounded-lg border text-xs font-mono font-semibold transition-all ${
-                                activeReg === reg
-                                  ? "bg-teal-600 border-teal-600 text-white"
+                              key={row.entryKey}
+                              onClick={() => setRegTab((p) => ({ ...p, [dayKey]: row.entryKey }))}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono font-semibold transition-all ${
+                                activeEntryKey === row.entryKey
+                                  ? row.status === "Replaced"
+                                    ? "bg-red-600 border-red-600 text-white"
+                                    : "bg-teal-600 border-teal-600 text-white"
                                   : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                               }`}
                             >
-                              {reg}
+                              {row.reg}
+                              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeEntryKey === row.entryKey ? "bg-white/20 text-white" : STATUS_CHIP[row.status] || "bg-blue-100 text-blue-700"}`}>
+                                {row.status}
+                              </span>
                             </button>
                           ))}
                         </div>
@@ -264,6 +354,11 @@ export default function TimelineHoursTab({ order, vehicleTypes }: { order: { _id
                           <div className="flex items-center justify-between gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800/50">
                             <div className="flex items-center gap-2 min-w-0">
                               <span className="font-mono text-sm font-bold text-gray-800 dark:text-gray-100">{activeReg}</span>
+                              {activeRow?.status && (
+                                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${STATUS_CHIP[activeRow.status] || "bg-blue-100 text-blue-700"}`}>
+                                  {activeRow.status}
+                                </span>
+                              )}
                               <span className="text-xs text-gray-400">{fmtDateLabel(activeDay)}</span>
                             </div>
                             <Clock size={13} className="text-gray-400" />

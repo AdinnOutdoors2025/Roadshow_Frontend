@@ -162,9 +162,11 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
             <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">
               {getVehicleTypeName(vehicle.vehicleType)}
             </p>
-            <span className="text-[15px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">
-              {vehicle.campaignType || "—"}
-            </span>
+            {vehicle.campaignType?.trim() && (
+              <span className="text-[15px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">
+                {vehicle.campaignType}
+              </span>
+            )}
             {isVehicleOnRoad && (
               <span className="text-[14px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
                 On Road
@@ -184,7 +186,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               {quantity} {quantity === 1 ? "vehicle" : "vehicles"}
             </span>
           </div>
-          {vehicle.campaignName && (
+          {vehicle.campaignName?.trim() && (
             <p className="text-md text-gray-400 mt-0.5">{vehicle.campaignName}</p>
           )}
         </div>
@@ -213,36 +215,42 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               </div>
 
               <div className="flex-shrink-0">
-                <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">{campaignName}</p>
-                <p className="text-sm text-gray-400 mt-0.5">{clientName}</p>
+                {campaignName?.trim() && (
+                  <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">{campaignName}</p>
+                )}
+                {clientName?.trim() && (
+                  <p className="text-sm text-gray-400 mt-0.5">{clientName}</p>
+                )}
               </div>
 
               <div className="w-px h-10 bg-gray-100 dark:bg-gray-800 flex-shrink-0" />
 
 
               <div className="flex gap-6 flex-wrap flex-1 min-w-0">
-                <div>
-                  <p className="text-sm text-gray-400">Campaign type</p>
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{campaignType}</p>
-                </div>
+                {campaignType?.trim() && (
+                  <div>
+                    <p className="text-sm text-gray-400">Campaign type</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{campaignType}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-sm text-gray-400">Start date</p>
                   <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{fmtDate(startDate)}</p>
                   <p className="text-sm text-gray-400">End · {fmtDate(endDate)}</p>
                 </div>
-                <div>
+                {city?.trim() && (
+                  <div>
+                    <p className="text-sm text-gray-400">City</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{city}</p>
+                  </div>
+                )}
 
-                  <p className="text-sm text-gray-400">City</p>
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{city}</p>
-
-                  {/* <p className="text-xs text-gray-400">Vehicles · {totalVehicles}</p> */}
-                </div>
-
-
-                <div>
-                  <p className="text-sm text-gray-400">State</p>
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{state}</p>
-                </div>
+                {state?.trim() && (
+                  <div>
+                    <p className="text-sm text-gray-400">State</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{state}</p>
+                  </div>
+                )}
 
               </div>
             </div>
@@ -308,7 +316,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     >
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                          {h.driverName} — {h.vehicleRegNo}
+                          {h.eventType === "replaced" ? "Vehicle Replaced" : `${h.driverName} — ${h.vehicleRegNo}`}
                         </p>
                         <div className="flex items-center gap-1.5">
                           {h.eventType === "replaced" ? (

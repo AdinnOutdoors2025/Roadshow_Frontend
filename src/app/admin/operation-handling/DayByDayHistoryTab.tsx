@@ -682,7 +682,7 @@ const CATEGORY_META: Record<string, any> = {
     renderBody: (e: any) => (
       <>
         {(e.oldDriverName || e.newDriverName) ? (
-          <div className="grid grid-cols-2 gap-2 mt-1.5 text-xs">
+          <div className="grid grid-cols-2 gap-2 mt-1.5 text-sm">
             <div>
               <p className="text-gray-400">Old Driver</p>
               <p className="font-semibold text-gray-700 dark:text-gray-300">{e.oldDriverName || "—"} · {fmtPhone(e.oldDriverPhone) || "—"}</p>
@@ -691,16 +691,16 @@ const CATEGORY_META: Record<string, any> = {
             <div>
               <p className="text-gray-400">New Driver</p>
               <p className="font-semibold text-gray-700 dark:text-gray-300">{e.newDriverName || "—"} · {fmtPhone(e.newDriverPhone) || "—"}</p>
-              {e.newVehicleRegistrationNumber && <p className="font-mono text-gray-500">{e.newVehicleRegistrationNumber}</p>}
+              <p className="font-mono text-gray-500">{e.newVehicleRegistrationNumber || e.vehicleRegistrationNumber || "—"}</p>
             </div>
           </div>
         ) : (
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 mt-1">
             {e.driverName} · {fmtPhone(e.driverPhone)} — <span className="font-mono">{e.vehicleRegistrationNumber}</span>
           </p>
         )}
-        {e.comments && <p className="text-xs text-gray-400 mt-1.5">Comments: {e.comments}</p>}
-        <p className="text-xs text-gray-400 mt-1">Updated by {e.changedBy || "—"}</p>
+        {e.comments && <p className="text-sm text-gray-400 mt-1.5">Comments: {e.comments}</p>}
+        <p className="text-sm text-gray-400 mt-1">Updated by {e.changedBy || "—"}</p>
       </>
     ),
   },
@@ -711,7 +711,7 @@ const CATEGORY_META: Record<string, any> = {
     getTitle: (e: any) => (e.status === "resolved-today" ? "Issue Resolved" : e.status === "open" ? "Issue Reported" : "Issue"),
     renderBody: (e: any) => (
       <>
-        <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{e.issueDescription}</p>
+        <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{e.issueDescription}</p>
         {e.issuePhoto && (
           <a href={getImageUrl(e.issuePhoto)} target="_blank" rel="noreferrer">
             <img src={getImageUrl(e.issuePhoto)} className="w-14 h-12 rounded-lg object-cover border mt-1.5" alt="issue" />
@@ -719,12 +719,12 @@ const CATEGORY_META: Record<string, any> = {
         )}
         {e.resolveDescription && (
           <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800/50">
-            <p className="text-xs text-emerald-600 font-semibold">Resolved</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">{e.resolveDescription}</p>
-            <p className="text-xs text-gray-400 mt-0.5">By {e.resolvedBy} · {fmtDatetime(e.resolvedAt)}</p>
+            <p className="text-sm text-emerald-600 font-semibold">Resolved</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{e.resolveDescription}</p>
+            <p className="text-sm text-gray-400 mt-0.5">By {e.resolvedBy} · {fmtDatetime(e.resolvedAt)}</p>
           </div>
         )}
-        <p className="text-xs text-gray-400 mt-1.5">Created by {e.createdBy}</p>
+        <p className="text-sm text-gray-400 mt-1.5">Created by {e.createdBy}</p>
       </>
     ),
   },
@@ -735,11 +735,11 @@ const CATEGORY_META: Record<string, any> = {
     getTitle: (e: any) => `${e.extraKm} km / ${e.extraHours} hrs`,
     renderBody: (e: any) => (
       <>
-        <p className="text-xs text-gray-500 mt-1">Logged for period: {e.loggedFor}</p>
-        <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+        <p className="text-sm text-gray-500 mt-1">Logged for period: {e.loggedFor}</p>
+        <p className="text-base font-bold text-gray-900 dark:text-white mt-1">
           ₹ {Number(e.totalCost || 0).toLocaleString("en-IN")}
         </p>
-        <p className="text-xs text-gray-400 mt-1">Updated by {e.updatedBy}</p>
+        <p className="text-sm text-gray-400 mt-1">Updated by {e.updatedBy}</p>
       </>
     ),
   },
@@ -750,15 +750,15 @@ const CATEGORY_META: Record<string, any> = {
     getTitle: (e: any) => `${e.runningHours} hrs logged`,
     renderBody: (e: any) => (
       <>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-sm text-gray-500 mt-1">
           {fmtTime(e.startTime)} – {fmtTime(e.endTime)}
         </p>
-        <div className="flex items-center gap-3 mt-1 text-xs">
+        <div className="flex items-center gap-3 mt-1 text-sm">
           <span className="text-indigo-600 dark:text-indigo-400 font-semibold">Running: {e.runningHours} hrs</span>
           {e.absentHours > 0 && <span className="text-amber-600 font-semibold">Absent: {e.absentHours} hrs</span>}
         </div>
-        {e.remarks && <p className="text-xs text-gray-400 mt-1.5">Remarks: {e.remarks}</p>}
-        <p className="text-xs text-gray-400 mt-1">Logged by {e.loggedBy}</p>
+        {e.remarks && <p className="text-sm text-gray-400 mt-1.5">Remarks: {e.remarks}</p>}
+        <p className="text-sm text-gray-400 mt-1">Logged by {e.loggedBy}</p>
       </>
     ),
   },
@@ -770,14 +770,14 @@ const CATEGORY_META: Record<string, any> = {
       e.eventType === "replaced" ? "Vehicle Replaced" : e.status === "unavailable" ? "Marked Unavailable" : "Marked Available",
     renderBody: (e: any) => (
       <>
-        <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{e.reason}</p>
+        <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{e.reason}</p>
         {e.photo && (
           <a href={getImageUrl(e.photo)} target="_blank" rel="noreferrer">
             <img src={getImageUrl(e.photo)} className="w-14 h-12 rounded-lg object-cover border mt-1.5" alt="unavailable" />
           </a>
         )}
         {e.eventType === "replaced" && (
-          <div className="mt-2 pt-2 border-t border-rose-200 dark:border-rose-800/50 grid grid-cols-2 gap-2 text-xs">
+          <div className="mt-2 pt-2 border-t border-rose-200 dark:border-rose-800/50 grid grid-cols-2 gap-2 text-sm">
             <div>
               <p className="text-gray-400">Old Vehicle</p>
               <p className="font-mono font-semibold text-gray-700 dark:text-gray-300">{e.vehicleRegistrationNumber}</p>
@@ -791,11 +791,11 @@ const CATEGORY_META: Record<string, any> = {
         )}
         {e.resolveDescription && (
           <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800/50">
-            <p className="text-xs text-emerald-600 font-semibold">Resolution</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">{e.resolveDescription}</p>
+            <p className="text-sm text-emerald-600 font-semibold">Resolution</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{e.resolveDescription}</p>
           </div>
         )}
-        <p className="text-xs text-gray-400 mt-1.5">Reported by {e.reportedBy}</p>
+        <p className="text-sm text-gray-400 mt-1.5">Reported by {e.reportedBy}</p>
       </>
     ),
   },
@@ -857,6 +857,21 @@ function mergeReplacementEvents(events: any[]) {
       });
     }
   });
+
+  // A "Vehicle Replaced (Incoming)" driverChangeHistory record already carries
+  // both the old and new driver+vehicle details in one card — the separate
+  // "Vehicle Added" record for that same incoming entry is a redundant
+  // duplicate of the same action and should not render alongside it.
+  const hasIncomingReplace = events.some(
+    (o) => o._category === "driverChangeHistory" && /replaced.*incoming/i.test(o.eventType || "")
+  );
+  if (hasIncomingReplace) {
+    events.forEach((e, i) => {
+      if (e._category === "driverChangeHistory" && /^vehicle added$/i.test(e.eventType || "")) {
+        used.add(i);
+      }
+    });
+  }
 
   // Pass 2: build final ordered list, skipping consumed events
   const merged: any[] = [];
@@ -1011,10 +1026,10 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center px-6">
         <AlertTriangle className="w-8 h-8 text-amber-500 mb-2" />
-        <p className="text-sm text-gray-500">No day-by-day history available for this order yet.</p>
+        <p className="text-base text-gray-500">No day-by-day history available for this order yet.</p>
         <button
           onClick={fetchHistory}
-          className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-semibold"
+          className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-900 text-white text-sm font-semibold"
         >
           <RefreshCw size={12} /> Retry
         </button>
@@ -1064,10 +1079,10 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
                   <Truck size={15} className="text-blue-500" />
                 </div>
                 <div className="text-left min-w-0">
-                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
+                  <p className="text-base font-semibold text-gray-800 dark:text-gray-100 truncate">
                     {getVehicleTypeName(vt.vehicleType)}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm text-gray-400">
                     {vt.registrationNumbers.length} vehicle{vt.registrationNumbers.length !== 1 ? "s" : ""} · {days.length} day{days.length !== 1 ? "s" : ""}
                   </p>
                 </div>
@@ -1078,7 +1093,7 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
             {isOpen && (
               <div className="border-t border-gray-100 dark:border-gray-800 px-4 py-3 space-y-3">
                 {days.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-8">No campaign days found.</p>
+                  <p className="text-base text-gray-400 text-center py-8">No campaign days found.</p>
                 ) : (
                   <>
                     <div className="flex gap-1.5 overflow-x-auto pb-1 border-b border-gray-100 dark:border-gray-800">
@@ -1086,7 +1101,7 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
                         <button
                           key={day}
                           onClick={() => setDayTab((p) => ({ ...p, [vt.vehicleIndex]: day }))}
-                          className={`flex-shrink-0 px-3 py-2 text-xs font-semibold border-b-2 transition-all -mb-px whitespace-nowrap ${activeDay === day
+                          className={`flex-shrink-0 px-3 py-2 text-sm font-semibold border-b-2 transition-all -mb-px whitespace-nowrap ${activeDay === day
                             ? "border-violet-500 text-violet-600 dark:text-violet-400"
                             : "border-transparent text-gray-400 hover:text-gray-600"
                             }`}
@@ -1098,7 +1113,7 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
 
                     <div className="pt-1 space-y-3">
                       {dayRows.length === 0 ? (
-                        <p className="text-sm text-gray-400 text-center py-8">No vehicles active on this day.</p>
+                        <p className="text-base text-gray-400 text-center py-8">No vehicles active on this day.</p>
                       ) : (
                         <>
                           <div className="flex flex-wrap gap-1.5">
@@ -1106,7 +1121,7 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
                               <button
                                 key={row.entryKey}
                                 onClick={() => setRegTab((p) => ({ ...p, [dayKey]: row.entryKey }))}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono font-semibold transition-all ${activeEntryKey === row.entryKey
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-mono font-semibold transition-all ${activeEntryKey === row.entryKey
                                   ? row.status === "Replaced"
                                     ? "bg-red-600 border-red-600 text-white"
                                     : "bg-teal-600 border-teal-600 text-white"
@@ -1114,7 +1129,7 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
                                   }`}
                               >
                                 {row.reg}
-                                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeEntryKey === row.entryKey ? "bg-white/20 text-white" : STATUS_CHIP[row.status] || "bg-blue-100 text-blue-700"}`}>
+                                <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${activeEntryKey === row.entryKey ? "bg-white/20 text-white" : STATUS_CHIP[row.status] || "bg-blue-100 text-blue-700"}`}>
                                   {row.status}
                                 </span>
                               </button>
@@ -1125,31 +1140,31 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
                             <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
                               <div className="flex items-center justify-between gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800/50">
                                 <div className="flex items-center gap-2 min-w-0">
-                                  <span className="font-mono text-sm font-bold text-gray-800 dark:text-gray-100">{activeRow.reg}</span>
-                                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${STATUS_CHIP[activeRow.status] || "bg-blue-100 text-blue-700"}`}>
+                                  <span className="font-mono text-base font-bold text-gray-800 dark:text-gray-100">{activeRow.reg}</span>
+                                  <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${STATUS_CHIP[activeRow.status] || "bg-blue-100 text-blue-700"}`}>
                                     {activeRow.status}
                                   </span>
                                 </div>
                                 {activeRow.driverName && (
-                                  <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
+                                  <div className="flex items-center gap-1 text-sm text-gray-500 flex-shrink-0">
                                     <User size={11} /> {activeRow.driverName}{activeRow.driverPhone ? ` · ${fmtPhone(activeRow.driverPhone)}` : ""}
                                   </div>
                                 )}
                               </div>
 
                               {activeRow.status === "Unavailable" && activeRow.statusReason && (
-                                <p className="px-3 pt-2 text-xs text-red-600 dark:text-red-400">
+                                <p className="px-3 pt-2 text-sm text-red-600 dark:text-red-400">
                                   Unavailable since {fmtTime(activeRow.statusTime)}: {activeRow.statusReason}
                                 </p>
                               )}
                               {activeRow.status === "Replaced" && activeRow.statusReason && (
-                                <p className="px-3 pt-2 text-xs text-amber-600 dark:text-amber-400">
+                                <p className="px-3 pt-2 text-sm text-amber-600 dark:text-amber-400">
                                   Replaced at {fmtTime(activeRow.statusTime)}: {activeRow.statusReason}
                                 </p>
                               )}
 
                               {activeRow.todaysEvents.length === 0 ? (
-                                <p className="px-3 py-2 text-xs text-gray-400">Continued from previous day — no new activity.</p>
+                                <p className="px-3 py-2 text-sm text-gray-400">Continued from previous day — no new activity.</p>
                               ) : (
                                 <div className="p-3 space-y-2">
                                   {[...mergeReplacementEvents(activeRow.todaysEvents)].reverse().map((e: any, i: number) => {
@@ -1157,17 +1172,17 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
                                       return (
                                         <div key={i} className="rounded-lg border border-red-200 dark:border-red-800/60 bg-red-50 dark:bg-red-900/20 p-2.5">
                                           <div className="flex items-center justify-between gap-2">
-                                            <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                                            <span className="flex items-center gap-1 text-sm font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
                                               <RefreshCw size={10} /> Vehicle Replaced
                                             </span>
-                                            <span className="text-xs text-gray-400 whitespace-nowrap">{fmtTime(e._timestamp)}</span>
+                                            <span className="text-sm text-gray-400 whitespace-nowrap">{fmtTime(e._timestamp)}</span>
                                           </div>
                                           {e.reason && (
-                                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                                            <p className="text-sm text-red-600 dark:text-red-400 mt-1">
                                               Comments: {e.reason}
                                             </p>
                                           )}
-                                          <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                                          <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                                             <div>
                                               <p className="text-gray-400">Old Vehicle</p>
                                               <p className="font-mono font-semibold text-gray-700 dark:text-gray-300">{e.oldReg || "—"}</p>
@@ -1179,7 +1194,7 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
                                               <p className="text-gray-500">{e.newDriverName || "—"}{e.newDriverPhone ? ` · ${fmtPhone(e.newDriverPhone)}` : ""}</p>
                                             </div>
                                           </div>
-                                          {e.reportedBy && <p className="text-xs text-gray-400 mt-1.5">Reported by {e.reportedBy}</p>}
+                                          {e.reportedBy && <p className="text-sm text-gray-400 mt-1.5">Reported by {e.reportedBy}</p>}
                                         </div>
                                       );
                                     }
@@ -1189,10 +1204,10 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
                                     return (
                                       <div key={i} className={`rounded-lg border p-2.5 ${accent.border}`}>
                                         <div className="flex items-center justify-between gap-2">
-                                          <span className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${accent.chip}`}>
+                                          <span className={`flex items-center gap-1 text-sm font-bold px-2 py-0.5 rounded-full ${accent.chip}`}>
                                             <Icon size={10} /> {meta.getTitle(e)}
                                           </span>
-                                          <span className="text-xs text-gray-400 whitespace-nowrap">{fmtTime(e._timestamp)}</span>
+                                          <span className="text-sm text-gray-400 whitespace-nowrap">{fmtTime(e._timestamp)}</span>
                                         </div>
                                         {meta.renderBody(e)}
                                       </div>
