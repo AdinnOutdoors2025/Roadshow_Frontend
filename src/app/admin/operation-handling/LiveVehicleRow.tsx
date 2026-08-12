@@ -912,34 +912,18 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                   placeholder="9876543210"
                 />
               </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Reg. No</label>
-                <VehicleRegSelect
-                  vehicleTypeId={vehicle.vehicleType}
-                  value={updRegNo}
-                  onChange={(val, docId) => {
-                    setUpdRegNo(val);
-                    if (docId) setUpdVehicleDocId(docId);
-                  }}
-                  disabled={false}
-                  hasError={false}
-                />
-              </div>
             </div>
 
             <button
               onClick={() => {
                 if (!updDriverName.trim()) return toast.error("Driver name required");
                 if (!/^\d{10}$/.test(updDriverPhone)) return toast.error("Enter valid 10-digit phone");
-                if (!updRegNo.trim()) return toast.error("Vehicle Reg number required");
                 setUpdateConfirmOpen(true);
               }}
               disabled={
                 updating ||
                 (updDriverName.trim() === (entry.driverName || "").trim() &&
-                  updDriverPhone.trim() === (entry.driverPhone || "").trim() &&
-                  updRegNo.trim().toUpperCase() === (entry.vehicleRegistrationNumber || "").trim().toUpperCase())
+                  updDriverPhone.trim() === (entry.driverPhone || "").trim())
               }
               className="w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all disabled:opacity-40"
             >
@@ -963,7 +947,6 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
             <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 p-3 text-xs text-blue-700 dark:text-blue-300 space-y-1">
               <p><b>Driver:</b> {entry.driverName || "—"} → {updDriverName}</p>
               <p><b>Phone:</b> {entry.driverPhone || "—"} → {updDriverPhone}</p>
-              <p><b>Reg No:</b> {entry.vehicleRegistrationNumber || "—"} → {updRegNo}</p>
             </div>
 
             <div>

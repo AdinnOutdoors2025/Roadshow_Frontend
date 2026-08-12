@@ -98,10 +98,27 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
 
   const hasPendingFoc = orderHasPendingFoc(order);
 
-  const unavailableVehicles = (order.onRoadExecutionArray || []).filter(
+  // A vehicle that's been replaced (not just marked unavailable) has already
+  // been resolved — its old entry stays in onRoadExecutionArray with
+  // unavailableStatus still true, and a new replacement entry is added
+  // alongside it. Without excluding the old "replaced" entry, both counts
+  // double up (e.g. 1 old-unavailable + 2 active = "1 Unavailable / 2
+  // Available" shown for a 2-vehicle order). Same "replaced" detection used
+  // in OnRoadTab.tsx: an onRoadUnavailableHistory record with
+  // eventType "replaced" matching this entry's reg number.
+  const executionEntries = order.onRoadExecutionArray || [];
+  const replacedRegNos = new Set(
+    (order.onRoadUnavailableHistory || [])
+      .filter((h: any) => h.eventType === "replaced")
+      .map((h: any) => h.vehicleRegNo)
+  );
+  const activeExecutionEntries = executionEntries.filter(
+    (e: any) => !replacedRegNos.has(e.vehicleRegistrationNumber)
+  );
+  const unavailableVehicles = activeExecutionEntries.filter(
     e => e.unavailableStatus === true
   );
-  const totalVehicles = (order.onRoadExecutionArray || []).length;
+  const totalVehicles = activeExecutionEntries.length;
   const unavailableCount = unavailableVehicles.length;
   const availableCount = totalVehicles - unavailableCount;
 
