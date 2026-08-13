@@ -39,7 +39,7 @@ const bannerItems = [
     },
     {
         id: 5,
-        image: "./images/assets/full side LED edited (1)_NEW.png",
+        image: "./images/assets/full_side_LED_edited-1_new.png",
         title: "3 Sided 19ft",
     },
 ];

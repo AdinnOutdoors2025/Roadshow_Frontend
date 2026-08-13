@@ -55,7 +55,7 @@ import { clientAuthHeaders } from "@/lib/roadshowAuthToken";
 ========================================================= */
 
 const VEHICLE_IMAGE =
-  "/images/assets/full side LED edited (1)_NEW.png";
+  "/images/assets/full_side_LED_edited-1_new.png";
 
 /* =========================================================
    TYPES

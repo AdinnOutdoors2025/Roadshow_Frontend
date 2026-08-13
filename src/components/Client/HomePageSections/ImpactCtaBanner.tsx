@@ -21,8 +21,7 @@ type BleedCtaProps = {
   label: string;
 };
 
-const HERO_VEHICLE_IMAGE =
-  "/images/assets/full side LED edited (1)_NEW.png";
+const HERO_VEHICLE_IMAGE = "/images/assets/full_side_LED_edited-1_new.png";
 
 /* =========================================================
    EASY DESKTOP TUNING

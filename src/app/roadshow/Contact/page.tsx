@@ -146,7 +146,7 @@ const SERVICE_DETAILS: Record<ServiceOption, ServiceDetails> = {
   },
 
   "19 Feet Triple Side LED": {
-    image: "/images/assets/full side LED edited (1)_NEW.png",
+    image: "/images/assets/full_side_LED_edited-1_new.png",
     alt: "19 feet triple side LED roadshow vehicle",
     title: "19 Feet Triple Side LED",
     description:
