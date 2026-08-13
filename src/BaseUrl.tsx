@@ -3,7 +3,7 @@
 ========================================================= */
 
 // Local backend
-export const baseUrl = "http://localhost:3001";
+export const baseUrl = "https://roadshow-backend.onrender.com";
 
 // Production backend
 // export const baseUrl = "https://roadshow-backend.onrender.com";

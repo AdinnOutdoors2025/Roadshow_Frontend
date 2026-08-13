@@ -16,6 +16,7 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 import emailjs from "@emailjs/browser";
 import { useRouter } from "next/navigation";
+import { ButtonHover } from "./ButtonHover";
 
 type MathCaptcha = {
   firstNumber: number;
@@ -384,12 +385,11 @@ function Footer() {
             </div>
           </div>
 
-          <a
+          <ButtonHover
             href="/roadshow/Contact"
-            className="FooterCTAButton shrink-0 md:shrink-0 w-full md:w-auto text-center hover:bg-gray-100 transition-colors duration-200 whitespace-nowrap block"
-          >
-            Reach Us
-          </a>
+            label="Reach Us"
+            className="FooterCTAButton shrink-0 md:shrink-0 w-full md:w-auto text-center whitespace-nowrap"
+          />
         </div>
 
         {/* Main Footer Content */}

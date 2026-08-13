@@ -246,7 +246,7 @@ export function Process() {
         lg:py-28
       "
     >
-      <div
+      {/* <div
         className="
           relative
           z-10
@@ -311,7 +311,7 @@ export function Process() {
             />
           ))}
         </div>
-      </div>
+      </div> */}
     </section>
   );
 }

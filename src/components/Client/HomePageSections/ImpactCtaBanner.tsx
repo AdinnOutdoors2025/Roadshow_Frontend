@@ -1,751 +1,1171 @@
 "use client";
 
-import Link from "next/link";
+import {
+  useLayoutEffect,
+  useRef,
+} from "react";
 
-import { ArrowRight } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import Image from "next/image";
 
-import AnimatedContent from "../Animations/AnimatedContent";
-import CountUp from "../Animations/CountUp";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-/* =========================================================
-   TYPES
-========================================================= */
-
-type ImpactStat = {
-  id: number;
-  value: number;
-  suffix: string;
-  label: string;
-  description: string;
-  separator?: string;
-};
-
-type VehicleFormat = {
-  id: number;
-  label: string;
-  image: string;
-};
-
-/* =========================================================
-   DATA
-========================================================= */
-
-const impactStats: ImpactStat[] = [
-  {
-    id: 1,
-    value: 10000,
-    suffix: "+",
-    label: "Successful Campaigns",
-    description: "Campaigns executed across India",
-    separator: ",",
-  },
-  {
-    id: 2,
-    value: 250,
-    suffix: "+",
-    label: "Roadshow Vehicles",
-    description: "Modern fleet for every marketing need",
-  },
-  {
-    id: 3,
-    value: 20,
-    suffix: "L+",
-    label: "Daily Impressions",
-    description: "Real people. Real reach. Every single day.",
-  },
-];
-
-/* Vertical step per card, so the four vehicles sit along a line that rises to
-   the right instead of a flat row — the same direction the background curves
-   travel. Written out as literal class strings, not built from the index:
-   Tailwind only generates a class it can actually see in the source. Applied
-   from lg up, where the four are on one row; below that they wrap to a 2-up
-   grid and a staircase would just read as broken alignment. */
-const slantOffsets = [
-  "lg:mt-[54px]",
-  "lg:mt-[36px]",
-  "lg:mt-[18px]",
-  "lg:mt-0",
-];
-
-/* Perspective: a row of parked trucks does not read as four equal cut-outs —
-   the nearest one is largest and sits lowest, and each one behind it is
-   smaller and higher up. Pairing these shrinking heights with the rising
-   offsets above puts the tops AND the bottoms of the four on two parallel
-   slanted lines, which is what sells the depth.
-
-   Uniform up to lg on purpose: below that the cards wrap to a 2-up grid with
-   no slant, and four different sizes with nothing to line them up on just
-   looks like a mistake. */
-const vehicleSizes = [
-  "h-28 sm:h-32 lg:h-44 xl:h-52",
-  "h-28 sm:h-32 lg:h-40 xl:h-47",
-  "h-28 sm:h-32 lg:h-36 xl:h-42",
-  "h-28 sm:h-32 lg:h-32 xl:h-38",
-];
-
-/* The four formats shown beside the numbers. Images are the ones already in
-   public/images/assets — swap a path here to change a card, nothing else has
-   to move. Filenames contain spaces and brackets on purpose: they are the
-   assets as delivered, and renaming them would break every other reference. */
-const vehicleFormats: VehicleFormat[] = [
-  {
-    id: 1,
-    label: "2 Sided Van",
-    image: "/images/assets/HomeBanner_MainPageFinal.png",
-  },
-  {
-    id: 2,
-    label: "3 Sided Van",
-    image: "/images/assets/tata ultra - 2.png",
-  },
-  {
-    id: 3,
-    label: "19ft LED Truck",
-    image: "/images/assets/full side LED edited (1)_NEW.png",
-  },
-  {
-    id: 4,
-    label: "Single Side Van",
-    image: "/images/assets/single side edited (1)_NEW.png",
-  },
-];
-
-/* =========================================================
-   PROPS
-========================================================= */
+import { ButtonHover } from "../Reusable_Components/ButtonHover";
 
 type ImpactCtaBannerProps = {
   ctaHref?: string;
 };
 
+type BleedCtaProps = {
+  href: string;
+  label: string;
+};
+
+const HERO_VEHICLE_IMAGE =
+  "/images/assets/full side LED edited (1)_NEW.png";
+
+/* =========================================================
+   EASY DESKTOP TUNING
+========================================================= */
+
+const INITIAL_VEHICLE_SCALE = 1.18;
+const LEFT_VEHICLE_SCALE = 1.82;
+const LEFT_X_PERCENT = -45;
+const LEFT_Y_PERCENT = -4;
+const SCROLL_LENGTH = 2.15;
+
+/* =========================================================
+   BLEED CTA
+========================================================= */
+
+function BleedCta({
+  href,
+  label,
+}: BleedCtaProps) {
+  return (
+    <ButtonHover
+      href={href}
+      label={label}
+      className="
+        inline-flex
+        h-[56px]
+        min-h-[56px]
+        w-fit
+        items-center
+        justify-center
+        rounded-full
+        border-0
+        bg-[#e8e8e8]
+        px-9
+        font-sans
+        text-[15px]
+        font-semibold
+        leading-none
+        tracking-[-0.01em]
+        text-[#1f1f1f]
+        shadow-[0_10px_28px_rgba(0,0,0,0.045)]
+        max-[640px]:h-[52px]
+        max-[640px]:min-h-[52px]
+        max-[640px]:px-7
+        max-[640px]:text-[14px]
+      "
+    />
+  );
+}
+
 /* =========================================================
    COMPONENT
 ========================================================= */
 
-const ImpactCtaBanner = ({
-  ctaHref = "/contact",
-}: ImpactCtaBannerProps) => {
-  /* The vehicles breathe with a slow float. Switched off entirely — not just
-     shortened — when the visitor has asked for reduced motion, since this is
-     decoration that never stops. */
-  const shouldReduceMotion = useReducedMotion();
+export default function ImpactCtaBanner({
+  ctaHref = "/roadshow/Contact",
+}: ImpactCtaBannerProps) {
+  const sectionRef =
+    useRef<HTMLElement | null>(null);
+
+  const stageRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const introRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const desktopVehicleRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const mobileVehicleRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const frameTwoRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const frameThreeRef =
+    useRef<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    const section =
+      sectionRef.current;
+
+    const stage =
+      stageRef.current;
+
+    const intro =
+      introRef.current;
+
+    const desktopVehicle =
+      desktopVehicleRef.current;
+
+    const mobileVehicle =
+      mobileVehicleRef.current;
+
+    const frameTwo =
+      frameTwoRef.current;
+
+    const frameThree =
+      frameThreeRef.current;
+
+    if (
+      !section ||
+      !stage ||
+      !intro ||
+      !desktopVehicle ||
+      !frameTwo ||
+      !frameThree
+    ) {
+      return;
+    }
+
+    gsap.registerPlugin(
+      ScrollTrigger,
+    );
+
+    const reduceMotion =
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
+    const mm =
+      gsap.matchMedia();
+
+    /* =====================================================
+       DESKTOP SCROLL STORY
+    ===================================================== */
+
+    mm.add(
+      "(min-width: 1024px)",
+      () => {
+        const ctx =
+          gsap.context(() => {
+            const introItems =
+              gsap.utils.toArray<HTMLElement>(
+                "[data-intro-reveal]",
+                intro,
+              );
+
+            const frameTwoItems =
+              gsap.utils.toArray<HTMLElement>(
+                "[data-frame-two-reveal]",
+                frameTwo,
+              );
+
+            const frameThreeItems =
+              gsap.utils.toArray<HTMLElement>(
+                "[data-frame-three-reveal]",
+                frameThree,
+              );
+
+            gsap.set(
+              [
+                desktopVehicle,
+                ...introItems,
+                ...frameTwoItems,
+                ...frameThreeItems,
+              ],
+              {
+                force3D: true,
+              },
+            );
+
+            gsap.set(
+              desktopVehicle,
+              {
+                xPercent: 0,
+                yPercent: 0,
+                scale:
+                  INITIAL_VEHICLE_SCALE,
+                transformOrigin:
+                  "50% 54%",
+              },
+            );
+
+            gsap.set(
+              introItems,
+              {
+                yPercent: 0,
+                autoAlpha: 1,
+              },
+            );
+
+            gsap.set(
+              frameTwo,
+              {
+                autoAlpha: 0,
+              },
+            );
+
+            gsap.set(
+              frameThree,
+              {
+                autoAlpha: 0,
+              },
+            );
+
+            gsap.set(
+              frameTwoItems,
+              {
+                yPercent: 118,
+                autoAlpha: 1,
+              },
+            );
+
+            gsap.set(
+              frameThreeItems,
+              {
+                yPercent: 118,
+                autoAlpha: 1,
+              },
+            );
+
+            if (reduceMotion) {
+              gsap.set(
+                frameTwo,
+                {
+                  autoAlpha: 1,
+                },
+              );
+
+              gsap.set(
+                frameTwoItems,
+                {
+                  yPercent: 0,
+                },
+              );
+
+              return;
+            }
+
+            const timeline =
+              gsap.timeline({
+                scrollTrigger: {
+                  trigger:
+                    section,
+
+                  start:
+                    "top top",
+
+                  end: () =>
+                    `+=${
+                      window.innerHeight *
+                      SCROLL_LENGTH
+                    }`,
+
+                  pin:
+                    stage,
+
+                  pinSpacing:
+                    true,
+
+                  scrub: 1.05,
+
+                  anticipatePin: 1,
+
+                  invalidateOnRefresh:
+                    false,
+                },
+              });
+
+            /* =================================================
+               FRAME 01 -> FRAME 02
+            ================================================= */
+
+            timeline.to(
+              introItems,
+              {
+                yPercent: -118,
+                autoAlpha: 0,
+                duration: 0.4,
+                stagger: 0.03,
+                ease: "power2.in",
+              },
+              0.08,
+            );
+
+            /*
+             * ONE smooth vehicle tween:
+             * center -> left
+             * scale 1.18 -> 1.82
+             * slightly upward
+             */
+            timeline.to(
+              desktopVehicle,
+              {
+                xPercent:
+                  LEFT_X_PERCENT,
+
+                yPercent:
+                  LEFT_Y_PERCENT,
+
+                scale:
+                  LEFT_VEHICLE_SCALE,
+
+                duration: 1.08,
+
+                ease: "none",
+              },
+              0,
+            );
+
+            timeline.set(
+              frameTwo,
+              {
+                autoAlpha: 1,
+              },
+              0.47,
+            );
+
+            timeline.to(
+              frameTwoItems,
+              {
+                yPercent: 0,
+                duration: 0.55,
+                stagger: 0.06,
+                ease: "power3.out",
+              },
+              0.49,
+            );
+
+            timeline.to(
+              {},
+              {
+                duration: 0.24,
+              },
+            );
+
+            /* =================================================
+               FRAME 02 -> FRAME 03
+            ================================================= */
+
+            timeline.to(
+              frameTwoItems,
+              {
+                yPercent: -118,
+                duration: 0.44,
+                stagger: 0.03,
+                ease: "power3.in",
+              },
+            );
+
+            timeline.set(
+              frameTwo,
+              {
+                autoAlpha: 0,
+              },
+            );
+
+            timeline.set(
+              frameThree,
+              {
+                autoAlpha: 1,
+              },
+            );
+
+            timeline.to(
+              frameThreeItems,
+              {
+                yPercent: 0,
+                duration: 0.54,
+                stagger: 0.06,
+                ease: "power3.out",
+              },
+            );
+
+            timeline.to(
+              {},
+              {
+                duration: 0.32,
+              },
+            );
+          }, section);
+
+        return () => {
+          ctx.revert();
+        };
+      },
+    );
+
+    /* =====================================================
+       TABLET + MOBILE
+    ===================================================== */
+
+    mm.add(
+      "(max-width: 1023px)",
+      () => {
+        if (!mobileVehicle) {
+          return;
+        }
+
+        const ctx =
+          gsap.context(() => {
+            const mobileItems =
+              gsap.utils.toArray<HTMLElement>(
+                "[data-mobile-reveal]",
+                section,
+              );
+
+            if (reduceMotion) {
+              gsap.set(
+                [
+                  mobileVehicle,
+                  ...mobileItems,
+                ],
+                {
+                  autoAlpha: 1,
+                  x: 0,
+                  y: 0,
+                  scale: 1,
+                },
+              );
+
+              return;
+            }
+
+            gsap.set(
+              mobileItems,
+              {
+                autoAlpha: 0,
+                y: 30,
+                force3D: true,
+              },
+            );
+
+            gsap.set(
+              mobileVehicle,
+              {
+                autoAlpha: 0,
+                y: 24,
+                scale: 0.96,
+                force3D: true,
+              },
+            );
+
+            const mobileTimeline =
+              gsap.timeline({
+                scrollTrigger: {
+                  trigger:
+                    section,
+
+                  start:
+                    "top 80%",
+
+                  once:
+                    true,
+                },
+              });
+
+            mobileTimeline.to(
+              mobileItems,
+              {
+                autoAlpha: 1,
+                y: 0,
+                duration: 0.62,
+                stagger: 0.07,
+                ease: "power3.out",
+              },
+            );
+
+            mobileTimeline.to(
+              mobileVehicle,
+              {
+                autoAlpha: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.82,
+                ease: "power3.out",
+              },
+              "-=0.42",
+            );
+          }, section);
+
+        return () => {
+          ctx.revert();
+        };
+      },
+    );
+
+    return () => {
+      mm.revert();
+    };
+  }, []);
 
   return (
     <section
+      ref={sectionRef}
       className="
         relative
         w-full
-        overflow-hidden
-        bg-[#f8f8fa]
+        bg-[#f8f8f6]
       "
     >
       {/* =====================================================
-          VERY SUBTLE BACKGROUND GRAPHIC
+          DESKTOP PINNED STAGE
       ===================================================== */}
 
       <div
-        aria-hidden="true"
+        ref={stageRef}
         className="
-          pointer-events-none
-          absolute
-          inset-0
+          relative
+          hidden
+          h-[100svh]
+          min-h-[760px]
+          w-full
           overflow-hidden
+          bg-[#f8f8f6]
+          lg:block
         "
       >
-        <svg
-          viewBox="0 0 1600 500"
-          preserveAspectRatio="none"
+        {/* Background */}
+        <div
+          aria-hidden="true"
           className="
+            pointer-events-none
             absolute
-            bottom-0
-            left-0
-            h-full
-            w-full
-            opacity-[0.45]
+            inset-0
+            bg-[radial-gradient(circle_at_50%_43%,rgba(255,255,255,1)_0%,rgba(255,255,255,0.82)_34%,rgba(248,248,246,0)_76%)]
+          "
+        />
+
+        {/* ===================================================
+            STATIC ROADSHOW TYPOGRAPHY
+
+            text-[22vw] = requested size.
+            bottom-[-11vw] = moves it farther DOWN.
+            left-1/2 + -translate-x-1/2 = exact center.
+
+            No GSAP ref, so it never moves with vehicle.
+        =================================================== */}
+
+        <div
+  aria-hidden="true"
+  className="
+    pointer-events-none
+    absolute
+    bottom-[-4vw]
+    left-[48%]
+    z-[2]
+    w-max
+    -translate-x-1/2
+  "
+>
+  <span
+    className="
+      block
+      select-none
+      whitespace-nowrap
+      text-center
+      font-serif
+      text-[22vw]
+      italic
+      font-normal
+      leading-none
+      tracking-[-0.055em]
+      text-black/[0.032]
+    "
+  >
+    roadshow
+  </span>
+</div>
+
+        {/* ===================================================
+            FRAME 01 INTRO
+        =================================================== */}
+
+        <div
+  ref={introRef}
+  className="
+    pointer-events-none
+    absolute
+    left-1/2
+    top-[clamp(135px,14vh,165px)]
+    z-30
+    w-[min(900px,76vw)]
+    -translate-x-1/2
+    text-center
+  "
+>
+          <div className="overflow-hidden">
+            <p
+              data-intro-reveal
+              className="
+                m-0
+                transform-gpu
+                will-change-transform
+                font-sans
+                text-[clamp(32px,3.6vw,58px)]
+                font-normal
+                leading-[0.98]
+                tracking-[-0.05em]
+                text-[#a2a19e]
+              "
+            >
+              Powerful roadshow{" "}
+
+              <span
+                className="
+                  font-serif
+                  italic
+                  font-normal
+                  text-[#969088]
+                "
+              >
+                advertising
+              </span>
+            </p>
+          </div>
+
+          <div className="mt-1 overflow-hidden">
+            <h2
+              data-intro-reveal
+              className="
+                mx-auto
+                max-w-[820px]
+                transform-gpu
+                will-change-transform
+                font-sans
+                text-[clamp(38px,4.3vw,68px)]
+                font-medium
+                leading-[0.98]
+                tracking-[-0.058em]
+                text-[#111111]
+              "
+            >
+              to{" "}
+
+              <span
+                className="
+                  font-serif
+                  italic
+                  font-normal
+                "
+              >
+                amplify
+              </span>{" "}
+
+              your brand
+
+              <br />
+
+              where it matters most
+            </h2>
+          </div>
+        </div>
+
+        {/* ===================================================
+            DESKTOP VEHICLE
+
+            top-[53%] moves vehicle UP from the old ~58%.
+
+            w-[min(780px,43vw)] + scale 1.82 keeps it large
+            without forcing the image too far outside the page.
+        =================================================== */}
+
+        <div
+          className="
+            pointer-events-none
+            absolute
+            left-1/2
+            top-[53%]
+            z-20
+            w-[min(780px,43vw)]
+            -translate-x-1/2
+            -translate-y-1/2
           "
         >
-          <path
-            d="
-              M-100 390
-              C190 330 330 430 620 350
-              C920 265 1090 160 1370 155
-              C1480 150 1570 170 1700 220
+          <div
+            ref={desktopVehicleRef}
+            className="
+              relative
+              w-full
+              transform-gpu
+              backface-hidden
+              will-change-transform
             "
-            fill="none"
-            stroke="#7057C3"
-            strokeOpacity="0.07"
-            strokeWidth="1"
-          />
+          >
+            <Image
+              src={HERO_VEHICLE_IMAGE}
+              alt="Adinn roadshow advertising vehicle"
+              width={1200}
+              height={720}
+              priority
+              draggable={false}
+              sizes="43vw"
+              className="
+                relative
+                z-[2]
+                block
+                h-auto
+                w-full
+                select-none
+                object-contain
+                drop-shadow-[0_28px_24px_rgba(0,0,0,0.15)]
+              "
+            />
 
-          <path
-            d="
-              M-100 410
-              C190 350 340 450 630 370
-              C930 285 1100 180 1380 175
-              C1490 170 1580 190 1700 240
-            "
-            fill="none"
-            stroke="#7057C3"
-            strokeOpacity="0.05"
-            strokeWidth="1"
-          />
+            <div
+              aria-hidden="true"
+              className="
+                absolute
+                bottom-[1%]
+                left-[13%]
+                right-[8%]
+                z-[1]
+                h-[7%]
+                rounded-[50%]
+                bg-black/20
+                blur-[25px]
+              "
+            />
+          </div>
+        </div>
 
-          <path
-            d="
-              M-100 430
-              C190 370 350 470 640 390
-              C940 305 1110 200 1390 195
-              C1500 190 1590 210 1700 260
+        {/* ===================================================
+            RIGHT-SIDE CONTENT
+
+            Moved left from ~64-66% to ~61-62%.
+            This reduces the empty center gap.
+        =================================================== */}
+
+        <div
+          className="
+            absolute
+            left-[61%]
+            top-1/2
+            z-40
+            h-[430px]
+            w-[31%]
+            min-w-[390px]
+            max-w-[500px]
+            -translate-y-1/2
+            overflow-hidden
+            xl:left-[61.5%]
+            2xl:left-[62%]
+          "
+        >
+          {/* =================================================
+              FRAME 02
+          ================================================= */}
+
+          <div
+            ref={frameTwoRef}
+            className="
+              invisible
+              absolute
+              inset-0
+              flex
+              flex-col
+              justify-center
+              opacity-0
             "
-            fill="none"
-            stroke="#7057C3"
-            strokeOpacity="0.035"
-            strokeWidth="1"
-          />
-        </svg>
+          >
+            <div className="overflow-hidden">
+              <div
+                data-frame-two-reveal
+                className="
+                  transform-gpu
+                  will-change-transform
+                  font-sans
+                  text-[clamp(82px,6.5vw,116px)]
+                  font-normal
+                  leading-[0.8]
+                  tracking-[-0.07em]
+                  text-[#111111]
+                "
+              >
+                250+
+              </div>
+            </div>
+
+            <div className="mt-7 overflow-hidden">
+              <h3
+                data-frame-two-reveal
+                className="
+                  transform-gpu
+                  will-change-transform
+                  font-sans
+                  text-[clamp(34px,2.7vw,47px)]
+                  font-medium
+                  leading-[0.98]
+                  tracking-[-0.046em]
+                  text-[#111111]
+                "
+              >
+                Roadshow Vehicles
+              </h3>
+            </div>
+
+            <div className="mt-5 overflow-hidden">
+              {/* <p
+                data-frame-two-reveal
+                className="
+                  max-w-[390px]
+                  transform-gpu
+                  will-change-transform
+                  font-sans
+                  text-[17px]
+                  font-normal
+                  leading-[1.55]
+                  tracking-[-0.01em]
+                  text-black/48
+                "
+              >
+                Modern fleet for every marketing need.
+              </p> */}
+            </div>
+
+            <div className="overflow-hidden pb-3">
+              <div
+                data-frame-two-reveal
+                className="
+                  transform-gpu
+                  will-change-transform
+                "
+              >
+                <BleedCta
+                  href={ctaHref}
+                  label="Explore Vehicles"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* =================================================
+              FRAME 03
+          ================================================= */}
+
+          <div
+            ref={frameThreeRef}
+            className="
+              invisible
+              absolute
+              inset-0
+              flex
+              flex-col
+              justify-center
+              opacity-0
+            "
+          >
+            <div className="overflow-hidden">
+              <div
+                data-frame-three-reveal
+                className="
+                  transform-gpu
+                  will-change-transform
+                  font-sans
+                  text-[clamp(82px,6.5vw,116px)]
+                  font-normal
+                  leading-[0.8]
+                  tracking-[-0.07em]
+                  text-[#111111]
+                "
+              >
+                20L+
+              </div>
+            </div>
+
+            <div className="mt-7 overflow-hidden">
+              <h3
+                data-frame-three-reveal
+                className="
+                  transform-gpu
+                  will-change-transform
+                  font-sans
+                  text-[clamp(34px,2.7vw,47px)]
+                  font-medium
+                  leading-[0.98]
+                  tracking-[-0.046em]
+                  text-[#111111]
+                "
+              >
+                Daily Impressions
+              </h3>
+            </div>
+
+            <div className="mt-5 overflow-hidden">
+              {/* <p
+                data-frame-three-reveal
+                className="
+                  max-w-[390px]
+                  transform-gpu
+                  will-change-transform
+                  font-sans
+                  text-[17px]
+                  font-normal
+                  leading-[1.55]
+                  tracking-[-0.01em]
+                  text-black/48
+                "
+              >
+                Real people. Real reach. Every single day.
+              </p> */}
+            </div>
+
+            <div className="overflow-hidden pb-3">
+              <div
+                data-frame-three-reveal
+                className="
+                  transform-gpu
+                  will-change-transform
+                "
+              >
+                <BleedCta
+                  href={ctaHref}
+                  label="Plan Your Roadshow"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* =====================================================
-          CONTAINER
+          TABLET + MOBILE
       ===================================================== */}
 
       <div
         className="
           relative
-          z-10
-          mx-auto
-          w-full
-          max-w-[1720px]
-
+          overflow-hidden
+          bg-[#f8f8f6]
           px-5
-          py-14
-
+          py-16
           sm:px-8
-          sm:py-16
-
+          sm:py-20
           md:px-10
-
-          lg:px-12
-          lg:py-20
-
-          xl:px-16
-          xl:py-24
-
-          2xl:px-20
-          2xl:py-28
+          lg:hidden
         "
       >
-        {/* ===================================================
-            TOP SECTION
-        =================================================== */}
+        <div
+          aria-hidden="true"
+          className="
+            pointer-events-none
+            absolute
+            inset-0
+            bg-[radial-gradient(circle_at_50%_32%,rgba(255,255,255,1)_0%,rgba(255,255,255,0.76)_38%,rgba(248,248,246,0)_76%)]
+          "
+        />
 
-        <AnimatedContent
-          distance={45}
-          direction="vertical"
-          duration={0.8}
-          initialOpacity={0}
-          animateOpacity
-          threshold={0.15}
+        {/* Centered mobile roadshow word */}
+        <div
+          aria-hidden="true"
+          className="
+            pointer-events-none
+            absolute
+            bottom-[-3vw]
+            left-1/2
+            w-max
+            -translate-x-1/2
+            select-none
+            whitespace-nowrap
+            text-center
+            font-serif
+            text-[22vw]
+            italic
+            leading-none
+            text-black/[0.025]
+          "
         >
-          <div
-            className="
-              flex
-              flex-col
-              gap-8
-
-              border-b
-              border-black/[0.09]
-
-              pb-10
-
-              md:flex-row
-              md:items-end
-              md:justify-between
-
-              lg:pb-12
-            "
-          >
-            {/* LEFT */}
-
-            <div className="max-w-[760px]">
-              <div
-                className="
-                  mb-4
-                  flex
-                  items-center
-                  gap-3
-                "
-              >
-                <span
-                  className="
-                    h-[1px]
-                    w-8
-                    bg-[#7057C3]
-                  "
-                />
-
-                <span
-                  className="
-                    text-[11px]
-                    font-semibold
-                    uppercase
-                    tracking-[0.22em]
-                    text-[#7057C3]
-
-                    sm:text-xs
-                  "
-                >
-                  Our Impact
-                </span>
-              </div>
-
-              <h2
-                className="
-                  max-w-[760px]
-
-                  text-[34px]
-                  font-medium
-                  leading-[1.08]
-                  tracking-[-0.045em]
-                  text-[#111111]
-
-                  sm:text-[42px]
-
-                  md:text-[48px]
-
-                  lg:text-[52px]
-
-                  xl:text-[58px]
-
-                  2xl:text-[64px]
-                "
-              >
-                Campaigns that move
-                <span className="text-[#7057C3]">
-                  {" "}
-                  brands forward.
-                </span>
-              </h2>
-            </div>
-
-            {/* RIGHT */}
-
-            <div
-              className="
-                max-w-[440px]
-
-                md:pb-1
-
-                lg:max-w-[470px]
-              "
-            >
-              <p
-                className="
-                  text-[14px]
-                  font-normal
-                  leading-6
-                  text-black/55
-
-                  sm:text-[15px]
-                  sm:leading-7
-
-                  xl:text-base
-                "
-              >
-                From local market activations to large-scale
-                roadshow campaigns, we help brands build
-                visibility where their audience actually is.
-              </p>
-
-              <Link
-                href={ctaHref}
-                className="
-                  group
-
-                  mt-6
-
-                  inline-flex
-                  items-center
-                  gap-3
-
-                  text-[13px]
-                  font-semibold
-                  text-[#111111]
-
-                  transition-colors
-                  duration-300
-
-                  hover:text-[#7057C3]
-
-                  sm:text-sm
-                "
-              >
-                Plan your roadshow
-
-                <span
-                  className="
-                    flex
-                    h-8
-                    w-8
-                    items-center
-                    justify-center
-
-                    rounded-full
-
-                    border
-                    border-black/[0.14]
-
-                    transition-all
-                    duration-300
-
-                    group-hover:border-[#7057C3]
-                    group-hover:bg-[#7057C3]
-                    group-hover:text-white
-                  "
-                >
-                  <ArrowRight
-                    className="
-                      h-3.5
-                      w-3.5
-
-                      transition-transform
-                      duration-300
-
-                      group-hover:translate-x-[2px]
-                    "
-                  />
-                </span>
-              </Link>
-            </div>
-          </div>
-        </AnimatedContent>
-
-        {/* ===================================================
-            IMPACT BAND
-
-            One horizontal strip: the three headline numbers on
-            the left, the four vehicle formats on the right,
-            separated by hairline rules. They only sit side by
-            side from lg upwards — below that the numbers keep
-            the full width and the vehicles drop to a 2-up grid,
-            which is the only way four trucks stay legible on a
-            phone.
-        =================================================== */}
+          roadshow
+        </div>
 
         <div
           className="
+            relative
+            z-10
+            mx-auto
             grid
+            max-w-[960px]
             grid-cols-1
-
-            pt-10
-
-            lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]
-            lg:pt-14
+            gap-12
+            md:grid-cols-2
+            md:items-center
           "
         >
-          {/* -------------------------------------------------
-              STATISTICS
-          ------------------------------------------------- */}
-
+          {/* Content first */}
           <div
+            data-mobile-reveal
             className="
-              grid
-              grid-cols-1
-
-              sm:grid-cols-3
+              order-1
+              md:order-2
             "
           >
-            {impactStats.map((stat, index) => (
-              <AnimatedContent
-                key={stat.id}
-                distance={40}
-                direction="vertical"
-                duration={0.75}
-                delay={0.05 + index * 0.1}
-                initialOpacity={0}
-                animateOpacity
-                threshold={0.15}
-                className="w-full"
-              >
-                <div
-                  className={`
-                    h-full
+            <div
+              className="
+                font-sans
+                text-[clamp(68px,17vw,94px)]
+                font-normal
+                leading-[0.8]
+                tracking-[-0.07em]
+                text-[#111111]
+              "
+            >
+              250+
+            </div>
 
-                    py-7
+            <h2
+              className="
+                mt-6
+                font-sans
+                text-[clamp(34px,8vw,43px)]
+                font-medium
+                leading-none
+                tracking-[-0.045em]
+                text-[#111111]
+              "
+            >
+              Roadshow Vehicles
+            </h2>
 
-                    sm:px-6
-                    sm:py-2
+            {/* <p
+              className="
+                mt-4
+                max-w-[390px]
+                font-sans
+                text-[16px]
+                leading-7
+                text-black/48
+              "
+            >
+              Modern fleet for every marketing need.
+            </p> */}
 
-                    lg:px-8
-
-                    ${
-                      index === 0
-                        ? "sm:pl-0"
-                        : `
-                          border-t
-                          border-black/[0.08]
-
-                          sm:border-t-0
-                          sm:border-l
-                        `
-                    }
-                  `}
-                >
-                  <div
-                    className="
-                      flex
-                      items-baseline
-                      whitespace-nowrap
-
-                      font-semibold
-                      leading-none
-                      tracking-[-0.055em]
-
-                      text-[#5b3fd6]
-                    "
-                  >
-                    <CountUp
-                      from={0}
-                      to={stat.value}
-                      separator={stat.separator ?? ""}
-                      duration={2}
-                      delay={0.2 + index * 0.12}
-                      className="
-                        text-[40px]
-
-                        sm:text-[38px]
-
-                        lg:text-[46px]
-
-                        xl:text-[54px]
-
-                        2xl:text-[60px]
-                      "
-                    />
-
-                    <span
-                      className="
-                        text-[32px]
-
-                        sm:text-[30px]
-
-                        lg:text-[36px]
-
-                        xl:text-[42px]
-
-                        2xl:text-[46px]
-                      "
-                    >
-                      {stat.suffix}
-                    </span>
-                  </div>
-
-                  <h3
-                    className="
-                      mt-3
-
-                      text-[14px]
-                      font-semibold
-                      tracking-[-0.015em]
-                      text-[#111111]
-
-                      lg:text-[15px]
-
-                      xl:text-base
-                    "
-                  >
-                    {stat.label}
-                  </h3>
-
-                  <p
-                    className="
-                      mt-2
-
-                      max-w-[210px]
-
-                      text-[12px]
-                      font-normal
-                      leading-5
-                      text-black/45
-
-                      xl:text-[13px]
-                    "
-                  >
-                    {stat.description}
-                  </p>
-                </div>
-              </AnimatedContent>
-            ))}
+            <BleedCta
+              href={ctaHref}
+              label="Explore Vehicles"
+            />
           </div>
 
-          {/* -------------------------------------------------
-              VEHICLE FORMATS
-          ------------------------------------------------- */}
-
-          {/* No rules anywhere in here: the vehicles read as one line of
-              traffic, and a divider between each would chop it into four
-              boxes. Spacing alone separates them from the numbers. */}
+          {/* Vehicle */}
           <div
             className="
-              mt-10
-
-              grid
-              grid-cols-2
-
-              pt-2
-
-              md:grid-cols-4
-
-              lg:mt-0
-              lg:pt-0
+              order-2
+              md:order-1
             "
           >
-            {vehicleFormats.map((vehicle, index) => (
-              <AnimatedContent
-                key={vehicle.id}
-                distance={40}
-                direction="vertical"
-                duration={0.75}
-                delay={0.35 + index * 0.1}
-                initialOpacity={0}
-                animateOpacity
-                threshold={0.15}
-                className="w-full"
-              >
-                <div
-                  className={`
-                    group
+            <div
+              ref={mobileVehicleRef}
+              className="
+                relative
+                mx-auto
+                w-full
+                max-w-[650px]
+                transform-gpu
+                will-change-transform
+              "
+            >
+              <Image
+                src={HERO_VEHICLE_IMAGE}
+                alt="Adinn roadshow advertising vehicle"
+                width={1200}
+                height={720}
+                priority
+                draggable={false}
+                sizes="
+                  (max-width: 767px) 92vw,
+                  50vw
+                "
+                className="
+                  relative
+                  z-10
+                  block
+                  h-auto
+                  w-full
+                  select-none
+                  object-contain
+                  drop-shadow-[0_24px_24px_rgba(0,0,0,0.14)]
+                "
+              />
 
-                    flex
-                    h-full
-                    flex-col
-                    items-center
+              <div
+                aria-hidden="true"
+                className="
+                  absolute
+                  bottom-[2%]
+                  left-[14%]
+                  right-[8%]
+                  h-[8%]
+                  rounded-[50%]
+                  bg-black/[0.14]
+                  blur-[24px]
+                "
+              />
+            </div>
+          </div>
 
-                    px-3
-                    py-6
+          {/* Second metric */}
+          <div
+            data-mobile-reveal
+            className="
+              order-3
+              border-t
+              border-black/[0.08]
+              pt-10
+              md:col-span-2
+            "
+          >
+            <div
+              className="
+                font-sans
+                text-[58px]
+                font-normal
+                leading-[0.8]
+                tracking-[-0.065em]
+                text-[#111111]
+              "
+            >
+              20L+
+            </div>
 
-                    sm:px-5
+            <h3
+              className="
+                mt-5
+                font-sans
+                text-[28px]
+                font-medium
+                tracking-[-0.04em]
+                text-[#111111]
+              "
+            >
+              Daily Impressions
+            </h3>
 
-                    lg:py-2
+            <p
+              className="
+                mt-3
+                max-w-[320px]
+                font-sans
+                text-[15px]
+                leading-6
+                text-black/45
+              "
+            >
+              Real people. Real reach. Every single day.
+            </p>
 
-                    ${index === 0 ? "lg:pl-8" : ""}
-
-                    ${slantOffsets[index] ?? ""}
-                  `}
-                >
-                  {/* Index and name share one line — the number reads as a
-                      label on the name rather than a heading above it. */}
-                  <div
-                    className="
-                      flex
-                      items-baseline
-                      justify-center
-                      gap-2
-                    "
-                  >
-                    <span
-                      className="
-                        text-[12px]
-                        font-semibold
-                        tracking-[0.02em]
-                        text-[#5b3fd6]
-
-                        lg:text-[13px]
-                      "
-                    >
-                      0{index + 1}
-                    </span>
-
-                    <h3
-                      className="
-                        text-center
-
-                        text-[13px]
-                        font-semibold
-                        tracking-[-0.015em]
-                        text-[#111111]
-
-                        transition-colors
-                        duration-300
-
-                        group-hover:text-[#5b3fd6]
-
-                        lg:text-[14px]
-
-                        xl:text-[15px]
-                      "
-                    >
-                      {vehicle.label}
-                    </h3>
-                  </div>
-
-                  {/* Accent grows out from the centre on hover — with the
-                      dividers gone this is the only edge in the strip, so it
-                      stays subtle. */}
-                  <span
-                    aria-hidden="true"
-                    className="
-                      mt-2
-
-                      h-[2px]
-                      w-0
-
-                      rounded-full
-                      bg-[#5b3fd6]
-
-                      transition-all
-                      duration-500
-
-                      group-hover:w-7
-                    "
-                  />
-
-                  <motion.img
-                    src={vehicle.image}
-                    alt={vehicle.label}
-                    loading="lazy"
-                    className={`
-                      mt-4
-
-                      w-full
-
-                      object-contain
-
-                      ${vehicleSizes[index] ?? "h-28 sm:h-32 lg:h-36"}
-                    `}
-                    animate={
-                      shouldReduceMotion
-                        ? undefined
-                        : { y: [0, -6, 0] }
-                    }
-                    transition={
-                      shouldReduceMotion
-                        ? undefined
-                        : {
-                            duration: 4.5,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                            /* Offset per card so the four never bob in
-                               lockstep, which reads as a glitch. */
-                            delay: index * 0.4,
-                          }
-                    }
-                    whileHover={
-                      shouldReduceMotion
-                        ? undefined
-                        : { scale: 1.06 }
-                    }
-                  />
-                </div>
-              </AnimatedContent>
-            ))}
+            <BleedCta
+              href={ctaHref}
+              label="Plan Your Roadshow"
+            />
           </div>
         </div>
       </div>
     </section>
   );
-};
-
-export default ImpactCtaBanner;
+}

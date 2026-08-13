@@ -238,46 +238,123 @@
 }
 
 .RS_VehicleButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
   padding: 15px 30px;
   border-radius: 50px;
   background: #e8e8e8;
   font-size: 18px;
   font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
 }
 
+/* =========================================================
+   OLD ROADSHOW CURSOR-BLEED BUTTON
+
+   Normal state: light grey pill, dark text (#e8e8e8 / #1f1f1f).
+   On hover/focus, a solid Adinn-red circle grows from the exact
+   point the cursor entered until it floods the button, text
+   turning white as it's covered. Matches the old
+   adinn_roadshows-main BleedButton: 340% circle, transform-only,
+   1.65s cubic-bezier(0.19, 1, 0.22, 1).
+========================================================= */
+
 .RS_VehicleButton,
-.RS_ViewAllClientsBtn {
-  position: relative;
-  z-index: 0;
-  overflow: hidden;
-  border: none;
+.RS_ViewAllClientsBtn,
+.RS_GpsConsultBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: fit-content;
+
+  height: 80px;
+  min-height: 70px;
+
+  padding: 0 42px;
+
+  box-sizing: border-box;
+
+  border-radius: 9999px;
+
+  background: #e8e8e8;
+  color: #1f1f1f;
+
+  font-family: Outfit, sans-serif;
+
+  font-size: 24px;
+  font-weight: 500;
+
+  line-height: 1;
+  letter-spacing: -0.01em;
+
+  white-space: nowrap;
+
   cursor: pointer;
-  transition: color 400ms ease;
 }
 
 .RS_VehicleButton:hover,
-.RS_ViewAllClientsBtn:hover {
+.RS_ViewAllClientsBtn:hover,
+.RS_GpsConsultBtn:hover {
   color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.RS_VehicleButton:active,
+.RS_ViewAllClientsBtn:active,
+.RS_GpsConsultBtn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.RS_VehicleButton:disabled,
+.RS_ViewAllClientsBtn:disabled,
+.RS_GpsConsultBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .RS_BtnBubble {
   position: absolute;
   z-index: 0;
+  left: var(--bleed-x);
+  top: var(--bleed-y);
+
+  width: 340%;
+  aspect-ratio: 1;
   border-radius: 50%;
-  background: linear-gradient(
-    180deg,
-    #ff0000 0%,
-    #990000 100%
-  );
+  background: #e3000f;
+
   pointer-events: none;
-  opacity: 0;
-  transform: scale(0);
+  transform: translate(-50%, -50%) scale(0);
+  transform-origin: center;
+  transition: transform 1.65s cubic-bezier(0.19, 1, 0.22, 1);
+  will-change: transform;
+}
+
+.RS_VehicleButton:focus-visible .RS_BtnBubble,
+.RS_ViewAllClientsBtn:focus-visible .RS_BtnBubble,
+.RS_GpsConsultBtn:focus-visible .RS_BtnBubble,
+.RS_BtnBubble.RS_BtnBubble--active {
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .RS_VehicleButton > span:not(.RS_BtnBubble),
-.RS_ViewAllClientsBtn > span:not(.RS_BtnBubble) {
+.RS_ViewAllClientsBtn > span:not(.RS_BtnBubble),
+.RS_GpsConsultBtn > span:not(.RS_BtnBubble) {
   position: relative;
   z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .RS_VehicleButton,
+  .RS_ViewAllClientsBtn,
+  .RS_GpsConsultBtn,
+  .RS_BtnBubble {
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .RS_CarouselWrapper {
@@ -1176,14 +1253,57 @@
 }
 
 .RS_ViewAllClientsBtn {
-  padding: 30px 35px;
-  border-radius: 50px;
-  background: #d2d2d7;
-  color: #000000;
-  font-size: 28px;
-  line-height: 100%;
-  letter-spacing: 0%;
-  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: fit-content;
+
+  /* HEIGHT */
+  height: 90px;
+  min-height: 80px;
+
+  /* WIDTH — increases naturally with padding */
+  padding: 0 50px;
+
+  box-sizing: border-box;
+
+  border-radius: 9999px;
+
+  background: #e8e8e8;
+  color: #1f1f1f;
+
+  font-family: Outfit, sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+
+  line-height: 1;
+  letter-spacing: -0.01em;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+}
+
+/* GPS section CTA ("Consult With Our Campaign Team") — same old-Roadshow
+   pill/bleed treatment as .RS_ViewAllClientsBtn, kept as its own class
+   (rather than reusing bare .RS_VehicleButton) so it doesn't inherit that
+   class's vehicle-carousel responsive padding/font-size overrides. */
+.RS_GpsConsultBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 50px;
+  padding: 15px 34px;
+  border-radius: 9999px;
+  background: #e8e8e8;
+  color: #1f1f1f;
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -1377,11 +1497,6 @@
     height: 220px;
     font-size: 48px;
   }
-
-  .RS_ViewAllClientsBtn {
-    padding: 34px 42px;
-    font-size: 34px;
-  }
 }
 
 /* Large Screens (1440px - 2559px) - Large Desktop 1440
@@ -1440,11 +1555,6 @@
      the vehicle image keeps its breathing room. */
   .RS_WhyAdRS_Left {
     left: 64px;
-  }
-
-  .RS_ViewAllClientsBtn {
-    padding: 26px 32px;
-    font-size: 25px;
   }
 }
 
@@ -1532,11 +1642,6 @@
   .RS_WhyAdRS_Left {
     left: 64px;
   }
-
-  .RS_ViewAllClientsBtn {
-    padding: 22px 28px;
-    font-size: 22px;
-  }
 }
 
 /* Laptops & Small Desktops (992px - 1023px) - Tablets (Landscape) */
@@ -1620,11 +1725,6 @@
     left: 10%;
     width: 86%;
     height: 45%;
-  }
-
-  .RS_ViewAllClientsBtn {
-    padding: 20px 26px;
-    font-size: 20px;
   }
 }
 
@@ -1739,11 +1839,6 @@
     left: 6%;
     width: 90%;
     height: 42%;
-  }
-
-  .RS_ViewAllClientsBtn {
-    padding: 18px 24px;
-    font-size: 19px;
   }
 }
 
@@ -1896,11 +1991,6 @@
     width: 100%;
     height: 38%;
   }
-
-  .RS_ViewAllClientsBtn {
-    padding: 16px 22px;
-    font-size: 17px;
-  }
 }
 
 /* Mobile Medium (425px - 479px) - iPhone XR, Galaxy S20 */
@@ -2043,11 +2133,6 @@
     left: 1%;
     width: 100%;
     height: 37%;
-  }
-
-  .RS_ViewAllClientsBtn {
-    padding: 15px 20px;
-    font-size: 16px;
   }
 }
 
@@ -2201,11 +2286,6 @@
     width: 100%;
     height: 36%;
   }
-
-  .RS_ViewAllClientsBtn {
-    padding: 14px 20px;
-    font-size: 15px;
-  }
 }
 
 /* Extra Small (360px - 374px) */
@@ -2357,11 +2437,6 @@
     left: 0;
     width: 100%;
     height: 35%;
-  }
-
-  .RS_ViewAllClientsBtn {
-    padding: 13px 18px;
-    font-size: 14.5px;
   }
 }
 
@@ -2520,11 +2595,6 @@
     width: 100%;
     height: 34%;
   }
-
-  .RS_ViewAllClientsBtn {
-    padding: 12px 18px;
-    font-size: 13.5px;
-  }
 }
 
 /* ---------------------------------------------------------
@@ -2548,5 +2618,163 @@
   .RS_WhyAdRS_ImageLayer.exit-right {
     animation-duration: 1ms;
     animation-delay: 0ms;
+  }
+}
+
+/* =========================================================
+   CTA BUTTON RESPONSIVE SIZE TUNING
+========================================================= */
+
+@media (max-width: 767px) {
+  .RS_ViewAllClientsBtn {
+    height: 56px;
+    min-height: 56px;
+    padding: 0 30px;
+    font-size: 15px;
+  }
+
+  .RS_GpsConsultBtn {
+    height: 54px;
+    min-height: 54px;
+    padding: 0 28px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 424px) {
+  .RS_ViewAllClientsBtn {
+    height: 54px;
+    min-height: 54px;
+    padding: 0 26px;
+    font-size: 14px;
+  }
+
+  .RS_GpsConsultBtn {
+    height: 52px;
+    min-height: 52px;
+    padding: 0 24px;
+    font-size: 13.5px;
+  }
+}
+
+/* =========================================================
+   FINAL VEHICLE CARD BUTTON SIZE OVERRIDE
+   ---------------------------------------------------------
+   Keeps View Details + Book Now compact.
+   This block is intentionally at the END of the file so it
+   overrides the larger shared CTA values above without
+   changing Explore More Brands or the GPS CTA.
+========================================================= */
+
+.RS_VehicleButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: fit-content;
+
+  height: 50px;
+  min-height: 50px;
+
+  padding: 0 22px;
+
+  box-sizing: border-box;
+
+  border-radius: 9999px;
+
+  font-family: Outfit, sans-serif;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  line-height: 1;
+  letter-spacing: -0.01em;
+
+  white-space: nowrap;
+
+  flex-shrink: 0;
+}
+
+/* 4K / very large screens */
+@media (min-width: 2560px) {
+  .RS_VehicleButton {
+    height: 50px;
+    min-height: 50px;
+
+    padding: 0 26px;
+
+    font-size: 15px;
+  }
+}
+
+/* Small desktop */
+@media (min-width: 1281px) and (max-width: 1439px) {
+  .RS_VehicleButton {
+    height: 46px;
+    min-height: 46px;
+
+    padding: 0 21px;
+
+    font-size: 14px;
+  }
+}
+
+/* Laptop */
+@media (min-width: 992px) and (max-width: 1280px) {
+  .RS_VehicleButton {
+    height: 44px;
+    min-height: 44px;
+
+    padding: 0 18px;
+
+    font-size: 13.5px;
+  }
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 991px) {
+  .RS_VehicleButton {
+    height: 44px;
+    min-height: 44px;
+
+    padding: 0 18px;
+
+    font-size: 13px;
+  }
+}
+
+/* Large / medium mobile */
+@media (min-width: 425px) and (max-width: 767px) {
+  .RS_VehicleButton {
+    height: 42px;
+    min-height: 42px;
+
+    padding: 0 16px;
+
+    font-size: 13px;
+  }
+}
+
+/* Small mobile */
+@media (min-width: 360px) and (max-width: 424px) {
+  .RS_VehicleButton {
+    height: 40px;
+    min-height: 40px;
+
+    padding: 0 14px;
+
+    font-size: 12.5px;
+  }
+}
+
+/* Extra-small mobile */
+@media (max-width: 359px) {
+  .RS_VehicleButton {
+    height: 38px;
+    min-height: 38px;
+
+    padding: 0 12px;
+
+    font-size: 12px;
   }
 }

@@ -341,43 +341,34 @@ export default function RoadshowProcessSection() {
               lg:mb-16
             "
           >
-            <span
-              className="
-                block
-                text-[38px]
-                text-[#111111]
-
-                sm:text-[46px]
-
-                md:text-[52px]
-
-                lg:text-[58px]
-
-                xl:text-[64px]
-              "
-            >
-              How the roadshow
-            </span>
+           <span
+  className="
+    block
+    text-[38px]
+    font-normal
+    text-[#111111]
+    sm:text-[46px]
+    md:text-[52px]
+    lg:text-[58px]
+    xl:text-[64px]
+  "
+>
+  How the roadshow
+</span>
 
             <span
-              className="
-                mt-2
-                block
-                text-[38px]
-                text-[#b5121b]
-
-                sm:text-[46px]
-
-                md:mt-3
-                md:text-[52px]
-
-                lg:text-[58px]
-
-                xl:text-[64px]
-              "
-            >
-              works
-            </span>
+  className="
+    block
+    text-[38px]
+    font-normal
+    text-[#b5121b]
+    sm:text-[46px]
+    md:text-[52px]
+    lg:text-[58px]
+    xl:text-[64px]
+  "
+>
+Works</span>
           </h2>
 
           {/* ===============================================

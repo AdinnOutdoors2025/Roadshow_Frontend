@@ -478,16 +478,14 @@ export default function VehicleListing({
                       </div>
 
                       <div className="RS_VehListActions">
-                        <button
-                          type="button"
-                          className="RS_VehListSpecBtn"
+                        <ButtonHover
+                          label="View Details"
+                          className="RS_VehicleButton RS_VehListSpecBtn"
                           onClick={(event) => {
                             event.stopPropagation();
                             setSpecVehicle(vehicle);
                           }}
-                        >
-                          View Details
-                        </button>
+                        />
 
                         <div onClick={(event) => event.stopPropagation()}>
                           <ButtonHover

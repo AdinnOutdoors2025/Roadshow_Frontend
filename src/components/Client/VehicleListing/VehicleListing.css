@@ -588,6 +588,9 @@ background: black;
   gap: 10px;
 }
 
+/* Base look (rest state) only — the cursor-bleed hover interaction and
+   colour-flip on hover come from the shared .RS_VehicleButton rules in
+   HomePageSection1.css, since this button also carries that class. */
 .RS_VehListSpecBtn {
   flex: 0 0 auto;
 
@@ -601,19 +604,10 @@ background: black;
   font-size: 16px;
   font-weight: 500;
   color: #171719;
-
-  cursor: pointer;
-  transition:
-    border-color 240ms ease,
-    color 240ms ease;
+  white-space: nowrap;
 }
 
-.RS_VehListSpecBtn:hover {
-  border-color: #d70000;
-  color: #d70000;
-}
-
-/* Inherits the shared bubble-hover pill from HomePageSection1.css */
+/* Inherits the shared cursor-bleed pill from HomePageSection1.css */
 .RS_VehListBookBtn {
   padding: 15px 26px;
   font-size: 16px;
