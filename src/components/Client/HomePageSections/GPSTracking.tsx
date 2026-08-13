@@ -5,7 +5,7 @@
 import { Reveal } from "./Reveal";
 import { Activity, MapPin, Navigation2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { BleedButton } from "./BleedButton";
+import { ButtonHover } from "../Reusable_Components/ButtonHover";
 
 type LatLng = [number, number];
 
@@ -1526,28 +1526,48 @@ export function GPSTracking() {
   return (
     <section className="section-pad">
       <div className="container-x grid items-center gap-12 lg:grid-cols-12">
-        <div className="lg:col-span-5">
+        {/* =====================================================
+            LEFT CONTENT
+        ===================================================== */}
 
+        <div className="lg:col-span-5">
+          {/* HEADING */}
 
           <Reveal delay={1}>
-            <h2 className="mt-3 font-display text-[34px] font-semibold leading-[1.05] text-balance-tight md:text-[34px]">
+            <h2
+              className="
+                mt-3
+                font-display
+                text-[34px]
+                font-regular
+                leading-[1.08]
+                tracking-[-0.025em]
+                text-balance-tight
+
+                md:text-[38px]
+                lg:text-[42px]
+              "
+            >
               GPS Tracking to monitor your campaign with confidence.
             </h2>
           </Reveal>
 
+          {/* DESCRIPTION */}
+
           <Reveal delay={2}>
             <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-              GPS-supported visibility for routes, movement, and live execution updates across city
-              roads and district campaign zones.
+              GPS-supported visibility for routes, movement, and live execution
+              updates across city roads and district campaign zones.
             </p>
           </Reveal>
+
+          {/* FEATURES */}
 
           <Reveal delay={3}>
             <ul className="mt-8 space-y-4">
               {[
                 {
                   i: Activity,
-                  // t: ${VEHICLE_COUNT} moving vehicles,
                   t: "Live GPS Monitoring",
                   d: "Track every vehicle in real time.",
                 },
@@ -1562,36 +1582,58 @@ export function GPSTracking() {
                   d: "Instant progress updates delivered to your team.",
                 },
               ].map((f) => (
-                <li key={f.t} className="flex gap-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#E3000F]/10 text-[#E3000F]">
-                    <f.i className="size-5" strokeWidth={1.4} />
+                <li
+                  key={f.t}
+                  className="flex gap-4"
+                >
+                  <div
+                    className="
+                      flex
+                      size-10
+                      shrink-0
+                      items-center
+                      justify-center
+                      rounded-xl
+                      bg-[#E3000F]/10
+                      text-[#E3000F]
+                    "
+                  >
+                    <f.i
+                      className="size-5"
+                      strokeWidth={1.4}
+                    />
                   </div>
 
                   <div>
-                    <div className="font-medium">{f.t}</div>
-                    <p className="text-sm text-muted-foreground">{f.d}</p>
+                    <div className="font-medium">
+                      {f.t}
+                    </div>
+
+                    <p className="text-sm text-muted-foreground">
+                      {f.d}
+                    </p>
                   </div>
                 </li>
               ))}
             </ul>
           </Reveal>
+
+          {/* =================================================
+              CONSULT CTA
+          ================================================= */}
+
           <Reveal delay={4}>
-            <BleedButton
+            <ButtonHover
               type="button"
-              className="
-                mt-9
-                !h-auto
-                !px-6
-                !py-2.5
-                !text-[14px]
-                !shadow-none
-                !drop-shadow-none
-                md:!px-8
-                md:!py-6
-                md:!text-[15px]
-              "
+              className="RS_GpsConsultBtn mt-9"
+              label="Consult With Our Team"
+              style={{
+                fontSize: "20px",
+                fontWeight: 500,
+              }}
               onClick={() => {
-                const contactSection = document.getElementById("contact");
+                const contactSection =
+                  document.getElementById("contact");
 
                 if (contactSection) {
                   contactSection.scrollIntoView({
@@ -1600,13 +1642,19 @@ export function GPSTracking() {
                   });
                 }
 
-                window.history.replaceState(null, "", window.location.pathname);
+                window.history.replaceState(
+                  null,
+                  "",
+                  window.location.pathname,
+                );
               }}
-            >
-              Consult With Our Campaign Team
-            </BleedButton>
+            />
           </Reveal>
         </div>
+
+        {/* =====================================================
+            RIGHT MAP
+        ===================================================== */}
 
         <div className="lg:col-span-7">
           <SouthIndiaLiveMap />
