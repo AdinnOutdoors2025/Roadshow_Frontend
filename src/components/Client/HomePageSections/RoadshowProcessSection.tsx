@@ -645,12 +645,7 @@ Works</span>
                     alt={active ? step.imageAlt : ""}
                     fill
                     priority={index === DEFAULT_ACTIVE_INDEX}
-                    sizes="
-                      (max-width: 640px) 76vw,
-                      (max-width: 768px) 58vw,
-                      (max-width: 1024px) 50vw,
-                      395px
-                    "
+                    sizes="(max-width: 640px) 76vw, (max-width: 768px) 58vw, (max-width: 1024px) 50vw, 395px"
                     className="object-cover"
                   />
                 </div>
