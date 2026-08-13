@@ -1,5 +1,3 @@
-
-
 /* eslint-disable */
 // @ts-nocheck
 import { useRef, useState } from "react";
@@ -23,6 +21,54 @@ const STAGE_LABELS: Record<string, string> = {
   onRoad: "On Road", campaignRunning: "Campaign Running", vehicleUnavailable: "Vehicle Unavailable",
   clientClosure: "Client Closure & Feedback", invoiceGeneration: "Invoice Generation",
   paymentStage2: "Payment Processing Stage 2", closedWon: "Closed Won", closedLost: "Closed Lost",
+};
+
+/*
+ * html2canvas does not support CSS oklch() values. This style is injected only
+ * into the temporary cloned document used for PDF generation, so the live UI
+ * and global CSS remain exactly as they are.
+ */
+const PDF_CAPTURE_SAFE_COLORS = `
+  :root, :root.dark, :root.dark *, .dark, .dark * {
+    --background: #ffffff !important;
+    --foreground: #09090b !important;
+    --card: #ffffff !important;
+    --card-foreground: #09090b !important;
+    --popover: #ffffff !important;
+    --popover-foreground: #09090b !important;
+    --primary: #18181b !important;
+    --primary-foreground: #fafafa !important;
+    --secondary: #f4f4f5 !important;
+    --secondary-foreground: #18181b !important;
+    --muted: #f4f4f5 !important;
+    --muted-foreground: #71717a !important;
+    --accent: #f4f4f5 !important;
+    --accent-foreground: #18181b !important;
+    --destructive: #e7000b !important;
+    --border: #e4e4e7 !important;
+    --input: #e4e4e7 !important;
+    --ring: #a1a1aa !important;
+    --chart-1: #d4d4d8 !important;
+    --chart-2: #71717a !important;
+    --chart-3: #52525b !important;
+    --chart-4: #3f3f46 !important;
+    --chart-5: #27272a !important;
+    --sidebar: #fafafa !important;
+    --sidebar-foreground: #09090b !important;
+    --sidebar-primary: #18181b !important;
+    --sidebar-primary-foreground: #fafafa !important;
+    --sidebar-accent: #f4f4f5 !important;
+    --sidebar-accent-foreground: #18181b !important;
+    --sidebar-border: #e4e4e7 !important;
+    --sidebar-ring: #a1a1aa !important;
+  }
+`;
+
+const addPdfCaptureSafeColors = (clonedDocument: Document) => {
+  const style = clonedDocument.createElement("style");
+  style.setAttribute("data-pdf-capture-safe-colors", "true");
+  style.textContent = PDF_CAPTURE_SAFE_COLORS;
+  clonedDocument.head.appendChild(style);
 };
 
 // ── Inline style constants ────────────────────────────────────── ────────────
@@ -135,6 +181,8 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
         windowWidth: 900,
         scrollX: 0,
         scrollY: 0,
+        logging: false,
+        onclone: addPdfCaptureSafeColors,
       });
 
 

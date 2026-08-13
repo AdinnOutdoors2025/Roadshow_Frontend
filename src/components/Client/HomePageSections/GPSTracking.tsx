@@ -5,6 +5,7 @@
 import { Reveal } from "./Reveal";
 import { Activity, MapPin, Navigation2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import "leaflet/dist/leaflet.css";
 import { ButtonHover } from "../Reusable_Components/ButtonHover";
 
 type LatLng = [number, number];
@@ -1524,8 +1525,8 @@ function SouthIndiaLiveMap() {
 
 export function GPSTracking() {
   return (
-    <section className="section-pad">
-      <div className="container-x grid items-center gap-12 lg:grid-cols-12">
+    <section className="py-[clamp(56px,6vw,104px)]">
+      <div className="mx-auto grid w-[calc(100%_-_76px)] max-w-[1540px] items-center gap-12 max-sm:w-[calc(100%_-_36px)] lg:grid-cols-12">
         {/* =====================================================
             LEFT CONTENT
         ===================================================== */}
@@ -1537,12 +1538,12 @@ export function GPSTracking() {
             <h2
               className="
                 mt-3
-                font-display
+                font-outfit
                 text-[34px]
                 font-regular
                 leading-[1.08]
                 tracking-[-0.025em]
-                text-balance-tight
+                text-balance
 
                 md:text-[38px]
                 lg:text-[42px]

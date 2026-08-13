@@ -1,5 +1,4 @@
 
-
 /* eslint-disable */
 // @ts-nocheck
 
@@ -44,6 +43,54 @@ const ACCENT_TINT = "#cacaca";
 const LINE = "#D9D9D9";
 const LINE_SOFT = "#E9E9E9";
 const PAPER_ALT = "#FBE1DF";
+
+/*
+ * html2canvas does not support CSS oklch() values.  This style is injected
+ * only into its temporary cloned document while a PDF is generated.  The
+ * visible application and global theme are never changed.
+ */
+const PDF_CAPTURE_SAFE_COLORS = `
+  :root, :root.dark, :root.dark *, .dark, .dark * {
+    --background: #ffffff !important;
+    --foreground: #09090b !important;
+    --card: #ffffff !important;
+    --card-foreground: #09090b !important;
+    --popover: #ffffff !important;
+    --popover-foreground: #09090b !important;
+    --primary: #18181b !important;
+    --primary-foreground: #fafafa !important;
+    --secondary: #f4f4f5 !important;
+    --secondary-foreground: #18181b !important;
+    --muted: #f4f4f5 !important;
+    --muted-foreground: #71717a !important;
+    --accent: #f4f4f5 !important;
+    --accent-foreground: #18181b !important;
+    --destructive: #e7000b !important;
+    --border: #e4e4e7 !important;
+    --input: #e4e4e7 !important;
+    --ring: #a1a1aa !important;
+    --chart-1: #d4d4d8 !important;
+    --chart-2: #71717a !important;
+    --chart-3: #52525b !important;
+    --chart-4: #3f3f46 !important;
+    --chart-5: #27272a !important;
+    --sidebar: #fafafa !important;
+    --sidebar-foreground: #09090b !important;
+    --sidebar-primary: #18181b !important;
+    --sidebar-primary-foreground: #fafafa !important;
+    --sidebar-accent: #f4f4f5 !important;
+    --sidebar-accent-foreground: #18181b !important;
+    --sidebar-border: #e4e4e7 !important;
+    --sidebar-ring: #a1a1aa !important;
+  }
+`;
+
+const addPdfCaptureSafeColors = (clonedDocument) => {
+  const style = clonedDocument.createElement("style");
+  style.setAttribute("data-pdf-capture-safe-colors", "true");
+  style.textContent = PDF_CAPTURE_SAFE_COLORS;
+  clonedDocument.head.appendChild(style);
+};
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 
@@ -403,7 +450,13 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
       const { default: jsPDF } = await import("jspdf");
       const { default: html2canvas } = await import("html2canvas");
 
-      const canvas = await html2canvas(content, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      const canvas = await html2canvas(content, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        onclone: addPdfCaptureSafeColors,
+      });
 
       const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: "a4" });
       const pdfWidth = pdf.internal.pageSize.getWidth();
