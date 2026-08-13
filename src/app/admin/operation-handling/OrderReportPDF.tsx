@@ -1,6 +1,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { useRef, useState } from "react";
+import "../admin_css/pdf_report.css";
 
 // Tailwind v4's base layer sets colors (incl. its default border-color reset)
 // using oklch(), which html2canvas's CSS color parser can't read — it throws
