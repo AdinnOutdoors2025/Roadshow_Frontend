@@ -168,7 +168,7 @@ const ourClients = [
   { name: "DRA Homes", logo: "./images/assets/Client-logos/DRA_Homes.png", w: 160 },
   { name: "G Square", logo: "./images/assets/Client-logos/G_Square.png", w: 180 },
   { name: "Havells", logo: "./images/assets/Client-logos/Havells.png", w: 400 },
-  { name: "Impex", logo: "./images/assets/Client-logos/Impex.png", w: 250 },
+  { name: "Impex", logo: "./images/assets/Client-logos/Impex.png", w: 180 },
   { name: "ITC", logo: "./images/assets/Client-logos/ITC.png", w: 280 },
   { name: "KFC", logo: "./images/assets/Client-logos/KFC.png", w: 220 },
   { name: "Lalithaa Jewellery", logo: "./images/assets/Client-logos/Lalithaa_Jewellery.png", w: 300 },

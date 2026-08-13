@@ -991,7 +991,7 @@
 
 .RS_Bubble_4 {
   top: 9%;
-  left: 34%;
+  left: 32%;
   width: calc(120px * var(--rs-orbit-f, 1));
   height: calc(120px * var(--rs-orbit-f, 1));
   --rs-logo-scale: 0.72;
@@ -1047,7 +1047,7 @@
    need 5 repeats, thirteen would need 12. Slot count and pool size have to be
    chosen together or the last page turns into mostly duplicates. */
 .RS_Bubble_10 {
-  top: -25%;
+  top: -22%;
   left: 9%;
   width: calc(118px * var(--rs-orbit-f, 1));
   height: calc(118px * var(--rs-orbit-f, 1));
