@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/module-qa-gate.cjs",
+            "statusMessage": "Checking module QA gate..."
+          }
+        ]
+      }
+    ]
+  }
+}
