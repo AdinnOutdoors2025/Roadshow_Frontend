@@ -28,32 +28,8 @@ body {
   min-height: 100vh;
 }
 
-/* Your existing theme variables remain intact */
 @theme {
   --font-outfit: Outfit, sans-serif;
-
-  /* Tokens used by the newer marketing sections (GPSTracking, About, Process).
-     Those files were written against a shadcn-style design system and call for
-     `font-display` and `text-muted-foreground`, neither of which existed here —
-     so the classes emitted nothing and the type fell back to defaults. Tailwind
-     v4 derives the utility name from the variable name, so declaring them here
-     is all that is needed.
-
-     Display maps to Outfit rather than a second family on purpose: the site
-     already sets Outfit globally, and introducing a different display face for
-     three sections would break the type system everywhere else. */
-  --font-display: Outfit, sans-serif;
-
-  /* Matches the secondary text already used across these sections. */
-  --color-muted-foreground: #667085;
-
-  --color-white: #ffffff;
-  --color-black: #101828;
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f2f4f7;
-  --shadow-theme-xl:
-    0px 20px 24px -4px rgba(16, 24, 40, 0.08),
-    0px 8px 8px -4px rgba(16, 24, 40, 0.03);
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
@@ -364,158 +340,9 @@ body {
     -webkit-appearance: none;
   }
 
-  /* =========================================================
-     MARKETING SECTION PRIMITIVES
-
-     GPSTracking.tsx, About.tsx and Process.tsx were written against a
-     shadcn-style design system and reference these four class names. None of
-     them existed in this project, so they emitted nothing: the grids inside
-     `container-x` ran edge to edge with no max-width or gutter, sections had no
-     vertical rhythm, and `btn-primary` left the button unstyled.
-
-     The Tailwind utilities in those files (grid, gap-12, lg:grid-cols-12 ...)
-     were always working — only these four were missing.
-     ========================================================= */
-
-  /* Page gutter + max line length. The 1540/76 pair matches
-     .adinn-testimonial-container so the newer sections line up with the
-     existing ones instead of sitting at a different width. */
-  .container-x {
-    width: min(1540px, calc(100% - 76px));
-    margin-inline: auto;
-  }
-
-  @media (max-width: 640px) {
-    .container-x {
-      width: calc(100% - 36px);
-    }
-  }
-
-  /* Vertical rhythm between sections. Clamped rather than a percentage: the
-     surrounding sections use `padding: 5% 0`, which on a wide viewport turns
-     into ~100px and on a narrow one collapses to almost nothing. */
-  .section-pad {
-    padding-block: clamp(56px, 6vw, 104px);
-  }
-
-  /* Solid red pill, matching the site's #E3000F. Deliberately no fixed height
-     or font-size so callers can size it without needing !important — the
-     existing GPSTracking button carries eight `!` overrides purely to fight the
-     original project's version of this class, and those can now be dropped. */
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-
-    padding: 14px 30px;
-    border: none;
-    border-radius: 999px;
-
-    font-weight: 500;
-    line-height: 1;
-    white-space: nowrap;
-
-    color: #ffffff;
-    background: #e3000f;
-
-    cursor: pointer;
-    transition:
-      background 260ms ease,
-      transform 260ms ease;
-  }
-
-  .btn-primary:hover:not(:disabled) {
-    background: #b8000c;
-    transform: translateY(-1px);
-  }
-
-  .btn-primary:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  /* Keeps a two or three line heading from leaving one orphaned word. */
-  .text-balance-tight {
-    text-wrap: balance;
-  }
-
-  /* BLEED BUTTON
-
-     BleedButton.tsx writes --x / --y on mouseenter and mousemove, then relies
-     on this class to do something with them. The class did not exist here, so
-     the component was setting two variables nothing read and the button
-     rendered completely inert — same cause as btn-primary: the markup was
-     ported from adinnroadshows.com but its stylesheet was not.
-
-     The effect: a circle grows from wherever the cursor entered until it floods
-     the button. Because the origin follows the pointer, entering from the left
-     and entering from the right look different, which is what makes it read as
-     ink bleeding rather than a plain colour swap. */
-  .bleed-button {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-  }
-
-  .bleed-button::after {
-    content: "";
-
-    position: absolute;
-    /* Falls back to the centre so a keyboard focus, which never sets --x/--y,
-       still bleeds from a sensible place. */
-    top: var(--y, 50%);
-    left: var(--x, 50%);
-    z-index: -1;
-
-    width: 0;
-    height: 0;
-
-    border-radius: 50%;
-    background: #7d0008;
-
-    transform: translate(-50%, -50%);
-    /* Width and height rather than a scaled circle: a transform would need a
-       fixed base size, and the button's width changes with its label. */
-    transition:
-      width 560ms cubic-bezier(0.22, 1, 0.36, 1),
-      height 560ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .bleed-button:hover:not(:disabled)::after,
-  .bleed-button:focus-visible:not(:disabled)::after {
-    /* Oversized so the circle covers the corners from any entry point. */
-    width: 260%;
-    height: 700%;
-  }
-
-  /* The component already wraps its label in a <span>; lift it above the
-     bleeding circle. */
-  .bleed-button > span {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* btn-primary darkens its own background on hover. Combined with the bleed
-     that reads as two separate effects firing at once, so hold the base colour
-     still and let the circle carry the change. */
-  .bleed-button.btn-primary:hover:not(:disabled) {
-    background: #e3000f;
-    transform: none;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .bleed-button::after {
-      transition: none;
-    }
-  }
 }
 
 /* third-party libraries CSS */
-.apexcharts-legend-text {
-  @apply !text-gray-700 dark:!text-gray-400;
-}
-
 .apexcharts-text {
   @apply !fill-gray-700 dark:!fill-gray-400;
 }
@@ -525,7 +352,7 @@ body {
 }
 
 .apexcharts-legend-text {
-  @apply pl-5! !text-gray-700 dark:!text-gray-400;
+  @apply !pl-5 !text-gray-700 dark:!text-gray-400;
 }
 .apexcharts-tooltip-series-group {
   @apply !p-0;
@@ -960,10 +787,7 @@ span.flatpickr-weekday,
 }
 
 .task {
-  transition: all 0.2s ease; /* Smooth transition for visual effects */
-}
-
-.task {
+  transition: all 0.2s ease;
   border-radius: 0.75rem;
   box-shadow: 0 1px 3px 0 rgba(16, 24, 40, 0.1),
     0 1px 2px 0 rgba(16, 24, 40, 0.06);
