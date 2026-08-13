@@ -202,9 +202,10 @@ export default function TimelineHoursTab({ order, vehicleTypes }: { order: { _id
       .sort((a: any, b: any) => (a.firstDay || "").localeCompare(b.firstDay || ""));
   };
 
-  const fetchGpsHistory = async (reg: string, day: string) => {
+  const fetchGpsHistory = async (reg: string, day: string, force = false) => {
     const key = `${reg}:${day}`;
-    if (gpsCache[key] || gpsLoading[key]) return;
+    if (gpsLoading[key]) return;
+    if (!force && gpsCache[key]) return;
     setGpsLoading((p) => ({ ...p, [key]: true }));
     setGpsError((p) => ({ ...p, [key]: "" }));
     try {
@@ -333,7 +334,10 @@ export default function TimelineHoursTab({ order, vehicleTypes }: { order: { _id
                           {dayRows.map((row: any) => (
                             <button
                               key={row.entryKey}
-                              onClick={() => setRegTab((p) => ({ ...p, [dayKey]: row.entryKey }))}
+                              onClick={() => {
+                                setRegTab((p) => ({ ...p, [dayKey]: row.entryKey }));
+                                fetchGpsHistory(row.reg, activeDay, true);
+                              }}
                               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono font-semibold transition-all ${
                                 activeEntryKey === row.entryKey
                                   ? row.status === "Replaced"
@@ -372,7 +376,7 @@ export default function TimelineHoursTab({ order, vehicleTypes }: { order: { _id
                             <div className="flex flex-col items-center justify-center py-8 gap-2">
                               <p className="text-xs text-gray-400">{errMsg}</p>
                               <button
-                                onClick={() => activeReg && activeDay && fetchGpsHistory(activeReg, activeDay)}
+                                onClick={() => activeReg && activeDay && fetchGpsHistory(activeReg, activeDay, true)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-semibold"
                               >
                                 <RefreshCw size={11} /> Retry
