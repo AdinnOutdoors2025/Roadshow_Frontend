@@ -225,6 +225,11 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
     if (existing?.discounts?.length) {
       return existing.discounts.map((d) => ({
         id: uid(),
+        // Real Mongo _id from a previously-saved row — sent back on save so
+        // the backend can match this exact row across edits (by id, not by
+        // label text) instead of misattributing changes to the wrong row
+        // when two discounts share a label.
+        _id: d._id || undefined,
         label: d.label || "Discount",
         mode: d.mode || "decrease",
         type: d.type || "percent",
@@ -240,13 +245,15 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
         value: existing.discountValue ?? 0,
       }];
     }
-    return [{ id: uid(), label: "Discount", mode: "decrease", type: "percent", value: 0 }];
+    // Blank label by default — admin types their own name rather than every
+    // discount starting out pre-filled with the literal text "Discount".
+    return [{ id: uid(), label: "", mode: "decrease", type: "percent", value: 0 }];
   });
 
   const updateDiscount = (id, patch) =>
     setDiscounts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
   const addDiscount = () =>
-    setDiscounts((prev) => [{ id: uid(), label: "Discount", mode: "decrease", type: "percent", value: 0 }, ...prev]);
+    setDiscounts((prev) => [{ id: uid(), label: "", mode: "decrease", type: "percent", value: 0 }, ...prev]);
   const removeDiscount = (id) =>
     setDiscounts((prev) => (prev.length > 1 ? prev.filter((d) => d.id !== id) : prev));
   const [signatureMode, setSignatureMode] = useState(existing?.signatureMode || "signed");
@@ -391,6 +398,13 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
     setSaving(true);
     try {
       const payload = buildPayload();
+      // Only true for the very first silent auto-save that fires the moment
+      // a Project Code is selected (see the mount effect below) — tells the
+      // backend this invoiceData is still an untouched draft, so the
+      // admin's actual first fill-in doesn't get diffed against it and
+      // logged as a confusing "Edited" entry instead of being treated as
+      // the real first save.
+      if (silent) payload.isAutoSave = true;
       await axios.patch(`${API_BASE}admin/pipeline/${order._id}/invoice`, payload, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
@@ -918,14 +932,14 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
         <div className={cardCls}>
           <div className="flex items-center justify-between">
             <p className={sectionTitleCls}>
-              <Percent size={14} className="text-gray-400" /> Discount
+              <Percent size={14} className="text-gray-400" /> Label
             </p>
             <button
               type="button"
               onClick={addDiscount}
               className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600 hover:text-red-700"
             >
-              <Plus size={13} /> Add Discount
+              <Plus size={13} /> Add Label
             </button>
           </div>
 

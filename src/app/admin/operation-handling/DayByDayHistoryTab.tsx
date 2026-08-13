@@ -959,6 +959,29 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
     return v?.typeName || vehicleTypeId;
   };
 
+  const fmtDateOnly = (s) =>
+    s ? new Date(s).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+
+  // Compensation requests (FOC compensation-hours / compensation-days) raised
+  // from the Campaign Calculator for this vehicle-type slot — both the
+  // request and (once approved) the acceptance details live on the same
+  // campaignClosureArray record, so no separate lookup is needed for either.
+  const getCompensationEntries = (vehicleIndex: number) =>
+    (order.campaignClosureArray || [])
+      .filter(
+        (c: any) =>
+          c.type === "foc" &&
+          (c.focPurpose === "compensation-hours" || c.focPurpose === "compensation-days") &&
+          c.compensationVehicleIndex === vehicleIndex
+      )
+      .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+  const getEntryRegNo = (entryId: string | null) => {
+    if (!entryId) return null;
+    const e = (order.onRoadExecutionArray || []).find((x: any) => String(x._id) === String(entryId));
+    return e?.vehicleRegistrationNumber || null;
+  };
+
   // Per vehicle type: full campaign day list + every event tagged & grouped by registration number.
   const perVehicleType = useMemo(() => {
     if (!data?.vehicleTypes) return {};
@@ -1222,6 +1245,59 @@ export default function DayByDayHistoryTab({ order, vehicleTypes }: { order: { _
                     </div>
                   </>
                 )}
+
+                {(() => {
+                  const compEntries = getCompensationEntries(vt.vehicleIndex);
+                  if (compEntries.length === 0) return null;
+                  return (
+                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                      <p className="text-sm font-semibold text-gray-500 mb-2">
+                        Compensation History ({compEntries.length})
+                      </p>
+                      <div className="space-y-2">
+                        {compEntries.map((c: any) => {
+                          const reg = getEntryRegNo(c.compensationEntryId);
+                          const value =
+                            c.focPurpose === "compensation-hours"
+                              ? `${c.compensationHoursValue ?? 0} hrs/day compensation`
+                              : `${c.compensationDaysValue ?? 0} extra campaign day(s)`;
+                          const isApproved = c.status === "approved";
+                          return (
+                            <div
+                              key={c._id}
+                              className={`rounded-lg border p-2.5 ${isApproved ? "border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-900/10" : "border-amber-200 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-900/10"}`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="flex items-center gap-1 text-sm font-bold px-2 py-0.5 rounded-full bg-white/70 dark:bg-black/20 text-gray-700 dark:text-gray-200">
+                                  Compensation Request {c.focPurpose === "compensation-hours" ? "(Hours)" : "(Days)"}
+                                </span>
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${isApproved ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"}`}>
+                                  {isApproved ? "Accepted" : "Pending"}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-500 mt-1.5">
+                                Vehicle: <span className="font-mono font-semibold text-gray-700 dark:text-gray-300">{reg || "All vehicles in this slot"}</span>
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                Period: {fmtDateOnly(c.fromDate)} → {fmtDateOnly(c.toDate)}
+                              </p>
+                              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 mt-0.5">{value}</p>
+                              {c.reason && <p className="text-sm text-gray-400 mt-1">Reason: {c.reason}</p>}
+                              <p className="text-sm text-gray-400 mt-1.5">
+                                Requested by {c.createdBy || "—"} · {fmtDatetime(c.createdAt)}
+                              </p>
+                              {isApproved && (
+                                <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">
+                                  Accepted by {c.approvedBy || "—"} · {fmtDatetime(c.approvedAt)}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>

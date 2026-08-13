@@ -190,7 +190,7 @@ export default function InvoiceHistoryTab({ invoiceHistory }: Props) {
 
                 {(h.discountChanges || []).length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Discounts</p>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Label</p>
                     <div className="rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden divide-y divide-gray-100 dark:divide-gray-800">
                       {(h.discountChanges || []).map((dc, i) => (
                         <div key={i} className="px-3 py-2">
@@ -239,7 +239,7 @@ export default function InvoiceHistoryTab({ invoiceHistory }: Props) {
                                     <div key={j} className="flex items-center justify-between text-[12.5px] bg-gray-50 dark:bg-gray-800/40 rounded px-2 py-1">
                                       <span className="text-gray-500">{fc.field}</span>
                                       <span className="text-right">
-                                        {dc.action !== "added" && <span className="text-red-500 line-through mr-2">{oldText}</span>}
+                                        {dc.action !== "added" && dc.action !== "removed" && <span className="text-red-500 line-through mr-2">{oldText}</span>}
                                         {dc.action !== "removed" && <span className="text-green-600 font-medium">{newText}</span>}
                                         {dc.action === "removed" && <span className="text-red-500 font-medium">{oldText}</span>}
                                       </span>
@@ -250,7 +250,7 @@ export default function InvoiceHistoryTab({ invoiceHistory }: Props) {
                                   <div key={j} className="flex items-center justify-between text-[12.5px] bg-gray-50 dark:bg-gray-800/40 rounded px-2 py-1">
                                     <span className="text-gray-500">{fc.field}</span>
                                     <span className="text-right">
-                                      {dc.action !== "added" && <span className="text-red-500 line-through mr-2">{displayVal(fc.oldValue, fc.field)}</span>}
+                                      {dc.action !== "added" && dc.action !== "removed" && <span className="text-red-500 line-through mr-2">{displayVal(fc.oldValue, fc.field)}</span>}
                                       {dc.action !== "removed" && <span className="text-green-600 font-medium">{displayVal(fc.newValue, fc.field)}</span>}
                                       {dc.action === "removed" && <span className="text-red-500 font-medium">{displayVal(fc.oldValue, fc.field)}</span>}
                                     </span>
