@@ -226,8 +226,8 @@ export default function DetailDrawer({
             ? [{ key: "campaignCalculator", label: "Campaign Calculator" }]
             : []),
 
-        ...(defaultTab === "VehicleUnavailable"
-            ? [{ key: "VehicleUnavailable", label: "VehicleUnavailable" }]
+        ...(hasReachedOnRoad
+            ? [{ key: "VehicleUnavailable", label: "Vehicle Unavailable" }]
             : []),
 
         ...((order.campaignClosureArray || []).some((c: any) => c.type === "foc")

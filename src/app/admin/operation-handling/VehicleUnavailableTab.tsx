@@ -76,7 +76,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const resolvedIssues = vehicleIssues.filter((iss) => iss.status === "resolved");
 
 
-const vehicles = (order.bookingItems || [])
+  const vehicles = (order.bookingItems || [])
     .map((item, originalIdx) => ({ item, originalIdx }))
     .filter(({ item, originalIdx }) => {
       const entries = (order.onRoadExecutionArray || [])
@@ -109,7 +109,7 @@ const vehicles = (order.bookingItems || [])
     return v?.typeName || "Vehicle";
   };
 
-const vehicleEntries = (order.onRoadExecutionArray || []).filter(
+  const vehicleEntries = (order.onRoadExecutionArray || []).filter(
     (e) => e.vehicleIndex === vehicleIndex && e.unavailableStatus === true
   );
 
@@ -150,21 +150,23 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
         className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all"
         onClick={() => setOpen(!open)}
       >
-    
+
         <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${isVehicleOnRoad ? "bg-emerald-500" : allDriversSaved ? "bg-blue-500" : "bg-gray-400"
           }`}>
           V{vehicleIndex + 1}
         </div>
 
-      
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">
               {getVehicleTypeName(vehicle.vehicleType)}
             </p>
-            <span className="text-[15px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">
-              {vehicle.campaignType || "—"}
-            </span>
+            {vehicle.campaignType?.trim() && (
+              <span className="text-[15px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">
+                {vehicle.campaignType}
+              </span>
+            )}
             {isVehicleOnRoad && (
               <span className="text-[14px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
                 On Road
@@ -184,14 +186,14 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
               {quantity} {quantity === 1 ? "vehicle" : "vehicles"}
             </span>
           </div>
-          {vehicle.campaignName && (
+          {vehicle.campaignName?.trim() && (
             <p className="text-md text-gray-400 mt-0.5">{vehicle.campaignName}</p>
           )}
         </div>
 
-     
+
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-        <span className="text-sm font-bold px-2 py-0.5 rounded-full border bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800">
+          <span className="text-sm font-bold px-2 py-0.5 rounded-full border bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800">
             {unavailableCount} unavailable
           </span>
           {open
@@ -200,49 +202,55 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
         </div>
       </div>
 
-    
+
       {open && (
         <div className="border-t border-gray-100 dark:border-gray-800">
 
-        
+
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
             <div className="flex items-center gap-4 p-4">
-          
+
               <div className="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center flex-shrink-0">
                 <Truck size={24} className="text-white" />
               </div>
 
               <div className="flex-shrink-0">
-                <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">{campaignName}</p>
-                <p className="text-sm text-gray-400 mt-0.5">{clientName}</p>
+                {campaignName?.trim() && (
+                  <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">{campaignName}</p>
+                )}
+                {clientName?.trim() && (
+                  <p className="text-sm text-gray-400 mt-0.5">{clientName}</p>
+                )}
               </div>
 
               <div className="w-px h-10 bg-gray-100 dark:bg-gray-800 flex-shrink-0" />
 
-           
+
               <div className="flex gap-6 flex-wrap flex-1 min-w-0">
-                <div>
-                  <p className="text-sm text-gray-400">Campaign type</p>
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{campaignType}</p>
-                </div>
+                {campaignType?.trim() && (
+                  <div>
+                    <p className="text-sm text-gray-400">Campaign type</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{campaignType}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-sm text-gray-400">Start date</p>
                   <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{fmtDate(startDate)}</p>
                   <p className="text-sm text-gray-400">End · {fmtDate(endDate)}</p>
                 </div>
-                <div>
+                {city?.trim() && (
+                  <div>
+                    <p className="text-sm text-gray-400">City</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{city}</p>
+                  </div>
+                )}
 
-                  <p className="text-sm text-gray-400">City</p>
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{city}</p>
-
-                  {/* <p className="text-xs text-gray-400">Vehicles · {totalVehicles}</p> */}
-                </div>
-
-
-                <div>
-                  <p className="text-sm text-gray-400">State</p>
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{state}</p>
-                </div>
+                {state?.trim() && (
+                  <div>
+                    <p className="text-sm text-gray-400">State</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{state}</p>
+                  </div>
+                )}
 
               </div>
             </div>
@@ -251,7 +259,7 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-           
+
 
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
@@ -283,8 +291,8 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
               </div>
             </div>
 
-            
-             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                 <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
                   Unavailable History
@@ -301,34 +309,28 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
                   .map((h, i) => (
                     <div
                       key={h._id || i}
-                      className={`rounded-xl border p-3 ${
-                        h.status === "unavailable"
-                          ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10"
-                          : "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10"
-                      }`}
+                      className={`rounded-xl border p-3 ${h.status === "unavailable"
+                        ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10"
+                        : "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10"
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                          {h.driverName} — {h.vehicleRegNo}
+                          {h.eventType === "replaced" ? "Vehicle Replaced" : `${h.driverName} — ${h.vehicleRegNo}`}
                         </p>
                         <div className="flex items-center gap-1.5">
-                          {h.eventType === "replaced" && (
+                          {h.eventType === "replaced" ? (
                             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                               Replaced
                             </span>
-                          )}
-                          {h.status === "unavailable" && h.inventoryStatus && (
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                              {h.inventoryStatus}
-                            </span>
-                          )}
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            h.status === "unavailable"
+                          ) : (
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${h.status === "unavailable"
                               ? "bg-red-100 text-red-600"
                               : "bg-emerald-100 text-emerald-600"
-                          }`}>
-                            {h.status === "unavailable" ? "Unavailable" : "Available"}
-                          </span>
+                              }`}>
+                              {h.status === "unavailable" ? "Unavailable" : "Available"}
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -350,6 +352,7 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
                         Reported by {h.reportedBy} · {fmtDatetime(h.reportedAt)}
                       </p>
 
+
                       {h.eventType === "replaced" && (
                         <div className="mt-2 pt-2 border-t border-red-200 dark:border-red-800/50 grid grid-cols-2 gap-2">
                           <div>
@@ -362,13 +365,10 @@ const vehicleEntries = (order.onRoadExecutionArray || []).filter(
                             <p className="text-xs font-mono font-semibold text-gray-700 dark:text-gray-300">{h.replacementVehicleRegNo}</p>
                             <p className="text-xs text-gray-500">{h.replacementDriverName} · {h.replacementDriverPhone}</p>
                           </div>
-                          <p className="col-span-2 text-xs text-gray-400">
-                            Replaced at {fmtDatetime(h.replacedAt)}
-                          </p>
                         </div>
                       )}
 
-                     {h.status === "available" && h.resolvedBy && (
+                      {h.status === "available" && h.resolvedBy && (
                         <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800 space-y-1">
                           {h.resolveDescription && (
                             <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -452,7 +452,7 @@ export default function VehicleUnavailable({ order, onRefresh, vehicleTypes }) {
   }, []);
 
 
-const vehicles = (order.bookingItems || [])
+  const vehicles = (order.bookingItems || [])
     .map((item, originalIdx) => ({ item, originalIdx }))
     .filter(({ item, originalIdx }) => {
       const entries = (order.onRoadExecutionArray || [])
@@ -492,7 +492,7 @@ const vehicles = (order.bookingItems || [])
 
 
 
-      
+
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
           <div>

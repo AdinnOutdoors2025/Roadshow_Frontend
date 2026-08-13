@@ -4,6 +4,77 @@
 // @ts-nocheck
 import { useRef, useState } from "react";
 
+// Tailwind v4's base layer sets colors (incl. its default border-color reset)
+// using oklch(), which html2canvas's CSS color parser can't read — it throws
+// "unsupported color function 'oklch'" and the PDF export fails outright.
+// Route every such value through a real <canvas> 2D context, which normalizes
+// any CSS color (oklch included) to an rgb()/rgba() string when read back.
+const oklchToRgb = (() => {
+  let ctx: CanvasRenderingContext2D | null = null;
+  const cache = new Map<string, string>();
+  return (value: string): string => {
+    if (!value || !value.includes("oklch")) return value;
+    const cached = cache.get(value);
+    if (cached) return cached;
+    if (!ctx) ctx = document.createElement("canvas").getContext("2d");
+    if (!ctx) return value;
+    ctx.fillStyle = "#000";
+    ctx.fillStyle = value;
+    const rgb = ctx.fillStyle;
+    cache.set(value, rgb);
+    return rgb;
+  };
+})();
+
+const OKLCH_RE = /oklch\([^)]*\)/gi;
+
+// Only the properties oklch() can realistically appear in — walking every
+// computed property (~300 per element) across the whole cloned document
+// froze the tab indefinitely (that's why "Generating…" never finished).
+// A bounded list keeps this fast enough to run on every element.
+const COLOR_PROPS = [
+  "color", "background-color", "background-image",
+  "border-top-color", "border-right-color", "border-bottom-color", "border-left-color",
+  "outline-color", "text-decoration-color", "box-shadow", "fill", "stroke",
+];
+
+// oklch() can turn up inside shorthand/gradient/shadow values too (e.g.
+// "linear-gradient(oklch(...), oklch(...))", "box-shadow: 0 0 0 1px oklch(...)")
+// and html2canvas's parser can't handle any of them.
+const inlineOklchColors = (root: Document, scope?: HTMLElement) => {
+  const win = root.defaultView;
+  if (!win) return;
+
+  // Tailwind v4's preflight resets border-color on ::before/::after too
+  // (`*, ::before, ::after { border-color: oklch(...) }`); those pseudo
+  // elements aren't real DOM nodes so the loop below can't reach them —
+  // override with a plain rgb value up front via an injected stylesheet.
+  const style = root.createElement("style");
+  style.textContent = `*, *::before, *::after, *::backdrop { border-color: rgb(229,231,235) !important; }`;
+  root.head.appendChild(style);
+
+  // Scope the walk to just the printed content (plus itself) instead of the
+  // whole cloned document — html2canvas clones the entire page, and this
+  // component's report is a small fraction of it.
+  const container = scope || root.body;
+  const elements: HTMLElement[] = [container, ...Array.from(container.querySelectorAll<HTMLElement>("*"))];
+
+  elements.forEach((el) => {
+    const computed = win.getComputedStyle(el);
+    COLOR_PROPS.forEach((prop) => {
+      const value = computed.getPropertyValue(prop);
+      if (value && value.includes("oklch")) {
+        const converted = value.replace(OKLCH_RE, (m) => oklchToRgb(m));
+        try {
+          el.style.setProperty(prop, converted, computed.getPropertyPriority(prop));
+        } catch {
+          // safe to skip — underlying longhands are covered too.
+        }
+      }
+    });
+  });
+};
+
 const fmtDate = (s?: string) => {
   if (!s) return "—";
   return new Date(s).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
@@ -135,6 +206,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
         windowWidth: 900,
         scrollX: 0,
         scrollY: 0,
+        onclone: (clonedDoc: Document, clonedEl: HTMLElement) => inlineOklchColors(clonedDoc, clonedEl),
       });
 
 

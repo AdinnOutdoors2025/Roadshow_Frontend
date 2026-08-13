@@ -5,7 +5,7 @@
 
 import { getToken } from "../../utils/auth";
 import { CheckCircle2, Mail, RefreshCw, Clock, Send } from "lucide-react";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import API_BASE from "../../../../baseurl";
 import { useEffect, useState } from "react";
 import { SalesOrder } from "./page";
@@ -213,7 +213,6 @@ export default function CodeCreationTab({
 
   return (
     <div className="h-full flex flex-col">
-     <Toaster position="top-right" />
       <div className="flex-shrink-0 flex items-start justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
         <div>
           <p className="text-[13px] font-bold text-red-600 uppercase tracking-widest mb-0.5">

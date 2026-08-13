@@ -39,6 +39,39 @@ const fmtDate = (s) => {
   });
 };
 
+// "Day X of Y" for a campaign's date range, so admin doesn't have to mentally
+// count from fromDate/toDate to know how far into the campaign today is.
+const getCampaignDayInfo = (from, to) => {
+  if (!from || !to) return null;
+  const start = new Date(new Date(from).toDateString());
+  const end = new Date(new Date(to).toDateString());
+  const today = new Date(new Date().toDateString());
+  const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+  if (today < start) {
+    const daysToStart = Math.round((start.getTime() - today.getTime()) / 86400000);
+    return { label: `Starts in ${daysToStart}d`, cls: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" };
+  }
+  if (today > end) {
+    return { label: "Campaign completed", cls: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" };
+  }
+  const dayNum = Math.round((today.getTime() - start.getTime()) / 86400000) + 1;
+  const daysLeft = totalDays - dayNum;
+  const label = daysLeft === 0
+    ? `Last day running (Day ${dayNum} of ${totalDays})`
+    : `${dayNum}${dayNum === 1 ? "st" : dayNum === 2 ? "nd" : dayNum === 3 ? "rd" : "th"} day running · ${daysLeft} day${daysLeft === 1 ? "" : "s"} left`;
+  return { label, cls: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400" };
+};
+
+    const formatINR = (value: string | number) => {
+        const num = parseFloat(String(value).replace(/[^0-9.]/g, ""));
+        if (isNaN(num) || value === "" || value === undefined) return "";
+        return new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 0,
+        }).format(num);
+    };
+
 const fmtDatetime = (s) => {
   if (!s) return "—";
   return new Date(s).toLocaleString("en-IN", {
@@ -63,8 +96,14 @@ const getImageUrl = (url) => {
 // Single source of truth for a registration-number's current status tag,
 // used across the Issue, Extra KM, Driver History and Campaign History
 // panels so chained replacements are never ambiguous.
-function getRegStatus(entry) {
+function getRegStatus(entry, unavailableHistory = []) {
   if (!entry) return { label: "—", cls: "bg-gray-100 text-gray-400 border-gray-200" };
+  const wasReplaced = (unavailableHistory || []).some(
+    (h) => h.eventType === "replaced" && h.vehicleRegNo === entry.vehicleRegistrationNumber
+  );
+  if (wasReplaced) {
+    return { label: "Replaced", cls: "bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800" };
+  }
   if (entry.entryStatus === "removed") {
     return { label: "Released", cls: "bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600" };
   }
@@ -77,8 +116,8 @@ function getRegStatus(entry) {
   return { label: "Assigned", cls: "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800" };
 }
 
-function RegStatusBadge({ entry, className = "" }) {
-  const { label, cls } = getRegStatus(entry);
+function RegStatusBadge({ entry, unavailableHistory = [], className = "" }) {
+  const { label, cls } = getRegStatus(entry, unavailableHistory);
   return (
     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border leading-none ${cls} ${className}`}>
       {label}
@@ -105,6 +144,17 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const [addVehicleModalOpen, setAddVehicleModalOpen] = useState(false);
   const [bookingStatusMap, setBookingStatusMap] = useState({});
   const [bookingStatusLoading, setBookingStatusLoading] = useState(false);
+
+  // While a refresh (GPS + booking-status) is in flight, the stats/live-status/
+  // route/issue/extra-KM sections below would briefly show stale or zeroed-out
+  // values — hide them behind a loading state instead until both calls land.
+  const isRefreshing = gpsLoading || bookingStatusLoading;
+  const RefreshSkeleton = () => (
+    <div className="flex items-center justify-center gap-2 py-10 text-gray-400">
+      <Loader2 size={18} className="animate-spin" />
+      <span className="text-sm">Refreshing vehicle data…</span>
+    </div>
+  );
 
   const cleanReg = (r) => (r || "").replace(/\s+/g, "").toUpperCase();
 
@@ -182,7 +232,19 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const vehicleIssues = (order.onRoadIssues || []).filter(
     (iss) => iss.vehicleIndex === vehicleIndex
   );
-  const openIssues = vehicleIssues.filter((iss) => iss.status === "open");
+  // A vehicle that's been replaced/marked unavailable is no longer the
+  // team's active concern — its still-"open" issue shouldn't keep inflating
+  // the "Open issues" stat card / header badge forever. Only count issues
+  // against entries that are currently active (not removed, not unavailable).
+  const activeEntriesForVehicle = (order.onRoadExecutionArray || []).filter(
+    (e) => e.vehicleIndex === vehicleIndex && e.entryStatus !== "removed" && !e.unavailableStatus
+  );
+  const openIssues = vehicleIssues.filter((iss) => {
+    if (iss.status !== "open") return false;
+    return activeEntriesForVehicle.some((e) =>
+      iss.entryId ? String(iss.entryId) === String(e._id) : iss.vehicleRegNo === e.vehicleRegistrationNumber
+    );
+  });
   const resolvedIssues = vehicleIssues.filter((iss) => iss.status === "resolved");
 
   const vehicles = (order.bookingItems || [])
@@ -332,9 +394,11 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
             <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">
               {getVehicleTypeName(vehicle.vehicleType)}
             </p>
-            <span className="text-[15px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">
-              {vehicle.campaignType || "—"}
-            </span>
+            {vehicle.campaignType?.trim() && (
+              <span className="text-[15px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">
+                {vehicle.campaignType}
+              </span>
+            )}
             {isVehicleOnRoad && (
               <span className="text-[14px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
                 On Road
@@ -368,8 +432,16 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               <Truck size={14} />
               {quantity} {quantity === 1 ? "vehicle" : "vehicles"}
             </span>
+            {(() => {
+              const dayInfo = getCampaignDayInfo(vehicle.fromDate, vehicle.toDate);
+              return dayInfo && (
+                <span className={`text-[13px] font-semibold px-2 py-0.5 rounded-full ${dayInfo.cls}`}>
+                  {dayInfo.label}
+                </span>
+              );
+            })()}
           </div>
-          {vehicle.campaignName && (
+          {vehicle.campaignName?.trim() && (
             <p className="text-md text-gray-400 mt-0.5">{vehicle.campaignName}</p>
           )}
         </div>
@@ -398,8 +470,12 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
               {/* Name & client */}
               <div className="flex-shrink-0">
-                <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">{campaignName}</p>
-                <p className="text-sm text-gray-400 mt-0.5">{clientName}</p>
+                {campaignName?.trim() && (
+                  <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">{campaignName}</p>
+                )}
+                {clientName?.trim() && (
+                  <p className="text-sm text-gray-400 mt-0.5">{clientName}</p>
+                )}
               </div>
 
               {/* Divider */}
@@ -407,23 +483,29 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
               {/* Meta grid */}
               <div className="flex gap-6 flex-wrap flex-1 min-w-0">
-                <div>
-                  <p className="text-sm text-gray-400">Campaign type</p>
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{campaignType}</p>
-                </div>
+                {campaignType && (
+                  <div>
+                    <p className="text-sm text-gray-400">Campaign type</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{campaignType}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-sm text-gray-400">Start date</p>
                   <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{fmtDate(startDate)}</p>
                   <p className="text-sm text-gray-400">End · {fmtDate(endDate)}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-400">City</p>
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{city}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">State</p>
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{state}</p>
-                </div>
+                {city && (
+                  <div>
+                    <p className="text-sm text-gray-400">City</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{city}</p>
+                  </div>
+                )}
+                {state && (
+                  <div>
+                    <p className="text-sm text-gray-400">State</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{state}</p>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={(e) => {
@@ -488,13 +570,14 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
           </div>
 
           {/* ── Stats Row ── */}
+          {isRefreshing ? <RefreshSkeleton /> : (
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
             <StatCard
               icon={Truck}
               iconBg="bg-blue-50 dark:bg-blue-900/20"
               iconColor="text-blue-500"
               label="Vehicles live"
-              value={`${liveCount} / ${liveStatusEntries.length}`}
+              value={`${liveStatusEntries.length} / ${quantity}`}
               subColor={mismatchVehicleCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}
             />
 
@@ -503,8 +586,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               iconBg="bg-emerald-50 dark:bg-emerald-900/20"
               iconColor="text-emerald-500"
               label="Route covered"
-              value="68%"
-              sub={<><TrendingUp size={11} /> Today's progress</>}
+              value="0%"
+              // sub={<><TrendingUp size={11} /> Today's progress</>}
               subColor="text-emerald-600 dark:text-emerald-400"
             />
 
@@ -583,7 +666,9 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               )}
             </div>
           </div>
+          )}
 
+          {isRefreshing ? null : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
@@ -699,6 +784,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   <DriverHistoryPanel
                     vehicleEntries={allVehicleEntriesIncludingRemoved}
                     driverHistory={order.onRoadDriverHistory || []}
+                    unavailableHistory={order.onRoadUnavailableHistory || []}
                     vehicleIndex={vehicleIndex}
                   />
                 ) : (
@@ -821,8 +907,10 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               </div>
             </div>
           </div>
+          )}
 
           {/* ── Bottom Row ── */}
+          {isRefreshing ? null : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div ref={issueRef} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
@@ -861,7 +949,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                           V{i + 1}
                         </div>
                         <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-                        <RegStatusBadge entry={entry} />
+                        <RegStatusBadge entry={entry} unavailableHistory={order.onRoadUnavailableHistory || []} />
                         {entryOpenCount > 0 && (
                           <span className="ml-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
                             {entryOpenCount}
@@ -988,7 +1076,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                           V{i + 1}
                         </div>
                         <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-                        <RegStatusBadge entry={entry} />
+                        <RegStatusBadge entry={entry} unavailableHistory={order.onRoadUnavailableHistory || []} />
                       </button>
                     );
                   })}
@@ -1040,7 +1128,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                             {regNo} {isCurrentReg ? "(current)" : "(old)"}
                           </span>
                           <span className="text-xs text-gray-400">
-                            {groupTotalKm} km · {groupTotalHrs} hrs · ₹{groupTotalCost.toFixed(2)}
+                            {groupTotalKm} km · {groupTotalHrs} hrs · {formatINR(groupTotalCost)}
                           </span>
                         </div>
 
@@ -1061,7 +1149,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                                 </p>
                               </div>
                               <span className="text-sm font-bold text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
-                                ₹{(e.totalCost || 0).toFixed(2)}
+                                {formatINR(e.totalCost)}
                               </span>
                             </div>
 
@@ -1078,8 +1166,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                                 </svg>
                                 Extra Hours: <b className="text-gray-800 dark:text-gray-200">{e.extraHours} hrs</b>
                               </span>
-                              <span className="pl-4.5">KM cost: ₹{(e.extraKmCost || 0).toFixed(2)}</span>
-                              <span className="pl-4.5">Hour cost: ₹{(e.extraHourCost || 0).toFixed(2)}</span>
+                           <span className="pl-4.5">KM cost: {formatINR(e.extraKmCost)}</span>
+                          <span className="pl-4.5">Hour cost: {formatINR(e.extraHourCost)}</span>
                             </div>
 
                             <div className="flex items-center justify-between flex-wrap gap-1.5 pt-2 border-t border-gray-50 dark:border-gray-800">
@@ -1098,12 +1186,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                                 })}
                               </span>
                             </div>
-                            <p className="mt-1.5 text-[11px] text-gray-400 leading-snug">
-                              {e.distributionMethod === "split"
-                                ? "Split: total divided evenly across each day in this range."
-                                : "Daily: this full amount applies on every day in this range."}
-                              {" "}Shown cost is the flat package-rate reference — the actual amount billed per day (see Campaign Calculator → Daily Timeline) is lower on days where the purchased Extra KM/Hours pool still has balance.
-                            </p>
+                           
                           </div>
                         ))}
                       </div>
@@ -1113,6 +1196,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               </div>
             </div>
           </div>
+          )}
         </div>
       )}
 
@@ -1150,7 +1234,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   );
 }
 
-function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
+function DriverHistoryPanel({ vehicleEntries, driverHistory, unavailableHistory = [], vehicleIndex }) {
   const [activeVehicleTab, setActiveVehicleTab] = useState(0);
 
   const fmtDt = (s) => {
@@ -1194,7 +1278,7 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
                 V{i + 1}
               </div>
               <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-              <RegStatusBadge entry={entry} />
+              <RegStatusBadge entry={entry} unavailableHistory={unavailableHistory} />
             </button>
           ))}
         </div>
@@ -1210,7 +1294,7 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, vehicleIndex }) {
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{activeEntry.driverName || "—"}</p>
             <p className="text-xs text-gray-400 font-mono">{activeEntry.vehicleRegistrationNumber} · {activeEntry.driverPhone}</p>
           </div>
-          <RegStatusBadge entry={activeEntry} className="!text-xs !px-2 !py-0.5 flex-shrink-0" />
+          <RegStatusBadge entry={activeEntry} unavailableHistory={unavailableHistory} className="!text-xs !px-2 !py-0.5 flex-shrink-0" />
         </div>
       )}
 

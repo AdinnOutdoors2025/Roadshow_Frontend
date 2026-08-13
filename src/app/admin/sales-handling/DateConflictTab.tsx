@@ -34,21 +34,24 @@ const rankLabel = (rank: number) => {
     return `${rank}th`;
 };
 
-const getStatusKey = (c: ConflictEntry): "closedLost" | "closedWon" | "inProgress" => {
+// NOTE: the sales pipeline stage KEY "closedWon" is the "Order Confirmation"
+// stage (see SALES_STAGES in page.tsx) — not the real deal-won stage
+// ("salesFinalClosedWon"). Don't rename this key; it's a legacy/misleading
+// name kept as-is on the backend.
+// Once an order is confirmed it stays "confirmed" for Date Conflict purposes
+// even as it moves further along (Project Code Creation, Closed Won) — only
+// Closed Lost should ever pull it back out of this state.
+const CONFIRMED_OR_BEYOND = ["closedWon", "projectCodeCreation", "salesFinalClosedWon"];
+const getStatusKey = (c: ConflictEntry): "closedLost" | "orderConfirmation" | "inProgress" => {
     if (c.pipelineStatus === "closedLost" || c.salesPipelineStatus === "closedLost") return "closedLost";
-    if (c.pipelineStatus === "closedWon" || c.salesPipelineStatus === "closedWon") return "closedWon";
+    if (CONFIRMED_OR_BEYOND.includes(c.salesPipelineStatus)) return "orderConfirmation";
     return "inProgress";
 };
 
 const getDealStatus = (c: ConflictEntry) => {
     const key = getStatusKey(c);
     if (key === "closedLost") return { label: "Closed Lost", cls: "bg-red-100 text-red-700 border-red-200" };
-    if (key === "closedWon") {
-        if (c.pipelineStatus === "closedWon") {
-            return { label: "Closed Won", cls: "bg-emerald-100 text-emerald-700 border-emerald-200" };
-        }
-        return { label: "Closed Won (Sales)", cls: "bg-emerald-50 text-emerald-600 border-emerald-200" };
-    }
+    if (key === "orderConfirmation") return { label: "Order Confirmation", cls: "bg-indigo-100 text-indigo-700 border-indigo-200" };
     return { label: "In Progress", cls: "bg-amber-100 text-amber-700 border-amber-200" };
 };
 
@@ -110,10 +113,12 @@ const BOOKING_MAX_DATE = `${_currentYear + 2}-12-31`;
 const CREATED_MIN_DATE = `${_currentYear - 2}-01-01`;
 
 export default function DateConflictTab({
-    order, onOpenConflictOrder,
+    order, onOpenConflictOrder, onClosedLostConflictOrder, onEditConflictOrder,
 }: {
     order: SalesOrder;
     onOpenConflictOrder?: (orderObjectId: string) => void;
+    onClosedLostConflictOrder?: (orderObjectId: string) => void;
+    onEditConflictOrder?: (orderObjectId: string) => void;
 }) {
     const { vehicleTypes, fetchVehicleTypes } = useVehicle();
     const [loading, setLoading] = useState(true);
@@ -122,7 +127,7 @@ export default function DateConflictTab({
 
     // ── Filters ──────────────────────────────────────────────────
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState<"" | "inProgress" | "closedWon" | "closedLost">("");
+    const [statusFilter, setStatusFilter] = useState<"" | "inProgress" | "orderConfirmation" | "closedLost">("");
     const [bookingFrom, setBookingFrom] = useState("");
     const [bookingTo, setBookingTo] = useState("");
     const [createdFrom, setCreatedFrom] = useState("");
@@ -188,14 +193,14 @@ export default function DateConflictTab({
             // Status filter
             if (statusFilter && getStatusKey(c) !== statusFilter) return false;
 
-            // Booking dates filter (overlap logic)
+            // Booking dates filter (entry must be fully inside the selected range)
             if (bookingFrom) {
                 const bFrom = new Date(bookingFrom + "T00:00:00");
-                if (new Date(c.toDate) < bFrom) return false;
+                if (new Date(c.fromDate) < bFrom) return false;
             }
             if (bookingTo) {
                 const bTo = new Date(bookingTo + "T23:59:59");
-                if (new Date(c.fromDate) > bTo) return false;
+                if (new Date(c.toDate) > bTo) return false;
             }
 
             // Created At filter
@@ -211,6 +216,14 @@ export default function DateConflictTab({
             return true;
         });
     }, [activeGroup, search, statusFilter, bookingFrom, bookingTo, createdFrom, createdTo]);
+
+    // Sum of the "Qty" column across the currently filtered table rows.
+    const totalOrderVehicleCount = filteredEntries.reduce((sum, c) => sum + (c.quantity || 1), 0);
+
+    // If any order in this group already reached Order Confirmation, the
+    // other still-pending (In Progress) orders need a direct Edit/Closed
+    // Lost action instead of an ambiguous status label.
+    const hasConfirmedOrder = (activeGroup?.entries || []).some((c) => getStatusKey(c) === "orderConfirmation");
 
     // Filter maarina page 1 ku reset pannurom
     useEffect(() => {
@@ -331,7 +344,7 @@ export default function DateConflictTab({
                             {activeGroup.availability.error ? (
                                 <p className="text-xs text-gray-500">{activeGroup.availability.error}</p>
                             ) : (
-                                <div className="grid grid-cols-3 gap-2 text-center">
+                                <div className="grid grid-cols-4 gap-2 text-center">
                                     <div className="rounded-lg bg-white/60 dark:bg-black/10 py-2">
                                         <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
                                             {activeGroup.availability.totalFleet ?? "—"}
@@ -351,7 +364,13 @@ export default function DateConflictTab({
                                         <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
                                             {activeGroup.availability.requiredQuantity}
                                         </p>
-                                        <p className="text-[11px] text-gray-500">Order Vehicle Count</p>
+                                        <p className="text-[11px] text-gray-500">This Order Vehicle Count</p>
+                                    </div>
+                                    <div className="rounded-lg bg-white/60 dark:bg-black/10 py-2">
+                                        <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
+                                            {totalOrderVehicleCount}
+                                        </p>
+                                        <p className="text-[11px] text-gray-500">Total Order Vehicle Count</p>
                                     </div>
                                 </div>
                             )}
@@ -388,9 +407,8 @@ export default function DateConflictTab({
                                 className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
                             >
                                 <option value="">All Status</option>
+                                <option value="orderConfirmation">Order Confirmation</option>
                                 <option value="inProgress">In Progress</option>
-                                <option value="closedWon">Closed Won</option>
-                                <option value="closedLost">Closed Lost</option>
                             </select>
 
                             {activeFilterCount > 0 && (
@@ -478,7 +496,6 @@ export default function DateConflictTab({
                                         <th className="text-left px-3 py-2.5 text-xs font-bold text-gray-500 uppercase whitespace-nowrap">Customer</th>
                                         <th className="text-left px-3 py-2.5 text-xs font-bold text-gray-500 uppercase whitespace-nowrap">Status</th>
                                         <th className="text-left px-3 py-2.5 text-xs font-bold text-gray-500 uppercase whitespace-nowrap">Booking Dates</th>
-                                        <th className="text-left px-3 py-2.5 text-xs font-bold text-gray-500 uppercase whitespace-nowrap">Vehicle Assigned</th>
                                         <th className="text-left px-3 py-2.5 text-xs font-bold text-gray-500 uppercase whitespace-nowrap">Created At</th>
                                         <th className="text-left px-3 py-2.5 text-xs font-bold text-gray-500 uppercase whitespace-nowrap">Vehicle Model</th>
                                     </tr>
@@ -487,7 +504,7 @@ export default function DateConflictTab({
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                                     {paginatedEntries.length === 0 ? (
                                         <tr>
-                                            <td colSpan={8} className="text-center py-10 text-gray-400 text-sm">
+                                            <td colSpan={7} className="text-center py-10 text-gray-400 text-sm">
                                                 No matching orders for the selected filters
                                             </td>
                                         </tr>
@@ -531,6 +548,33 @@ export default function DateConflictTab({
                                                 </td>
                                                 <td className="px-3 py-2.5 align-top whitespace-nowrap">
                                                     {(() => {
+                                                        const key = getStatusKey(c);
+                                                        // Once one order in this group is confirmed, the other
+                                                        // still-pending orders can't stay ambiguous — give the
+                                                        // sales team a direct action instead of a status label.
+                                                        if (key === "inProgress" && hasConfirmedOrder) {
+                                                            return (
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="inline-block w-fit text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
+                                                                        In Progress
+                                                                    </span>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                    <button
+                                                                        onClick={() => onEditConflictOrder?.(c.orderObjectId)}
+                                                                        className="text-[11px] font-semibold px-2 py-1 rounded-md border border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20 whitespace-nowrap"
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => onClosedLostConflictOrder?.(c.orderObjectId)}
+                                                                        className="text-[11px] font-semibold px-2 py-1 rounded-md border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 whitespace-nowrap"
+                                                                    >
+                                                                        Closed Lost
+                                                                    </button>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        }
                                                         const status = getDealStatus(c);
                                                         return (
                                                             <span className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full border ${status.cls}`}>
@@ -541,40 +585,6 @@ export default function DateConflictTab({
                                                 </td>
                                                 <td className="px-3 py-2.5 align-top text-gray-600 dark:text-gray-300 whitespace-nowrap">
                                                     {fmtDate(c.fromDate)} → {fmtDate(c.toDate)}
-                                                </td>
-                                                <td className="px-3 py-2.5 align-top">
-                                                    {c.isReserved ? (
-                                                        <div className="flex flex-col gap-1.5 max-h-[200px] overflow-y-auto pr-1">
-                                                            {c.reservedVehicles.map((rv, rvIdx) => (
-                                                                <div
-                                                                    key={rvIdx}
-                                                                    className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10 px-2 py-1.5 whitespace-nowrap flex-shrink-0"
-                                                                >
-                                                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500 text-white">
-                                                                            Reserved
-                                                                        </span>
-                                                                        <span className="font-mono text-xs font-semibold text-gray-800 dark:text-gray-200">
-                                                                            {rv.vehicleRegistrationNumber || "—"}
-                                                                        </span>
-                                                                    </div>
-                                                                    {rv.driverName && (
-                                                                        <p className="text-[12px] text-gray-500 mt-0.5">Driver: {rv.driverName}</p>
-                                                                    )}
-                                                                    {rv.reservedAt && (
-                                                                        <p className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
-                                                                            <Clock size={10} className="flex-shrink-0" />
-                                                                            Reserved on {fmtDatetime(rv.reservedAt)}
-                                                                        </p>
-                                                                    )}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 whitespace-nowrap">
-                                                            Not Booked Yet
-                                                        </span>
-                                                    )}
                                                 </td>
                                                 <td className="px-3 py-2.5 align-top text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                                     <span className="flex items-center gap-1">
