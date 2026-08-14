@@ -243,7 +243,7 @@ export function Process() {
         bg-transparent
         py-16
         md:py-24
-        lg:py-28
+        lg:py-0
       "
     >
       {/* <div
