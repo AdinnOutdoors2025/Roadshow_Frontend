@@ -1012,8 +1012,9 @@ export default function CodeCreationTab({
                         value={projectCode}
                         placeholder="e.g. PROJ-2024-001"
                         onChange={(e) => {
-                          setProjectCode(e.target.value);
-                          if (!e.target.value.trim()) setProjectCodeError("Project code is required");
+                          const upper = e.target.value.toUpperCase();
+                          setProjectCode(upper);
+                          if (!upper.trim()) setProjectCodeError("Project code is required");
                           else setProjectCodeError("");
                         }}
                         className={`w-full border rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 transition-all ${projectCodeError
@@ -1037,8 +1038,9 @@ export default function CodeCreationTab({
                         value={estimationCode}
                         placeholder="e.g. EST-2024-001"
                         onChange={(e) => {
-                          setEstimationCode(e.target.value);
-                          if (!e.target.value.trim()) setEstimationCodeError("Estimation code is required");
+                          const upper = e.target.value.toUpperCase();
+                          setEstimationCode(upper);
+                          if (!upper.trim()) setEstimationCodeError("Estimation code is required");
                           else setEstimationCodeError("");
                         }}
                         className={`w-full border rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 transition-all ${estimationCodeError

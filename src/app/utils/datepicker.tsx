@@ -68,8 +68,14 @@ export default function DatePicker({
         const d = new Date(value + "T00:00:00");
         setCurYear(d.getFullYear());
         setCurMonth(d.getMonth());
-      } else if (minDate) {
-        const d = new Date(minDate + "T00:00:00");
+      } else {
+        // No value selected yet — open on today's month/year (clamped into
+        // the allowed range) instead of always jumping to minDate. Jumping
+        // to minDate meant a wide min/max range (e.g. "current year - 2")
+        // opened on a stale year far from today, confusing the admin.
+        let d = today;
+        if (d > effectiveMaxDate) d = effectiveMaxDate;
+        if (d < effectiveMinDate) d = effectiveMinDate;
         setCurYear(d.getFullYear());
         setCurMonth(d.getMonth());
       }

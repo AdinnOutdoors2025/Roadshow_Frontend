@@ -98,6 +98,7 @@ interface OrderPDFViewProps {
   order: Order;
   onClose: () => void;
   vehicleTypes: any;
+  resolvedOrderStatus?: string;
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -114,6 +115,15 @@ const fmtDate = (d?: string): string => {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+  });
+};
+
+const fmtDateOnly = (d?: string): string => {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
   });
 };
 
@@ -570,7 +580,7 @@ const PRINT_STYLES = `
 `;
 
 // ─── Main Component ────────────────────────────────────────────────────────────
-export default function OrderPDFView({ order, onClose, vehicleTypes }: OrderPDFViewProps) {
+export default function OrderPDFView({ order, onClose, vehicleTypes, resolvedOrderStatus }: OrderPDFViewProps) {
   const printRef = useRef<HTMLDivElement>(null);
 
   const bookingItems = order.bookingItems || [];
@@ -586,8 +596,6 @@ export default function OrderPDFView({ order, onClose, vehicleTypes }: OrderPDFV
   const grandTotal = taxable + gstAmt;
   const totalAdvance = paymentLogs.reduce((s, l) => s + (l.advancePayment || 0), 0);
   const balanceDue = grandTotal - totalAdvance;
-
-  const pipelineLabel = PIPELINE_LABELS[order.pipelineStatus] || order.pipelineStatus;
 
   const getVehicleTypeName = (vehicleTypeId: string) => {
     if (!vehicleTypeId || !vehicleTypes) return '';
@@ -683,13 +691,7 @@ export default function OrderPDFView({ order, onClose, vehicleTypes }: OrderPDFV
                     <div className="pdf-stat-card">
                       <div className="pdf-stat-label">Order Status</div>
                       <div className="pdf-stat-value" style={{ fontSize: '14px' }}>
-                        {order.orderStatus || "—"}
-                      </div>
-                    </div>
-                    <div className="pdf-stat-card">
-                      <div className="pdf-stat-label">Pipeline Stage</div>
-                      <div className="pdf-stat-value" style={{ fontSize: '13px' }}>
-                        {pipelineLabel}
+                        {resolvedOrderStatus || order.orderStatus || "—"}
                       </div>
                     </div>
                   </div>
@@ -765,14 +767,21 @@ export default function OrderPDFView({ order, onClose, vehicleTypes }: OrderPDFV
                           )}
                         </div>
                       </div>
-                      {order.isAdminCreated && (
-                        <div className="pdf-info-item">
-                          <div className="pdf-info-label">Order Source</div>
-                          <div className="pdf-info-value">
-                            <span className="pdf-badge badge-purple">Admin Created</span>
-                          </div>
+                      <div className="pdf-info-item">
+                        <div className="pdf-info-label">Order Source</div>
+
+                        <div className="pdf-info-value">
+                          {order.isAdminCreated ? (
+                            <span className="pdf-badge badge-purple">
+                              Admin Created
+                            </span>
+                          ) : (
+                            <span className="pdf-badge badge-purple">
+                              Client Created
+                            </span>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -834,33 +843,37 @@ export default function OrderPDFView({ order, onClose, vehicleTypes }: OrderPDFV
                                   <div className="detail-value">{item.bookingFor}</div>
                                 </div>
                               )}
-                              <div className="detail-item">
-                                <div className="detail-label">Campaign Type</div>
-                                <div className="detail-value">{campaignLabel}</div>
-                              </div>
+                              {campaignLabel !== "—" && (
+                                <div className="detail-item">
+                                  <div className="detail-label">Campaign Type</div>
+                                  <div className="detail-value">{campaignLabel}</div>
+                                </div>
+                              )}
                               {item.campaignName && (
                                 <div className="detail-item">
                                   <div className="detail-label">Campaign Name</div>
                                   <div className="detail-value">{item.campaignName}</div>
                                 </div>
                               )}
-                              <div className="detail-item">
-                                <div className="detail-label">State / City</div>
-                                <div className="detail-value">{location}</div>
-                              </div>
-                              <div className="detail-item">
-                                <div className="detail-label">Campaign Location</div>
-                                <div className="detail-value">
-                                  {item.campaignLocation ||
-                                    (item.fromLocation && item.toLocation
-                                      ? `${item.fromLocation} → ${item.toLocation}`
-                                      : "—")}
+                              {location !== "—" && (
+                                <div className="detail-item">
+                                  <div className="detail-label">State / City</div>
+                                  <div className="detail-value">{location}</div>
                                 </div>
-                              </div>
+                              )}
+                              {(item.campaignLocation || (item.fromLocation && item.toLocation)) && (
+                                <div className="detail-item">
+                                  <div className="detail-label">Campaign Location</div>
+                                  <div className="detail-value">
+                                    {item.campaignLocation ||
+                                      `${item.fromLocation} → ${item.toLocation}`}
+                                  </div>
+                                </div>
+                              )}
                               <div className="detail-item" style={{ gridColumn: 'span 2' }}>
                                 <div className="detail-label">Duration</div>
                                 <div className="detail-value">
-                                  {fmtDate(item.fromDate)} → {fmtDate(item.toDate)} ({item.totalDays} days)
+                                  {fmtDateOnly(item.fromDate)} → {fmtDateOnly(item.toDate)} ({item.totalDays} days)
                                 </div>
                               </div>
                               {item.extraKm > 0 && (

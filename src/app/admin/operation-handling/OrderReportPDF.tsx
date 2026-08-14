@@ -163,14 +163,22 @@ const S = {
   grid3: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px 16px" } as React.CSSProperties,
   grid4: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "8px" } as React.CSSProperties,
 
-  fieldLabel: { fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.5px", color: "#9ca3af", marginBottom: "2px" } as React.CSSProperties,
-  fieldValue: { fontSize: "12px", fontWeight: 600, color: "#111827" } as React.CSSProperties,
+  // fieldLabel: { fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.5px", color: "#9ca3af", marginBottom: "2px" } as React.CSSProperties,
+  // fieldValue: { fontSize: "12px", fontWeight: 600, color: "#111827" } as React.CSSProperties,
 
-  table: { width: "100%", borderCollapse: "collapse" as const, fontSize: "11px" } as React.CSSProperties,
-  th: { background: "#f3f4f6", color: "#6b7280", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.5px", padding: "7px 10px", textAlign: "left" as const, borderBottom: "1px solid #e5e7eb" } as React.CSSProperties,
-  td: { padding: "7px 10px", borderBottom: "1px solid #f3f4f6", color: "#374151", verticalAlign: "top" as const } as React.CSSProperties,
-  tdRight: { padding: "7px 10px", borderBottom: "1px solid #f3f4f6", color: "#374151", verticalAlign: "top" as const, textAlign: "right" as const } as React.CSSProperties,
+  // table: { width: "100%", borderCollapse: "collapse" as const, fontSize: "11px" } as React.CSSProperties,
+  // th: { background: "#f3f4f6", color: "#6b7280", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.5px", padding: "7px 10px", textAlign: "left" as const, borderBottom: "1px solid #e5e7eb" } as React.CSSProperties,
+  // td: { padding: "7px 10px", borderBottom: "1px solid #f3f4f6", color: "#374151", verticalAlign: "top" as const } as React.CSSProperties,
+  // tdRight: { padding: "7px 10px", borderBottom: "1px solid #f3f4f6", color: "#374151", verticalAlign: "top" as const, textAlign: "right" as const } as React.CSSProperties,
 
+  // ── S object: bump these font sizes up ──
+fieldLabel: { fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.5px", color: "#9ca3af", marginBottom: "2px" } as React.CSSProperties,
+fieldValue: { fontSize: "13px", fontWeight: 600, color: "#111827" } as React.CSSProperties,
+
+table: { width: "100%", borderCollapse: "collapse" as const, fontSize: "12.5px" } as React.CSSProperties,
+th: { background: "#f3f4f6", color: "#6b7280", fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.5px", padding: "7px 10px", textAlign: "left" as const, borderBottom: "1px solid #e5e7eb" } as React.CSSProperties,
+td: { padding: "7px 10px", borderBottom: "1px solid #f3f4f6", color: "#374151", verticalAlign: "top" as const, fontSize: "12px" } as React.CSSProperties,
+tdRight: { padding: "7px 10px", borderBottom: "1px solid #f3f4f6", color: "#374151", verticalAlign: "top" as const, textAlign: "right" as const, fontSize: "12px" } as React.CSSProperties,
   divider: { border: "none", borderTop: "1px solid #e5e7eb", margin: "12px 0" } as React.CSSProperties,
 
   // vehicleCard: { border: "1px solid #e5e7eb", borderRadius: "8px", marginBottom: "12px", overflow: "hidden" } as React.CSSProperties,

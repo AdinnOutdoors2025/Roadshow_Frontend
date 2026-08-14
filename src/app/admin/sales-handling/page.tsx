@@ -12,7 +12,7 @@ import { User, Clock, TrendingUp, AlertCircle, Search, X, SlidersHorizontal } fr
 import SalesDetailDrawer from "./SalesDetailDrawer";
 import API_BASE from "../../../../baseurl";
 import OrderDatePicker from "@/app/utils/OrderDatePicker";
-import "../admin_css/admin.css";
+// import "../admin_css/admin.css";
 import {
   FiClipboard,
   FiSearch,

@@ -171,16 +171,6 @@ function buildDefaultLineItems(order, vehicleTypes) {
       qty: vehicleQty,
       rate: rentalRatePerVehicle,
     });
-    if (b.rtoCharges) {
-      items.push({
-        id: uid(),
-        groupLabel,
-        description: `RTO Charges (${vehicleQty} Vehicle${vehicleQty > 1 ? "s" : ""})`,
-        hsnSac: "998361",
-        qty: vehicleQty,
-        rate: b.rtoCharges,
-      });
-    }
     if (b.promoterChargePerDay) {
       const promoterQty = b.promoterQuantity || 1;
       items.push({

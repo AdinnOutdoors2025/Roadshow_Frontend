@@ -175,6 +175,15 @@ export default function OrderDetailDrawer({
         });
     }
 
+    function formatDateOnly(d: string) {
+        if (!d) return "—";
+        return new Date(d).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        });
+    }
+
 
     const getImageUrl = (path: string) => {
         if (!path) return "";
@@ -376,7 +385,7 @@ export default function OrderDetailDrawer({
                                 )}
 
                                 {/* Order Source - Conditional */}
-                                {order.isAdminCreated && (
+                                {/* {order.isAdminCreated && (
                                     <div className="flex items-start gap-3 text-sm">
                                         <HiOutlineBadgeCheck className="w-5 h-5 text-gray-400 mt-0.5" />
                                         <div className="flex-1 min-w-0">
@@ -386,7 +395,26 @@ export default function OrderDetailDrawer({
                                             </span>
                                         </div>
                                     </div>
-                                )}
+                                )} */}
+                                <div className="flex items-start gap-3 text-sm">
+    <HiOutlineBadgeCheck className="w-5 h-5 text-gray-400 mt-0.5" />
+
+    <div className="flex-1 min-w-0">
+        <span className="text-gray-500 block text-sm mb-0.5">
+            Order Source
+        </span>
+
+        {order.isAdminCreated ? (
+            <span className="text-xs font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 px-2 py-1 rounded inline-block">
+                Admin Created
+            </span>
+        ) : (
+            <span className="text-xs font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded inline-block">
+                Client Created
+            </span>
+        )}
+    </div>
+</div>
                             </div>
                         </div>
                     </section>
@@ -456,7 +484,7 @@ export default function OrderDetailDrawer({
 
                                 const durationLabel =
                                     item.fromDate && item.toDate
-                                        ? `${formatDate(item.fromDate)} → ${formatDate(item.toDate)}`
+                                        ? `${formatDateOnly(item.fromDate)} → ${formatDateOnly(item.toDate)}`
                                         : "—";
 
                                 return (
@@ -495,24 +523,28 @@ export default function OrderDetailDrawer({
                                         <div className="p-4 space-y-4">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {[
-                                                    {
-                                                        icon: (
-                                                            <HiOutlineTag className="w-4 h-4 text-gray-400" />
-                                                        ),
-                                                        label: "Campaign",
-                                                        value:
-                                                            item.campaignType === "Other"
-                                                                ? item.otherCampaignType || "Other"
-                                                                : item.campaignType || "—",
-                                                    },
-                                                    {
-                                                        icon: (
-                                                            <HiOutlineTag className="w-4 h-4 text-gray-400" />
-                                                        ),
-                                                        label: "Campaign Name",
-                                                        value:
-                                                            item.campaignName
-                                                    },
+                                                    (item.campaignType === "Other" ? item.otherCampaignType : item.campaignType)
+                                                        ? {
+                                                            icon: (
+                                                                <HiOutlineTag className="w-4 h-4 text-gray-400" />
+                                                            ),
+                                                            label: "Campaign",
+                                                            value:
+                                                                item.campaignType === "Other"
+                                                                    ? item.otherCampaignType || "Other"
+                                                                    : item.campaignType,
+                                                        }
+                                                        : null,
+                                                    item.campaignName
+                                                        ? {
+                                                            icon: (
+                                                                <HiOutlineTag className="w-4 h-4 text-gray-400" />
+                                                            ),
+                                                            label: "Campaign Name",
+                                                            value:
+                                                                item.campaignName
+                                                        }
+                                                        : null,
                                                     {
                                                         icon: (
                                                             <HiOutlineCalendar className="w-4 h-4 text-gray-400" />
@@ -523,27 +555,29 @@ export default function OrderDetailDrawer({
                                                                 ? `${durationLabel} (${item.totalDays} Days Total)`
                                                                 : "—",
                                                     },
-                                                    {
-                                                        icon: (
-                                                            <HiOutlineLocationMarker className="w-4 h-4 text-gray-400" />
-                                                        ),
-                                                        label: "State / City",
-                                                        value:
-                                                            [item.state, item.city]
-                                                                .filter(Boolean)
-                                                                .join(" / ") || "—",
-                                                    },
-                                                    {
-                                                        icon: (
-                                                            <HiOutlineMap className="w-4 h-4 text-gray-400" />
-                                                        ),
-                                                        label: "Campaign Location",
-                                                        value:
-                                                            item.campaignLocation ||
-                                                            (item.fromLocation && item.toLocation
-                                                                ? `${item.fromLocation} → ${item.toLocation}`
-                                                                : "—"),
-                                                    },
+                                                    (item.state || item.city)
+                                                        ? {
+                                                            icon: (
+                                                                <HiOutlineLocationMarker className="w-4 h-4 text-gray-400" />
+                                                            ),
+                                                            label: "State / City",
+                                                            value:
+                                                                [item.state, item.city]
+                                                                    .filter(Boolean)
+                                                                    .join(" / "),
+                                                        }
+                                                        : null,
+                                                    (item.campaignLocation || (item.fromLocation && item.toLocation))
+                                                        ? {
+                                                            icon: (
+                                                                <HiOutlineMap className="w-4 h-4 text-gray-400" />
+                                                            ),
+                                                            label: "Campaign Location",
+                                                            value:
+                                                                item.campaignLocation ||
+                                                                `${item.fromLocation} → ${item.toLocation}`,
+                                                        }
+                                                        : null,
                                                     item.extraKm && item.extraKm > 0
                                                         ? {
                                                             icon: (

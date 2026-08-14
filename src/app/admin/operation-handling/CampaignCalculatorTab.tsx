@@ -685,7 +685,6 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
             </div>
             <div className="divide-y divide-gray-100 dark:divide-gray-800">
               <CompareRow label="Rental + Driver" estimated={fb.estimatedRental} actual={fb.actualRental} />
-              <CompareRow label="RTO Charges" estimated={fb.estimatedRto} actual={fb.actualRto} />
               <CompareRow label="Promoter Charges" estimated={fb.estimatedPromoter} actual={fb.actualPromoter} />
               <CompareRow label="Extra KM" estimated={fb.estimatedExtraKm} actual={fb.actualExtraKm} />
               <CompareRow label="Extra Hours" estimated={fb.estimatedExtraHours} actual={fb.actualExtraHours} />
@@ -1233,7 +1232,6 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                         <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden">
                           <PriceRow label={`Rental + Driver (${v.activeCount} vehicle${v.activeCount !== 1 ? "s" : ""} × ${fmt(v.baseDailyRate)})`} value={v.dailyVehicleAmount} />
                           {v.promoterAmountToday > 0 && <PriceRow label="Promoter Charges (today's share)" value={v.promoterAmountToday} />}
-                          {v.rtoAppliedToday > 0 && <PriceRow label="RTO Charges (one-time, first day)" value={v.rtoAppliedToday} />}
                           {(v.extraKmPoolFeeToday > 0 || v.extraHourPoolFeeToday > 0) && (
                             <PriceRow label="Extra KM/Hours Pool (one-time, first day)" value={v.extraKmPoolFeeToday + v.extraHourPoolFeeToday} />
                           )}
@@ -1335,7 +1333,6 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                 </div>
                 <div className="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
                   <CostLine label="Rental Total" value={v.rentalTotal} />
-                  <CostLine label="RTO Total" value={v.rtoTotal} />
                   <CostLine label="Promoter Total" value={v.promoterTotal} />
                   <CostLine label="Extra KM Total" value={v.extraKmTotal} />
                   <CostLine label="Extra Hours Total" value={v.extraHourTotal} />
@@ -1408,7 +1405,6 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
             <BillingLine label="Actual Rental" value={fb.actualRental} />
             <BillingLine label="Extra KM" value={fb.actualExtraKm} />
             <BillingLine label="Extra Hours" value={fb.actualExtraHours} />
-            <BillingLine label="RTO Charges" value={fb.actualRto} />
             <BillingLine label="Promoter Charges" value={fb.actualPromoter} />
             <BillingLine label="Compensation / Deductions" value={fb.totalCompensation} negative={fb.totalCompensation > 0} />
             <BillingLine label="Campaign Extensions" value={fb.campaignExtensionAmount} />

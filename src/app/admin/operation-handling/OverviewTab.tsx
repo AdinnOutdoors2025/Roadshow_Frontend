@@ -570,8 +570,10 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                             {(
                                 [
                                     ["Vehicle Model", getVehicleTypeName(currentVehicle.vehicleType)], // Fixed: changed 'vehicle' to 'currentVehicle'
-                                    ["Booking For", order.customerCategory],
-                                    ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType],
+                                    order.customerCategory ? ["Booking For", order.customerCategory] : null,
+                                    (currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType)
+                                        ? ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType]
+                                        : null,
                                     // ["Duration", currentVehicle.fromDate && currentVehicle.toDate
                                     //     ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000)}D base${currentVehicle.extraDays > 0 ? ` +${currentVehicle.extraDays} D = ${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000) + currentVehicle.extraDays}D total` : ""})`
                                     //     : "—"],
@@ -593,8 +595,12 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                                             })`
                                             : "—",
                                     ],
-                                    ["Campaign Location", currentVehicle.campaignLocation || `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
-                                    ["State / City", `${currentVehicle.state} / ${currentVehicle.city}`],
+                                    (currentVehicle.campaignLocation || (currentVehicle.fromLocation && currentVehicle.toLocation))
+                                        ? ["Campaign Location", currentVehicle.campaignLocation || `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`]
+                                        : null,
+                                    (currentVehicle.state || currentVehicle.city)
+                                        ? ["State / City", [currentVehicle.state, currentVehicle.city].filter(Boolean).join(" / ")]
+                                        : null,
                                     ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
                                     currentVehicle.extraKm > 0 ? ["Extra KM", `${currentVehicle.extraKm} km`] : null,
                                     currentVehicle.extraHours > 0 ? ["Extra Hours", `${currentVehicle.extraHours} hours`] : null,
