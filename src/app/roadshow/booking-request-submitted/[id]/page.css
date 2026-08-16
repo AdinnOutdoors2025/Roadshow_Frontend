@@ -663,21 +663,20 @@
 
 /* =========================================================
    DOWNLOAD SUMMARY BUTTON
-   COOL GRADIENT — NO RED / BLACK
+   BLUE / PURPLE + SOFT BLINK + HOVER SHIMMER
 ========================================================= */
 
 .RS_DownloadActionWrap {
   position: relative;
-
   z-index: 0;
-
   isolation: isolate;
-
   border-radius: 12px;
 }
 
 .RS_ActionButton--download {
   position: relative;
+  z-index: 1;
+  overflow: hidden;
 
   border: 1px solid
     rgba(
@@ -690,12 +689,9 @@
   background:
     linear-gradient(
       125deg,
-      #1687e8
-        0%,
-      #5268dc
-        45%,
-      #7658d8
-        100%
+      #1687e8 0%,
+      #5268dc 45%,
+      #7658d8 100%
     );
 
   background-size:
@@ -708,40 +704,73 @@
 
   animation:
     RS_DownloadGradientMove
-    6s
-    ease
-    infinite;
+      6s
+      ease
+      infinite,
+    RS_DownloadSoftBlink
+      2.2s
+      ease-in-out
+      infinite;
 }
 
+/* Moving shine / glitter sweep */
 .RS_ActionButton--download::before {
+  content: "";
+
+  position: absolute;
+
+  top: -60%;
+  bottom: -60%;
+
+  left: -45%;
+
+  width: 28%;
+
+  z-index: 1;
+
+  pointer-events: none;
+
   background:
     linear-gradient(
-      110deg,
+      90deg,
+      transparent,
+      rgba(
+        255,
+        255,
+        255,
+        0.12
+      ),
+      rgba(
+        255,
+        255,
+        255,
+        0.62
+      ),
+      rgba(
+        255,
+        255,
+        255,
+        0.12
+      ),
       transparent
-        25%,
-      rgba(
-        255,
-        255,
-        255,
-        0.22
-      )
-        42%,
-      rgba(
-        255,
-        255,
-        255,
-        0.45
-      )
-        50%,
-      rgba(
-        255,
-        255,
-        255,
-        0.22
-      )
-        58%,
-      transparent
-        75%
+    );
+
+  transform:
+    skewX(-22deg)
+    translateX(-220%);
+
+  transition: none;
+}
+
+.RS_ActionButton--download:hover::before {
+  animation:
+    RS_DownloadShimmer
+    900ms
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
     );
 }
 
@@ -757,12 +786,30 @@
     );
 }
 
+.RS_ActionButton--download:active {
+  transform:
+    scale(
+      0.98
+    );
+}
+
 .RS_ActionButton--download:disabled {
   cursor: wait;
 
   opacity: 0.82;
 
   transform: none;
+
+  animation:
+    RS_DownloadGradientMove
+    6s
+    ease
+    infinite;
+}
+
+.RS_ActionButton--download > * {
+  position: relative;
+  z-index: 3;
 }
 
 @keyframes RS_DownloadGradientMove {
@@ -785,148 +832,295 @@
   }
 }
 
-/* =========================================================
-   DOWNLOAD ATTENTION EFFECT
-   Triggered by clicking summary note
-========================================================= */
-/* 
-.RS_DownloadActionWrap::before,
-.RS_DownloadActionWrap::after {
-  content: "";
+@keyframes RS_DownloadSoftBlink {
+  0%,
+  100% {
+    filter:
+      brightness(
+        1
+      );
 
-  position: absolute;
-
-  inset: 0;
-
-  z-index: -1;
-
-  border-radius: 13px;
-
-  pointer-events: none;
-
-  opacity: 0;
-} */
-
-
-.RS_DownloadActionWrap--attention::after {
-  opacity: 1;
-
-  background:
-    conic-gradient(
-      from 0deg,
-      transparent
-        0deg,
+    border-color:
       rgba(
-        30,
-        135,
-        232,
-        0.25
-      )
-        80deg,
+        255,
+        255,
+        255,
+        0.26
+      );
+  }
+
+  50% {
+    filter:
+      brightness(
+        1.12
+      );
+
+    border-color:
       rgba(
-        118,
-        88,
-        216,
-        0.32
-      )
-        160deg,
-      transparent
-        230deg,
-      transparent
-        360deg
-    );
-
-  animation:
-    RS_DownloadOrbit
-    1.8s
-    linear
-    infinite;
-
-  inset: -4px;
+        255,
+        255,
+        255,
+        0.58
+      );
+  }
 }
 
-@keyframes RS_DownloadOrbit {
-  to {
+@keyframes RS_DownloadShimmer {
+  0% {
     transform:
-      rotate(
-        360deg
+      skewX(
+        -22deg
+      )
+      translateX(
+        -220%
+      );
+  }
+
+  100% {
+    transform:
+      skewX(
+        -22deg
+      )
+      translateX(
+        650%
       );
   }
 }
 
 /* =========================================================
    PLAN ANOTHER CAMPAIGN
-   DIFFERENT MOTION — NOT SHADOW BASED
+   DIFFERENT COLOR + SAME HOVER SHIMMER / GLITTER
 ========================================================= */
 
 .RS_ActionButton--plan {
+  position: relative;
+
   overflow: hidden;
 
-  background: #ffffff;
-
-  color: #171719;
-
-  box-shadow: none;
-}
-
-.RS_ActionButton--plan::after {
-  content: "";
-
-  position: absolute;
-
-  right: 16px;
-  bottom: 6px;
-  left: 16px;
-
-  z-index: 1;
-
-  height: 2px;
-
-  border-radius: 999px;
+  border: 1px solid
+    rgba(
+      11,
+      145,
+      128,
+      0.32
+    ) !important;
 
   background:
     linear-gradient(
-      90deg,
-      #c8c8ce
-        0%,
-      #56565e
-        50%,
-      #c8c8ce
-        100%
-    );
+      125deg,
+      #0e9f8b 0%,
+      #13a98d 45%,
+      #1d8f85 100%
+    ) !important;
 
-  transform:
-    scaleX(
-      0
-    );
+  background-size:
+    180%
+    180%;
 
-  transform-origin:
-    left center;
+  color:
+    #ffffff !important;
+
+  box-shadow: none;
 
   transition:
     transform
-      500ms
+      220ms
       cubic-bezier(
         0.22,
         1,
         0.36,
         1
-      );
+      ),
+    filter
+      220ms ease,
+    border-color
+      220ms ease,
+    background-position
+      500ms ease;
+}
+
+/* Same moving shine style as Download Summary */
+.RS_ActionButton--plan::before {
+  content: "";
+
+  position: absolute;
+
+  top: -60%;
+  bottom: -60%;
+
+  left: -45%;
+
+  width: 28%;
+
+  z-index: 1;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(
+        255,
+        255,
+        255,
+        0.10
+      ),
+      rgba(
+        255,
+        255,
+        255,
+        0.68
+      ),
+      rgba(
+        255,
+        255,
+        255,
+        0.10
+      ),
+      transparent
+    );
+
+  transform:
+    skewX(
+      -22deg
+    )
+    translateX(
+      -220%
+    );
+
+  transition: none;
+}
+
+/* Tiny glitter points */
+.RS_ActionButton--plan::after {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 1;
+
+  pointer-events: none;
+
+  opacity: 0;
+
+  background:
+    radial-gradient(
+      circle at 16% 30%,
+      rgba(
+        255,
+        255,
+        255,
+        0.82
+      )
+      0 1.3px,
+      transparent 1.8px
+    ),
+    radial-gradient(
+      circle at 34% 70%,
+      rgba(
+        255,
+        255,
+        255,
+        0.58
+      )
+      0 1.1px,
+      transparent 1.6px
+    ),
+    radial-gradient(
+      circle at 53% 24%,
+      rgba(
+        255,
+        255,
+        255,
+        0.78
+      )
+      0 1.2px,
+      transparent 1.7px
+    ),
+    radial-gradient(
+      circle at 72% 66%,
+      rgba(
+        255,
+        255,
+        255,
+        0.64
+      )
+      0 1.3px,
+      transparent 1.8px
+    ),
+    radial-gradient(
+      circle at 87% 34%,
+      rgba(
+        255,
+        255,
+        255,
+        0.72
+      )
+      0 1.2px,
+      transparent 1.7px
+    );
+
+  background-repeat:
+    no-repeat;
 }
 
 .RS_ActionButton--plan:hover {
-  border-color: #cacacf;
+  border-color:
+    rgba(
+      255,
+      255,
+      255,
+      0.40
+    ) !important;
 
-  background: #fafafb;
+  background:
+    linear-gradient(
+      125deg,
+      #0b9582 0%,
+      #119d84 45%,
+      #197f78 100%
+    ) !important;
+
+  color:
+    #ffffff !important;
+
+  transform:
+    translateY(
+      -2px
+    )
+    scale(
+      1.008
+    );
+
+  filter:
+    brightness(
+      1.05
+    );
 
   box-shadow: none;
 }
 
-.RS_ActionButton--plan:hover::after {
-  transform:
-    scaleX(
+.RS_ActionButton--plan:hover::before {
+  animation:
+    RS_PlanShimmer
+    900ms
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
       1
     );
+}
+
+.RS_ActionButton--plan:hover::after {
+  animation:
+    RS_PlanGlitterMove
+    1.4s
+    ease-in-out
+    infinite;
 }
 
 .RS_ActionButton--plan:hover svg {
@@ -940,6 +1134,73 @@
     scale(
       1.08
     );
+}
+
+.RS_ActionButton--plan:active {
+  transform:
+    scale(
+      0.98
+    );
+}
+
+.RS_ActionButton--plan > * {
+  position: relative;
+  z-index: 3;
+}
+
+@keyframes RS_PlanShimmer {
+  0% {
+    transform:
+      skewX(
+        -22deg
+      )
+      translateX(
+        -220%
+      );
+  }
+
+  100% {
+    transform:
+      skewX(
+        -22deg
+      )
+      translateX(
+        650%
+      );
+  }
+}
+
+@keyframes RS_PlanGlitterMove {
+  0% {
+    opacity: 0;
+
+    transform:
+      translateX(
+        -3px
+      );
+  }
+
+  30% {
+    opacity: 0.82;
+  }
+
+  65% {
+    opacity: 0.45;
+
+    transform:
+      translateX(
+        3px
+      );
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translateX(
+        6px
+      );
+  }
 }
 
 /* =========================================================
@@ -1577,12 +1838,12 @@
   .RS_ThankYouDiamond,
   .RS_ActionButton,
   .RS_ActionButton::before,
-  .RS_DownloadActionWrap::before,
-  .RS_DownloadActionWrap::after,
   .RS_SubCard,
   .RS_SummaryDownloadHint,
   .RS_SummaryDownloadHintIcon,
   .RS_SummaryDownloadHintArrow,
+  .RS_ActionButton--download::before,
+  .RS_ActionButton--plan::before,
   .RS_ActionButton--plan::after,
   .RS_DownloadSpinner {
     animation: none !important;

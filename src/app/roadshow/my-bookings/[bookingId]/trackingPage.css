@@ -1,0 +1,857 @@
+/* =========================================================
+   CAMPAIGN TRACKING — FULL PAGE
+   Reuses tokens/badge classes from ../journeyTracking.css
+========================================================= */
+
+.RS_TrackingPageRoot {
+  font-family:
+    "Outfit",
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(112px, 8vw, 160px) clamp(14px, 4vw, 40px) clamp(48px, 6vw, 80px);
+  color: #19191d;
+}
+
+/* Align container width with the rest of the My Bookings experience
+   (.RS_MyBookingsContainer in ../page.css) on larger screens, so this
+   page doesn't strand extra whitespace on both sides. Additive only —
+   base rule and narrower-viewport behavior above are untouched. */
+@media (min-width: 1024px) {
+  .RS_TrackingPageRoot {
+    max-width: 1680px;
+  }
+}
+
+@media (min-width: 1800px) {
+  .RS_TrackingPageRoot {
+    max-width: 1740px;
+  }
+}
+
+.RS_TrackingBreadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 20px;
+  border: none;
+  background: transparent;
+  color: #73737c;
+  font-size: clamp(12px, 0.8vw, 14px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.RS_TrackingBreadcrumb:hover {
+  color: #19191d;
+}
+
+.RS_TrackingPageLoading,
+.RS_TrackingPageState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 100px 16px;
+  color: #73737c;
+  text-align: center;
+}
+
+.RS_TrackingPageState strong {
+  font-size: 16px;
+  color: #19191d;
+}
+
+.RS_TrackingPageState--error {
+  color: #b5720a;
+}
+
+.RS_TrackingPageState button {
+  border: none;
+  border-radius: 999px;
+  background: #111114;
+  color: #ffffff;
+  padding: 10px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.RS_TrackingPageHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.RS_TrackingPageHeader h1 {
+  margin: 0 0 10px;
+  color: #111114;
+  font-size: clamp(20px, 2vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ── Two-column desktop layout, single column on narrower viewports ── */
+.RS_TrackingPageGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(20px, 2vw, 32px);
+  margin-top: 24px;
+}
+
+/* Paired-column scrolling — mirrors CampaignRequest/page.tsx exactly.
+   No overflow/max-height/scrollbar here on purpose: each column's
+   `position` and `top` are set imperatively in page.tsx (measured against
+   its own height vs the viewport), so the shorter column pins in place
+   while the taller one keeps scrolling past it, and once both are
+   exhausted the page scrolls on as one. See that effect for why a CSS
+   max-height + overflow-y:auto was tried and reverted (it clipped content
+   at the bottom of the tall column). */
+.RS_TrackingPageColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .RS_TrackingPageGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Today's Summary ── */
+
+.RS_TodaySummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.RS_TodaySummaryGrid > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #e7e7ea;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 12px 14px;
+  box-shadow: 0 3px 10px rgba(22, 24, 32, 0.03);
+}
+
+.RS_TodaySummaryGrid svg {
+  flex: 0 0 auto;
+  color: #5f6067;
+}
+
+.RS_TodaySummaryGrid small {
+  display: block;
+  margin-bottom: 2px;
+  color: #919199;
+  font-size: 10px;
+}
+
+.RS_TodaySummaryGrid strong {
+  display: block;
+  color: #25262b;
+  font-size: 13px;
+}
+
+.RS_NotReportedYet {
+  margin: 0;
+  border: 1px dashed #d7d7dc;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 14px;
+  color: #9999a2;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ── Live tracking ── */
+
+.RS_LiveVehicleList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.RS_LiveVehicleCard {
+  display: flex;
+  gap: 12px;
+  border: 1px solid #e7e7ea;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 12px 14px;
+  box-shadow: 0 4px 14px rgba(22, 24, 32, 0.035);
+}
+
+.RS_LiveVehicleIcon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #eaf3ff;
+  color: #1c6fd0;
+}
+
+.RS_LiveVehicleMain {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.RS_LiveVehicleTopRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.RS_LiveVehicleTopRow strong {
+  color: #19191d;
+  font-size: 14px;
+}
+
+.RS_VehicleStatusPill {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.RS_VehicleStatusPill--moving {
+  background: #eafaf0;
+  color: #1c8a4a;
+}
+
+.RS_VehicleStatusPill--parked {
+  background: #eaf3ff;
+  color: #1c6fd0;
+}
+
+.RS_VehicleStatusPill--idle {
+  background: #fff6e6;
+  color: #b5720a;
+}
+
+.RS_VehicleStatusPill--unknown {
+  background: #f1f1f3;
+  color: #73737c;
+}
+
+.RS_LiveVehicleBottomRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.RS_LiveKmCovered {
+  color: #25262b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.RS_LiveIndicator {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.RS_LiveIndicator--live {
+  background: #eafaf0;
+  color: #1c8a4a;
+  animation: RS_LivePulse 1.8s ease-in-out infinite;
+}
+
+.RS_LiveIndicator--stale {
+  background: #fff6e6;
+  color: #b5720a;
+}
+
+@keyframes RS_LivePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.RS_LiveAddress {
+  color: #55565d;
+  font-size: 12px;
+}
+
+.RS_LiveUpdatedAt {
+  color: #9999a2;
+  font-size: 11px;
+}
+
+.RS_LiveMapCanvas {
+  width: 100%;
+  height: clamp(240px, 32vw, 360px);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e7e7ea;
+}
+
+/* ── Live route embed (Vamosys public widget — speedometer + animated marker) ── */
+
+.RS_RouteTrackList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.RS_RouteTrackCard {
+  border: 1px solid #e7e7ea;
+  border-radius: 14px;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(22, 24, 32, 0.04);
+}
+
+.RS_RouteTrackHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.RS_RouteTrackHeader strong {
+  color: #19191d;
+  font-size: 13px;
+}
+
+.RS_RouteTrackHeader span {
+  color: #9999a2;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.RS_RouteTrackFrame {
+  display: block;
+  width: 100%;
+  height: clamp(260px, 34vw, 400px);
+  border: 0;
+  border-top: 1px solid #e7e7ea;
+}
+
+.RS_MapMarker {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.RS_MapMarker--live {
+  background: #1c6fd0;
+}
+
+.RS_MapMarker--stale {
+  background: #b5720a;
+}
+
+/* ── Day-wise report table ── */
+
+.RS_DayWiseTable {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.RS_DayWiseHeaderRow {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .RS_DayWiseHeaderRow {
+    display: grid;
+    grid-template-columns: 1.1fr 1.3fr 0.8fr 0.9fr 0.7fr 1.1fr 1.2fr;
+    gap: 8px;
+    padding: 0 14px;
+    color: #9999a2;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+}
+
+.RS_DayWiseRowGroup {
+  border: 1px solid #e7e7ea;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(22, 24, 32, 0.035);
+}
+
+.RS_DayWiseRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 12px 14px;
+  text-align: left;
+  cursor: default;
+  font: inherit;
+  color: inherit;
+}
+
+@media (min-width: 720px) {
+  .RS_DayWiseRow {
+    grid-template-columns: 1.1fr 1.3fr 0.8fr 0.9fr 0.7fr 1.1fr 1.2fr;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .RS_DayWiseRow [data-label] {
+    font-size: 12px;
+  }
+}
+
+.RS_DayWiseRow span[data-label]::before {
+  content: attr(data-label) ": ";
+  color: #9999a2;
+  font-weight: 600;
+}
+
+@media (min-width: 720px) {
+  .RS_DayWiseRow span[data-label]::before {
+    content: none;
+  }
+}
+
+.RS_DayWiseStatusCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.RS_DayWiseStatusBadge {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.RS_DayWiseStatusBadge--completed {
+  background: #eafaf0;
+  color: #1c8a4a;
+}
+
+.RS_DayWiseStatusBadge--ongoing {
+  background: #eaf3ff;
+  color: #1c6fd0;
+}
+
+.RS_DayWiseStatusBadge--upcoming {
+  background: #f1f1f3;
+  color: #73737c;
+}
+
+.RS_DayWiseStatusBadge--not_reported {
+  background: #fff6e6;
+  color: #b5720a;
+}
+
+.RS_DayWiseChevron {
+  color: #9999a2;
+  transition: transform 200ms ease;
+}
+
+.RS_DayWiseChevron--open {
+  transform: rotate(180deg);
+}
+
+.RS_DayWisePhotos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
+  border-top: 1px solid #e7e7ea;
+  padding: 12px 14px;
+}
+
+.RS_DayWisePhotos img {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+/* ── Photos gallery ── */
+
+.RS_PhotosGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.RS_PhotoThumb {
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 0;
+  cursor: pointer;
+  aspect-ratio: 1;
+}
+
+.RS_PhotoThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 200ms ease;
+}
+
+.RS_PhotoThumb:hover img {
+  transform: scale(1.05);
+}
+
+.RS_PhotoLightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 10, 12, 0.85);
+  padding: 24px;
+}
+
+.RS_PhotoLightbox img {
+  max-width: 100%;
+  max-height: 85vh;
+  border-radius: 12px;
+}
+
+.RS_PhotoLightboxClose {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+/* ── Driving summary (24-hour time breakdown, from Vamosys day history) ── */
+
+.RS_DrivingSummaryList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.RS_DrivingSummaryCard {
+  border: 1px solid #e7e7ea;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 14px 16px;
+  box-shadow: 0 6px 20px rgba(22, 24, 32, 0.04);
+}
+
+.RS_DrivingSummaryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.RS_DrivingSummaryHeader strong {
+  color: #19191d;
+  font-size: 13px;
+}
+
+.RS_DrivingSummaryHeader span {
+  color: #9999a2;
+  font-size: 11px;
+}
+
+.RS_TrackingSectionLabel {
+  margin: 0 0 8px;
+  color: #9999a2;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.RS_TimeBar {
+  display: flex;
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #f1f1f3;
+  box-shadow: inset 0 0 0 1px #e7e7ea;
+}
+
+.RS_TimeSegment {
+  height: 100%;
+}
+
+.RS_TimeSegment--moving {
+  background: #27904a;
+}
+
+.RS_TimeSegment--parked {
+  background: #1c6fd0;
+}
+
+.RS_TimeSegment--idle {
+  background: #e0a200;
+}
+
+.RS_TimeSegment--noData {
+  background: #c7c7cc;
+}
+
+.RS_TimeLegend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.RS_TimeLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.RS_TimeDot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+}
+
+.RS_TimeLegendItem small {
+  display: block;
+  color: #9999a2;
+  font-size: 10px;
+}
+
+.RS_TimeLegendItem strong {
+  display: block;
+  color: #25262b;
+  font-size: 12px;
+}
+
+.RS_DrivingStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.RS_DrivingStatsGrid > div {
+  border: 1px solid #e7e7ea;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.RS_DrivingStatsGrid small {
+  display: block;
+  color: #9999a2;
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+
+.RS_DrivingStatsGrid strong {
+  display: block;
+  color: #19191d;
+  font-size: 13px;
+}
+
+.RS_DrivingStatSub {
+  display: block;
+  color: #9999a2;
+  font-size: 10px;
+  margin-top: 1px;
+}
+
+.RS_DrivingLocations {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  border-top: 1px solid #e7e7ea;
+  padding-top: 12px;
+}
+
+.RS_DrivingLocations small {
+  display: block;
+  color: #9999a2;
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+
+.RS_DrivingLocations span {
+  color: #55565d;
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .RS_TimeLegend,
+  .RS_DrivingStatsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   LARGE / SMALL DESKTOP TYPE SCALE
+   Mirrors the tier system in page.css (1180-1399 / 1400-1599 /
+   1600-1799 / 1800+). Font-size only — no layout/spacing changes
+   on existing rules.
+========================================================= */
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .RS_TrackingPageHeader h1 { font-size: 30px; }
+  .RS_TrackingBreadcrumb { font-size: 13px; }
+  .RS_TodaySummaryGrid strong { font-size: 13px; }
+  .RS_TodaySummaryGrid small { font-size: 10.5px; }
+  .RS_NotReportedYet { font-size: 13px; }
+  .RS_LiveVehicleTopRow strong { font-size: 14.5px; }
+  .RS_VehicleStatusPill { font-size: 10.5px; }
+  .RS_LiveAddress { font-size: 12.5px; }
+  .RS_LiveKmCovered { font-size: 12.5px; }
+  .RS_LiveIndicator { font-size: 10.5px; }
+  .RS_LiveUpdatedAt { font-size: 11.5px; }
+  .RS_DrivingSummaryHeader strong { font-size: 13.5px; }
+  .RS_DrivingSummaryHeader span { font-size: 11.5px; }
+  .RS_TrackingSectionLabel { font-size: 10.5px; }
+  .RS_TimeLegendItem strong { font-size: 12.5px; }
+  .RS_TimeLegendItem small { font-size: 10.5px; }
+  .RS_DrivingStatsGrid strong { font-size: 13.5px; }
+  .RS_DrivingStatsGrid small { font-size: 10.5px; }
+  .RS_DrivingStatSub { font-size: 10.5px; }
+  .RS_DrivingLocations span { font-size: 12.5px; }
+  .RS_DrivingLocations small { font-size: 10.5px; }
+  .RS_DayWiseHeaderRow { font-size: 10.5px; }
+  .RS_DayWiseRow [data-label] { font-size: 12.5px; }
+  .RS_DayWiseStatusBadge { font-size: 10.5px; }
+  .RS_RouteTrackHeader strong { font-size: 13.5px; }
+  .RS_RouteTrackHeader span { font-size: 11.5px; }
+  .RS_RouteTrackFrame { height: clamp(270px, 34vw, 410px); }
+}
+
+@media (min-width: 1400px) and (max-width: 1599px) {
+  .RS_TrackingPageHeader h1 { font-size: 32px; }
+  .RS_TrackingBreadcrumb { font-size: 14px; }
+  .RS_TodaySummaryGrid strong { font-size: 14px; }
+  .RS_TodaySummaryGrid small { font-size: 11px; }
+  .RS_NotReportedYet { font-size: 14px; }
+  .RS_LiveVehicleTopRow strong { font-size: 15px; }
+  .RS_VehicleStatusPill { font-size: 11px; }
+  .RS_LiveAddress { font-size: 13px; }
+  .RS_LiveKmCovered { font-size: 13px; }
+  .RS_LiveIndicator { font-size: 11px; }
+  .RS_LiveUpdatedAt { font-size: 12px; }
+  .RS_DrivingSummaryHeader strong { font-size: 14px; }
+  .RS_DrivingSummaryHeader span { font-size: 12px; }
+  .RS_TrackingSectionLabel { font-size: 11px; }
+  .RS_TimeLegendItem strong { font-size: 13px; }
+  .RS_TimeLegendItem small { font-size: 11px; }
+  .RS_DrivingStatsGrid strong { font-size: 14px; }
+  .RS_DrivingStatsGrid small { font-size: 11px; }
+  .RS_DrivingStatSub { font-size: 11px; }
+  .RS_DrivingLocations span { font-size: 13px; }
+  .RS_DrivingLocations small { font-size: 11px; }
+  .RS_DayWiseHeaderRow { font-size: 11px; }
+  .RS_DayWiseRow [data-label] { font-size: 13px; }
+  .RS_DayWiseStatusBadge { font-size: 11px; }
+  .RS_RouteTrackHeader strong { font-size: 14px; }
+  .RS_RouteTrackHeader span { font-size: 12px; }
+  .RS_RouteTrackFrame { height: clamp(280px, 34vw, 420px); }
+}
+
+@media (min-width: 1600px) and (max-width: 1799px) {
+  .RS_TrackingPageHeader h1 { font-size: 34px; }
+  .RS_TrackingBreadcrumb { font-size: 15px; }
+  .RS_TodaySummaryGrid strong { font-size: 15px; }
+  .RS_TodaySummaryGrid small { font-size: 12px; }
+  .RS_NotReportedYet { font-size: 15px; }
+  .RS_LiveVehicleTopRow strong { font-size: 16px; }
+  .RS_VehicleStatusPill { font-size: 12px; }
+  .RS_LiveAddress { font-size: 14px; }
+  .RS_LiveKmCovered { font-size: 14px; }
+  .RS_LiveIndicator { font-size: 12px; }
+  .RS_LiveUpdatedAt { font-size: 13px; }
+  .RS_DrivingSummaryHeader strong { font-size: 15px; }
+  .RS_DrivingSummaryHeader span { font-size: 13px; }
+  .RS_TrackingSectionLabel { font-size: 12px; }
+  .RS_TimeLegendItem strong { font-size: 14px; }
+  .RS_TimeLegendItem small { font-size: 12px; }
+  .RS_DrivingStatsGrid strong { font-size: 15px; }
+  .RS_DrivingStatsGrid small { font-size: 12px; }
+  .RS_DrivingStatSub { font-size: 12px; }
+  .RS_DrivingLocations span { font-size: 14px; }
+  .RS_DrivingLocations small { font-size: 12px; }
+  .RS_DayWiseHeaderRow { font-size: 12px; }
+  .RS_DayWiseRow [data-label] { font-size: 14px; }
+  .RS_DayWiseStatusBadge { font-size: 12px; }
+  .RS_RouteTrackHeader strong { font-size: 15px; }
+  .RS_RouteTrackHeader span { font-size: 13px; }
+  .RS_RouteTrackFrame { height: clamp(300px, 34vw, 440px); }
+}
+
+@media (min-width: 1800px) {
+  .RS_TrackingPageHeader h1 { font-size: 36px; }
+  .RS_TrackingBreadcrumb { font-size: 16px; }
+  .RS_TodaySummaryGrid strong { font-size: 16px; }
+  .RS_TodaySummaryGrid small { font-size: 13px; }
+  .RS_NotReportedYet { font-size: 16px; }
+  .RS_LiveVehicleTopRow strong { font-size: 18px; }
+  .RS_VehicleStatusPill { font-size: 13px; }
+  .RS_LiveAddress { font-size: 15px; }
+  .RS_LiveKmCovered { font-size: 15px; }
+  .RS_LiveIndicator { font-size: 13px; }
+  .RS_LiveUpdatedAt { font-size: 14px; }
+  .RS_DrivingSummaryHeader strong { font-size: 16px; }
+  .RS_DrivingSummaryHeader span { font-size: 14px; }
+  .RS_TrackingSectionLabel { font-size: 13px; }
+  .RS_TimeLegendItem strong { font-size: 15px; }
+  .RS_TimeLegendItem small { font-size: 13px; }
+  .RS_DrivingStatsGrid strong { font-size: 16px; }
+  .RS_DrivingStatsGrid small { font-size: 13px; }
+  .RS_DrivingStatSub { font-size: 13px; }
+  .RS_DrivingLocations span { font-size: 15px; }
+  .RS_DrivingLocations small { font-size: 13px; }
+  .RS_DayWiseHeaderRow { font-size: 13px; }
+  .RS_DayWiseRow [data-label] { font-size: 15px; }
+  .RS_DayWiseStatusBadge { font-size: 13px; }
+  .RS_RouteTrackHeader strong { font-size: 16px; }
+  .RS_RouteTrackHeader span { font-size: 14px; }
+  .RS_RouteTrackFrame { height: clamp(320px, 34vw, 460px); }
+}

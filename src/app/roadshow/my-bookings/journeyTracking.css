@@ -1,0 +1,472 @@
+/* =========================================================
+   CAMPAIGN TRACKING — shared badge/section styles used by
+   the BookingRow pill in page.tsx and the full tracking page
+   at [bookingId]/page.tsx (see trackingPage.css for the rest
+   of that page's own layout).
+========================================================= */
+
+.RS_StatusStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.RS_StageBadge {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: clamp(5px, 0.35vw, 7px);
+  border-radius: 999px;
+  padding: clamp(5px, 0.38vw, 7px) clamp(8px, 0.55vw, 11px);
+  font-size: clamp(9px, 0.63vw, 13px);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.RS_StageBadge svg {
+  width: clamp(12px, 0.8vw, 16px);
+  height: clamp(12px, 0.8vw, 16px);
+}
+
+.RS_Journey--submitted {
+  background: #f1f1f3;
+  color: #55565d;
+}
+
+.RS_Journey--confirmed {
+  background: #ecf8ef;
+  color: #27904a;
+}
+
+.RS_Journey--prepared {
+  background: #eef1ff;
+  color: #4a55d6;
+}
+
+.RS_Journey--onroad {
+  background: #eaf3ff;
+  color: #1c6fd0;
+}
+
+.RS_Journey--completed {
+  background: #eafaf0;
+  color: #1c8a4a;
+}
+
+.RS_Journey--cancelled {
+  background: #fff0f1;
+  color: #dc3545;
+}
+
+.RS_DayBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #111114;
+  color: #ffffff;
+  padding: clamp(5px, 0.38vw, 7px) clamp(9px, 0.6vw, 12px);
+  font-size: clamp(9px, 0.6vw, 12px);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.RS_UnavailableBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  background: #fff6e6;
+  color: #b5720a;
+  padding: clamp(4px, 0.3vw, 6px) clamp(8px, 0.5vw, 10px);
+  font-size: clamp(8px, 0.55vw, 11px);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   SHARED TRACKING SECTION PRIMITIVES
+   Used by both BookingRow (page.tsx) and the full tracking
+   page at [bookingId]/page.tsx.
+========================================================= */
+
+.RS_SpinIcon {
+  animation: RS_Spin 900ms linear infinite;
+}
+
+@keyframes RS_Spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.RS_TrackingStageRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.RS_UnavailableBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  background: #fff6e6;
+  color: #8a5a06;
+  padding: 12px 14px;
+  font-size: clamp(11px, 0.72vw, 13px);
+  line-height: 1.45;
+}
+
+.RS_UnavailableBanner svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #b5720a;
+}
+
+.RS_StageMeaning {
+  margin: 0 0 14px;
+  color: #55565d;
+  font-size: clamp(12px, 0.78vw, 14px);
+  line-height: 1.55;
+}
+
+.RS_WhatsNext {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  border: 1px solid #e7e7ea;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px 14px;
+  box-shadow: 0 4px 14px rgba(22, 24, 32, 0.035);
+}
+
+.RS_WhatsNext span {
+  color: #9999a2;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.RS_WhatsNext strong {
+  color: #19191d;
+  font-size: clamp(12px, 0.8vw, 14px);
+  font-weight: 600;
+}
+
+/* =========================================================
+   QUICK STATS
+========================================================= */
+
+.RS_TrackingQuickStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  margin-bottom: 18px;
+  border: 1px solid #e7e7ea;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgba(22, 24, 32, 0.04);
+}
+
+.RS_TrackingQuickStats > div {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: clamp(13px, 1.05vw, 18px);
+}
+
+.RS_TrackingQuickStats > div:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 23%;
+  right: 0;
+  width: 1px;
+  height: 54%;
+  background: #ebebee;
+}
+
+.RS_TrackingQuickStats svg {
+  flex: 0 0 auto;
+  color: #5f6067;
+}
+
+.RS_TrackingQuickStats small {
+  display: block;
+  margin-bottom: 3px;
+  color: #919199;
+  font-size: clamp(8px, 0.52vw, 11px);
+}
+
+.RS_TrackingQuickStats strong {
+  display: block;
+  overflow: hidden;
+  color: #25262b;
+  font-size: clamp(11px, 0.75vw, 13px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RS_TrackingSection {
+  margin-bottom: 22px;
+  border: 1px solid #e7e7ea;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: clamp(15px, 1.2vw, 22px);
+  box-shadow: 0 6px 20px rgba(22, 24, 32, 0.04);
+}
+
+.RS_TrackingSection h3 {
+  margin: 0 0 12px;
+  color: #19191d;
+  font-size: clamp(13px, 0.85vw, 15px);
+  font-weight: 600;
+}
+
+.RS_LiveTrackingPlaceholder {
+  margin-bottom: 22px;
+  border: 1px dashed #d7d7dc;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 16px;
+  color: #9999a2;
+  font-size: clamp(11px, 0.72vw, 13px);
+  text-align: center;
+}
+
+/* =========================================================
+   JOURNEY TIMELINE
+========================================================= */
+
+.RS_JourneyTimeline {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.RS_JourneyStep {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding-bottom: 22px;
+}
+
+.RS_JourneyStep:last-child {
+  padding-bottom: 0;
+}
+
+.RS_JourneyStep:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 28px;
+  left: 13px;
+  width: 2px;
+  height: calc(100% - 22px);
+  background: #e7e7eb;
+}
+
+.RS_JourneyDot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  border: 2px solid #e7e7eb;
+  background: #ffffff;
+  color: #9999a2;
+}
+
+.RS_JourneyStep--done .RS_JourneyDot {
+  border-color: #27904a;
+  background: #27904a;
+  color: #ffffff;
+}
+
+.RS_JourneyStep--current .RS_JourneyDot {
+  border-color: #1c6fd0;
+  background: #1c6fd0;
+  color: #ffffff;
+  box-shadow: 0 0 0 5px rgba(28, 111, 208, 0.15);
+}
+
+.RS_JourneyStep--current:not(:last-child)::before {
+  background: linear-gradient(#27904a, #e7e7eb);
+}
+
+.RS_JourneyStepBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 3px;
+}
+
+.RS_JourneyStepBody strong {
+  color: #19191d;
+  font-size: clamp(12px, 0.8vw, 14px);
+  font-weight: 600;
+}
+
+.RS_JourneyStep--upcoming .RS_JourneyStepBody strong {
+  color: #9999a2;
+}
+
+.RS_JourneyCurrentTag {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  background: #eaf3ff;
+  color: #1c6fd0;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.RS_JourneyDate {
+  color: #9999a2;
+  font-size: clamp(10px, 0.65vw, 12px);
+}
+
+/* =========================================================
+   ACTIVITY
+========================================================= */
+
+.RS_ActivityList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.RS_ActivityList li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid #e7e7ea;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 10px 13px;
+  box-shadow: 0 3px 10px rgba(22, 24, 32, 0.03);
+}
+
+.RS_ActivityLabel {
+  color: #25262b;
+  font-size: clamp(11px, 0.72vw, 13px);
+  font-weight: 500;
+}
+
+.RS_ActivityDate {
+  color: #9999a2;
+  font-size: clamp(10px, 0.62vw, 12px);
+  white-space: nowrap;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 640px) {
+  .RS_TrackingQuickStats {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_TrackingQuickStats > div:not(:last-child)::after {
+    top: auto;
+    right: auto;
+    bottom: 0;
+    left: 5%;
+    width: 90%;
+    height: 1px;
+  }
+}
+
+/* =========================================================
+   LARGE / SMALL DESKTOP TYPE SCALE
+   Mirrors the tier system in page.css (1180-1399 / 1400-1599 /
+   1600-1799 / 1800+). Font-size only — no layout/spacing changes
+   on existing rules.
+========================================================= */
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .RS_StageBadge { font-size: 13px; }
+  .RS_DayBadge { font-size: 12px; }
+  .RS_UnavailableBadge { font-size: 11px; }
+  .RS_StageMeaning { font-size: 14px; }
+  .RS_WhatsNext strong { font-size: 14px; }
+  .RS_WhatsNext span { font-size: 10.5px; }
+  .RS_TrackingQuickStats strong { font-size: 13px; }
+  .RS_TrackingQuickStats small { font-size: 11.5px; }
+  .RS_TrackingSection h3 { font-size: 15px; }
+  .RS_LiveTrackingPlaceholder { font-size: 13px; }
+  .RS_JourneyStepBody strong { font-size: 14px; }
+  .RS_JourneyDate { font-size: 12.5px; }
+  .RS_ActivityLabel { font-size: 13px; }
+  .RS_ActivityDate { font-size: 12.5px; }
+}
+
+@media (min-width: 1400px) and (max-width: 1599px) {
+  .RS_StageBadge { font-size: 14px; }
+  .RS_DayBadge { font-size: 13px; }
+  .RS_UnavailableBadge { font-size: 12px; }
+  .RS_StageMeaning { font-size: 15px; }
+  .RS_WhatsNext strong { font-size: 15px; }
+  .RS_WhatsNext span { font-size: 11px; }
+  .RS_TrackingQuickStats strong { font-size: 14px; }
+  .RS_TrackingQuickStats small { font-size: 12px; }
+  .RS_TrackingSection h3 { font-size: 16px; }
+  .RS_LiveTrackingPlaceholder { font-size: 14px; }
+  .RS_JourneyStepBody strong { font-size: 15px; }
+  .RS_JourneyDate { font-size: 13px; }
+  .RS_ActivityLabel { font-size: 14px; }
+  .RS_ActivityDate { font-size: 13px; }
+}
+
+@media (min-width: 1600px) and (max-width: 1799px) {
+  .RS_StageBadge { font-size: 15px; }
+  .RS_DayBadge { font-size: 14px; }
+  .RS_UnavailableBadge { font-size: 13px; }
+  .RS_StageMeaning { font-size: 16px; }
+  .RS_WhatsNext strong { font-size: 16px; }
+  .RS_WhatsNext span { font-size: 12px; }
+  .RS_TrackingQuickStats strong { font-size: 15px; }
+  .RS_TrackingQuickStats small { font-size: 13px; }
+  .RS_TrackingSection h3 { font-size: 17px; }
+  .RS_LiveTrackingPlaceholder { font-size: 15px; }
+  .RS_JourneyStepBody strong { font-size: 16px; }
+  .RS_JourneyDate { font-size: 14px; }
+  .RS_ActivityLabel { font-size: 15px; }
+  .RS_ActivityDate { font-size: 14px; }
+}
+
+@media (min-width: 1800px) {
+  .RS_StageBadge { font-size: 16px; }
+  .RS_DayBadge { font-size: 15px; }
+  .RS_UnavailableBadge { font-size: 14px; }
+  .RS_StageMeaning { font-size: 17px; }
+  .RS_WhatsNext strong { font-size: 17px; }
+  .RS_WhatsNext span { font-size: 13px; }
+  .RS_TrackingQuickStats strong { font-size: 16px; }
+  .RS_TrackingQuickStats small { font-size: 14px; }
+  .RS_TrackingSection h3 { font-size: 19px; }
+  .RS_LiveTrackingPlaceholder { font-size: 16px; }
+  .RS_JourneyStepBody strong { font-size: 17px; }
+  .RS_JourneyDate { font-size: 15px; }
+  .RS_ActivityLabel { font-size: 16px; }
+  .RS_ActivityDate { font-size: 15px; }
+}

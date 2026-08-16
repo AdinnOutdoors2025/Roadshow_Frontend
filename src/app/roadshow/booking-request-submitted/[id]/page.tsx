@@ -340,12 +340,6 @@ export default function BookingRequestSubmittedPage() {
     useState("");
 
   const [
-    downloadAttention,
-    setDownloadAttention,
-  ] =
-    useState(false);
-
-  const [
     copied,
     setCopied,
   ] =
@@ -353,11 +347,6 @@ export default function BookingRequestSubmittedPage() {
 
   const downloadButtonRef =
     useRef<HTMLButtonElement>(
-      null,
-    );
-
-  const downloadAttentionTimerRef =
-    useRef<number | null>(
       null,
     );
 
@@ -556,14 +545,6 @@ export default function BookingRequestSubmittedPage() {
 
   useEffect(() => {
     return () => {
-      if (
-        downloadAttentionTimerRef.current
-      ) {
-        window.clearTimeout(
-          downloadAttentionTimerRef.current,
-        );
-      }
-
       if (
         downloadFeedbackTimerRef.current
       ) {
@@ -820,54 +801,21 @@ export default function BookingRequestSubmittedPage() {
 
   const handleSummaryNoteClick =
     () => {
-      if (
-        downloadAttentionTimerRef.current
-      ) {
-        window.clearTimeout(
-          downloadAttentionTimerRef.current,
-        );
-      }
-
-      setDownloadAttention(
-        true,
-      );
-
-      window.requestAnimationFrame(
-        () => {
-          buttonsRef.current?.scrollIntoView(
-            {
-              behavior:
-                "smooth",
-              block:
-                "center",
-              inline:
-                "nearest",
-            },
-          );
+      /*
+        Clicking the Booking Summary hint only smooth-scrolls
+        to the action button section. No highlight/orbit/focus
+        animation is triggered.
+      */
+      buttonsRef.current?.scrollIntoView(
+        {
+          behavior:
+            "smooth",
+          block:
+            "center",
+          inline:
+            "nearest",
         },
       );
-
-      window.setTimeout(
-        () => {
-          downloadButtonRef.current?.focus(
-            {
-              preventScroll:
-                true,
-            },
-          );
-        },
-        650,
-      );
-
-      downloadAttentionTimerRef.current =
-        window.setTimeout(
-          () => {
-            setDownloadAttention(
-              false,
-            );
-          },
-          3200,
-        );
     };
 
   /* =========================================================
@@ -1661,10 +1609,6 @@ export default function BookingRequestSubmittedPage() {
 
           <div
             className={`RS_DownloadActionWrap ${
-              downloadAttention
-                ? "RS_DownloadActionWrap--attention"
-                : ""
-            } ${
               downloading
                 ? "RS_DownloadActionWrap--loading"
                 : ""
@@ -1776,6 +1720,7 @@ export default function BookingRequestSubmittedPage() {
             </p>
           ) : downloadStatus ===
               "error" &&
+              
             downloadError ? (
             <p className="RS_DownloadStatus RS_DownloadStatus--error">
               {

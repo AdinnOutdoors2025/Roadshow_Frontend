@@ -3321,3 +3321,2504 @@
     transform: none !important;
   }
 }
+
+/* =========================================================
+   REFERENCE DASHBOARD OVERRIDES — 14 AUG 2026
+   Split booking list + client campaign tracking console.
+========================================================= */
+
+.RS_MyBookingsRoot {
+  --rs-ref-bg: #f6f7f8;
+  --rs-ref-border: #e4e7eb;
+  --rs-ref-text: #171b24;
+  --rs-ref-muted: #7b828d;
+  --rs-ref-red: #f33e43;
+  --rs-ref-green: #179c63;
+  --rs-ref-blue: #2582e7;
+  --rs-ref-orange: #f7931a;
+
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, #fafbfc 0%, var(--rs-ref-bg) 100%);
+  padding:
+    clamp(100px, 7vw, 132px)
+    clamp(9px, 1.2vw, 22px)
+    clamp(28px, 4vw, 58px);
+}
+
+.RS_MyBookingsContainer {
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+}
+
+.RS_DashboardShell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.17fr) minmax(540px, 0.92fr);
+  overflow: hidden;
+  border: 1px solid var(--rs-ref-border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 18px 55px rgba(30, 38, 52, 0.055);
+}
+
+.RS_BookingsPane {
+  min-width: 0;
+  padding: clamp(17px, 1.2vw, 24px);
+  border-right: 1px solid #e7e9ed;
+}
+
+.RS_PageHeader {
+  margin: 0;
+  padding: 1px 4px clamp(13px, 0.85vw, 17px);
+}
+
+.RS_PageHeader h1 {
+  font-size: clamp(25px, 1.55vw, 34px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.RS_PageHeader p {
+  max-width: none;
+  margin-top: 6px;
+  font-size: clamp(10.5px, 0.68vw, 13.5px);
+  line-height: 1.45;
+}
+
+/* ---------- Stats ---------- */
+
+.RS_StatsPanel {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-bottom: 13px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.RS_StatItem {
+  gap: clamp(7px, 0.55vw, 11px);
+  min-height: 0;
+  padding: clamp(10px, 0.75vw, 14px) clamp(9px, 0.7vw, 13px);
+}
+
+.RS_StatItem:hover { transform: none; }
+
+.RS_StatItem:not(:last-child)::after {
+  top: 22%;
+  height: 56%;
+}
+
+.RS_StatIcon {
+  width: clamp(31px, 2vw, 38px);
+  height: clamp(31px, 2vw, 38px);
+  border-radius: 50%;
+  background: #f5f6f8;
+}
+
+.RS_StatIcon svg {
+  width: clamp(17px, 1.05vw, 21px);
+  height: clamp(17px, 1.05vw, 21px);
+}
+
+.RS_StatItem--red .RS_StatIcon { color: var(--rs-ref-red); }
+.RS_StatItem--green .RS_StatIcon { color: var(--rs-ref-green); }
+.RS_StatItem--blue .RS_StatIcon { color: var(--rs-ref-blue); }
+.RS_StatItem--orange .RS_StatIcon { color: var(--rs-ref-orange); }
+
+.RS_StatLabel {
+  font-size: clamp(8px, 0.48vw, 10px);
+}
+
+.RS_StatValue {
+  margin-top: 3px;
+  font-size: clamp(16px, 1.05vw, 21px);
+}
+
+/* ---------- Controls ---------- */
+
+.RS_ControlBar {
+  grid-template-columns: minmax(240px, 1.4fr) minmax(0, 2.1fr) minmax(100px, 0.52fr);
+  gap: 7px;
+  margin-bottom: 11px;
+}
+
+.RS_SearchField,
+.RS_SortButton {
+  height: 42px;
+  border-radius: 8px;
+}
+
+.RS_SearchField { padding: 0 12px; }
+.RS_SearchField input { font-size: clamp(11px, 0.7vw, 14px); }
+
+.RS_StatusTabs { gap: 5px; }
+
+.RS_FilterTab {
+  height: 40px;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 0 clamp(8px, 0.55vw, 11px);
+  font-size: clamp(10.5px, 0.62vw, 13px);
+}
+
+.RS_FilterTab small {
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+}
+
+.RS_FilterDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #a8adb5;
+}
+.RS_FilterDot--confirmed { background: var(--rs-ref-green); }
+.RS_FilterDot--in-progress { background: var(--rs-ref-blue); }
+.RS_FilterDot--pending { background: var(--rs-ref-orange); }
+.RS_FilterDot--cancelled { background: var(--rs-ref-red); }
+
+.RS_SortButton { font-size: clamp(10.5px, 0.62vw, 13px); }
+.RS_SortMenu { width: 170px; }
+.RS_SortMenu button { font-size: 12px; padding: 8px 9px; }
+
+/* ---------- Booking rows ---------- */
+
+.RS_BookingsArea { min-height: 390px; }
+.RS_BookingsList { gap: 7px; }
+
+.RS_BookingRow {
+  grid-template-columns:
+    minmax(150px, 1.2fr)
+    minmax(92px, 0.72fr)
+    minmax(130px, 1.06fr)
+    minmax(128px, 1.03fr)
+    minmax(70px, 0.55fr)
+    minmax(62px, 0.48fr)
+    28px;
+  gap: clamp(8px, 0.6vw, 12px);
+  min-height: clamp(68px, 4.7vw, 82px);
+  border-radius: 10px;
+  padding: clamp(10px, 0.72vw, 13px) clamp(10px, 0.8vw, 15px);
+  cursor: pointer;
+  outline: 0;
+  box-shadow: none;
+}
+
+.RS_BookingRow:hover {
+  border-color: #d5d9df;
+  box-shadow: 0 8px 22px rgba(25, 31, 42, 0.05);
+  transform: translateY(-1px);
+}
+
+.RS_BookingRow--active {
+  border-color: rgba(243, 62, 67, 0.55);
+  background: linear-gradient(90deg, rgba(243, 62, 67, 0.025), #fff);
+}
+
+.RS_BookingIdentity { gap: 9px; }
+
+.RS_BookingCalendarIcon {
+  width: 35px;
+  height: 35px;
+  background: #f4f5f7;
+}
+
+.RS_CellLabel {
+  margin-bottom: 3px;
+  font-size: clamp(10px, 0.5vw, 12px);
+}
+
+.RS_BookingId {
+  font-size: clamp(13px, 0.8vw, 16px);
+}
+
+.RS_CellPrimary {
+  font-size: clamp(11px, 0.7vw, 14px);
+}
+
+.RS_BookingDate,
+.RS_CellSecondary {
+  margin-top: 3px;
+  font-size: clamp(10px, 0.55vw, 12px);
+}
+
+.RS_RowPeriod { font-size: clamp(10.5px, 0.62vw, 13px); }
+
+.RS_DashboardStatusBadge {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  padding: 5px 7px;
+  font-size: clamp(10px, 0.55vw, 12px);
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.RS_DashboardStatusBadge i {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.RS_RowChevron {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #2f343c;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.RS_RowChevron:hover {
+  background: #f0f2f4;
+  transform: translateX(1px);
+}
+
+/* ---------- Right tracking pane ---------- */
+
+.RS_TrackingPane {
+  min-width: 0;
+  padding: clamp(14px, 1.05vw, 20px);
+  background: linear-gradient(180deg, #fff 0%, #fcfcfd 100%);
+  animation: RS_ReferencePaneIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes RS_ReferencePaneIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.RS_TrackingPane--empty {
+  display: flex;
+  min-height: 650px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8a919b;
+  text-align: center;
+}
+
+.RS_TrackingPane--empty strong {
+  margin-top: 10px;
+  color: #262b34;
+  font-size: 15px;
+}
+
+.RS_TrackingPane--empty p {
+  max-width: 320px;
+  margin: 6px 0 0;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.RS_TrackingHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.RS_TrackingIdentity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+}
+
+.RS_TrackingThumb {
+  width: clamp(52px, 3.6vw, 68px);
+  height: clamp(52px, 3.6vw, 68px);
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid #e1e4e8;
+  border-radius: 9px;
+  background: #f2f3f5;
+}
+
+.RS_TrackingThumb img { width: 100%; height: 100%; object-fit: cover; }
+.RS_TrackingTitle { min-width: 0; }
+
+.RS_TrackingTitle h2 {
+  margin: 0;
+  overflow: hidden;
+  color: #151922;
+  font-size: clamp(15px, 1vw, 20px);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RS_TrackingTitle p {
+  margin: 3px 0 0;
+  color: #606873;
+  font-size: clamp(8px, 0.53vw, 10.5px);
+}
+
+.RS_TrackingMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 8px;
+  margin-top: 7px;
+  color: #767d87;
+  font-size: clamp(7px, 0.44vw, 9px);
+}
+
+.RS_TrackingMeta span { display: inline-flex; align-items: center; gap: 4px; }
+.RS_TrackingMeta i { width: 3px; height: 3px; border-radius: 50%; background: #a5abb3; }
+
+.RS_TrackingState {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.RS_TrackingState strong {
+  font-size: clamp(8.5px, 0.55vw, 10.5px);
+  white-space: nowrap;
+}
+
+.RS_DetailRefreshState {
+  min-height: 17px;
+  margin: 3px 0 6px;
+  color: #9197a0;
+  font-size: 7.5px;
+}
+
+.RS_DetailRefreshState span { display: inline-flex; align-items: center; gap: 5px; }
+.RS_DetailRefreshError { color: #d53c45 !important; }
+
+.RS_DashboardCard {
+  min-width: 0;
+  border: 1px solid var(--rs-ref-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.RS_CardHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.RS_CardHeading h3 {
+  margin: 0;
+  color: #20242c;
+  font-size: clamp(12px, 0.75vw, 15px);
+  font-weight: 650;
+}
+
+.RS_LivePill,
+.RS_SoftPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 4px 7px;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.RS_LivePill { background: #fff0f0; color: var(--rs-ref-red); }
+.RS_LivePill i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; animation: RS_RefLive 1.35s ease-in-out infinite; }
+.RS_SoftPill { background: #f2f4f6; color: #777f89; }
+
+@keyframes RS_RefLive { 0%,100%{opacity:.45} 50%{opacity:1} }
+
+/* ---------- Timeline ---------- */
+
+.RS_TimelineCard { padding: 11px 10px 9px; margin-bottom: 9px; }
+.RS_TimelineViewport { overflow-x: auto; scrollbar-width: thin; scrollbar-color: #d7dbe0 transparent; }
+.RS_Timeline { display: flex; min-width: max-content; padding: 2px 3px 1px; }
+.RS_TimelineStage { width: clamp(80px, 5vw, 98px); flex: 0 0 auto; text-align: center; }
+.RS_TimelineRail { display: flex; align-items: center; margin-bottom: 6px; }
+
+.RS_TimelineNode {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  place-items: center;
+  border: 1.5px solid #cdd2d8;
+  border-radius: 50%;
+  background: #fff;
+  color: #9aa1aa;
+}
+
+.RS_TimelineConnector {
+  width: calc(100% - 20px);
+  height: 1px;
+  background: repeating-linear-gradient(90deg, #d7dbe0 0 5px, transparent 5px 10px);
+}
+
+.RS_TimelineStage--complete .RS_TimelineNode { border-color: var(--rs-ref-green); background: var(--rs-ref-green); color: #fff; }
+.RS_TimelineStage--complete .RS_TimelineConnector { background: #78c6a1; }
+.RS_TimelineStage--current .RS_TimelineNode { border-color: var(--rs-ref-red); background: var(--rs-ref-red); color: #fff; box-shadow: 0 0 0 4px rgba(243,62,67,.1); }
+
+.RS_TimelineStage strong {
+  display: block;
+  max-width: 84px;
+  margin: 0 auto;
+  color: #30353d;
+  font-size: clamp(9px, 0.5vw, 11px);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.RS_TimelineStage small { display: block; margin-top: 2px; color: #9aa0a9; font-size: clamp(8px, 0.42vw, 9.5px); }
+.RS_TimelineStage--current small { color: var(--rs-ref-red); }
+.RS_TimelineFallback { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px; font-size: 12px; }
+.RS_TimelineFallback span { color: #848b95; font-size: 11px; }
+
+/* ---------- Tracking card grid ---------- */
+
+.RS_TrackingGrid {
+  display: grid;
+  grid-template-columns: minmax(125px, .68fr) minmax(235px, 1.42fr) minmax(155px, .8fr);
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.RS_LiveVehiclesCard,
+.RS_RouteCard,
+.RS_CampaignSummaryCard { padding: 9px; }
+
+.RS_LiveVehicleList { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+
+.RS_LiveVehicle {
+  display: grid;
+  grid-template-columns: 47px minmax(0, 1fr) 15px;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #edf0f2;
+  border-radius: 8px;
+  background: #fbfbfc;
+  padding: 5px;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.RS_LiveVehicle:disabled { cursor: default; opacity: .78; }
+.RS_LiveVehicleImage { width: 47px; height: 47px; overflow: hidden; border-radius: 7px; background: #f1f2f4; }
+.RS_LiveVehicleImage img { width: 100%; height: 100%; object-fit: cover; }
+.RS_LiveVehicleCopy { min-width: 0; }
+.RS_LiveVehicleCopy strong { display: block; color: #242932; font-size: clamp(11px, 0.62vw, 13px); }
+.RS_LiveVehicleCopy small { display: block; overflow: hidden; margin-top: 2px; color: #868c95; font-size: clamp(9.5px, 0.5vw, 11px); text-overflow: ellipsis; white-space: nowrap; }
+.RS_LiveVehicleCopy em { display: inline-flex; margin-top: 4px; border-radius: 999px; background: #eff1f3; padding: 3px 5px; color: #757c86; font-size: clamp(9px, 0.48vw, 10.5px); font-style: normal; font-weight: 600; }
+.RS_LiveVehicleCopy em.RS_VehicleActive { background: #e7f7ef; color: var(--rs-ref-green); }
+.RS_InlineEmpty { padding: 15px 6px; color: #8d939c; font-size: 10.5px; line-height: 1.4; text-align: center; }
+.RS_TextButton { display: inline-flex; align-items: center; gap: 4px; margin-top: 7px; border: 0; background: transparent; padding: 0; color: #56606c; cursor: pointer; font: inherit; font-size: 10px; font-weight: 600; }
+.RS_TextButton:disabled { opacity: .5; cursor: default; }
+
+/* ---------- Route / map preview ---------- */
+
+.RS_RoutePreview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: clamp(150px, 11vw, 195px);
+  overflow: hidden;
+  margin-top: 8px;
+  border: 1px solid #e8ebee;
+  border-radius: 8px;
+  background: #f6f8f7;
+}
+
+.RS_RoutePreviewIcon {
+  color: #b9c2be;
+}
+
+.RS_RouteGrid {
+  position: absolute;
+  inset: 0;
+  opacity: .8;
+  background:
+    linear-gradient(28deg, transparent 45%, #d8e0db 46%, #d8e0db 48%, transparent 49%),
+    linear-gradient(106deg, transparent 34%, #dde4df 35%, #dde4df 37%, transparent 38%),
+    linear-gradient(160deg, transparent 56%, #d9e1dc 57%, #d9e1dc 59%, transparent 60%),
+    #f0f4f1;
+}
+
+.RS_RouteMapLabel { position: absolute; z-index: 2; top: 10px; right: 10px; max-width: 45%; overflow: hidden; color: #626a65; font-size: 7.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.RS_RouteStart,.RS_RouteEnd,.RS_RouteVehicle { position: absolute; z-index: 3; display: grid; place-items: center; border-radius: 50%; }
+.RS_RouteStart { left: 13%; bottom: 18%; width: 23px; height: 23px; background: #fff; color: #252c35; box-shadow: 0 2px 7px rgba(26,34,45,.14); }
+.RS_RouteEnd { top: 18%; right: 13%; width: 25px; height: 25px; background: var(--rs-ref-red); color: #fff; box-shadow: 0 3px 9px rgba(243,62,67,.23); }
+.RS_RouteVehicle { top: 46%; left: 50%; width: 29px; height: 29px; background: #171b21; color: #fff; transform: rotate(-14deg); box-shadow: 0 3px 9px rgba(20,25,33,.18); }
+.RS_RouteLine { position: absolute; z-index: 2; inset: 23% 18% 20% 17%; border-left: 3px solid var(--rs-ref-green); border-bottom: 3px solid var(--rs-ref-green); border-radius: 0 0 0 70%; transform: rotate(-17deg); }
+
+.RS_RouteMessage {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  left: 7px;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 7px;
+  align-items: center;
+  border: 1px solid rgba(224,228,232,.95);
+  border-radius: 7px;
+  background: rgba(255,255,255,.94);
+  padding: 7px 8px;
+  backdrop-filter: blur(8px);
+}
+
+.RS_RouteMessage strong { display: block; color: #252a32; font-size: clamp(11px, 0.62vw, 13px); }
+.RS_RouteMessage span { display: block; margin-top: 2px; color: #858b94; font-size: clamp(9.5px, 0.5vw, 11px); line-height: 1.3; }
+.RS_RouteMessage button { display: inline-flex; height: 29px; align-items: center; gap: 4px; border: 0; border-radius: 7px; background: #161a20; padding: 0 8px; color: #fff; cursor: pointer; font: inherit; font-size: 10px; font-weight: 600; }
+.RS_RouteMessage button:disabled { background: #a7acb3; cursor: default; }
+
+.RS_RouteMeta { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 7px; }
+.RS_RouteMeta div { min-width: 0; }
+.RS_RouteMeta span { display: block; color: #969ca5; font-size: 9.5px; }
+.RS_RouteMeta strong { display: block; overflow: hidden; margin-top: 2px; color: #343941; font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Campaign summary ---------- */
+
+.RS_ProgressNumber { display: flex; align-items: baseline; gap: 4px; margin-top: 21px; }
+.RS_ProgressNumber strong { color: #1c2028; font-size: clamp(20px, 1.4vw, 27px); font-weight: 650; letter-spacing: -0.04em; }
+.RS_ProgressNumber span { color: #858c95; font-size: 10px; }
+.RS_ProgressBar { width: 100%; height: 7px; overflow: hidden; margin-top: 8px; border-radius: 999px; background: #e9edf0; }
+.RS_ProgressBar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #22a66e, #2a87df); transition: width 500ms cubic-bezier(.22,1,.36,1); }
+
+.RS_SummaryMetrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 7px; margin-top: 18px; }
+.RS_SummaryMetrics > div { display: flex; min-width: 0; align-items: flex-start; gap: 5px; }
+.RS_SummaryMetrics small { display: block; color: #979da6; font-size: 9.5px; }
+.RS_SummaryMetrics strong { display: block; overflow: hidden; margin-top: 2px; color: #333842; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.RS_MetricDot { width: 6px; height: 6px; flex: 0 0 auto; margin-top: 2px; border-radius: 50%; background: #a5abb3; }
+.RS_MetricDot--green { background: var(--rs-ref-green); }
+.RS_MetricDot--blue { background: var(--rs-ref-blue); }
+.RS_MetricDot--orange { background: var(--rs-ref-orange); }
+
+/* ---------- Day report ---------- */
+
+.RS_DayReport { padding: 9px; margin-bottom: 9px; }
+.RS_DayStats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 8px; }
+.RS_DayStat { position: relative; display: flex; min-width: 0; align-items: center; gap: 6px; padding: 5px 7px; }
+.RS_DayStat:not(:last-child)::after { content: ""; position: absolute; top: 18%; right: 0; width: 1px; height: 64%; background: #eceef1; }
+.RS_DayStatIcon { display: grid; width: 27px; height: 27px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #f3f5f7; color: #59616b; }
+.RS_DayStat > span:last-child { min-width: 0; }
+.RS_DayStat small,.RS_DayMeta small { display: block; color: #979da6; font-size: 9.5px; }
+.RS_DayStat strong { display: block; overflow: hidden; margin-top: 2px; color: #262b33; font-size: clamp(10px, 0.55vw, 12px); text-overflow: ellipsis; white-space: nowrap; }
+
+.RS_DayMeta { display: grid; grid-template-columns: 1fr 1fr; margin-top: 7px; border-top: 1px solid #edf0f2; padding-top: 7px; }
+.RS_DayMeta > div { display: flex; min-width: 0; align-items: flex-start; gap: 6px; padding: 2px 7px; }
+.RS_DayMeta > div:first-child { border-right: 1px solid #edf0f2; }
+.RS_DayMeta svg { flex: 0 0 auto; color: #666e78; }
+.RS_DayMeta strong { display: block; overflow: hidden; margin-top: 2px; color: #313640; font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Right actions ---------- */
+
+.RS_TrackingActions { display: flex; justify-content: flex-end; gap: 6px; }
+.RS_TrackingActions button { display: inline-flex; min-height: 33px; align-items: center; justify-content: center; gap: 5px; border: 1px solid var(--rs-ref-border); border-radius: 8px; background: #fff; padding: 0 9px; color: #323841; cursor: pointer; font: inherit; font-size: 11px; font-weight: 600; transition: transform 160ms ease, border-color 160ms ease; }
+.RS_TrackingActions button:hover:not(:disabled) { border-color: #ccd1d7; transform: translateY(-1px); }
+.RS_TrackingActions button:disabled { cursor: default; opacity: .55; }
+.RS_TrackingActions .RS_TrackingPrimaryAction { border-color: #161a20; background: #161a20; color: #fff; }
+
+/* ---------- How it works ---------- */
+
+.RS_HowItWorks {
+  display: grid;
+  grid-template-columns: 205px minmax(0, 1fr);
+  overflow: hidden;
+  margin-top: 11px;
+  border: 1px solid var(--rs-ref-border);
+  border-radius: 11px;
+  background: #fff;
+}
+
+.RS_HowIntro { position: relative; min-height: 145px; overflow: hidden; border-right: 1px solid #eceef1; padding: 17px 18px; }
+.RS_HowIntro h2 { margin: 0; color: #1f242c; font-size: 16px; font-weight: 650; }
+.RS_HowIntro p { max-width: 130px; margin: 6px 0 0; color: #777e88; font-size: 11.5px; line-height: 1.5; }
+.RS_HowIntro > svg { position: absolute; right: 12px; bottom: -4px; color: #d8dce2; opacity: .72; transform: scale(1.4); }
+.RS_HowSteps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.RS_HowStep { position: relative; display: grid; grid-template-columns: 22px minmax(0,1fr); gap: 7px 8px; align-content: center; min-width: 0; padding: 13px 16px; }
+.RS_HowStepNumber { display: grid; width: 21px; height: 21px; place-items: center; border-radius: 50%; background: var(--rs-ref-red); color: #fff; font-size: 10px; font-weight: 700; }
+.RS_HowPreview { grid-column: 2; display: grid; height: 53px; place-items: center; border: 1px solid #e5e8ec; border-radius: 7px; background: linear-gradient(180deg,#fbfbfc,#f3f5f7); color: #9fa6af; }
+.RS_HowStep > strong { grid-column: 1 / -1; color: #30353d; font-size: 12px; }
+.RS_HowStep > p { grid-column: 1 / -1; margin: -3px 0 0; color: #7c838d; font-size: 10px; line-height: 1.4; }
+.RS_HowArrow { position: absolute; top: 50%; right: -10px; z-index: 4; color: #838a94; transform: translateY(-50%); }
+
+/* ---------- Pagination compact ---------- */
+
+.RS_Pagination { margin-top: 11px; padding: 0 3px; }
+.RS_Pagination p { font-size: clamp(10px, 0.55vw, 12px); }
+.RS_PaginationControls { gap: 4px; }
+.RS_PaginationControls button { min-width: 30px; height: 30px; border-radius: 7px; font-size: 11px; }
+
+/* =========================================================
+   RESPONSIVE — 1800+
+========================================================= */
+
+@media (min-width: 1800px) {
+  .RS_MyBookingsRoot { padding: 128px 22px 56px; }
+  .RS_DashboardShell { grid-template-columns: minmax(0,1.2fr) minmax(660px,.9fr); }
+  .RS_BookingsPane { padding: 24px; }
+  .RS_TrackingPane { padding: 20px; }
+  .RS_TrackingGrid { grid-template-columns: minmax(150px,.7fr) minmax(305px,1.45fr) minmax(188px,.82fr); }
+}
+
+/* =========================================================
+   RESPONSIVE — UP TO 1365px: STACK DASHBOARD
+========================================================= */
+
+@media (max-width: 1365px) {
+  .RS_MyBookingsRoot { padding: 104px 12px 40px; }
+  .RS_DashboardShell { grid-template-columns: 1fr; }
+  .RS_BookingsPane { border-right: 0; border-bottom: 1px solid #e7e9ed; }
+  .RS_TrackingPane--empty { min-height: 280px; }
+  .RS_TrackingGrid { grid-template-columns: minmax(155px,.65fr) minmax(290px,1.35fr) minmax(180px,.78fr); }
+}
+
+/* =========================================================
+   RESPONSIVE — SMALL DESKTOP / TABLET
+========================================================= */
+
+@media (max-width: 1100px) {
+  .RS_ControlBar { grid-template-columns: minmax(0,1fr) 112px; }
+  .RS_SearchField { grid-column: 1; }
+  .RS_SortWrapper { grid-column: 2; }
+  .RS_StatusTabsViewport { grid-column: 1 / -1; grid-row: 2; }
+
+  .RS_BookingRow {
+    grid-template-columns: repeat(3, minmax(0,1fr)) 28px;
+    gap: 13px 10px;
+  }
+
+  .RS_RowChevron { grid-column: 4; grid-row: 1; }
+  .RS_RowProgressCell { display: none; }
+  .RS_TrackingGrid { grid-template-columns: 1fr 1.55fr; }
+  .RS_CampaignSummaryCard { grid-column: 1 / -1; }
+  .RS_SummaryMetrics { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .RS_HowItWorks { grid-template-columns: 185px minmax(0,1fr); }
+}
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 767px) {
+  .RS_MyBookingsRoot { padding: 92px 8px 28px; }
+  .RS_DashboardShell,.RS_HowItWorks { border-radius: 10px; }
+  .RS_BookingsPane,.RS_TrackingPane { padding: 12px; }
+  .RS_PageHeader { padding: 2px 1px 13px; }
+  .RS_PageHeader h1 { font-size: 28px; }
+  .RS_PageHeader p { max-width: 340px; font-size: 12px; }
+
+  .RS_StatsPanel { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .RS_StatItem { min-height: 66px; padding: 10px; border-bottom: 1px solid #eceef1; }
+  .RS_StatItem::after { display: none !important; }
+  .RS_StatItem:nth-child(odd) { border-right: 1px solid #eceef1; }
+  .RS_StatItem:last-child { grid-column: 1 / -1; justify-content: center; border-right: 0; border-bottom: 0; }
+  .RS_StatLabel { font-size: 9px; }
+  .RS_StatValue { font-size: 18px; }
+
+  .RS_ControlBar { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+  .RS_SearchField,.RS_SortButton { height: 44px; }
+  .RS_SearchField input { font-size: 11px; }
+  .RS_FilterTab { height: 39px; font-size: 9.5px; }
+
+  .RS_BookingRow { position: relative; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px 10px; padding: 12px; }
+  .RS_BookingIdentity { grid-column: 1 / -1; padding-right: 34px; padding-bottom: 9px; border-bottom: 1px solid #eef0f2; }
+  .RS_RowChevron { position: absolute; top: 11px; right: 9px; }
+  .RS_RowProgressCell { display: block; }
+  .RS_CellLabel { font-size: 8px; }
+  .RS_BookingId { font-size: 12px; }
+  .RS_CellPrimary { font-size: 10px; }
+  .RS_BookingDate,.RS_CellSecondary { font-size: 8.3px; }
+
+  .RS_TrackingHeader { align-items: flex-start; }
+  .RS_TrackingIdentity { align-items: flex-start; }
+  .RS_TrackingThumb { width: 54px; height: 54px; }
+  .RS_TrackingTitle h2 { max-width: 210px; font-size: 16px; }
+  .RS_TrackingState { display: none; }
+  .RS_TrackingGrid { grid-template-columns: 1fr; }
+  .RS_CampaignSummaryCard { grid-column: auto; }
+  .RS_RoutePreview { height: 205px; }
+  .RS_SummaryMetrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+
+  .RS_DayStats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .RS_DayStat { border-bottom: 1px solid #edf0f2; }
+  .RS_DayStat::after { display: none !important; }
+  .RS_DayStat:last-child { grid-column: 1 / -1; border-bottom: 0; }
+  .RS_DayMeta { grid-template-columns: 1fr; }
+  .RS_DayMeta > div:first-child { border-right: 0; border-bottom: 1px solid #edf0f2; padding-bottom: 7px; }
+  .RS_DayMeta > div:last-child { padding-top: 7px; }
+
+  .RS_TrackingActions { display: grid; grid-template-columns: 1fr 1fr; }
+  .RS_TrackingActions button { min-height: 39px; font-size: 8.5px; }
+  .RS_TrackingActions .RS_TrackingPrimaryAction { grid-column: 1 / -1; }
+
+  .RS_HowItWorks { grid-template-columns: 1fr; }
+  .RS_HowIntro { min-height: auto; border-right: 0; border-bottom: 1px solid #eceef1; }
+  .RS_HowSteps { grid-template-columns: 1fr 1fr; }
+  .RS_HowStep { border-bottom: 1px solid #edf0f2; }
+  .RS_HowStep:nth-child(odd) { border-right: 1px solid #edf0f2; }
+  .RS_HowArrow { display: none; }
+}
+
+@media (max-width: 430px) {
+  .RS_BookingRow { grid-template-columns: 1fr; }
+  .RS_BookingIdentity { grid-column: 1; }
+  .RS_RouteMessage { grid-template-columns: 1fr; }
+  .RS_RouteMessage button { margin-top: 4px; justify-content: center; }
+  .RS_TrackingActions { grid-template-columns: 1fr; }
+  .RS_TrackingActions .RS_TrackingPrimaryAction { grid-column: auto; }
+  .RS_HowSteps { grid-template-columns: 1fr; }
+  .RS_HowStep:nth-child(odd) { border-right: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .RS_TrackingPane,
+  .RS_LivePill i { animation: none !important; }
+}
+
+/* =========================================================
+   RESPONSIVE VISUAL REFINEMENT V2
+   Larger small-desktop type scale + premium spacing
+   These overrides intentionally come LAST in the file.
+========================================================= */
+
+/* ---------- Overall page ---------- */
+
+.RS_MyBookingsRoot {
+  background:
+    radial-gradient(
+      circle at 12% 0%,
+      rgba(255, 255, 255, 0.96) 0,
+      rgba(255, 255, 255, 0) 32%
+    ),
+    linear-gradient(
+      180deg,
+      #f8f9fb 0%,
+      #f3f5f7 100%
+    );
+
+  padding-top:
+    clamp(
+      122px,
+      8.3vw,
+      154px
+    );
+}
+
+.RS_MyBookingsContainer {
+  max-width: 1880px;
+}
+
+.RS_DashboardShell {
+  border-color: #e2e6eb;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 18px 55px
+    rgba(26, 33, 45, 0.07);
+}
+
+.RS_BookingsPane {
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #fdfdfe 100%
+    );
+}
+
+/* ---------- Page heading ---------- */
+
+.RS_PageHeader {
+  padding:
+    5px
+    6px
+    20px;
+}
+
+.RS_PageHeader h1 {
+  font-size:
+    clamp(
+      30px,
+      2vw,
+      42px
+    );
+
+  font-weight: 650;
+}
+
+.RS_PageHeader p {
+  margin-top: 7px;
+
+  font-size:
+    clamp(
+      13px,
+      0.86vw,
+      16px
+    );
+
+  color: #68707b;
+}
+
+/* ---------- Stats ---------- */
+
+.RS_StatsPanel {
+  border-radius: 14px;
+
+  margin-bottom:
+    clamp(
+      16px,
+      1.15vw,
+      22px
+    );
+
+  box-shadow:
+    0 7px 22px
+    rgba(32, 39, 51, 0.035);
+}
+
+.RS_StatItem {
+  min-height:
+    clamp(
+      78px,
+      5.4vw,
+      98px
+    );
+
+  gap:
+    clamp(
+      10px,
+      0.75vw,
+      15px
+    );
+
+  padding:
+    clamp(
+      14px,
+      1vw,
+      19px
+    )
+    clamp(
+      13px,
+      0.95vw,
+      19px
+    );
+}
+
+.RS_StatIcon {
+  width:
+    clamp(
+      38px,
+      2.5vw,
+      48px
+    );
+
+  height:
+    clamp(
+      38px,
+      2.5vw,
+      48px
+    );
+
+  background: #f6f7f9;
+}
+
+.RS_StatItem--red
+  .RS_StatIcon {
+  background: #fff0f1;
+}
+
+.RS_StatItem--green
+  .RS_StatIcon {
+  background: #eaf8f1;
+}
+
+.RS_StatItem--blue
+  .RS_StatIcon {
+  background: #edf5ff;
+}
+
+.RS_StatItem--orange
+  .RS_StatIcon {
+  background: #fff4e7;
+}
+
+.RS_StatLabel {
+  font-size:
+    clamp(
+      10.5px,
+      0.68vw,
+      13px
+    );
+
+  color: #747b86;
+}
+
+.RS_StatValue {
+  margin-top: 5px;
+
+  font-size:
+    clamp(
+      22px,
+      1.45vw,
+      29px
+    );
+}
+
+/* ---------- Controls ---------- */
+
+.RS_ControlBar {
+  gap: 9px;
+
+  margin-bottom: 15px;
+}
+
+.RS_SearchField,
+.RS_SortButton {
+  height:
+    clamp(
+      48px,
+      3vw,
+      56px
+    );
+
+  border-radius: 11px;
+}
+
+.RS_SearchField {
+  padding-inline:
+    clamp(
+      14px,
+      0.95vw,
+      18px
+    );
+}
+
+.RS_SearchField input {
+  font-size:
+    clamp(
+      11.5px,
+      0.76vw,
+      14px
+    );
+}
+
+.RS_FilterTab {
+  height:
+    clamp(
+      45px,
+      2.85vw,
+      52px
+    );
+
+  border-radius: 10px;
+
+  padding-inline:
+    clamp(
+      12px,
+      0.78vw,
+      16px
+    );
+
+  font-size:
+    clamp(
+      10.5px,
+      0.68vw,
+      12.5px
+    );
+}
+
+.RS_FilterTab small {
+  min-width: 21px;
+
+  height: 21px;
+
+  font-size: 9px;
+}
+
+.RS_SortButton {
+  font-size:
+    clamp(
+      10.5px,
+      0.68vw,
+      12.5px
+    );
+}
+
+/* ---------- Booking rows ---------- */
+
+.RS_BookingsList {
+  gap:
+    clamp(
+      9px,
+      0.65vw,
+      12px
+    );
+}
+
+.RS_BookingRow {
+  position: relative;
+
+  overflow: hidden;
+
+  min-height:
+    clamp(
+      90px,
+      5.8vw,
+      106px
+    );
+
+  border-radius: 13px;
+
+  padding:
+    clamp(
+      14px,
+      0.95vw,
+      18px
+    )
+    clamp(
+      14px,
+      1vw,
+      19px
+    );
+
+  gap:
+    clamp(
+      11px,
+      0.8vw,
+      16px
+    );
+
+  box-shadow:
+    0 4px 14px
+    rgba(30, 37, 48, 0.025);
+}
+
+.RS_BookingRow::before {
+  content: "";
+
+  position: absolute;
+
+  top: 13px;
+
+  bottom: 13px;
+
+  left: 0;
+
+  width: 3px;
+
+  border-radius:
+    0
+    999px
+    999px
+    0;
+
+  background: transparent;
+
+  transition:
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.RS_BookingRow:hover {
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 12px 28px
+    rgba(31, 38, 50, 0.07);
+}
+
+.RS_BookingRow--selected {
+  border-color:
+    rgba(
+      255,
+      63,
+      66,
+      0.6
+    );
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(
+        255,
+        63,
+        66,
+        0.035
+      )
+      0%,
+      #ffffff 38%
+    );
+
+  box-shadow:
+    0 10px 28px
+    rgba(
+      255,
+      63,
+      66,
+      0.055
+    );
+}
+
+.RS_BookingRow--selected::before {
+  background: #ff3f42;
+}
+
+.RS_BookingCalendarIcon {
+  width:
+    clamp(
+      40px,
+      2.55vw,
+      48px
+    );
+
+  height:
+    clamp(
+      40px,
+      2.55vw,
+      48px
+    );
+}
+
+.RS_CellLabel {
+  margin-bottom: 5px;
+
+  font-size:
+    clamp(
+      9.5px,
+      0.6vw,
+      11.5px
+    );
+
+  color: #818894;
+}
+
+.RS_BookingId {
+  font-size:
+    clamp(
+      13px,
+      0.84vw,
+      16px
+    );
+}
+
+.RS_CellPrimary {
+  font-size:
+    clamp(
+      11.5px,
+      0.75vw,
+      14px
+    );
+}
+
+.RS_DateValue {
+  font-size:
+    clamp(
+      10.5px,
+      0.7vw,
+      13px
+    );
+}
+
+.RS_CellSub {
+  margin-top: 5px;
+
+  font-size:
+    clamp(
+      9.5px,
+      0.6vw,
+      11px
+    );
+
+  color: #767d88;
+}
+
+.RS_StatusBadge,
+.RS_StageBadge {
+  padding:
+    6px
+    10px;
+
+  font-size:
+    clamp(
+      9.5px,
+      0.62vw,
+      11.5px
+    );
+}
+
+.RS_StatusDot {
+  width: 6px;
+
+  height: 6px;
+}
+
+.RS_RowOpenButton {
+  width: 34px;
+
+  height: 34px;
+
+  border-radius: 9px;
+}
+
+/* ---------- Pagination ---------- */
+
+.RS_Pagination {
+  margin-top: 16px;
+}
+
+.RS_Pagination p {
+  font-size:
+    clamp(
+      10px,
+      0.64vw,
+      12px
+    );
+}
+
+.RS_PaginationControls button {
+  min-width: 34px;
+
+  height: 34px;
+
+  border-radius: 8px;
+
+  font-size: 10.5px;
+}
+
+/* =========================================================
+   RIGHT TRACKING PANEL — stronger visual hierarchy
+========================================================= */
+
+.RS_TrackingPane {
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #fbfcfd 100%
+    );
+}
+
+.RS_TrackingHeader {
+  margin-bottom: 10px;
+}
+
+.RS_TrackingThumb {
+  width:
+    clamp(
+      64px,
+      4.2vw,
+      82px
+    );
+
+  height:
+    clamp(
+      64px,
+      4.2vw,
+      82px
+    );
+
+  border-radius: 11px;
+}
+
+.RS_TrackingIdentity {
+  gap:
+    clamp(
+      12px,
+      0.85vw,
+      16px
+    );
+}
+
+.RS_TrackingIdentity h2 {
+  font-size:
+    clamp(
+      19px,
+      1.25vw,
+      24px
+    );
+
+  line-height: 1.12;
+}
+
+.RS_TrackingIdentity p {
+  margin-top: 5px;
+
+  font-size:
+    clamp(
+      11px,
+      0.7vw,
+      13px
+    );
+}
+
+.RS_TrackingMeta {
+  margin-top: 9px;
+
+  gap:
+    6px
+    11px;
+
+  font-size:
+    clamp(
+      9.5px,
+      0.6vw,
+      11px
+    );
+}
+
+.RS_TrackingState strong {
+  font-size:
+    clamp(
+      10px,
+      0.66vw,
+      12.5px
+    );
+}
+
+.RS_PaneClose {
+  width: 36px;
+
+  height: 36px;
+
+  border-radius: 10px;
+}
+
+.RS_DetailFeedback {
+  min-height: 20px;
+
+  font-size: 9.5px;
+}
+
+/* ---------- Cards ---------- */
+
+.RS_DashboardCard {
+  border-radius: 13px;
+
+  border-color: #e2e6ea;
+
+  box-shadow:
+    0 5px 18px
+    rgba(30, 37, 48, 0.03);
+}
+
+.RS_CardHeading h3 {
+  font-size:
+    clamp(
+      12.5px,
+      0.82vw,
+      15px
+    );
+}
+
+.RS_LivePill,
+.RS_MutedPill {
+  padding:
+    5px
+    8px;
+
+  font-size:
+    9px;
+}
+
+/* ---------- Timeline ---------- */
+
+.RS_TimelineCard {
+  padding:
+    15px
+    13px
+    13px;
+
+  margin-bottom: 12px;
+}
+
+.RS_TimelineStage {
+  width:
+    clamp(
+      96px,
+      6.2vw,
+      118px
+    );
+}
+
+.RS_TimelineNode {
+  width: 24px;
+
+  height: 24px;
+
+  flex-basis: 24px;
+}
+
+.RS_TimelineConnector {
+  width:
+    calc(
+      100% - 24px
+    );
+}
+
+.RS_TimelineStage strong {
+  max-width: 98px;
+
+  font-size:
+    clamp(
+      8.5px,
+      0.54vw,
+      10.5px
+    );
+}
+
+.RS_TimelineStage small {
+  margin-top: 4px;
+
+  font-size:
+    clamp(
+      7.5px,
+      0.46vw,
+      9px
+    );
+}
+
+/* ---------- Right three-card grid ---------- */
+
+.RS_TrackingGrid {
+  gap: 12px;
+
+  margin-bottom: 12px;
+}
+
+.RS_LiveVehiclesCard,
+.RS_RouteCard,
+.RS_CampaignSummaryCard {
+  padding:
+    clamp(
+      13px,
+      0.85vw,
+      16px
+    );
+}
+
+/* ---------- Live vehicles ---------- */
+
+.RS_LiveVehicleList {
+  gap: 9px;
+
+  margin-top: 12px;
+}
+
+.RS_LiveVehicle {
+  grid-template-columns:
+    62px
+    minmax(0, 1fr)
+    18px;
+
+  gap: 10px;
+
+  border-radius: 10px;
+
+  padding: 8px;
+}
+
+.RS_LiveVehicleImage {
+  width: 62px;
+
+  height: 56px;
+
+  border-radius: 8px;
+}
+
+.RS_LiveVehicleText strong {
+  font-size:
+    clamp(
+      10px,
+      0.66vw,
+      12px
+    );
+}
+
+.RS_LiveVehicleText small {
+  margin-top: 3px;
+
+  font-size:
+    clamp(
+      8.5px,
+      0.53vw,
+      10px
+    );
+}
+
+.RS_VehicleState {
+  margin-top: 6px;
+
+  padding:
+    4px
+    7px;
+
+  font-size: 8.5px;
+}
+
+.RS_TextButton {
+  margin-top: 10px;
+
+  font-size: 9.5px;
+}
+
+.RS_InlineEmpty {
+  font-size: 10px;
+}
+
+/* ---------- Route ---------- */
+
+.RS_RoutePreview {
+  height:
+    clamp(
+      220px,
+      15vw,
+      280px
+    );
+
+  margin-top: 12px;
+
+  border-radius: 11px;
+}
+
+.RS_MapLabel {
+  font-size: 10px;
+}
+
+.RS_RouteOrigin {
+  width: 29px;
+
+  height: 29px;
+}
+
+.RS_RouteDestination {
+  width: 32px;
+
+  height: 32px;
+}
+
+.RS_RouteVehicle {
+  width: 36px;
+
+  height: 36px;
+}
+
+.RS_RouteOverlay {
+  right: 10px;
+
+  bottom: 10px;
+
+  left: 10px;
+
+  gap:
+    4px
+    10px;
+
+  border-radius: 10px;
+
+  padding:
+    10px
+    11px;
+}
+
+.RS_RouteOverlay strong {
+  font-size:
+    clamp(
+      9.5px,
+      0.62vw,
+      11.5px
+    );
+}
+
+.RS_RouteOverlay span {
+  font-size:
+    clamp(
+      8px,
+      0.5vw,
+      9.5px
+    );
+
+  line-height: 1.4;
+}
+
+.RS_RouteOverlay button {
+  height: 34px;
+
+  border-radius: 8px;
+
+  padding-inline: 11px;
+
+  font-size:
+    clamp(
+      8.5px,
+      0.53vw,
+      10px
+    );
+}
+
+.RS_RouteFooter {
+  gap: 12px;
+
+  margin-top: 10px;
+}
+
+.RS_RouteFooter small,
+.RS_SummaryMetrics small,
+.RS_DayStat small,
+.RS_DayLocations small {
+  font-size:
+    clamp(
+      8px,
+      0.5vw,
+      9.5px
+    );
+}
+
+.RS_RouteFooter strong {
+  margin-top: 3px;
+
+  font-size:
+    clamp(
+      9.5px,
+      0.61vw,
+      11.5px
+    );
+}
+
+/* ---------- Campaign summary ---------- */
+
+.RS_SummaryProgress {
+  margin-top:
+    clamp(
+      24px,
+      1.7vw,
+      34px
+    );
+}
+
+.RS_SummaryProgress strong {
+  font-size:
+    clamp(
+      28px,
+      1.85vw,
+      36px
+    );
+}
+
+.RS_SummaryProgress span {
+  font-size: 9.5px;
+}
+
+.RS_SummaryBar {
+  height: 9px;
+
+  margin-top: 11px;
+}
+
+.RS_SummaryMetrics {
+  gap:
+    17px
+    10px;
+
+  margin-top: 24px;
+}
+
+.RS_SummaryMetrics strong {
+  margin-top: 3px;
+
+  font-size:
+    clamp(
+      9.5px,
+      0.61vw,
+      11.5px
+    );
+}
+
+.RS_SummaryMetricDot {
+  width: 7px;
+
+  height: 7px;
+}
+
+/* ---------- Day report ---------- */
+
+.RS_DayReport {
+  padding:
+    clamp(
+      13px,
+      0.9vw,
+      17px
+    );
+
+  margin-bottom: 12px;
+}
+
+.RS_DayStats {
+  margin-top: 13px;
+}
+
+.RS_DayStat {
+  gap: 9px;
+
+  padding:
+    9px
+    10px;
+}
+
+.RS_DayStatIcon {
+  width: 34px;
+
+  height: 34px;
+}
+
+.RS_DayStat strong {
+  margin-top: 3px;
+
+  font-size:
+    clamp(
+      9.5px,
+      0.61vw,
+      11.5px
+    );
+}
+
+.RS_DayLocations {
+  margin-top: 11px;
+
+  padding-top: 11px;
+}
+
+.RS_DayLocations > div {
+  gap: 8px;
+
+  padding:
+    5px
+    10px;
+}
+
+.RS_DayLocations strong {
+  margin-top: 3px;
+
+  font-size:
+    clamp(
+      9.5px,
+      0.61vw,
+      11.5px
+    );
+}
+
+/* ---------- Right panel buttons ---------- */
+
+.RS_TrackingActions {
+  gap: 9px;
+}
+
+.RS_TrackingAction {
+  min-height: 39px;
+
+  border-radius: 9px;
+
+  padding-inline: 13px;
+
+  font-size:
+    clamp(
+      9.5px,
+      0.61vw,
+      11.5px
+    );
+}
+
+.RS_TrackingAction--primary {
+  box-shadow:
+    0 7px 17px
+    rgba(21, 25, 31, 0.11);
+}
+
+/* =========================================================
+   HOW IT WORKS — cleaner and larger
+========================================================= */
+
+.RS_HowItWorks {
+  margin-top: 16px;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 8px 25px
+    rgba(31, 38, 50, 0.035);
+}
+
+.RS_HowIntro {
+  min-height: 170px;
+
+  padding:
+    22px
+    22px;
+}
+
+.RS_HowIntro h2 {
+  font-size:
+    clamp(
+      16px,
+      1vw,
+      19px
+    );
+}
+
+.RS_HowIntro p {
+  max-width: 150px;
+
+  margin-top: 8px;
+
+  font-size:
+    clamp(
+      10px,
+      0.64vw,
+      12px
+    );
+}
+
+.RS_HowStep {
+  gap:
+    10px
+    11px;
+
+  padding:
+    18px
+    20px;
+}
+
+.RS_HowNumber {
+  width: 26px;
+
+  height: 26px;
+
+  font-size: 10px;
+}
+
+.RS_HowPreview {
+  height: 72px;
+
+  border-radius: 9px;
+}
+
+.RS_HowCopy strong {
+  font-size:
+    clamp(
+      10.5px,
+      0.68vw,
+      13px
+    );
+}
+
+.RS_HowCopy p {
+  margin-top: 5px;
+
+  font-size:
+    clamp(
+      8.5px,
+      0.54vw,
+      10.5px
+    );
+
+  line-height: 1.45;
+}
+
+/* =========================================================
+   SMALL DESKTOP REBALANCE
+   1400 - 1699
+========================================================= */
+
+@media (
+  min-width: 1400px
+) and (
+  max-width: 1699px
+) {
+  .RS_MyBookingsRoot {
+    padding:
+      126px
+      14px
+      46px;
+  }
+
+  .RS_DashboardShell {
+    grid-template-columns:
+      minmax(
+        0,
+        1.12fr
+      )
+      minmax(
+        610px,
+        0.88fr
+      );
+  }
+
+  .RS_BookingsPane {
+    padding: 20px;
+  }
+
+  .RS_TrackingPane {
+    padding: 19px;
+  }
+
+  .RS_PageHeader h1 {
+    font-size: 34px;
+  }
+
+  .RS_PageHeader p {
+    font-size: 14px;
+  }
+
+  .RS_StatLabel {
+    font-size: 11.5px;
+  }
+
+  .RS_StatValue {
+    font-size: 24px;
+  }
+
+  .RS_ControlBar {
+    grid-template-columns:
+      minmax(
+        260px,
+        1.4fr
+      )
+      minmax(
+        0,
+        2fr
+      )
+      120px;
+  }
+
+  .RS_SearchField input,
+  .RS_FilterTab,
+  .RS_SortButton {
+    font-size: 11px;
+  }
+
+  .RS_BookingRow {
+    grid-template-columns:
+      minmax(
+        150px,
+        1.14fr
+      )
+      minmax(
+        95px,
+        0.72fr
+      )
+      minmax(
+        135px,
+        1fr
+      )
+      minmax(
+        128px,
+        1fr
+      )
+      minmax(
+        78px,
+        0.54fr
+      )
+      minmax(
+        62px,
+        0.46fr
+      )
+      32px;
+
+    min-height: 94px;
+  }
+
+  .RS_CellLabel {
+    font-size: 10px;
+  }
+
+  .RS_BookingId {
+    font-size: 14px;
+  }
+
+  .RS_CellPrimary {
+    font-size: 12px;
+  }
+
+  .RS_CellSub {
+    font-size: 9.5px;
+  }
+
+  .RS_TrackingIdentity h2 {
+    font-size: 21px;
+  }
+
+  .RS_CardHeading h3 {
+    font-size: 13.5px;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns:
+      minmax(
+        150px,
+        0.7fr
+      )
+      minmax(
+        300px,
+        1.45fr
+      )
+      minmax(
+        190px,
+        0.82fr
+      );
+  }
+
+  .RS_LiveVehicleText strong,
+  .RS_RouteOverlay strong,
+  .RS_SummaryMetrics strong,
+  .RS_DayStat strong,
+  .RS_DayLocations strong {
+    font-size: 10px;
+  }
+
+  .RS_LiveVehicleText small,
+  .RS_RouteOverlay span,
+  .RS_RouteFooter small,
+  .RS_SummaryMetrics small,
+  .RS_DayStat small,
+  .RS_DayLocations small {
+    font-size: 8.5px;
+  }
+}
+
+/* =========================================================
+   COMPACT DESKTOP
+   1200 - 1399
+   Keep two-column dashboard but allow booking rows to breathe.
+========================================================= */
+
+@media (
+  min-width: 1200px
+) and (
+  max-width: 1399px
+) {
+  .RS_MyBookingsRoot {
+    padding:
+      118px
+      10px
+      40px;
+  }
+
+  /* .RS_DashboardShell intentionally left un-overridden here — the
+     shared max-width:1365px stacking rule above already governs this
+     range (1200-1365 of this block's 1200-1399 span); redeclaring a
+     two-column grid-template-columns here previously fought that rule
+     (later-in-file wins), forcing a 540px-minimum detail pane into a
+     column too narrow for its own content and letting it overflow past
+     .RS_DashboardShell's overflow:hidden. */
+
+  .RS_BookingsPane,
+  .RS_TrackingPane {
+    padding: 15px;
+  }
+
+  .RS_PageHeader h1 {
+    font-size: 36px;
+  }
+
+  .RS_PageHeader p {
+    font-size: 15px;
+  }
+
+  .RS_StatsPanel {
+    grid-template-columns:
+      repeat(
+        5,
+        minmax(
+          0,
+          1fr
+        )
+      );
+  }
+
+  .RS_StatItem {
+    min-height: 73px;
+
+    gap: 8px;
+
+    padding:
+      11px
+      8px;
+  }
+
+  .RS_StatIcon {
+    width: 34px;
+
+    height: 34px;
+  }
+
+  .RS_StatLabel {
+    font-size: 12px;
+  }
+
+  .RS_StatValue {
+    font-size: 24px;
+  }
+
+  .RS_ControlBar {
+    grid-template-columns:
+      minmax(
+        220px,
+        1fr
+      )
+      105px;
+  }
+
+  .RS_SearchField {
+    grid-column: 1;
+  }
+
+  .RS_SortWrapper {
+    grid-column: 2;
+  }
+
+  .RS_StatusTabsViewport {
+    grid-column:
+      1 / -1;
+
+    grid-row: 2;
+  }
+
+  .RS_BookingRow {
+    grid-template-columns:
+      minmax(
+        145px,
+        1.2fr
+      )
+      minmax(
+        95px,
+        0.8fr
+      )
+      minmax(
+        135px,
+        1.1fr
+      )
+      32px;
+
+    min-height: 112px;
+
+    gap:
+      11px
+      12px;
+  }
+
+  .RS_BookingIdentity {
+    grid-column: 1;
+  }
+
+  .RS_BookingRow
+    > .RS_BookingCell:nth-of-type(4) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .RS_BookingRow
+    > .RS_BookingCell:nth-of-type(5) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .RS_BookingRow
+    > .RS_BookingCell:nth-of-type(6) {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .RS_RowOpenButton {
+    grid-column: 4;
+    grid-row: 1;
+  }
+
+  .RS_CellLabel {
+    font-size: 11.5px;
+  }
+
+  .RS_BookingId {
+    font-size: 16px;
+  }
+
+  .RS_CellPrimary {
+    font-size: 14px;
+  }
+
+  .RS_CellSub {
+    font-size: 9px;
+  }
+
+  .RS_TrackingIdentity h2 {
+    font-size: 22px;
+  }
+
+  .RS_TrackingMeta {
+    font-size: 11px;
+  }
+
+  .RS_TimelineStage {
+    width: 94px;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns:
+      1fr
+      1.45fr;
+  }
+
+  .RS_CampaignSummaryCard {
+    grid-column:
+      1 / -1;
+  }
+
+  .RS_SummaryMetrics {
+    grid-template-columns:
+      repeat(
+        4,
+        minmax(
+          0,
+          1fr
+        )
+      );
+  }
+
+  .RS_RoutePreview {
+    height: 235px;
+  }
+
+  .RS_DayStats {
+    grid-template-columns:
+      repeat(
+        3,
+        minmax(
+          0,
+          1fr
+        )
+      );
+  }
+
+  .RS_DayStat:nth-child(3)::after {
+    display: none;
+  }
+
+  .RS_DayStat:nth-child(n + 4) {
+    border-top:
+      1px solid
+      #eceef1;
+  }
+
+  .RS_DayStat:last-child {
+    grid-column:
+      span 2;
+  }
+
+  .RS_HowItWorks {
+    grid-template-columns:
+      180px
+      minmax(
+        0,
+        1fr
+      );
+  }
+
+  .RS_HowStep {
+    padding:
+      15px
+      13px;
+  }
+
+  .RS_HowCopy strong {
+    font-size: 10.5px;
+  }
+
+  .RS_HowCopy p {
+    font-size: 8.5px;
+  }
+
+  /* Font-size coverage this tier was missing relative to its 1400-1699
+     sibling above — additive only, same values used there. */
+  .RS_SearchField input,
+  .RS_FilterTab,
+  .RS_SortButton {
+    font-size: 11px;
+  }
+
+  .RS_CardHeading h3 {
+    font-size: 13.5px;
+  }
+
+  .RS_SummaryMetrics strong,
+  .RS_DayStat strong {
+    font-size: 10px;
+  }
+
+  .RS_SummaryMetrics small,
+  .RS_DayStat small {
+    font-size: 8.5px;
+  }
+}
+
+/* =========================================================
+   TABLET / NARROW DESKTOP
+   Below 1200 stack the panels for real readability.
+========================================================= */
+
+@media (
+  max-width: 1199px
+) {
+  .RS_DashboardShell {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_BookingsPane {
+    border-right: 0;
+
+    border-bottom:
+      1px solid
+      var(--rs-border);
+  }
+
+  .RS_TrackingPane {
+    padding:
+      clamp(
+        14px,
+        2vw,
+        20px
+      );
+  }
+
+  .RS_BookingRow {
+    min-height: 100px;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns:
+      minmax(
+        180px,
+        0.72fr
+      )
+      minmax(
+        320px,
+        1.35fr
+      )
+      minmax(
+        210px,
+        0.82fr
+      );
+  }
+}
+
+/* =========================================================
+   MOBILE REFINEMENT
+========================================================= */
+
+@media (
+  max-width: 767px
+) {
+  .RS_MyBookingsRoot {
+    padding-top: 100px;
+  }
+
+  .RS_DashboardShell {
+    border-radius: 13px;
+  }
+
+  .RS_PageHeader h1 {
+    font-size: 30px;
+  }
+
+  .RS_PageHeader p {
+    font-size: 13px;
+  }
+
+  .RS_StatsPanel {
+    border-radius: 12px;
+  }
+
+  .RS_StatItem {
+    min-height: 76px;
+  }
+
+  .RS_SearchField,
+  .RS_SortButton {
+    height: 46px;
+  }
+
+  .RS_BookingRow {
+    min-height: auto;
+
+    border-radius: 12px;
+  }
+
+  .RS_TrackingIdentity h2 {
+    max-width: 220px;
+
+    font-size: 18px;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_RoutePreview {
+    height: 235px;
+  }
+
+  .RS_CardHeading h3 {
+    font-size: 14px;
+  }
+
+  .RS_LiveVehicleText strong {
+    font-size: 11px;
+  }
+
+  .RS_LiveVehicleText small {
+    font-size: 9.5px;
+  }
+
+  .RS_SummaryMetrics strong,
+  .RS_DayStat strong,
+  .RS_DayLocations strong,
+  .RS_RouteFooter strong {
+    font-size: 10.5px;
+  }
+
+  .RS_SummaryMetrics small,
+  .RS_DayStat small,
+  .RS_DayLocations small,
+  .RS_RouteFooter small {
+    font-size: 9px;
+  }
+
+  .RS_HowIntro h2 {
+    font-size: 17px;
+  }
+
+  .RS_HowCopy strong {
+    font-size: 11px;
+  }
+
+  .RS_HowCopy p {
+    font-size: 9px;
+  }
+}

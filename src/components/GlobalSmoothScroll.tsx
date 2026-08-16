@@ -31,6 +31,12 @@ const SMOOTH_SCROLL_DISABLED_PATHS = [
      bar, so they need the same opt-out for exactly the reason above. */
   "/roadshow/campaign-details",
   "/roadshow/review-order",
+
+  /* The campaign tracking console (/roadshow/my-bookings/[bookingId]) uses
+     the same paired sticky-column trick as CampaignRequest above. Trailing
+     slash keeps this from also matching the plain /roadshow/my-bookings
+     list page, which has no sticky columns and keeps smooth scroll. */
+  "/roadshow/my-bookings/",
 ];
 
 export default function GlobalSmoothScroll({

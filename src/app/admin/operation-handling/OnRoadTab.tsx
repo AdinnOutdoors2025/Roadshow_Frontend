@@ -306,7 +306,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
     setGpsLoading(true);
     try {
       const { data } = await axios.get(
-        `${API_BASE}admin/vamosys/vehicle-locations`
+        `${API_BASE}admin/vamosys/vehicle-locations`,
+        { headers: { Authorization: `Bearer ${getToken()}` } }
       );
       const locations = data?.data?.data?.[0]?.vehicleLocations ?? [];
       setGpsData(locations);

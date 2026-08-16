@@ -447,14 +447,7 @@ export const buildRoadshowVehicles =
                 pkg
                   ?.vehicleType,
               ) ===
-                vehicleTypeId &&
-              normalizeModelName(
-                pkg
-                  ?.vehicleModel,
-              ) ===
-                normalizeModelName(
-                  name,
-                ),
+                vehicleTypeId,
           ) || null;
 
         /* -----------------------------------------------
