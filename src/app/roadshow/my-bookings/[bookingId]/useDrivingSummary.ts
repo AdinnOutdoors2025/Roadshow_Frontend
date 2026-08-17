@@ -23,6 +23,12 @@ export type DrivingSummary = {
   startAddress: string;
   endAddress: string;
   vehicleMode: string;
+  openingOdoReadingKm: number;
+  closingOdoReadingKm: number;
+  idleCount: number;
+  parkingCount: number;
+  startFuelLitres: number | null;
+  endFuelLitres: number | null;
 };
 
 export type DrivingSummaryVehicle = {
@@ -34,6 +40,7 @@ export function useDrivingSummary(
   mongoId: string,
   token: string | null,
   enabled: boolean,
+  day?: string,
 ) {
   const [vehicles, setVehicles] = useState<DrivingSummaryVehicle[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,13 +56,14 @@ export function useDrivingSummary(
       if (showLoading) setLoading(true);
 
       try {
-        const response = await fetch(
-          `${baseUrl}/client-requests/${mongoId}/driving-summary`,
-          {
-            cache: "no-store",
-            headers: clientAuthHeaders(token),
-          },
-        );
+        const url = day
+          ? `${baseUrl}/client-requests/${mongoId}/driving-summary?day=${day}`
+          : `${baseUrl}/client-requests/${mongoId}/driving-summary`;
+
+        const response = await fetch(url, {
+          cache: "no-store",
+          headers: clientAuthHeaders(token),
+        });
 
         const result = await response.json().catch(() => null);
 
@@ -110,7 +118,7 @@ export function useDrivingSummary(
       setVehicles([]);
       signatureRef.current = "";
     };
-  }, [mongoId, token, enabled]);
+  }, [mongoId, token, enabled, day]);
 
   return { vehicles, loading };
 }

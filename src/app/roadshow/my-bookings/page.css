@@ -8026,6 +8026,57 @@ html {
   }
 }
 
+/* Small-desktop / large-desktop typography smoothing — the 900-1199 tier
+   above jumped 17-27% into the 1200-1399 tier just above it (e.g. h1
+   34px -> 40px), a much steeper single step than every other boundary in
+   this file (~4-7%). Raising this tier roughly halfway closes that gap on
+   both sides without touching layout — same selectors, values only, kept
+   after the block above so it wins the cascade (both !important, later
+   source wins). Still strictly smaller than the 1200-1399 tier per the
+   "text must never get smaller as viewport widens" rule noted above. */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .RS_PageHeader h1 {
+    font-size: 37px !important;
+  }
+
+  .RS_PageHeader p {
+    font-size: 15px !important;
+  }
+
+  .RS_StatLabel {
+    font-size: 12.5px !important;
+  }
+
+  .RS_StatValue {
+    font-size: 25px !important;
+  }
+
+  .RS_BookingId {
+    font-size: 16.5px !important;
+  }
+
+  .RS_CellLabel {
+    font-size: 11.5px !important;
+  }
+
+  .RS_CellPrimary {
+    font-size: 14.5px !important;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 11.5px !important;
+  }
+
+  .RS_TrackingTitle h2 {
+    font-size: 24px !important;
+  }
+
+  .RS_CardHeading h3 {
+    font-size: 15px !important;
+  }
+}
+
 @media (max-width: 899px) {
   .RS_SelectedCampaignHint {
     align-items: flex-start;

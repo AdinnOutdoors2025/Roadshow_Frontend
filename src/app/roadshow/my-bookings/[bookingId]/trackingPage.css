@@ -1,3 +1,6 @@
+/* Full file retains the original component coverage below; this redesign layer
+   intentionally overrides layout/scale only, while all existing API-driven
+   class hooks and states continue to work. */
 /* =========================================================
    ROADSHOW — CLIENT CAMPAIGN TRACKING
    Complete UI redesign
@@ -821,6 +824,11 @@
   color: #747c86;
 }
 
+.RST_VehicleState--unavailable {
+  background: var(--rst-red-soft);
+  color: var(--rst-red);
+}
+
 .RST_VehicleKm {
   display: flex;
   grid-column: 1 / -1;
@@ -890,6 +898,16 @@
   text-align: center;
 }
 
+.RST_MapFallback--warning {
+  flex-direction: column;
+  gap: 6px;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(239, 62, 70, 0.06), transparent 50%),
+    linear-gradient(180deg, #fbfcfd 0%, #f2f5f8 100%);
+  padding: clamp(20px, 3vw, 38px);
+  text-align: center;
+}
+
 .RST_MapFallbackIcon {
   display: grid;
   width: 54px;
@@ -899,6 +917,11 @@
   border-radius: 50%;
   background: var(--rst-blue-soft);
   color: var(--rst-blue);
+}
+
+.RST_MapFallbackIcon--warning {
+  background: var(--rst-red-soft);
+  color: var(--rst-red);
 }
 
 .RST_MapFallbackTitle {
@@ -1282,6 +1305,112 @@
   color: #454d58;
   font-size: 10px;
   line-height: 1.45;
+}
+
+/* =========================================================
+   DRIVING HISTORY TABLE
+========================================================= */
+
+.RS_DrivingHistory {
+  margin-top: 18px;
+}
+
+.RS_DrivingHistoryDayTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.RS_DrivingHistoryDayTab {
+  border: 1px solid #e4e8ee;
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 12px;
+  color: #77808d;
+  cursor: pointer;
+  font: inherit;
+  font-size: clamp(9.5px, 0.6vw, 11px);
+  font-weight: 640;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.RS_DrivingHistoryDayTab:hover {
+  border-color: #d5dbe2;
+}
+
+.RS_DrivingHistoryDayTab--active {
+  border-color: rgba(40, 125, 224, 0.48);
+  background: var(--rst-blue-soft);
+  color: var(--rst-blue);
+}
+
+.RS_DrivingHistoryTable {
+  overflow-x: auto;
+  border: 1px solid #e6eaef;
+  border-radius: 14px;
+  background: #fbfcfd;
+}
+
+.RS_DrivingHistoryHeaderRow,
+.RS_DrivingHistoryRow {
+  display: grid;
+  grid-template-columns:
+    minmax(90px, 1fr) minmax(80px, 0.8fr) minmax(90px, 1fr)
+    minmax(70px, 0.8fr) minmax(120px, 1.1fr) minmax(100px, 1fr)
+    minmax(80px, 0.9fr) minmax(70px, 0.8fr);
+  gap: 10px;
+  min-width: 780px;
+  padding: 10px 16px;
+}
+
+.RS_DrivingHistoryHeaderRow {
+  border-bottom: 1px solid #edf0f3;
+  color: #929aa4;
+  font-size: 8.5px;
+  font-weight: 720;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.RS_DrivingHistoryRowGroup:not(:last-child) .RS_DrivingHistoryRow {
+  border-bottom: 1px solid #edf0f3;
+}
+
+.RS_DrivingHistoryRow {
+  align-items: center;
+  color: #2d343e;
+  font-size: clamp(10px, 0.66vw, 11.5px);
+}
+
+.RS_DrivingHistoryRow span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.RS_DrivingHistoryRoute {
+  padding: 0 16px 12px;
+  color: #818a95;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.RS_DrivingHistoryRoute strong {
+  overflow-wrap: anywhere;
+  color: #454d58;
+  font-weight: 600;
+}
+
+.RS_DrivingHistoryEmpty {
+  border: 1px dashed #d7dde5;
+  border-radius: 14px;
+  padding: 20px;
+  color: #9ba3ad;
+  font-size: 11px;
+  text-align: center;
 }
 
 /* =========================================================
@@ -2339,6 +2468,17 @@
   .RST_PhotoGrid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+
+  /* This tier shared the exact same 21px as the 1200-1439 tier above it —
+     no visible step between "large desktop" and "small desktop" here.
+     20.5px keeps it above the <=767 mobile tier's 20px (viewport-size
+     order must stay non-decreasing) while still reading distinctly
+     smaller than the 1200-1439 tier's 21px. Kept as a later declaration
+     in this block (wins on source order, same specificity, no !important
+     needed) rather than editing the value at line ~2404 directly. */
+  .RST_JourneyHead h2 {
+    font-size: 20.5px;
+  }
 }
 
 /* =========================================================
@@ -2649,4 +2789,780 @@
   .RST_HeroVehicle img {
     transition: none !important;
   }
+}
+
+
+/* =========================================================
+   LIVE MAP REFRESH
+========================================================= */
+
+.RST_MapHeaderActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.RST_MapRefresh,
+.RST_HistoryRefresh {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--rst-line);
+  border-radius: 9px;
+  background: #fff;
+  padding: 0 10px;
+  color: #4f5965;
+  cursor: pointer;
+  font: inherit;
+  font-size: clamp(9px, 0.59vw, 11px);
+  font-weight: 650;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.RST_MapRefresh:hover,
+.RST_HistoryRefresh:hover {
+  border-color: #ccd4dd;
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.RST_MapRefresh:disabled,
+.RST_HistoryRefresh:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  transform: none;
+}
+
+/* =========================================================
+   VEHICLE HISTORY
+========================================================= */
+
+.RST_HistorySection {
+  margin-top: clamp(13px, 0.95vw, 17px);
+  border: 1px solid var(--rst-line);
+  border-radius: clamp(15px, 1.05vw, 19px);
+  background: var(--rst-card);
+  padding: clamp(17px, 1.25vw, 24px);
+  box-shadow: var(--rst-shadow);
+  animation: RST_Enter 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.RST_HistoryToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.RST_HistoryQuickFilters,
+.RST_HistoryActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.RST_HistoryFilter {
+  min-height: 34px;
+  border: 1px solid #e1e6ec;
+  border-radius: 9px;
+  background: #fff;
+  padding: 0 12px;
+  color: #6d7681;
+  cursor: pointer;
+  font: inherit;
+  font-size: clamp(9px, 0.61vw, 11.5px);
+  font-weight: 650;
+  transition:
+    border-color 170ms ease,
+    color 170ms ease,
+    background-color 170ms ease,
+    transform 170ms ease;
+}
+
+.RST_HistoryFilter:hover {
+  transform: translateY(-1px);
+}
+
+.RST_HistoryFilter--active {
+  border-color: rgba(40, 125, 224, 0.5);
+  background: var(--rst-blue-soft);
+  color: var(--rst-blue);
+}
+
+.RST_HistoryActions select {
+  min-height: 34px;
+  min-width: 190px;
+  border: 1px solid #e1e6ec;
+  border-radius: 9px;
+  outline: none;
+  background: #fff;
+  padding: 0 31px 0 10px;
+  color: #3e4651;
+  font: inherit;
+  font-size: clamp(9px, 0.61vw, 11.5px);
+  font-weight: 600;
+}
+
+.RST_HistoryCustomRange {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #e7ebef;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 10px;
+}
+
+.RST_HistoryCustomRange label {
+  display: block;
+  min-width: 0;
+}
+
+.RST_HistoryCustomRange label > span {
+  display: block;
+  margin-bottom: 5px;
+  color: #8a939e;
+  font-size: clamp(8px, 0.53vw, 9.5px);
+  font-weight: 650;
+}
+
+.RST_HistoryCustomRange input {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #dfe5eb;
+  border-radius: 8px;
+  outline: none;
+  background: #fff;
+  padding: 0 9px;
+  color: #333b46;
+  font: inherit;
+  font-size: clamp(9.5px, 0.62vw, 11px);
+}
+
+.RST_HistoryCustomRange input:focus,
+.RST_HistoryActions select:focus {
+  border-color: rgba(40, 125, 224, 0.58);
+  box-shadow: 0 0 0 3px rgba(40, 125, 224, 0.07);
+}
+
+.RST_HistoryStatusLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+  color: #7b8490;
+  font-size: clamp(9px, 0.57vw, 10.5px);
+}
+
+.RST_HistoryStatusLine span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.RST_HistoryVehicleList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.RST_HistoryVehicle {
+  overflow: hidden;
+  border: 1px solid #e5e9ee;
+  border-radius: 13px;
+  background: #fbfcfd;
+}
+
+.RST_HistoryVehicle--unavailable {
+  border-color: #f1d5d7;
+  background: #fffafb;
+}
+
+.RST_HistoryVehicleHeader {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.RST_HistoryVehicleHeader--button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.RST_HistoryVehicleHeader > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.RST_HistoryVehicleIcon {
+  display: grid;
+  width: 35px;
+  height: 35px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: #edf5ff;
+  color: var(--rst-blue);
+}
+
+.RST_HistoryVehicleHeader strong {
+  display: block;
+  color: #28303a;
+  font-size: clamp(11px, 0.72vw, 13px);
+  font-weight: 700;
+}
+
+.RST_HistoryVehicleHeader small {
+  display: block;
+  margin-top: 2px;
+  color: #8c959f;
+  font-size: clamp(8.5px, 0.55vw, 10px);
+}
+
+.RST_HistoryChevron--open {
+  transform: rotate(180deg);
+}
+
+.RST_HistoryMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  border-top: 1px solid #edf0f3;
+  padding: 10px 14px;
+}
+
+.RST_HistoryMetrics > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9px;
+  background: #fff;
+  padding: 9px;
+}
+
+.RST_HistoryMetrics svg {
+  flex: 0 0 auto;
+  color: #64707d;
+}
+
+.RST_HistoryMetrics small {
+  display: block;
+  color: #939ba5;
+  font-size: 8.5px;
+}
+
+.RST_HistoryMetrics strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: #343b45;
+  font-size: clamp(9.5px, 0.62vw, 11px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RST_HistoryRouteSummary {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 14px 10px;
+  border-radius: 10px;
+  background: #f6f8fa;
+  padding: 9px 10px;
+}
+
+.RST_HistoryRouteSummary svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #66717d;
+}
+
+.RST_HistoryRouteSummary small {
+  display: block;
+  color: #929aa4;
+  font-size: 8px;
+}
+
+.RST_HistoryRouteSummary strong {
+  display: block;
+  overflow-wrap: anywhere;
+  margin-top: 2px;
+  color: #49525d;
+  font-size: clamp(9px, 0.58vw, 10.5px);
+  font-weight: 570;
+  line-height: 1.45;
+}
+
+.RST_HistoryTableWrap {
+  overflow-x: auto;
+  border-top: 1px solid #e8ecf0;
+}
+
+.RST_HistoryTable {
+  min-width: 1120px;
+}
+
+.RST_HistoryTableHead,
+.RST_HistoryTableRow {
+  display: grid;
+  grid-template-columns:
+    minmax(130px, 1.05fr)
+    minmax(75px, 0.55fr)
+    minmax(55px, 0.45fr)
+    minmax(260px, 2.2fr)
+    minmax(80px, 0.65fr)
+    minmax(65px, 0.5fr)
+    minmax(90px, 0.65fr)
+    minmax(100px, 0.8fr)
+    minmax(75px, 0.55fr)
+    minmax(80px, 0.6fr);
+  gap: 8px;
+  align-items: center;
+  padding: 10px 14px;
+}
+
+.RST_HistoryTableHead {
+  background: #f4f7f9;
+  color: #747e89;
+  font-size: 8.5px;
+  font-weight: 720;
+  letter-spacing: 0.035em;
+}
+
+.RST_HistoryTableRow {
+  border-top: 1px solid #edf0f3;
+  background: #fff;
+  color: #3e4650;
+  font-size: clamp(9.5px, 0.61vw, 11px);
+}
+
+.RST_HistoryTableRow:nth-child(odd) {
+  background: #fcfdfd;
+}
+
+.RST_HistoryAddress {
+  line-height: 1.4;
+}
+
+.RST_HistoryTableRow a {
+  color: var(--rst-blue);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.RST_IgnitionBadge {
+  display: inline-flex;
+  border-radius: 999px;
+  background: #f0f2f4;
+  padding: 4px 7px;
+  color: #747c86;
+  font-size: 8.5px;
+  font-weight: 720;
+}
+
+.RST_IgnitionBadge--on {
+  background: var(--rst-green-soft);
+  color: var(--rst-green);
+}
+
+.RST_HistoryUnavailable,
+.RST_HistoryEmpty,
+.RST_HistoryLoading {
+  margin: 0 14px 14px;
+  border-radius: 10px;
+  padding: 13px;
+  color: #858e99;
+  font-size: clamp(9.5px, 0.61vw, 11px);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.RST_HistoryUnavailable {
+  background: var(--rst-red-soft);
+  color: #b4494f;
+}
+
+.RST_HistoryEmpty {
+  border: 1px dashed #d6dde5;
+  background: #fff;
+}
+
+.RST_HistoryLoading {
+  display: flex;
+  min-height: 100px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #f8fafc;
+}
+
+@media (min-width: 1600px) {
+  .RST_HistorySection {
+    padding: 25px;
+  }
+
+  .RST_HistoryFilter,
+  .RST_HistoryActions select,
+  .RST_MapRefresh,
+  .RST_HistoryRefresh {
+    min-height: 38px;
+    font-size: 12px;
+  }
+
+  .RST_HistoryVehicleHeader strong {
+    font-size: 14px;
+  }
+
+  .RST_HistoryTableRow {
+    font-size: 11.5px;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1439px) {
+  .RST_HistorySection {
+    padding: 18px;
+  }
+
+  .RST_HistoryMetrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .RST_HistoryToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .RST_HistoryActions {
+    justify-content: space-between;
+  }
+
+  .RST_HistoryActions select {
+    flex: 1 1 210px;
+  }
+
+  .RST_HistoryCustomRange {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .RST_HistoryMetrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .RST_MapHeader {
+    align-items: flex-start;
+  }
+
+  .RST_MapHeaderActions {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .RST_MapRefresh span {
+    display: none;
+  }
+
+  .RST_HistorySection {
+    padding: 14px;
+  }
+
+  .RST_HistoryQuickFilters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .RST_HistoryFilter {
+    flex: 0 0 auto;
+  }
+
+  .RST_HistoryActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .RST_HistoryActions select,
+  .RST_HistoryRefresh {
+    width: 100%;
+  }
+
+  .RST_HistoryCustomRange {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .RST_HistoryMetrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .RST_HistoryTable {
+    min-width: 0;
+  }
+
+  .RST_HistoryTableHead {
+    display: none;
+  }
+
+  .RST_HistoryTableRow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
+    padding: 12px;
+  }
+
+  .RST_HistoryTableRow > span {
+    display: grid;
+    grid-template-columns: 108px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .RST_HistoryTableRow > span::before {
+    content: attr(data-label);
+    color: #8b949f;
+    font-size: 8.5px;
+    font-weight: 700;
+  }
+}
+
+@media (max-width: 430px) {
+  .RST_HistoryCustomRange,
+  .RST_HistoryMetrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   2026 CLIENT TRACKING REDESIGN — RESPONSIVE EXPERIENCE LAYER
+========================================================= */
+.RST_Root {
+  --rst-max: 1760px;
+  --rst-radius-xl: 26px;
+  --rst-radius-lg: 20px;
+  --rst-ink: #101722;
+  --rst-subtle: #667085;
+  --rst-surface: rgba(255,255,255,.94);
+  background:
+    radial-gradient(circle at 0 0, rgba(40,125,224,.09), transparent 28%),
+    radial-gradient(circle at 100% 14%, rgba(239,62,70,.07), transparent 26%),
+    linear-gradient(180deg,#f8fafc 0,#f1f4f8 46%,#f7f9fb 100%);
+  padding-top: clamp(112px, 7vw, 150px);
+}
+.RST_Container { width:min(var(--rst-max),100%); }
+
+/* Larger, calmer type scale */
+.RST_SectionHeading h2,.RST_MapHeader h2 { font-size:clamp(22px,1.45vw,30px); }
+.RST_SectionHeading--compact h2 { font-size:clamp(19px,1.15vw,24px); }
+.RST_SectionHeading>div>span,.RST_MapHeader>div>span,.RST_Eyebrow { font-size:clamp(10px,.64vw,12px); }
+.RST_SectionHeading>small { max-width:560px;font-size:clamp(11px,.7vw,14px); }
+
+/* Hero becomes an executive campaign header */
+.RST_Hero {
+  position:relative;overflow:hidden;
+  min-height:190px;
+  border:0;
+  border-radius:var(--rst-radius-xl);
+  background:
+    linear-gradient(115deg,rgba(14,22,34,.98),rgba(26,37,54,.95) 58%,rgba(42,55,73,.9)),
+    #17202d;
+  box-shadow:0 22px 65px rgba(18,28,43,.16);
+  padding:clamp(28px,2.1vw,42px);
+}
+.RST_Hero::after { content:"";position:absolute;right:-80px;top:-120px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.10),transparent 66%);pointer-events:none; }
+.RST_HeroVehicle { width:clamp(128px,8.6vw,170px);height:clamp(104px,7.1vw,140px);border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07); }
+.RST_HeroVehicle img { object-fit:contain; }
+.RST_Hero h1 { color:#fff;font-size:clamp(36px,2.65vw,54px);letter-spacing:-.045em; }
+.RST_HeroMeta { margin-top:16px;color:#d8e0ea;font-size:clamp(13px,.85vw,16px);gap:10px 22px; }
+.RST_HeroPeriod { min-width:330px;border-left:1px solid rgba(255,255,255,.14);padding-left:32px; }
+.RST_HeroPeriodIcon { width:50px;height:50px;background:rgba(255,255,255,.1);color:#fff; }
+.RST_HeroPeriod>div>span,.RST_HeroPeriod small { color:#aeb9c7;font-size:clamp(11px,.72vw,14px); }
+.RST_HeroPeriod strong { color:#fff;font-size:clamp(16px,1vw,20px); }
+
+/* Journey card */
+.RST_JourneyCard { border-radius:var(--rst-radius-xl);padding:clamp(24px,1.7vw,34px); }
+.RST_JourneyHead h2 { font-size:clamp(26px,1.75vw,36px); }
+.RST_CurrentMeaning { max-width:520px;width:min(520px,45%);border:1px solid #e6ebf1;background:#f8fafc;padding:14px 16px; }
+.RST_CurrentMeaning strong { font-size:clamp(13px,.82vw,16px); }
+.RST_CurrentMeaning small { font-size:clamp(11px,.7vw,13px); }
+.RST_StatusNode { width:48px;height:48px; }
+.RST_StatusConnector { left:calc(50% + 24px);width:calc(100% - 48px);height:3px; }
+.RST_StatusCopy strong { font-size:clamp(12px,.76vw,15px); }
+.RST_StatusCopy small { font-size:clamp(10px,.64vw,12px); }
+
+/* Live tracking: compact left command rail + dominant map */
+.RST_LiveShell {
+  grid-template-columns:minmax(310px,.72fr) minmax(680px,1.7fr);
+  grid-template-rows:auto auto;
+  align-items:stretch;
+  gap:18px;
+}
+.RST_LiveSidebar { grid-column:1;grid-row:1; }
+.RST_TodayCard { grid-column:1;grid-row:2; }
+.RST_MapCard { grid-column:2;grid-row:1 / span 2; }
+.RST_LiveSidebar,.RST_TodayCard,.RST_MapCard { border-radius:var(--rst-radius-lg); }
+.RST_LiveSidebar,.RST_TodayCard { padding:22px; }
+.RST_MapHeader { padding:22px 24px; }
+.RST_Map { height:clamp(560px,43vw,760px); }
+.RST_MapFooter { padding:16px 20px; }
+.RST_MapFooter span { font-size:11px; }
+.RST_MapFooter strong { font-size:13px; }
+.RST_VehicleCard { grid-template-columns:78px minmax(0,1fr);padding:13px;border-radius:15px; }
+.RST_VehicleThumb { width:78px;height:68px; }
+.RST_VehicleCopy strong { font-size:14px; }
+.RST_VehicleCopy small { font-size:11px; }
+.RST_VehicleState { font-size:10.5px;padding:5px 9px; }
+.RST_VehicleKm small { font-size:10px; }.RST_VehicleKm strong { font-size:12px; }
+.RST_TodayMetric { padding:15px 2px; }.RST_TodayMetric small { font-size:11px; }.RST_TodayMetric strong { font-size:15px; }
+.RST_MetricIcon { width:44px;height:44px; }
+.RST_CurrentVehicleStrip { margin-top:16px;grid-template-columns:repeat(3,1fr); }
+.RST_CurrentVehicleStrip small { font-size:9.5px; }.RST_CurrentVehicleStrip strong { font-size:11.5px; }
+
+/* Driving and history cards */
+.RST_DrivingSection,.RST_HistorySection,.RST_ReportSection { border-radius:var(--rst-radius-xl);padding:clamp(24px,1.7vw,34px); }
+.RS_DrivingSummaryList { grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px; }
+.RS_DrivingSummaryCard { border-radius:18px;padding:20px; }
+.RS_DrivingSummaryHeader strong { font-size:15px; }
+.RS_TimeLegendItem small,.RS_DrivingStatsGrid>div small { font-size:10px; }
+.RS_TimeLegendItem strong,.RS_DrivingStatsGrid>div strong { font-size:13px; }
+.RS_DrivingLocations span { font-size:12px; }
+.RST_HistoryVehicleHeader strong { font-size:14px; }.RST_HistoryVehicleHeader small { font-size:11px; }
+.RST_HistoryMetrics small { font-size:10px; }.RST_HistoryMetrics strong { font-size:12px; }
+.RST_HistoryFilter,.RST_HistoryActions select,.RST_MapRefresh,.RST_HistoryRefresh { min-height:42px;font-size:12px; }
+
+/* New campaign date carousel / grab timeline */
+.RST_ReportTopline { display:flex;align-items:flex-start;justify-content:space-between;gap:20px; }
+.RST_ReportTopline .RST_SectionHeading { flex:1; }
+.RST_DayTimelineControls { display:flex;gap:8px;flex:0 0 auto; }
+.RST_DayTimelineControls button { display:grid;width:46px;height:46px;place-items:center;border:1px solid #dfe5ec;border-radius:14px;background:#fff;color:#364152;cursor:pointer;transition:.2s ease; }
+.RST_DayTimelineControls button:hover { transform:translateY(-2px);box-shadow:0 10px 24px rgba(24,35,52,.09); }
+.RST_DayTimeline { overflow-x:auto;overflow-y:hidden;margin:2px -5px 20px;padding:8px 5px 14px;cursor:grab;scroll-snap-type:x mandatory;scrollbar-width:none;touch-action:pan-y;user-select:none; }
+.RST_DayTimeline::-webkit-scrollbar { display:none; }
+.RST_DayTimeline--dragging { cursor:grabbing;scroll-snap-type:none; }
+.RST_DayTimelineTrack { display:flex;min-width:max-content;align-items:stretch;gap:12px; }
+.RST_DayTimelineItem { position:relative;display:flex;width:clamp(190px,14vw,240px);min-height:112px;flex:0 0 auto;align-items:center;gap:13px;border:1px solid #e4e9ef;border-radius:18px;background:#fbfcfe;padding:16px;color:inherit;cursor:pointer;font:inherit;text-align:left;scroll-snap-align:start;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease,background .2s ease; }
+.RST_DayTimelineItem::after { content:"";position:absolute;right:-13px;top:50%;width:13px;height:2px;background:#e3e8ee; }
+.RST_DayTimelineItem:last-child::after { display:none; }
+.RST_DayTimelineItem:hover { transform:translateY(-2px);border-color:#cfd8e4; }
+.RST_DayTimelineItem--active { border-color:#1f77dc;background:linear-gradient(145deg,#f2f8ff,#fff);box-shadow:0 12px 30px rgba(40,125,224,.12); }
+.RST_DayTimelineDot { width:14px;height:14px;flex:0 0 auto;border:4px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #d6dce4;background:#c7cdd5; }
+.RST_DayTimelineDot.RST_ReportStatus--completed { background:#179b61;box-shadow:0 0 0 1px #179b61; }
+.RST_DayTimelineDot.RST_ReportStatus--ongoing { background:#287de0;box-shadow:0 0 0 1px #287de0; }
+.RST_DayTimelineDot.RST_ReportStatus--not_reported { background:#ef8a17;box-shadow:0 0 0 1px #ef8a17; }
+.RST_DayTimelineCopy { display:flex;min-width:0;flex-direction:column;gap:4px; }
+.RST_DayTimelineCopy small { color:#98a2b3;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase; }
+.RST_DayTimelineCopy strong { color:#202938;font-size:15px;font-weight:700;white-space:nowrap; }
+.RST_DayTimelineCopy em { color:#667085;font-size:11px;font-style:normal;font-weight:600; }
+.RST_DayDetail--wide { border:0;border-radius:20px;background:linear-gradient(180deg,#f9fbfd,#fff);box-shadow:inset 0 0 0 1px #e7ebf0;padding:clamp(20px,1.5vw,30px); }
+.RST_DayDetailHeader h3 { font-size:clamp(24px,1.5vw,31px); }
+.RST_ReportStatus { padding:8px 12px;font-size:11px; }
+.RST_ReportMetric { min-height:92px;padding:16px;border-radius:16px;background:#fff; }
+.RST_ReportMetricIcon { width:44px;height:44px; }
+.RST_ReportMetric small { font-size:10.5px; }.RST_ReportMetric strong { font-size:15px; }
+.RST_RouteNote { margin-top:16px;padding:15px;border-radius:14px; }.RST_RouteNote span { font-size:10px; }.RST_RouteNote strong { font-size:12.5px; }
+
+/* Bottom dashboard */
+.RST_BottomGrid { grid-template-columns:1.05fr .9fr 1.35fr;gap:18px; }
+.RST_ActivityCard,.RST_ProgressCard,.RST_PhotoCard { border-radius:var(--rst-radius-lg);padding:24px; }
+.RST_Activity strong { font-size:12.5px; }.RST_Activity small { font-size:10px; }
+.RST_ProgressStats span { font-size:11px; }.RST_ProgressStats strong { font-size:13px; }
+.RST_PhotoGrid { gap:10px; }
+
+/* Ensure desktop tiers never shrink back to tiny text from the legacy rules */
+@media (min-width:1200px) and (max-width:1599px) {
+  .RST_Root { padding-inline:clamp(18px,2vw,32px); }
+  .RST_Hero h1 { font-size:clamp(38px,2.6vw,46px); }
+  .RST_HeroMeta { font-size:13px; }
+  .RST_SectionHeading h2,.RST_MapHeader h2 { font-size:clamp(22px,1.55vw,27px); }
+  .RST_SectionHeading--compact h2 { font-size:20px; }
+  .RST_JourneyHead h2 { font-size:27px; }
+  .RST_StatusCopy strong { font-size:12.5px; }.RST_StatusCopy small { font-size:10px; }
+  .RST_Map { height:clamp(540px,44vw,660px); }
+}
+
+@media (min-width:1600px) {
+  .RST_Root { padding-inline:46px; }
+  .RST_Hero h1 { font-size:54px; }
+  .RST_HeroMeta { font-size:15px; }
+  .RST_LiveShell { grid-template-columns:minmax(340px,.68fr) minmax(820px,1.75fr); }
+  .RST_Map { height:730px; }
+  .RST_DayTimelineItem { width:235px; }
+}
+
+/* Tablet */
+@media (min-width:768px) and (max-width:1199px) {
+  .RST_Hero { min-height:0; }
+  .RST_HeroVehicle { width:100px;height:88px; }
+  .RST_Hero h1 { font-size:34px; }
+  .RST_HeroPeriod { min-width:240px; }
+  .RST_LiveShell { grid-template-columns:1fr 1.55fr;grid-template-rows:auto auto; }
+  .RST_MapCard { grid-column:2;grid-row:1 / span 2; }
+  .RST_LiveSidebar { grid-column:1;grid-row:1; }.RST_TodayCard { grid-column:1;grid-row:2; }
+  .RST_Map { height:620px; }
+  .RST_SnapshotMetrics { grid-template-columns:1fr 1fr; }
+  .RST_ReportMetrics { grid-template-columns:1fr 1fr; }
+  .RST_BottomGrid { grid-template-columns:1fr 1fr; }
+  .RST_PhotoCard { grid-column:1/-1; }
+}
+
+/* Mobile */
+@media (max-width:767px) {
+  .RST_Root { padding-inline:10px; }
+  .RST_Hero { padding:18px;border-radius:20px; }
+  .RST_HeroIdentity { align-items:center; }
+  .RST_HeroVehicle { width:82px;height:70px; }
+  .RST_Hero h1 { font-size:clamp(28px,8vw,36px); }
+  .RST_HeroMeta { font-size:11px; }
+  .RST_HeroPeriod { border-top:1px solid rgba(255,255,255,.14); }
+  .RST_HeroPeriod strong { font-size:15px; }
+  .RST_SectionHeading h2,.RST_MapHeader h2 { font-size:22px; }
+  .RST_SectionHeading>small { font-size:11px; }
+  .RST_JourneyHead h2 { font-size:24px; }
+  .RST_CurrentMeaning { width:100%; }
+  .RST_LiveShell { display:flex;flex-direction:column; }
+  .RST_MapCard { order:1; }.RST_LiveSidebar { order:2; }.RST_TodayCard { order:3; }
+  .RST_Map { height:min(86vw,420px);min-height:330px; }
+  .RST_LiveSidebar,.RST_TodayCard { padding:17px; }
+  .RST_SnapshotMetrics { grid-template-columns:1fr 1fr; }
+  .RST_DrivingSection,.RST_HistorySection,.RST_ReportSection { padding:17px;border-radius:18px; }
+  .RST_ReportTopline { flex-direction:column; }
+  .RST_ReportTopline .RST_SectionHeading { margin-bottom:0; }
+  .RST_DayTimelineControls { align-self:flex-end; }
+  .RST_DayTimelineItem { width:180px;min-height:104px; }
+  .RST_ReportMetrics { grid-template-columns:1fr 1fr; }
+  .RST_ReportMetric { min-height:84px;padding:13px; }
+  .RST_DayPhotos,.RST_PhotoGrid { grid-template-columns:1fr 1fr; }
+  .RST_BottomGrid { grid-template-columns:1fr; }
+  .RST_ActivityCard,.RST_ProgressCard,.RST_PhotoCard { padding:18px; }
+}
+
+@media (max-width:480px) {
+  .RST_HeroIdentity { align-items:flex-start; }
+  .RST_HeroVehicle { width:70px;height:62px; }
+  .RST_Hero h1 { font-size:28px; }
+  .RST_HeroMeta { display:grid;grid-template-columns:1fr;gap:7px; }
+  .RST_SnapshotMetrics,.RST_ReportMetrics { grid-template-columns:1fr; }
+  .RST_DayTimelineItem { width:166px; }
+  .RST_DayTimelineControls button { width:42px;height:42px; }
+  .RST_DayDetail--wide { padding:15px; }
 }

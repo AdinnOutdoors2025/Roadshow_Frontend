@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { baseUrl } from "../../../../BaseUrl";
 import { clientAuthHeaders } from "@/lib/roadshowAuthToken";
@@ -9,21 +9,17 @@ const POLL_INTERVAL_MS = 18000;
 
 export type LiveVehicle = {
   registrationNumber: string;
-  latitude: number;
-  longitude: number;
-  address: string;
-  speedKmh: number;
-  status: "Moving" | "Parked" | "Idle" | "Unknown";
-  distanceCoveredKm: number;
-  lastUpdatedAt: string | null;
-  isStale: boolean;
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+  speedKmh?: number;
+  status?: "Moving" | "Parked" | "Idle" | "Unknown";
+  distanceCoveredKm?: number;
+  lastUpdatedAt?: string | null;
+  isStale?: boolean;
+  unavailable: boolean;
 };
 
-/* Lightweight, frequently-polled live GPS lookup — separate from
-   useCampaignTracking so a location refresh never pulls the whole booking.
-   `enabled` should be false whenever the journey stage isn't On Road: no
-   request is made at all in that case (the placeholder in the page covers
-   that state instead). */
 export function useLiveLocation(
   mongoId: string,
   token: string | null,
@@ -31,17 +27,18 @@ export function useLiveLocation(
 ) {
   const [vehicles, setVehicles] = useState<LiveVehicle[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+
+  const mountedRef = useRef(true);
   const lastUpdatedRef = useRef<string>("");
 
-  useEffect(() => {
-    if (!enabled) return;
+  const fetchLocation = useCallback(
+    async (mode: "initial" | "refresh" | "poll" = "poll") => {
+      if (!enabled || !mongoId) return;
 
-    let active = true;
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-
-    async function fetchLocation(showLoading: boolean) {
-      if (showLoading) setLoading(true);
+      if (mode === "initial") setLoading(true);
+      if (mode === "refresh") setRefreshing(true);
 
       try {
         const response = await fetch(
@@ -60,12 +57,22 @@ export function useLiveLocation(
           );
         }
 
-        if (!active) return;
+        if (!mountedRef.current) return;
 
         const nextVehicles: LiveVehicle[] = result.data?.vehicles || [];
-        const signature = nextVehicles
-          .map((v) => `${v.registrationNumber}:${v.lastUpdatedAt}`)
-          .join("|");
+        const signature = JSON.stringify(
+          nextVehicles.map((vehicle) => ({
+            registrationNumber: vehicle.registrationNumber,
+            latitude: vehicle.latitude,
+            longitude: vehicle.longitude,
+            speedKmh: vehicle.speedKmh,
+            status: vehicle.status,
+            distanceCoveredKm: vehicle.distanceCoveredKm,
+            lastUpdatedAt: vehicle.lastUpdatedAt,
+            isStale: vehicle.isStale,
+            unavailable: vehicle.unavailable,
+          })),
+        );
 
         if (signature !== lastUpdatedRef.current) {
           lastUpdatedRef.current = signature;
@@ -74,7 +81,7 @@ export function useLiveLocation(
 
         setError("");
       } catch (err) {
-        if (!active) return;
+        if (!mountedRef.current) return;
 
         setError(
           err instanceof Error
@@ -82,49 +89,71 @@ export function useLiveLocation(
             : "Unable to load live location.",
         );
       } finally {
-        if (active && showLoading) setLoading(false);
+        if (!mountedRef.current) return;
+        if (mode === "initial") setLoading(false);
+        if (mode === "refresh") setRefreshing(false);
       }
+    },
+    [mongoId, token, enabled],
+  );
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    if (!enabled) {
+      setVehicles([]);
+      setError("");
+      lastUpdatedRef.current = "";
+      return;
     }
 
-    function stopPolling() {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    const stopPolling = () => {
       if (intervalId) {
         clearInterval(intervalId);
         intervalId = null;
       }
-    }
+    };
 
-    function startPolling() {
+    const startPolling = () => {
       if (intervalId) return;
-      intervalId = setInterval(() => fetchLocation(false), POLL_INTERVAL_MS);
-    }
+      intervalId = setInterval(
+        () => void fetchLocation("poll"),
+        POLL_INTERVAL_MS,
+      );
+    };
 
-    function handleVisibility() {
+    const handleVisibility = () => {
       if (document.hidden) {
         stopPolling();
       } else {
-        fetchLocation(false);
+        void fetchLocation("poll");
         startPolling();
       }
-    }
+    };
 
-    fetchLocation(true);
-
+    void fetchLocation("initial");
     if (!document.hidden) startPolling();
 
     document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
-      active = false;
+      mountedRef.current = false;
       stopPolling();
       document.removeEventListener("visibilitychange", handleVisibility);
-      /* Runs on unmount and whenever `enabled` flips back to false (or
-         mongoId/token change) — clears stale vehicles rather than leaving
-         a stopped-being-on-road booking showing its last known position. */
-      setVehicles([]);
-      setError("");
-      lastUpdatedRef.current = "";
     };
-  }, [mongoId, token, enabled]);
+  }, [enabled, fetchLocation]);
 
-  return { vehicles, loading, error };
+  const refresh = useCallback(async () => {
+    await fetchLocation("refresh");
+  }, [fetchLocation]);
+
+  return {
+    vehicles,
+    loading,
+    refreshing,
+    error,
+    refresh,
+  };
 }

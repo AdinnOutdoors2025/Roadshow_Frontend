@@ -9,6 +9,21 @@ function formatHM(ms: number) {
   return `${h}h ${m}m`;
 }
 
+function formatDayLabel(day?: string) {
+  if (!day) return "Today";
+
+  const date = new Date(`${day}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "Today";
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  if (day === todayKey) return "Today";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+  }).format(date);
+}
+
 const SEGMENT_META = {
   moving: { label: "Moving", className: "RS_TimeSegment--moving" },
   parked: { label: "Parked", className: "RS_TimeSegment--parked" },
@@ -18,8 +33,10 @@ const SEGMENT_META = {
 
 export default function DrivingSummaryPanel({
   vehicles,
+  day,
 }: {
   vehicles: DrivingSummaryVehicle[];
+  day?: string;
 }) {
   const withData = vehicles.filter((v) => v.drivingSummary);
 
@@ -41,7 +58,7 @@ export default function DrivingSummaryPanel({
           <div key={registrationNumber} className="RS_DrivingSummaryCard">
             <div className="RS_DrivingSummaryHeader">
               <strong>{registrationNumber}</strong>
-              <span>Today</span>
+              <span>{formatDayLabel(day)}</span>
             </div>
 
             <p className="RS_TrackingSectionLabel">24-Hour Summary</p>
