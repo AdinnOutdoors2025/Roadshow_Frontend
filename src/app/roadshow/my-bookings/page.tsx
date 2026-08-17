@@ -85,8 +85,18 @@ type SortMode =
   | "highest"
   | "lowest";
 
+const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "highest", label: "Highest amount" },
+  { value: "lowest", label: "Lowest amount" },
+];
+
 type Vehicle = {
   name: string;
+  /* Representative photo for the booked vehicle TYPE, not the exact
+     named vehicle — see vehicleTypeImage on ClientRequestVehicleRaw. */
+  image: string | null;
   startDate: string;
   endDate: string;
   duration: string;
@@ -101,6 +111,16 @@ type JourneyStage = { index: number; key: string };
 
 type OnRoadDay = { day: number; totalDays: number };
 
+/* Mirrors buildSteps() in the backend's Utils/clientJourneyStages.js —
+   completedAt is null when the backend has no logged timestamp for that
+   milestone yet, never a guessed date. */
+type JourneyStep = {
+  key: string;
+  label: string;
+  status: "done" | "current" | "upcoming";
+  completedAt: string | null;
+};
+
 type Booking = {
   id: string;
   mongoId: string;
@@ -108,6 +128,7 @@ type Booking = {
   status: BookingStatus;
 
   journeyStage: JourneyStage;
+  steps: JourneyStep[];
   isCancelled: boolean;
   vehicleUnavailable: boolean;
   onRoad: OnRoadDay | null;
@@ -122,6 +143,8 @@ type Booking = {
   vehicleTypes: number;
   vehicleCount: number;
 
+  subtotal: number;
+  gstAmount: number;
   estimatedTotal: number;
 
   campaignName: string;
@@ -144,11 +167,16 @@ type ClientRequestVehicleRaw = {
   vehicleName?: string;
 
   vehicleType?:
-    | {
-        name?: string;
-      }
-    | string
-    | null;
+  | {
+    name?: string;
+  }
+  | string
+  | null;
+
+  /* Best-effort photo for the booked vehicle's TYPE — see
+     attachVehicleTypeImages in ClientRequestController.js. null when no
+     onboarded vehicle of that type has a front-view photo yet. */
+  vehicleTypeImage?: string | null;
 
   quantity?: number;
 
@@ -178,6 +206,8 @@ type ClientRequestRaw = {
 
   createdAt?: string;
 
+  subtotal?: number;
+  gstAmount?: number;
   estimatedTotal?: number;
 
   name?: string;
@@ -194,6 +224,7 @@ type ClientRequestRaw = {
   /* Additive fields from the linked Order's real pipeline — see
      getMyClientRequests/getClientRequestById in ClientRequestController.js. */
   journeyStage?: JourneyStage;
+  steps?: JourneyStep[];
   isCancelled?: boolean;
   vehicleUnavailable?: boolean;
   onRoad?: OnRoadDay | null;
@@ -202,14 +233,6 @@ type ClientRequestRaw = {
 /* =========================================================
    UI CONFIG
 ========================================================= */
-
-const FILTER_TABS: StatusFilter[] = [
-  "All",
-  "Confirmed",
-  "In Progress",
-  "Pending",
-  "Cancelled",
-];
 
 type StatusConfig = {
   label: string;
@@ -275,6 +298,19 @@ function formatBookingDate(value?: string) {
   }).format(date);
 }
 
+function formatStageDate(value?: string | null) {
+  if (!value) return null;
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return null;
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+  }).format(date);
+}
+
 function formatBookingDateTime(value?: string) {
   if (!value) return "-";
 
@@ -316,6 +352,39 @@ function mapRequestStatus(status?: number): BookingStatus {
   }
 }
 
+/*
+  The per-row badge (getBookingStatusLabel) already reads the real pipeline
+  stage from journeyStage.key. The stat tiles must bucket bookings from the
+  same source, or "Order Confirmed" rows can show under a "Confirmed" count
+  of 0 whenever the legacy numeric `status` field lags the pipeline. onRoad/
+  confirmed/prepared/completed/submitted are the only stage keys the backend
+  emits (see journeyStageCopy.ts) — mapRequestStatus is kept only as a
+  fallback for an unrecognized/missing stage key.
+*/
+function mapJourneyStageToStatus(
+  journeyStageKey: string | undefined,
+  onRoad: OnRoadDay | null | undefined,
+  fallbackStatus?: number,
+): BookingStatus {
+  if (onRoad) return "In Progress";
+
+  switch (journeyStageKey) {
+    case "onRoad":
+      return "In Progress";
+
+    case "confirmed":
+    case "prepared":
+    case "completed":
+      return "Confirmed";
+
+    case "submitted":
+      return "Pending";
+
+    default:
+      return mapRequestStatus(fallbackStatus);
+  }
+}
+
 function mapClientRequestToBooking(
   request: ClientRequestRaw,
 ): Booking {
@@ -327,8 +396,8 @@ function mapClientRequestToBooking(
 
   const promoterLabel = firstVehicle?.needPromoter
     ? [firstVehicle.promoterType, firstVehicle.promoterGender]
-        .filter(Boolean)
-        .join(" · ") || "Promoter requested"
+      .filter(Boolean)
+      .join(" · ") || "Promoter requested"
     : "No promoter";
 
   const vehicleCount = vehicleTypes.reduce(
@@ -353,10 +422,16 @@ function mapClientRequestToBooking(
 
     status: request.isCancelled
       ? "Cancelled"
-      : mapRequestStatus(request.status),
+      : mapJourneyStageToStatus(
+        request.journeyStage?.key,
+        request.onRoad,
+        request.status,
+      ),
 
     journeyStage:
       request.journeyStage || { index: 0, key: "submitted" },
+
+    steps: Array.isArray(request.steps) ? request.steps : [],
 
     isCancelled: Boolean(request.isCancelled),
     vehicleUnavailable: Boolean(request.vehicleUnavailable),
@@ -369,14 +444,15 @@ function mapClientRequestToBooking(
     endDate: formatBookingDate(firstVehicle?.toDate),
 
     duration: firstVehicle?.totalDays
-      ? `${firstVehicle.totalDays} ${
-          firstVehicle.totalDays === 1 ? "Day" : "Days"
-        }`
+      ? `${firstVehicle.totalDays} ${firstVehicle.totalDays === 1 ? "Day" : "Days"
+      }`
       : "-",
 
     vehicleTypes: vehicleTypes.length,
     vehicleCount,
 
+    subtotal: Number(request.subtotal || 0),
+    gstAmount: Number(request.gstAmount || 0),
     estimatedTotal: Number(request.estimatedTotal || 0),
 
     campaignName:
@@ -406,13 +482,14 @@ function mapClientRequestToBooking(
             : undefined) ||
         "Roadshow Vehicle",
 
+      image: vehicle.vehicleTypeImage || null,
+
       startDate: formatBookingDate(vehicle.fromDate),
       endDate: formatBookingDate(vehicle.toDate),
 
       duration: vehicle.totalDays
-        ? `${vehicle.totalDays} ${
-            vehicle.totalDays === 1 ? "Day" : "Days"
-          }`
+        ? `${vehicle.totalDays} ${vehicle.totalDays === 1 ? "Day" : "Days"
+        }`
         : "-",
 
       quantity: Number(vehicle.quantity || 0),
@@ -569,7 +646,7 @@ function BubbleButton({
 function getStageMeta(booking: Booking) {
   return (
     JOURNEY_STAGE_COPY[
-      booking.journeyStage.key as JourneyStageKey
+    booking.journeyStage.key as JourneyStageKey
     ] || null
   );
 }
@@ -610,12 +687,12 @@ function getCampaignProgress(booking: Booking) {
     keyIndex >= 0
       ? keyIndex
       : Math.max(
-          0,
-          Math.min(
-            Number(booking.journeyStage.index || 0),
-            stages.length - 1,
-          ),
-        );
+        0,
+        Math.min(
+          Number(booking.journeyStage.index || 0),
+          stages.length - 1,
+        ),
+      );
 
   return Math.round(
     (stageIndex / (stages.length - 1)) * 100,
@@ -625,13 +702,14 @@ function getCampaignProgress(booking: Booking) {
 function canTrackCampaign(booking: Booking) {
   return Boolean(
     booking.onRoad ||
-      booking.isCancelled ||
-      Number(booking.journeyStage.index || 0) > 0,
+    booking.isCancelled ||
+    Number(booking.journeyStage.index || 0) > 0,
   );
 }
 
 function getExpandedVehicles(booking: Booking) {
-  const items: Array<{ label: string; name: string }> = [];
+  const items: Array<{ label: string; name: string; image: string | null }> =
+    [];
 
   booking.vehicles.forEach((vehicle) => {
     const quantity = Math.max(1, Number(vehicle.quantity || 1));
@@ -643,6 +721,7 @@ function getExpandedVehicles(booking: Booking) {
             ? `Vehicle ${String(items.length + 1).padStart(2, "0")}`
             : "Vehicle",
         name: vehicle.name,
+        image: vehicle.image,
       });
     }
   });
@@ -659,14 +738,23 @@ function StatItem({
   label,
   value,
   tone,
+  isActive,
+  onClick,
 }: {
   icon: LucideIcon;
   label: string;
   value: number;
   tone: "red" | "green" | "blue" | "orange";
+  isActive?: boolean;
+  onClick?: () => void;
 }) {
   return (
-    <div className={`RS_StatItem RS_StatItem--${tone}`}>
+    <button
+      type="button"
+      className={`RS_StatItem RS_StatItem--${tone} ${isActive ? "RS_StatItem--active" : ""
+        }`}
+      onClick={onClick}
+    >
       <span className="RS_StatIcon">
         <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
       </span>
@@ -675,7 +763,7 @@ function StatItem({
         <span className="RS_StatLabel">{label}</span>
         <strong className="RS_StatValue">{value}</strong>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -689,12 +777,11 @@ function DashboardStatusBadge({ booking }: { booking: Booking }) {
 
   return (
     <span
-      className={`RS_DashboardStatusBadge ${
-        stageMeta?.className || fallback.className
-      }`}
+      className={`RS_DashboardStatusBadge ${stageMeta?.className || fallback.className
+        }`}
     >
       <i aria-hidden="true" />
-      {stageMeta?.label || fallback.shortLabel}
+      {stageMeta?.shortLabel || fallback.shortLabel}
     </span>
   );
 }
@@ -719,9 +806,8 @@ function BookingRow({
   return (
     <article
       data-reveal-id={booking.id}
-      className={`RS_BookingRow RS_Reveal ${
-        isRevealed ? "RS_IsVisible" : ""
-      } ${isActive ? "RS_BookingRow--active" : ""}`}
+      className={`RS_BookingRow RS_Reveal ${isRevealed ? "RS_IsVisible" : ""
+        } ${isActive ? "RS_BookingRow--active" : ""}`}
       role="button"
       tabIndex={0}
       onClick={onSelect}
@@ -798,8 +884,93 @@ function BookingRow({
   );
 }
 
+// /* =========================================================
+//    CAMPAIGN TIMELINE
+// ========================================================= */
+
+// function CampaignTimeline({ booking }: { booking: Booking }) {
+//   const stages = Object.entries(JOURNEY_STAGE_COPY);
+
+//   if (!stages.length) {
+//     return (
+//       <div className="RS_TimelineFallback">
+//         <strong>{getBookingStatusLabel(booking)}</strong>
+//         <span>Campaign progress is updating from the backend.</span>
+//       </div>
+//     );
+//   }
+
+//   const keyIndex = stages.findIndex(
+//     ([key]) => key === booking.journeyStage.key,
+//   );
+
+//   const currentIndex =
+//     keyIndex >= 0
+//       ? keyIndex
+//       : Math.max(
+//           0,
+//           Math.min(
+//             Number(booking.journeyStage.index || 0),
+//             stages.length - 1,
+//           ),
+//         );
+
+//   return (
+//     <div className="RS_TimelineViewport">
+//       <div className="RS_Timeline">
+//         {stages.map(([key, rawMeta], index) => {
+//           const meta = rawMeta as any;
+//           const complete = index < currentIndex;
+//           const current = index === currentIndex;
+//           const StageIcon = meta?.icon;
+
+//           const stepDate = formatStageDate(
+//             booking.steps.find((step) => step.key === key)?.completedAt,
+//           );
+
+//           return (
+//             <div
+//               key={key}
+//               className={`RS_TimelineStage ${
+//                 complete ? "RS_TimelineStage--complete" : ""
+//               } ${current ? "RS_TimelineStage--current" : ""}`}
+//             >
+//               <div className="RS_TimelineRail">
+//                 <span className="RS_TimelineNode">
+//                   {complete ? (
+//                     <Check size={12} strokeWidth={2.8} />
+//                   ) : current && StageIcon ? (
+//                     <StageIcon size={12} strokeWidth={2.2} />
+//                   ) : (
+//                     <Circle size={8} strokeWidth={2} />
+//                   )}
+//                 </span>
+
+//                 {index < stages.length - 1 && (
+//                   <span className="RS_TimelineConnector" />
+//                 )}
+//               </div>
+
+//               <strong>{meta?.label || key}</strong>
+//               <small>
+//                 {stepDate ||
+//                   (complete ? "Completed" : current ? "Current" : "Upcoming")}
+//               </small>
+//             </div>
+//           );
+//         })}
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
 /* =========================================================
-   CAMPAIGN TIMELINE
+   CAMPAIGN STATUS FLOW
+   Backend data remains unchanged.
 ========================================================= */
 
 function CampaignTimeline({ booking }: { booking: Booking }) {
@@ -809,50 +980,75 @@ function CampaignTimeline({ booking }: { booking: Booking }) {
     return (
       <div className="RS_TimelineFallback">
         <strong>{getBookingStatusLabel(booking)}</strong>
-        <span>Campaign progress is updating from the backend.</span>
+        <span>Campaign progress is updating...</span>
       </div>
     );
   }
 
-  const keyIndex = stages.findIndex(
-    ([key]) => key === booking.journeyStage.key,
-  );
+  const currentKey = booking.journeyStage?.key;
 
-  const currentIndex =
-    keyIndex >= 0
-      ? keyIndex
-      : Math.max(
-          0,
-          Math.min(
-            Number(booking.journeyStage.index || 0),
-            stages.length - 1,
-          ),
-        );
+  const currentIndex = stages.findIndex(
+    ([key]) => key === currentKey,
+  );
 
   return (
     <div className="RS_TimelineViewport">
       <div className="RS_Timeline">
         {stages.map(([key, rawMeta], index) => {
           const meta = rawMeta as any;
-          const complete = index < currentIndex;
-          const current = index === currentIndex;
           const StageIcon = meta?.icon;
+
+          /*
+            Prefer actual backend step status.
+            Only fallback to journeyStage index if steps
+            are not returned by the backend.
+          */
+          const backendStep = booking.steps?.find(
+            (step) => step.key === key,
+          );
+
+          let stepStatus:
+            | "done"
+            | "current"
+            | "upcoming" =
+            backendStep?.status ||
+            (index < currentIndex
+              ? "done"
+              : index === currentIndex
+                ? "current"
+                : "upcoming");
+
+          const isDone = stepStatus === "done";
+          const isCurrent = stepStatus === "current";
+          const isUpcoming = stepStatus === "upcoming";
+
+          const stepDate = formatStageDate(
+            backendStep?.completedAt,
+          );
 
           return (
             <div
               key={key}
-              className={`RS_TimelineStage ${
-                complete ? "RS_TimelineStage--complete" : ""
-              } ${current ? "RS_TimelineStage--current" : ""}`}
+              className={[
+                "RS_TimelineStage",
+                isDone && "RS_TimelineStage--complete",
+                isCurrent && "RS_TimelineStage--current",
+                isUpcoming && "RS_TimelineStage--upcoming",
+              ]
+                .filter(Boolean)
+                .join(" ")}
             >
               <div className="RS_TimelineRail">
                 <span className="RS_TimelineNode">
-                  {complete ? (
-                    <Check size={12} strokeWidth={2.8} />
-                  ) : current && StageIcon ? (
-                    <StageIcon size={12} strokeWidth={2.2} />
+                  {isDone ? (
+                    <Check size={14} strokeWidth={3} />
+                  ) : isCurrent && StageIcon ? (
+                    <StageIcon
+                      size={15}
+                      strokeWidth={2.4}
+                    />
                   ) : (
-                    <Circle size={8} strokeWidth={2} />
+                    <Circle size={9} strokeWidth={2.1} />
                   )}
                 </span>
 
@@ -861,10 +1057,24 @@ function CampaignTimeline({ booking }: { booking: Booking }) {
                 )}
               </div>
 
-              <strong>{meta?.label || key}</strong>
-              <small>
-                {complete ? "Completed" : current ? "Current" : "Upcoming"}
-              </small>
+              <div className="RS_TimelineContent">
+                <strong>
+                  {meta?.label || backendStep?.label || key}
+                </strong>
+
+                {isCurrent ? (
+                  <span className="RS_TimelineCurrentText">
+                    Current
+                  </span>
+                ) : (
+                  <small>
+                    {stepDate ||
+                      (isDone
+                        ? "Completed"
+                        : "Upcoming")}
+                  </small>
+                )}
+              </div>
             </div>
           );
         })}
@@ -872,6 +1082,8 @@ function CampaignTimeline({ booking }: { booking: Booking }) {
     </div>
   );
 }
+
+
 
 /* =========================================================
    LIVE VEHICLES CARD
@@ -912,7 +1124,7 @@ function LiveVehiclesCard({
               disabled={!canTrack}
             >
               <span className="RS_LiveVehicleImage">
-                <img src={VEHICLE_IMAGE} alt="" />
+                <img src={vehicle.image || VEHICLE_IMAGE} alt="" />
               </span>
 
               <span className="RS_LiveVehicleCopy">
@@ -969,39 +1181,68 @@ function RouteProgressCard({
   return (
     <section className="RS_DashboardCard RS_RouteCard">
       <div className="RS_CardHeading">
-        <h3>Today&apos;s Route Progress</h3>
+        <div>
+          <span className="RS_CardEyebrow">
+            {booking.onRoad ? "LIVE CAMPAIGN" : "CAMPAIGN ROUTE"}
+          </span>
+          <h3>
+            {booking.onRoad
+              ? "Live Route & Movement"
+              : "Route & Tracking"}
+          </h3>
+        </div>
 
-        {booking.onRoad && (
+        {booking.onRoad ? (
           <span className="RS_LivePill">
             <i /> LIVE
+          </span>
+        ) : (
+          <span className="RS_SoftPill">
+            {canTrack ? "Tracking history" : "Not started"}
           </span>
         )}
       </div>
 
-      <div className="RS_RoutePreview">
-        <MapPinned
-          size={30}
-          strokeWidth={1.5}
-          className="RS_RoutePreviewIcon"
-        />
+      <div className="RS_RoutePreview RS_RoutePreview--friendly">
+        {/* <div className="RS_RouteGrid" aria-hidden="true" /> */}
+        {/* <span className="RS_RouteStart">
+          <Circle size={8} strokeWidth={3} />
+        </span>
+        <span className="RS_RouteEnd">
+          <MapPin size={14} strokeWidth={2.2} />
+        </span>
+        <span className="RS_RouteVehicle">
+          <Truck size={15} strokeWidth={2.1} />
+        </span>
+        <span className="RS_RouteLine" aria-hidden="true" /> */}
 
-        <div className="RS_RouteMessage">
+        <div className="RS_RouteMessage RS_RouteMessage--friendly">
           <div>
             <strong>
               {booking.onRoad
-                ? "Live tracking is active"
-                : "Live tracking preview"}
+                ? "Your campaign is currently on road"
+                : canTrack
+                  ? "Campaign tracking is available"
+                  : "Live tracking starts when the campaign goes On Road"}
             </strong>
+
             <span>
               {booking.onRoad
-                ? "Open the tracking console for the latest GPS location and route updates."
-                : "Live GPS becomes available when the campaign reaches the on-road stage."}
+                ? "Open the full tracking screen for the latest GPS position, vehicle movement and day-wise campaign report."
+                : canTrack
+                  ? "Open the tracking screen to review the client-safe campaign history available for this order."
+                  : "Until then, you can follow the campaign preparation status from the timeline above."}
             </span>
           </div>
 
-          <button type="button" onClick={onTrack} disabled={!canTrack}>
+          <button
+            type="button"
+            onClick={onTrack}
+            disabled={!canTrack}
+          >
             <MapPinned size={14} />
-            {canTrack ? "Open Tracking" : "Not Available Yet"}
+            {canTrack ? "Open Live Tracking" : "Tracking Not Available"}
+            {canTrack && <ArrowRight size={13} />}
           </button>
         </div>
       </div>
@@ -1011,10 +1252,14 @@ function RouteProgressCard({
           <span>Campaign Location</span>
           <strong>{booking.location}</strong>
         </div>
+
         <div>
-          <span>Route</span>
+          <span>Planned Route</span>
           <strong title={booking.route}>
-            {booking.route || (canTrack ? "See tracking console" : "Not available yet")}
+            {booking.route ||
+              (canTrack
+                ? "Open tracking for route updates"
+                : "Route will appear when available")}
           </strong>
         </div>
       </div>
@@ -1179,6 +1424,7 @@ function CampaignDashboard({
   onTrack,
   isDownloadingSummary,
   isSummaryDownloaded,
+  detailPaneRef,
 }: {
   booking: Booking;
   detailLoading: boolean;
@@ -1188,15 +1434,28 @@ function CampaignDashboard({
   onTrack: () => void;
   isDownloadingSummary: boolean;
   isSummaryDownloaded: boolean;
+  detailPaneRef?: any;
 }) {
   const canTrack = canTrackCampaign(booking);
 
   return (
-    <aside className="RS_TrackingPane">
+    <aside
+      ref={detailPaneRef}
+      className="RS_TrackingPane"
+      aria-label={`Selected campaign details for ${booking.id}`}
+    >
+      <div className="RS_SelectedCampaignHint">
+        <span><CheckCircle2 size={14} /> Selected campaign</span>
+        <small>Review the summary here, then open live tracking for full GPS and day-wise reporting.</small>
+      </div>
+
       <header className="RS_TrackingHeader">
         <div className="RS_TrackingIdentity">
           <span className="RS_TrackingThumb">
-            <img src={VEHICLE_IMAGE} alt="" />
+            <img
+              src={booking.vehicles[0]?.image || VEHICLE_IMAGE}
+              alt=""
+            />
           </span>
 
           <div className="RS_TrackingTitle">
@@ -1220,7 +1479,7 @@ function CampaignDashboard({
         </div>
       </header>
 
-      <div className="RS_DetailRefreshState">
+      {/* <div className="RS_DetailRefreshState">
         {detailLoading ? (
           <span><LoaderCircle size={12} className="RS_DownloadSpinner" /> Refreshing campaign details...</span>
         ) : detailError ? (
@@ -1228,11 +1487,44 @@ function CampaignDashboard({
         ) : (
           <span>Campaign details are synced with your booking API.</span>
         )}
-      </div>
+      </div> */}
+
 
       <section className="RS_DashboardCard RS_TimelineCard">
+        <div className="RS_TimelineCardHeader">
+          <div>
+            <span className="RS_TimelineEyebrow">
+              CAMPAIGN STATUS
+            </span>
+
+            <h3>Where your campaign is now</h3>
+          </div>
+
+          <div
+            className={`RS_TimelineSync ${
+              detailLoading ? "RS_TimelineSync--refreshing" : ""
+            }`}
+          >
+            <span
+              className={`RS_TimelineSyncDot ${
+                detailError ? "RS_TimelineSyncDot--error" : ""
+              }`}
+            />
+
+            <span>
+              {detailError
+                ? detailError
+                : "Campaign details are synced with your booking API."}
+            </span>
+          </div>
+        </div>
+
         <CampaignTimeline booking={booking} />
       </section>
+
+      {/* <section className="RS_DashboardCard RS_TimelineCard">
+        <CampaignTimeline booking={booking} />
+      </section> */}
 
       <div className="RS_TrackingGrid">
         <LiveVehiclesCard booking={booking} onTrack={onTrack} />
@@ -1273,7 +1565,7 @@ function CampaignDashboard({
           disabled={!canTrack}
         >
           <MapPinned size={14} />
-          {canTrack ? "Track Campaign" : "Tracking Not Available Yet"}
+          {canTrack ? "Open Live Tracking" : "Tracking Not Available Yet"}
         </button>
       </div>
     </aside>
@@ -1381,7 +1673,7 @@ function VehicleRow({
     <article className="RS_ModalVehicle">
       <div className="RS_ModalVehicleImage">
         <img
-          src={VEHICLE_IMAGE}
+          src={vehicle.image || VEHICLE_IMAGE}
           alt={vehicle.name}
         />
       </div>
@@ -1468,33 +1760,26 @@ function BookingModal({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const scrollY = window.scrollY;
-
+    /*
+      Pause the global GSAP smoother while the dialog is open, but do not
+      change body position/top. The old position:fixed lock could prevent the
+      modal's own flex child from receiving wheel/touch scrolling correctly.
+      The page itself is locked with overflow only; RS_ModalBody remains the
+      dedicated scroll container.
+    */
     const smoother = ScrollSmoother.get();
-
     smoother?.paused(true);
 
-    const previousBodyPosition =
-      document.body.style.position;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyOverscroll = document.body.style.overscrollBehavior;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousHtmlOverscroll =
+      document.documentElement.style.overscrollBehavior;
 
-    const previousBodyTop =
-      document.body.style.top;
-
-    const previousBodyWidth =
-      document.body.style.width;
-
-    const previousBodyOverflow =
-      document.body.style.overflow;
-
-    const previousHtmlOverflow =
-      document.documentElement.style.overflow;
-
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
     document.body.style.overflow = "hidden";
-
+    document.body.style.overscrollBehavior = "none";
     document.documentElement.style.overflow = "hidden";
+    document.documentElement.style.overscrollBehavior = "none";
 
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -1505,28 +1790,15 @@ function BookingModal({
     window.addEventListener("keydown", handleEscape);
 
     return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.overscrollBehavior = previousBodyOverscroll;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.documentElement.style.overscrollBehavior =
+        previousHtmlOverscroll;
+
       smoother?.paused(false);
 
-      document.body.style.position =
-        previousBodyPosition;
-
-      document.body.style.top = previousBodyTop;
-
-      document.body.style.width =
-        previousBodyWidth;
-
-      document.body.style.overflow =
-        previousBodyOverflow;
-
-      document.documentElement.style.overflow =
-        previousHtmlOverflow;
-
-      window.scrollTo(0, scrollY);
-
-      window.removeEventListener(
-        "keydown",
-        handleEscape,
-      );
+      window.removeEventListener("keydown", handleEscape);
     };
   }, [onClose]);
 
@@ -1548,6 +1820,8 @@ function BookingModal({
       <section
         className="RS_ModalPanel"
         onMouseDown={(event) => event.stopPropagation()}
+        onWheel={(event) => event.stopPropagation()}
+        onTouchMove={(event) => event.stopPropagation()}
       >
         {/* HEADER */}
         <header className="RS_ModalHeader">
@@ -1770,14 +2044,14 @@ function BookingModal({
 
                       <strong>
                         {formatINR(
-                          booking.estimatedTotal,
+                          booking.subtotal,
                         )}
                       </strong>
                     </div>
 
                     <div>
                       <span>Taxes & Charges</span>
-                      <strong>₹0.00</strong>
+                      <strong>{formatINR(booking.gstAmount)}</strong>
                     </div>
 
                     <hr />
@@ -1872,7 +2146,7 @@ function BookingModal({
                 : "Download Summary"}
           </BubbleButton>
 
-          {booking.status !== "Cancelled" &&
+          {/* {booking.status !== "Cancelled" &&
             booking.status !== "Confirmed" && (
               <BubbleButton
                 variant="danger"
@@ -1886,7 +2160,7 @@ function BookingModal({
 
                 Cancel Request
               </BubbleButton>
-            )}
+            )} */}
 
           <BubbleButton
             variant="dark"
@@ -1899,6 +2173,95 @@ function BookingModal({
       </section>
     </div>,
     document.body,
+  );
+}
+
+/* =========================================================
+   OVERALL DASHBOARD LOADING
+   One page-level loading state for initial refresh/load.
+   No section-specific loading cards are rendered while the booking list
+   itself is still being fetched.
+========================================================= */
+
+function OverallDashboardLoading() {
+  return (
+    <section
+      className="RS_DashboardOverallLoading"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div className="RS_OverallLoadingHead">
+        <span className="RS_OverallLoadingLogo">
+          <LoaderCircle
+            size={24}
+            strokeWidth={1.8}
+            className="RS_DownloadSpinner"
+          />
+        </span>
+
+        <div>
+          <strong>Loading your campaigns</strong>
+          <p>
+            We&apos;re getting your bookings and latest campaign status.
+          </p>
+        </div>
+      </div>
+
+      <div className="RS_OverallLoadingGrid" aria-hidden="true">
+        <div className="RS_OverallLoadingPane">
+          <div className="RS_LoadSkeleton RS_LoadSkeleton--title" />
+          <div className="RS_LoadSkeleton RS_LoadSkeleton--sub" />
+
+          <div className="RS_LoadingStatRow">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div
+                key={`loading-stat-${index}`}
+                className="RS_LoadingStat"
+              >
+                <span className="RS_LoadSkeleton RS_LoadSkeleton--circle" />
+                <span className="RS_LoadSkeleton RS_LoadSkeleton--line" />
+              </div>
+            ))}
+          </div>
+
+          <div className="RS_LoadSkeleton RS_LoadSkeleton--control" />
+
+          <div className="RS_LoadingRows">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={`loading-row-${index}`}
+                className="RS_LoadingRow"
+              >
+                <span className="RS_LoadSkeleton RS_LoadSkeleton--circle" />
+                <span className="RS_LoadSkeleton RS_LoadSkeleton--wide" />
+                <span className="RS_LoadSkeleton RS_LoadSkeleton--medium" />
+                <span className="RS_LoadSkeleton RS_LoadSkeleton--short" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="RS_OverallLoadingPane RS_OverallLoadingPane--detail">
+          <div className="RS_LoadingHeroSkeleton">
+            <span className="RS_LoadSkeleton RS_LoadSkeleton--vehicle" />
+            <div>
+              <span className="RS_LoadSkeleton RS_LoadSkeleton--detailTitle" />
+              <span className="RS_LoadSkeleton RS_LoadSkeleton--detailSub" />
+            </div>
+          </div>
+
+          <div className="RS_LoadSkeleton RS_LoadSkeleton--timeline" />
+
+          <div className="RS_LoadingCards">
+            <span className="RS_LoadSkeleton RS_LoadSkeleton--card" />
+            <span className="RS_LoadSkeleton RS_LoadSkeleton--card" />
+            <span className="RS_LoadSkeleton RS_LoadSkeleton--card" />
+          </div>
+
+          <div className="RS_LoadSkeleton RS_LoadSkeleton--report" />
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -1935,6 +2298,17 @@ export default function MyBookingsPage() {
   const [sortOpen, setSortOpen] = useState(false);
 
   const sortRef = useRef<HTMLDivElement>(null);
+
+  /* Paired-column refs.
+     The Campaign Request page uses measured sticky offsets so the shorter
+     column waits while the taller column continues with the page scroll.
+     My Bookings now follows the same pattern without creating nested
+     scrollbars or touching any booking/tracking API logic. */
+  const dashboardShellRef = useRef<HTMLElement | null>(null);
+
+  const bookingsPaneRef = useRef<HTMLDivElement | null>(null);
+
+  const detailPaneRef = useRef<HTMLElement | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -2016,7 +2390,7 @@ export default function MyBookingsPage() {
         if (!response.ok || !result?.success) {
           throw new Error(
             result?.message ||
-              "Unable to load your bookings.",
+            "Unable to load your bookings.",
           );
         }
 
@@ -2287,7 +2661,7 @@ export default function MyBookingsPage() {
         ) {
           throw new Error(
             result?.message ||
-              "Unable to refresh campaign details.",
+            "Unable to refresh campaign details.",
           );
         }
 
@@ -2332,6 +2706,164 @@ export default function MyBookingsPage() {
       window.clearInterval(timer);
     };
   }, [user, token, activeMongoId]);
+
+  /* =========================================================
+     PAIRED LEFT / RIGHT COLUMN SCROLLING
+
+     This deliberately does NOT rely on CSS position:sticky. The site can
+     run inside GSAP ScrollSmoother, which moves a wrapper with transforms;
+     native sticky can become unreliable inside a transformed scroll tree.
+
+     Instead we reproduce the Campaign Request behavior with a lightweight
+     translateY that follows the real page scroll:
+
+     - shorter pane reaches the navbar and waits there;
+     - taller pane keeps travelling through all of its own content;
+     - if a pane is taller than the viewport, it is allowed to travel until
+       its bottom reaches the viewport bottom before it waits;
+     - when both pane heights are effectively equal, neither is translated,
+       so both move together;
+     - there is no nested scroll container and therefore no pane scrollbar.
+  ========================================================= */
+
+  useEffect(() => {
+    const shell = dashboardShellRef.current;
+    const leftPane = bookingsPaneRef.current;
+    const rightPane = detailPaneRef.current;
+
+    if (!shell || !leftPane || !rightPane) return;
+
+    const DESKTOP_MIN_WIDTH = 1366;
+    const TOP_GAP = 112;
+    const BOTTOM_GAP = 24;
+    const SAME_HEIGHT_TOLERANCE = 12;
+
+    let frameId = 0;
+    let shellTop = 0;
+    let shellHeight = 0;
+    let leftHeight = 0;
+    let rightHeight = 0;
+
+    const resetPane = (pane: HTMLElement) => {
+      pane.style.transform = "";
+      pane.style.willChange = "";
+      pane.style.zIndex = "";
+    };
+
+    const resetAll = () => {
+      resetPane(leftPane);
+      resetPane(rightPane);
+    };
+
+    const calculateTranslate = (paneHeight: number) => {
+      const viewportHeight = window.innerHeight;
+
+      const paneOverflowsViewport =
+        paneHeight + TOP_GAP + BOTTOM_GAP > viewportHeight;
+
+      /*
+        Short pane: hold its top below the navbar.
+        Tall pane: do not hold it until its bottom reaches the viewport's
+        bottom edge. This is the same negative-top idea used in Campaign
+        Request, expressed as a transform so it also works with ScrollSmoother.
+      */
+      const desiredViewportTop = paneOverflowsViewport
+        ? viewportHeight - paneHeight - BOTTOM_GAP
+        : TOP_GAP;
+
+      const wanted =
+        window.scrollY + desiredViewportTop - shellTop;
+
+      const maximum = Math.max(0, shellHeight - paneHeight);
+
+      return Math.max(0, Math.min(wanted, maximum));
+    };
+
+    const apply = () => {
+      frameId = 0;
+
+      if (window.innerWidth < DESKTOP_MIN_WIDTH) {
+        resetAll();
+        return;
+      }
+
+      /* Equal content heights should simply move together. */
+      if (
+        Math.abs(leftHeight - rightHeight) <=
+        SAME_HEIGHT_TOLERANCE
+      ) {
+        leftPane.style.transform = "translate3d(0, 0, 0)";
+        rightPane.style.transform = "translate3d(0, 0, 0)";
+        return;
+      }
+
+      const leftTranslate = calculateTranslate(leftHeight);
+      const rightTranslate = calculateTranslate(rightHeight);
+
+      leftPane.style.transform =
+        `translate3d(0, ${leftTranslate}px, 0)`;
+      rightPane.style.transform =
+        `translate3d(0, ${rightTranslate}px, 0)`;
+    };
+
+    const requestApply = () => {
+      if (frameId) return;
+      frameId = window.requestAnimationFrame(apply);
+    };
+
+    const measure = () => {
+      if (window.innerWidth < DESKTOP_MIN_WIDTH) {
+        resetAll();
+        return;
+      }
+
+      /* offsetHeight is unaffected by our transforms. */
+      leftHeight = leftPane.offsetHeight;
+      rightHeight = rightPane.offsetHeight;
+      shellHeight = shell.offsetHeight;
+
+      /*
+        getBoundingClientRect + scrollY gives the document position both in
+        native scrolling and when ScrollSmoother visually translates the
+        content wrapper.
+      */
+      shellTop = shell.getBoundingClientRect().top + window.scrollY;
+
+      leftPane.style.willChange = "transform";
+      rightPane.style.willChange = "transform";
+      leftPane.style.zIndex = "1";
+      rightPane.style.zIndex = "1";
+
+      requestApply();
+    };
+
+    measure();
+
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(shell);
+    resizeObserver.observe(leftPane);
+    resizeObserver.observe(rightPane);
+
+    window.addEventListener("scroll", requestApply, { passive: true });
+    window.addEventListener("resize", measure);
+
+    return () => {
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+
+      resizeObserver.disconnect();
+      window.removeEventListener("scroll", requestApply);
+      window.removeEventListener("resize", measure);
+
+      resetAll();
+    };
+  }, [
+    activeBookingId,
+    bookingsLoading,
+    visibleBookings.length,
+    filteredBookings.length,
+  ]);
 
   /* =========================================================
      SCROLL REVEAL
@@ -2394,6 +2926,7 @@ export default function MyBookingsPage() {
     activeTab,
     safePage,
     searchValue,
+    sortMode,
   ]);
 
   /* =========================================================
@@ -2411,6 +2944,27 @@ export default function MyBookingsPage() {
   /* =========================================================
      HANDLERS
   ========================================================= */
+
+  function handleSelectBooking(bookingId: string) {
+    setActiveBookingId(bookingId);
+
+    if (typeof window === "undefined") return;
+
+    /*
+      Compact desktop/tablet layout stacks the selected campaign below
+      the booking list. Scroll there after an intentional booking click.
+      Large desktop keeps the side-by-side dashboard and does not move
+      the page unexpectedly.
+    */
+    if (window.matchMedia("(max-width: 1399px)").matches) {
+      window.setTimeout(() => {
+        detailPaneRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 90);
+    }
+  }
 
   function handleTabChange(tab: StatusFilter) {
     setActiveTab(tab);
@@ -2452,7 +3006,7 @@ export default function MyBookingsPage() {
       if (!response.ok || !result?.success || !result?.data) {
         throw new Error(
           result?.message ||
-            "Unable to prepare the booking summary.",
+          "Unable to prepare the booking summary.",
         );
       }
 
@@ -2506,14 +3060,20 @@ export default function MyBookingsPage() {
       currentBookings.map((booking) =>
         booking.id === selectedBooking.id
           ? {
-              ...booking,
-              status: "Cancelled",
-              isCancelled: true,
-            }
+            ...booking,
+            status: "Cancelled",
+            isCancelled: true,
+          }
           : booking,
       ),
     );
   }
+
+  /* Initial page refresh/load uses one dashboard-level loading state.
+     Background refreshes of the selected booking keep the existing content
+     visible and therefore do not flash section-by-section loading messages. */
+  const isOverallLoading =
+    authLoading || Boolean(user && bookingsLoading);
 
   /* =========================================================
      RENDER
@@ -2523,15 +3083,28 @@ export default function MyBookingsPage() {
     <>
       <main className="RS_MyBookingsRoot">
         <div className="RS_MyBookingsContainer">
-          <section className="RS_DashboardShell">
+          {isOverallLoading ? (
+            <OverallDashboardLoading />
+          ) : (
+          <section ref={dashboardShellRef} className="RS_DashboardShell">
             {/* =================================================
                 LEFT — BOOKINGS LIST
             ================================================= */}
 
-            <div className="RS_BookingsPane">
+            <div
+              ref={bookingsPaneRef}
+              className="RS_BookingsPane"
+            >
               <header className="RS_PageHeader RS_Reveal">
                 <h1>My Bookings</h1>
                 <p>View and manage all your vehicle booking requests.</p>
+                <div className="RS_PageGuide">
+                  <span>1</span> Select a booking
+                  <i />
+                  <span>2</span> Review campaign status
+                  <i />
+                  <span>3</span> Open live tracking
+                </div>
               </header>
 
               <section className="RS_StatsPanel RS_Reveal">
@@ -2540,30 +3113,40 @@ export default function MyBookingsPage() {
                   label="Total Bookings"
                   value={statusCounts.All}
                   tone="red"
+                  isActive={activeTab === "All"}
+                  onClick={() => handleTabChange("All")}
                 />
                 <StatItem
                   icon={CheckCircle2}
                   label="Confirmed"
                   value={statusCounts.Confirmed}
                   tone="green"
+                  isActive={activeTab === "Confirmed"}
+                  onClick={() => handleTabChange("Confirmed")}
                 />
                 <StatItem
                   icon={Clock3}
                   label="In Progress"
                   value={statusCounts["In Progress"]}
                   tone="blue"
+                  isActive={activeTab === "In Progress"}
+                  onClick={() => handleTabChange("In Progress")}
                 />
                 <StatItem
                   icon={Hourglass}
                   label="Pending"
                   value={statusCounts.Pending}
                   tone="orange"
+                  isActive={activeTab === "Pending"}
+                  onClick={() => handleTabChange("Pending")}
                 />
                 <StatItem
                   icon={XCircle}
                   label="Cancelled"
                   value={statusCounts.Cancelled}
                   tone="red"
+                  isActive={activeTab === "Cancelled"}
+                  onClick={() => handleTabChange("Cancelled")}
                 />
               </section>
 
@@ -2581,33 +3164,6 @@ export default function MyBookingsPage() {
                   />
                 </label>
 
-                <div className="RS_StatusTabsViewport">
-                  <div className="RS_StatusTabs">
-                    {FILTER_TABS.map((tab) => (
-                      <button
-                        key={tab}
-                        type="button"
-                        className={`RS_FilterTab ${
-                          activeTab === tab
-                            ? "RS_FilterTab--active"
-                            : ""
-                        }`}
-                        onClick={() => handleTabChange(tab)}
-                      >
-                        {tab !== "All" && (
-                          <i
-                            className={`RS_FilterDot RS_FilterDot--${tab
-                              .toLowerCase()
-                              .replace(" ", "-")}`}
-                          />
-                        )}
-                        <span>{tab}</span>
-                        <small>{statusCounts[tab]}</small>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="RS_SortWrapper" ref={sortRef}>
                   <button
                     type="button"
@@ -2621,12 +3177,7 @@ export default function MyBookingsPage() {
 
                   {sortOpen && (
                     <div className="RS_SortMenu">
-                      {[
-                        { value: "newest", label: "Newest first" },
-                        { value: "oldest", label: "Oldest first" },
-                        { value: "highest", label: "Highest amount" },
-                        { value: "lowest", label: "Lowest amount" },
-                      ].map((option) => (
+                      {SORT_OPTIONS.map((option) => (
                         <button
                           key={option.value}
                           type="button"
@@ -2649,14 +3200,73 @@ export default function MyBookingsPage() {
                 </div>
               </section>
 
+              {(activeTab !== "All" ||
+                searchValue.trim() ||
+                sortMode !== "newest") && (
+                <div className="RS_ActiveFilters RS_Reveal">
+                  <span className="RS_ActiveFiltersLabel">Filters:</span>
+
+                  {activeTab !== "All" && (
+                    <button
+                      type="button"
+                      className="RS_FilterChip"
+                      onClick={() => handleTabChange("All")}
+                    >
+                      Status: {activeTab}
+                      <X size={12} strokeWidth={2.2} />
+                    </button>
+                  )}
+
+                  {searchValue.trim() && (
+                    <button
+                      type="button"
+                      className="RS_FilterChip"
+                      onClick={() => {
+                        setSearchValue("");
+                        setCurrentPage(1);
+                      }}
+                    >
+                      Search: "{searchValue.trim()}"
+                      <X size={12} strokeWidth={2.2} />
+                    </button>
+                  )}
+
+                  {sortMode !== "newest" && (
+                    <button
+                      type="button"
+                      className="RS_FilterChip"
+                      onClick={() => {
+                        setSortMode("newest");
+                        setCurrentPage(1);
+                      }}
+                    >
+                      Sort:{" "}
+                      {
+                        SORT_OPTIONS.find(
+                          (option) => option.value === sortMode,
+                        )?.label
+                      }
+                      <X size={12} strokeWidth={2.2} />
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    className="RS_ClearAllFilters"
+                    onClick={() => {
+                      handleTabChange("All");
+                      setSearchValue("");
+                      setSortMode("newest");
+                      setActiveBookingId(null);
+                    }}
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
+
               <section className="RS_BookingsArea">
-                {authLoading || (user && bookingsLoading) ? (
-                  <div className="RS_StateCard">
-                    <div className="RS_LoadingRing" />
-                    <strong>Loading your bookings...</strong>
-                    <p>Please wait while we fetch your booking requests.</p>
-                  </div>
-                ) : !user ? (
+                {!user ? (
                   <div className="RS_StateCard">
                     <UserRound size={28} strokeWidth={1.6} />
                     <strong>Sign in to view your bookings</strong>
@@ -2683,7 +3293,7 @@ export default function MyBookingsPage() {
                         booking={booking}
                         isActive={activeBookingId === booking.id}
                         isRevealed={revealedBookingIds.has(booking.id)}
-                        onSelect={() => setActiveBookingId(booking.id)}
+                        onSelect={() => handleSelectBooking(booking.id)}
                       />
                     ))}
                   </div>
@@ -2693,14 +3303,18 @@ export default function MyBookingsPage() {
                     <strong>No bookings found</strong>
                     <p>Try changing your search, filter or status selection.</p>
 
-                    {(activeTab !== "All" || searchValue.trim()) && (
+                    {(activeTab !== "All" ||
+                      searchValue.trim() ||
+                      sortMode !== "newest") && (
                       <BubbleButton
                         variant="dark"
                         className="RS_StateButton"
                         onClick={() => {
                           setActiveTab("All");
                           setSearchValue("");
+                          setSortMode("newest");
                           setCurrentPage(1);
+                          setActiveBookingId(null);
                         }}
                       >
                         Clear Filters
@@ -2783,7 +3397,9 @@ export default function MyBookingsPage() {
 
             {activeBooking ? (
               <CampaignDashboard
+                key={activeBooking.id}
                 booking={activeBooking}
+                detailPaneRef={detailPaneRef}
                 detailLoading={detailLoading}
                 detailError={detailError}
                 onOpenDetails={() => setSelectedBookingId(activeBooking.id)}
@@ -2803,7 +3419,7 @@ export default function MyBookingsPage() {
                 }
               />
             ) : (
-              <aside className="RS_TrackingPane RS_TrackingPane--empty">
+              <aside ref={detailPaneRef} className="RS_TrackingPane RS_TrackingPane--empty">
                 <MapPinned size={34} strokeWidth={1.5} />
                 <strong>Select a booking</strong>
                 <p>
@@ -2813,8 +3429,9 @@ export default function MyBookingsPage() {
               </aside>
             )}
           </section>
+          )}
 
-          <HowItWorks />
+          {/* <HowItWorks /> */}
         </div>
       </main>
 

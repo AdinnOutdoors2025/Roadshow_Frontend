@@ -1259,6 +1259,26 @@
   }
 }
 
+/* Small Desktops (1281px - 1439px)
+   This range previously had no override at all, so it fell straight back
+   to the base/1440px+ design values (width: 125%, margin-left: -186px,
+   stage height: 386px) with nothing to keep the -186px-shifted hero and
+   the fixed-height LED stage inside a narrower column. Values below are
+   interpolated between the base design and the 1024-1280px tuning above. */
+@media (min-width: 1281px) and (max-width: 1439px) {
+  .adinn-testimonial-hero {
+    width: 122%;
+    margin-left: -150px;
+  }
+
+  .adinn-testimonial-truck-stage {
+    width: min(860px, 56vw);
+    height: 330px;
+    top: 33%;
+    left: 56.45%;
+  }
+}
+
 /* Tablets (768px - 991px) ✅ Tablets (Portrait Mode) */
 @media (min-width: 768px) and (max-width: 991px) {
   .adinn-road-faq-section {
