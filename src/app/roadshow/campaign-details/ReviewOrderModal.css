@@ -231,6 +231,7 @@
 
 .rdsw_rvFactBody {
   min-width: 0;
+  align-items: center; align-content:center;
 }
 
 .rdsw_rvFactLabel {
@@ -545,7 +546,8 @@
 .rdsw_rvTotalRow strong {
   font-size: var(--rv-total);
   font-weight: 700;
-  color: #d70000;
+  /* color: #d70000; */
+  color: #2563eb;
   font-variant-numeric: tabular-nums;
 }
 

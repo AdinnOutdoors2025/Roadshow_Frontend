@@ -1634,7 +1634,7 @@ export function GPSTracking() {
               }}
               onClick={() => {
                 const contactSection =
-                  document.getElementById("contact");
+                  document.getElementById("footer");
 
                 if (contactSection) {
                   contactSection.scrollIntoView({

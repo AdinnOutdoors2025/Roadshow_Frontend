@@ -1323,15 +1323,10 @@ export default function BookingRequestSubmittedPage() {
                 </p>
 
                 <p
-                  className="RS_TileSub mt-0.5 truncate text-[12px] text-[#8a8a92]"
-                  title={
-                    vehicleSummary
-                  }
-                >
-                  {
-                    vehicleSummary
-                  }
-                </p>
+  className="RS_TileSub mt-0.5 break-words whitespace-normal text-[12px] leading-[1.45] text-[#8a8a92]"
+  title={vehicleSummary}>
+  {vehicleSummary}
+</p>
               </div>
             </div>
 
@@ -1351,7 +1346,7 @@ export default function BookingRequestSubmittedPage() {
                   Campaign
                 </p>
 
-                <p className="RS_TileValue mt-1 break-words text-[13px] font-semibold text-[#202024]">
+                <p className="RS_TileValue mt-1 break-words text-[13px] font-semibold text-[#202024] whitespace-normal leading-[1.45]">
                   {
                     campaignSummary.title
                   }
@@ -1359,15 +1354,10 @@ export default function BookingRequestSubmittedPage() {
 
                 {campaignSummary.sub ? (
                   <p
-                    className="RS_TileSub mt-0.5 truncate text-[12px] text-[#8a8a92]"
-                    title={
-                      campaignSummary.sub
-                    }
-                  >
-                    {
-                      campaignSummary.sub
-                    }
-                  </p>
+  className="RS_TileSub mt-0.5 break-words whitespace-normal text-[12px] leading-[1.45] text-[#8a8a92]"
+  title={campaignSummary.sub}>
+  {campaignSummary.sub}
+</p>
                 ) : null}
               </div>
             </div>
@@ -1433,9 +1423,7 @@ export default function BookingRequestSubmittedPage() {
             </span>
 
             <span>
-              Need vehicle-wise
-              pricing, GST and
-              campaign details?
+             View the complete booking summary for vehicle-wise pricing, GST, and campaign details.
 
               <strong>
                 {" "}

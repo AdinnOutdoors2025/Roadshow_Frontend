@@ -191,7 +191,7 @@ export default function ReviewOrderModal({
                     })}
                   </p>
 
-                  <p className="rdsw_rvFactMeta">to</p>
+                  <p className="rdsw_rvFactMeta" style={{textAlign:'center'}}>to</p>
 
                   <p className="rdsw_rvFactValue">
                     {formatDate(campaignEnd, {
@@ -200,7 +200,7 @@ export default function ReviewOrderModal({
                     })}
                   </p>
 
-                  <p className="rdsw_rvFactHighlight">
+                  <p className="rdsw_rvFactHighlight" >
                     {totalDays} {totalDays === 1 ? "Day" : "Days"}
                   </p>
                 </div>
@@ -431,10 +431,7 @@ export default function ReviewOrderModal({
                 <p className="rdsw_rvNotesTitle">Important Notes</p>
 
                 <p className="rdsw_rvNotesBody">
-                  The final quotation may vary based on campaign
-                  requirements, branding, fabrication, logistics, permits and
-                  other applicable charges. Vehicle availability is confirmed
-                  by our team after the request is received.
+                  The final quotation may vary depending on campaign requirements, branding, fabrication, logistics, permits, and applicable location-based RTO charges. Vehicle availability and final pricing will be confirmed by our team after reviewing your campaign request.
                 </p>
               </div>
             </div>
@@ -527,7 +524,7 @@ export default function ReviewOrderModal({
                 <strong>{formatMoney(pricing.grandTotal)}</strong>
               </div>
 
-              <div className="rdsw_rvCallout rdsw_rvCalloutRed">
+              {/* <div className="rdsw_rvCallout rdsw_rvCalloutRed">
                 <p className="rdsw_rvCalloutTitle">
                   This is an estimated cost.
                 </p>
@@ -536,7 +533,7 @@ export default function ReviewOrderModal({
                   The final quotation may vary based on campaign requirements
                   and other applicable charges.
                 </p>
-              </div>
+              </div> */}
 
               <div className="rdsw_rvCallout rdsw_rvCalloutGreen">
                 <p className="rdsw_rvCalloutTitle">

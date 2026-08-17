@@ -6,7 +6,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, } from "react";
 import { createPortal } from "react-dom";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { isBefore } from "date-fns";
-import { CalendarDays, ChevronLeft, ChevronRight, Minus, Plus, Send, SquarePen, X, } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Minus, Plus, Send, SquarePen, Trash2, X, } from "lucide-react";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
@@ -664,6 +664,10 @@ export default function CampaignRequestPage() {
       ? null
       : vehicle.id;
 
+    const removingVehicle = isSelected(
+      vehicle.id
+    );
+
     setSelectedVehicles((current) => {
       const alreadySelected = current.some(
         (item) =>
@@ -712,16 +716,46 @@ export default function CampaignRequestPage() {
         },
       ];
     });
+
+    if (removingVehicle) {
+      toast.success(
+        `${vehicle.name} removed from your campaign.`,
+        {
+          id: `vehicle-toggle-${vehicle.id}`,
+        }
+      );
+    } else {
+      toast.success(
+        `${vehicle.name} added. Select your dates, then continue to Campaign Details.`,
+        {
+          id: `vehicle-toggle-${vehicle.id}`,
+        }
+      );
+    }
   };
 
   const removeVehicle = (
     vehicleId: string
   ) => {
+    const vehicleToRemove = selectedVehicles.find(
+      (vehicle) =>
+        String(vehicle.id) === String(vehicleId)
+    );
+
     setSelectedVehicles((current) =>
       current.filter(
         (vehicle) =>
-          vehicle.id !== vehicleId
+          String(vehicle.id) !== String(vehicleId)
       )
+    );
+
+    toast.success(
+      vehicleToRemove
+        ? `${vehicleToRemove.name} removed from your campaign.`
+        : "Vehicle removed from your campaign.",
+      {
+        id: `vehicle-removed-${vehicleId}`,
+      }
     );
   };
 
@@ -1775,7 +1809,7 @@ export default function CampaignRequestPage() {
               <VehicleCrfSubmitBtn
                 type="button"
                 label="Continue"
-                loadingLabel="Submitting..."
+                loadingLabel="Opening Campaign Details..."
                 loading={submitting}
                 disabled={submitting}
                 ariaLabel="Continue to campaign details"
@@ -1829,7 +1863,7 @@ export default function CampaignRequestPage() {
               </h2>
 
               <p className="rdsw_crfProdDetailsDesc">
-                Review your roadshow campaign details and confirm your booking.
+                Choose your roadshow vehicles and campaign dates. You can add campaign details in the next step.
               </p>
             </div>
 
@@ -1899,6 +1933,24 @@ export default function CampaignRequestPage() {
                         ].join(" ")}
                       >
                         <div className="rdsw_crfProdDetailsImageWrapper">
+                          {selected && (
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                removeVehicle(vehicle.id);
+                              }}
+                              className="rdsw_crfProdDetailsRemoveVehicleBtn"
+                              aria-label={`Remove ${vehicle.name} from campaign`}
+                              title="Remove vehicle"
+                            >
+                              <Trash2
+                                size={17}
+                                strokeWidth={1.9}
+                              />
+                            </button>
+                          )}
+
                           <img
                             src={
                               vehicle.image ||
@@ -1972,7 +2024,7 @@ export default function CampaignRequestPage() {
 
                             <span>
                               {selected
-                                ? "Vehicle added"
+                                ? "Vehicle Added"
                                 : "Add Vehicle"}
                             </span>
                           </button>
@@ -2194,8 +2246,8 @@ export default function CampaignRequestPage() {
                   className="rdsw_crfStickyBarButton"
                 >
                   {submitting
-                    ? "Submitting..."
-                    : "Campaign Details"}
+                    ? "Opening..."
+                    : "Continue to Campaign Details"}
                 </button>
               </div>
             </motion.div>

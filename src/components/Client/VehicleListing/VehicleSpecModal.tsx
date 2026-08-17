@@ -300,7 +300,7 @@ const buildSpecGroups = (
     },
     {
       label: "GPS Tracking",
-      value: gpsEnabled ? "Live tracking enabled" : "",
+      value: gpsEnabled ? "Live tracking available" : "",
     },
   ];
 

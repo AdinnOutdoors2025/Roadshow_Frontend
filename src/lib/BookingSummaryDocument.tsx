@@ -33,30 +33,57 @@ const STATUS_LABELS: Record<number, string> = {
 function formatINR(value?: number) {
   return `₹ ${Number(value || 0).toLocaleString("en-IN")}`;
 }
-
 function formatDate(value?: string) {
   if (!value) return "-";
+
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat(
+    "en-IN",
+    {
+      timeZone: "Asia/Kolkata",
+
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    },
+  ).format(date);
 }
 
 function formatDateTime(value?: string) {
   if (!value) return "-";
+
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat(
+    "en-IN",
+    {
+      timeZone: "Asia/Kolkata",
+
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+
+      hour: "2-digit",
+      minute: "2-digit",
+
+      hour12: true,
+    },
+  )
+    .format(date)
+    .replace("am", "AM")
+    .replace("pm", "PM");
 }
+
+
 
 function vehicleName(vehicle: PdfVehicleType) {
   if (
@@ -438,13 +465,13 @@ export default function BookingSummaryDocument({
 
         <div style={S.grandTotalRow}>
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#111114" }}>Grand Total</span>
-          <span style={{ fontSize: "16px", fontWeight: 800, color: "#d70000" }}>
+          <span style={{ fontSize: "17px", fontWeight: 800, color: "#0a0a0a" }}>
             {formatINR(data.estimatedTotal)}
           </span>
         </div>
       </div>
 
-      <div style={S.footer}>Thank you for choosing Adinn. We look forward to serving you.</div>
+      <div style={S.footer}>Thank you for choosing Adinn Roadshows. We look forward to serving you.</div>
     </div>
   );
 }
