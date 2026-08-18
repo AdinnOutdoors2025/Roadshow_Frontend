@@ -6,7 +6,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, } from "react";
 import { createPortal } from "react-dom";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { isBefore } from "date-fns";
-import { CalendarDays, ChevronLeft, ChevronRight, Minus, Plus, Send, SquarePen, Trash2, X, } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, CircleAlert, CircleCheck, Minus, Plus, Send, SquarePen, Trash2, X, } from "lucide-react";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
@@ -1699,36 +1699,62 @@ export default function CampaignRequestPage() {
                             surrounding flex row keeps its two children and
                             its layout is untouched. */}
                         {(() => {
-                          const shortfall =
-                            vehicle.quantity >
-                            toSafeNumber(
-                              vehicle.availableVehicles
-                            );
+                          const available = toSafeNumber(
+                            vehicle.availableVehicles
+                          );
 
-                          if (!shortfall) return null;
+                          const shortfall =
+                            vehicle.quantity > available;
+
+                          const fromDate = formatDate(
+                            vehicle.startDate,
+                            {
+                              pattern: "dd MMM yyyy",
+                              fallback: "",
+                            }
+                          );
+
+                          if (!shortfall) {
+                            return (
+                              <p className="rdsw_crfQtyAvailabilityNote rdsw_crfQtyAvailabilityNote--ok">
+                                <CircleCheck size={12} />
+                                <span>
+                                  {available} vehicle
+                                  {available === 1 ? "" : "s"}{" "}
+                                  available
+                                  {fromDate
+                                    ? ` from ${fromDate}`
+                                    : " for your selected dates"}
+                                  .
+                                </span>
+                              </p>
+                            );
+                          }
 
                           const nextAvailable =
                             getNextAvailableDate(vehicle);
 
                           return (
-                            <p className="rdsw_crfQtyAvailabilityNote mt-1 text-[10.5px] leading-[1.45] text-[#8a6100]">
-                              {toSafeNumber(
-                                vehicle.availableVehicles
-                              )}{" "}
-                              available now
-                              {nextAvailable
-                                ? ` · more available from ${formatDate(
-                                  nextAvailable,
-                                  {
-                                    pattern:
-                                      "dd MMM yyyy",
-                                    fallback: "",
-                                  }
-                                )}`
-                                : ""}
-                              . You can still request this
-                              quantity — our team will confirm
-                              it.
+                            <p className="rdsw_crfQtyAvailabilityNote rdsw_crfQtyAvailabilityNote--shortfall">
+                              <CircleAlert size={12} />
+                              <span>
+                                Only {available} available
+                                {fromDate ? ` from ${fromDate}` : ""}
+                                , but you're requesting{" "}
+                                {vehicle.quantity}
+                                {nextAvailable
+                                  ? ` · more free from ${formatDate(
+                                    nextAvailable,
+                                    {
+                                      pattern:
+                                        "dd MMM yyyy",
+                                      fallback: "",
+                                    }
+                                  )}`
+                                  : ""}
+                                . We'll confirm the rest with our
+                                team.
+                              </span>
                             </p>
                           );
                         })()}

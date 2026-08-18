@@ -16,6 +16,33 @@ import {
   staggerContainer,
 } from "@/components/motion/motionTokens";
 
+/* The fade-in keyframe on .HomeBannerCurrentImg runs on its own clock as
+   soon as the class is applied — it has no idea whether the image bytes
+   have actually arrived. Isolating the main image in its own component
+   lets its "loaded" flag live and reset per `src` via the key remount
+   below, instead of the parent having to track it per banner item. */
+function CrossfadeMainImage({ src }: { src: string }) {
+    const [loaded, setLoaded] = useState(false);
+
+    return (
+        <>
+            {!loaded && (
+                <span className="HomeBannerImgSpinner" aria-hidden="true" />
+            )}
+
+            <img
+                src={src}
+                alt="Main Banner"
+                className={`HomeBannerMainImg HomeBannerCurrentImg ${
+                    loaded ? "" : "HomeBannerImgLoading"
+                }`}
+                draggable="false"
+                onLoad={() => setLoaded(true)}
+            />
+        </>
+    );
+}
+
 const bannerItems = [
     {
         id: 1,
@@ -51,6 +78,10 @@ function HomeBanner() {
     const [activeIdx, setActiveIdx] = useState(0);
     const [currentImg, setCurrentImg] = useState(bannerItems[0].image);
     const [previousImg, setPreviousImg] = useState(null);
+
+    // Per-thumbnail loaded flag, keyed by banner item id — each thumbnail
+    // shows its own shimmer until its own bytes arrive.
+    const [subLoaded, setSubLoaded] = useState({});
 
     const timeoutRef = useRef(null);
 
@@ -144,12 +175,9 @@ function HomeBanner() {
                             />
                         )}
 
-                        <img
+                        <CrossfadeMainImage
                             key={currentImg}
                             src={currentImg}
-                            alt="Main Banner"
-                            className="HomeBannerMainImg HomeBannerCurrentImg"
-                            draggable="false"
                         />
                     </motion.div>
 
@@ -186,12 +214,29 @@ function HomeBanner() {
                                     }`}
                                     aria-label={`Show ${item.title}`}
                                 >
-                                    <img
-                                        src={item.image}
-                                        alt={item.title}
-                                        className="HomeBannerSubImg"
-                                        draggable="false"
-                                    />
+                                    <span className="HomeBannerSubImgThumb">
+                                        {!subLoaded[item.id] && (
+                                            <span
+                                                className="HomeBannerImgSpinner HomeBannerImgSpinner--thumb"
+                                                aria-hidden="true"
+                                            />
+                                        )}
+
+                                        <img
+                                            src={item.image}
+                                            alt={item.title}
+                                            className={`HomeBannerSubImg ${
+                                                subLoaded[item.id] ? "" : "HomeBannerImgLoading"
+                                            }`}
+                                            draggable="false"
+                                            onLoad={() =>
+                                                setSubLoaded((prev) => ({
+                                                    ...prev,
+                                                    [item.id]: true,
+                                                }))
+                                            }
+                                        />
+                                    </span>
 
                                     <div className="HomeBannerSubImgTitle">
                                         {item.title}

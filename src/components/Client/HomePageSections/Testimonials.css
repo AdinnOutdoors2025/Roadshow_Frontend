@@ -1159,6 +1159,42 @@
   z-index: 1;
   pointer-events: none;
   user-select: none;
+  transition: opacity 320ms ease;
+}
+
+/* Kept transparent (not display:none) while buffering, so the element
+   already has its final box and onCanPlay doesn't cause a layout jump. */
+.adinn-testimonial-bg-video--loading {
+  opacity: 0;
+}
+
+/* Shown behind the video until it can play — otherwise the section sits on
+   flat #f2f3f5 with no feedback while the clip buffers. */
+.adinn-testimonial-bg-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  background: linear-gradient(100deg, #eceaf2 28%, #f6f5f9 45%, #eceaf2 62%);
+  background-size: 200% 100%;
+
+  animation: adinnTestimonialBgShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes adinnTestimonialBgShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adinn-testimonial-bg-loading {
+    animation: none;
+  }
 }
 
 /* LED screen container over video */

@@ -3,11 +3,12 @@
 import {
   ChevronLeft,
   ChevronRight,
-  LockKeyhole,
+  LoaderCircle,
 } from "lucide-react";
 import {
   useMemo,
   useRef,
+  useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
@@ -68,15 +69,43 @@ export default function DrivingHistoryTable({
   days,
   selectedDay,
   onSelectDay,
+  loading,
 }: {
   vehicles: DrivingSummaryVehicle[];
   days: string[];
   selectedDay: string;
   onSelectDay: (day: string) => void;
+  loading?: boolean;
 }) {
   const withData = vehicles.filter(
     (vehicle) => vehicle.drivingSummary,
   );
+
+  /* useDrivingSummary clears its vehicles the instant the selected day
+     changes, before the new day's fetch resolves — rendered as-is, that
+     flashed this table to "No driving history..." and back on every date
+     click. Hold the last populated render (date label included, so the
+     two never show a mismatched pair) and dim it under a spinner instead,
+     so a day switch reads as a brief refresh rather than a content swap.
+     Adjusted during render (React's documented pattern for deriving state
+     from a prop change) rather than in a useEffect, so there's no extra
+     post-commit render pass before the held values are available. */
+  const [prevVehicles, setPrevVehicles] = useState(vehicles);
+  const [lastGoodData, setLastGoodData] = useState(withData);
+  const [lastGoodDay, setLastGoodDay] = useState(selectedDay);
+
+  if (vehicles !== prevVehicles) {
+    setPrevVehicles(vehicles);
+
+    if (withData.length) {
+      setLastGoodData(withData);
+      setLastGoodDay(selectedDay);
+    }
+  }
+
+  const showRefreshOverlay = Boolean(loading) && withData.length === 0;
+  const displayData = showRefreshOverlay ? lastGoodData : withData;
+  const displayDay = showRefreshOverlay ? lastGoodDay : selectedDay;
 
   const today = todayIndiaKey();
 
@@ -201,7 +230,7 @@ export default function DrivingHistoryTable({
             onLostPointerCapture={stopDrag}
           >
             <div className="RS_DrivingHistoryDateTrack">
-              {dayItems.map((item) => {
+              {dayItems.map((item, index) => {
                 const active =
                   item.day === selectedDay;
 
@@ -217,16 +246,14 @@ export default function DrivingHistoryTable({
                     type="button"
                     disabled={item.isFuture}
                     title={title}
+                    /* Reuses the same card look as the CAMPAIGN DATE
+                       TIMELINE picker further down the page (RST_DayTimelineItem)
+                       so the two day-pickers on this page read as one
+                       consistent pattern instead of two different designs. */
                     className={[
-                      "RS_DrivingHistoryDayCard",
-                      active &&
-                        "RS_DrivingHistoryDayCard--active",
-                      item.isToday &&
-                        "RS_DrivingHistoryDayCard--today",
-                      item.isPast &&
-                        "RS_DrivingHistoryDayCard--completed",
-                      item.isFuture &&
-                        "RS_DrivingHistoryDayCard--future",
+                      "RST_DayTimelineItem",
+                      active && "RST_DayTimelineItem--active",
+                      item.isFuture && "RST_DayTimelineItem--future",
                     ]
                       .filter(Boolean)
                       .join(" ")}
@@ -236,21 +263,31 @@ export default function DrivingHistoryTable({
                       }
                     }}
                   >
-                    <span className="RS_DrivingHistoryDayState">
-                      {item.isFuture ? (
-                        <>
-                          <LockKeyhole size={12} />
-                          Locked
-                        </>
-                      ) : item.isToday ? (
-                        "Today"
-                      ) : (
-                        "Completed"
-                      )}
-                    </span>
+                    <span
+                      className={`RST_DayTimelineDot ${
+                        item.isFuture
+                          ? ""
+                          : item.isToday
+                            ? "RST_ReportStatus--ongoing"
+                            : "RST_ReportStatus--completed"
+                      }`}
+                    />
 
-                    <strong>{item.date}</strong>
-                    <small>{item.weekday}</small>
+                    <span className="RST_DayTimelineCopy">
+                      <small>
+                        Day {String(index + 1).padStart(2, "0")}
+                      </small>
+
+                      <strong>{item.date}</strong>
+
+                      <em>
+                        {item.isFuture
+                          ? "Upcoming · Locked"
+                          : item.isToday
+                            ? "Today"
+                            : "Completed"}
+                      </em>
+                    </span>
                   </button>
                 );
               })}
@@ -259,109 +296,131 @@ export default function DrivingHistoryTable({
         </div>
       )}
 
-      {withData.length ? (
-        <div className="RS_DrivingHistoryTable">
-          <div className="RS_DrivingHistoryHeaderRow">
-            <span>Vehicle</span>
-            <span>Date</span>
-            <span>Speed (Avg / Top)</span>
-            <span>Distance</span>
-            <span>Odometer (Open → Close)</span>
-            <span>Fuel (Start → End)</span>
-            <span>Idle / Parking</span>
-            <span>Ignition Mode</span>
-          </div>
-
-          {withData.map(
-            ({
-              registrationNumber,
-              drivingSummary,
-            }) => {
-              if (!drivingSummary) return null;
-
-              return (
-                <div
-                  key={registrationNumber}
-                  className="RS_DrivingHistoryRowGroup"
-                >
-                  <div className="RS_DrivingHistoryRow">
-                    <span data-label="Vehicle">
-                      <strong className="RS_DrivingVehicleNumber">
-                        {registrationNumber}
-                      </strong>
-                    </span>
-
-                    <span data-label="Date">
-                      {formatHistoryDay(selectedDay)}
-                    </span>
-
-                    <span data-label="Speed (Avg / Top)">
-                      {drivingSummary.avgSpeedKmh} /{" "}
-                      {drivingSummary.topSpeedKmh} km/h
-                    </span>
-
-                    <span data-label="Distance">
-                      {fmtKm(
-                        drivingSummary.tripDistanceKm,
-                      )}
-                    </span>
-
-                    <span data-label="Odometer (Open → Close)">
-                      {fmtKm(
-                        drivingSummary.openingOdoReadingKm,
-                      )}{" "}
-                      →{" "}
-                      {fmtKm(
-                        drivingSummary.closingOdoReadingKm,
-                      )}
-                    </span>
-
-                    <span data-label="Fuel (Start → End)">
-                      {fmtFuel(
-                        drivingSummary.startFuelLitres,
-                      )}{" "}
-                      →{" "}
-                      {fmtFuel(
-                        drivingSummary.endFuelLitres,
-                      )}
-                    </span>
-
-                    <span data-label="Idle / Parking">
-                      {drivingSummary.idleCount} /{" "}
-                      {drivingSummary.parkingCount}
-                    </span>
-
-                    <span data-label="Ignition Mode">
-                      <span className="RS_DrivingModeBadge">
-                        {drivingSummary.vehicleMode ||
-                          "—"}
-                      </span>
-                    </span>
-                  </div>
-
-                  {(drivingSummary.startAddress ||
-                    drivingSummary.endAddress) && (
-                    <div className="RS_DrivingHistoryRoute">
-                      <span>Route</span>
-
-                      <strong>
-                        {drivingSummary.startAddress ||
-                          "—"}{" "}
-                        <em>→</em>{" "}
-                        {drivingSummary.endAddress ||
-                          "—"}
-                      </strong>
-                    </div>
-                  )}
-                </div>
-              );
-            },
+      {displayData.length ? (
+        <div
+          className={[
+            "RS_DrivingHistoryTableZone",
+            showRefreshOverlay && "RS_DrivingHistoryTableZone--loading",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          {showRefreshOverlay && (
+            <div className="RS_DrivingHistoryTableOverlay">
+              <LoaderCircle className="RST_Spin" size={20} />
+              <span>Refreshing…</span>
+            </div>
           )}
+
+          <div className="RS_DrivingHistoryTable">
+            <div className="RS_DrivingHistoryHeaderRow">
+              <span>Vehicle</span>
+              <span>Date</span>
+              <span>Speed (Avg / Top)</span>
+              <span>Distance</span>
+              <span>Odometer (Open → Close)</span>
+              <span>Fuel (Start → End)</span>
+              <span>Idle / Parking</span>
+              <span>Ignition Mode</span>
+            </div>
+
+            {displayData.map(
+              ({
+                registrationNumber,
+                drivingSummary,
+              }) => {
+                if (!drivingSummary) return null;
+
+                return (
+                  <div
+                    key={registrationNumber}
+                    className="RS_DrivingHistoryRowGroup"
+                  >
+                    <div className="RS_DrivingHistoryRow">
+                      <span data-label="Vehicle">
+                        <strong className="RS_DrivingVehicleNumber">
+                          {registrationNumber}
+                        </strong>
+                      </span>
+
+                      <span data-label="Date">
+                        {formatHistoryDay(displayDay)}
+                      </span>
+
+                      <span data-label="Speed (Avg / Top)">
+                        {drivingSummary.avgSpeedKmh} /{" "}
+                        {drivingSummary.topSpeedKmh} km/h
+                      </span>
+
+                      <span data-label="Distance">
+                        {fmtKm(
+                          drivingSummary.tripDistanceKm,
+                        )}
+                      </span>
+
+                      <span data-label="Odometer (Open → Close)">
+                        {fmtKm(
+                          drivingSummary.openingOdoReadingKm,
+                        )}{" "}
+                        →{" "}
+                        {fmtKm(
+                          drivingSummary.closingOdoReadingKm,
+                        )}
+                      </span>
+
+                      <span data-label="Fuel (Start → End)">
+                        {fmtFuel(
+                          drivingSummary.startFuelLitres,
+                        )}{" "}
+                        →{" "}
+                        {fmtFuel(
+                          drivingSummary.endFuelLitres,
+                        )}
+                      </span>
+
+                      <span data-label="Idle / Parking">
+                        {drivingSummary.idleCount} /{" "}
+                        {drivingSummary.parkingCount}
+                      </span>
+
+                      <span data-label="Ignition Mode">
+                        <span className="RS_DrivingModeBadge">
+                          {drivingSummary.vehicleMode ||
+                            "—"}
+                        </span>
+                      </span>
+                    </div>
+
+                    {(drivingSummary.startAddress ||
+                      drivingSummary.endAddress) && (
+                      <div className="RS_DrivingHistoryRoute">
+                        <span>Route</span>
+
+                        <strong>
+                          {drivingSummary.startAddress ||
+                            "—"}{" "}
+                          <em>→</em>{" "}
+                          {drivingSummary.endAddress ||
+                            "—"}
+                        </strong>
+                      </div>
+                    )}
+                  </div>
+                );
+              },
+            )}
+          </div>
         </div>
       ) : (
         <div className="RS_DrivingHistoryEmpty">
-          No driving history is available for this day
-          yet.
+          {loading ? (
+            <>
+              <LoaderCircle className="RST_Spin" size={20} />
+              Loading driving details...
+            </>
+          ) : (
+            "No driving history is available for this day yet."
+          )}
         </div>
       )}
     </div>

@@ -487,11 +487,16 @@ export default function VehicleListing({
                           />
                         </span>
 
-                        <span className="RS_VehListAvail">
-                          {vehicle.availableVehicles > 0
-                            ? `${vehicle.availableVehicles} available`
-                            : "Check availability"}
-                        </span>
+                        {vehicle.availableVehicles > 0 ? (
+                          <span className="RS_VehListAvail">
+                            {vehicle.availableVehicles} available
+                          </span>
+                        ) : (
+                          <span className="RS_VehListAvail RS_VehListAvail--soldout">
+                            <span className="RS_VehListAvailDot" />
+                            Sold Out
+                          </span>
+                        )}
                       </div>
 
                       <div className="RS_VehListActions">

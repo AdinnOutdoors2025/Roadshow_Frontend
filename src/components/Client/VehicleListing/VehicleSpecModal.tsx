@@ -29,6 +29,7 @@ import { categoryLabelOf } from "./vehicleCategories";
 type SpecRow = {
   label: string;
   value: string;
+  soldOut?: boolean;
 };
 
 type SpecGroup = {
@@ -284,7 +285,8 @@ const buildSpecGroups = (
       value:
         vehicle?.availableVehicles > 0
           ? `${vehicle.availableVehicles} ready to book`
-          : "Check availability",
+          : "Sold Out",
+      soldOut: vehicle?.availableVehicles <= 0,
     },
     {
       label: "Operating Cities",
@@ -451,7 +453,14 @@ export default function VehicleSpecModal({
                       </dt>
 
                       <dd className="RS_VehSpecValue">
-                        {row.value}
+                        {row.soldOut ? (
+                          <span className="RS_VehListAvail RS_VehListAvail--soldout">
+                            <span className="RS_VehListAvailDot" />
+                            {row.value}
+                          </span>
+                        ) : (
+                          row.value
+                        )}
                       </dd>
                     </div>
                   ))}

@@ -97,6 +97,59 @@
     }
 }
 
+/* ── Image loading states ──
+   Shown while a banner image's bytes are still on the way — without this,
+   .HomeBannerCurrentImg's fade-in animation plays on its own 700ms clock
+   regardless of whether the image has actually arrived, so a slow load
+   used to finish its "reveal" animation on empty space and then pop the
+   picture in late. Now the fade-in only starts once onLoad actually
+   fires. A small centered spinner marks the wait instead of a full-size
+   placeholder block — the earlier shimmer rectangle read as its own boxy
+   panel rather than a loading cue, especially against the banner's pale
+   background. */
+.HomeBannerImgSpinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 0;
+
+    width: 34px;
+    height: 34px;
+    margin: -17px 0 0 -17px;
+
+    border-radius: 999px;
+    border: 3px solid rgba(112, 87, 195, 0.16);
+    border-top-color: #7057c3;
+
+    animation: HomeBannerSpin 800ms linear infinite;
+}
+
+.HomeBannerImgSpinner--thumb {
+    width: 18px;
+    height: 18px;
+    margin: -9px 0 0 -9px;
+    border-width: 2px;
+}
+
+@keyframes HomeBannerSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.HomeBannerMainImg.HomeBannerImgLoading,
+.HomeBannerSubImg.HomeBannerImgLoading {
+    opacity: 0;
+}
+
+.HomeBannerSubImgThumb {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
 /* ── Sub images row ── */
 .HomeBannerSubImgRow {
     display: flex;
@@ -615,5 +668,9 @@
     .HomeBannerSubImg,
     .HomeBannerSubImgTitle {
         transition-duration: 1ms !important;
+    }
+
+    .HomeBannerImgSpinner {
+        animation: none;
     }
 }

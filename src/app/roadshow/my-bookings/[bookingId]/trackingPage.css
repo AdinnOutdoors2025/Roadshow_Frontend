@@ -927,7 +927,7 @@
 .RST_MapFallbackTitle {
   max-width: 460px;
   color: #242a33;
-  font-size: clamp(13px, 0.94vw, 16px);
+  font-size: clamp(13px, 0.94vw, 19px);
   font-weight: 600;
 }
 
@@ -935,7 +935,7 @@
   max-width: 420px;
   margin: 0;
   color: #818a95;
-  font-size: clamp(9.5px, 0.62vw, 11px);
+  font-size: clamp(9.5px, 0.62vw, 14px);
   line-height: 1.5;
 }
 
@@ -1583,6 +1583,16 @@
   padding: 5px 8px;
   font-size: 8.5px;
   font-weight: 600;
+}
+
+.RST_DayDetailStatusGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.RST_DayDetailSyncing {
+  color: var(--rst-muted-2);
 }
 
 .RST_ReportMetrics {
@@ -4563,7 +4573,10 @@
   display: flex;
   width: max-content;
   align-items: stretch;
-  gap: 8px;
+  /* Matches RST_DayTimelineTrack's gap (12px) — the reused
+     RST_DayTimelineItem card draws its own connecting divider line sized
+     for that spacing. */
+  gap: 12px;
   padding: 2px 2px 4px;
 }
 
@@ -5138,4 +5151,63 @@
   .RST_RouteMapCanvas {
     height: 260px;
   }
+}
+
+/* =========================================================
+   DAY-SWITCH REFRESH OVERLAYS
+   Shown briefly over already-rendered content while a newly
+   selected campaign day's data is still loading, instead of
+   flashing to an empty/placeholder state.
+========================================================= */
+
+.RS_DrivingHistoryTableZone {
+  position: relative;
+}
+
+.RS_DrivingHistoryTableZone--loading .RS_DrivingHistoryTable {
+  opacity: 0.45;
+  filter: saturate(0.7);
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.RS_DrivingHistoryTableOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.55);
+  color: #56616d;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.RST_ReportMetricsZone {
+  position: relative;
+}
+
+.RST_ReportMetricsZone--loading .RST_ReportMetrics {
+  opacity: 0.5;
+  filter: saturate(0.7);
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.RST_ReportMetricsOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--rst-muted);
+  font-size: 12.5px;
+  font-weight: 650;
 }

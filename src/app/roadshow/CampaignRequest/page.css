@@ -2607,6 +2607,35 @@
   transition: background 220ms ease, transform 220ms ease;
 }
 
+.rdsw_crfQtyAvailabilityNote {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+
+  margin-top: 6px;
+  padding: 5px 10px;
+
+  border-radius: 10px;
+
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.rdsw_crfQtyAvailabilityNote svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.rdsw_crfQtyAvailabilityNote--ok {
+  color: #157a3d;
+  background: rgba(21, 122, 61, 0.09);
+}
+
+.rdsw_crfQtyAvailabilityNote--shortfall {
+  color: #8a6100;
+  background: rgba(138, 97, 0, 0.1);
+}
+
 .rdsw_crfStickyBarButton:hover:not(:disabled) {
   background: #d70000;
   transform: translateY(-1px);

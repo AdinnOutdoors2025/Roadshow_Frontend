@@ -1183,6 +1183,7 @@ function TrackingPageContent({
                     days={historyDays}
                     selectedDay={selectedHistoryDay}
                     onSelectDay={setSelectedHistoryDay}
+                    loading={drivingSummaryLoading}
                   />
                 )}
               </section>
@@ -1332,33 +1333,46 @@ function TrackingPageContent({
                     </span>
                   </div>
 
-                  <div className="RST_ReportMetrics">
-                    <div className="RST_ReportMetric RST_ReportMetric--blue">
-                      <span className="RST_ReportMetricIcon"><Route size={21} /></span>
-                      <span>
-                        <small>Distance covered</small>
-                        <strong>
-                          {reportDayDistanceKm != null
-                            ? `${reportDayDistanceKm.toFixed(2)} km`
-                            : selectedDay.distanceCoveredKm != null
-                              ? `${Number(selectedDay.distanceCoveredKm).toFixed(2)} km`
-                              : reportDaySummaryLoading
-                                ? "Calculating…"
+                  <div
+                    className={`RST_ReportMetricsZone ${
+                      reportDaySummaryLoading
+                        ? "RST_ReportMetricsZone--loading"
+                        : ""
+                    }`}
+                  >
+                    {reportDaySummaryLoading && (
+                      <div className="RST_ReportMetricsOverlay">
+                        <RefreshCw size={18} className="RST_Spin" />
+                        <span>Refreshing…</span>
+                      </div>
+                    )}
+
+                    <div className="RST_ReportMetrics">
+                      <div className="RST_ReportMetric RST_ReportMetric--blue">
+                        <span className="RST_ReportMetricIcon"><Route size={21} /></span>
+                        <span>
+                          <small>Distance covered</small>
+                          <strong>
+                            {reportDayDistanceKm != null
+                              ? `${reportDayDistanceKm.toFixed(2)} km`
+                              : selectedDay.distanceCoveredKm != null
+                                ? `${Number(selectedDay.distanceCoveredKm).toFixed(2)} km`
                                 : "0.00 km"}
-                        </strong>
-                      </span>
-                    </div>
-                    <div className="RST_ReportMetric RST_ReportMetric--green">
-                      <span className="RST_ReportMetricIcon"><Sparkles size={21} /></span>
-                      <span><small>Activations</small><strong>{selectedDay.activationsCount || 0}</strong></span>
-                    </div>
-                    <div className="RST_ReportMetric RST_ReportMetric--teal">
-                      <span className="RST_ReportMetricIcon"><CheckCircle2 size={21} /></span>
-                      <span><small>Leads collected</small><strong>{selectedDay.leadsCollected || 0}</strong></span>
-                    </div>
-                    <div className="RST_ReportMetric RST_ReportMetric--purple">
-                      <span className="RST_ReportMetricIcon"><Users size={21} /></span>
-                      <span><small>People engaged</small><strong>{selectedDay.peopleEngaged || 0}</strong></span>
+                          </strong>
+                        </span>
+                      </div>
+                      <div className="RST_ReportMetric RST_ReportMetric--green">
+                        <span className="RST_ReportMetricIcon"><Sparkles size={21} /></span>
+                        <span><small>Activations</small><strong>{selectedDay.activationsCount || 0}</strong></span>
+                      </div>
+                      <div className="RST_ReportMetric RST_ReportMetric--teal">
+                        <span className="RST_ReportMetricIcon"><CheckCircle2 size={21} /></span>
+                        <span><small>Leads collected</small><strong>{selectedDay.leadsCollected || 0}</strong></span>
+                      </div>
+                      <div className="RST_ReportMetric RST_ReportMetric--purple">
+                        <span className="RST_ReportMetricIcon"><Users size={21} /></span>
+                        <span><small>People engaged</small><strong>{selectedDay.peopleEngaged || 0}</strong></span>
+                      </div>
                     </div>
                   </div>
 

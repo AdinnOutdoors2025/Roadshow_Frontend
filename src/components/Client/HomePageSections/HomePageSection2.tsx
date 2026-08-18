@@ -13,6 +13,7 @@ import RevealText from "@/components/motion/RevealText";
 // export, so this has to be a named import (aliased to keep the name used below).
 import { Testimonials as RdswWebTestimonialsSection } from "./Testimonials";
 import { GPSTracking as RdswWebGPSTrackingSection } from "./GPSTracking";
+import { useNewsletterSubscribe } from "@/components/Client/Reusable_Components/useNewsletterSubscribe";
 
 
 function StarRating({ rating, size = 20 }) {
@@ -399,6 +400,18 @@ function HomePageSection2() {
         setActiveIndex(prev => prev === idx ? -1 : idx);
     };
 
+    // Roadshow Advantages email/phone capture — same validation, captcha
+    // and EmailJS template as the Footer newsletter field (shared hook).
+    const {
+        email: raEmail,
+        onEmailChange: onRaEmailChange,
+        loading: raLoading,
+        isEmpty: isRaEmpty,
+        openCaptchaPopup: openRaCaptchaPopup,
+        handleNewsletterKeyDown: handleRaKeyDown,
+        modal: raCaptchaModal,
+    } = useNewsletterSubscribe("Adinn Roadshows Website - Roadshow Advantages Section");
+
     // Help center section
     const help_Center_Faq = [
         {
@@ -568,14 +581,28 @@ function HomePageSection2() {
                                 <div className='RA_RightSecondContent1'>Don't Need to Miss out</div>
                                 <div className=" RA_RightContent2Main flex gap-5 items-center bg-white rounded-full overflow-hidden pr-1 pl-4 py-1 w-full max-w-xs">
                                     <input
-                                        type="email"
+                                        type="text"
+                                        inputMode="email"
+                                        autoComplete="email"
                                         placeholder="Your email or phone number"
-                                        className="RA_RightContent2Input  flex-1 bg-transparent text-black text-md outline-none placeholder-gray-400 min-w-0"
+                                        value={raEmail}
+                                        disabled={raLoading}
+                                        onChange={(event) => onRaEmailChange(event.target.value)}
+                                        onKeyDown={handleRaKeyDown}
+                                        className="RA_RightContent2Input  flex-1 bg-transparent text-black text-md outline-none placeholder-gray-400 min-w-0 disabled:opacity-60"
                                     />
                                     <button
-                                        className=" RA_RightContent2InpBtn transition-colors duration-200 rounded-full p-2 flex items-center justify-center flex-shrink-0"
-                                        aria-label="Subscribe">
-                                        <i className="fa-solid fa-chevron-right"></i>
+                                        type="button"
+                                        onClick={openRaCaptchaPopup}
+                                        disabled={raLoading || isRaEmpty}
+                                        className={`RA_RightContent2InpBtn transition-all duration-200 rounded-full p-2 flex items-center justify-center flex-shrink-0 ${raLoading || isRaEmpty ? "cursor-not-allowed opacity-40" : "cursor-pointer opacity-100"
+                                            }`}
+                                        aria-label="Continue with contact verification">
+                                        {raLoading ? (
+                                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                                        ) : (
+                                            <i className="fa-solid fa-chevron-right"></i>
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -587,7 +614,7 @@ function HomePageSection2() {
                 </div>
             </div>
 
-
+            {raCaptchaModal}
 
             <div className='HC_Main'>
                 <div className='px-30 mx-auto'>
