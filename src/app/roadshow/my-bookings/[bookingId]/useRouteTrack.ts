@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { baseUrl } from "../../../../BaseUrl";
 import { clientAuthHeaders } from "@/lib/roadshowAuthToken";
@@ -21,12 +21,20 @@ export function useRouteTrack(
   enabled: boolean,
 ) {
   const [vehicles, setVehicles] = useState<RouteTrackVehicle[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const signatureRef = useRef("");
+  const activeRef = useRef(true);
+  /* Bridges the polling effect's local fetch function out to the manual
+     refresh() below — kept as a ref (not a useCallback dependency) so the
+     effect's own direct call stays a plain local-function invocation, the
+     same shape it had before "Refresh" needed to reach it. */
+  const fetchRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
+    activeRef.current = true;
+
     if (!enabled) return;
 
-    let active = true;
     let intervalId: ReturnType<typeof setInterval> | null = null;
 
     async function fetchRouteTrack() {
@@ -41,7 +49,7 @@ export function useRouteTrack(
 
         const result = await response.json().catch(() => null);
 
-        if (!response.ok || !result?.success || !active) return;
+        if (!response.ok || !result?.success || !activeRef.current) return;
 
         const next: RouteTrackVehicle[] = result.data?.vehicles || [];
         const signature = JSON.stringify(next);
@@ -55,6 +63,8 @@ export function useRouteTrack(
         // errors; this just quietly falls back to the Leaflet map.
       }
     }
+
+    fetchRef.current = fetchRouteTrack;
 
     function stopPolling() {
       if (intervalId) {
@@ -84,7 +94,7 @@ export function useRouteTrack(
     document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
-      active = false;
+      activeRef.current = false;
       stopPolling();
       document.removeEventListener("visibilitychange", handleVisibility);
       setVehicles([]);
@@ -92,5 +102,19 @@ export function useRouteTrack(
     };
   }, [mongoId, token, enabled]);
 
-  return { vehicles };
+  /* Extracted so the "Refresh" button on the map card (page.tsx) can force a
+     re-check of the cached trackId instead of only refreshing the sidebar
+     GPS stats via useLiveLocation — otherwise clicking Refresh never
+     touched the actual embedded route map. */
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+
+    try {
+      await fetchRef.current();
+    } finally {
+      if (activeRef.current) setRefreshing(false);
+    }
+  }, []);
+
+  return { vehicles, refreshing, refresh };
 }
