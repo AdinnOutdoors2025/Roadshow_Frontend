@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AnimatePresence,
   motion,
@@ -71,6 +71,12 @@ const items: TestimonialItem[] = [
 
 const AUTO_CHANGE_TIME = 2000;
 
+// Adjust only these values to resize and position the LED screen.
+const LED_SCREEN_WIDTH = "85.5%";
+const LED_SCREEN_HEIGHT = "86%";
+const LED_SCREEN_LEFT = "4%";
+const LED_SCREEN_TOP = "17.5%";
+
 function getNextIndex(index: number) {
   return (index + 1) % items.length;
 }
@@ -132,8 +138,28 @@ export function Testimonials() {
   const shouldReduceMotion = useReducedMotion();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const ledScreenRef = useRef<HTMLDivElement>(null);
 
   const selectedItem = items[selectedIndex];
+
+  useEffect(() => {
+    const ledScreen = ledScreenRef.current;
+
+    if (!ledScreen) return;
+
+    // Force only the LED size and position above existing CSS !important rules.
+    ledScreen.style.setProperty("width", LED_SCREEN_WIDTH, "important");
+    ledScreen.style.setProperty("height", LED_SCREEN_HEIGHT, "important");
+    ledScreen.style.setProperty("left", LED_SCREEN_LEFT, "important");
+    ledScreen.style.setProperty("top", LED_SCREEN_TOP, "important");
+    ledScreen.style.setProperty("right", "auto", "important");
+    ledScreen.style.setProperty("bottom", "auto", "important");
+    ledScreen.style.setProperty("min-width", "0", "important");
+    ledScreen.style.setProperty("min-height", "0", "important");
+    ledScreen.style.setProperty("max-width", "none", "important");
+    ledScreen.style.setProperty("max-height", "none", "important");
+  }, []);
+
   //STOP TO AUTOPLAY
   useEffect(() => {
     if (shouldReduceMotion || isPaused) return;
@@ -199,7 +225,15 @@ export function Testimonials() {
             </video>
 
             <div className="adinn-testimonial-truck-stage">
-              <div className="adinn-led-screen-overlay" aria-live="polite">
+              <div
+                ref={ledScreenRef}
+                className="adinn-led-screen-overlay"
+                aria-live="polite"
+                style={{
+                  width: LED_SCREEN_WIDTH,
+                  height: LED_SCREEN_HEIGHT,
+                }}
+              >
                 {!shouldReduceMotion && !isPaused && (
                   <motion.div
                     key={`progress-${selectedIndex}`}

@@ -92,7 +92,19 @@ export default function ImpactCtaBanner({
   const desktopVehicleRef =
     useRef<HTMLDivElement | null>(null);
 
-  const mobileVehicleRef =
+  const responsiveStageRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const responsiveIntroRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const responsiveVehicleRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const responsiveFrameTwoRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const responsiveFrameThreeRef =
     useRef<HTMLDivElement | null>(null);
 
   const frameTwoRef =
@@ -114,8 +126,20 @@ export default function ImpactCtaBanner({
     const desktopVehicle =
       desktopVehicleRef.current;
 
-    const mobileVehicle =
-      mobileVehicleRef.current;
+    const responsiveStage =
+      responsiveStageRef.current;
+
+    const responsiveIntro =
+      responsiveIntroRef.current;
+
+    const responsiveVehicle =
+      responsiveVehicleRef.current;
+
+    const responsiveFrameTwo =
+      responsiveFrameTwoRef.current;
+
+    const responsiveFrameThree =
+      responsiveFrameThreeRef.current;
 
     const frameTwo =
       frameTwoRef.current;
@@ -129,7 +153,12 @@ export default function ImpactCtaBanner({
       !intro ||
       !desktopVehicle ||
       !frameTwo ||
-      !frameThree
+      !frameThree ||
+      !responsiveStage ||
+      !responsiveIntro ||
+      !responsiveVehicle ||
+      !responsiveFrameTwo ||
+      !responsiveFrameThree
     ) {
       return;
     }
@@ -403,95 +432,286 @@ export default function ImpactCtaBanner({
     );
 
     /* =====================================================
-       TABLET + MOBILE
+       TABLET + MOBILE PINNED SCROLL STORY
+
+       This is intentionally separate from the desktop
+       timeline above. The desktop design and animation
+       values remain completely unchanged.
     ===================================================== */
 
     mm.add(
-      "(max-width: 1023px)",
-      () => {
-        if (!mobileVehicle) {
-          return;
-        }
+      {
+        mobile:
+          "(max-width: 639px)",
+
+        tablet:
+          "(min-width: 640px) and (max-width: 1023px)",
+      },
+      (context) => {
+        const isMobile =
+          Boolean(
+            context.conditions?.mobile,
+          );
 
         const ctx =
           gsap.context(() => {
-            const mobileItems =
+            const responsiveIntroItems =
               gsap.utils.toArray<HTMLElement>(
-                "[data-mobile-reveal]",
-                section,
+                "[data-responsive-intro-reveal]",
+                responsiveIntro,
               );
+
+            const responsiveFrameTwoItems =
+              gsap.utils.toArray<HTMLElement>(
+                "[data-responsive-frame-two-reveal]",
+                responsiveFrameTwo,
+              );
+
+            const responsiveFrameThreeItems =
+              gsap.utils.toArray<HTMLElement>(
+                "[data-responsive-frame-three-reveal]",
+                responsiveFrameThree,
+              );
+
+            gsap.set(
+              [
+                responsiveVehicle,
+                ...responsiveIntroItems,
+                ...responsiveFrameTwoItems,
+                ...responsiveFrameThreeItems,
+              ],
+              {
+                force3D: true,
+              },
+            );
+
+            gsap.set(
+              responsiveVehicle,
+              {
+                xPercent: 0,
+                yPercent: 0,
+                scale: 1,
+                transformOrigin:
+                  "50% 54%",
+              },
+            );
+
+            gsap.set(
+              responsiveIntroItems,
+              {
+                yPercent: 0,
+                autoAlpha: 1,
+              },
+            );
+
+            gsap.set(
+              responsiveFrameTwo,
+              {
+                autoAlpha: 0,
+              },
+            );
+
+            gsap.set(
+              responsiveFrameThree,
+              {
+                autoAlpha: 0,
+              },
+            );
+
+            gsap.set(
+              responsiveFrameTwoItems,
+              {
+                yPercent: 118,
+                autoAlpha: 1,
+              },
+            );
+
+            gsap.set(
+              responsiveFrameThreeItems,
+              {
+                yPercent: 118,
+                autoAlpha: 1,
+              },
+            );
 
             if (reduceMotion) {
               gsap.set(
-                [
-                  mobileVehicle,
-                  ...mobileItems,
-                ],
+                responsiveIntro,
+                {
+                  autoAlpha: 0,
+                },
+              );
+
+              gsap.set(
+                responsiveVehicle,
+                {
+                  xPercent:
+                    isMobile ? 0 : -36,
+
+                  yPercent:
+                    isMobile ? 20 : 2,
+
+                  scale:
+                    isMobile ? 1.08 : 1.4,
+                },
+              );
+
+              gsap.set(
+                responsiveFrameTwo,
                 {
                   autoAlpha: 1,
-                  x: 0,
-                  y: 0,
-                  scale: 1,
+                },
+              );
+
+              gsap.set(
+                responsiveFrameTwoItems,
+                {
+                  yPercent: 0,
                 },
               );
 
               return;
             }
 
-            gsap.set(
-              mobileItems,
-              {
-                autoAlpha: 0,
-                y: 30,
-                force3D: true,
-              },
-            );
-
-            gsap.set(
-              mobileVehicle,
-              {
-                autoAlpha: 0,
-                y: 24,
-                scale: 0.96,
-                force3D: true,
-              },
-            );
-
-            const mobileTimeline =
+            const responsiveTimeline =
               gsap.timeline({
                 scrollTrigger: {
                   trigger:
                     section,
 
                   start:
-                    "top 80%",
+                    "top top",
 
-                  once:
+                  end: () =>
+                    `+=${
+                      window.innerHeight *
+                      (isMobile
+                        ? 2.45
+                        : 2.25)
+                    }`,
+
+                  pin:
+                    responsiveStage,
+
+                  pinSpacing:
+                    true,
+
+                  scrub:
+                    isMobile
+                      ? 0.82
+                      : 0.95,
+
+                  anticipatePin: 1,
+
+                  invalidateOnRefresh:
                     true,
                 },
               });
 
-            mobileTimeline.to(
-              mobileItems,
+            /* =============================================
+               RESPONSIVE FRAME 01 -> FRAME 02
+            ============================================= */
+
+            responsiveTimeline.to(
+              responsiveIntroItems,
+              {
+                yPercent: -118,
+                autoAlpha: 0,
+                duration: 0.4,
+                stagger: 0.03,
+                ease: "power2.in",
+              },
+              0.08,
+            );
+
+            responsiveTimeline.to(
+              responsiveVehicle,
+              {
+                xPercent:
+                  isMobile ? 0 : -36,
+
+                yPercent:
+                  isMobile ? 20 : 2,
+
+                scale:
+                  isMobile ? 1.08 : 1.4,
+
+                duration: 1.08,
+
+                ease: "none",
+              },
+              0,
+            );
+
+            responsiveTimeline.set(
+              responsiveFrameTwo,
               {
                 autoAlpha: 1,
-                y: 0,
-                duration: 0.62,
-                stagger: 0.07,
+              },
+              0.47,
+            );
+
+            responsiveTimeline.to(
+              responsiveFrameTwoItems,
+              {
+                yPercent: 0,
+                duration: 0.55,
+                stagger: 0.06,
+                ease: "power3.out",
+              },
+              0.49,
+            );
+
+            responsiveTimeline.to(
+              {},
+              {
+                duration: 0.24,
+              },
+            );
+
+            /* =============================================
+               RESPONSIVE FRAME 02 -> FRAME 03
+            ============================================= */
+
+            responsiveTimeline.to(
+              responsiveFrameTwoItems,
+              {
+                yPercent: -118,
+                duration: 0.44,
+                stagger: 0.03,
+                ease: "power3.in",
+              },
+            );
+
+            responsiveTimeline.set(
+              responsiveFrameTwo,
+              {
+                autoAlpha: 0,
+              },
+            );
+
+            responsiveTimeline.set(
+              responsiveFrameThree,
+              {
+                autoAlpha: 1,
+              },
+            );
+
+            responsiveTimeline.to(
+              responsiveFrameThreeItems,
+              {
+                yPercent: 0,
+                duration: 0.54,
+                stagger: 0.06,
                 ease: "power3.out",
               },
             );
 
-            mobileTimeline.to(
-              mobileVehicle,
+            responsiveTimeline.to(
+              {},
               {
-                autoAlpha: 1,
-                y: 0,
-                scale: 1,
-                duration: 0.82,
-                ease: "power3.out",
+                duration: 0.32,
               },
-              "-=0.42",
             );
           }, section);
 
@@ -509,6 +729,7 @@ export default function ImpactCtaBanner({
   return (
     <section
       ref={sectionRef}
+      data-responsive-scroll="MOBILE_TABLET_SCROLL_V2_SPACING"
       className="
         relative
         w-full
@@ -520,18 +741,18 @@ export default function ImpactCtaBanner({
       ===================================================== */}
 
       <div
-        ref={stageRef}
-        className="
-          relative
-          hidden
-          h-[100svh]
-          min-h-[760px]
-          w-full
-          overflow-hidden
-          bg-[#f8f8f6]
-          lg:block
-        "
-      >
+  ref={stageRef}
+  className="
+    relative
+    hidden
+    h-[100svh]
+    min-h-[760px]
+    w-full
+    overflow-hidden
+    bg-[#f8f8f6]
+    lg:block
+  "
+>
         {/* Background */}
         <div
           aria-hidden="true"
@@ -616,7 +837,7 @@ export default function ImpactCtaBanner({
                 text-[#a2a19e]
               "
             >
-              Powerful roadshow{" "}
+              
 
               <span
                 className="
@@ -626,7 +847,7 @@ export default function ImpactCtaBanner({
                   text-[#969088]
                 "
               >
-                advertising
+                Powerful roadshow advertising
               </span>
             </p>
           </div>
@@ -647,17 +868,9 @@ export default function ImpactCtaBanner({
                 text-[#111111]
               "
             >
-              to{" "}
+              to amplify{" "}
 
-              <span
-                className="
-                  font-serif
-                  italic
-                  font-normal
-                "
-              >
-                amplify
-              </span>{" "}
+            
 
               your brand
 
@@ -936,233 +1149,400 @@ export default function ImpactCtaBanner({
       </div>
 
       {/* =====================================================
-          TABLET + MOBILE
+          TABLET + MOBILE PINNED STAGE
+
+          Mobile and tablet now follow the same three-state
+          storytelling logic as desktop, but their layouts are
+          specifically composed for narrow screens.
+
+          IMPORTANT:
+          This is separate markup. It does not change any
+          desktop design, position, sizing or animation value.
       ===================================================== */}
 
       <div
-        className="
-          relative
-          overflow-hidden
-          bg-[#f8f8f6]
-          px-5
-          py-16
-          sm:px-8
-          sm:py-20
-          md:px-10
-          lg:hidden
-        "
-      >
+  ref={responsiveStageRef}
+  className="
+    relative
+    h-[calc(100svh_-_110px)]
+    min-h-[560px]
+    w-full
+    overflow-hidden
+    bg-[#f8f8f6]
+    sm:h-[100svh]
+    sm:min-h-[600px]
+    lg:hidden
+  "
+>
+        {/* Responsive background */}
         <div
           aria-hidden="true"
           className="
             pointer-events-none
             absolute
             inset-0
-            bg-[radial-gradient(circle_at_50%_32%,rgba(255,255,255,1)_0%,rgba(255,255,255,0.76)_38%,rgba(248,248,246,0)_76%)]
+            bg-[radial-gradient(circle_at_50%_34%,rgba(255,255,255,1)_0%,rgba(255,255,255,0.78)_38%,rgba(248,248,246,0)_76%)]
           "
         />
 
-        {/* Centered mobile roadshow word */}
+        {/* Static responsive roadshow typography */}
         <div
           aria-hidden="true"
           className="
             pointer-events-none
             absolute
-            bottom-[-3vw]
+            bottom-[38%]
             left-1/2
+            z-[2]
             w-max
             -translate-x-1/2
-            select-none
-            whitespace-nowrap
-            text-center
-            font-serif
-            text-[22vw]
-            italic
-            leading-none
-            text-black/[0.025]
+            sm:bottom-[-2vw]
           "
         >
-          roadshow
+          <span
+            className="
+              block
+              select-none
+              whitespace-nowrap
+              text-center
+              font-serif
+              text-[22vw]
+              font-normal
+              italic
+              leading-none
+              tracking-[-0.055em]
+              text-black/[0.028]
+              sm:text-[21vw]
+            "
+          >
+            roadshow
+          </span>
         </div>
+
+        {/* ================================================
+            RESPONSIVE FRAME 01 INTRO
+        ================================================ */}
+
+        <div
+          ref={responsiveIntroRef}
+          className="
+            pointer-events-none
+            absolute
+            left-1/2
+            top-[8%]
+            z-30
+            w-[calc(100%_-_40px)]
+            max-w-[700px]
+            -translate-x-1/2
+            text-center
+            sm:top-[11%]
+            sm:w-[82%]
+          "
+        >
+          <div className="overflow-hidden pb-1">
+            <p
+              data-responsive-intro-reveal
+              className="
+                m-0
+                transform-gpu
+                will-change-transform
+                font-sans
+                text-[clamp(16px,5.1vw,19px)]
+                font-normal
+                leading-[1.02]
+                tracking-[-0.045em]
+                text-[#a2a19e]
+                sm:text-[clamp(24px,3.8vw,34px)]
+              "
+            >
+              <span
+                className="
+                  font-serif
+                  font-normal
+                  italic
+                  text-[#969088]
+                "
+              >
+                Powerful roadshow advertising
+              </span>
+            </p>
+          </div>
+
+          <div className="mt-1 overflow-hidden pb-2">
+            <h2
+              data-responsive-intro-reveal
+              className="
+                mx-auto
+                max-w-[680px]
+                transform-gpu
+                will-change-transform
+                text-balance
+                font-sans
+                text-[clamp(24px,7.8vw,30px)]
+                font-medium
+                leading-[0.98]
+                tracking-[-0.056em]
+                text-[#111111]
+                sm:text-[clamp(36px,5.4vw,48px)]
+              "
+            >
+              to amplify your brand
+
+              <br />
+
+              where it matters most
+            </h2>
+          </div>
+        </div>
+
+        {/* ================================================
+            RESPONSIVE VEHICLE
+
+            The outer wrapper owns static centering.
+            GSAP animates only the inner element, preventing
+            a transform conflict with Tailwind centering.
+        ================================================ */}
 
         <div
           className="
-            relative
-            z-10
-            mx-auto
-            grid
-            max-w-[960px]
-            grid-cols-1
-            gap-12
-            md:grid-cols-2
-            md:items-center
+            pointer-events-none
+            absolute
+            left-1/2
+            top-[38%]
+            z-20
+            w-[165vw]
+            max-w-none
+            -translate-x-1/2
+            -translate-y-1/2
+            sm:top-[56%]
+            sm:w-[min(760px,86vw)]
           "
         >
-          {/* Content first */}
           <div
-            data-mobile-reveal
+            ref={responsiveVehicleRef}
             className="
-              order-1
-              md:order-2
+              relative
+              w-full
+              transform-gpu
+              backface-hidden
+              will-change-transform
             "
           >
-            <div
-              className="
-                font-sans
-                text-[clamp(68px,17vw,94px)]
-                font-normal
-                leading-[0.8]
-                tracking-[-0.07em]
-                text-[#111111]
+            <Image
+              src={HERO_VEHICLE_IMAGE}
+              alt="Adinn roadshow advertising vehicle"
+              width={1200}
+              height={720}
+              priority
+              draggable={false}
+              sizes="
+                (max-width: 639px) 165vw,
+                (max-width: 1023px) 86vw,
+                43vw
               "
-            >
-              250+
-            </div>
-
-            <h2
-              className="
-                mt-6
-                font-sans
-                text-[clamp(34px,8vw,43px)]
-                font-medium
-                leading-none
-                tracking-[-0.045em]
-                text-[#111111]
-              "
-            >
-              Roadshow Vehicles
-            </h2>
-
-            {/* <p
-              className="
-                mt-4
-                max-w-[390px]
-                font-sans
-                text-[16px]
-                leading-7
-                text-black/48
-              "
-            >
-              Modern fleet for every marketing need.
-            </p> */}
-
-            <BleedCta
-              href={ctaHref}
-              label="Explore Vehicles"
-            />
-          </div>
-
-          {/* Vehicle */}
-          <div
-            className="
-              order-2
-              md:order-1
-            "
-          >
-            <div
-              ref={mobileVehicleRef}
               className="
                 relative
-                mx-auto
+                z-[2]
+                block
+                h-auto
                 w-full
-                max-w-[650px]
-                transform-gpu
-                will-change-transform
+                max-w-none
+                select-none
+                object-contain
+                drop-shadow-[0_24px_22px_rgba(0,0,0,0.15)]
               "
-            >
-              <Image
-                src={HERO_VEHICLE_IMAGE}
-                alt="Adinn roadshow advertising vehicle"
-                width={1200}
-                height={720}
-                priority
-                draggable={false}
-                sizes="
-                  (max-width: 767px) 92vw,
-                  50vw
-                "
-                className="
-                  relative
-                  z-10
-                  block
-                  h-auto
-                  w-full
-                  select-none
-                  object-contain
-                  drop-shadow-[0_24px_24px_rgba(0,0,0,0.14)]
-                "
-              />
+              onLoad={() => {
+                ScrollTrigger.refresh();
+              }}
+            />
 
+            <div
+              aria-hidden="true"
+              className="
+                absolute
+                bottom-[1%]
+                left-[13%]
+                right-[8%]
+                z-[1]
+                h-[7%]
+                rounded-[50%]
+                bg-black/[0.17]
+                blur-[22px]
+              "
+            />
+          </div>
+        </div>
+
+        {/* ================================================
+            RESPONSIVE CONTENT VIEWPORT
+
+            Mobile: content occupies the upper area.
+            Tablet: content moves to the right side while
+            the animated vehicle moves to the left.
+        ================================================ */}
+
+        <div
+          aria-live="polite"
+          className="
+            absolute
+            left-5
+            right-5
+            top-[8%]
+            z-40
+            h-[260px]
+            overflow-hidden
+            sm:left-[58%]
+            sm:right-auto
+            sm:top-1/2
+            sm:h-[380px]
+            sm:w-[38%]
+            sm:min-w-[245px]
+            sm:max-w-[360px]
+            sm:-translate-y-1/2
+          "
+        >
+          {/* =============================================
+              RESPONSIVE FRAME 02
+          ============================================= */}
+
+          <div
+            ref={responsiveFrameTwoRef}
+            className="
+              invisible
+              absolute
+              inset-0
+              flex
+              flex-col
+              justify-start
+              opacity-0
+              sm:justify-center
+            "
+          >
+            <div className="overflow-hidden pb-2">
               <div
-                aria-hidden="true"
+                data-responsive-frame-two-reveal
                 className="
-                  absolute
-                  bottom-[2%]
-                  left-[14%]
-                  right-[8%]
-                  h-[8%]
-                  rounded-[50%]
-                  bg-black/[0.14]
-                  blur-[24px]
+                  transform-gpu
+                  will-change-transform
+                  font-sans
+                  text-[clamp(50px,15.5vw,64px)]
+                  font-normal
+                  leading-[0.8]
+                  tracking-[-0.07em]
+                  text-[#111111]
+                  sm:text-[clamp(76px,10vw,102px)]
                 "
-              />
+              >
+                250+
+              </div>
+            </div>
+
+            <div className="mt-4 overflow-hidden pb-1 sm:mt-6">
+              <h3
+                data-responsive-frame-two-reveal
+                className="
+                  transform-gpu
+                  will-change-transform
+                  text-balance
+                  font-sans
+                  text-[clamp(24px,7.5vw,31px)]
+                  font-medium
+                  leading-[1.02]
+                  tracking-[-0.046em]
+                  text-[#111111]
+                  sm:text-[clamp(34px,4.6vw,43px)]
+                "
+              >
+                Roadshow Vehicles
+              </h3>
+            </div>
+
+            <div className="mt-3 overflow-hidden pb-3 sm:mt-5">
+              <div
+                data-responsive-frame-two-reveal
+                className="
+                  transform-gpu
+                  will-change-transform
+                "
+              >
+                <BleedCta
+                  href={ctaHref}
+                  label="Explore Vehicles"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Second metric */}
+          {/* =============================================
+              RESPONSIVE FRAME 03
+          ============================================= */}
+
           <div
-            data-mobile-reveal
+            ref={responsiveFrameThreeRef}
             className="
-              order-3
-              border-t
-              border-black/[0.08]
-              pt-10
-              md:col-span-2
+              invisible
+              absolute
+              inset-0
+              flex
+              flex-col
+              justify-start
+              opacity-0
+              sm:justify-center
             "
           >
-            <div
-              className="
-                font-sans
-                text-[58px]
-                font-normal
-                leading-[0.8]
-                tracking-[-0.065em]
-                text-[#111111]
-              "
-            >
-              20L+
+            <div className="overflow-hidden pb-2">
+              <div
+                data-responsive-frame-three-reveal
+                className="
+                  transform-gpu
+                  will-change-transform
+                  font-sans
+                  text-[clamp(50px,15.5vw,64px)]
+                  font-normal
+                  leading-[0.8]
+                  tracking-[-0.07em]
+                  text-[#111111]
+                  sm:text-[clamp(76px,10vw,102px)]
+                "
+              >
+                20L+
+              </div>
             </div>
 
-            <h3
-              className="
-                mt-5
-                font-sans
-                text-[28px]
-                font-medium
-                tracking-[-0.04em]
-                text-[#111111]
-              "
-            >
-              Daily Impressions
-            </h3>
+            <div className="mt-4 overflow-hidden pb-1 sm:mt-6">
+              <h3
+                data-responsive-frame-three-reveal
+                className="
+                  transform-gpu
+                  will-change-transform
+                  text-balance
+                  font-sans
+                  text-[clamp(24px,7.5vw,31px)]
+                  font-medium
+                  leading-[1.02]
+                  tracking-[-0.046em]
+                  text-[#111111]
+                  sm:text-[clamp(34px,4.6vw,43px)]
+                "
+              >
+                Daily Impressions
+              </h3>
+            </div>
 
-            <p
-              className="
-                mt-3
-                max-w-[320px]
-                font-sans
-                text-[15px]
-                leading-6
-                text-black/45
-              "
-            >
-              Real people. Real reach. Every single day.
-            </p>
-
-            <BleedCta
-              href={ctaHref}
-              label="Plan Your Roadshow"
-            />
+            <div className="mt-3 overflow-hidden pb-3 sm:mt-5">
+              <div
+                data-responsive-frame-three-reveal
+                className="
+                  transform-gpu
+                  will-change-transform
+                "
+              >
+                <BleedCta
+                  href={ctaHref}
+                  label="Plan Your Roadshow"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

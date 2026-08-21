@@ -179,8 +179,7 @@ const whyAdinnWorksBest = [
     name: "GPS Support",
     description:
       "Live location tracking for vehicles with route visibility and movement updates throughout the campaign.",
-    image:
-      "./images/assets/HomeBanner_MainPageFinal.png",
+    image: "/images/assets/Why_Adinn_Roadshows/gps.png",
     collapsedWidth: 219,
     expandedWidth: 400,
   },
@@ -189,8 +188,7 @@ const whyAdinnWorksBest = [
     name: "RTO Certified",
     description:
       "Fully approved vehicles complying with road regulations for smooth and hassle-free campaign execution.",
-    image:
-      "./images/assets/tata ultra - 2.png",
+    image: "/images/assets/Why_Adinn_Roadshows/rto.png",
     collapsedWidth: 227,
     expandedWidth: 400,
   },
@@ -199,8 +197,7 @@ const whyAdinnWorksBest = [
     name: "One-Stop Solution",
     description:
       "From planning to execution, everything is managed in one place for a roadshow campaign.",
-    image:
-      "./images/assets/full side LED.png",
+    image: "/images/assets/Why_Adinn_Roadshows/one_stop.png",
     collapsedWidth: 270,
     expandedWidth: 410,
   },
@@ -210,13 +207,8 @@ const whyAdinnWorksBest = [
     description:
       "Strategic route planning focuses on high-visibility and high-traffic locations to maximize campaign reach.",
     image:
-      "./images/assets/HomeBanner_MainPageFinal.png",
-
-    /*
-     * Larger width fixes the cropped
-     * "High-Traffic Route Planning" text.
-     */
-    collapsedWidth: 390,
+      "/images/assets/Why_Adinn_Roadshows/High_Traffic_Route_Planning.png",
+    collapsedWidth: 360,
     expandedWidth: 470,
   },
 
@@ -225,7 +217,7 @@ const whyAdinnWorksBest = [
     description:
       "Experienced on-ground teams handle vehicle movement, branding and campaign execution with proper coordination.",
     image:
-      "./images/assets/tata ultra - 2.png",
+      "/images/assets/Why_Adinn_Roadshows/Professional_Execution.png",
     collapsedWidth: 335,
     expandedWidth: 440,
   },
@@ -234,8 +226,7 @@ const whyAdinnWorksBest = [
     name: "24/7 Support",
     description:
       "Dedicated team available anytime to monitor, coordinate, and assist throughout the campaign.",
-    image:
-      "./images/assets/HomeBanner_MainPageFinal.png",
+    image: "/images/assets/Why_Adinn_Roadshows/time.png",
     collapsedWidth: 215,
     expandedWidth: 400,
   },

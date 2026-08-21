@@ -580,7 +580,7 @@ function HomePageSection2() {
                                 </div>
                             </div>
                             <div>
-                                <img src='./images/assets/RA_RightVanImg.png' className=' RA_RightVanImg  w-120' />
+                                <img src='./images/assets/RA_RightVanImg.png' className=' RA_RightVanImg  w-100' />
                             </div>
                         </div>
                     </div>
