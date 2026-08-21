@@ -24,7 +24,7 @@
 /*  Lenis checks the whole composed path, so declaring it once on the overlay  */
 /*  covers every scroller inside.                                              */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   CalendarDays,
@@ -52,6 +52,7 @@ import {
   resolveCampaignType,
   resolvePromoterType,
 } from "@/lib/roadshowRequestSubmit";
+import TermsAndConditionsModal from "@/components/Client/Reusable_Components/TermsAndConditionsModal";
 
 import "./ReviewOrderModal.css";
 
@@ -67,6 +68,8 @@ export default function ReviewOrderModal({
   onSubmit,
   onEditVehicle,
 }) {
+  const [termsOpen, setTermsOpen] = useState(false);
+
   useScrollLock(open);
 
   /* Escape closes — but never mid-send, or the customer loses sight of a
@@ -104,7 +107,9 @@ export default function ReviewOrderModal({
 
   const firstDetails = rows[0]?.details;
 
-  return createPortal(
+  return (
+    <>
+      {createPortal(
     <div
       className="rdsw_rvOverlay"
       role="dialog"
@@ -576,8 +581,15 @@ export default function ReviewOrderModal({
               </div>
 
               <p className="rdsw_rvTerms">
-                By sending the request, you agree to our Terms &amp;
-                Conditions.
+                By sending the request, you agree to our{" "}
+                <button
+                  type="button"
+                  className="rdsw_rvTermsLink"
+                  onClick={() => setTermsOpen(true)}
+                >
+                  Terms &amp; Conditions
+                </button>
+                .
               </p>
             </div>
           </aside>
@@ -585,5 +597,12 @@ export default function ReviewOrderModal({
       </div>
     </div>,
     document.body
+      )}
+
+      <TermsAndConditionsModal
+        open={termsOpen}
+        onClose={() => setTermsOpen(false)}
+      />
+    </>
   );
 }

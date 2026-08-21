@@ -2,16 +2,19 @@
 // @ts-nocheck
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import "./Footer.css";
 import "../HomePageSections/HomePageSection2.css";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ButtonHover } from "./ButtonHover";
 import { useNewsletterSubscribe } from "./useNewsletterSubscribe";
+import TermsAndConditionsModal from "./TermsAndConditionsModal";
 
 function Footer() {
   const router = useRouter();
+
+  const [termsOpen, setTermsOpen] = useState(false);
 
   const {
     email,
@@ -150,12 +153,12 @@ function Footer() {
               </div>
 
               <a
-                href="mailto:ba@adinn.co.in"
+                href="mailto:roadshowsales@adinn.co.in"
                 style={{
                   textDecoration: "none",
                 }}
               >
-                ba@adinn.co.in
+                roadshowsales@adinn.co.in
               </a>
             </div>
 
@@ -293,12 +296,15 @@ function Footer() {
             Cookies Policy
           </a>
 
-          <a
-            href="/legal"
-            className="hover:text-white transition-colors"
+          {/* Was a dead link to a /legal route that doesn't exist — now
+              opens the actual Terms & Conditions content in a popup. */}
+          <button
+            type="button"
+            onClick={() => setTermsOpen(true)}
+            className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-inherit text-inherit"
           >
-            Legal Terms
-          </a>
+            Terms &amp; Conditions
+          </button>
 
           <a
             href="/privacy"
@@ -310,6 +316,11 @@ function Footer() {
       </footer>
 
       {newsletterCaptchaModal}
+
+      <TermsAndConditionsModal
+        open={termsOpen}
+        onClose={() => setTermsOpen(false)}
+      />
     </>
   );
 }
