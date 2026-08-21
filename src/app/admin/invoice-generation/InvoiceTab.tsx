@@ -267,18 +267,18 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
         // label text) instead of misattributing changes to the wrong row
         // when two discounts share a label.
         _id: d._id || undefined,
-        label: d.label || "Discount",
-        mode: d.mode || "decrease",
-        type: d.type || "percent",
+        label: d.label ?? "",
+        mode: d.mode ?? "",
+        type: d.type ?? "",
         value: d.value ?? 0,
       }));
     }
     if (existing?.discountLabel || existing?.discountValue) {
       return [{
         id: uid(),
-        label: existing.discountLabel || "Discount",
-        mode: existing.discountMode || "decrease",
-        type: existing.discountType || "percent",
+        label: existing.discountLabel ?? "",
+        mode: existing.discountMode ?? "",
+        type: existing.discountType ?? "",
         value: existing.discountValue ?? 0,
       }];
     }
