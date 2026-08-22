@@ -409,6 +409,7 @@ function TimelineDayDetail({ gps, day }: { gps: any; day: string }) {
   const noData = gps.totalNoDataTime || 0;
   const total = running + parked + idle + noData || DAY_MS;
 
+
   const aggregateSegments = [
     { key: "M", ms: running },
     { key: "P", ms: parked },
@@ -445,6 +446,18 @@ function TimelineDayDetail({ gps, day }: { gps: any; day: string }) {
     return resolved || raw;
   };
 
+
+  const position = gps?.vehicleLocations?.[0]?.position;
+
+const vehicleMode =
+  position === "P"
+    ? "Parked"
+    : position === "M"
+      ? "Moving"
+      : position === "S"
+        ? "Idle"
+        : "Unavailable";
+
   const infoCards = [
     { label: "Driver", value: gps.driverName || "—", sub: gps.driverMobile || "" },
     { label: "Trip Distance", value: gps.tripDistance ? `${gps.tripDistance} km` : "—" },
@@ -458,7 +471,7 @@ function TimelineDayDetail({ gps, day }: { gps: any; day: string }) {
     { label: "Fuel (Start → End)", value: gps.startFuel != null && gps.endFuel != null ? `${gps.startFuel} → ${gps.endFuel} L` : "—" },
     { label: "Start Location", value: locationValue(gps.startLocation, addresses.start), sub: gps.startLocation || "", wide: true },
     { label: "End Location", value: locationValue(gps.endLocation, addresses.end), sub: gps.endLocation || "", wide: true },
-    { label: "Vehicle Mode", value: gps.vehicleMode || "—" },
+    { label: "Vehicle Mode", value: vehicleMode || "—" },
   ];
 
   return (

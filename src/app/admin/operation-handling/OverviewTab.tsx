@@ -17,11 +17,13 @@ import {
 import { useState, useRef, useCallback, useEffect } from "react";
 import axios from "axios";
 import { getToken } from "../../utils/auth";
+import { jwtDecode } from "jwt-decode";
 import toast from "react-hot-toast";
 import API_BASE from "../../../../baseurl";
 import { useVehicle } from '../../../context/vehicletypecontext';
 import { ChevronLeft } from "lucide-react";
 import DatePicker from "../../utils/datepicker";
+import HandlerSearchSelect from "../../utils/HandlerSearchSelect";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -57,11 +59,25 @@ interface Order {
     customerCategory?: string;
 }
 
-export default function OverviewTab({ order, onRefresh, onStageMove, vehicleTypes, staffAdmins = [] }: {
+export default function OverviewTab({ order, onRefresh, onStageMove, vehicleTypes, staffAdmins = [], currentUserIsAdmin = 1 }: {
     order: Order; onRefresh: () => Promise<void>;
     onStageMove: (order: Order, toStage: string) => void;
     staffAdmins?: { username: string }[];
+    currentUserIsAdmin?: number;
 }) {
+
+    // Sales/Operation (non-admin) logins only ever see themselves as a
+    // reassignment target, and don't see the Handler Assignment panel at
+    // all when the order is already theirs. Admin login is untouched.
+    const isStaffUser = currentUserIsAdmin !== 1;
+    const [currentUsername, setCurrentUsername] = useState("");
+    useEffect(() => {
+        const token = getToken();
+        if (token) {
+            try { setCurrentUsername((jwtDecode(token) as any)?.username || ""); } catch { }
+        }
+    }, []);
+    const isOwnOrder = isStaffUser && order.handlerName && order.handlerName === currentUsername;
 
     // ── Handler reassignment / handover ──────────────────────────────────────
     const [showHandoverModal, setShowHandoverModal] = useState(false);
@@ -293,7 +309,7 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
             </div>
 
             {/* Handler Assignment */}
-            {order?.pipelineStatus !== "todo" && (
+            {order?.pipelineStatus !== "todo" && !isOwnOrder && (
             <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
                     <div className="flex items-center gap-2">
@@ -416,16 +432,24 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                         <div className="space-y-3">
                             <div>
                                 <label className="text-xs font-semibold text-gray-500">New Handler</label>
-                                <select
-                                    value={handoverNewHandler}
-                                    onChange={(e) => setHandoverNewHandler(e.target.value)}
-                                    className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
-                                >
-                                    <option value="">Select handler...</option>
-                                    {staffAdmins.map((s) => (
-                                        <option key={s.username} value={s.username}>{s.username}</option>
-                                    ))}
-                                </select>
+                                {isStaffUser ? (
+                                    <HandlerSearchSelect
+                                        value={handoverNewHandler}
+                                        onChange={setHandoverNewHandler}
+                                        options={currentUsername ? [{ username: currentUsername }] : []}
+                                    />
+                                ) : (
+                                    <select
+                                        value={handoverNewHandler}
+                                        onChange={(e) => setHandoverNewHandler(e.target.value)}
+                                        className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+                                    >
+                                        <option value="">Select handler...</option>
+                                        {staffAdmins.map((s) => (
+                                            <option key={s.username} value={s.username}>{s.username}</option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-2">

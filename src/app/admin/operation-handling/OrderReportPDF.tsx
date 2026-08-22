@@ -145,7 +145,7 @@ const addPdfCaptureSafeColors = (clonedDocument: Document) => {
 
 // ── Inline style constants ────────────────────────────────────── ────────────
 const S = {
-  page: { fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: "12px", color: "#1a1a1a", background: "#fff", lineHeight: "1.5", padding: "32px 36px", maxWidth: "860px", margin: "0 auto" } as React.CSSProperties,
+  page: { fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: "13px", color: "#1a1a1a", background: "#fff", lineHeight: "1.5", padding: "32px 36px", maxWidth: "860px", margin: "0 auto" } as React.CSSProperties,
   header: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingBottom: "16px", borderBottom: "2.5px solid #1e3a5f", marginBottom: "24px" } as React.CSSProperties,
   brandName: { fontSize: "22px", fontWeight: 800, color: "#1e3a5f", letterSpacing: "-0.5px" } as React.CSSProperties,
   brandSub: { fontSize: "11px", color: "#6b7280", marginTop: "2px" } as React.CSSProperties,
@@ -156,7 +156,7 @@ const S = {
 
   // section: { marginBottom: "22px" } as React.CSSProperties,
   section: { marginBottom: "22px", pageBreakInside: "avoid", breakInside: "avoid" } as React.CSSProperties,
-  sectionTitleBase: { display: "flex", alignItems: "center", gap: "8px", fontSize: "11px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.8px", color: "#fff", padding: "8px 14px", borderRadius: "8px 8px 0 0" } as React.CSSProperties,
+  sectionTitleBase: { display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.8px", color: "#fff", padding: "8px 14px", borderRadius: "8px 8px 0 0" } as React.CSSProperties,
   sectionBody: { border: "1px solid #e5e7eb", borderTop: "none", borderRadius: "0 0 8px 8px", padding: "14px" } as React.CSSProperties,
 
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 24px" } as React.CSSProperties,
@@ -172,38 +172,37 @@ const S = {
   // tdRight: { padding: "7px 10px", borderBottom: "1px solid #f3f4f6", color: "#374151", verticalAlign: "top" as const, textAlign: "right" as const } as React.CSSProperties,
 
   // ── S object: bump these font sizes up ──
-fieldLabel: { fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.5px", color: "#9ca3af", marginBottom: "2px" } as React.CSSProperties,
-fieldValue: { fontSize: "13px", fontWeight: 600, color: "#111827" } as React.CSSProperties,
+  fieldLabel: { fontSize: "11.5px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.5px", color: "#9ca3af", marginBottom: "2px" } as React.CSSProperties,
+  fieldValue: { fontSize: "14px", fontWeight: 600, color: "#111827" } as React.CSSProperties,
 
-table: { width: "100%", borderCollapse: "collapse" as const, fontSize: "12.5px" } as React.CSSProperties,
-th: { background: "#f3f4f6", color: "#6b7280", fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.5px", padding: "7px 10px", textAlign: "left" as const, borderBottom: "1px solid #e5e7eb" } as React.CSSProperties,
-td: { padding: "7px 10px", borderBottom: "1px solid #f3f4f6", color: "#374151", verticalAlign: "top" as const, fontSize: "12px" } as React.CSSProperties,
-tdRight: { padding: "7px 10px", borderBottom: "1px solid #f3f4f6", color: "#374151", verticalAlign: "top" as const, textAlign: "right" as const, fontSize: "12px" } as React.CSSProperties,
-  divider: { border: "none", borderTop: "1px solid #e5e7eb", margin: "12px 0" } as React.CSSProperties,
+  table: { width: "100%", borderCollapse: "collapse" as const, fontSize: "13.5px" } as React.CSSProperties,
+  th: { background: "#f3f4f6", color: "#6b7280", fontSize: "11.5px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.5px", padding: "7px 10px", textAlign: "left" as const, borderBottom: "1px solid #e5e7eb" } as React.CSSProperties,
+  td: { padding: "7px 10px", borderBottom: "1px solid #f3f4f6", color: "#374151", verticalAlign: "top" as const, fontSize: "13px" } as React.CSSProperties,
+  tdRight: { padding: "7px 10px", borderBottom: "1px solid #f3f4f6", color: "#374151", verticalAlign: "top" as const, textAlign: "right" as const, fontSize: "13px" } as React.CSSProperties, divider: { border: "none", borderTop: "1px solid #e5e7eb", margin: "12px 0" } as React.CSSProperties,
 
   // vehicleCard: { border: "1px solid #e5e7eb", borderRadius: "8px", marginBottom: "12px", overflow: "hidden" } as React.CSSProperties,
   vehicleCard: { border: "1px solid #e5e7eb", borderRadius: "8px", marginBottom: "12px", overflow: "hidden", pageBreakInside: "avoid", breakInside: "avoid" } as React.CSSProperties,
   vehicleCardHeader: { background: "#f0f9ff", padding: "8px 12px", borderBottom: "1px solid #bae6fd", display: "flex", alignItems: "center", justifyContent: "space-between" } as React.CSSProperties,
-  vehicleCardTitle: { fontWeight: 700, fontSize: "12px", color: "#075985" } as React.CSSProperties,
+  vehicleCardTitle: { fontWeight: 700, fontSize: "13px", color: "#075985" } as React.CSSProperties,
   vehicleCardBody: { padding: "12px" } as React.CSSProperties,
 
   statCard: { border: "1px solid #e5e7eb", borderRadius: "8px", padding: "10px 12px", textAlign: "center" as const } as React.CSSProperties,
-  statLabel: { fontSize: "9.5px", color: "#9ca3af", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.4px" } as React.CSSProperties,
-  statValue: { fontSize: "18px", fontWeight: 800, color: "#111827", marginTop: "3px" } as React.CSSProperties,
-  statSub: { fontSize: "9.5px", color: "#6b7280", marginTop: "2px" } as React.CSSProperties,
+  statLabel: { fontSize: "10.5px", color: "#9ca3af", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.4px" } as React.CSSProperties,
+ statValue: { fontSize: "20px", fontWeight: 800, color: "#111827", marginTop: "3px" } as React.CSSProperties,
+ statSub: { fontSize: "10.5px", color: "#6b7280", marginTop: "2px" } as React.CSSProperties,
 
   timelineItem: { display: "flex", gap: "12px", marginBottom: "10px" } as React.CSSProperties,
   timelineDot: { width: "28px", height: "28px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: 800, color: "#fff", flexShrink: 0, marginTop: "1px", paddingBottom: "10px" } as React.CSSProperties,
   timelineContent: { flex: 1, background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "8px 12px", marginBottom: "2px" } as React.CSSProperties,
-  timelineStage: { fontSize: "11px", fontWeight: 700, color: "#111827" } as React.CSSProperties,
-  timelineMeta: { fontSize: "10px", color: "#9ca3af", marginTop: "2px" } as React.CSSProperties,
+  timelineStage: { fontSize: "12.5px", fontWeight: 700, color: "#111827" } as React.CSSProperties,
+ timelineMeta: { fontSize: "11px", color: "#9ca3af", marginTop: "2px" } as React.CSSProperties,
 
   issueCardOpen: { borderRadius: "8px", padding: "10px 12px", marginBottom: "8px", background: "#fff7ed", border: "1px solid #fed7aa" } as React.CSSProperties,
   issueCardResolved: { borderRadius: "8px", padding: "10px 12px", marginBottom: "8px", background: "#f0fdf4", border: "1px solid #bbf7d0" } as React.CSSProperties,
   unavailCard: { borderRadius: "8px", padding: "10px 12px", marginBottom: "8px", background: "#fff1f2", border: "1px solid #fecdd3" } as React.CSSProperties,
   availCard: { borderRadius: "8px", padding: "10px 12px", marginBottom: "8px", background: "#f0fdf4", border: "1px solid #bbf7d0" } as React.CSSProperties,
 
-  footer: { marginTop: "28px", paddingTop: "12px", borderTop: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#9ca3af" } as React.CSSProperties,
+  footer: { marginTop: "28px", paddingTop: "12px", borderTop: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#9ca3af" } as React.CSSProperties,
 };
 
 const Badge = ({ children, color }: { children: React.ReactNode; color: "green" | "red" | "blue" | "amber" | "gray" | "sky" | "violet" }) => {
@@ -220,7 +219,7 @@ const Badge = ({ children, color }: { children: React.ReactNode; color: "green" 
     <span style={{
       display: "inline-flex", alignItems: "center", justifyContent: "center",
       borderRadius: "20px",
-      fontSize: "10px", fontWeight: 700, lineHeight: 1.4,
+     fontSize: "11px", fontWeight: 700, lineHeight: 1.4,
       whiteSpace: "nowrap",
       verticalAlign: "middle", paddingBottom: "15px", paddingLeft: "10px", paddingRight: "10px",
       ...colors[color]
@@ -278,7 +277,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
       const contentRect = content.getBoundingClientRect();
       const scale = canvas.width / content.offsetWidth;
 
-     
+
 
       const getSmartBreaks = () => {
         const breaks: number[] = [];
@@ -319,7 +318,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
       let yOffset = 0;
       let pageNum = 0;
 
-   
+
 
       const topPaddingPx = 40;
 
@@ -385,8 +384,8 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
   const focPurposeLabel = (p: string) =>
     p === "absent-day" ? "Vehicle Absent — Extend +1 Day"
       : p === "compensation-hours" ? "Extra Working Hours Compensation"
-      : p === "compensation-days" ? "Extra Campaign Days Compensation"
-      : null;
+        : p === "compensation-days" ? "Extra Campaign Days Compensation"
+          : null;
 
   return (
     <>
@@ -487,7 +486,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                   </div>
                   <div style={S.vehicleCardBody}>
                     <div style={{ ...S.grid3, marginBottom: 10 }}>
-                    
+
                       {([
                         ["Campaign Name", item.campaignName],
 
@@ -732,7 +731,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                                     {entry.driverPhone}
                                   </span>
 
-                                
+
                                   <div style={{ marginLeft: "auto" }}>
                                     <span style={{
                                       display: "inline-flex", alignItems: "center", gap: 5,
@@ -771,56 +770,56 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                                       const tag = isUnavailableRemoval
                                         ? { label: "Unavailable Vehicle", color: "red" as const }
                                         : isPlainRelease
-                                        ? { label: "Vehicle Released", color: "gray" as const }
-                                        : isReplacementAdd
-                                        ? { label: "Replacement Vehicle", color: "violet" as const }
-                                        : h.action === "created"
-                                        ? { label: "Driver Added", color: "blue" as const }
-                                        : { label: "Driver Updated", color: "amber" as const };
+                                          ? { label: "Vehicle Released", color: "gray" as const }
+                                          : isReplacementAdd
+                                            ? { label: "Replacement Vehicle", color: "violet" as const }
+                                            : h.action === "created"
+                                              ? { label: "Driver Added", color: "blue" as const }
+                                              : { label: "Driver Updated", color: "amber" as const };
 
                                       return (
-                                      <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#f9fafb" }}>
-                                        <td style={{ ...S.td, verticalAlign: "middle", textAlign: "center", width: "90px", paddingTop: "20px" }}>
-                                          <Badge color={tag.color}>{tag.label}</Badge>
-                                        </td>
-                                        <td style={{ ...S.td, verticalAlign: "middle", fontWeight: 700 }}>{h.driverName}</td>
-                                        <td style={{ ...S.td, verticalAlign: "middle" }}>{h.driverPhone}</td>
-                                        <td style={{ ...S.td, verticalAlign: "middle", fontFamily: "monospace" }}>{h.vehicleRegistrationNumber}</td>
-                                        <td style={{ ...S.td, verticalAlign: "middle" }}>{h.changedBy}</td>
-                                        <td style={{ ...S.td, verticalAlign: "middle", fontSize: "10px" }}>{fmtDatetime(h.changedAt)}</td>
-                                        <td style={{ ...S.td, verticalAlign: "middle", fontSize: "10px" }}>
-                                          {isUnavailableRemoval && (
-                                            <div style={{ marginBottom: 4, color: "#dc2626" }}>
-                                              Replaced by <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{h.changedFields.replacedBy}</span>
-                                            </div>
-                                          )}
-                                          {isReplacementAdd && (
-                                            <div style={{ marginBottom: 4, color: "#5b21b6" }}>
-                                              Replaces <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{h.changedFields.replacementFor}</span>
-                                            </div>
-                                          )}
-                                          {h.changedFields?.reason && (
-                                            <div style={{ marginBottom: 4 }}>
-                                              <span style={{ fontWeight: 700, color: "#374151" }}>Reason:</span> {h.changedFields.reason}
-                                            </div>
-                                          )}
-                                          {h.action === "updated" && h.changedFields && Object.keys(h.changedFields).length > 0
-                                            ? Object.entries(h.changedFields).map(([field, val]: any, fi: number) => (
-                                              <div key={fi} style={{ marginBottom: fi < Object.keys(h.changedFields).length - 1 ? 4 : 0 }}>
-                                                <span style={{ fontWeight: 700, color: "#374151" }}>
-                                                  {field === "driverName" ? "Driver Name"
-                                                    : field === "driverPhone" ? "Phone"
-                                                      : field === "vehicleRegistrationNumber" ? "Reg. No"
-                                                        : field}:
-                                                </span>{" "}
-                                                <span style={{ color: "#dc2626", textDecoration: "line-through" }}>{val.old}</span>
-                                                {" → "}
-                                                <span style={{ color: "#16a34a", fontWeight: 600 }}>{val.new}</span>
+                                        <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#f9fafb" }}>
+                                          <td style={{ ...S.td, verticalAlign: "middle", textAlign: "center", width: "90px", paddingTop: "20px" }}>
+                                            <Badge color={tag.color}>{tag.label}</Badge>
+                                          </td>
+                                          <td style={{ ...S.td, verticalAlign: "middle", fontWeight: 700 }}>{h.driverName}</td>
+                                          <td style={{ ...S.td, verticalAlign: "middle" }}>{h.driverPhone}</td>
+                                          <td style={{ ...S.td, verticalAlign: "middle", fontFamily: "monospace" }}>{h.vehicleRegistrationNumber}</td>
+                                          <td style={{ ...S.td, verticalAlign: "middle" }}>{h.changedBy}</td>
+                                          <td style={{ ...S.td, verticalAlign: "middle", fontSize: "10px" }}>{fmtDatetime(h.changedAt)}</td>
+                                          <td style={{ ...S.td, verticalAlign: "middle", fontSize: "10px" }}>
+                                            {isUnavailableRemoval && (
+                                              <div style={{ marginBottom: 4, color: "#dc2626" }}>
+                                                Replaced by <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{h.changedFields.replacedBy}</span>
                                               </div>
-                                            ))
-                                            : (!isUnavailableRemoval && !isReplacementAdd && !h.changedFields?.reason) && <span style={{ color: "#9ca3af" }}>—</span>}
-                                        </td>
-                                      </tr>
+                                            )}
+                                            {isReplacementAdd && (
+                                              <div style={{ marginBottom: 4, color: "#5b21b6" }}>
+                                                Replaces <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{h.changedFields.replacementFor}</span>
+                                              </div>
+                                            )}
+                                            {h.changedFields?.reason && (
+                                              <div style={{ marginBottom: 4 }}>
+                                                <span style={{ fontWeight: 700, color: "#374151" }}>Reason:</span> {h.changedFields.reason}
+                                              </div>
+                                            )}
+                                            {h.action === "updated" && h.changedFields && Object.keys(h.changedFields).length > 0
+                                              ? Object.entries(h.changedFields).map(([field, val]: any, fi: number) => (
+                                                <div key={fi} style={{ marginBottom: fi < Object.keys(h.changedFields).length - 1 ? 4 : 0 }}>
+                                                  <span style={{ fontWeight: 700, color: "#374151" }}>
+                                                    {field === "driverName" ? "Driver Name"
+                                                      : field === "driverPhone" ? "Phone"
+                                                        : field === "vehicleRegistrationNumber" ? "Reg. No"
+                                                          : field}:
+                                                  </span>{" "}
+                                                  <span style={{ color: "#dc2626", textDecoration: "line-through" }}>{val.old}</span>
+                                                  {" → "}
+                                                  <span style={{ color: "#16a34a", fontWeight: 600 }}>{val.new}</span>
+                                                </div>
+                                              ))
+                                              : (!isUnavailableRemoval && !isReplacementAdd && !h.changedFields?.reason) && <span style={{ color: "#9ca3af" }}>—</span>}
+                                          </td>
+                                        </tr>
                                       );
                                     })}
                                   </tbody>
@@ -839,7 +838,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
 
 
 
-{/* ══ SECTION 4b: EXTRA KM HISTORY ══ */}
+          {/* ══ SECTION 4b: EXTRA KM HISTORY ══ */}
           {(order.extraKmDetailsArray || []).length > 0 && (
             <div style={S.section}>
               <SectionTitle bg="#ea580c">Extra KM / Hours History ({(order.extraKmDetailsArray || []).length} records)</SectionTitle>
@@ -965,7 +964,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
             </div>
           )}
 
-    
+
 
 
           {/* ══ SECTION 3: COMMENTS ══ */}
@@ -1126,279 +1125,7 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
             </div>
           )}
 
-          {/* ══ SECTION 5b: FOC REQUEST ══ */}
-          {focEntries.length > 0 && (
-            <div style={S.section}>
-              <SectionTitle bg="#5b21b6">FOC Request ({focEntries.length} records)</SectionTitle>
-              <div style={S.sectionBody}>
-                {order.bookingItems.map((bookingItem: any, bIdx: number) => {
-                  const bookingItemId = String(bookingItem._id?.$oid || bookingItem._id || "");
-                  const focForBooking = focEntries.filter((c: any) => {
-                    const cId = (typeof c.bookingItemId === "object" && c.bookingItemId !== null)
-                      ? (c.bookingItemId.$oid || c.bookingItemId._id || c.bookingItemId.toString())
-                      : String(c.bookingItemId ?? "");
-                    return cId === bookingItemId;
-                  });
-                  if (focForBooking.length === 0) return null;
-
-                  return (
-                    <div key={bIdx} data-avoid-break="true" style={{ marginBottom: 16 }}>
-                      <div style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-                        background: "#f5f3ff", border: "1px solid #ddd6fe",
-                        borderRadius: "6px", padding: "8px 12px", marginBottom: 8, height: "44px"
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            width: 32, height: 32, borderRadius: "50%",
-                            background: "#5b21b6", display: "flex", alignItems: "center",
-                            justifyContent: "center", fontSize: "11px", fontWeight: 800, color: "#fff",
-                            flexShrink: 0, lineHeight: 1, paddingBottom: "15px"
-                          }}>V{bIdx + 1}</div>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 }}>
-                            <span style={{ fontWeight: 700, fontSize: "12px", color: "#5b21b6", lineHeight: 1.2 }}>
-                              {getVehicleTypeName(bookingItem.vehicleType, vehicleTypes)}
-                            </span>
-                            <span style={{ fontSize: "10px", color: "#6b7280", lineHeight: 1.2 }}>
-                              {bookingItem.campaignType} · {bookingItem.city}
-                            </span>
-                          </div>
-                        </div>
-                        <span style={{
-                          fontSize: "10px", fontWeight: 700,
-                          background: "#ede9fe", color: "#5b21b6",
-                          padding: "4px 12px", borderRadius: "20px", whiteSpace: "nowrap",
-                          display: "inline-flex", alignItems: "center", justifyContent: "center",
-                          flexShrink: 0, paddingBottom: "15px"
-                        }}>
-                          {focForBooking.length} FOC
-                        </span>
-                      </div>
-
-                      {focForBooking.map((foc: any, fIdx: number) => {
-                        const status = foc.status || "pending";
-                        const purposeLabel = focPurposeLabel(foc.focPurpose);
-                        const compensationValue =
-                          foc.focPurpose === "compensation-hours" ? foc.compensationHoursValue
-                            : foc.focPurpose === "compensation-days" ? foc.compensationDaysValue
-                            : null;
-                        const compensationValueLabel =
-                          foc.focPurpose === "compensation-hours" && compensationValue ? `${compensationValue}h`
-                            : foc.focPurpose === "compensation-days" && compensationValue ? `${compensationValue} day(s)`
-                            : null;
-
-                        return (
-                          <div key={fIdx} data-avoid-break="true" style={{
-                            borderRadius: "8px", padding: "10px 12px", marginBottom: 8,
-                            background: status === "approved" ? "#f0fdf4" : "#fff7ed",
-                            border: `1px solid ${status === "approved" ? "#bbf7d0" : "#fed7aa"}`,
-                          }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
-                              <span style={{ fontSize: "11px", fontWeight: 700, color: "#5b21b6" }}>FOC #{fIdx + 1}</span>
-                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                                {purposeLabel && <Badge color="violet">{purposeLabel}</Badge>}
-                                {compensationValueLabel && <Badge color="gray">Value: {compensationValueLabel}</Badge>}
-                                <Badge color={status === "approved" ? "green" : "amber"}>
-                                  {status === "approved" ? "Approved" : "Pending"}
-                                </Badge>
-                              </div>
-                            </div>
-                            <p style={{ fontSize: "11px", color: "#374151" }}>{foc.reason || "—"}</p>
-                            <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 3 }}>
-                              Compensation: {fmtDate(foc.fromDate)} → {fmtDate(foc.toDate)}
-                            </p>
-                            <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 2 }}>Requested by {foc.createdBy}</p>
-                            {status === "approved" && foc.approvedBy && (
-                              <p style={{ fontSize: "10px", color: "#16a34a", marginTop: 2 }}>
-                                Approved by {foc.approvedBy} · {fmtDatetime(foc.approvedAt)}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* ══ SECTION 6: ISSUES ══ */}
-          {/* {allIssues.length > 0 && (
-            <div data-avoid-break="true" style={S.section}>
-              <SectionTitle bg="#d97706">Issue / Escalation History ({allIssues.length} total)</SectionTitle>
-              <div style={S.sectionBody}>
-                <div data-avoid-break="true" style={{ display: "flex", gap: 12, marginBottom: 14 }}>
-                  {[
-                    { label: "Issue", value: allIssues.filter((i: any) => i.status === "open").length, color: "#dc2626" },
-                    { label: "Resolved", value: allIssues.filter((i: any) => i.status === "resolved").length, color: "#16a34a" },
-                    { label: "Total", value: allIssues.length, color: "#111827" },
-                  ].map((s, i) => (
-                    <div key={i} style={{ ...S.statCard, flex: 1 }}>
-                      <div style={S.statLabel}>{s.label}</div>
-                      <div style={{ ...S.statValue, color: s.color }}>{s.value}</div>
-                    </div>
-                  ))}
-                </div>
-                {[...allIssues].reverse().map((iss: any, i: number) => (
-                  <div key={i} data-avoid-break="true" style={iss.status === "open" ? S.issueCardOpen : S.issueCardResolved}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                      <div style={{ fontSize: "11px", fontWeight: 700, color: iss.status === "open" ? "#c2410c" : "#15803d" }}>
-                        {iss.driverName} — <span style={{ fontFamily: "monospace" }}>{iss.vehicleRegNo}</span>
-                      </div>
-                      <Badge color={iss.status === "open" ? "amber" : "green"}>
-                        {iss.status === "open" ? "Issue" : "Resolved"}
-                      </Badge>
-                    </div>
-                    <p style={{ fontSize: "11px", marginTop: 4, color: "#374151" }}><strong>Issue:</strong> {iss.issueDescription}</p>
-                    <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 3 }}>Reported by {iss.reportedBy} · {fmtDatetime(iss.reportedAt)}</p>
-                    {iss.status === "resolved" && (
-                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #bbf7d0" }}>
-                        <p style={{ fontSize: "11px" }}><strong>Resolution:</strong> {iss.resolveDescription}</p>
-                        <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 3 }}>Resolved by {iss.resolvedBy} · {fmtDatetime(iss.resolvedAt)}</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )} */}
-
-          {/* ══ SECTION 6: ISSUES ══ */}
-          {/* {allIssues.length > 0 && (
-            <div data-avoid-break="true" style={S.section}>
-              <SectionTitle bg="#d97706">Issue / Escalation History ({allIssues.length} total)</SectionTitle>
-              <div style={S.sectionBody}>
-                <div data-avoid-break="true" style={{ display: "flex", gap: 12, marginBottom: 14 }}>
-                  {[
-                    { label: "Issue", value: allIssues.filter((i: any) => i.status === "open").length, color: "#dc2626" },
-                    { label: "Resolved", value: allIssues.filter((i: any) => i.status === "resolved").length, color: "#16a34a" },
-                    { label: "Total", value: allIssues.length, color: "#111827" },
-                  ].map((s, i) => (
-                    <div key={i} style={{ ...S.statCard, flex: 1 }}>
-                      <div style={S.statLabel}>{s.label}</div>
-                      <div style={{ ...S.statValue, color: s.color }}>{s.value}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {order.bookingItems.map((bookingItem: any, bIdx: number) => {
-                  const entriesForBooking = driverEntries.filter((e: any) => e.vehicleIndex === bIdx);
-                  const issuesForBooking = allIssues.filter((iss: any) => iss.vehicleIndex === bIdx);
-                  if (issuesForBooking.length === 0) return null;
-
-                  return (
-                    <div key={bIdx} data-avoid-break="true" style={{ marginBottom: 16 }}>
-                     
-                      <div style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-                        background: "#fffbeb", border: "1px solid #fde68a",
-                        borderRadius: "6px", padding: "8px 12px", marginBottom: 8, height: "44px"
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            width: 32, height: 32, borderRadius: "50%",
-                            background: "#d97706", display: "flex", alignItems: "center",
-                            justifyContent: "center", fontSize: "11px", fontWeight: 800, color: "#fff",
-                            flexShrink: 0, lineHeight: 1, paddingBottom: "15px"
-                          }}>V{bIdx + 1}</div>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 }}>
-                            <span style={{ fontWeight: 700, fontSize: "12px", color: "#92400e", lineHeight: 1.2 }}>
-                              {getVehicleTypeName(bookingItem.vehicleType, vehicleTypes)}
-                            </span>
-                            <span style={{ fontSize: "10px", color: "#6b7280", lineHeight: 1.2 }}>
-                              {bookingItem.campaignType} · {bookingItem.city}
-                            </span>
-                          </div>
-                        </div>
-                        <span style={{
-                          fontSize: "10px", fontWeight: 700,
-                          background: "#fef3c7", color: "#92400e",
-                          padding: "4px 12px", borderRadius: "20px", whiteSpace: "nowrap",
-                          display: "inline-flex", alignItems: "center", justifyContent: "center",
-                          flexShrink: 0, paddingBottom: "15px"
-                        }}>
-                          {issuesForBooking.length} issues
-                        </span>
-                      </div>
-
-                      {entriesForBooking.map((entry: any, eIdx: number) => {
-                        const entryIssues = issuesForBooking.filter((iss: any) =>
-                          iss.entryId ? String(iss.entryId) === String(entry._id) : iss.vehicleRegNo === entry.vehicleRegistrationNumber
-                        );
-                        if (entryIssues.length === 0) return null;
-
-                      
-                        const groups: Record<string, any[]> = {};
-                        entryIssues.forEach((iss: any) => {
-                          const key = iss.vehicleRegNo || "—";
-                          if (!groups[key]) groups[key] = [];
-                          groups[key].push(iss);
-                        });
-
-                        return (
-                          <div key={eIdx} data-avoid-break="true" style={{
-                            marginBottom: 12, border: "1px solid #fde68a", borderRadius: "8px", overflow: "hidden",
-                          }}>
-                            <div style={{
-                              display: "flex", alignItems: "center", gap: 10, padding: "8px 8px",
-                              background: "#fffbeb", borderBottom: "1px solid #fde68a",
-                            }}>
-                              <span style={{ fontSize: "11px", fontWeight: 700, color: "#92400e" }}>
-                                {entry.driverName}
-                              </span>
-                              <span style={{ fontSize: "10px", color: "#d1d5db" }}>·</span>
-                              <span style={{ fontSize: "10px", color: "#6b7280" }}>{entry.driverPhone}</span>
-                            </div>
-
-                            {Object.keys(groups).map((regNo) => {
-                              const groupIssues = [...groups[regNo]].reverse();
-                              const isCurrentReg = regNo === entry.vehicleRegistrationNumber;
-                              const groupOpenCount = groupIssues.filter((i: any) => i.status === "open").length;
-
-                              return (
-                                <div key={regNo} style={{ padding: "8px" }}>
-                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                                    <Badge color={isCurrentReg ? "green" : "gray"}>
-                                      {regNo} {isCurrentReg ? "(current)" : "(old)"}
-                                    </Badge>
-                                    <span style={{ fontSize: "10px", color: "#6b7280" }}>
-                                      {groupIssues.length} issues{groupOpenCount > 0 ? ` · ${groupOpenCount} open` : ""}
-                                    </span>
-                                  </div>
-                                  {groupIssues.map((iss: any, i: number) => (
-                                    <div key={i} data-avoid-break="true" style={iss.status === "open" ? S.issueCardOpen : S.issueCardResolved}>
-                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                        <div style={{ fontSize: "11px", fontWeight: 700, color: iss.status === "open" ? "#c2410c" : "#15803d" }}>
-                                          {iss.driverName} — <span style={{ fontFamily: "monospace" }}>{iss.vehicleRegNo}</span>
-                                        </div>
-                                        <Badge color={iss.status === "open" ? "amber" : "green"}>
-                                          {iss.status === "open" ? "Issue" : "Resolved"}
-                                        </Badge>
-                                      </div>
-                                      <p style={{ fontSize: "11px", marginTop: 4, color: "#374151" }}><strong>Issue:</strong> {iss.issueDescription}</p>
-                                      <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 3 }}>Reported by {iss.reportedBy} · {fmtDatetime(iss.reportedAt)}</p>
-                                      {iss.status === "resolved" && (
-                                        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #bbf7d0" }}>
-                                          <p style={{ fontSize: "11px" }}><strong>Resolution:</strong> {iss.resolveDescription}</p>
-                                          <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 3 }}>Resolved by {iss.resolvedBy} · {fmtDatetime(iss.resolvedAt)}</p>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )} */}
-
+       
 
 
           {/* ══ SECTION 6: ISSUES ══ */}
@@ -1535,6 +1262,105 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
               </div>
             </div>
           )}
+
+
+             {/* ══ SECTION 5b: FOC REQUEST ══ */}
+          {focEntries.length > 0 && (
+            <div style={S.section}>
+              <SectionTitle bg="#5b21b6">FOC Request ({focEntries.length} records)</SectionTitle>
+              <div style={S.sectionBody}>
+                {order.bookingItems.map((bookingItem: any, bIdx: number) => {
+                  const bookingItemId = String(bookingItem._id?.$oid || bookingItem._id || "");
+                  const focForBooking = focEntries.filter((c: any) => {
+                    const cId = (typeof c.bookingItemId === "object" && c.bookingItemId !== null)
+                      ? (c.bookingItemId.$oid || c.bookingItemId._id || c.bookingItemId.toString())
+                      : String(c.bookingItemId ?? "");
+                    return cId === bookingItemId;
+                  });
+                  if (focForBooking.length === 0) return null;
+
+                  return (
+                    <div key={bIdx} data-avoid-break="true" style={{ marginBottom: 16 }}>
+                      <div style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                        background: "#f5f3ff", border: "1px solid #ddd6fe",
+                        borderRadius: "6px", padding: "8px 12px", marginBottom: 8, height: "44px"
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: "50%",
+                            background: "#5b21b6", display: "flex", alignItems: "center",
+                            justifyContent: "center", fontSize: "11px", fontWeight: 800, color: "#fff",
+                            flexShrink: 0, lineHeight: 1, paddingBottom: "15px"
+                          }}>V{bIdx + 1}</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 }}>
+                            <span style={{ fontWeight: 700, fontSize: "12px", color: "#5b21b6", lineHeight: 1.2 }}>
+                              {getVehicleTypeName(bookingItem.vehicleType, vehicleTypes)}
+                            </span>
+                            <span style={{ fontSize: "10px", color: "#6b7280", lineHeight: 1.2 }}>
+                              {bookingItem.campaignType} · {bookingItem.city}
+                            </span>
+                          </div>
+                        </div>
+                        <span style={{
+                          fontSize: "10px", fontWeight: 700,
+                          background: "#ede9fe", color: "#5b21b6",
+                          padding: "4px 12px", borderRadius: "20px", whiteSpace: "nowrap",
+                          display: "inline-flex", alignItems: "center", justifyContent: "center",
+                          flexShrink: 0, paddingBottom: "15px"
+                        }}>
+                          {focForBooking.length} FOC
+                        </span>
+                      </div>
+
+                      {focForBooking.map((foc: any, fIdx: number) => {
+                        const status = foc.status || "pending";
+                        const purposeLabel = focPurposeLabel(foc.focPurpose);
+                        const compensationValue =
+                          foc.focPurpose === "compensation-hours" ? foc.compensationHoursValue
+                            : foc.focPurpose === "compensation-days" ? foc.compensationDaysValue
+                              : null;
+                        const compensationValueLabel =
+                          foc.focPurpose === "compensation-hours" && compensationValue ? `${compensationValue}h`
+                            : foc.focPurpose === "compensation-days" && compensationValue ? `${compensationValue} day(s)`
+                              : null;
+
+                        return (
+                          <div key={fIdx} data-avoid-break="true" style={{
+                            borderRadius: "8px", padding: "10px 12px", marginBottom: 8,
+                            background: status === "approved" ? "#f0fdf4" : "#fff7ed",
+                            border: `1px solid ${status === "approved" ? "#bbf7d0" : "#fed7aa"}`,
+                          }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
+                              <span style={{ fontSize: "11px", fontWeight: 700, color: "#5b21b6" }}>FOC #{fIdx + 1}</span>
+                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                {purposeLabel && <Badge color="violet">{purposeLabel}</Badge>}
+                                {compensationValueLabel && <Badge color="gray">Value: {compensationValueLabel}</Badge>}
+                                <Badge color={status === "approved" ? "green" : "amber"}>
+                                  {status === "approved" ? "Approved" : "Pending"}
+                                </Badge>
+                              </div>
+                            </div>
+                            <p style={{ fontSize: "11px", color: "#374151" }}>{foc.reason || "—"}</p>
+                            <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 3 }}>
+                              Compensation: {fmtDate(foc.fromDate)} → {fmtDate(foc.toDate)}
+                            </p>
+                            <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: 2 }}>Requested by {foc.createdBy}</p>
+                            {status === "approved" && foc.approvedBy && (
+                              <p style={{ fontSize: "10px", color: "#16a34a", marginTop: 2 }}>
+                                Approved by {foc.approvedBy} · {fmtDatetime(foc.approvedAt)}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
 
 
 

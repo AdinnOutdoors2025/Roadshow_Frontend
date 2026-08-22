@@ -29,6 +29,7 @@ import {
 } from "react-icons/fi";
 import CodeCreationTab from "./CodeCreationTab";
 import DatePicker from "../../utils/datepicker";
+import HandlerSearchSelect from "../../utils/HandlerSearchSelect";
 import { useVehicle } from '../../../context/vehicletypecontext';
 
 
@@ -431,13 +432,14 @@ import OrderEditHistoryTab from "./OrderEditHistoryTab";
 
 
 function OverviewTab({
-  order, onRefresh, onStageMove, getVehicleTypeName, onOpenHandover, onResolveHandover,
+  order, onRefresh, onStageMove, getVehicleTypeName, onOpenHandover, onResolveHandover, isOwnOrder = false,
 }: {
   order: SalesOrder; onRefresh: () => Promise<void>;
   onStageMove: (order: SalesOrder, toStage: string) => void;
   getVehicleTypeName: any;
   onOpenHandover?: () => void;
   onResolveHandover?: (assignmentId: string, makePermanent: boolean) => void;
+  isOwnOrder?: boolean;
 }) {
 
   const [activeVehicleTab, setActiveVehicleTab] = useState<number>(0);
@@ -566,7 +568,7 @@ function OverviewTab({
       </div>
 
       {/* Handler Assignment */}
-      {order.salesPipelineStatus !== "enquiry" && (
+      {order.salesPipelineStatus !== "enquiry" && !isOwnOrder && (
       <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-2">
@@ -1671,6 +1673,19 @@ export default function SalesDetailDrawer({
   const [showEditForm, setShowEditForm] = useState(false);
   const { vehicleTypes, fetchVehicleTypes } = useVehicle();
 
+  // Sales/Operation (non-admin) logins only ever see themselves as a
+  // reassignment target, and don't see the Handler Assignment panel at
+  // all when the order is already theirs. Admin login is untouched.
+  const isStaffUser = currentUserIsAdmin !== 1;
+  const [currentUsername, setCurrentUsername] = useState("");
+  useEffect(() => {
+    const token = getToken();
+    if (token) {
+      try { setCurrentUsername((jwtDecode(token) as any)?.username || ""); } catch { }
+    }
+  }, []);
+  const isOwnOrder = isStaffUser && order.salesHandlerName && order.salesHandlerName === currentUsername;
+
   // Date Conflict tab "Edit" button on a conflicting order routed us here —
   // auto-open the edit form once this order is actually showing.
   useEffect(() => {
@@ -1968,6 +1983,7 @@ export default function SalesDetailDrawer({
                   order={order} onRefresh={onRefresh} onStageMove={onStageMove} getVehicleTypeName={getVehicleTypeName}
                   onOpenHandover={() => setShowHandoverModal(true)}
                   onResolveHandover={resolveHandover}
+                  isOwnOrder={isOwnOrder}
                 />
               </div>
 
@@ -2135,18 +2151,26 @@ export default function SalesDetailDrawer({
                 <div className="space-y-3">
                   <div>
                     <label className="text-xs font-semibold text-gray-500">New Handler</label>
-                    <select
-                      value={handoverNewHandler}
-                      onChange={(e) => setHandoverNewHandler(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
-                    >
-                      <option value="">Select handler...</option>
-                      {staffAdmins
-                        .filter((s) => s.username !== order.salesHandlerName)
-                        .map((s) => (
-                          <option key={s.username} value={s.username}>{s.username}</option>
-                        ))}
-                    </select>
+                    {isStaffUser ? (
+                      <HandlerSearchSelect
+                        value={handoverNewHandler}
+                        onChange={setHandoverNewHandler}
+                        options={currentUsername ? [{ username: currentUsername }] : []}
+                      />
+                    ) : (
+                      <select
+                        value={handoverNewHandler}
+                        onChange={(e) => setHandoverNewHandler(e.target.value)}
+                        className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+                      >
+                        <option value="">Select handler...</option>
+                        {staffAdmins
+                          .filter((s) => s.username !== order.salesHandlerName)
+                          .map((s) => (
+                            <option key={s.username} value={s.username}>{s.username}</option>
+                          ))}
+                      </select>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">
