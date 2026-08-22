@@ -27,6 +27,8 @@ import {
   useRouter,
 } from "next/navigation";
 
+import { ScrollSmoother } from "gsap/ScrollSmoother";
+
 import { baseUrl } from "../../../../BaseUrl";
 import { useAuth } from "@/context/AuthContext";
 import { clientAuthHeaders } from "@/lib/roadshowAuthToken";
@@ -805,11 +807,47 @@ export default function BookingRequestSubmittedPage() {
         Clicking the Booking Summary hint only smooth-scrolls
         to the action button section. No highlight/orbit/focus
         animation is triggered.
+
+        This page runs under GSAP ScrollSmoother (it's not in
+        GlobalSmoothScroll's opt-out list), which translates
+        #smooth-content rather than scrolling the window — the native
+        scrollIntoView() below computed against a scrollport whose
+        scrollTop is permanently 0, landed nowhere near the target, and
+        left the smoother's tracked position out of sync with what the
+        browser's native scroll thought it was, which is what made
+        further scrolling appear "stuck". Same fix already used by
+        scrollToSection.ts: hand it to the smoother when one is alive.
       */
-      buttonsRef.current?.scrollIntoView(
+      const target =
+        buttonsRef.current;
+
+      if (!target) return;
+
+      const prefersReducedMotion =
+        window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+
+      const smooth =
+        !prefersReducedMotion;
+
+      const smoother =
+        ScrollSmoother.get?.();
+
+      if (smoother) {
+        smoother.scrollTo(
+          target,
+          smooth,
+          "center center",
+        );
+        return;
+      }
+
+      target.scrollIntoView(
         {
-          behavior:
-            "smooth",
+          behavior: smooth
+            ? "smooth"
+            : "auto",
           block:
             "center",
           inline:

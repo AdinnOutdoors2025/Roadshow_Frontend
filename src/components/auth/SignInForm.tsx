@@ -27,6 +27,26 @@ interface ApiResponse {
   };
 }
 
+const ADMIN_AUTH_PATHS = ["/admin/signin", "/admin/signup", "/admin/forgot-password"];
+
+/**
+ * The `redirect` query param middleware.tsx attaches when it bounces an
+ * unauthenticated request to signin. Read straight from the URL (not
+ * useSearchParams()) so this page doesn't need a Suspense boundary.
+ *
+ * Only a same-app relative /admin/... path is honored — never another auth
+ * page (would loop) and never anything absolute (would be an open redirect).
+ */
+const getSafeRedirectTarget = (): string | null => {
+  if (typeof window === "undefined") return null;
+
+  const raw = new URLSearchParams(window.location.search).get("redirect");
+  if (!raw || !raw.startsWith("/admin/")) return null;
+  if (ADMIN_AUTH_PATHS.some((path) => raw.startsWith(path))) return null;
+
+  return raw;
+};
+
 const ERROR_MESSAGES: Record<string, string> = {
   ADMIN_NOT_FOUND: "Admin account not found.",
   INVALID_PASSWORD: "Incorrect password.",
@@ -86,15 +106,17 @@ export default function SignInForm() {
     }
 
       const role = data.data?.user?.role;
+      const redirectTarget = getSafeRedirectTarget();
+
       if (role === "admin") {
-        router.push("/admin/dashboard");
+        router.push(redirectTarget || "/admin/dashboard");
       } else {
         try {
           const payload = jwtDecode<{ allowedMenus?: string[] }>(data.data!.token);
           const firstAllowed = payload.allowedMenus?.[0];
-          router.push(firstAllowed || "/admin/no-access");
+          router.push(redirectTarget || firstAllowed || "/admin/no-access");
         } catch {
-          router.push("/admin/no-access");
+          router.push(redirectTarget || "/admin/no-access");
         }
       }
     } catch (err) {

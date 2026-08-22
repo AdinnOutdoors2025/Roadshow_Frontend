@@ -719,10 +719,107 @@
    VEHICLES
 ========================================================= */
 
+.RST_LiveHeaderMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.RST_LiveDayChip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--rst-line, #eef1f5);
+  padding: 5px 9px;
+  color: var(--rst-subtle, #667085);
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Model tabs — group vehicle cards by booking line (vehicleIndex) instead
+   of one flat list, so a multi-model booking doesn't read as one long
+   undifferentiated stack of cards.
+
+   nowrap + overflow-x:auto instead of flex-wrap: with enough tabs to not
+   fit in one row, wrapping to a 2nd/3rd row grows this section taller
+   than the map card next to it — the exact problem the vehicle-card
+   carousel above already solves the same way. When every tab fits, there
+   is nothing to scroll and this behaves like a plain row; it only
+   becomes a drag/scroll strip once tabs actually overflow. Scrollbar
+   hidden since dragging (see RST_VehicleTabs--dragging below, set by
+   page.tsx) is the intended way to move it, same as the carousel card. */
+.RST_VehicleTabs {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 6px;
+  margin-bottom: 10px;
+  cursor: grab;
+  scrollbar-width: none;
+}
+
+.RST_VehicleTabs::-webkit-scrollbar {
+  display: none;
+}
+
+.RST_VehicleTabs--dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.RST_VehicleTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  border: 1px solid #e8edf1;
+  border-radius: 999px;
+  background: #fbfcfd;
+  padding: 6px 11px;
+  color: #4c4c53;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.RST_VehicleTab--active {
+  border-color: rgba(40, 125, 224, 0.48);
+  background: #f3f8ff;
+  color: #287de0;
+}
+
+.RST_VehicleTabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0 4px;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.RST_VehicleTab--active .RST_VehicleTabCount {
+  background: rgba(40, 125, 224, 0.16);
+  color: #287de0;
+}
+
 .RST_VehicleList {
   display: flex;
   flex-direction: column;
   gap: 9px;
+  /* .RST_MapCard spans both grid rows at a fixed .RST_Map height, while
+     .RST_LiveSidebar (this list) + .RST_TodayCard stack beside it. A
+     booking with several vehicle slots (multiple models × quantity, some
+     still "pending" assignment) can grow this list taller than the map,
+     stretching the whole row and leaving empty space under the map. Cap
+     it and let extra cards scroll internally instead. */
+  max-height: clamp(280px, 22vw, 380px);
+  overflow-y: auto;
 }
 
 .RST_VehicleCard {
@@ -756,6 +853,71 @@
   border-color: rgba(40, 125, 224, 0.48);
   background: #f3f8ff;
   box-shadow: 0 8px 22px rgba(40, 125, 224, 0.075);
+}
+
+/* Same treatment as --active, kept as its own rule (rather than merged
+   into the selector above) so this diff stays insertion-only. */
+.RST_VehicleCard--current {
+  border-color: rgba(40, 125, 224, 0.48);
+  background: #f3f8ff;
+  box-shadow: 0 8px 22px rgba(40, 125, 224, 0.075);
+}
+
+/* Draggable/swipeable state for the current carousel card — only applied
+   when there's more than one unit to page through. touch-action: pan-y
+   lets the page still scroll vertically on touch while this element
+   claims horizontal drag for itself. user-select: none stops a fast drag
+   from highlighting the card's text. */
+.RST_VehicleCard--draggable {
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.RST_VehicleCard--draggable.RST_VehicleCard--dragging {
+  cursor: grabbing;
+}
+
+/* Carousel — pages through one vehicle card at a time within the active
+   model tab, instead of stacking every unit. Keeps this section's height
+   constant no matter how many units a tab has, so the map card next to it
+   never has to stretch to match a taller sidebar. */
+.RST_VehicleCarousel {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.RST_VehicleCarouselNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.RST_VehicleCarouselNav span {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.RST_VehicleCarouselNav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #e8edf1;
+  border-radius: 999px;
+  background: #fbfcfd;
+  color: #4c4c53;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.RST_VehicleCarouselNav button:hover {
+  border-color: rgba(40, 125, 224, 0.48);
+  color: #287de0;
 }
 
 .RST_VehicleThumb {
@@ -867,6 +1029,16 @@
   min-width: 0;
   overflow: hidden;
   padding: 0;
+  /* .RST_LiveShell spans this card across both grid rows with
+     align-items: stretch on the parent, so by default it stretches to
+     match .RST_LiveSidebar + .RST_TodayCard's combined height. With a
+     fixed-height .RST_Map inside and overflow:hidden, that extra
+     stretched height rendered as blank interior space whenever the left
+     column grew taller (e.g. several vehicle cards). align-self here
+     overrides just this child, so it sits at its own natural height
+     instead — any leftover vertical space is plain page background, not
+     an empty bordered box. */
+  align-self: start;
 }
 
 .RST_MapHeader {

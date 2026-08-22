@@ -2,7 +2,14 @@
 // @ts-nocheck
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -31,7 +38,10 @@ import { useAuth } from "@/context/AuthContext";
 import { fetchAllRoadshowVehicles } from "@/lib/roadshowVehicles";
 
 import { useCampaignTracking } from "../useCampaignTracking";
-import { useLiveLocation } from "../[bookingId]/useLiveLocation";
+import {
+  useLiveLocation,
+  type LiveVehicle,
+} from "../[bookingId]/useLiveLocation";
 import { useRouteTrack } from "../[bookingId]/useRouteTrack";
 import { useDrivingSummary } from "../[bookingId]/useDrivingSummary";
 import DrivingSummaryPanel from "../[bookingId]/DrivingSummaryPanel";
@@ -311,13 +321,31 @@ function TrackingPageContent({
   );
 
   const {
-    vehicles: liveVehicles,
+    vehicles: rawLiveVehicles,
     loading: liveLoading,
     refreshing: liveRefreshing,
     error: liveError,
     refreshedAt: liveRefreshedAt,
     refresh: refreshLiveLocation,
   } = useLiveLocation(mongoId, token, onRoadEnabled);
+
+  /* Every "pending" (not-yet-assigned) slot comes back from the backend
+     with registrationNumber: null — fine for display (everything branches
+     on `.pending` first), but a booking line with more than one pending
+     slot (e.g. quantity 2, neither assigned yet) would otherwise share
+     that same null key, so selecting/tracking one card can't tell it
+     apart from its sibling. Give each one a unique synthetic id instead;
+     it's never shown, only used to select/compare vehicles. */
+  const liveVehicles = useMemo(
+    () =>
+      rawLiveVehicles.map((vehicle, index) => ({
+        ...vehicle,
+        registrationNumber:
+          vehicle.registrationNumber ||
+          `pending-${vehicle.vehicleIndex ?? "x"}-${index}`,
+      })),
+    [rawLiveVehicles],
+  );
 
   const {
     vehicles: routeVehicles,
@@ -434,14 +462,186 @@ function TrackingPageContent({
     return (key && vehicleImageMap[key]) || VEHICLE_IMAGE;
   }
 
+  /* Vehicles grouped by booking line (vehicleIndex) — one tab per vehicle
+     MODEL, so a 2-model × 2-quantity booking shows as 2 tabs of 2 cards
+     each instead of one flat list of 4. Order follows first appearance,
+     i.e. the order bookingItems were booked in. */
+  const vehicleGroups = useMemo(() => {
+    const order: Array<number | undefined> = [];
+    const byIndex = new Map<
+      number | undefined,
+      { vehicleIndex: number | undefined; vehicleName: string; vehicles: LiveVehicle[] }
+    >();
+
+    liveVehicles.forEach((vehicle) => {
+      const key = vehicle.vehicleIndex;
+
+      if (!byIndex.has(key)) {
+        byIndex.set(key, {
+          vehicleIndex: key,
+          vehicleName: vehicle.vehicleName || "Roadshow Vehicle",
+          vehicles: [],
+        });
+        order.push(key);
+      }
+
+      byIndex.get(key)!.vehicles.push(vehicle);
+    });
+
+    return order.map((key) => byIndex.get(key)!);
+  }, [liveVehicles]);
+
+  const [activeVehicleGroup, setActiveVehicleGroup] = useState<
+    number | undefined
+  >(undefined);
+
   useEffect(() => {
-    if (!liveVehicles.length) {
+    if (!vehicleGroups.length) return;
+
+    setActiveVehicleGroup((current) => {
+      const stillValid = vehicleGroups.some(
+        (group) => group.vehicleIndex === current,
+      );
+
+      return stillValid ? current : vehicleGroups[0].vehicleIndex;
+    });
+  }, [vehicleGroups]);
+
+  const activeGroupVehicles = useMemo(
+    () =>
+      vehicleGroups.find((group) => group.vehicleIndex === activeVehicleGroup)
+        ?.vehicles || liveVehicles,
+    [vehicleGroups, activeVehicleGroup, liveVehicles],
+  );
+
+  /* Position of the currently selected vehicle within the active tab —
+     drives which single card the carousel shows, and what the prev/next
+     buttons step relative to. Falls back to 0 rather than -1 so a stale
+     selectedVehicleReg (about to be corrected by the effect below) never
+     makes activeGroupVehicles[activeVehicleSlot] read as undefined. */
+  const activeVehicleSlot = Math.max(
+    0,
+    activeGroupVehicles.findIndex(
+      (vehicle) => vehicle.registrationNumber === selectedVehicleReg,
+    ),
+  );
+
+  const goToVehicleOffset = (offset: number) => {
+    if (activeGroupVehicles.length < 2) return;
+
+    const nextIndex =
+      (activeVehicleSlot + offset + activeGroupVehicles.length) %
+      activeGroupVehicles.length;
+
+    setSelectedVehicleReg(activeGroupVehicles[nextIndex].registrationNumber);
+  };
+
+  /* Drag-to-page the carousel card, in addition to the prev/next buttons.
+     Mirrors the pointer-drag pattern VehicleHistoryPanel's table already
+     uses (setPointerCapture + delta tracking), but — unlike that one —
+     doesn't exclude touch, since swipe is the whole point here. */
+  const carouselDragRef = useRef({ active: false, startX: 0 });
+  const [carouselDragX, setCarouselDragX] = useState(0);
+  const [carouselDragging, setCarouselDragging] = useState(false);
+
+  const CAROUSEL_DRAG_THRESHOLD = 48;
+
+  function startCarouselDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    if (activeGroupVehicles.length < 2) return;
+
+    carouselDragRef.current = { active: true, startX: event.clientX };
+    setCarouselDragging(true);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  }
+
+  function moveCarouselDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!carouselDragRef.current.active) return;
+
+    setCarouselDragX(event.clientX - carouselDragRef.current.startX);
+  }
+
+  function endCarouselDrag() {
+    if (!carouselDragRef.current.active) return;
+
+    carouselDragRef.current.active = false;
+    setCarouselDragging(false);
+
+    if (carouselDragX <= -CAROUSEL_DRAG_THRESHOLD) {
+      goToVehicleOffset(1);
+    } else if (carouselDragX >= CAROUSEL_DRAG_THRESHOLD) {
+      goToVehicleOffset(-1);
+    }
+
+    setCarouselDragX(0);
+  }
+
+  /* Drag-to-scroll the model tab strip (see the .RST_VehicleTabs comment
+     in trackingPage.css for why it's nowrap+overflow-x instead of wrap).
+     Touch already scrolls a horizontally-overflowing element natively, so
+     — same as VehicleHistoryPanel's table-drag — this only handles mouse,
+     which has no built-in click-drag-to-scroll. */
+  const tabsRef = useRef<HTMLDivElement | null>(null);
+  const tabsDragRef = useRef({
+    active: false,
+    startX: 0,
+    scrollLeft: 0,
+    moved: false,
+  });
+  const [tabsDragging, setTabsDragging] = useState(false);
+
+  function startTabsDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "touch") return;
+
+    const element = tabsRef.current;
+    if (!element) return;
+
+    tabsDragRef.current = {
+      active: true,
+      startX: event.clientX,
+      scrollLeft: element.scrollLeft,
+      moved: false,
+    };
+    setTabsDragging(true);
+    element.setPointerCapture?.(event.pointerId);
+  }
+
+  function moveTabsDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    const element = tabsRef.current;
+    if (!element || !tabsDragRef.current.active) return;
+
+    const delta = event.clientX - tabsDragRef.current.startX;
+
+    // A few px of jitter shouldn't count as "dragged" — only a real drag
+    // should suppress the tab's own click below.
+    if (Math.abs(delta) > 4) tabsDragRef.current.moved = true;
+
+    element.scrollLeft = tabsDragRef.current.scrollLeft - delta;
+  }
+
+  function endTabsDrag() {
+    tabsDragRef.current.active = false;
+    setTabsDragging(false);
+  }
+
+  // Runs in the capture phase, before a tab button's own onClick — swallows
+  // the click that would otherwise fire on whichever tab the pointer
+  // happened to release over at the end of a drag.
+  function suppressTabClickAfterDrag(event: ReactMouseEvent) {
+    if (!tabsDragRef.current.moved) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    tabsDragRef.current.moved = false;
+  }
+
+  useEffect(() => {
+    if (!activeGroupVehicles.length) {
       setSelectedVehicleReg("");
       return;
     }
 
     setSelectedVehicleReg((current) => {
-      const currentVehicle = liveVehicles.find(
+      const currentVehicle = activeGroupVehicles.find(
         (vehicle) => vehicle.registrationNumber === current,
       );
 
@@ -454,16 +654,18 @@ function TrackingPageContent({
          placeholder — a pending slot has no registration/GPS data at all,
          so auto-selecting it first would leave the map with nothing to
          show even when a sibling vehicle on the same booking is live. */
-      const firstAvailable = liveVehicles.find(
+      const firstAvailable = activeGroupVehicles.find(
         (vehicle) => !vehicle.unavailable && !vehicle.pending,
       );
-      const firstUnavailable = liveVehicles.find(
+      const firstUnavailable = activeGroupVehicles.find(
         (vehicle) => vehicle.unavailable,
       );
 
-      return (firstAvailable || firstUnavailable || liveVehicles[0]).registrationNumber;
+      return (
+        firstAvailable || firstUnavailable || activeGroupVehicles[0]
+      ).registrationNumber;
     });
-  }, [liveVehicles]);
+  }, [activeGroupVehicles]);
 
   const selectedLiveVehicle = useMemo(
     () =>
@@ -780,10 +982,59 @@ function TrackingPageContent({
                     <h2>Live vehicles</h2>
                   </div>
 
-                  <span className="RST_LiveBadge">
-                    <i /> LIVE
+                  <span className="RST_LiveHeaderMeta">
+                    {data.onRoad?.totalDays ? (
+                      <span className="RST_LiveDayChip">
+                        Day {data.onRoad.day} of {data.onRoad.totalDays}
+                      </span>
+                    ) : null}
+
+                    <span className="RST_LiveBadge">
+                      <i /> LIVE
+                    </span>
                   </span>
                 </div>
+
+                {vehicleGroups.length > 1 && (
+                  <div
+                    ref={tabsRef}
+                    className={`RST_VehicleTabs ${
+                      tabsDragging ? "RST_VehicleTabs--dragging" : ""
+                    }`}
+                    role="tablist"
+                    aria-label="Vehicle models in this booking"
+                    onPointerDown={startTabsDrag}
+                    onPointerMove={moveTabsDrag}
+                    onPointerUp={endTabsDrag}
+                    onPointerCancel={endTabsDrag}
+                    onLostPointerCapture={endTabsDrag}
+                    onClickCapture={suppressTabClickAfterDrag}
+                  >
+                    {vehicleGroups.map((group) => (
+                      <button
+                        key={group.vehicleIndex ?? group.vehicleName}
+                        type="button"
+                        role="tab"
+                        aria-selected={
+                          activeVehicleGroup === group.vehicleIndex
+                        }
+                        className={`RST_VehicleTab ${
+                          activeVehicleGroup === group.vehicleIndex
+                            ? "RST_VehicleTab--active"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          setActiveVehicleGroup(group.vehicleIndex)
+                        }
+                      >
+                        {group.vehicleName}
+                        <span className="RST_VehicleTabCount">
+                          {group.vehicles.length}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {liveLoading && !liveVehicles.length ? (
                   <div className="RST_MiniLoading">
@@ -791,90 +1042,133 @@ function TrackingPageContent({
                     Loading live vehicles...
                   </div>
                 ) : liveVehicles.length ? (
-                  <div className="RST_VehicleList">
-                    {liveVehicles.map((vehicle, index) => {
-                      const selected =
-                        vehicle.registrationNumber ===
-                        selectedLiveVehicle?.registrationNumber;
-
-                      return (
+                  <div className="RST_VehicleCarousel">
+                    {/* Only shown when the active tab has more than one
+                        unit — a single-vehicle tab renders its one card
+                        with no paging controls at all. Paging (not a
+                        stacked list) keeps this section's height constant
+                        regardless of how many units a model line has,
+                        which is also what stopped the sidebar from
+                        out-growing the map card next to it. */}
+                    {activeGroupVehicles.length > 1 && (
+                      <div className="RST_VehicleCarouselNav">
                         <button
-                          key={vehicle.registrationNumber || `pending-${index}`}
                           type="button"
-                          className={`RST_VehicleCard ${
-                            selected ? "RST_VehicleCard--active" : ""
-                          } ${vehicle.pending ? "RST_VehicleCard--pending" : ""}`}
-                          onClick={() =>
-                            setSelectedVehicleReg(
-                              vehicle.registrationNumber,
-                            )
-                          }
+                          aria-label="Previous vehicle"
+                          onClick={() => goToVehicleOffset(-1)}
                         >
-                          <span className="RST_VehicleThumb">
-                            <img
-                              src={resolveVehicleImage(
-                                vehicle.registrationNumber,
-                              )}
-                              alt=""
-                            />
-                          </span>
+                          <ChevronLeft size={16} />
+                        </button>
 
-                          <span className="RST_VehicleCopy">
-                            <strong>
-                              {vehicle.vehicleName ||
-                                `Vehicle ${String(index + 1).padStart(2, "0")}`}
-                            </strong>
-                            <small>
-                              {vehicle.pending
-                                ? "Not yet assigned"
-                                : vehicle.registrationNumber ||
-                                  "Registration unavailable"}
-                            </small>
-                            {vehicle.pending ? (
-                              <span className="RST_VehicleState RST_VehicleState--pending">
-                                Awaiting assignment
-                              </span>
-                            ) : vehicle.unavailable ? (
-                              <span className="RST_VehicleState RST_VehicleState--unavailable">
-                                Unavailable
-                              </span>
-                            ) : (
-                              <span
-                                className={`RST_VehicleState ${statusClass(
-                                  vehicle.status,
-                                )}`}
-                              >
-                                {vehicle.isStale
-                                  ? "GPS delayed"
-                                  : vehicle.status}
-                              </span>
+                        <span>
+                          {activeVehicleSlot + 1} / {activeGroupVehicles.length}
+                        </span>
+
+                        <button
+                          type="button"
+                          aria-label="Next vehicle"
+                          onClick={() => goToVehicleOffset(1)}
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    )}
+
+                    {activeGroupVehicles[activeVehicleSlot] && (
+                      <div
+                        className={`RST_VehicleCard RST_VehicleCard--current ${
+                          activeGroupVehicles.length > 1
+                            ? "RST_VehicleCard--draggable"
+                            : ""
+                        } ${carouselDragging ? "RST_VehicleCard--dragging" : ""}`}
+                        style={
+                          activeGroupVehicles.length > 1
+                            ? {
+                                transform: `translateX(${carouselDragX}px)`,
+                                transition: carouselDragging
+                                  ? "none"
+                                  : "transform 200ms ease",
+                              }
+                            : undefined
+                        }
+                        onPointerDown={startCarouselDrag}
+                        onPointerMove={moveCarouselDrag}
+                        onPointerUp={endCarouselDrag}
+                        onPointerCancel={endCarouselDrag}
+                        onLostPointerCapture={endCarouselDrag}
+                      >
+                        <span className="RST_VehicleThumb">
+                          <img
+                            src={resolveVehicleImage(
+                              activeGroupVehicles[activeVehicleSlot]
+                                .registrationNumber,
                             )}
-                          </span>
+                            alt=""
+                          />
+                        </span>
 
-                          {vehicle.pending ? (
-                            <span className="RST_VehicleKm">
-                              <small>Status</small>
-                              <strong>Pending</strong>
+                        <span className="RST_VehicleCopy">
+                          <strong>
+                            {vehicleGroups.length > 1
+                              ? `Unit ${String(activeVehicleSlot + 1).padStart(2, "0")}`
+                              : activeGroupVehicles[activeVehicleSlot]
+                                  .vehicleName || "Vehicle 01"}
+                          </strong>
+                          <small>
+                            {activeGroupVehicles[activeVehicleSlot].pending
+                              ? "Not yet assigned"
+                              : activeGroupVehicles[activeVehicleSlot]
+                                  .registrationNumber ||
+                                "Registration unavailable"}
+                          </small>
+                          {activeGroupVehicles[activeVehicleSlot].pending ? (
+                            <span className="RST_VehicleState RST_VehicleState--pending">
+                              Awaiting assignment
                             </span>
-                          ) : vehicle.unavailable ? (
-                            <span className="RST_VehicleKm">
-                              <small>Status</small>
-                              <strong>Not tracked</strong>
+                          ) : activeGroupVehicles[activeVehicleSlot]
+                              .unavailable ? (
+                            <span className="RST_VehicleState RST_VehicleState--unavailable">
+                              Unavailable
                             </span>
                           ) : (
-                            <span className="RST_VehicleKm">
-                              <small>KM covered</small>
-                              <strong>
-                                {Number(
-                                  vehicle.distanceCoveredKm || 0,
-                                ).toFixed(2)}{" "}
-                                km
-                              </strong>
+                            <span
+                              className={`RST_VehicleState ${statusClass(
+                                activeGroupVehicles[activeVehicleSlot].status,
+                              )}`}
+                            >
+                              {activeGroupVehicles[activeVehicleSlot].isStale
+                                ? "GPS delayed"
+                                : activeGroupVehicles[activeVehicleSlot]
+                                    .status}
                             </span>
                           )}
-                        </button>
-                      );
-                    })}
+                        </span>
+
+                        {activeGroupVehicles[activeVehicleSlot].pending ? (
+                          <span className="RST_VehicleKm">
+                            <small>Status</small>
+                            <strong>Pending</strong>
+                          </span>
+                        ) : activeGroupVehicles[activeVehicleSlot]
+                            .unavailable ? (
+                          <span className="RST_VehicleKm">
+                            <small>Status</small>
+                            <strong>Not tracked</strong>
+                          </span>
+                        ) : (
+                          <span className="RST_VehicleKm">
+                            <small>KM covered</small>
+                            <strong>
+                              {Number(
+                                activeGroupVehicles[activeVehicleSlot]
+                                  .distanceCoveredKm || 0,
+                              ).toFixed(2)}{" "}
+                              km
+                            </strong>
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="RST_EmptyMini">
@@ -1239,11 +1533,24 @@ function TrackingPageContent({
               mongoId={mongoId}
               token={token}
               enabled={onRoadEnabled}
-              vehicles={liveVehicles.map((vehicle) => ({
-                registrationNumber: vehicle.registrationNumber,
-                unavailable: vehicle.unavailable,
-              }))}
-              selectedVehicle={selectedLiveVehicle?.registrationNumber}
+              /* Pending slots have no real registration number — they
+                 only exist so the carousel/tabs can show "awaiting
+                 assignment". This panel queries real Vamosys GPS history
+                 by registration number, so a pending slot's synthetic id
+                 (e.g. "pending-0-0") must never reach it: it isn't a real
+                 vehicle, and sending it as a filter would 400 against the
+                 backend ("vehicle not assigned to this booking"). */
+              vehicles={liveVehicles
+                .filter((vehicle) => !vehicle.pending)
+                .map((vehicle) => ({
+                  registrationNumber: vehicle.registrationNumber,
+                  unavailable: vehicle.unavailable,
+                }))}
+              selectedVehicle={
+                selectedLiveVehicle && !selectedLiveVehicle.pending
+                  ? selectedLiveVehicle.registrationNumber
+                  : undefined
+              }
             />
           </>
         ) : (

@@ -91,7 +91,12 @@ export function middleware(request: NextRequest): NextResponse {
     isAdminRoute && !adminAuthPaths.some((p) => pathname.startsWith(p));
 
   if (isProtectedAdminRoute && !token) {
-    return NextResponse.redirect(new URL("/admin/signin", request.url));
+    // Carry the originally-requested path along so SignInForm can send the
+    // user back there after login instead of always landing on the
+    // dashboard — e.g. an admin/sales-handling link from an email.
+    const signinUrl = new URL("/admin/signin", request.url);
+    signinUrl.searchParams.set("redirect", pathname + request.nextUrl.search);
+    return NextResponse.redirect(signinUrl);
   }
 
   if (token && adminAuthPaths.some((p) => pathname.startsWith(p))) {
