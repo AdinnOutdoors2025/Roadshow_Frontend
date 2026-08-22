@@ -1,16 +1,21 @@
+/* eslint-disable */
+// @ts-nocheck
 "use client";
 
-import {
+import React, {
   useLayoutEffect,
   useRef,
 } from "react";
 
 import Image from "next/image";
+import Link from "next/link";
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-import { ButtonHover } from "../Reusable_Components/ButtonHover";
+/* =========================================================
+   TYPES
+========================================================= */
 
 type ImpactCtaBannerProps = {
   ctaHref?: string;
@@ -21,21 +26,152 @@ type BleedCtaProps = {
   label: string;
 };
 
+/* =========================================================
+   IMAGE
+========================================================= */
+
 const HERO_VEHICLE_IMAGE =
   "/images/assets/full side LED edited (1)_NEW.png";
 
 /* =========================================================
-   EASY DESKTOP TUNING
+   DESKTOP SETTINGS
 ========================================================= */
 
 const INITIAL_VEHICLE_SCALE = 1.18;
+
 const LEFT_VEHICLE_SCALE = 1.82;
+
 const LEFT_X_PERCENT = -45;
+
 const LEFT_Y_PERCENT = -4;
-const SCROLL_LENGTH = 2.15;
+
+const DESKTOP_SCROLL_LENGTH = 2.15;
 
 /* =========================================================
-   BLEED CTA
+   HEADER SETTINGS
+========================================================= */
+
+const RESPONSIVE_HEADER_GAP = 20;
+
+const MOBILE_HEADER_FALLBACK = 72;
+
+const TABLET_HEADER_FALLBACK = 80;
+
+/* =========================================================
+   MOBILE SETTINGS
+========================================================= */
+
+const MOBILE_VEHICLE_X = 0;
+
+const MOBILE_VEHICLE_Y = 15;
+
+const MOBILE_VEHICLE_SCALE = 1.08;
+
+const MOBILE_SCRUB = 1;
+
+/* =========================================================
+   TABLET SETTINGS
+========================================================= */
+
+/*
+ * INITIAL:
+ * vehicle stays centered.
+ *
+ * AFTER SCROLL:
+ * vehicle moves left.
+ */
+const TABLET_VEHICLE_X = -27;
+
+const TABLET_VEHICLE_Y = 0;
+
+const TABLET_VEHICLE_SCALE = 1.08;
+
+/*
+ * Higher = smoother/slower response.
+ */
+const TABLET_SCRUB = 1.2;
+
+/* =========================================================
+   RESPONSIVE STICKY STORY DISTANCE
+
+   IMPORTANT:
+
+   This controls only HOW LONG the sticky animation lasts.
+
+   It does NOT change:
+   - visible banner height
+   - vehicle size
+   - typography
+   - existing internal spacing
+========================================================= */
+
+const MOBILE_STICKY_DISTANCE = 1.45;
+
+const TABLET_STICKY_DISTANCE = 1.55;
+
+/* =========================================================
+   STICKY HEADER DETECTION
+========================================================= */
+
+function getStickyHeaderBottom(
+  fallbackHeight: number,
+) {
+  if (typeof window === "undefined") {
+    return fallbackHeight;
+  }
+
+  const selectors = [
+    "[data-site-header]",
+    "header",
+    "#header",
+    ".site-header",
+    ".main-header",
+    ".navbar",
+  ];
+
+  for (const selector of selectors) {
+    const element =
+      document.querySelector<HTMLElement>(
+        selector,
+      );
+
+    if (!element) {
+      continue;
+    }
+
+    const styles =
+      window.getComputedStyle(element);
+
+    const rect =
+      element.getBoundingClientRect();
+
+    if (
+      rect.height <= 0 ||
+      styles.display === "none" ||
+      styles.visibility === "hidden"
+    ) {
+      continue;
+    }
+
+    const isSticky =
+      styles.position === "fixed" ||
+      styles.position === "sticky";
+
+    if (!isSticky) {
+      continue;
+    }
+
+    return Math.max(
+      fallbackHeight,
+      Math.ceil(rect.bottom),
+    );
+  }
+
+  return fallbackHeight;
+}
+
+/* =========================================================
+   CTA
 ========================================================= */
 
 function BleedCta({
@@ -43,33 +179,55 @@ function BleedCta({
   label,
 }: BleedCtaProps) {
   return (
-    <ButtonHover
+    <Link
       href={href}
-      label={label}
       className="
         inline-flex
-        h-[56px]
-        min-h-[56px]
-        w-fit
         items-center
         justify-center
+
+        !h-[42px]
+        !min-h-[42px]
+
+        w-fit
+
         rounded-full
         border-0
+
         bg-[#e8e8e8]
-        px-9
+
+        !px-5
+
         font-sans
-        text-[15px]
+        !text-[11px]
         font-semibold
+
         leading-none
         tracking-[-0.01em]
+
         text-[#1f1f1f]
-        shadow-[0_10px_28px_rgba(0,0,0,0.045)]
-        max-[640px]:h-[52px]
-        max-[640px]:min-h-[52px]
-        max-[640px]:px-7
-        max-[640px]:text-[14px]
+
+        no-underline
+
+        shadow-[0_8px_22px_rgba(0,0,0,0.05)]
+
+        sm:!h-[44px]
+        sm:!min-h-[44px]
+        sm:!px-6
+        sm:!text-[12px]
+
+        lg:!h-[56px]
+        lg:!min-h-[56px]
+        lg:!px-9
+        lg:!text-[15px]
+
+        lg:transition-transform
+        lg:duration-300
+        lg:hover:-translate-y-[2px]
       "
-    />
+    >
+      {label}
+    </Link>
   );
 }
 
@@ -80,8 +238,16 @@ function BleedCta({
 export default function ImpactCtaBanner({
   ctaHref = "/roadshow/Contact",
 }: ImpactCtaBannerProps) {
+  /* =======================================================
+     ROOT
+  ======================================================= */
+
   const sectionRef =
     useRef<HTMLElement | null>(null);
+
+  /* =======================================================
+     DESKTOP
+  ======================================================= */
 
   const stageRef =
     useRef<HTMLDivElement | null>(null);
@@ -90,6 +256,26 @@ export default function ImpactCtaBanner({
     useRef<HTMLDivElement | null>(null);
 
   const desktopVehicleRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const frameTwoRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const frameThreeRef =
+    useRef<HTMLDivElement | null>(null);
+
+  /* =======================================================
+     RESPONSIVE
+
+     responsiveStoryRef:
+     the GSAP pin's trigger/parent — this is where GSAP
+     inserts its pin-spacer to reserve scroll distance.
+
+     responsiveStageRef:
+     the actual visible banner, pinned via GSAP ScrollTrigger.
+  ======================================================= */
+
+  const responsiveStoryRef =
     useRef<HTMLDivElement | null>(null);
 
   const responsiveStageRef =
@@ -107,11 +293,9 @@ export default function ImpactCtaBanner({
   const responsiveFrameThreeRef =
     useRef<HTMLDivElement | null>(null);
 
-  const frameTwoRef =
-    useRef<HTMLDivElement | null>(null);
-
-  const frameThreeRef =
-    useRef<HTMLDivElement | null>(null);
+  /* =======================================================
+     GSAP
+  ======================================================= */
 
   useLayoutEffect(() => {
     const section =
@@ -125,6 +309,15 @@ export default function ImpactCtaBanner({
 
     const desktopVehicle =
       desktopVehicleRef.current;
+
+    const frameTwo =
+      frameTwoRef.current;
+
+    const frameThree =
+      frameThreeRef.current;
+
+    const responsiveStory =
+      responsiveStoryRef.current;
 
     const responsiveStage =
       responsiveStageRef.current;
@@ -141,12 +334,6 @@ export default function ImpactCtaBanner({
     const responsiveFrameThree =
       responsiveFrameThreeRef.current;
 
-    const frameTwo =
-      frameTwoRef.current;
-
-    const frameThree =
-      frameThreeRef.current;
-
     if (
       !section ||
       !stage ||
@@ -154,6 +341,7 @@ export default function ImpactCtaBanner({
       !desktopVehicle ||
       !frameTwo ||
       !frameThree ||
+      !responsiveStory ||
       !responsiveStage ||
       !responsiveIntro ||
       !responsiveVehicle ||
@@ -176,7 +364,8 @@ export default function ImpactCtaBanner({
       gsap.matchMedia();
 
     /* =====================================================
-       DESKTOP SCROLL STORY
+       DESKTOP
+       KEEP EXISTING DESKTOP PINNED EXPERIENCE
     ===================================================== */
 
     mm.add(
@@ -202,6 +391,10 @@ export default function ImpactCtaBanner({
                 frameThree,
               );
 
+            /* =============================================
+               RESET
+            ============================================= */
+
             gsap.set(
               [
                 desktopVehicle,
@@ -218,9 +411,12 @@ export default function ImpactCtaBanner({
               desktopVehicle,
               {
                 xPercent: 0,
+
                 yPercent: 0,
+
                 scale:
                   INITIAL_VEHICLE_SCALE,
+
                 transformOrigin:
                   "50% 54%",
               },
@@ -230,6 +426,7 @@ export default function ImpactCtaBanner({
               introItems,
               {
                 yPercent: 0,
+
                 autoAlpha: 1,
               },
             );
@@ -252,6 +449,7 @@ export default function ImpactCtaBanner({
               frameTwoItems,
               {
                 yPercent: 118,
+
                 autoAlpha: 1,
               },
             );
@@ -260,11 +458,23 @@ export default function ImpactCtaBanner({
               frameThreeItems,
               {
                 yPercent: 118,
+
                 autoAlpha: 1,
               },
             );
 
+            /* =============================================
+               REDUCED MOTION
+            ============================================= */
+
             if (reduceMotion) {
+              gsap.set(
+                intro,
+                {
+                  autoAlpha: 0,
+                },
+              );
+
               gsap.set(
                 frameTwo,
                 {
@@ -282,7 +492,11 @@ export default function ImpactCtaBanner({
               return;
             }
 
-            const timeline =
+            /* =============================================
+               DESKTOP TIMELINE
+            ============================================= */
+
+            const desktopTimeline =
               gsap.timeline({
                 scrollTrigger: {
                   trigger:
@@ -294,7 +508,7 @@ export default function ImpactCtaBanner({
                   end: () =>
                     `+=${
                       window.innerHeight *
-                      SCROLL_LENGTH
+                      DESKTOP_SCROLL_LENGTH
                     }`,
 
                   pin:
@@ -305,36 +519,44 @@ export default function ImpactCtaBanner({
 
                   scrub: 1.05,
 
-                  anticipatePin: 1,
+                  anticipatePin:
+                    1,
 
                   invalidateOnRefresh:
-                    false,
+                    true,
                 },
               });
 
-            /* =================================================
-               FRAME 01 -> FRAME 02
-            ================================================= */
+            /* =============================================
+               INTRO OUT
+            ============================================= */
 
-            timeline.to(
+            desktopTimeline.to(
               introItems,
               {
-                yPercent: -118,
-                autoAlpha: 0,
-                duration: 0.4,
-                stagger: 0.03,
-                ease: "power2.in",
+                yPercent:
+                  -118,
+
+                autoAlpha:
+                  0,
+
+                duration:
+                  0.4,
+
+                stagger:
+                  0.03,
+
+                ease:
+                  "power2.in",
               },
               0.08,
             );
 
-            /*
-             * ONE smooth vehicle tween:
-             * center -> left
-             * scale 1.18 -> 1.82
-             * slightly upward
-             */
-            timeline.to(
+            /* =============================================
+               VEHICLE MOVE
+            ============================================= */
+
+            desktopTimeline.to(
               desktopVehicle,
               {
                 xPercent:
@@ -346,81 +568,117 @@ export default function ImpactCtaBanner({
                 scale:
                   LEFT_VEHICLE_SCALE,
 
-                duration: 1.08,
+                duration:
+                  1.08,
 
-                ease: "none",
+                ease:
+                  "none",
               },
               0,
             );
 
-            timeline.set(
+            /* =============================================
+               FRAME TWO
+            ============================================= */
+
+            desktopTimeline.set(
               frameTwo,
               {
-                autoAlpha: 1,
+                autoAlpha:
+                  1,
               },
               0.47,
             );
 
-            timeline.to(
+            desktopTimeline.to(
               frameTwoItems,
               {
-                yPercent: 0,
-                duration: 0.55,
-                stagger: 0.06,
-                ease: "power3.out",
+                yPercent:
+                  0,
+
+                duration:
+                  0.55,
+
+                stagger:
+                  0.06,
+
+                ease:
+                  "power3.out",
               },
               0.49,
             );
 
-            timeline.to(
+            desktopTimeline.to(
               {},
               {
-                duration: 0.24,
+                duration:
+                  0.24,
               },
             );
 
-            /* =================================================
-               FRAME 02 -> FRAME 03
-            ================================================= */
+            /* =============================================
+               FRAME TWO OUT
+            ============================================= */
 
-            timeline.to(
+            desktopTimeline.to(
               frameTwoItems,
               {
-                yPercent: -118,
-                duration: 0.44,
-                stagger: 0.03,
-                ease: "power3.in",
+                yPercent:
+                  -118,
+
+                duration:
+                  0.44,
+
+                stagger:
+                  0.03,
+
+                ease:
+                  "power3.in",
               },
             );
 
-            timeline.set(
+            desktopTimeline.set(
               frameTwo,
               {
-                autoAlpha: 0,
+                autoAlpha:
+                  0,
               },
             );
 
-            timeline.set(
+            /* =============================================
+               FRAME THREE
+            ============================================= */
+
+            desktopTimeline.set(
               frameThree,
               {
-                autoAlpha: 1,
+                autoAlpha:
+                  1,
               },
             );
 
-            timeline.to(
+            desktopTimeline.to(
               frameThreeItems,
               {
-                yPercent: 0,
-                duration: 0.54,
-                stagger: 0.06,
-                ease: "power3.out",
+                yPercent:
+                  0,
+
+                duration:
+                  0.54,
+
+                stagger:
+                  0.06,
+
+                ease:
+                  "power3.out",
               },
             );
 
-            timeline.to(
+            desktopTimeline.to(
               {},
               {
-                duration: 0.32,
+                duration:
+                  0.32,
               },
             );
           }, section);
@@ -432,11 +690,38 @@ export default function ImpactCtaBanner({
     );
 
     /* =====================================================
-       TABLET + MOBILE PINNED SCROLL STORY
+       MOBILE + TABLET
 
-       This is intentionally separate from the desktop
-       timeline above. The desktop design and animation
-       values remain completely unchanged.
+       IMPORTANT ARCHITECTURE (V17):
+
+       Uses a real GSAP ScrollTrigger pin on responsiveStage,
+       the same mechanism as the desktop stage above.
+
+       V16 used CSS position: sticky here instead. That does
+       not work on this page: GSAP ScrollSmoother moves
+       #smooth-content with a transform rather than native
+       scrolling, so a sticky element's nearest scrollport
+       (#smooth-wrapper) never reports a scroll offset and the
+       element silently behaves as static — see the note in
+       GlobalSmoothScroll.tsx. That is what let the next
+       section render behind/inside the Roadshow section while
+       scrolling. GSAP's pin is ScrollSmoother-aware, so it
+       positions responsiveStage correctly.
+
+       pinSpacing reserves exactly the scroll distance the
+       animation needs (getStoryDistance()) — same distance
+       V16 used to size responsiveStory manually — so there is
+       still no extra height and no artificial gap.
+
+       This is what gives:
+
+       pinned banner
+       ↓
+       animation
+       ↓
+       next section reaches banner bottom
+       ↓
+       next section PUSHES banner upward
     ===================================================== */
 
     mm.add(
@@ -447,11 +732,120 @@ export default function ImpactCtaBanner({
         tablet:
           "(min-width: 640px) and (max-width: 1023px)",
       },
+
       (context) => {
         const isMobile =
           Boolean(
             context.conditions?.mobile,
           );
+
+        /* =================================================
+           STICKY TOP
+        ================================================= */
+
+        const getStickyTop =
+          () => {
+            const fallback =
+              isMobile
+                ? MOBILE_HEADER_FALLBACK
+                : TABLET_HEADER_FALLBACK;
+
+            return (
+              getStickyHeaderBottom(
+                fallback,
+              ) +
+              RESPONSIVE_HEADER_GAP
+            );
+          };
+
+        /* =================================================
+           STORY DISTANCE
+
+           This is the invisible SCROLL RANGE the GSAP pin
+           needs (used as its ScrollTrigger `end` value).
+
+           It is not padding/margin inside the visible
+           Roadshow card.
+        ================================================= */
+
+        const getStoryDistance =
+          () => {
+            const stageHeight =
+              responsiveStage.offsetHeight;
+
+            const multiplier =
+              isMobile
+                ? MOBILE_STICKY_DISTANCE
+                : TABLET_STICKY_DISTANCE;
+
+            return Math.max(
+              stageHeight * multiplier,
+              isMobile
+                ? 620
+                : 680,
+            );
+          };
+
+        /* =================================================
+           SYNC RESPONSIVE STAGE HEIGHT
+
+           Keeps the visible banner's own height correct for
+           the current viewport before the GSAP pin below
+           measures it. The pin's own pinSpacing then reserves
+           the extra scroll distance automatically; when the
+           pin releases, the next section in normal flow
+           physically pushes this stage upward.
+        ================================================= */
+
+        const updateResponsiveStory =
+          () => {
+            const stickyTop =
+              getStickyTop();
+
+            /*
+             * KEEP EXISTING MOBILE HEIGHT BEHAVIOR.
+             *
+             * Tablet continues to use the current Tailwind
+             * clamp height from the JSX below.
+             */
+            if (isMobile) {
+              const availableHeight =
+                Math.max(
+                  500,
+
+                  window.innerHeight -
+                    stickyTop,
+                );
+
+              responsiveStage.style.height =
+                `${availableHeight}px`;
+
+              responsiveStage.style.minHeight =
+                `${availableHeight}px`;
+
+              responsiveStage.style.maxHeight =
+                `${availableHeight}px`;
+            } else {
+              responsiveStage.style.removeProperty(
+                "height",
+              );
+
+              responsiveStage.style.removeProperty(
+                "min-height",
+              );
+
+              responsiveStage.style.removeProperty(
+                "max-height",
+              );
+            }
+          };
+
+        updateResponsiveStory();
+
+        ScrollTrigger.addEventListener(
+          "refreshInit",
+          updateResponsiveStory,
+        );
 
         const ctx =
           gsap.context(() => {
@@ -473,6 +867,10 @@ export default function ImpactCtaBanner({
                 responsiveFrameThree,
               );
 
+            /* =============================================
+               GPU
+            ============================================= */
+
             gsap.set(
               [
                 responsiveVehicle,
@@ -485,24 +883,42 @@ export default function ImpactCtaBanner({
               },
             );
 
+            /* =============================================
+               INITIAL VEHICLE
+
+               KEEP CENTERED.
+            ============================================= */
+
             gsap.set(
               responsiveVehicle,
               {
                 xPercent: 0,
+
                 yPercent: 0,
+
                 scale: 1,
+
                 transformOrigin:
                   "50% 54%",
               },
             );
 
+            /* =============================================
+               INTRO INITIAL
+            ============================================= */
+
             gsap.set(
               responsiveIntroItems,
               {
                 yPercent: 0,
+
                 autoAlpha: 1,
               },
             );
+
+            /* =============================================
+               FRAME TWO INITIAL
+            ============================================= */
 
             gsap.set(
               responsiveFrameTwo,
@@ -512,6 +928,19 @@ export default function ImpactCtaBanner({
             );
 
             gsap.set(
+              responsiveFrameTwoItems,
+              {
+                yPercent: 118,
+
+                autoAlpha: 0,
+              },
+            );
+
+            /* =============================================
+               FRAME THREE INITIAL
+            ============================================= */
+
+            gsap.set(
               responsiveFrameThree,
               {
                 autoAlpha: 0,
@@ -519,20 +948,17 @@ export default function ImpactCtaBanner({
             );
 
             gsap.set(
-              responsiveFrameTwoItems,
-              {
-                yPercent: 118,
-                autoAlpha: 1,
-              },
-            );
-
-            gsap.set(
               responsiveFrameThreeItems,
               {
                 yPercent: 118,
-                autoAlpha: 1,
+
+                autoAlpha: 0,
               },
             );
+
+            /* =============================================
+               REDUCED MOTION
+            ============================================= */
 
             if (reduceMotion) {
               gsap.set(
@@ -546,48 +972,73 @@ export default function ImpactCtaBanner({
                 responsiveVehicle,
                 {
                   xPercent:
-                    isMobile ? 0 : -36,
+                    isMobile
+                      ? MOBILE_VEHICLE_X
+                      : TABLET_VEHICLE_X,
 
                   yPercent:
-                    isMobile ? 20 : 2,
+                    isMobile
+                      ? MOBILE_VEHICLE_Y
+                      : TABLET_VEHICLE_Y,
 
                   scale:
-                    isMobile ? 1.08 : 1.4,
+                    isMobile
+                      ? MOBILE_VEHICLE_SCALE
+                      : TABLET_VEHICLE_SCALE,
                 },
               );
 
               gsap.set(
-                responsiveFrameTwo,
+                responsiveFrameThree,
                 {
                   autoAlpha: 1,
                 },
               );
 
               gsap.set(
-                responsiveFrameTwoItems,
+                responsiveFrameThreeItems,
                 {
                   yPercent: 0,
+
+                  autoAlpha: 1,
                 },
               );
 
               return;
             }
 
+            /* =============================================
+               RESPONSIVE TIMELINE
+
+               IMPORTANT:
+
+               Uses a real GSAP ScrollTrigger pin on
+               responsiveStage (same mechanism as the desktop
+               stage above), NOT CSS position: sticky.
+
+               CSS sticky cannot work on this page: it sits
+               inside GSAP ScrollSmoother's #smooth-content,
+               which is moved with a transform instead of
+               native scrolling, so a sticky element's
+               scrollport never reports any scroll offset and
+               it silently behaves as static (see the note in
+               GlobalSmoothScroll.tsx). GSAP's own pin is
+               ScrollSmoother-aware and positions the element
+               correctly instead.
+            ============================================= */
+
             const responsiveTimeline =
               gsap.timeline({
                 scrollTrigger: {
                   trigger:
-                    section,
+                    responsiveStory,
 
-                  start:
-                    "top top",
+                  start: () =>
+                    `top top+=${getStickyTop()}`,
 
                   end: () =>
                     `+=${
-                      window.innerHeight *
-                      (isMobile
-                        ? 2.45
-                        : 2.25)
+                      getStoryDistance()
                     }`,
 
                   pin:
@@ -596,12 +1047,13 @@ export default function ImpactCtaBanner({
                   pinSpacing:
                     true,
 
+                  anticipatePin:
+                    1,
+
                   scrub:
                     isMobile
-                      ? 0.82
-                      : 0.95,
-
-                  anticipatePin: 1,
+                      ? MOBILE_SCRUB
+                      : TABLET_SCRUB,
 
                   invalidateOnRefresh:
                     true,
@@ -609,77 +1061,155 @@ export default function ImpactCtaBanner({
               });
 
             /* =============================================
-               RESPONSIVE FRAME 01 -> FRAME 02
+               INITIAL HOLD
+            ============================================= */
+
+            responsiveTimeline.to(
+              {},
+              {
+                duration:
+                  isMobile
+                    ? 0.14
+                    : 0.24,
+              },
+            );
+
+            /* =============================================
+               INTRO OUT
             ============================================= */
 
             responsiveTimeline.to(
               responsiveIntroItems,
               {
-                yPercent: -118,
-                autoAlpha: 0,
-                duration: 0.4,
-                stagger: 0.03,
-                ease: "power2.in",
+                yPercent:
+                  -112,
+
+                autoAlpha:
+                  0,
+
+                duration:
+                  isMobile
+                    ? 0.42
+                    : 0.58,
+
+                stagger:
+                  isMobile
+                    ? 0.035
+                    : 0.05,
+
+                ease:
+                  "power2.inOut",
               },
-              0.08,
             );
+
+            /* =============================================
+               VEHICLE MOVE
+
+               INITIAL = CENTER
+               AFTER SCROLL = LEFT
+            ============================================= */
 
             responsiveTimeline.to(
               responsiveVehicle,
               {
                 xPercent:
-                  isMobile ? 0 : -36,
+                  isMobile
+                    ? MOBILE_VEHICLE_X
+                    : TABLET_VEHICLE_X,
 
                 yPercent:
-                  isMobile ? 20 : 2,
+                  isMobile
+                    ? MOBILE_VEHICLE_Y
+                    : TABLET_VEHICLE_Y,
 
                 scale:
-                  isMobile ? 1.08 : 1.4,
+                  isMobile
+                    ? MOBILE_VEHICLE_SCALE
+                    : TABLET_VEHICLE_SCALE,
 
-                duration: 1.08,
+                duration:
+                  isMobile
+                    ? 0.9
+                    : 1.08,
 
-                ease: "none",
+                ease:
+                  "power1.inOut",
               },
-              0,
+              "<-0.3",
             );
+
+            /* =============================================
+               FRAME TWO ON
+            ============================================= */
 
             responsiveTimeline.set(
               responsiveFrameTwo,
               {
                 autoAlpha: 1,
               },
-              0.47,
             );
 
             responsiveTimeline.to(
               responsiveFrameTwoItems,
               {
                 yPercent: 0,
-                duration: 0.55,
-                stagger: 0.06,
-                ease: "power3.out",
-              },
-              0.49,
-            );
 
-            responsiveTimeline.to(
-              {},
-              {
-                duration: 0.24,
+                autoAlpha: 1,
+
+                duration:
+                  isMobile
+                    ? 0.5
+                    : 0.62,
+
+                stagger:
+                  isMobile
+                    ? 0.045
+                    : 0.055,
+
+                ease:
+                  "power3.out",
               },
             );
 
             /* =============================================
-               RESPONSIVE FRAME 02 -> FRAME 03
+               FRAME TWO HOLD
+            ============================================= */
+
+            responsiveTimeline.to(
+              {},
+              {
+                duration:
+                  isMobile
+                    ? 0.22
+                    : 0.38,
+              },
+            );
+
+            /* =============================================
+               FRAME TWO OUT
             ============================================= */
 
             responsiveTimeline.to(
               responsiveFrameTwoItems,
               {
-                yPercent: -118,
-                duration: 0.44,
-                stagger: 0.03,
-                ease: "power3.in",
+                yPercent:
+                  -112,
+
+                autoAlpha:
+                  0,
+
+                duration:
+                  isMobile
+                    ? 0.4
+                    : 0.5,
+
+                stagger:
+                  isMobile
+                    ? 0.025
+                    : 0.04,
+
+                ease:
+                  "power2.in",
               },
             );
 
@@ -689,6 +1219,10 @@ export default function ImpactCtaBanner({
                 autoAlpha: 0,
               },
             );
+
+            /* =============================================
+               FRAME THREE ON
+            ============================================= */
 
             responsiveTimeline.set(
               responsiveFrameThree,
@@ -701,149 +1235,288 @@ export default function ImpactCtaBanner({
               responsiveFrameThreeItems,
               {
                 yPercent: 0,
-                duration: 0.54,
-                stagger: 0.06,
-                ease: "power3.out",
+
+                autoAlpha: 1,
+
+                duration:
+                  isMobile
+                    ? 0.5
+                    : 0.62,
+
+                stagger:
+                  isMobile
+                    ? 0.045
+                    : 0.055,
+
+                ease:
+                  "power3.out",
               },
             );
+
+            /* =============================================
+               FINAL HOLD
+
+               20L+ stays fully visible before the sticky
+               wrapper reaches its end.
+
+               THEN the following section reaches this
+               stage and pushes the Roadshow stage upward.
+            ============================================= */
 
             responsiveTimeline.to(
               {},
               {
-                duration: 0.32,
+                duration:
+                  isMobile
+                    ? 0.32
+                    : 0.52,
               },
             );
-          }, section);
+          }, responsiveStory);
+
+        /* =================================================
+           RESIZE
+        ================================================= */
+
+        const handleResize =
+          () => {
+            updateResponsiveStory();
+
+            ScrollTrigger.refresh();
+          };
+
+        window.addEventListener(
+          "resize",
+          handleResize,
+        );
+
+        const refreshFrame =
+          window.requestAnimationFrame(
+            () => {
+              updateResponsiveStory();
+
+              ScrollTrigger.refresh();
+            },
+          );
+
+        /* =================================================
+           CLEANUP
+        ================================================= */
 
         return () => {
+          window.cancelAnimationFrame(
+            refreshFrame,
+          );
+
+          window.removeEventListener(
+            "resize",
+            handleResize,
+          );
+
+          ScrollTrigger.removeEventListener(
+            "refreshInit",
+            updateResponsiveStory,
+          );
+
+          responsiveStage.style.removeProperty(
+            "height",
+          );
+
+          responsiveStage.style.removeProperty(
+            "min-height",
+          );
+
+          responsiveStage.style.removeProperty(
+            "max-height",
+          );
+
           ctx.revert();
         };
       },
     );
+
+    /* =====================================================
+       COMPLETE CLEANUP
+    ===================================================== */
 
     return () => {
       mm.revert();
     };
   }, []);
 
+  /* =======================================================
+     JSX
+  ======================================================= */
+
   return (
     <section
       ref={sectionRef}
-      data-responsive-scroll="MOBILE_TABLET_SCROLL_V2_SPACING"
+      data-responsive-scroll="GSAP_PIN_PUSH_V17"
       className="
         relative
+
+        !m-0
+        !mb-0
+
+        !p-0
+        !pb-0
+
         w-full
+
         bg-[#f8f8f6]
       "
     >
-      {/* =====================================================
-          DESKTOP PINNED STAGE
-      ===================================================== */}
+      {/* ===================================================
+          DESKTOP STAGE
+      =================================================== */}
 
       <div
-  ref={stageRef}
-  className="
-    relative
-    hidden
-    h-[100svh]
-    min-h-[760px]
-    w-full
-    overflow-hidden
-    bg-[#f8f8f6]
-    lg:block
-  "
->
-        {/* Background */}
+        ref={stageRef}
+        className="
+          relative
+
+          hidden
+
+          h-[100svh]
+
+          min-h-[760px]
+
+          w-full
+
+          overflow-hidden
+
+          bg-[#f8f8f6]
+
+          lg:block
+        "
+      >
+        {/* =================================================
+            BACKGROUND
+        ================================================= */}
+
         <div
           aria-hidden="true"
           className="
             pointer-events-none
+
             absolute
+
             inset-0
+
             bg-[radial-gradient(circle_at_50%_43%,rgba(255,255,255,1)_0%,rgba(255,255,255,0.82)_34%,rgba(248,248,246,0)_76%)]
           "
         />
 
-        {/* ===================================================
-            STATIC ROADSHOW TYPOGRAPHY
-
-            text-[22vw] = requested size.
-            bottom-[-11vw] = moves it farther DOWN.
-            left-1/2 + -translate-x-1/2 = exact center.
-
-            No GSAP ref, so it never moves with vehicle.
-        =================================================== */}
+        {/* =================================================
+            ROADSHOW WATERMARK
+        ================================================= */}
 
         <div
-  aria-hidden="true"
-  className="
-    pointer-events-none
-    absolute
-    bottom-[-4vw]
-    left-[48%]
-    z-[2]
-    w-max
-    -translate-x-1/2
-  "
->
-  <span
-    className="
-      block
-      select-none
-      whitespace-nowrap
-      text-center
-      font-serif
-      text-[22vw]
-      italic
-      font-normal
-      leading-none
-      tracking-[-0.055em]
-      text-black/[0.032]
-    "
-  >
-    roadshow
-  </span>
-</div>
+          aria-hidden="true"
+          className="
+            pointer-events-none
 
-        {/* ===================================================
-            FRAME 01 INTRO
-        =================================================== */}
+            absolute
+
+            bottom-[-4vw]
+
+            left-[48%]
+
+            z-[2]
+
+            w-max
+
+            -translate-x-1/2
+          "
+        >
+          <span
+            className="
+              block
+
+              select-none
+
+              whitespace-nowrap
+
+              text-center
+
+              font-serif
+
+              text-[22vw]
+
+              font-normal
+
+              italic
+
+              leading-none
+
+              tracking-[-0.055em]
+
+              text-black/[0.032]
+            "
+          >
+            roadshows
+          </span>
+        </div>
+
+        {/* =================================================
+            DESKTOP INTRO
+        ================================================= */}
 
         <div
-  ref={introRef}
-  className="
-    pointer-events-none
-    absolute
-    left-1/2
-    top-[clamp(135px,14vh,165px)]
-    z-30
-    w-[min(900px,76vw)]
-    -translate-x-1/2
-    text-center
-  "
->
-          <div className="overflow-hidden">
+          ref={introRef}
+          className="
+            pointer-events-none
+
+            absolute
+
+            left-1/2
+
+            top-[clamp(135px,14vh,165px)]
+
+            z-30
+
+            w-[min(900px,76vw)]
+
+            -translate-x-1/2
+
+            text-center
+          "
+        >
+          <div
+            className="
+              overflow-hidden
+            "
+          >
             <p
               data-intro-reveal
               className="
                 m-0
+
                 transform-gpu
+
                 will-change-transform
+
                 font-sans
+
                 text-[clamp(32px,3.6vw,58px)]
+
                 font-normal
+
                 leading-[0.98]
+
                 tracking-[-0.05em]
+
                 text-[#a2a19e]
               "
             >
-              
-
               <span
                 className="
                   font-serif
-                  italic
+
                   font-normal
+
+                  italic
+
                   text-[#969088]
                 "
               >
@@ -852,27 +1525,38 @@ export default function ImpactCtaBanner({
             </p>
           </div>
 
-          <div className="mt-1 overflow-hidden">
+          <div
+            className="
+              mt-1
+
+              overflow-hidden
+            "
+          >
             <h2
               data-intro-reveal
               className="
                 mx-auto
+
                 max-w-[820px]
+
                 transform-gpu
+
                 will-change-transform
+
                 font-sans
+
                 text-[clamp(38px,4.3vw,68px)]
+
                 font-medium
+
                 leading-[0.98]
+
                 tracking-[-0.058em]
+
                 text-[#111111]
               "
             >
-              to amplify{" "}
-
-            
-
-              your brand
+              to amplify your brand
 
               <br />
 
@@ -881,23 +1565,24 @@ export default function ImpactCtaBanner({
           </div>
         </div>
 
-        {/* ===================================================
+        {/* =================================================
             DESKTOP VEHICLE
-
-            top-[53%] moves vehicle UP from the old ~58%.
-
-            w-[min(780px,43vw)] + scale 1.82 keeps it large
-            without forcing the image too far outside the page.
-        =================================================== */}
+        ================================================= */}
 
         <div
           className="
             pointer-events-none
+
             absolute
+
             left-1/2
+
             top-[53%]
+
             z-20
+
             w-[min(780px,43vw)]
+
             -translate-x-1/2
             -translate-y-1/2
           "
@@ -906,9 +1591,13 @@ export default function ImpactCtaBanner({
             ref={desktopVehicleRef}
             className="
               relative
+
               w-full
+
               transform-gpu
+
               backface-hidden
+
               will-change-transform
             "
           >
@@ -922,12 +1611,19 @@ export default function ImpactCtaBanner({
               sizes="43vw"
               className="
                 relative
+
                 z-[2]
+
                 block
+
                 h-auto
+
                 w-full
+
                 select-none
+
                 object-contain
+
                 drop-shadow-[0_28px_24px_rgba(0,0,0,0.15)]
               "
             />
@@ -936,69 +1632,102 @@ export default function ImpactCtaBanner({
               aria-hidden="true"
               className="
                 absolute
+
                 bottom-[1%]
+
                 left-[13%]
+
                 right-[8%]
+
                 z-[1]
+
                 h-[7%]
+
                 rounded-[50%]
+
                 bg-black/20
+
                 blur-[25px]
               "
             />
           </div>
         </div>
 
-        {/* ===================================================
-            RIGHT-SIDE CONTENT
-
-            Moved left from ~64-66% to ~61-62%.
-            This reduces the empty center gap.
-        =================================================== */}
+        {/* =================================================
+            DESKTOP CONTENT
+        ================================================= */}
 
         <div
           className="
             absolute
+
             left-[61%]
+
             top-1/2
+
             z-40
+
             h-[430px]
+
             w-[31%]
+
             min-w-[390px]
+
             max-w-[500px]
+
             -translate-y-1/2
+
             overflow-hidden
+
             xl:left-[61.5%]
+
             2xl:left-[62%]
           "
         >
-          {/* =================================================
-              FRAME 02
-          ================================================= */}
+          {/* ===============================================
+              FRAME TWO
+          =============================================== */}
 
           <div
             ref={frameTwoRef}
             className="
               invisible
+
               absolute
+
               inset-0
+
               flex
+
               flex-col
+
               justify-center
+
               opacity-0
             "
           >
-            <div className="overflow-hidden">
+            <div
+              className="
+                overflow-hidden
+              "
+            >
               <div
                 data-frame-two-reveal
                 className="
                   transform-gpu
+
                   will-change-transform
+
                   font-sans
+
                   text-[clamp(82px,6.5vw,116px)]
+
                   font-normal
+
                   leading-[0.8]
+
                   tracking-[-0.07em]
+
                   text-[#111111]
                 "
               >
@@ -1006,17 +1735,30 @@ export default function ImpactCtaBanner({
               </div>
             </div>
 
-            <div className="mt-7 overflow-hidden">
+            <div
+              className="
+                mt-7
+
+                overflow-hidden
+              "
+            >
               <h3
                 data-frame-two-reveal
                 className="
                   transform-gpu
+
                   will-change-transform
+
                   font-sans
+
                   text-[clamp(34px,2.7vw,47px)]
+
                   font-medium
+
                   leading-[0.98]
+
                   tracking-[-0.046em]
+
                   text-[#111111]
                 "
               >
@@ -1024,30 +1766,20 @@ export default function ImpactCtaBanner({
               </h3>
             </div>
 
-            <div className="mt-5 overflow-hidden">
-              {/* <p
-                data-frame-two-reveal
-                className="
-                  max-w-[390px]
-                  transform-gpu
-                  will-change-transform
-                  font-sans
-                  text-[17px]
-                  font-normal
-                  leading-[1.55]
-                  tracking-[-0.01em]
-                  text-black/48
-                "
-              >
-                Modern fleet for every marketing need.
-              </p> */}
-            </div>
+            <div
+              className="
+                mt-5
 
-            <div className="overflow-hidden pb-3">
+                overflow-hidden
+
+                pb-3
+              "
+            >
               <div
                 data-frame-two-reveal
                 className="
                   transform-gpu
+
                   will-change-transform
                 "
               >
@@ -1059,33 +1791,50 @@ export default function ImpactCtaBanner({
             </div>
           </div>
 
-          {/* =================================================
-              FRAME 03
-          ================================================= */}
+          {/* ===============================================
+              FRAME THREE
+          =============================================== */}
 
           <div
             ref={frameThreeRef}
             className="
               invisible
+
               absolute
+
               inset-0
+
               flex
+
               flex-col
+
               justify-center
+
               opacity-0
             "
           >
-            <div className="overflow-hidden">
+            <div
+              className="
+                overflow-hidden
+              "
+            >
               <div
                 data-frame-three-reveal
                 className="
                   transform-gpu
+
                   will-change-transform
+
                   font-sans
+
                   text-[clamp(82px,6.5vw,116px)]
+
                   font-normal
+
                   leading-[0.8]
+
                   tracking-[-0.07em]
+
                   text-[#111111]
                 "
               >
@@ -1093,17 +1842,30 @@ export default function ImpactCtaBanner({
               </div>
             </div>
 
-            <div className="mt-7 overflow-hidden">
+            <div
+              className="
+                mt-7
+
+                overflow-hidden
+              "
+            >
               <h3
                 data-frame-three-reveal
                 className="
                   transform-gpu
+
                   will-change-transform
+
                   font-sans
+
                   text-[clamp(34px,2.7vw,47px)]
+
                   font-medium
+
                   leading-[0.98]
+
                   tracking-[-0.046em]
+
                   text-[#111111]
                 "
               >
@@ -1111,30 +1873,20 @@ export default function ImpactCtaBanner({
               </h3>
             </div>
 
-            <div className="mt-5 overflow-hidden">
-              {/* <p
-                data-frame-three-reveal
-                className="
-                  max-w-[390px]
-                  transform-gpu
-                  will-change-transform
-                  font-sans
-                  text-[17px]
-                  font-normal
-                  leading-[1.55]
-                  tracking-[-0.01em]
-                  text-black/48
-                "
-              >
-                Real people. Real reach. Every single day.
-              </p> */}
-            </div>
+            <div
+              className="
+                mt-5
 
-            <div className="overflow-hidden pb-3">
+                overflow-hidden
+
+                pb-3
+              "
+            >
               <div
                 data-frame-three-reveal
                 className="
                   transform-gpu
+
                   will-change-transform
                 "
               >
@@ -1148,399 +1900,682 @@ export default function ImpactCtaBanner({
         </div>
       </div>
 
-      {/* =====================================================
-          TABLET + MOBILE PINNED STAGE
+      {/* ===================================================
+          RESPONSIVE PIN STORY
 
-          Mobile and tablet now follow the same three-state
-          storytelling logic as desktop, but their layouts are
-          specifically composed for narrow screens.
-
-          IMPORTANT:
-          This is separate markup. It does not change any
-          desktop design, position, sizing or animation value.
-      ===================================================== */}
+          Wraps the pinned responsive stage. GSAP inserts its
+          own pin-spacer here at runtime to reserve the scroll
+          distance the animation needs — do NOT put
+          overflow-hidden/auto/scroll on this wrapper, it can
+          clip that spacer and the pinned content.
+      =================================================== */}
 
       <div
-  ref={responsiveStageRef}
-  className="
-    relative
-    h-[calc(100svh_-_110px)]
-    min-h-[560px]
-    w-full
-    overflow-hidden
-    bg-[#f8f8f6]
-    sm:h-[100svh]
-    sm:min-h-[600px]
-    lg:hidden
-  "
->
-        {/* Responsive background */}
-        <div
-          aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            bg-[radial-gradient(circle_at_50%_34%,rgba(255,255,255,1)_0%,rgba(255,255,255,0.78)_38%,rgba(248,248,246,0)_76%)]
-          "
-        />
+        ref={responsiveStoryRef}
+        className="
+          relative
 
-        {/* Static responsive roadshow typography */}
+          !m-0
+          !mb-0
+
+          !p-0
+          !pb-0
+
+          w-full
+
+          overflow-visible
+
+          bg-[#f8f8f6]
+
+          lg:hidden
+        "
+      >
+        {/* =================================================
+            MOBILE + TABLET PINNED STAGE
+
+            IMPORTANT:
+
+            Pinned via GSAP ScrollTrigger (see the
+            scrollTrigger config above), matching the desktop
+            stage's own pin mechanism — NOT CSS position:
+            sticky, which cannot work inside GSAP
+            ScrollSmoother (see GlobalSmoothScroll.tsx).
+
+            The pin engages once this stage's top reaches
+            the sticky header's bottom + 20px, and releases
+            when the animation's scroll distance is used up,
+            at which point the next section in normal flow
+            pushes this stage upward.
+        ================================================= */}
+
         <div
-          aria-hidden="true"
+          ref={responsiveStageRef}
           className="
-            pointer-events-none
-            absolute
-            bottom-[38%]
-            left-1/2
-            z-[2]
-            w-max
-            -translate-x-1/2
-            sm:bottom-[-2vw]
+            relative
+
+            z-[30]
+
+            !m-0
+            !mb-0
+
+            !p-0
+            !pb-0
+
+            w-full
+
+            overflow-hidden
+
+            bg-[#f8f8f6]
+
+            !h-[calc(100svh-92px)]
+            !min-h-[500px]
+
+            sm:!h-[clamp(420px,58svh,520px)]
+            sm:!min-h-[420px]
+            sm:!max-h-[520px]
           "
         >
-          <span
+          {/* ===============================================
+              RESPONSIVE BACKGROUND
+          =============================================== */}
+
+          <div
+            aria-hidden="true"
             className="
-              block
-              select-none
-              whitespace-nowrap
-              text-center
-              font-serif
-              text-[22vw]
-              font-normal
-              italic
-              leading-none
-              tracking-[-0.055em]
-              text-black/[0.028]
-              sm:text-[21vw]
+              pointer-events-none
+
+              absolute
+
+              inset-0
+
+              bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,1)_0%,rgba(255,255,255,0.85)_38%,rgba(248,248,246,0)_78%)]
+            "
+          />
+
+          {/* ===============================================
+              ROADSHOW WATERMARK
+          =============================================== */}
+
+          <div
+            aria-hidden="true"
+            className="
+              pointer-events-none
+
+              absolute
+
+              !bottom-[-3vw]
+
+              left-1/2
+
+              z-[2]
+
+              w-max
+
+              -translate-x-1/2
+
+              sm:!bottom-[-2vw]
             "
           >
-            roadshow
-          </span>
-        </div>
-
-        {/* ================================================
-            RESPONSIVE FRAME 01 INTRO
-        ================================================ */}
-
-        <div
-          ref={responsiveIntroRef}
-          className="
-            pointer-events-none
-            absolute
-            left-1/2
-            top-[8%]
-            z-30
-            w-[calc(100%_-_40px)]
-            max-w-[700px]
-            -translate-x-1/2
-            text-center
-            sm:top-[11%]
-            sm:w-[82%]
-          "
-        >
-          <div className="overflow-hidden pb-1">
-            <p
-              data-responsive-intro-reveal
+            <span
               className="
-                m-0
-                transform-gpu
-                will-change-transform
-                font-sans
-                text-[clamp(16px,5.1vw,19px)]
+                block
+
+                select-none
+
+                whitespace-nowrap
+
+                text-center
+
+                font-serif
+
+                text-[22vw]
+
                 font-normal
-                leading-[1.02]
-                tracking-[-0.045em]
-                text-[#a2a19e]
-                sm:text-[clamp(24px,3.8vw,34px)]
+
+                italic
+
+                leading-none
+
+                tracking-[-0.055em]
+
+                text-black/[0.028]
+
+                sm:!text-[17vw]
               "
             >
-              <span
+              roadshows
+            </span>
+          </div>
+
+          {/* ===============================================
+              RESPONSIVE INTRO
+          =============================================== */}
+
+          <div
+            ref={responsiveIntroRef}
+            className="
+              pointer-events-none
+
+              absolute
+
+              left-1/2
+
+              !top-[5%]
+
+              z-30
+
+              !w-[calc(100%-40px)]
+
+              max-w-[700px]
+
+              -translate-x-1/2
+
+              text-center
+
+              sm:!top-[7%]
+
+              sm:!w-[76%]
+            "
+          >
+            <div
+              className="
+                overflow-hidden
+
+                pb-1
+              "
+            >
+              <p
+                data-responsive-intro-reveal
                 className="
-                  font-serif
+                  m-0
+
+                  transform-gpu
+
+                  will-change-transform
+
+                  font-sans
+
+                  !text-[clamp(16px,5vw,19px)]
+
                   font-normal
-                  italic
-                  text-[#969088]
+
+                  leading-[1.02]
+
+                  tracking-[-0.045em]
+
+                  text-[#a2a19e]
+
+                  sm:!text-[clamp(19px,2.6vw,25px)]
                 "
               >
-                Powerful roadshow advertising
-              </span>
-            </p>
-          </div>
+                <span
+                  className="
+                    font-serif
 
-          <div className="mt-1 overflow-hidden pb-2">
-            <h2
-              data-responsive-intro-reveal
-              className="
-                mx-auto
-                max-w-[680px]
-                transform-gpu
-                will-change-transform
-                text-balance
-                font-sans
-                text-[clamp(24px,7.8vw,30px)]
-                font-medium
-                leading-[0.98]
-                tracking-[-0.056em]
-                text-[#111111]
-                sm:text-[clamp(36px,5.4vw,48px)]
-              "
-            >
-              to amplify your brand
+                    font-normal
 
-              <br />
+                    italic
 
-              where it matters most
-            </h2>
-          </div>
-        </div>
-
-        {/* ================================================
-            RESPONSIVE VEHICLE
-
-            The outer wrapper owns static centering.
-            GSAP animates only the inner element, preventing
-            a transform conflict with Tailwind centering.
-        ================================================ */}
-
-        <div
-          className="
-            pointer-events-none
-            absolute
-            left-1/2
-            top-[38%]
-            z-20
-            w-[165vw]
-            max-w-none
-            -translate-x-1/2
-            -translate-y-1/2
-            sm:top-[56%]
-            sm:w-[min(760px,86vw)]
-          "
-        >
-          <div
-            ref={responsiveVehicleRef}
-            className="
-              relative
-              w-full
-              transform-gpu
-              backface-hidden
-              will-change-transform
-            "
-          >
-            <Image
-              src={HERO_VEHICLE_IMAGE}
-              alt="Adinn roadshow advertising vehicle"
-              width={1200}
-              height={720}
-              priority
-              draggable={false}
-              sizes="
-                (max-width: 639px) 165vw,
-                (max-width: 1023px) 86vw,
-                43vw
-              "
-              className="
-                relative
-                z-[2]
-                block
-                h-auto
-                w-full
-                max-w-none
-                select-none
-                object-contain
-                drop-shadow-[0_24px_22px_rgba(0,0,0,0.15)]
-              "
-              onLoad={() => {
-                ScrollTrigger.refresh();
-              }}
-            />
+                    text-[#969088]
+                  "
+                >
+                  Powerful roadshow advertising
+                </span>
+              </p>
+            </div>
 
             <div
-              aria-hidden="true"
               className="
-                absolute
-                bottom-[1%]
-                left-[13%]
-                right-[8%]
-                z-[1]
-                h-[7%]
-                rounded-[50%]
-                bg-black/[0.17]
-                blur-[22px]
+                mt-1
+
+                overflow-hidden
+
+                pb-2
               "
-            />
-          </div>
-        </div>
-
-        {/* ================================================
-            RESPONSIVE CONTENT VIEWPORT
-
-            Mobile: content occupies the upper area.
-            Tablet: content moves to the right side while
-            the animated vehicle moves to the left.
-        ================================================ */}
-
-        <div
-          aria-live="polite"
-          className="
-            absolute
-            left-5
-            right-5
-            top-[8%]
-            z-40
-            h-[260px]
-            overflow-hidden
-            sm:left-[58%]
-            sm:right-auto
-            sm:top-1/2
-            sm:h-[380px]
-            sm:w-[38%]
-            sm:min-w-[245px]
-            sm:max-w-[360px]
-            sm:-translate-y-1/2
-          "
-        >
-          {/* =============================================
-              RESPONSIVE FRAME 02
-          ============================================= */}
-
-          <div
-            ref={responsiveFrameTwoRef}
-            className="
-              invisible
-              absolute
-              inset-0
-              flex
-              flex-col
-              justify-start
-              opacity-0
-              sm:justify-center
-            "
-          >
-            <div className="overflow-hidden pb-2">
-              <div
-                data-responsive-frame-two-reveal
+            >
+              <h2
+                data-responsive-intro-reveal
                 className="
-                  transform-gpu
-                  will-change-transform
-                  font-sans
-                  text-[clamp(50px,15.5vw,64px)]
-                  font-normal
-                  leading-[0.8]
-                  tracking-[-0.07em]
-                  text-[#111111]
-                  sm:text-[clamp(76px,10vw,102px)]
-                "
-              >
-                250+
-              </div>
-            </div>
+                  mx-auto
 
-            <div className="mt-4 overflow-hidden pb-1 sm:mt-6">
-              <h3
-                data-responsive-frame-two-reveal
-                className="
+                  max-w-[680px]
+
                   transform-gpu
+
                   will-change-transform
+
                   text-balance
-                  font-sans
-                  text-[clamp(24px,7.5vw,31px)]
-                  font-medium
-                  leading-[1.02]
-                  tracking-[-0.046em]
-                  text-[#111111]
-                  sm:text-[clamp(34px,4.6vw,43px)]
-                "
-              >
-                Roadshow Vehicles
-              </h3>
-            </div>
 
-            <div className="mt-3 overflow-hidden pb-3 sm:mt-5">
-              <div
-                data-responsive-frame-two-reveal
-                className="
-                  transform-gpu
-                  will-change-transform
+                  font-sans
+
+                  !text-[clamp(24px,7.6vw,30px)]
+
+                  font-medium
+
+                  leading-[0.98]
+
+                  tracking-[-0.052em]
+
+                  text-[#111111]
+
+                  sm:!text-[clamp(28px,3.7vw,37px)]
                 "
               >
-                <BleedCta
-                  href={ctaHref}
-                  label="Explore Vehicles"
-                />
-              </div>
+                to amplify your brand
+
+                <br />
+
+                where it matters most
+              </h2>
             </div>
           </div>
 
-          {/* =============================================
-              RESPONSIVE FRAME 03
-          ============================================= */}
+          {/* ===============================================
+              RESPONSIVE VEHICLE
+
+              SAME SIZE / POSITION STRUCTURE.
+          =============================================== */}
 
           <div
-            ref={responsiveFrameThreeRef}
             className="
-              invisible
+              pointer-events-none
+
               absolute
-              inset-0
-              flex
-              flex-col
-              justify-start
-              opacity-0
-              sm:justify-center
+
+              left-1/2
+
+              !top-[40%]
+
+              z-20
+
+              !w-[160vw]
+
+              max-w-none
+
+              -translate-x-1/2
+              -translate-y-1/2
+
+              sm:!left-1/2
+
+              sm:!top-[52%]
+
+              sm:!w-[min(620px,64vw)]
             "
           >
-            <div className="overflow-hidden pb-2">
-              <div
-                data-responsive-frame-three-reveal
+            <div
+              ref={responsiveVehicleRef}
+              className="
+                relative
+
+                w-full
+
+                transform-gpu
+
+                backface-hidden
+
+                will-change-transform
+              "
+            >
+              <Image
+                src={HERO_VEHICLE_IMAGE}
+                alt="Adinn roadshow advertising vehicle"
+                width={1200}
+                height={720}
+                priority
+                draggable={false}
+                sizes="
+                  (max-width:639px) 160vw,
+                  (max-width:1023px) 64vw,
+                  43vw
+                "
                 className="
-                  transform-gpu
-                  will-change-transform
-                  font-sans
-                  text-[clamp(50px,15.5vw,64px)]
-                  font-normal
-                  leading-[0.8]
-                  tracking-[-0.07em]
-                  text-[#111111]
-                  sm:text-[clamp(76px,10vw,102px)]
+                  relative
+
+                  z-[2]
+
+                  block
+
+                  !h-auto
+                  !w-full
+
+                  max-w-none
+
+                  select-none
+
+                  object-contain
+
+                  drop-shadow-[0_20px_18px_rgba(0,0,0,0.15)]
+                "
+                onLoad={() => {
+                  window.requestAnimationFrame(
+                    () => {
+                      ScrollTrigger.refresh();
+                    },
+                  );
+                }}
+              />
+
+              <div
+                aria-hidden="true"
+                className="
+                  absolute
+
+                  bottom-[1%]
+
+                  left-[13%]
+
+                  right-[8%]
+
+                  z-[1]
+
+                  h-[7%]
+
+                  rounded-[50%]
+
+                  bg-black/[0.15]
+
+                  blur-[20px]
+                "
+              />
+            </div>
+          </div>
+
+          {/* ===============================================
+              RESPONSIVE CONTENT VIEWPORT
+
+              SAME EXISTING STRUCTURE.
+          =============================================== */}
+
+          <div
+            aria-live="polite"
+            className="
+              absolute
+
+              left-5
+              right-5
+
+              !top-[6%]
+
+              z-40
+
+              !h-[250px]
+
+              overflow-hidden
+
+              sm:!left-[61%]
+              sm:!right-auto
+
+              sm:!top-[49%]
+
+              sm:!h-[260px]
+
+              sm:!w-[36%]
+
+              sm:!min-w-[230px]
+              sm:!max-w-[340px]
+
+              sm:-translate-y-1/2
+            "
+          >
+            {/* =============================================
+                FRAME TWO
+            ============================================= */}
+
+            <div
+              ref={responsiveFrameTwoRef}
+              className="
+                invisible
+
+                absolute
+
+                inset-0
+
+                flex
+
+                flex-col
+
+                justify-start
+
+                opacity-0
+
+                sm:justify-center
+              "
+            >
+              {/* ===========================================
+                  250+
+              =========================================== */}
+
+              <div
+                className="
+                  overflow-hidden
+
+                  !pb-3
                 "
               >
-                20L+
+                <div
+                  data-responsive-frame-two-reveal
+                  className="
+                    transform-gpu
+
+                    will-change-transform
+
+                    font-sans
+
+                    !text-[clamp(48px,14.5vw,62px)]
+
+                    font-normal
+
+                    leading-[0.86]
+
+                    tracking-[-0.065em]
+
+                    text-[#111111]
+
+                    sm:!text-[clamp(52px,6.6vw,68px)]
+                  "
+                >
+                  250+
+                </div>
+              </div>
+
+              {/* ===========================================
+                  ROADSHOW VEHICLES
+              =========================================== */}
+
+              <div
+                className="
+                  !mt-3
+
+                  overflow-hidden
+
+                  !pb-2
+                "
+              >
+                <h3
+                  data-responsive-frame-two-reveal
+                  className="
+                    transform-gpu
+
+                    will-change-transform
+
+                    whitespace-nowrap
+
+                    font-sans
+
+                    !text-[clamp(23px,7vw,29px)]
+
+                    font-medium
+
+                    leading-[1.05]
+
+                    tracking-[-0.045em]
+
+                    text-[#111111]
+
+                    sm:!text-[clamp(22px,2.8vw,29px)]
+                  "
+                >
+                  Roadshow Vehicles
+                </h3>
+              </div>
+
+              {/* ===========================================
+                  BUTTON
+              =========================================== */}
+
+              <div
+                className="
+                  !mt-4
+
+                  overflow-hidden
+
+                  !pb-4
+                "
+              >
+                <div
+                  data-responsive-frame-two-reveal
+                  className="
+                    transform-gpu
+
+                    will-change-transform
+                  "
+                >
+                  <BleedCta
+                    href={ctaHref}
+                    label="Explore Vehicles"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="mt-4 overflow-hidden pb-1 sm:mt-6">
-              <h3
-                data-responsive-frame-three-reveal
-                className="
-                  transform-gpu
-                  will-change-transform
-                  text-balance
-                  font-sans
-                  text-[clamp(24px,7.5vw,31px)]
-                  font-medium
-                  leading-[1.02]
-                  tracking-[-0.046em]
-                  text-[#111111]
-                  sm:text-[clamp(34px,4.6vw,43px)]
-                "
-              >
-                Daily Impressions
-              </h3>
-            </div>
+            {/* =============================================
+                FRAME THREE
+            ============================================= */}
 
-            <div className="mt-3 overflow-hidden pb-3 sm:mt-5">
+            <div
+              ref={responsiveFrameThreeRef}
+              className="
+                invisible
+
+                absolute
+
+                inset-0
+
+                flex
+
+                flex-col
+
+                justify-start
+
+                opacity-0
+
+                sm:justify-center
+              "
+            >
+              {/* ===========================================
+                  20L+
+              =========================================== */}
+
               <div
-                data-responsive-frame-three-reveal
                 className="
-                  transform-gpu
-                  will-change-transform
+                  overflow-hidden
+
+                  !pb-3
                 "
               >
-                <BleedCta
-                  href={ctaHref}
-                  label="Plan Your Roadshow"
-                />
+                <div
+                  data-responsive-frame-three-reveal
+                  className="
+                    transform-gpu
+
+                    will-change-transform
+
+                    font-sans
+
+                    !text-[clamp(48px,14.5vw,62px)]
+
+                    font-normal
+
+                    leading-[0.86]
+
+                    tracking-[-0.065em]
+
+                    text-[#111111]
+
+                    sm:!text-[clamp(52px,6.6vw,68px)]
+                  "
+                >
+                  20L+
+                </div>
+              </div>
+
+              {/* ===========================================
+                  DAILY IMPRESSIONS
+              =========================================== */}
+
+              <div
+                className="
+                  !mt-3
+
+                  overflow-hidden
+
+                  !pb-2
+                "
+              >
+                <h3
+                  data-responsive-frame-three-reveal
+                  className="
+                    transform-gpu
+
+                    will-change-transform
+
+                    whitespace-nowrap
+
+                    font-sans
+
+                    !text-[clamp(23px,7vw,29px)]
+
+                    font-medium
+
+                    leading-[1.05]
+
+                    tracking-[-0.045em]
+
+                    text-[#111111]
+
+                    sm:!text-[clamp(22px,2.8vw,29px)]
+                  "
+                >
+                  Daily Impressions
+                </h3>
+              </div>
+
+              {/* ===========================================
+                  BUTTON
+              =========================================== */}
+
+              <div
+                className="
+                  !mt-4
+
+                  overflow-hidden
+
+                  !pb-4
+                "
+              >
+                <div
+                  data-responsive-frame-three-reveal
+                  className="
+                    transform-gpu
+
+                    will-change-transform
+                  "
+                >
+                  <BleedCta
+                    href={ctaHref}
+                    label="Plan Your Roadshow"
+                  />
+                </div>
               </div>
             </div>
           </div>

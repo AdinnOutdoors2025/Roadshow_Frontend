@@ -929,7 +929,7 @@ backdrop-filter: blur(10px);
                   <span className="RS_RefMenuLabel">Sign In</span>
                   <span className="RS_RefMenuArrow">
                     <ChevronIcon />
-                  </span>
+                  </span> 
                 </button>
 
                 <div className="RS_RefMenuDivider" />

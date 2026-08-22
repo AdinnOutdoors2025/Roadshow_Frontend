@@ -501,10 +501,10 @@ export default function RoadshowProcessSection() {
             "
           >
             {/* Mobile and tablet: intentional three-line title */}
-            <span className="block lg:hidden">How the</span>
-            <span className="block lg:hidden">roadshow</span>
+            <span className="block lg:hidden">How the roadshow </span>
+            
             <span className="block text-[#b5121b] lg:hidden">
-              Works
+              roadshow Works
             </span>
 
             {/* Desktop: preserve the existing title layout */}

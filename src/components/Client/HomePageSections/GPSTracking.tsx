@@ -1384,8 +1384,8 @@ function SouthIndiaLiveMap() {
   }, []);
 
   return (
-    <div className="relative overflow-hidden rounded-[30px] border border-black/[0.06] bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
-      <div className="relative h-[560px] w-full overflow-hidden rounded-t-[30px] bg-[#E8EFF6]">
+    <div className="relative h-full min-h-[360px] w-full overflow-hidden rounded-[26px] bg-[#E8EFF6] sm:min-h-[430px] lg:min-h-[560px]">
+      <div className="relative h-full min-h-[360px] w-full overflow-hidden rounded-[26px] bg-[#E8EFF6] sm:min-h-[430px] lg:min-h-[560px]">
         <img
           src={VEHICLE_IMAGE_PATH}
           alt=""
@@ -1402,13 +1402,13 @@ function SouthIndiaLiveMap() {
         </div> */}
 
         {routeStatus === "loading" && (
-          <div className="absolute bottom-5 left-5 z-[500] rounded-full bg-white/95 px-4 py-2 text-[12px] font-semibold text-[#475467] shadow-[0_12px_34px_rgba(15,23,42,0.12)] backdrop-blur-md">
+          <div className="absolute bottom-4 left-4 z-[500] rounded-full bg-white px-4 py-2 text-[12px] font-semibold text-[#475467]">
             Syncing city road routes...
           </div>
         )}
 
         {routeStatus === "error" && (
-          <div className="absolute bottom-5 left-5 z-[500] max-w-[280px] rounded-2xl bg-white/95 px-4 py-3 text-[12px] font-medium text-[#475467] shadow-[0_12px_34px_rgba(15,23,42,0.12)] backdrop-blur-md">
+          <div className="absolute bottom-4 left-4 z-[500] max-w-[280px] rounded-2xl bg-white px-4 py-3 text-[12px] font-medium text-[#475467]">
             Road route service is not available now. Vehicles are hidden to avoid fake movement.
           </div>
         )}
@@ -1456,7 +1456,7 @@ function SouthIndiaLiveMap() {
           overflow: hidden;
           border: 0 !important;
           border-radius: 14px !important;
-          box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16) !important;
+          box-shadow: none !important;
         }
 
         .leaflet-control-zoom a {
@@ -1489,7 +1489,7 @@ function SouthIndiaLiveMap() {
           object-fit: contain;
           transform: rotate(var(--vehicle-angle, 0deg)) !important;
           transform-origin: center 86%;
-          filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.2));
+          filter: none;
           transition: transform 0.16s linear;
           will-change: transform;
         }
@@ -1514,7 +1514,7 @@ function SouthIndiaLiveMap() {
           border-radius: 999px !important;
           background: rgba(255, 255, 255, 0.96) !important;
           color: #111827 !important;
-          box-shadow: 0 10px 26px rgba(15, 23, 42, 0.16) !important;
+          box-shadow: none !important;
           font-size: 12px !important;
           font-weight: 700 !important;
         }
@@ -1524,141 +1524,101 @@ function SouthIndiaLiveMap() {
 }
 
 export function GPSTracking() {
+  const features = [
+    {
+      i: Activity,
+      t: "Live GPS Monitoring",
+      d: "Track every vehicle in real time.",
+    },
+    {
+      i: Navigation2,
+      t: "Execution Photo Reports",
+      d: "Verified photos from every campaign location.",
+    },
+    {
+      i: MapPin,
+      t: "WhatsApp Live Updates",
+      d: "Instant progress updates delivered to your team.",
+    },
+  ];
+
   return (
-    <section className="py-[clamp(56px,6vw,104px)]">
-      <div className="mx-auto grid w-[calc(100%_-_76px)] max-w-[1540px] items-center gap-12 max-sm:w-[calc(100%_-_36px)] lg:grid-cols-12">
-        {/* =====================================================
-            LEFT CONTENT
-        ===================================================== */}
+    <section className="bg-[#EEF6FF] py-[clamp(56px,6vw,96px)]">
+      <div className="mx-auto w-[calc(100%_-_36px)] max-w-[1540px] sm:w-[calc(100%_-_56px)] lg:w-[calc(100%_-_76px)]">
+        <div className="overflow-hidden rounded-[32px] bg-white sm:rounded-[38px]">
+          <div className="grid lg:grid-cols-[0.86fr_1.14fr]">
+            {/* LEFT CONTENT */}
+            <div className="flex flex-col justify-center px-6 py-9 sm:px-10 sm:py-12 lg:px-12 lg:py-14 xl:px-16 xl:py-16">
+              <Reveal delay={1}>
+                <h2 className="max-w-[620px] font-outfit text-[34px] font-normal leading-[1.07] tracking-[-0.035em] text-[#111111] sm:text-[40px] lg:text-[44px] xl:text-[48px]">
+                  GPS Tracking to monitor your campaign with confidence.
+                </h2>
+              </Reveal>
 
-        <div className="lg:col-span-5">
-          {/* HEADING */}
+              <Reveal delay={2}>
+                <p className="mt-5 max-w-[610px] text-[15px] leading-[1.75] text-[#667085] sm:text-[16px] lg:text-[17px]">
+                  GPS-supported visibility for routes, movement, and live execution
+                  updates across city roads and district campaign zones.
+                </p>
+              </Reveal>
 
-          <Reveal delay={1}>
-            <h2
-              className="
-                mt-3
-                font-outfit
-                text-[34px]
-                font-regular
-                leading-[1.08]
-                tracking-[-0.025em]
-                text-balance
+              <Reveal delay={3}>
+                <ul className="mt-8 space-y-6 sm:mt-9">
+                  {features.map((feature) => (
+                    <li key={feature.t} className="flex items-start gap-4">
+                      <div className="flex size-9 shrink-0 items-center justify-center text-[#E3000F] sm:size-10">
+                        <feature.i className="size-[21px]" strokeWidth={1.65} />
+                      </div>
 
-                md:text-[38px]
-                lg:text-[42px]
-              "
-            >
-              GPS Tracking to monitor your campaign with confidence.
-            </h2>
-          </Reveal>
+                      <div className="pt-0.5">
+                        <h3 className="text-[16px] font-semibold leading-6 text-[#161616] sm:text-[17px]">
+                          {feature.t}
+                        </h3>
+                        <p className="mt-1 text-[14px] leading-6 text-[#777C85] sm:text-[15px]">
+                          {feature.d}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
 
-          {/* DESCRIPTION */}
+              <Reveal delay={4}>
+                <ButtonHover
+                  type="button"
+                  className="RS_GpsConsultBtn mt-9 w-fit sm:mt-10"
+                  label="Consult With Our Team"
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: 500,
+                  }}
+                  onClick={() => {
+                    const contactSection = document.getElementById("contact");
 
-          <Reveal delay={2}>
-            <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-              GPS-supported visibility for routes, movement, and live execution
-              updates across city roads and district campaign zones.
-            </p>
-          </Reveal>
+                    if (contactSection) {
+                      contactSection.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      });
+                    }
 
-          {/* FEATURES */}
+                    window.history.replaceState(
+                      null,
+                      "",
+                      window.location.pathname,
+                    );
+                  }}
+                />
+              </Reveal>
+            </div>
 
-          <Reveal delay={3}>
-            <ul className="mt-8 space-y-4">
-              {[
-                {
-                  i: Activity,
-                  t: "Live GPS Monitoring",
-                  d: "Track every vehicle in real time.",
-                },
-                {
-                  i: Navigation2,
-                  t: "Execution Photo Reports",
-                  d: "Verified photos from every campaign location.",
-                },
-                {
-                  i: MapPin,
-                  t: "WhatsApp Live Updates",
-                  d: "Instant progress updates delivered to your team.",
-                },
-              ].map((f) => (
-                <li
-                  key={f.t}
-                  className="flex gap-4"
-                >
-                  <div
-                    className="
-                      flex
-                      size-10
-                      shrink-0
-                      items-center
-                      justify-center
-                      rounded-xl
-                      bg-[#E3000F]/10
-                      text-[#E3000F]
-                    "
-                  >
-                    <f.i
-                      className="size-5"
-                      strokeWidth={1.4}
-                    />
-                  </div>
-
-                  <div>
-                    <div className="font-medium">
-                      {f.t}
-                    </div>
-
-                    <p className="text-sm text-muted-foreground">
-                      {f.d}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-
-          {/* =================================================
-              CONSULT CTA
-          ================================================= */}
-
-          <Reveal delay={4}>
-            <ButtonHover
-              type="button"
-              className="RS_GpsConsultBtn mt-9"
-              label="Consult With Our Team"
-              style={{
-                fontSize: "20px",
-                fontWeight: 500,
-              }}
-              onClick={() => {
-                const contactSection =
-                  document.getElementById("contact");
-
-                if (contactSection) {
-                  contactSection.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
-                }
-
-                window.history.replaceState(
-                  null,
-                  "",
-                  window.location.pathname,
-                );
-              }}
-            />
-          </Reveal>
-        </div>
-
-        {/* =====================================================
-            RIGHT MAP
-        ===================================================== */}
-
-        <div className="lg:col-span-7">
-          <SouthIndiaLiveMap />
+            {/* RIGHT MAP */}
+            <div className="p-3 pt-0 sm:p-5 sm:pt-0 lg:p-5 lg:pl-0">
+              <div className="h-full min-h-[360px] sm:min-h-[430px] lg:min-h-[560px]">
+                <SouthIndiaLiveMap />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
