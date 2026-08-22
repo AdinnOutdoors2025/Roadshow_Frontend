@@ -1,0 +1,28 @@
+{
+  "moduleTaskPrefix": "[MODULE]",
+  "testOutputDir": "tests/module-qa",
+  "qaRoot": ".qa",
+  "allowNotApplicable": true,
+  "categories": [
+    "smoke",
+    "functional",
+    "regression",
+    "regex",
+    "api",
+    "security",
+    "performance"
+  ],
+  "security": {
+    "productionTestingAllowed": false,
+    "failOnIntroducedSeverity": [
+      "critical",
+      "high"
+    ]
+  },
+  "performance": {
+    "mode": "safe-baseline",
+    "maxAdHocConcurrency": 10,
+    "maxAdHocDurationSeconds": 30,
+    "enforceProjectDefinedBudgets": true
+  }
+}

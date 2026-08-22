@@ -40,9 +40,7 @@
   color: var(--rs-text);
 
   padding:
-    clamp(112px, 8vw, 172px)
-    clamp(14px, 4vw, 76px)
-    clamp(36px, 5vw, 80px);
+    clamp(112px, 8vw, 172px) clamp(14px, 4vw, 76px) clamp(36px, 5vw, 80px);
 }
 
 .RS_MyBookingsContainer {
@@ -77,23 +75,19 @@
   transform: translateY(0);
 }
 
-.RS_BookingsList
-  .RS_BookingRow:nth-child(2) {
+.RS_BookingsList .RS_BookingRow:nth-child(2) {
   transition-delay: 45ms;
 }
 
-.RS_BookingsList
-  .RS_BookingRow:nth-child(3) {
+.RS_BookingsList .RS_BookingRow:nth-child(3) {
   transition-delay: 90ms;
 }
 
-.RS_BookingsList
-  .RS_BookingRow:nth-child(4) {
+.RS_BookingsList .RS_BookingRow:nth-child(4) {
   transition-delay: 135ms;
 }
 
-.RS_BookingsList
-  .RS_BookingRow:nth-child(5) {
+.RS_BookingsList .RS_BookingRow:nth-child(5) {
   transition-delay: 180ms;
 }
 
@@ -169,8 +163,7 @@
   gap: clamp(10px, 1vw, 20px);
 
   padding:
-    clamp(14px, 1.5vw, 30px)
-    clamp(14px, 1.8vw, 34px);
+    clamp(14px, 1.5vw, 30px) clamp(14px, 1.8vw, 34px);
 
   transition:
     background-color 220ms ease,
@@ -263,9 +256,7 @@
   display: grid;
 
   grid-template-columns:
-    minmax(300px, 420px)
-    minmax(0, 1fr)
-    clamp(130px, 9vw, 165px);
+    minmax(300px, 420px) minmax(0, 1fr) clamp(130px, 9vw, 165px);
 
   align-items: center;
 
@@ -296,8 +287,7 @@
   background: #ffffff;
 
   padding:
-    0
-    clamp(15px, 1.15vw, 23px);
+    0 clamp(15px, 1.15vw, 23px);
 
   color: #8a8a92;
 
@@ -347,6 +337,14 @@
   color: #aaaab1;
 }
 
+.RS_SearchField {
+  grid-column: 1;
+}
+
+.RS_SortWrapper {
+  grid-column: 3;
+}
+
 /* =========================================================
    STATUS TABS
 ========================================================= */
@@ -393,8 +391,7 @@
   background: #ffffff;
 
   padding:
-    0
-    clamp(12px, 0.95vw, 20px);
+    0 clamp(12px, 0.95vw, 20px);
 
   color: #505159;
 
@@ -553,10 +550,7 @@
     0 20px 50px rgba(15, 16, 22, 0.14);
 
   animation:
-    RS_SortMenuOpen
-    220ms
-    cubic-bezier(0.22, 1, 0.36, 1)
-    both;
+    RS_SortMenuOpen 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .RS_SortMenu button {
@@ -569,8 +563,7 @@
   background: transparent;
 
   padding:
-    clamp(10px, 0.8vw, 14px)
-    clamp(11px, 0.9vw, 16px);
+    clamp(10px, 0.8vw, 14px) clamp(11px, 0.9vw, 16px);
 
   color: #595a61;
 
@@ -601,16 +594,14 @@
     opacity: 0;
 
     transform:
-      translateY(-7px)
-      scale(0.97);
+      translateY(-7px) scale(0.97);
   }
 
   to {
     opacity: 1;
 
     transform:
-      translateY(0)
-      scale(1);
+      translateY(0) scale(1);
   }
 }
 
@@ -634,12 +625,7 @@
   display: grid;
 
   grid-template-columns:
-    minmax(205px, 1.1fr)
-    minmax(150px, 0.78fr)
-    minmax(205px, 1.1fr)
-    minmax(185px, 1fr)
-    minmax(150px, 0.75fr)
-    minmax(165px, 0.8fr);
+    minmax(205px, 1.1fr) minmax(150px, 0.78fr) minmax(205px, 1.1fr) minmax(185px, 1fr) minmax(150px, 0.75fr) minmax(165px, 0.8fr);
 
   min-width: 0;
 
@@ -656,8 +642,7 @@
   background: #ffffff;
 
   padding:
-    clamp(15px, 1.15vw, 23px)
-    clamp(15px, 1.35vw, 27px);
+    clamp(15px, 1.15vw, 23px) clamp(15px, 1.35vw, 27px);
 
   box-shadow:
     0 5px 17px rgba(22, 24, 32, 0.035);
@@ -717,8 +702,7 @@
   height: clamp(18px, 1.15vw, 23px);
 }
 
-.RS_BookingRow:hover
-  .RS_BookingCalendarIcon {
+.RS_BookingRow:hover .RS_BookingCalendarIcon {
   background: #ededf0;
 
   transform: scale(1.04);
@@ -824,8 +808,7 @@
   border-radius: 999px;
 
   padding:
-    clamp(5px, 0.38vw, 7px)
-    clamp(8px, 0.55vw, 11px);
+    clamp(5px, 0.38vw, 7px) clamp(8px, 0.55vw, 11px);
 
   font-size: clamp(9px, 0.63vw, 13px);
 
@@ -1074,7 +1057,7 @@
   text-align: center;
 }
 
-.RS_StateCard > svg {
+.RS_StateCard>svg {
   margin-bottom: clamp(14px, 1vw, 20px);
 
   width: clamp(28px, 1.8vw, 36px);
@@ -1132,8 +1115,7 @@
   border-radius: 50%;
 
   animation:
-    RS_Spin
-    800ms linear infinite;
+    RS_Spin 800ms linear infinite;
 }
 
 @keyframes RS_Spin {
@@ -1209,8 +1191,7 @@
     transform 200ms ease;
 }
 
-.RS_PaginationControls
-  button:hover:not(:disabled) {
+.RS_PaginationControls button:hover:not(:disabled) {
   border-color: #cfcfd4;
 
   transform: translateY(-1px);
@@ -1259,8 +1240,7 @@
   -webkit-backdrop-filter: blur(9px);
 
   animation:
-    RS_ModalOverlayOpen
-    250ms ease both;
+    RS_ModalOverlayOpen 250ms ease both;
 }
 
 .RS_ModalPanel {
@@ -1282,10 +1262,7 @@
     0 35px 90px rgba(0, 0, 0, 0.2);
 
   animation:
-    RS_ModalOpen
-    420ms
-    cubic-bezier(0.22, 1, 0.36, 1)
-    both;
+    RS_ModalOpen 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes RS_ModalOverlayOpen {
@@ -1303,16 +1280,14 @@
     opacity: 0;
 
     transform:
-      translateY(24px)
-      scale(0.975);
+      translateY(24px) scale(0.975);
   }
 
   to {
     opacity: 1;
 
     transform:
-      translateY(0)
-      scale(1);
+      translateY(0) scale(1);
   }
 }
 
@@ -1336,8 +1311,7 @@
   background: rgba(247, 247, 248, 0.95);
 
   padding:
-    clamp(17px, 1.4vw, 26px)
-    clamp(18px, 1.7vw, 32px);
+    clamp(17px, 1.4vw, 26px) clamp(18px, 1.7vw, 32px);
 
   backdrop-filter: blur(18px);
 }
@@ -1436,9 +1410,7 @@
   overscroll-behavior: contain;
 
   padding:
-    clamp(14px, 1.35vw, 25px)
-    clamp(16px, 1.6vw, 30px)
-    clamp(18px, 1.5vw, 28px);
+    clamp(14px, 1.35vw, 25px) clamp(16px, 1.6vw, 30px) clamp(18px, 1.5vw, 28px);
 
   scrollbar-width: thin;
 
@@ -1480,7 +1452,7 @@
   background: #ffffff;
 }
 
-.RS_ModalQuickStats > div {
+.RS_ModalQuickStats>div {
   position: relative;
 
   display: flex;
@@ -1495,8 +1467,7 @@
     clamp(13px, 1.05vw, 19px);
 }
 
-.RS_ModalQuickStats
-  > div:not(:last-child)::after {
+.RS_ModalQuickStats>div:not(:last-child)::after {
   content: "";
 
   position: absolute;
@@ -1556,8 +1527,7 @@
   display: grid;
 
   grid-template-columns:
-    clamp(245px, 20vw, 310px)
-    minmax(0, 1fr);
+    clamp(245px, 20vw, 310px) minmax(0, 1fr);
 
   gap: clamp(13px, 1vw, 20px);
 }
@@ -1610,7 +1580,7 @@
   font-weight: 600;
 }
 
-.RS_ModalCardTitle > div span {
+.RS_ModalCardTitle>div span {
   display: block;
 
   margin-top: 2px;
@@ -1788,9 +1758,7 @@
   display: grid;
 
   grid-template-columns:
-    clamp(90px, 7vw, 125px)
-    minmax(0, 1fr)
-    clamp(150px, 12vw, 190px);
+    clamp(90px, 7vw, 125px) minmax(0, 1fr) clamp(150px, 12vw, 190px);
 
   align-items: center;
 
@@ -1838,8 +1806,7 @@
     transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.RS_ModalVehicle:hover
-  .RS_ModalVehicleImage img {
+.RS_ModalVehicle:hover .RS_ModalVehicleImage img {
   transform: scale(1.04);
 }
 
@@ -1920,7 +1887,7 @@
   padding: clamp(11px, 0.85vw, 15px);
 }
 
-.RS_ModalVehiclePrice > div {
+.RS_ModalVehiclePrice>div {
   display: flex;
 
   align-items: center;
@@ -1944,8 +1911,7 @@
   display: grid;
 
   grid-template-columns:
-    1fr
-    1fr;
+    1fr 1fr;
 
   gap: clamp(12px, 0.85vw, 16px);
 }
@@ -1960,7 +1926,7 @@
   margin-top: clamp(13px, 0.9vw, 17px);
 }
 
-.RS_AmountSummary > div {
+.RS_AmountSummary>div {
   display: flex;
 
   align-items: center;
@@ -2021,7 +1987,7 @@
   margin-top: clamp(13px, 0.9vw, 17px);
 }
 
-.RS_NextSteps > div {
+.RS_NextSteps>div {
   display: flex;
 
   align-items: flex-start;
@@ -2029,7 +1995,7 @@
   gap: 9px;
 }
 
-.RS_NextSteps > div > span {
+.RS_NextSteps>div>span {
   display: grid;
 
   width: clamp(22px, 1.45vw, 28px);
@@ -2081,8 +2047,7 @@
   background: #ffffff;
 
   padding:
-    clamp(11px, 0.9vw, 16px)
-    clamp(15px, 1.5vw, 28px);
+    clamp(11px, 0.9vw, 16px) clamp(15px, 1.5vw, 28px);
 }
 
 .RS_ModalFooterButton {
@@ -2109,9 +2074,7 @@
 @media (min-width: 1800px) {
   .RS_MyBookingsRoot {
     padding:
-      178px
-      88px
-      84px;
+      178px 88px 84px;
   }
 
   .RS_MyBookingsContainer {
@@ -2166,9 +2129,7 @@
 
   .RS_ControlBar {
     grid-template-columns:
-      460px
-      minmax(0, 1fr)
-      172px;
+      460px minmax(0, 1fr) 172px;
 
     gap: 15px;
 
@@ -2226,12 +2187,7 @@
 
   .RS_BookingRow {
     grid-template-columns:
-      minmax(245px, 1.1fr)
-      minmax(185px, 0.8fr)
-      minmax(260px, 1.2fr)
-      minmax(235px, 1fr)
-      minmax(190px, 0.8fr)
-      205px;
+      minmax(245px, 1.1fr) minmax(185px, 0.8fr) minmax(260px, 1.2fr) minmax(235px, 1fr) minmax(190px, 0.8fr) 205px;
 
     min-height: 124px;
 
@@ -2343,9 +2299,7 @@
 @media (min-width: 1600px) and (max-width: 1799px) {
   .RS_MyBookingsRoot {
     padding:
-      162px
-      70px
-      70px;
+      162px 70px 70px;
   }
 
   .RS_PageHeader h1 {
@@ -2372,9 +2326,7 @@
 
   .RS_ControlBar {
     grid-template-columns:
-      420px
-      minmax(0, 1fr)
-      158px;
+      420px minmax(0, 1fr) 158px;
   }
 
   .RS_SearchField,
@@ -2396,12 +2348,7 @@
 
   .RS_BookingRow {
     grid-template-columns:
-      minmax(220px, 1.1fr)
-      minmax(165px, 0.8fr)
-      minmax(230px, 1.15fr)
-      minmax(205px, 1fr)
-      minmax(170px, 0.8fr)
-      185px;
+      minmax(220px, 1.1fr) minmax(165px, 0.8fr) minmax(230px, 1.15fr) minmax(205px, 1fr) minmax(170px, 0.8fr) 185px;
 
     min-height: 110px;
 
@@ -2453,9 +2400,7 @@
 @media (min-width: 1400px) and (max-width: 1599px) {
   .RS_MyBookingsRoot {
     padding:
-      150px
-      52px
-      62px;
+      150px 52px 62px;
   }
 
   .RS_PageHeader h1 {
@@ -2482,9 +2427,7 @@
 
   .RS_ControlBar {
     grid-template-columns:
-      365px
-      minmax(0, 1fr)
-      145px;
+      365px minmax(0, 1fr) 145px;
   }
 
   .RS_FilterTab {
@@ -2495,12 +2438,7 @@
 
   .RS_BookingRow {
     grid-template-columns:
-      minmax(195px, 1.1fr)
-      minmax(145px, 0.78fr)
-      minmax(195px, 1.1fr)
-      minmax(180px, 1fr)
-      minmax(145px, 0.75fr)
-      170px;
+      minmax(195px, 1.1fr) minmax(145px, 0.78fr) minmax(195px, 1.1fr) minmax(180px, 1fr) minmax(145px, 0.75fr) 170px;
 
     min-height: 98px;
 
@@ -2548,9 +2486,7 @@
 @media (min-width: 1180px) and (max-width: 1399px) {
   .RS_MyBookingsRoot {
     padding:
-      138px
-      34px
-      52px;
+      138px 34px 52px;
   }
 
   .RS_PageHeader h1 {
@@ -2586,9 +2522,7 @@
 
   .RS_ControlBar {
     grid-template-columns:
-      310px
-      minmax(0, 1fr)
-      125px;
+      310px minmax(0, 1fr) 125px;
 
     gap: 8px;
   }
@@ -2618,12 +2552,7 @@
 
   .RS_BookingRow {
     grid-template-columns:
-      minmax(175px, 1fr)
-      120px
-      minmax(165px, 1fr)
-      minmax(155px, 0.9fr)
-      125px
-      145px;
+      minmax(175px, 1fr) 120px minmax(165px, 1fr) minmax(155px, 0.9fr) 125px 145px;
 
     min-height: 88px;
 
@@ -2682,9 +2611,7 @@
 @media (min-width: 768px) and (max-width: 1179px) {
   .RS_MyBookingsRoot {
     padding:
-      125px
-      25px
-      44px;
+      125px 25px 44px;
   }
 
   .RS_PageHeader h1 {
@@ -2728,8 +2655,7 @@
 
   .RS_ControlBar {
     grid-template-columns:
-      minmax(0, 1fr)
-      125px;
+      minmax(0, 1fr) 125px;
 
     gap: 10px;
   }
@@ -2814,17 +2740,15 @@
       repeat(2, minmax(0, 1fr));
   }
 
-  .RS_ModalQuickStats
-    > div:nth-child(2)::after {
+  .RS_ModalQuickStats>div:nth-child(2)::after {
     display: none;
   }
 
-  .RS_ModalQuickStats > div {
+  .RS_ModalQuickStats>div {
     border-bottom: 1px solid #eeeeef;
   }
 
-  .RS_ModalQuickStats
-    > div:nth-last-child(-n + 2) {
+  .RS_ModalQuickStats>div:nth-last-child(-n + 2) {
     border-bottom: 0;
   }
 
@@ -2836,8 +2760,7 @@
     display: grid;
 
     grid-template-columns:
-      minmax(0, 1.3fr)
-      minmax(220px, 0.7fr);
+      minmax(0, 1.3fr) minmax(220px, 0.7fr);
   }
 }
 
@@ -2849,9 +2772,7 @@
 @media (max-width: 767px) {
   .RS_MyBookingsRoot {
     padding:
-      105px
-      14px
-      34px;
+      105px 14px 34px;
   }
 
   .RS_PageHeader {
@@ -3012,8 +2933,7 @@
       repeat(2, minmax(0, 1fr));
 
     gap:
-      17px
-      12px;
+      17px 12px;
 
     min-height: auto;
 
@@ -3152,9 +3072,7 @@
 
   .RS_ModalBody {
     padding:
-      12px
-      12px
-      17px;
+      12px 12px 17px;
   }
 
   .RS_ModalQuickStats {
@@ -3163,19 +3081,17 @@
     margin-bottom: 12px;
   }
 
-  .RS_ModalQuickStats > div {
+  .RS_ModalQuickStats>div {
     border-bottom: 1px solid #eeeeef;
 
     padding: 12px;
   }
 
-  .RS_ModalQuickStats
-    > div:not(:last-child)::after {
+  .RS_ModalQuickStats>div:not(:last-child)::after {
     display: none;
   }
 
-  .RS_ModalQuickStats
-    > div:last-child {
+  .RS_ModalQuickStats>div:last-child {
     border-bottom: 0;
   }
 
@@ -3232,7 +3148,7 @@
     gap: 10px;
   }
 
-  .RS_ModalVehiclePrice > div {
+  .RS_ModalVehiclePrice>div {
     flex-direction: column;
 
     align-items: flex-start;
@@ -3297,6 +3213,7 @@
 ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
+
   .RS_Reveal,
   .RS_BookingRow,
   .RS_ActionButton,
@@ -3319,5 +3236,5474 @@
     opacity: 1 !important;
 
     transform: none !important;
+  }
+}
+
+/* =========================================================
+   REFERENCE DASHBOARD OVERRIDES — 14 AUG 2026
+   Split booking list + client campaign tracking console.
+========================================================= */
+
+.RS_MyBookingsRoot {
+  --rs-ref-bg: #f6f7f8;
+  --rs-ref-border: #e4e7eb;
+  --rs-ref-text: #171b24;
+  --rs-ref-muted: #7b828d;
+  --rs-ref-red: #f33e43;
+  --rs-ref-green: #179c63;
+  --rs-ref-blue: #2582e7;
+  --rs-ref-orange: #f7931a;
+
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, #fafbfc 0%, var(--rs-ref-bg) 100%);
+  padding:
+    clamp(100px, 7vw, 132px) clamp(9px, 1.2vw, 22px) clamp(28px, 4vw, 58px);
+}
+
+.RS_MyBookingsContainer {
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+}
+
+.RS_DashboardShell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.17fr) minmax(540px, 0.92fr);
+  overflow: hidden;
+  border: 1px solid var(--rs-ref-border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 18px 55px rgba(30, 38, 52, 0.055);
+}
+
+.RS_BookingsPane {
+  min-width: 0;
+  padding: clamp(17px, 1.2vw, 24px);
+  border-right: 1px solid #e7e9ed;
+}
+
+.RS_PageHeader {
+  margin: 0;
+  padding: 1px 4px clamp(13px, 0.85vw, 17px);
+}
+
+.RS_PageHeader h1 {
+  font-size: clamp(25px, 1.55vw, 34px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.RS_PageHeader p {
+  max-width: none;
+  margin-top: 6px;
+  font-size: clamp(10.5px, 0.68vw, 13.5px);
+  line-height: 1.45;
+}
+
+/* ---------- Stats ---------- */
+
+.RS_StatsPanel {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-bottom: 13px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.RS_StatItem {
+  gap: clamp(7px, 0.55vw, 11px);
+  min-height: 0;
+  padding: clamp(10px, 0.75vw, 14px) clamp(9px, 0.7vw, 13px);
+}
+
+.RS_StatItem:hover {
+  transform: none;
+}
+
+.RS_StatItem:not(:last-child)::after {
+  top: 22%;
+  height: 56%;
+}
+
+.RS_StatIcon {
+  width: clamp(31px, 2vw, 38px);
+  height: clamp(31px, 2vw, 38px);
+  border-radius: 50%;
+  background: #f5f6f8;
+}
+
+.RS_StatIcon svg {
+  width: clamp(17px, 1.05vw, 21px);
+  height: clamp(17px, 1.05vw, 21px);
+}
+
+.RS_StatItem--red .RS_StatIcon {
+  color: var(--rs-ref-red);
+}
+
+.RS_StatItem--green .RS_StatIcon {
+  color: var(--rs-ref-green);
+}
+
+.RS_StatItem--blue .RS_StatIcon {
+  color: var(--rs-ref-blue);
+}
+
+.RS_StatItem--orange .RS_StatIcon {
+  color: var(--rs-ref-orange);
+}
+
+.RS_StatItem {
+  appearance: none;
+  margin: 0;
+  border: none;
+  width: 100%;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.RS_StatItem--active {
+  background: #f5f6f8;
+}
+
+.RS_StatItem--red.RS_StatItem--active {
+  background: rgba(243, 62, 67, 0.08);
+}
+
+.RS_StatItem--green.RS_StatItem--active {
+  background: rgba(23, 156, 99, 0.08);
+}
+
+.RS_StatItem--blue.RS_StatItem--active {
+  background: rgba(37, 130, 231, 0.08);
+}
+
+.RS_StatItem--orange.RS_StatItem--active {
+  background: rgba(247, 147, 26, 0.08);
+}
+
+.RS_StatLabel {
+  font-size: clamp(8px, 0.48vw, 10px);
+}
+
+.RS_StatValue {
+  margin-top: 3px;
+  font-size: clamp(16px, 1.05vw, 21px);
+}
+
+/* ---------- Controls ---------- */
+
+.RS_ControlBar {
+  grid-template-columns: minmax(240px, 1.4fr) minmax(0, 2.1fr) minmax(100px, 0.52fr);
+  gap: 7px;
+  margin-bottom: 11px;
+}
+
+.RS_SearchField,
+.RS_SortButton {
+  height: 42px;
+  border-radius: 8px;
+}
+
+.RS_SearchField {
+  padding: 0 12px;
+}
+
+.RS_SearchField input {
+  font-size: clamp(11px, 0.7vw, 14px);
+}
+
+.RS_StatusTabs {
+  gap: 5px;
+}
+
+.RS_FilterTab {
+  height: 40px;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 0 clamp(8px, 0.55vw, 11px);
+  font-size: clamp(10.5px, 0.62vw, 13px);
+}
+
+.RS_FilterTab small {
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+}
+
+.RS_FilterDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #a8adb5;
+}
+
+.RS_FilterDot--confirmed {
+  background: var(--rs-ref-green);
+}
+
+.RS_FilterDot--in-progress {
+  background: var(--rs-ref-blue);
+}
+
+.RS_FilterDot--pending {
+  background: var(--rs-ref-orange);
+}
+
+.RS_FilterDot--cancelled {
+  background: var(--rs-ref-red);
+}
+
+.RS_SortButton {
+  font-size: clamp(10.5px, 0.62vw, 13px);
+}
+
+.RS_SortMenu {
+  width: 170px;
+}
+
+.RS_SortMenu button {
+  font-size: 12px;
+  padding: 8px 9px;
+}
+
+/* ---------- Active filter chips ---------- */
+
+.RS_ActiveFilters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin: -3px 0 11px;
+}
+
+.RS_ActiveFiltersLabel {
+  color: var(--rs-ref-muted);
+  font-size: clamp(10.5px, 0.6vw, 12.5px);
+  font-weight: 600;
+}
+
+.RS_FilterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--rs-ref-border);
+  border-radius: 999px;
+  background: #f5f6f8;
+  padding: 6px 10px;
+  color: var(--rs-ref-text);
+  font-size: clamp(10.5px, 0.6vw, 12.5px);
+  font-weight: 550;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.RS_FilterChip:hover {
+  border-color: #d2d6dc;
+  background: #eef0f2;
+}
+
+.RS_FilterChip svg {
+  flex: 0 0 auto;
+  color: var(--rs-ref-muted);
+}
+
+.RS_ClearAllFilters {
+  border: 0;
+  background: transparent;
+  padding: 6px 4px;
+  color: var(--rs-ref-red);
+  font-size: clamp(10.5px, 0.6vw, 12.5px);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.RS_ClearAllFilters:hover {
+  opacity: 0.8;
+}
+
+/* ---------- Booking rows ---------- */
+
+.RS_BookingsArea {
+  min-height: 390px;
+}
+
+.RS_BookingsList {
+  gap: 7px;
+}
+
+.RS_BookingRow {
+  grid-template-columns:
+    minmax(150px, 1.2fr) minmax(92px, 0.72fr) minmax(130px, 1.06fr) minmax(128px, 1.03fr) minmax(70px, 0.55fr) minmax(62px, 0.48fr) 28px;
+  gap: clamp(8px, 0.6vw, 12px);
+  min-height: clamp(68px, 4.7vw, 82px);
+  border-radius: 10px;
+  padding: clamp(10px, 0.72vw, 13px) clamp(10px, 0.8vw, 15px);
+  cursor: pointer;
+  outline: 0;
+  box-shadow: none;
+}
+
+.RS_BookingRow:hover {
+  border-color: #d5d9df;
+  box-shadow: 0 8px 22px rgba(25, 31, 42, 0.05);
+  transform: translateY(-1px);
+}
+
+.RS_BookingRow--active {
+  border-color: rgba(243, 62, 67, 0.55);
+  background: linear-gradient(90deg, rgba(243, 62, 67, 0.025), #fff);
+}
+
+.RS_BookingIdentity {
+  gap: 9px;
+}
+
+.RS_BookingCalendarIcon {
+  width: 35px;
+  height: 35px;
+  background: #f4f5f7;
+}
+
+.RS_CellLabel {
+  margin-bottom: 3px;
+  font-size: clamp(10px, 0.5vw, 12px);
+}
+
+.RS_BookingId {
+  font-size: clamp(13px, 0.8vw, 16px);
+}
+
+.RS_CellPrimary {
+  font-size: clamp(11px, 0.7vw, 14px);
+}
+
+.RS_BookingDate,
+.RS_CellSecondary {
+  margin-top: 3px;
+  font-size: clamp(10px, 0.55vw, 12px);
+}
+
+.RS_RowPeriod {
+  font-size: clamp(10.5px, 0.62vw, 13px);
+}
+
+.RS_DashboardStatusBadge {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  padding: 5px 7px;
+  font-size: clamp(10px, 0.55vw, 12px);
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.RS_DashboardStatusBadge i {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.RS_RowChevron {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #2f343c;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.RS_RowChevron:hover {
+  background: #f0f2f4;
+  transform: translateX(1px);
+}
+
+/* ---------- Right tracking pane ---------- */
+
+.RS_TrackingPane {
+  min-width: 0;
+  padding: clamp(14px, 1.05vw, 20px);
+  background: linear-gradient(180deg, #fff 0%, #fcfcfd 100%);
+  animation: RS_ReferencePaneIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes RS_ReferencePaneIn {
+
+  /* Opacity-only: a translateX here would leave a `transform` on
+     RS_TrackingPane forever (animation-fill-mode: both), and a transform on
+     a position:sticky element forces the browser to recompute its stuck
+     offset every scroll frame — see the >=1400px sticky rule below. */
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.RS_TrackingPane--empty {
+  display: flex;
+  min-height: 650px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8a919b;
+  text-align: center;
+}
+
+.RS_TrackingPane--empty strong {
+  margin-top: 10px;
+  color: #262b34;
+  font-size: 15px;
+}
+
+.RS_TrackingPane--empty p {
+  max-width: 320px;
+  margin: 6px 0 0;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.RS_TrackingHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.RS_TrackingIdentity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+}
+
+.RS_TrackingThumb {
+  width: clamp(52px, 3.6vw, 68px);
+  height: clamp(52px, 3.6vw, 68px);
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid #e1e4e8;
+  border-radius: 9px;
+  background: #f2f3f5;
+}
+
+.RS_TrackingThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.RS_TrackingTitle {
+  min-width: 0;
+}
+
+.RS_TrackingTitle h2 {
+  margin: 0;
+  overflow: hidden;
+  color: #151922;
+  font-size: clamp(15px, 1vw, 20px);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RS_TrackingTitle p {
+  margin: 3px 0 0;
+  color: #606873;
+  font-size: clamp(8px, 0.53vw, 10.5px);
+}
+
+.RS_TrackingMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 8px;
+  margin-top: 7px;
+  color: #767d87;
+  font-size: clamp(7px, 0.44vw, 9px);
+}
+
+.RS_TrackingMeta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.RS_TrackingMeta i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #a5abb3;
+}
+
+.RS_TrackingState {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.RS_TrackingState strong {
+  font-size: clamp(8.5px, 0.55vw, 10.5px);
+  white-space: nowrap;
+}
+
+.RS_DetailRefreshState {
+  min-height: 17px;
+  margin: 3px 0 6px;
+  color: #9197a0;
+  font-size: 7.5px;
+}
+
+.RS_DetailRefreshState span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.RS_DetailRefreshError {
+  color: #d53c45 !important;
+}
+
+.RS_DashboardCard {
+  min-width: 0;
+  border: 1px solid var(--rs-ref-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.RS_CardHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.RS_CardHeading h3 {
+  margin: 0;
+  color: #20242c;
+  font-size: clamp(12px, 0.75vw, 15px);
+  font-weight: 650;
+}
+
+.RS_LivePill,
+.RS_SoftPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 4px 7px;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.RS_LivePill {
+  background: #fff0f0;
+  color: var(--rs-ref-red);
+}
+
+.RS_LivePill i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: RS_RefLive 1.35s ease-in-out infinite;
+}
+
+.RS_SoftPill {
+  background: #f2f4f6;
+  color: #777f89;
+}
+
+@keyframes RS_RefLive {
+
+  0%,
+  100% {
+    opacity: .45
+  }
+
+  50% {
+    opacity: 1
+  }
+}
+
+/* =========================================================
+   TRACKING PANE
+   STRAIGHT CAMPAIGN STATUS FLOW
+========================================================= */
+
+.RS_TimelineCard {
+  position: relative;
+
+  width: 100%;
+
+  overflow: hidden;
+
+  border: 1px solid #e6e9ed !important;
+
+  border-radius: 16px !important;
+
+  background: #ffffff !important;
+
+  padding:
+    clamp(18px, 1.3vw, 25px) clamp(16px, 1.35vw, 26px) clamp(17px, 1.2vw, 23px) !important;
+
+  box-shadow:
+    0 8px 28px rgba(27, 35, 48, 0.035) !important;
+}
+
+
+/* =========================================================
+   TIMELINE CARD HEADER
+========================================================= */
+
+.RS_TimelineCardHeader {
+  display: flex;
+
+  align-items: flex-start;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: clamp(19px, 1.35vw, 26px);
+}
+
+
+.RS_TimelineEyebrow {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #979da6;
+
+  font-size: clamp(8.5px, 0.53vw, 10.5px);
+
+  font-weight: 700;
+
+  letter-spacing: 0.1em;
+}
+
+
+.RS_TimelineCardHeader h3 {
+  margin: 0;
+
+  color: #191e27;
+
+  font-size: clamp(16px, 1.08vw, 21px);
+
+  font-weight: 650;
+
+  letter-spacing: -0.025em;
+}
+
+
+/* =========================================================
+   API SYNC STATUS
+========================================================= */
+
+.RS_TimelineSync {
+  display: flex;
+
+  max-width: 310px;
+
+  align-items: center;
+
+  justify-content: flex-end;
+
+  gap: 7px;
+
+  color: #838b96;
+
+  font-size: clamp(8.5px, 0.55vw, 10.5px);
+
+  line-height: 1.4;
+
+  text-align: right;
+}
+
+
+.RS_TimelineSyncDot {
+  width: 7px;
+
+  height: 7px;
+
+  flex: 0 0 auto;
+
+  border-radius: 50%;
+
+  background: #19a064;
+
+  box-shadow:
+    0 0 0 4px rgba(25, 160, 100, 0.1);
+}
+
+
+.RS_TimelineSyncDot--error {
+  background: #e23b43;
+
+  box-shadow:
+    0 0 0 4px rgba(226, 59, 67, 0.09);
+}
+
+
+/* =========================================================
+   TIMELINE VIEWPORT
+========================================================= */
+
+.RS_TimelineViewport {
+  width: 100%;
+
+  min-width: 0;
+
+  overflow-x: auto;
+
+  overflow-y: hidden;
+
+  padding:
+    3px 1px 5px;
+
+  scrollbar-width: none;
+
+  scroll-behavior: smooth;
+}
+
+
+.RS_TimelineViewport::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* =========================================================
+   STRAIGHT TIMELINE
+========================================================= */
+
+.RS_Timeline {
+  display: flex;
+
+  width: 100%;
+
+  min-width: 650px;
+
+  align-items: flex-start;
+
+  gap: 0;
+}
+
+
+/* =========================================================
+   EACH STATUS
+========================================================= */
+
+.RS_TimelineStage {
+  position: relative;
+
+  display: flex;
+
+  min-width: 0;
+
+  flex: 1 1 0;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   ICON + CONNECTOR
+========================================================= */
+
+.RS_TimelineRail {
+  position: relative;
+
+  display: flex;
+
+  width: 100%;
+
+  height: 36px;
+
+  align-items: center;
+
+  justify-content: center;
+}
+
+
+.RS_TimelineNode {
+  position: relative;
+
+  z-index: 3;
+
+  display: grid;
+
+  width: 28px;
+
+  height: 28px;
+
+  flex: 0 0 28px;
+
+  place-items: center;
+
+  border: 2px solid #dfe4e9;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  color: #a5acb5;
+
+  transition:
+    transform 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+
+/* straight horizontal line */
+
+.RS_TimelineConnector {
+  position: absolute;
+
+  z-index: 1;
+
+  top: 50%;
+
+  left: calc(50% + 12px);
+
+  width: calc(100% - 28px);
+
+  height: 2px;
+
+  border-radius: 999px;
+
+  background: #e2e7eb;
+
+  transform: translateY(-50%);
+}
+
+
+/* =========================================================
+   COMPLETED STATUS
+========================================================= */
+
+.RS_TimelineStage--complete .RS_TimelineNode {
+  border-color: #1ca163;
+
+  background: #1ca163;
+
+  color: #ffffff;
+
+  box-shadow:
+    0 3px 9px rgba(28, 161, 99, 0.18);
+}
+
+
+.RS_TimelineStage--complete .RS_TimelineConnector {
+  background: #55b987;
+}
+
+
+/* =========================================================
+   CURRENT STATUS
+========================================================= */
+
+.RS_TimelineStage--current .RS_TimelineNode {
+  border-color: #ef4048;
+
+  background: #ef4048;
+
+  color: #ffffff;
+
+  box-shadow:
+    0 4px 12px rgba(239, 64, 72, 0.23),
+    0 0 0 5px rgba(239, 64, 72, 0.08);
+
+  animation:
+    RS_CurrentTimelinePulse 2s ease-in-out infinite;
+}
+
+
+@keyframes RS_CurrentTimelinePulse {
+
+  0%,
+  100% {
+    box-shadow:
+      0 4px 12px rgba(239, 64, 72, 0.2),
+      0 0 0 4px rgba(239, 64, 72, 0.07);
+  }
+
+  50% {
+    box-shadow:
+      0 5px 15px rgba(239, 64, 72, 0.26),
+      0 0 0 7px rgba(239, 64, 72, 0.025);
+  }
+}
+
+
+/* current to next connector remains grey */
+
+.RS_TimelineStage--current .RS_TimelineConnector {
+  background: #e2e7eb;
+}
+
+
+/* =========================================================
+   UPCOMING STATUS
+========================================================= */
+
+.RS_TimelineStage--upcoming .RS_TimelineNode {
+  border-color: #dfe4e9;
+
+  background: #ffffff;
+
+  color: #acb3bc;
+}
+
+
+/* =========================================================
+   STATUS TEXT
+========================================================= */
+
+.RS_TimelineContent {
+  display: flex;
+
+  width: 100%;
+
+  min-width: 0;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 3px;
+
+  padding:
+    3px clamp(4px, 0.45vw, 8px) 0;
+}
+
+
+.RS_TimelineContent strong {
+  display: block;
+
+  max-width: 110px;
+
+  color: #353b44;
+
+  font-size: clamp(9px, 0.64vw, 12px);
+
+  font-weight: 600;
+
+  line-height: 1.25;
+}
+
+
+.RS_TimelineStage--upcoming .RS_TimelineContent strong {
+  color: #989fa9;
+}
+
+
+.RS_TimelineContent small {
+  display: block;
+
+  color: #9299a3;
+
+  font-size: clamp(7.5px, 0.5vw, 9.5px);
+
+  font-weight: 450;
+
+  line-height: 1.3;
+}
+
+
+.RS_TimelineCurrentText {
+  display: block;
+
+  color: #ea3d45;
+
+  font-size: clamp(7.5px, 0.5vw, 9.5px);
+
+  font-weight: 650;
+}
+
+
+/* =========================================================
+   HOVER
+========================================================= */
+
+@media (hover: hover) {
+
+  .RS_TimelineStage:hover .RS_TimelineNode {
+    transform: translateY(-2px);
+  }
+}
+
+
+/* =========================================================
+   LARGE DESKTOP
+   1600+
+========================================================= */
+
+@media (min-width: 1600px) {
+
+  .RS_TimelineCard {
+    border-radius: 18px !important;
+
+    padding:
+      25px 28px 23px !important;
+  }
+
+
+  .RS_TimelineCardHeader {
+    margin-bottom: 26px;
+  }
+
+
+  .RS_TimelineCardHeader h3 {
+    font-size: 21px;
+  }
+
+
+  .RS_TimelineEyebrow {
+    font-size: 10px;
+  }
+
+
+  .RS_TimelineSync {
+    max-width: 350px;
+
+    font-size: 10.5px;
+  }
+
+
+  .RS_TimelineRail {
+    height: 42px;
+  }
+
+
+  .RS_TimelineNode {
+    width: 32px;
+
+    height: 32px;
+
+    flex-basis: 32px;
+  }
+
+
+  .RS_TimelineConnector {
+    left: calc(50% + 11px);
+
+    width: calc(100% - 32px);
+  }
+
+
+  .RS_TimelineContent strong {
+    max-width: 135px;
+
+    font-size: 12.5px;
+  }
+
+
+  .RS_TimelineContent small,
+  .RS_TimelineCurrentText {
+    font-size: 10px;
+  }
+}
+
+
+/* =========================================================
+   1400 - 1599
+========================================================= */
+
+@media (min-width: 1400px) and (max-width: 1599px) {
+
+  .RS_TimelineCardHeader h3 {
+    font-size: 19px;
+  }
+
+
+  .RS_TimelineNode {
+    width: 30px;
+
+    height: 30px;
+
+    flex-basis: 30px;
+  }
+
+
+  .RS_TimelineConnector {
+    left: calc(50% + 15px);
+
+    width: calc(100% - 30px);
+  }
+
+
+  .RS_TimelineContent strong {
+    font-size: 11px;
+  }
+}
+
+
+/* =========================================================
+   SMALL DESKTOP
+   1180 - 1399
+========================================================= */
+
+@media (min-width: 1180px) and (max-width: 1399px) {
+
+  .RS_TimelineCard {
+    padding:
+      20px 18px 18px !important;
+  }
+
+
+  .RS_TimelineCardHeader {
+    margin-bottom: 19px;
+  }
+
+
+  .RS_TimelineCardHeader h3 {
+    font-size: 18px;
+  }
+
+
+  .RS_TimelineEyebrow {
+    font-size: 9px;
+  }
+
+
+  .RS_TimelineSync {
+    max-width: 275px;
+
+    font-size: 9.5px;
+  }
+
+
+  .RS_Timeline {
+    min-width: 620px;
+  }
+
+
+  .RS_TimelineContent strong {
+    font-size: 10.5px;
+  }
+
+
+  .RS_TimelineContent small,
+  .RS_TimelineCurrentText {
+    font-size: 8.5px;
+  }
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1179px) {
+
+  .RS_TimelineCardHeader {
+    align-items: flex-start;
+  }
+
+
+  .RS_TimelineSync {
+    max-width: 270px;
+  }
+
+
+  .RS_Timeline {
+    min-width: 660px;
+  }
+
+
+  .RS_TimelineStage {
+    min-width: 110px;
+
+    flex:
+      1 0 110px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 767px) {
+
+  .RS_TimelineCard {
+    border-radius: 14px !important;
+
+    padding:
+      16px 13px 14px !important;
+  }
+
+
+  .RS_TimelineCardHeader {
+    flex-direction: column;
+
+    gap: 8px;
+
+    margin-bottom: 14px;
+  }
+
+
+  .RS_TimelineCardHeader h3 {
+    font-size: 17px;
+  }
+
+
+  .RS_TimelineSync {
+    max-width: none;
+
+    justify-content: flex-start;
+
+    font-size: 9px;
+
+    text-align: left;
+  }
+
+
+  .RS_TimelineViewport {
+    margin-right: -13px;
+
+    padding-right: 13px;
+  }
+
+
+  .RS_Timeline {
+    min-width: max-content;
+  }
+
+
+  .RS_TimelineStage {
+    width: 118px;
+
+    min-width: 118px;
+
+    flex: 0 0 118px;
+  }
+
+
+  .RS_TimelineRail {
+    height: 34px;
+  }
+
+
+  .RS_TimelineNode {
+    width: 27px;
+
+    height: 27px;
+
+    flex-basis: 27px;
+  }
+
+
+  .RS_TimelineConnector {
+    left: calc(50% + 13.5px);
+
+    width: calc(100% - 27px);
+  }
+
+
+  .RS_TimelineContent {
+    padding-inline: 4px;
+  }
+
+
+  .RS_TimelineContent strong {
+    max-width: 105px;
+
+    font-size: 10px;
+  }
+
+
+  .RS_TimelineContent small,
+  .RS_TimelineCurrentText {
+    font-size: 8px;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 420px) {
+
+  .RS_TimelineStage {
+    width: 108px;
+
+    min-width: 108px;
+
+    flex-basis: 108px;
+  }
+
+
+  .RS_TimelineContent strong {
+    max-width: 96px;
+
+    font-size: 9.5px;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .RS_TimelineStage--current .RS_TimelineNode {
+    animation: none !important;
+  }
+
+
+  .RS_TimelineViewport {
+    scroll-behavior: auto;
+  }
+}
+
+/* ---------- Tracking card grid ---------- */
+
+.RS_TrackingGrid {
+  display: grid;
+  grid-template-columns: minmax(125px, .68fr) minmax(235px, 1.42fr) minmax(155px, .8fr);
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.RS_LiveVehiclesCard,
+.RS_RouteCard,
+.RS_CampaignSummaryCard {
+  padding: 9px;
+}
+
+.RS_LiveVehicleList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.RS_LiveVehicle {
+  display: grid;
+  grid-template-columns: 47px minmax(0, 1fr) 15px;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #edf0f2;
+  border-radius: 8px;
+  background: #fbfbfc;
+  padding: 5px;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.RS_LiveVehicle:disabled {
+  cursor: default;
+  opacity: .78;
+}
+
+.RS_LiveVehicleImage {
+  width: 47px;
+  height: 47px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #f1f2f4;
+}
+
+.RS_LiveVehicleImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.RS_LiveVehicleCopy {
+  min-width: 0;
+}
+
+.RS_LiveVehicleCopy strong {
+  display: block;
+  color: #242932;
+  font-size: clamp(11px, 0.62vw, 13px);
+}
+
+.RS_LiveVehicleCopy small {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: #868c95;
+  font-size: clamp(9.5px, 0.5vw, 11px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RS_LiveVehicleCopy em {
+  display: inline-flex;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: #eff1f3;
+  padding: 3px 5px;
+  color: #757c86;
+  font-size: clamp(9px, 0.48vw, 10.5px);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.RS_LiveVehicleCopy em.RS_VehicleActive {
+  background: #e7f7ef;
+  color: var(--rs-ref-green);
+}
+
+.RS_InlineEmpty {
+  padding: 15px 6px;
+  color: #8d939c;
+  font-size: 10.5px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.RS_TextButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 7px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #56606c;
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.RS_TextButton:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+/* ---------- Route / map preview ---------- */
+
+.RS_RoutePreview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: clamp(150px, 11vw, 195px);
+  overflow: hidden;
+  margin-top: 8px;
+  border: 1px solid #e8ebee;
+  border-radius: 8px;
+  background: #f6f8f7;
+}
+
+.RS_RoutePreviewIcon {
+  color: #b9c2be;
+}
+
+.RS_RouteGrid {
+  position: absolute;
+  inset: 0;
+  opacity: .8;
+  background:
+    linear-gradient(28deg, transparent 45%, #d8e0db 46%, #d8e0db 48%, transparent 49%),
+    linear-gradient(106deg, transparent 34%, #dde4df 35%, #dde4df 37%, transparent 38%),
+    linear-gradient(160deg, transparent 56%, #d9e1dc 57%, #d9e1dc 59%, transparent 60%),
+    #f0f4f1;
+}
+
+.RS_RouteMapLabel {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  right: 10px;
+  max-width: 45%;
+  overflow: hidden;
+  color: #626a65;
+  font-size: 7.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RS_RouteStart,
+.RS_RouteEnd,
+.RS_RouteVehicle {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.RS_RouteStart {
+  left: 13%;
+  bottom: 18%;
+  width: 23px;
+  height: 23px;
+  background: #fff;
+  color: #252c35;
+  box-shadow: 0 2px 7px rgba(26, 34, 45, .14);
+}
+
+.RS_RouteEnd {
+  top: 18%;
+  right: 13%;
+  width: 25px;
+  height: 25px;
+  background: var(--rs-ref-red);
+  color: #fff;
+  box-shadow: 0 3px 9px rgba(243, 62, 67, .23);
+}
+
+.RS_RouteVehicle {
+  top: 46%;
+  left: 50%;
+  width: 29px;
+  height: 29px;
+  background: #171b21;
+  color: #fff;
+  transform: rotate(-14deg);
+  box-shadow: 0 3px 9px rgba(20, 25, 33, .18);
+}
+
+.RS_RouteLine {
+  position: absolute;
+  z-index: 2;
+  inset: 23% 18% 20% 17%;
+  border-left: 3px solid var(--rs-ref-green);
+  border-bottom: 3px solid var(--rs-ref-green);
+  border-radius: 0 0 0 70%;
+  transform: rotate(-17deg);
+}
+
+.RS_RouteMessage {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  left: 7px;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 7px;
+  align-items: center;
+  border: 1px solid rgba(224, 228, 232, .95);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .94);
+  padding: 7px 8px;
+  backdrop-filter: blur(8px);
+}
+
+.RS_RouteMessage strong {
+  display: block;
+  color: #252a32;
+  font-size: clamp(11px, 0.62vw, 13px);
+}
+
+.RS_RouteMessage span {
+  display: block;
+  margin-top: 2px;
+  color: #858b94;
+  font-size: clamp(9.5px, 0.5vw, 11px);
+  line-height: 1.3;
+}
+
+.RS_RouteMessage button {
+  display: inline-flex;
+  height: 29px;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 7px;
+  background: #161a20;
+  padding: 0 8px;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.RS_RouteMessage button:disabled {
+  background: #a7acb3;
+  cursor: default;
+}
+
+.RS_RouteMeta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 7px;
+}
+
+.RS_RouteMeta div {
+  min-width: 0;
+}
+
+.RS_RouteMeta span {
+  display: block;
+  color: #969ca5;
+  font-size: 9.5px;
+}
+
+.RS_RouteMeta strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: #343941;
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Campaign summary ---------- */
+
+.RS_ProgressNumber {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 21px;
+}
+
+.RS_ProgressNumber strong {
+  color: #1c2028;
+  font-size: clamp(20px, 1.4vw, 27px);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+}
+
+.RS_ProgressNumber span {
+  color: #858c95;
+  font-size: 10px;
+}
+
+.RS_ProgressBar {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: #e9edf0;
+}
+
+.RS_ProgressBar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22a66e, #2a87df);
+  transition: width 500ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.RS_SummaryMetrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 7px;
+  margin-top: 18px;
+}
+
+.RS_SummaryMetrics>div {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.RS_SummaryMetrics small {
+  display: block;
+  color: #979da6;
+  font-size: 9.5px;
+}
+
+.RS_SummaryMetrics strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: #333842;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RS_MetricDot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  margin-top: 2px;
+  border-radius: 50%;
+  background: #a5abb3;
+}
+
+.RS_MetricDot--green {
+  background: var(--rs-ref-green);
+}
+
+.RS_MetricDot--blue {
+  background: var(--rs-ref-blue);
+}
+
+.RS_MetricDot--orange {
+  background: var(--rs-ref-orange);
+}
+
+/* ---------- Day report ---------- */
+
+.RS_DayReport {
+  padding: 9px;
+  margin-bottom: 9px;
+}
+
+.RS_DayStats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 8px;
+}
+
+.RS_DayStat {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+}
+
+.RS_DayStat:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 18%;
+  right: 0;
+  width: 1px;
+  height: 64%;
+  background: #eceef1;
+}
+
+.RS_DayStatIcon {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #f3f5f7;
+  color: #59616b;
+}
+
+.RS_DayStat>span:last-child {
+  min-width: 0;
+}
+
+.RS_DayStat small,
+.RS_DayMeta small {
+  display: block;
+  color: #979da6;
+  font-size: 9.5px;
+}
+
+.RS_DayStat strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: #262b33;
+  font-size: clamp(10px, 0.55vw, 12px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RS_DayMeta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 7px;
+  border-top: 1px solid #edf0f2;
+  padding-top: 7px;
+}
+
+.RS_DayMeta>div {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 2px 7px;
+}
+
+.RS_DayMeta>div:first-child {
+  border-right: 1px solid #edf0f2;
+}
+
+.RS_DayMeta svg {
+  flex: 0 0 auto;
+  color: #666e78;
+}
+
+.RS_DayMeta strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: #313640;
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Right actions ---------- */
+
+.RS_TrackingActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.RS_TrackingActions button {
+  display: inline-flex;
+  min-height: 33px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid var(--rs-ref-border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 9px;
+  color: #323841;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+
+.RS_TrackingActions button:hover:not(:disabled) {
+  border-color: #ccd1d7;
+  transform: translateY(-1px);
+}
+
+.RS_TrackingActions button:disabled {
+  cursor: default;
+  opacity: .55;
+}
+
+.RS_TrackingActions .RS_TrackingPrimaryAction {
+  border-color: #161a20;
+  background: #161a20;
+  color: #fff;
+}
+
+/* ---------- How it works ---------- */
+
+.RS_HowItWorks {
+  display: grid;
+  grid-template-columns: 205px minmax(0, 1fr);
+  overflow: hidden;
+  margin-top: 11px;
+  border: 1px solid var(--rs-ref-border);
+  border-radius: 11px;
+  background: #fff;
+}
+
+.RS_HowIntro {
+  position: relative;
+  min-height: 145px;
+  overflow: hidden;
+  border-right: 1px solid #eceef1;
+  padding: 17px 18px;
+}
+
+.RS_HowIntro h2 {
+  margin: 0;
+  color: #1f242c;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.RS_HowIntro p {
+  max-width: 130px;
+  margin: 6px 0 0;
+  color: #777e88;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.RS_HowIntro>svg {
+  position: absolute;
+  right: 12px;
+  bottom: -4px;
+  color: #d8dce2;
+  opacity: .72;
+  transform: scale(1.4);
+}
+
+.RS_HowSteps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.RS_HowStep {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 7px 8px;
+  align-content: center;
+  min-width: 0;
+  padding: 13px 16px;
+}
+
+.RS_HowStepNumber {
+  display: grid;
+  width: 21px;
+  height: 21px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--rs-ref-red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.RS_HowPreview {
+  grid-column: 2;
+  display: grid;
+  height: 53px;
+  place-items: center;
+  border: 1px solid #e5e8ec;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #fbfbfc, #f3f5f7);
+  color: #9fa6af;
+}
+
+.RS_HowStep>strong {
+  grid-column: 1 / -1;
+  color: #30353d;
+  font-size: 12px;
+}
+
+.RS_HowStep>p {
+  grid-column: 1 / -1;
+  margin: -3px 0 0;
+  color: #7c838d;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.RS_HowArrow {
+  position: absolute;
+  top: 50%;
+  right: -10px;
+  z-index: 4;
+  color: #838a94;
+  transform: translateY(-50%);
+}
+
+/* ---------- Pagination compact ---------- */
+
+.RS_Pagination {
+  margin-top: 11px;
+  padding: 0 3px;
+}
+
+.RS_Pagination p {
+  font-size: clamp(10px, 0.55vw, 12px);
+}
+
+.RS_PaginationControls {
+  gap: 4px;
+}
+
+.RS_PaginationControls button {
+  min-width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+/* =========================================================
+   RESPONSIVE — 1800+
+========================================================= */
+
+@media (min-width: 1800px) {
+  .RS_MyBookingsRoot {
+    padding: 128px 22px 56px;
+  }
+
+  .RS_DashboardShell {
+    grid-template-columns: minmax(0, 1.2fr) minmax(660px, .9fr);
+  }
+
+  .RS_BookingsPane {
+    padding: 24px;
+  }
+
+  .RS_TrackingPane {
+    padding: 20px;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns: minmax(150px, .7fr) minmax(305px, 1.45fr) minmax(188px, .82fr);
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — UP TO 1365px: STACK DASHBOARD
+========================================================= */
+
+@media (max-width: 1365px) {
+  .RS_MyBookingsRoot {
+    padding: 104px 12px 40px;
+  }
+
+  .RS_DashboardShell {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_BookingsPane {
+    border-right: 0;
+    border-bottom: 1px solid #e7e9ed;
+  }
+
+  .RS_TrackingPane--empty {
+    min-height: 280px;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns: minmax(155px, .65fr) minmax(290px, 1.35fr) minmax(180px, .78fr);
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — SMALL DESKTOP / TABLET
+========================================================= */
+
+@media (max-width: 1100px) {
+  .RS_ControlBar {
+    grid-template-columns: minmax(0, 1fr) 112px;
+  }
+
+  .RS_SearchField {
+    grid-column: 1;
+  }
+
+  .RS_SortWrapper {
+    grid-column: 2;
+  }
+
+  .RS_StatusTabsViewport {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .RS_BookingRow {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) 28px;
+    gap: 13px 10px;
+  }
+
+  .RS_RowChevron {
+    grid-column: 4;
+    grid-row: 1;
+  }
+
+  .RS_RowProgressCell {
+    display: none;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .RS_CampaignSummaryCard {
+    grid-column: 1 / -1;
+  }
+
+  .RS_SummaryMetrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .RS_HowItWorks {
+    grid-template-columns: 185px minmax(0, 1fr);
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 767px) {
+  .RS_MyBookingsRoot {
+    padding: 92px 8px 28px;
+  }
+
+  .RS_DashboardShell,
+  .RS_HowItWorks {
+    border-radius: 10px;
+  }
+
+  .RS_BookingsPane,
+  .RS_TrackingPane {
+    padding: 12px;
+  }
+
+  .RS_PageHeader {
+    padding: 2px 1px 13px;
+  }
+
+  .RS_PageHeader h1 {
+    font-size: 28px;
+  }
+
+  .RS_PageHeader p {
+    max-width: 340px;
+    font-size: 12px;
+  }
+
+  .RS_StatsPanel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .RS_StatItem {
+    min-height: 66px;
+    padding: 10px;
+    border-bottom: 1px solid #eceef1;
+  }
+
+  .RS_StatItem::after {
+    display: none !important;
+  }
+
+  .RS_StatItem:nth-child(odd) {
+    border-right: 1px solid #eceef1;
+  }
+
+  .RS_StatItem:last-child {
+    grid-column: 1 / -1;
+    justify-content: center;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  .RS_StatLabel {
+    font-size: 9px;
+  }
+
+  .RS_StatValue {
+    font-size: 18px;
+  }
+
+  .RS_ControlBar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .RS_SearchField,
+  .RS_SortButton {
+    height: 44px;
+  }
+
+  .RS_SearchField input {
+    font-size: 11px;
+  }
+
+  .RS_FilterTab {
+    height: 39px;
+    font-size: 9.5px;
+  }
+
+  .RS_BookingRow {
+    position: relative;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 10px;
+    padding: 12px;
+  }
+
+  .RS_BookingIdentity {
+    grid-column: 1 / -1;
+    padding-right: 34px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid #eef0f2;
+  }
+
+  .RS_RowChevron {
+    position: absolute;
+    top: 11px;
+    right: 9px;
+  }
+
+  .RS_RowProgressCell {
+    display: block;
+  }
+
+  .RS_CellLabel {
+    font-size: 8px;
+  }
+
+  .RS_BookingId {
+    font-size: 12px;
+  }
+
+  .RS_CellPrimary {
+    font-size: 10px;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 8.3px;
+  }
+
+  .RS_TrackingHeader {
+    align-items: flex-start;
+  }
+
+  .RS_TrackingIdentity {
+    align-items: flex-start;
+  }
+
+  .RS_TrackingThumb {
+    width: 54px;
+    height: 54px;
+  }
+
+  .RS_TrackingTitle h2 {
+    max-width: 210px;
+    font-size: 16px;
+  }
+
+  .RS_TrackingState {
+    display: none;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_CampaignSummaryCard {
+    grid-column: auto;
+  }
+
+  .RS_RoutePreview {
+    height: 205px;
+  }
+
+  .RS_SummaryMetrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .RS_DayStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .RS_DayStat {
+    border-bottom: 1px solid #edf0f2;
+  }
+
+  .RS_DayStat::after {
+    display: none !important;
+  }
+
+  .RS_DayStat:last-child {
+    grid-column: 1 / -1;
+    border-bottom: 0;
+  }
+
+  .RS_DayMeta {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_DayMeta>div:first-child {
+    border-right: 0;
+    border-bottom: 1px solid #edf0f2;
+    padding-bottom: 7px;
+  }
+
+  .RS_DayMeta>div:last-child {
+    padding-top: 7px;
+  }
+
+  .RS_TrackingActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .RS_TrackingActions button {
+    min-height: 39px;
+    font-size: 8.5px;
+  }
+
+  .RS_TrackingActions .RS_TrackingPrimaryAction {
+    grid-column: 1 / -1;
+  }
+
+  .RS_HowItWorks {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_HowIntro {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid #eceef1;
+  }
+
+  .RS_HowSteps {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .RS_HowStep {
+    border-bottom: 1px solid #edf0f2;
+  }
+
+  .RS_HowStep:nth-child(odd) {
+    border-right: 1px solid #edf0f2;
+  }
+
+  .RS_HowArrow {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .RS_BookingRow {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_BookingIdentity {
+    grid-column: 1;
+  }
+
+  .RS_RouteMessage {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_RouteMessage button {
+    margin-top: 4px;
+    justify-content: center;
+  }
+
+  .RS_TrackingActions {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_TrackingActions .RS_TrackingPrimaryAction {
+    grid-column: auto;
+  }
+
+  .RS_HowSteps {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_HowStep:nth-child(odd) {
+    border-right: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .RS_TrackingPane,
+  .RS_LivePill i {
+    animation: none !important;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE VISUAL REFINEMENT V2
+   Larger small-desktop type scale + premium spacing
+   These overrides intentionally come LAST in the file.
+========================================================= */
+
+/* ---------- Overall page ---------- */
+
+.RS_MyBookingsRoot {
+  background:
+    radial-gradient(circle at 12% 0%,
+      rgba(255, 255, 255, 0.96) 0,
+      rgba(255, 255, 255, 0) 32%),
+    linear-gradient(180deg,
+      #f8f9fb 0%,
+      #f3f5f7 100%);
+
+  padding-top:
+    clamp(122px,
+      8.3vw,
+      154px);
+}
+
+.RS_MyBookingsContainer {
+  max-width: 1880px;
+}
+
+.RS_DashboardShell {
+  border-color: #e2e6eb;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 18px 55px rgba(26, 33, 45, 0.07);
+}
+
+.RS_BookingsPane {
+  background:
+    linear-gradient(180deg,
+      #ffffff 0%,
+      #fdfdfe 100%);
+}
+
+/* ---------- Page heading ---------- */
+
+.RS_PageHeader {
+  padding:
+    5px 6px 20px;
+}
+
+.RS_PageHeader h1 {
+  font-size:
+    clamp(30px,
+      2vw,
+      42px);
+
+  font-weight: 650;
+}
+
+.RS_PageHeader p {
+  margin-top: 7px;
+
+  font-size:
+    clamp(13px,
+      0.86vw,
+      16px);
+
+  color: #68707b;
+}
+
+/* ---------- Stats ---------- */
+
+.RS_StatsPanel {
+  border-radius: 14px;
+
+  margin-bottom:
+    clamp(16px,
+      1.15vw,
+      22px);
+
+  box-shadow:
+    0 7px 22px rgba(32, 39, 51, 0.035);
+}
+
+.RS_StatItem {
+  min-height:
+    clamp(78px,
+      5.4vw,
+      98px);
+
+  gap:
+    clamp(10px,
+      0.75vw,
+      15px);
+
+  padding:
+    clamp(14px,
+      1vw,
+      19px) clamp(13px,
+      0.95vw,
+      19px);
+}
+
+.RS_StatIcon {
+  width:
+    clamp(38px,
+      2.5vw,
+      48px);
+
+  height:
+    clamp(38px,
+      2.5vw,
+      48px);
+
+  background: #f6f7f9;
+}
+
+.RS_StatItem--red .RS_StatIcon {
+  background: #fff0f1;
+}
+
+.RS_StatItem--green .RS_StatIcon {
+  background: #eaf8f1;
+}
+
+.RS_StatItem--blue .RS_StatIcon {
+  background: #edf5ff;
+}
+
+.RS_StatItem--orange .RS_StatIcon {
+  background: #fff4e7;
+}
+
+.RS_StatLabel {
+  font-size:
+    clamp(10.5px,
+      0.68vw,
+      13px);
+
+  color: #747b86;
+}
+
+.RS_StatValue {
+  margin-top: 5px;
+
+  font-size:
+    clamp(22px,
+      1.45vw,
+      29px);
+}
+
+/* ---------- Controls ---------- */
+
+.RS_ControlBar {
+  gap: 9px;
+
+  margin-bottom: 15px;
+}
+
+.RS_SearchField,
+.RS_SortButton {
+  height:
+    clamp(48px,
+      3vw,
+      56px);
+
+  border-radius: 11px;
+}
+
+.RS_SearchField {
+  padding-inline:
+    clamp(14px,
+      0.95vw,
+      18px);
+}
+
+.RS_SearchField input {
+  font-size:
+    clamp(11.5px,
+      0.76vw,
+      14px);
+}
+
+.RS_FilterTab {
+  height:
+    clamp(45px,
+      2.85vw,
+      52px);
+
+  border-radius: 10px;
+
+  padding-inline:
+    clamp(12px,
+      0.78vw,
+      16px);
+
+  font-size:
+    clamp(10.5px,
+      0.68vw,
+      12.5px);
+}
+
+.RS_FilterTab small {
+  min-width: 21px;
+
+  height: 21px;
+
+  font-size: 9px;
+}
+
+.RS_SortButton {
+  font-size:
+    clamp(10.5px,
+      0.68vw,
+      12.5px);
+}
+
+/* ---------- Booking rows ---------- */
+
+.RS_BookingsList {
+  gap:
+    clamp(9px,
+      0.65vw,
+      12px);
+}
+
+.RS_BookingRow {
+  position: relative;
+
+  overflow: hidden;
+
+  min-height:
+    clamp(90px,
+      5.8vw,
+      106px);
+
+  border-radius: 13px;
+
+  padding:
+    clamp(14px,
+      0.95vw,
+      18px) clamp(14px,
+      1vw,
+      19px);
+
+  gap:
+    clamp(11px,
+      0.8vw,
+      16px);
+
+  box-shadow:
+    0 4px 14px rgba(30, 37, 48, 0.025);
+}
+
+.RS_BookingRow::before {
+  content: "";
+
+  position: absolute;
+
+  top: 13px;
+
+  bottom: 13px;
+
+  left: 0;
+
+  width: 3px;
+
+  border-radius:
+    0 999px 999px 0;
+
+  background: transparent;
+
+  transition:
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.RS_BookingRow:hover {
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 12px 28px rgba(31, 38, 50, 0.07);
+}
+
+.RS_BookingRow--selected {
+  border-color:
+    rgba(255,
+      63,
+      66,
+      0.6);
+
+  background:
+    linear-gradient(90deg,
+      rgba(255,
+        63,
+        66,
+        0.035) 0%,
+      #ffffff 38%);
+
+  box-shadow:
+    0 10px 28px rgba(255,
+      63,
+      66,
+      0.055);
+}
+
+.RS_BookingRow--selected::before {
+  background: #ff3f42;
+}
+
+.RS_BookingCalendarIcon {
+  width:
+    clamp(40px,
+      2.55vw,
+      48px);
+
+  height:
+    clamp(40px,
+      2.55vw,
+      48px);
+}
+
+.RS_CellLabel {
+  margin-bottom: 5px;
+
+  font-size:
+    clamp(9.5px,
+      0.6vw,
+      11.5px);
+
+  color: #818894;
+}
+
+.RS_BookingId {
+  font-size:
+    clamp(13px,
+      0.84vw,
+      16px);
+}
+
+.RS_CellPrimary {
+  font-size:
+    clamp(11.5px,
+      0.75vw,
+      14px);
+}
+
+.RS_DateValue {
+  font-size:
+    clamp(10.5px,
+      0.7vw,
+      13px);
+}
+
+.RS_CellSub {
+  margin-top: 5px;
+
+  font-size:
+    clamp(9.5px,
+      0.6vw,
+      11px);
+
+  color: #767d88;
+}
+
+.RS_StatusBadge,
+.RS_StageBadge {
+  padding:
+    6px 10px;
+
+  font-size:
+    clamp(9.5px,
+      0.62vw,
+      11.5px);
+}
+
+.RS_StatusDot {
+  width: 6px;
+
+  height: 6px;
+}
+
+.RS_RowOpenButton {
+  width: 34px;
+
+  height: 34px;
+
+  border-radius: 9px;
+}
+
+/* ---------- Pagination ---------- */
+
+.RS_Pagination {
+  margin-top: 16px;
+}
+
+.RS_Pagination p {
+  font-size:
+    clamp(10px,
+      0.64vw,
+      12px);
+}
+
+.RS_PaginationControls button {
+  min-width: 34px;
+
+  height: 34px;
+
+  border-radius: 8px;
+
+  font-size: 10.5px;
+}
+
+/* =========================================================
+   RIGHT TRACKING PANEL — stronger visual hierarchy
+========================================================= */
+
+.RS_TrackingPane {
+  background:
+    linear-gradient(180deg,
+      #ffffff 0%,
+      #fbfcfd 100%);
+}
+
+.RS_TrackingHeader {
+  margin-bottom: 10px;
+}
+
+.RS_TrackingThumb {
+  width:
+    clamp(64px,
+      4.2vw,
+      82px);
+
+  height:
+    clamp(64px,
+      4.2vw,
+      82px);
+
+  border-radius: 11px;
+}
+
+.RS_TrackingIdentity {
+  gap:
+    clamp(12px,
+      0.85vw,
+      16px);
+}
+
+.RS_TrackingIdentity h2 {
+  font-size:
+    clamp(19px,
+      1.25vw,
+      24px);
+
+  line-height: 1.12;
+}
+
+.RS_TrackingIdentity p {
+  margin-top: 5px;
+
+  font-size:
+    clamp(11px,
+      0.7vw,
+      13px);
+}
+
+.RS_TrackingMeta {
+  margin-top: 9px;
+
+  gap:
+    6px 11px;
+
+  font-size:
+    clamp(9.5px,
+      0.6vw,
+      11px);
+}
+
+.RS_TrackingState strong {
+  font-size:
+    clamp(10px,
+      0.66vw,
+      12.5px);
+}
+
+.RS_PaneClose {
+  width: 36px;
+
+  height: 36px;
+
+  border-radius: 10px;
+}
+
+.RS_DetailFeedback {
+  min-height: 20px;
+
+  font-size: 9.5px;
+}
+
+/* ---------- Cards ---------- */
+
+.RS_DashboardCard {
+  border-radius: 13px;
+
+  border-color: #e2e6ea;
+
+  box-shadow:
+    0 5px 18px rgba(30, 37, 48, 0.03);
+}
+
+.RS_CardHeading h3 {
+  font-size:
+    clamp(12.5px,
+      0.82vw,
+      15px);
+}
+
+.RS_LivePill,
+.RS_MutedPill {
+  padding:
+    5px 8px;
+
+  font-size:
+    9px;
+}
+
+/* ---------- Timeline ---------- */
+
+.RS_TimelineCard {
+  padding:
+    15px 13px 13px;
+
+  margin-bottom: 12px;
+}
+
+.RS_TimelineStage {
+  width:
+    clamp(96px,
+      6.2vw,
+      118px);
+}
+
+.RS_TimelineNode {
+  width: 24px;
+
+  height: 24px;
+
+  flex-basis: 24px;
+}
+
+.RS_TimelineConnector {
+  width:
+    calc(100% - 24px);
+}
+
+.RS_TimelineStage strong {
+  max-width: 98px;
+
+  font-size:
+    clamp(8.5px,
+      0.54vw,
+      10.5px);
+}
+
+.RS_TimelineStage small {
+  margin-top: 4px;
+
+  font-size:
+    clamp(7.5px,
+      0.46vw,
+      9px);
+}
+
+/* ---------- Right three-card grid ---------- */
+
+.RS_TrackingGrid {
+  gap: 12px;
+
+  margin-bottom: 12px;
+}
+
+.RS_LiveVehiclesCard,
+.RS_RouteCard,
+.RS_CampaignSummaryCard {
+  padding:
+    clamp(13px,
+      0.85vw,
+      16px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+/* ---------- Live vehicles ---------- */
+
+.RS_LiveVehicleList {
+  gap: 9px;
+
+  margin-top: 12px;
+}
+
+.RS_LiveVehicle {
+  grid-template-columns:
+    62px minmax(0, 1fr) 18px;
+
+  gap: 10px;
+
+  border-radius: 10px;
+
+  padding: 8px;
+}
+
+.RS_LiveVehicleImage {
+  width: 62px;
+
+  height: 56px;
+
+  border-radius: 8px;
+}
+
+.RS_LiveVehicleText strong {
+  font-size:
+    clamp(10px,
+      0.66vw,
+      12px);
+}
+
+.RS_LiveVehicleText small {
+  margin-top: 3px;
+
+  font-size:
+    clamp(8.5px,
+      0.53vw,
+      10px);
+}
+
+.RS_VehicleState {
+  margin-top: 6px;
+
+  padding:
+    4px 7px;
+
+  font-size: 8.5px;
+}
+
+.RS_TextButton {
+  margin-top: 10px;
+
+  font-size: 9.5px;
+}
+
+.RS_InlineEmpty {
+  font-size: 10px;
+}
+
+/* ---------- Route ---------- */
+
+.RS_RoutePreview {
+  height:
+    clamp(220px,
+      15vw,
+      280px);
+
+  margin-top: 12px;
+
+  border-radius: 11px;
+}
+
+.RS_MapLabel {
+  font-size: 10px;
+}
+
+.RS_RouteOrigin {
+  width: 29px;
+
+  height: 29px;
+}
+
+.RS_RouteDestination {
+  width: 32px;
+
+  height: 32px;
+}
+
+.RS_RouteVehicle {
+  width: 36px;
+
+  height: 36px;
+}
+
+.RS_RouteOverlay {
+  right: 10px;
+
+  bottom: 10px;
+
+  left: 10px;
+
+  gap:
+    4px 10px;
+
+  border-radius: 10px;
+
+  padding:
+    10px 11px;
+}
+
+.RS_RouteOverlay strong {
+  font-size:
+    clamp(9.5px,
+      0.62vw,
+      11.5px);
+}
+
+.RS_RouteOverlay span {
+  font-size:
+    clamp(8px,
+      0.5vw,
+      9.5px);
+
+  line-height: 1.4;
+}
+
+.RS_RouteOverlay button {
+  height: 34px;
+
+  border-radius: 8px;
+
+  padding-inline: 11px;
+
+  font-size:
+    clamp(8.5px,
+      0.53vw,
+      10px);
+}
+
+.RS_RouteFooter {
+  gap: 12px;
+
+  margin-top: 10px;
+}
+
+.RS_RouteFooter small,
+.RS_SummaryMetrics small,
+.RS_DayStat small,
+.RS_DayLocations small {
+  font-size:
+    clamp(8px,
+      0.5vw,
+      9.5px);
+}
+
+.RS_RouteFooter strong {
+  margin-top: 3px;
+
+  font-size:
+    clamp(9.5px,
+      0.61vw,
+      11.5px);
+}
+
+/* ---------- Campaign summary ---------- */
+
+.RS_SummaryProgress {
+  margin-top:
+    clamp(24px,
+      1.7vw,
+      34px);
+}
+
+.RS_SummaryProgress strong {
+  font-size:
+    clamp(28px,
+      1.85vw,
+      36px);
+}
+
+.RS_SummaryProgress span {
+  font-size: 9.5px;
+}
+
+.RS_SummaryBar {
+  height: 9px;
+
+  margin-top: 11px;
+}
+
+.RS_SummaryMetrics {
+  gap:
+    17px 10px;
+
+  margin-top: 24px;
+}
+
+.RS_SummaryMetrics strong {
+  margin-top: 3px;
+
+  font-size:
+    clamp(9.5px,
+      0.61vw,
+      11.5px);
+}
+
+.RS_SummaryMetricDot {
+  width: 7px;
+
+  height: 7px;
+}
+
+/* ---------- Day report ---------- */
+
+.RS_DayReport {
+  padding:
+    clamp(13px,
+      0.9vw,
+      17px);
+
+  margin-bottom: 12px;
+}
+
+.RS_DayStats {
+  margin-top: 13px;
+}
+
+.RS_DayStat {
+  gap: 9px;
+
+  padding:
+    9px 10px;
+}
+
+.RS_DayStatIcon {
+  width: 34px;
+
+  height: 34px;
+}
+
+.RS_DayStat strong {
+  margin-top: 3px;
+
+  font-size:
+    clamp(9.5px,
+      0.61vw,
+      11.5px);
+}
+
+.RS_DayLocations {
+  margin-top: 11px;
+
+  padding-top: 11px;
+}
+
+.RS_DayLocations>div {
+  gap: 8px;
+
+  padding:
+    5px 10px;
+}
+
+.RS_DayLocations strong {
+  margin-top: 3px;
+
+  font-size:
+    clamp(9.5px,
+      0.61vw,
+      11.5px);
+}
+
+/* ---------- Right panel buttons ---------- */
+
+.RS_TrackingActions {
+  gap: 9px;
+}
+
+.RS_TrackingAction {
+  min-height: 39px;
+
+  border-radius: 9px;
+
+  padding-inline: 13px;
+
+  font-size:
+    clamp(9.5px,
+      0.61vw,
+      11.5px);
+}
+
+.RS_TrackingAction--primary {
+  box-shadow:
+    0 7px 17px rgba(21, 25, 31, 0.11);
+}
+
+/* =========================================================
+   HOW IT WORKS — cleaner and larger
+========================================================= */
+
+.RS_HowItWorks {
+  margin-top: 16px;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 8px 25px rgba(31, 38, 50, 0.035);
+}
+
+.RS_HowIntro {
+  min-height: 170px;
+
+  padding:
+    22px 22px;
+}
+
+.RS_HowIntro h2 {
+  font-size:
+    clamp(16px,
+      1vw,
+      19px);
+}
+
+.RS_HowIntro p {
+  max-width: 150px;
+
+  margin-top: 8px;
+
+  font-size:
+    clamp(10px,
+      0.64vw,
+      12px);
+}
+
+.RS_HowStep {
+  gap:
+    10px 11px;
+
+  padding:
+    18px 20px;
+}
+
+.RS_HowNumber {
+  width: 26px;
+
+  height: 26px;
+
+  font-size: 10px;
+}
+
+.RS_HowPreview {
+  height: 72px;
+
+  border-radius: 9px;
+}
+
+.RS_HowCopy strong {
+  font-size:
+    clamp(10.5px,
+      0.68vw,
+      13px);
+}
+
+.RS_HowCopy p {
+  margin-top: 5px;
+
+  font-size:
+    clamp(8.5px,
+      0.54vw,
+      10.5px);
+
+  line-height: 1.45;
+}
+
+/* =========================================================
+   SMALL DESKTOP REBALANCE
+   1400 - 1699
+========================================================= */
+
+@media (min-width: 1400px) and (max-width: 1699px) {
+  .RS_MyBookingsRoot {
+    padding:
+      126px 14px 46px;
+  }
+
+  .RS_DashboardShell {
+    grid-template-columns:
+      minmax(0,
+        1.12fr) minmax(610px,
+        0.88fr);
+  }
+
+  .RS_BookingsPane {
+    padding: 20px;
+  }
+
+  .RS_TrackingPane {
+    padding: 19px;
+  }
+
+  .RS_PageHeader h1 {
+    font-size: 34px;
+  }
+
+  .RS_PageHeader p {
+    font-size: 14px;
+  }
+
+  .RS_StatLabel {
+    font-size: 11.5px;
+  }
+
+  .RS_StatValue {
+    font-size: 24px;
+  }
+
+  .RS_ControlBar {
+    grid-template-columns:
+      minmax(260px,
+        1.4fr) minmax(0,
+        2fr) 120px;
+  }
+
+  .RS_SearchField input,
+  .RS_FilterTab,
+  .RS_SortButton {
+    font-size: 11px;
+  }
+
+  .RS_BookingRow {
+    grid-template-columns:
+      minmax(150px,
+        1.14fr) minmax(95px,
+        0.72fr) minmax(135px,
+        1fr) minmax(128px,
+        1fr) minmax(78px,
+        0.54fr) minmax(62px,
+        0.46fr) 32px;
+
+    min-height: 94px;
+  }
+
+  .RS_CellLabel {
+    font-size: 10px;
+  }
+
+  .RS_BookingId {
+    font-size: 14px;
+  }
+
+  .RS_CellPrimary {
+    font-size: 12px;
+  }
+
+  .RS_CellSub {
+    font-size: 9.5px;
+  }
+
+  .RS_TrackingIdentity h2 {
+    font-size: 21px;
+  }
+
+  .RS_CardHeading h3 {
+    font-size: 13.5px;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns:
+      minmax(150px,
+        0.7fr) minmax(300px,
+        1.45fr) minmax(190px,
+        0.82fr);
+  }
+
+  .RS_LiveVehicleText strong,
+  .RS_RouteOverlay strong,
+  .RS_SummaryMetrics strong,
+  .RS_DayStat strong,
+  .RS_DayLocations strong {
+    font-size: 10px;
+  }
+
+  .RS_LiveVehicleText small,
+  .RS_RouteOverlay span,
+  .RS_RouteFooter small,
+  .RS_SummaryMetrics small,
+  .RS_DayStat small,
+  .RS_DayLocations small {
+    font-size: 8.5px;
+  }
+}
+
+/* =========================================================
+   COMPACT DESKTOP
+   1200 - 1399
+   Keep two-column dashboard but allow booking rows to breathe.
+========================================================= */
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .RS_MyBookingsRoot {
+    padding:
+      118px 10px 40px;
+  }
+
+  /* .RS_DashboardShell intentionally left un-overridden here — the
+     shared max-width:1365px stacking rule above already governs this
+     range (1200-1365 of this block's 1200-1399 span); redeclaring a
+     two-column grid-template-columns here previously fought that rule
+     (later-in-file wins), forcing a 540px-minimum detail pane into a
+     column too narrow for its own content and letting it overflow past
+     .RS_DashboardShell's overflow:hidden. */
+
+  .RS_BookingsPane,
+  .RS_TrackingPane {
+    padding: 15px;
+  }
+
+  .RS_PageHeader h1 {
+    font-size: 36px;
+  }
+
+  .RS_PageHeader p {
+    font-size: 15px;
+  }
+
+  .RS_StatsPanel {
+    grid-template-columns:
+      repeat(5,
+        minmax(0,
+          1fr));
+  }
+
+  .RS_StatItem {
+    min-height: 73px;
+
+    gap: 8px;
+
+    padding:
+      11px 8px;
+  }
+
+  .RS_StatIcon {
+    width: 34px;
+
+    height: 34px;
+  }
+
+  .RS_StatLabel {
+    font-size: 12px;
+  }
+
+  .RS_StatValue {
+    font-size: 24px;
+  }
+
+  .RS_ControlBar {
+    grid-template-columns:
+      minmax(220px,
+        1fr) 105px;
+  }
+
+  .RS_SearchField {
+    grid-column: 1;
+  }
+
+  .RS_SortWrapper {
+    grid-column: 3;
+  }
+
+  .RS_StatusTabsViewport {
+    grid-column:
+      1 / -1;
+
+    grid-row: 2;
+  }
+
+  .RS_BookingRow {
+    grid-template-columns:
+      minmax(145px,
+        1.2fr) minmax(95px,
+        0.8fr) minmax(135px,
+        1.1fr) 32px;
+
+    min-height: 112px;
+
+    gap:
+      11px 12px;
+  }
+
+  .RS_BookingIdentity {
+    grid-column: 1;
+  }
+
+  .RS_BookingRow>.RS_BookingCell:nth-of-type(4) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .RS_BookingRow>.RS_BookingCell:nth-of-type(5) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .RS_BookingRow>.RS_BookingCell:nth-of-type(6) {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .RS_RowOpenButton {
+    grid-column: 4;
+    grid-row: 1;
+  }
+
+  .RS_CellLabel {
+    font-size: 11.5px;
+  }
+
+  .RS_BookingId {
+    font-size: 16px;
+  }
+
+  .RS_CellPrimary {
+    font-size: 14px;
+  }
+
+  .RS_CellSub {
+    font-size: 9px;
+  }
+
+  .RS_TrackingIdentity h2 {
+    font-size: 22px;
+  }
+
+  .RS_TrackingMeta {
+    font-size: 11px;
+  }
+
+  .RS_TimelineStage {
+    width: 94px;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns:
+      1fr 1.45fr;
+  }
+
+  .RS_CampaignSummaryCard {
+    grid-column:
+      1 / -1;
+  }
+
+  .RS_SummaryMetrics {
+    grid-template-columns:
+      repeat(4,
+        minmax(0,
+          1fr));
+  }
+
+  .RS_RoutePreview {
+    height: 235px;
+  }
+
+  .RS_DayStats {
+    grid-template-columns:
+      repeat(3,
+        minmax(0,
+          1fr));
+  }
+
+  .RS_DayStat:nth-child(3)::after {
+    display: none;
+  }
+
+  .RS_DayStat:nth-child(n + 4) {
+    border-top:
+      1px solid #eceef1;
+  }
+
+  .RS_DayStat:last-child {
+    grid-column:
+      span 2;
+  }
+
+  .RS_HowItWorks {
+    grid-template-columns:
+      180px minmax(0,
+        1fr);
+  }
+
+  .RS_HowStep {
+    padding:
+      15px 13px;
+  }
+
+  .RS_HowCopy strong {
+    font-size: 10.5px;
+  }
+
+  .RS_HowCopy p {
+    font-size: 8.5px;
+  }
+
+  /* Font-size coverage this tier was missing relative to its 1400-1699
+     sibling above — additive only, same values used there. */
+  .RS_SearchField input,
+  .RS_FilterTab,
+  .RS_SortButton {
+    font-size: 11px;
+  }
+
+  .RS_CardHeading h3 {
+    font-size: 13.5px;
+  }
+
+  .RS_SummaryMetrics strong,
+  .RS_DayStat strong {
+    font-size: 10px;
+  }
+
+  .RS_SummaryMetrics small,
+  .RS_DayStat small {
+    font-size: 8.5px;
+  }
+}
+
+/* =========================================================
+   TABLET / NARROW DESKTOP
+   Below 1200 stack the panels for real readability.
+========================================================= */
+
+@media (max-width: 1199px) {
+  .RS_DashboardShell {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_BookingsPane {
+    border-right: 0;
+
+    border-bottom:
+      1px solid var(--rs-border);
+  }
+
+  .RS_TrackingPane {
+    padding:
+      clamp(14px,
+        2vw,
+        20px);
+  }
+
+  .RS_BookingRow {
+    min-height: 100px;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns:
+      minmax(180px,
+        0.72fr) minmax(320px,
+        1.35fr) minmax(210px,
+        0.82fr);
+  }
+}
+
+/* =========================================================
+   MOBILE REFINEMENT
+========================================================= */
+
+@media (max-width: 767px) {
+  .RS_MyBookingsRoot {
+    padding-top: 100px;
+  }
+
+  .RS_DashboardShell {
+    border-radius: 13px;
+  }
+
+  .RS_PageHeader h1 {
+    font-size: 30px;
+  }
+
+  .RS_PageHeader p {
+    font-size: 13px;
+  }
+
+  .RS_StatsPanel {
+    border-radius: 12px;
+  }
+
+  .RS_StatItem {
+    min-height: 76px;
+  }
+
+  .RS_SearchField,
+  .RS_SortButton {
+    height: 46px;
+  }
+
+  .RS_BookingRow {
+    min-height: auto;
+
+    border-radius: 12px;
+  }
+
+  .RS_TrackingIdentity h2 {
+    max-width: 220px;
+
+    font-size: 18px;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_RoutePreview {
+    height: 235px;
+  }
+
+  .RS_CardHeading h3 {
+    font-size: 14px;
+  }
+
+  .RS_LiveVehicleText strong {
+    font-size: 11px;
+  }
+
+  .RS_LiveVehicleText small {
+    font-size: 9.5px;
+  }
+
+  .RS_SummaryMetrics strong,
+  .RS_DayStat strong,
+  .RS_DayLocations strong,
+  .RS_RouteFooter strong {
+    font-size: 10.5px;
+  }
+
+  .RS_SummaryMetrics small,
+  .RS_DayStat small,
+  .RS_DayLocations small,
+  .RS_RouteFooter small {
+    font-size: 9px;
+  }
+
+  .RS_HowIntro h2 {
+    font-size: 17px;
+  }
+
+  .RS_HowCopy strong {
+    font-size: 11px;
+  }
+
+  .RS_HowCopy p {
+    font-size: 9px;
+  }
+}
+
+
+/* =========================================================
+   USER-FRIENDLY CAMPAIGN DASHBOARD — FINAL OVERRIDES
+   16 AUG 2026
+========================================================= */
+
+html {
+  scroll-behavior: smooth;
+}
+
+.RS_MyBookingsRoot {
+  --rs-final-text: #161b24;
+  --rs-final-muted: #6f7885;
+  --rs-final-line: #e4e8ed;
+  --rs-final-red: #ed343a;
+  --rs-final-green: #159b62;
+  --rs-final-blue: #247ddd;
+  --rs-final-orange: #ef8b16;
+  background:
+    radial-gradient(circle at 18% -8%, rgba(255, 255, 255, .98), transparent 34%),
+    linear-gradient(180deg, #f8f9fb 0%, #f2f4f7 100%);
+}
+
+.RS_PageGuide {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-top: 13px;
+  color: #757e89;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.RS_PageGuide span {
+  display: grid;
+  width: 21px;
+  height: 21px;
+  place-items: center;
+  border-radius: 999px;
+  background: #171b21;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.RS_PageGuide i {
+  width: 18px;
+  height: 1px;
+  background: #d7dce2;
+}
+
+.RS_SelectedCampaignHint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  border: 1px solid #e6e9ed;
+  border-radius: 11px;
+  background: linear-gradient(90deg, #fbfcfd, #fff);
+  padding: 9px 11px;
+}
+
+.RS_SelectedCampaignHint>span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #222832;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.RS_SelectedCampaignHint>span svg {
+  color: var(--rs-final-green);
+}
+
+.RS_SelectedCampaignHint small {
+  color: #78818c;
+  font-size: 9.5px;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.RS_CardEyebrow {
+  display: block;
+  margin-bottom: 3px;
+  color: #9299a3;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.RS_RoutePreview--friendly {
+  isolation: isolate;
+}
+
+.RS_RouteMessage--friendly {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.RS_RouteMessage--friendly button {
+  white-space: nowrap;
+}
+
+/* Route card now shows its message as the card body itself instead of an
+   overlay pinned to the bottom of a tall, empty map-placeholder box — no
+   more reserved blank space above the text. Compound selector + !important
+   so this wins over every breakpoint's forced .RS_RoutePreview height. */
+.RS_RoutePreview.RS_RoutePreview--friendly {
+  height: auto !important;
+  min-height: 0 !important;
+  display: block;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.RS_RouteMessage--friendly {
+  position: static;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  background: linear-gradient(160deg, #fbfbfc 0%, #f2f4f6 100%);
+  border: 1px solid #e7eaee;
+  padding: 16px;
+}
+
+.RS_BookingRow--active {
+  border-color: rgba(237, 52, 58, .58) !important;
+  background: linear-gradient(90deg, rgba(237, 52, 58, .045), #fff 34%) !important;
+  box-shadow: 0 10px 28px rgba(237, 52, 58, .06) !important;
+}
+
+.RS_TrackingPane {
+  scroll-margin-top: 112px;
+}
+
+.RS_TrackingPrimaryAction {
+  position: relative;
+  overflow: hidden;
+}
+
+.RS_TrackingPrimaryAction::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 18%, rgba(255, 255, 255, .16) 42%, transparent 66%);
+  transform: translateX(-130%);
+  transition: transform 650ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.RS_TrackingPrimaryAction:hover::after {
+  transform: translateX(130%);
+}
+
+@media (min-width: 1400px) {
+  .RS_DashboardShell {
+    height: auto;
+    min-height: 0;
+    align-items: start;
+  }
+
+  /* No internal scrollbox on either pane, and no fixed/clamped shell
+     height — there is exactly one scrollbar: the page's. Both panes are
+     sticky and pin at the same offset, so whichever is taller simply keeps
+     scrolling with the page past the shorter one (which stays pinned in
+     view until its own container ends); when the two are close in height
+     neither ever "detaches", so they scroll past together like normal
+     page content. This depends on two things staying true: no transform on
+     either pane (see RS_ReferencePaneIn — animation-fill-mode was leaving
+     one behind, which forces the browser to recompute the stuck offset
+     every scroll frame), and ScrollSmoother being off for this route (see
+     SMOOTH_SCROLL_DISABLED_PATHS in GlobalSmoothScroll.tsx — it drives
+     scroll via a transform on an ancestor, which silently breaks
+     position:sticky for everything inside it). */
+  .RS_BookingsPane,
+  .RS_TrackingPane {
+    position: sticky;
+    top: 112px;
+    min-height: 0;
+    height: auto;
+  }
+
+  /* Live Vehicles / Live Route & Movement side by side on top, Campaign
+     Summary as one full-width card below — instead of 3 uneven columns
+     where Live Vehicles was squeezed narrow enough to clip vehicle names. */
+  .RS_TrackingGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .RS_CampaignSummaryCard {
+    grid-column: 1 / -1;
+  }
+
+  .RS_CampaignSummaryCard .RS_SummaryMetrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* Stage labels of different lengths ("On Road" vs "Prepared for
+     Campaign") were wrapping to a different number of lines, so the row
+     of icons/connectors above them looked zig-zagged instead of level.
+     Reserving 2 lines under every stage keeps the icon row straight. */
+  .RS_TimelineStage strong {
+    min-height: 2.6em;
+  }
+}
+
+/* Both tiers below intentionally read >= the 1200-1399 tier further down
+   this file for every shared selector — text must never get smaller as
+   the viewport gets wider. Column widths (.RS_BookingRow, .RS_TrackingGrid)
+   are left alone so the extra type scale doesn't force new overflow. */
+@media (min-width: 1400px) and (max-width: 1699px) {
+  .RS_DashboardShell {
+    grid-template-columns: minmax(0, 1.08fr) minmax(600px, .92fr);
+  }
+
+  .RS_PageHeader h1 {
+    font-size: 42px !important;
+  }
+
+  .RS_PageHeader p {
+    font-size: 16.5px !important;
+  }
+
+  .RS_PageGuide {
+    font-size: 13px !important;
+  }
+
+  .RS_StatItem {
+    min-height: 84px !important;
+    padding: 14px 13px !important;
+  }
+
+  .RS_StatIcon {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .RS_StatLabel {
+    font-size: 14.5px !important;
+  }
+
+  .RS_StatValue {
+    font-size: 29px !important;
+  }
+
+  .RS_FilterTab,
+  .RS_SortButton {
+    font-size: 13.5px !important;
+  }
+
+  .RS_SearchField input {
+    font-size: 14.5px !important;
+  }
+
+  .RS_CellLabel {
+    font-size: 13.5px !important;
+  }
+
+  .RS_BookingId {
+    font-size: 19px !important;
+  }
+
+  .RS_CellPrimary {
+    font-size: 16.5px !important;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 13px !important;
+  }
+
+  .RS_DashboardStatusBadge,
+  .RS_StageBadge,
+  .RS_StatusBadge {
+    font-size: 13px !important;
+  }
+
+  .RS_SelectedCampaignHint {
+    padding: 12px 14px !important;
+  }
+
+  .RS_SelectedCampaignHint>span {
+    font-size: 14px !important;
+  }
+
+  .RS_SelectedCampaignHint small {
+    font-size: 12.5px !important;
+  }
+
+  .RS_TrackingThumb {
+    width: 82px !important;
+    height: 82px !important;
+  }
+
+  .RS_TrackingTitle h2 {
+    font-size: 27px !important;
+  }
+
+  .RS_TrackingTitle p {
+    font-size: 14.5px !important;
+  }
+
+  .RS_TrackingMeta {
+    font-size: 13px !important;
+  }
+
+  .RS_TrackingState strong {
+    font-size: 13.5px !important;
+  }
+
+  .RS_DetailRefreshState {
+    font-size: 12px !important;
+  }
+
+  .RS_TimelineStage {
+    width: 120px !important;
+  }
+
+  .RS_TimelineStage strong {
+    font-size: 12px !important;
+  }
+
+  .RS_TimelineStage small {
+    font-size: 11px !important;
+  }
+
+  .RS_CardHeading h3 {
+    font-size: 17px !important;
+  }
+
+  .RS_CardEyebrow {
+    font-size: 11px !important;
+  }
+
+  .RS_LiveVehicleCopy strong,
+  .RS_RouteMessage strong,
+  .RS_SummaryMetrics strong,
+  .RS_DayStat strong {
+    font-size: 13.5px !important;
+  }
+
+  .RS_LiveVehicleCopy small,
+  .RS_RouteMessage span,
+  .RS_SummaryMetrics small,
+  .RS_DayStat small {
+    font-size: 11.5px !important;
+  }
+
+  .RS_LiveVehicleCopy em {
+    font-size: 11px !important;
+  }
+
+  .RS_RouteMessage button {
+    height: 37px !important;
+    font-size: 11.5px !important;
+  }
+
+  .RS_RouteMeta span {
+    font-size: 11.5px !important;
+  }
+
+  .RS_RouteMeta strong {
+    font-size: 13.5px !important;
+  }
+
+  .RS_ProgressNumber strong {
+    font-size: 35px !important;
+  }
+
+  .RS_TrackingActions button {
+    min-height: 43px !important;
+    padding-inline: 15px !important;
+    font-size: 13px !important;
+  }
+
+  .RS_Pagination p {
+    font-size: 13px !important;
+  }
+
+  .RS_PaginationControls button {
+    min-width: 37px !important;
+    height: 37px !important;
+    font-size: 13px !important;
+  }
+}
+
+@media (min-width: 1700px) {
+  .RS_PageHeader h1 {
+    font-size: 44px !important;
+  }
+
+  .RS_PageHeader p {
+    font-size: 17px !important;
+  }
+
+  .RS_PageGuide {
+    font-size: 13.5px !important;
+  }
+
+  .RS_StatItem {
+    min-height: 88px !important;
+    padding: 15px 14px !important;
+  }
+
+  .RS_StatIcon {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .RS_StatLabel {
+    font-size: 15px !important;
+  }
+
+  .RS_StatValue {
+    font-size: 31px !important;
+  }
+
+  .RS_FilterTab,
+  .RS_SortButton {
+    font-size: 14px !important;
+  }
+
+  .RS_SearchField input {
+    font-size: 15px !important;
+  }
+
+  .RS_CellLabel {
+    font-size: 14px !important;
+  }
+
+  .RS_BookingId {
+    font-size: 20px !important;
+  }
+
+  .RS_CellPrimary {
+    font-size: 17.5px !important;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 13.5px !important;
+  }
+
+  .RS_DashboardStatusBadge,
+  .RS_StageBadge,
+  .RS_StatusBadge {
+    font-size: 13.5px !important;
+  }
+
+  .RS_SelectedCampaignHint {
+    padding: 13px 15px !important;
+  }
+
+  .RS_SelectedCampaignHint>span {
+    font-size: 14.5px !important;
+  }
+
+  .RS_SelectedCampaignHint small {
+    font-size: 13px !important;
+  }
+
+  .RS_TrackingThumb {
+    width: 86px !important;
+    height: 86px !important;
+  }
+
+  .RS_TrackingTitle h2 {
+    font-size: 28px !important;
+  }
+
+  .RS_TrackingTitle p {
+    font-size: 15px !important;
+  }
+
+  .RS_TrackingMeta {
+    font-size: 13.5px !important;
+  }
+
+  .RS_TrackingState strong {
+    font-size: 14px !important;
+  }
+
+  .RS_DetailRefreshState {
+    font-size: 12.5px !important;
+  }
+
+  .RS_TimelineStage {
+    width: 126px !important;
+  }
+
+  .RS_TimelineStage strong {
+    font-size: 12.5px !important;
+  }
+
+  .RS_TimelineStage small {
+    font-size: 11.5px !important;
+  }
+
+  .RS_CardHeading h3 {
+    font-size: 18px !important;
+  }
+
+  .RS_CardEyebrow {
+    font-size: 11.5px !important;
+  }
+
+  .RS_LiveVehicleCopy strong,
+  .RS_RouteMessage strong,
+  .RS_SummaryMetrics strong,
+  .RS_DayStat strong {
+    font-size: 14px !important;
+  }
+
+  .RS_LiveVehicleCopy small,
+  .RS_RouteMessage span,
+  .RS_SummaryMetrics small,
+  .RS_DayStat small {
+    font-size: 12px !important;
+  }
+
+  .RS_LiveVehicleCopy em {
+    font-size: 11.5px !important;
+  }
+
+  .RS_RouteMessage button {
+    height: 38px !important;
+    font-size: 12px !important;
+  }
+
+  .RS_RouteMeta span {
+    font-size: 12px !important;
+  }
+
+  .RS_RouteMeta strong {
+    font-size: 14px !important;
+  }
+
+  .RS_ProgressNumber strong {
+    font-size: 36px !important;
+  }
+
+  .RS_TrackingActions button {
+    min-height: 44px !important;
+    padding-inline: 16px !important;
+    font-size: 13.5px !important;
+  }
+
+  .RS_Pagination p {
+    font-size: 13.5px !important;
+  }
+
+  .RS_PaginationControls button {
+    min-width: 38px !important;
+    height: 38px !important;
+    font-size: 13.5px !important;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .RS_MyBookingsRoot {
+    padding: 116px 18px 46px !important;
+  }
+
+  .RS_MyBookingsContainer {
+    max-width: 1320px;
+  }
+
+  .RS_DashboardShell {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-radius: 17px;
+  }
+
+  .RS_BookingsPane,
+  .RS_TrackingPane {
+    width: 100%;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 20px !important;
+  }
+
+  .RS_BookingsPane {
+    border-right: 0 !important;
+    border-bottom: 1px solid #e4e8ed;
+  }
+
+  .RS_TrackingPane {
+    scroll-margin-top: 118px;
+    padding-top: 22px !important;
+    animation: RS_CompactDetailEnter 420ms cubic-bezier(.22, 1, .36, 1) both;
+  }
+
+  @keyframes RS_CompactDetailEnter {
+    from {
+      opacity: .15;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .RS_PageHeader h1 {
+    font-size: 40px !important;
+  }
+
+  .RS_PageHeader p {
+    font-size: 16px !important;
+  }
+
+  .RS_PageGuide {
+    font-size: 12.5px;
+  }
+
+  .RS_StatItem {
+    min-height: 80px !important;
+    padding: 13px 12px !important;
+  }
+
+  .RS_StatIcon {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .RS_StatLabel {
+    font-size: 14px !important;
+  }
+
+  .RS_StatValue {
+    font-size: 28px !important;
+  }
+
+  .RS_ControlBar {
+    grid-template-columns: minmax(310px, 1.05fr) minmax(0, 1.7fr) 120px !important;
+    gap: 9px !important;
+  }
+
+  .RS_SearchField,
+  .RS_SortButton {
+    height: 50px !important;
+  }
+
+  .RS_SearchField input {
+    font-size: 14px !important;
+  }
+
+  .RS_FilterTab {
+    height: 47px !important;
+    padding-inline: 12px !important;
+    font-size: 13px !important;
+  }
+
+  .RS_SortButton {
+    font-size: 13px !important;
+  }
+
+  .RS_BookingsList {
+    gap: 10px !important;
+  }
+
+  .RS_BookingRow {
+    grid-template-columns:
+      minmax(185px, 1.25fr) minmax(135px, .83fr) minmax(180px, 1.14fr) minmax(170px, 1.05fr) minmax(115px, .68fr) minmax(90px, .55fr) 36px !important;
+    gap: 13px !important;
+    min-height: 100px !important;
+    padding: 15px 16px !important;
+  }
+
+  .RS_BookingRow>.RS_BookingCell {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    min-height: 0 !important;
+  }
+
+  .RS_BookingIdentity {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    padding: 0 !important;
+    border-bottom: 0 !important;
+  }
+
+  .RS_RowChevron {
+    position: static !important;
+    grid-column: 7 !important;
+    grid-row: 1 !important;
+    width: 34px !important;
+    height: 34px !important;
+    align-self: center;
+  }
+
+  .RS_BookingCalendarIcon {
+    width: 43px !important;
+    height: 43px !important;
+  }
+
+  .RS_CellLabel {
+    font-size: 13px !important;
+  }
+
+  .RS_BookingId {
+    font-size: 18px !important;
+  }
+
+  .RS_CellPrimary,
+  .RS_RowPeriod {
+    font-size: 16px !important;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 12.5px !important;
+  }
+
+  .RS_DashboardStatusBadge,
+  .RS_StageBadge,
+  .RS_StatusBadge {
+    font-size: 12.5px !important;
+  }
+
+  .RS_SelectedCampaignHint {
+    padding: 11px 13px;
+  }
+
+  .RS_SelectedCampaignHint>span {
+    font-size: 13.5px;
+  }
+
+  .RS_SelectedCampaignHint small {
+    font-size: 12px;
+  }
+
+  .RS_TrackingThumb {
+    width: 78px !important;
+    height: 78px !important;
+  }
+
+  .RS_TrackingTitle h2 {
+    font-size: 26px !important;
+  }
+
+  .RS_TrackingTitle p {
+    font-size: 14px !important;
+  }
+
+  .RS_TrackingMeta {
+    font-size: 12.5px !important;
+  }
+
+  .RS_TrackingState strong {
+    font-size: 13px !important;
+  }
+
+  .RS_DetailRefreshState {
+    font-size: 11.5px !important;
+  }
+
+  .RS_TimelineStage {
+    width: 112px !important;
+  }
+
+  .RS_TimelineStage strong {
+    font-size: 11.5px !important;
+  }
+
+  .RS_TimelineStage small {
+    font-size: 10.5px !important;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 13px !important;
+  }
+
+  .RS_CampaignSummaryCard {
+    grid-column: 1 / -1;
+  }
+
+  .RS_LiveVehiclesCard,
+  .RS_RouteCard,
+  .RS_CampaignSummaryCard,
+  .RS_DayReport {
+    padding: 15px !important;
+  }
+
+  .RS_CardHeading h3 {
+    font-size: 16.5px !important;
+  }
+
+  .RS_CardEyebrow {
+    font-size: 10.5px;
+  }
+
+  .RS_LiveVehicleCopy strong {
+    font-size: 13.5px !important;
+  }
+
+  .RS_LiveVehicleCopy small {
+    font-size: 11.5px !important;
+  }
+
+  .RS_LiveVehicleCopy em {
+    font-size: 10.5px !important;
+  }
+
+  .RS_RoutePreview {
+    height: 310px !important;
+  }
+
+  .RS_RouteMessage strong {
+    font-size: 13.5px !important;
+  }
+
+  .RS_RouteMessage span {
+    font-size: 11.5px !important;
+  }
+
+  .RS_RouteMessage button {
+    height: 36px !important;
+    font-size: 11px !important;
+  }
+
+  .RS_RouteMeta span,
+  .RS_SummaryMetrics small,
+  .RS_DayStat small {
+    font-size: 11px !important;
+  }
+
+  .RS_RouteMeta strong,
+  .RS_SummaryMetrics strong,
+  .RS_DayStat strong {
+    font-size: 13px !important;
+  }
+
+  .RS_ProgressNumber strong {
+    font-size: 34px !important;
+  }
+
+  .RS_DayStatIcon {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .RS_TrackingActions button {
+    min-height: 42px !important;
+    padding-inline: 14px !important;
+    font-size: 12.5px !important;
+  }
+
+  .RS_Pagination p {
+    font-size: 12.5px !important;
+  }
+
+  .RS_PaginationControls button {
+    min-width: 36px !important;
+    height: 36px !important;
+    font-size: 12.5px !important;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1199px) {
+  .RS_MyBookingsRoot {
+    padding: 108px 16px 42px !important;
+  }
+
+  .RS_DashboardShell {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .RS_BookingsPane,
+  .RS_TrackingPane {
+    height: auto !important;
+    overflow: visible !important;
+    padding: 18px !important;
+  }
+
+  .RS_BookingsPane {
+    border-right: 0 !important;
+    border-bottom: 1px solid #e4e8ed;
+  }
+
+  .RS_TrackingPane {
+    scroll-margin-top: 108px;
+  }
+
+  .RS_PageHeader h1 {
+    font-size: 34px !important;
+  }
+
+  .RS_PageHeader p {
+    font-size: 14px !important;
+  }
+
+  .RS_StatLabel {
+    font-size: 11px !important;
+  }
+
+  .RS_StatValue {
+    font-size: 22px !important;
+  }
+
+  .RS_BookingId {
+    font-size: 15px !important;
+  }
+
+  .RS_CellLabel {
+    font-size: 10.5px !important;
+  }
+
+  .RS_CellPrimary {
+    font-size: 13px !important;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 10.5px !important;
+  }
+
+  .RS_TrackingTitle h2 {
+    font-size: 22px !important;
+  }
+
+  .RS_CardHeading h3 {
+    font-size: 14px !important;
+  }
+
+  .RS_TrackingGrid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .RS_CampaignSummaryCard {
+    grid-column: 1 / -1;
+  }
+
+  .RS_RoutePreview {
+    height: 280px !important;
+  }
+}
+
+/* Small-desktop / large-desktop typography smoothing — the 900-1199 tier
+   above jumped 17-27% into the 1200-1399 tier just above it (e.g. h1
+   34px -> 40px), a much steeper single step than every other boundary in
+   this file (~4-7%). Raising this tier roughly halfway closes that gap on
+   both sides without touching layout — same selectors, values only, kept
+   after the block above so it wins the cascade (both !important, later
+   source wins). Still strictly smaller than the 1200-1399 tier per the
+   "text must never get smaller as viewport widens" rule noted above. */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .RS_PageHeader h1 {
+    font-size: 37px !important;
+  }
+
+  .RS_PageHeader p {
+    font-size: 15px !important;
+  }
+
+  .RS_StatLabel {
+    font-size: 12.5px !important;
+  }
+
+  .RS_StatValue {
+    font-size: 25px !important;
+  }
+
+  .RS_BookingId {
+    font-size: 16.5px !important;
+  }
+
+  .RS_CellLabel {
+    font-size: 11.5px !important;
+  }
+
+  .RS_CellPrimary {
+    font-size: 14.5px !important;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 11.5px !important;
+  }
+
+  .RS_TrackingTitle h2 {
+    font-size: 24px !important;
+  }
+
+  .RS_CardHeading h3 {
+    font-size: 15px !important;
+  }
+}
+
+@media (max-width: 899px) {
+  .RS_SelectedCampaignHint {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .RS_SelectedCampaignHint small {
+    text-align: left;
+  }
+}
+
+@media (max-width: 767px) {
+  .RS_TrackingPane {
+    scroll-margin-top: 92px;
+  }
+
+  .RS_PageGuide {
+    gap: 5px;
+    font-size: 10px;
+  }
+
+  .RS_PageGuide span {
+    width: 19px;
+    height: 19px;
+    font-size: 8.5px;
+  }
+
+  .RS_PageGuide i {
+    width: 11px;
+  }
+
+  .RS_RouteMessage--friendly {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_RouteMessage--friendly button {
+    width: 100%;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  .RS_RoutePreview {
+    height: 250px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .RS_TrackingPrimaryAction::after {
+    transition: none !important;
+  }
+}
+
+/* =========================================================
+   PAIRED-PANE SCROLL + OVERALL LOADING
+   17 AUG 2026
+
+   UI-only behavior:
+   - keeps existing responsive layout, cards and typography
+   - no internal left/right scrollbar
+   - shorter desktop pane stays sticky while the taller pane continues
+   - equal-height panes move together
+   - stacked layouts keep normal document scrolling
+========================================================= */
+
+/* The base shell previously used overflow:hidden. Any overflow other than
+   visible becomes the sticky containing block and prevents the measured
+   sticky behavior used by Campaign Request. Keep clipping only on stacked
+   layouts; desktop needs visible overflow for the two panes to coordinate. */
+@media (min-width: 1366px) {
+  .RS_DashboardShell {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    align-items: start !important;
+    overflow: visible !important;
+  }
+
+  .RS_BookingsPane,
+  .RS_TrackingPane {
+    position: relative;
+    top: auto;
+    align-self: start;
+    min-height: 0;
+    height: auto !important;
+    max-height: none !important;
+
+    /*
+      Scrolling happens through the page + measured sticky offsets.
+      These panes must never become nested scroll boxes.
+    */
+    overflow: visible !important;
+    overscroll-behavior: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    /*
+      Do not put transforms on sticky panes. Transformed sticky elements can
+      judder/recalculate their stuck position while scrolling.
+    */
+    transform: none !important;
+  }
+
+  .RS_BookingsPane::-webkit-scrollbar,
+  .RS_TrackingPane::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+/* Existing compact desktop/tablet layout remains stacked exactly as before.
+   Remove any inline sticky values if the viewport crosses down from desktop. */
+@media (max-width: 1365px) {
+  .RS_DashboardShell {
+    overflow: visible !important;
+  }
+
+  .RS_BookingsPane,
+  .RS_TrackingPane {
+    position: static !important;
+    top: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+/* =========================================================
+   ONE OVERALL INITIAL LOADING STATE
+========================================================= */
+
+.RS_DashboardOverallLoading {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #e2e6eb;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow:
+    0 18px 55px rgba(26, 33, 45, 0.055);
+  padding: clamp(18px, 1.4vw, 26px);
+}
+
+.RS_OverallLoadingHead {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding:
+    clamp(3px, 0.4vw, 7px) clamp(2px, 0.3vw, 5px) clamp(18px, 1.35vw, 25px);
+}
+
+.RS_OverallLoadingLogo {
+  display: grid;
+  width: clamp(42px, 2.8vw, 52px);
+  height: clamp(42px, 2.8vw, 52px);
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 13px;
+  background: #f3f5f7;
+  color: #4f5966;
+}
+
+.RS_OverallLoadingHead strong {
+  display: block;
+  color: #1d232c;
+  font-size: clamp(16px, 1.05vw, 21px);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.RS_OverallLoadingHead p {
+  margin: 4px 0 0;
+  color: #8b929c;
+  font-size: clamp(10px, 0.66vw, 12.5px);
+  line-height: 1.45;
+}
+
+.RS_OverallLoadingGrid {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.08fr) minmax(540px, 0.92fr);
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid #e8ebef;
+  border-radius: 15px;
+  background: #e8ebef;
+}
+
+.RS_OverallLoadingPane {
+  min-width: 0;
+  min-height: clamp(500px, 44vw, 710px);
+  background: #ffffff;
+  padding: clamp(17px, 1.2vw, 23px);
+}
+
+.RS_OverallLoadingPane--detail {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.RS_LoadSkeleton {
+  display: block;
+  border-radius: 8px;
+  background:
+    linear-gradient(100deg,
+      #f0f2f4 18%,
+      #f8f9fa 40%,
+      #f0f2f4 62%);
+  background-size: 220% 100%;
+  animation:
+    RS_OverallSkeletonMove 1.35s ease-in-out infinite;
+}
+
+@keyframes RS_OverallSkeletonMove {
+  0% {
+    background-position: 110% 0;
+  }
+
+  100% {
+    background-position: -110% 0;
+  }
+}
+
+.RS_LoadSkeleton--title {
+  width: 36%;
+  height: clamp(27px, 1.8vw, 35px);
+}
+
+.RS_LoadSkeleton--sub {
+  width: 52%;
+  height: 11px;
+  margin-top: 9px;
+}
+
+.RS_LoadingStatRow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  margin-top: 20px;
+  border: 1px solid #edf0f2;
+  border-radius: 12px;
+  background: #edf0f2;
+}
+
+.RS_LoadingStat {
+  display: flex;
+  min-width: 0;
+  min-height: 70px;
+  align-items: center;
+  gap: 9px;
+  background: #ffffff;
+  padding: 11px;
+}
+
+.RS_LoadSkeleton--circle {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 50%;
+}
+
+.RS_LoadSkeleton--line {
+  width: 62%;
+  height: 10px;
+}
+
+.RS_LoadSkeleton--control {
+  width: 100%;
+  height: 47px;
+  margin-top: 14px;
+  border-radius: 11px;
+}
+
+.RS_LoadingRows {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.RS_LoadingRow {
+  display: grid;
+  grid-template-columns:
+    34px minmax(120px, 1.2fr) minmax(100px, 0.9fr) minmax(80px, 0.6fr);
+  align-items: center;
+  gap: 14px;
+  min-height: 82px;
+  border: 1px solid #edf0f2;
+  border-radius: 13px;
+  padding: 13px;
+}
+
+.RS_LoadSkeleton--wide {
+  width: 78%;
+  height: 12px;
+}
+
+.RS_LoadSkeleton--medium {
+  width: 72%;
+  height: 11px;
+}
+
+.RS_LoadSkeleton--short {
+  width: 62%;
+  height: 11px;
+}
+
+.RS_LoadingHeroSkeleton {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 88px;
+  border: 1px solid #edf0f2;
+  border-radius: 13px;
+  padding: 13px;
+}
+
+.RS_LoadingHeroSkeleton>div {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.RS_LoadSkeleton--vehicle {
+  width: 66px;
+  height: 62px;
+  flex: 0 0 66px;
+  border-radius: 10px;
+}
+
+.RS_LoadSkeleton--detailTitle {
+  width: 46%;
+  height: 18px;
+}
+
+.RS_LoadSkeleton--detailSub {
+  width: 68%;
+  height: 10px;
+}
+
+.RS_LoadSkeleton--timeline {
+  width: 100%;
+  height: 116px;
+  border-radius: 13px;
+}
+
+.RS_LoadingCards {
+  display: grid;
+  grid-template-columns:
+    minmax(125px, 0.72fr) minmax(210px, 1.3fr) minmax(150px, 0.8fr);
+  gap: 10px;
+}
+
+.RS_LoadSkeleton--card {
+  width: 100%;
+  height: 220px;
+  border-radius: 13px;
+}
+
+.RS_LoadSkeleton--report {
+  width: 100%;
+  height: 118px;
+  border-radius: 13px;
+}
+
+/* Background selected-booking polling remains functional, but no longer
+   replaces timeline text with another section-specific loading message. */
+.RS_TimelineSync--refreshing .RS_TimelineSyncDot {
+  animation:
+    RS_TimelineBackgroundRefresh 1.15s ease-in-out infinite;
+}
+
+@keyframes RS_TimelineBackgroundRefresh {
+
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.86);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* =========================================================
+   LOADING RESPONSIVE
+========================================================= */
+
+@media (max-width: 1365px) {
+  .RS_OverallLoadingGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_OverallLoadingPane {
+    min-height: 390px;
+  }
+
+  .RS_OverallLoadingPane--detail {
+    border-top: 1px solid #e8ebef;
+  }
+}
+
+@media (max-width: 767px) {
+  .RS_DashboardOverallLoading {
+    border-radius: 13px;
+    padding: 12px;
+  }
+
+  .RS_OverallLoadingHead {
+    align-items: flex-start;
+    padding: 4px 2px 15px;
+  }
+
+  .RS_OverallLoadingHead strong {
+    font-size: 16px;
+  }
+
+  .RS_OverallLoadingHead p {
+    font-size: 10.5px;
+  }
+
+  .RS_OverallLoadingPane {
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .RS_LoadingStatRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .RS_LoadingStat:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .RS_LoadingRow {
+    grid-template-columns: 32px minmax(0, 1fr);
+    min-height: 70px;
+  }
+
+  .RS_LoadingRow .RS_LoadSkeleton--medium,
+  .RS_LoadingRow .RS_LoadSkeleton--short {
+    display: none;
+  }
+
+  .RS_LoadingCards {
+    grid-template-columns: 1fr;
+  }
+
+  .RS_LoadSkeleton--card {
+    height: 115px;
+  }
+
+  .RS_LoadSkeleton--timeline {
+    height: 98px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .RS_LoadSkeleton,
+  .RS_TimelineSync--refreshing .RS_TimelineSyncDot {
+    animation: none !important;
+  }
+}
+
+/* =========================================================
+   PAIRED PAGE-SCROLL V2 + VIEW DETAILS MODAL SCROLL FIX
+   17 AUG 2026
+
+   IMPORTANT:
+   Desktop pane coordination is driven by page.tsx transforms, not native
+   position:sticky. This avoids sticky breaking when a GSAP smooth-scroll
+   wrapper transforms an ancestor.
+========================================================= */
+
+@media (min-width: 1366px) {
+  .RS_DashboardShell {
+    position: relative !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    align-items: start !important;
+    overflow: visible !important;
+  }
+
+  .RS_BookingsPane,
+  .RS_TrackingPane {
+    /* JS applies only translateY. Keep both panes in normal document flow. */
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+    align-self: start !important;
+
+    width: 100%;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+
+    /* Absolutely no nested vertical scroll box. */
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overscroll-behavior: auto !important;
+
+    scrollbar-width: none !important;
+    -ms-overflow-style: none;
+
+    /* Prevent old reveal/keyframe transforms from fighting the JS transform. */
+    animation: none !important;
+    transition-property:
+      background-color,
+      border-color,
+      box-shadow !important;
+  }
+
+  .RS_TrackingPane {
+    margin: auto;
+  }
+
+  .RS_BookingsPane::-webkit-scrollbar,
+  .RS_TrackingPane::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+.RS_TrackingPane--empty strong {
+
+    font-size: 18px;
+}
+  .RS_TrackingPane--empty p {
+    font-size: 15px !important;
+ 
+}
+}
+
+@media (max-width: 1365px) {
+  .RS_DashboardShell {
+    overflow: visible !important;
+  }
+
+  .RS_BookingsPane,
+  .RS_TrackingPane {
+    position: static !important;
+    top: auto !important;
+    transform: none !important;
+    will-change: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+/* =========================================================
+   VIEW DETAILS POPUP — RELIABLE INTERNAL SCROLL
+========================================================= */
+
+.RS_ModalOverlay {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none;
+}
+
+.RS_ModalPanel {
+  /* Critical for a flex child with overflow:auto to actually shrink. */
+  min-height: 0 !important;
+  max-height: calc(100dvh - 32px) !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain !important;
+  touch-action: auto;
+}
+
+.RS_ModalHeader,
+.RS_ModalFooter {
+  flex: 0 0 auto !important;
+}
+
+.RS_ModalBody {
+  /* min-height:0 is the missing flexbox rule that lets the body become the
+     modal's scroll container instead of forcing the panel beyond max-height. */
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+
+  overscroll-behavior-y: contain !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(112, 118, 128, 0.38) transparent;
+}
+
+.RS_ModalBody::-webkit-scrollbar {
+  width: 7px;
+}
+
+.RS_ModalBody::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.RS_ModalBody::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(112, 118, 128, 0.38);
+  background-clip: padding-box;
+}
+
+@media (max-width: 900px) {
+  .RS_ModalOverlay {
+    padding: 7px !important;
+  }
+
+  .RS_ModalPanel {
+    width: 100% !important;
+    max-height: calc(100dvh - 14px) !important;
+    border-radius: 18px !important;
+  }
+
+  .RS_ModalBody {
+    padding-bottom: 18px !important;
   }
 }

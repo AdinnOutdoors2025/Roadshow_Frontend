@@ -6,7 +6,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, } from "react";
 import { createPortal } from "react-dom";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { isBefore } from "date-fns";
-import { CalendarDays, ChevronLeft, ChevronRight, Minus, Plus, Send, SquarePen, X, } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, CircleAlert, CircleCheck, Minus, Plus, Send, SquarePen, Trash2, X, } from "lucide-react";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
@@ -664,6 +664,10 @@ export default function CampaignRequestPage() {
       ? null
       : vehicle.id;
 
+    const removingVehicle = isSelected(
+      vehicle.id
+    );
+
     setSelectedVehicles((current) => {
       const alreadySelected = current.some(
         (item) =>
@@ -712,16 +716,46 @@ export default function CampaignRequestPage() {
         },
       ];
     });
+
+    if (removingVehicle) {
+      toast.success(
+        `${vehicle.name} removed from your campaign.`,
+        {
+          id: `vehicle-toggle-${vehicle.id}`,
+        }
+      );
+    } else {
+      toast.success(
+        `${vehicle.name} added. Select your dates, then continue to Campaign Details.`,
+        {
+          id: `vehicle-toggle-${vehicle.id}`,
+        }
+      );
+    }
   };
 
   const removeVehicle = (
     vehicleId: string
   ) => {
+    const vehicleToRemove = selectedVehicles.find(
+      (vehicle) =>
+        String(vehicle.id) === String(vehicleId)
+    );
+
     setSelectedVehicles((current) =>
       current.filter(
         (vehicle) =>
-          vehicle.id !== vehicleId
+          String(vehicle.id) !== String(vehicleId)
       )
+    );
+
+    toast.success(
+      vehicleToRemove
+        ? `${vehicleToRemove.name} removed from your campaign.`
+        : "Vehicle removed from your campaign.",
+      {
+        id: `vehicle-removed-${vehicleId}`,
+      }
     );
   };
 
@@ -1665,36 +1699,62 @@ export default function CampaignRequestPage() {
                             surrounding flex row keeps its two children and
                             its layout is untouched. */}
                         {(() => {
-                          const shortfall =
-                            vehicle.quantity >
-                            toSafeNumber(
-                              vehicle.availableVehicles
-                            );
+                          const available = toSafeNumber(
+                            vehicle.availableVehicles
+                          );
 
-                          if (!shortfall) return null;
+                          const shortfall =
+                            vehicle.quantity > available;
+
+                          const fromDate = formatDate(
+                            vehicle.startDate,
+                            {
+                              pattern: "dd MMM yyyy",
+                              fallback: "",
+                            }
+                          );
+
+                          if (!shortfall) {
+                            return (
+                              <p className="rdsw_crfQtyAvailabilityNote rdsw_crfQtyAvailabilityNote--ok">
+                                <CircleCheck size={12} />
+                                <span>
+                                  {available} vehicle
+                                  {available === 1 ? "" : "s"}{" "}
+                                  available
+                                  {fromDate
+                                    ? ` from ${fromDate}`
+                                    : " for your selected dates"}
+                                  .
+                                </span>
+                              </p>
+                            );
+                          }
 
                           const nextAvailable =
                             getNextAvailableDate(vehicle);
 
                           return (
-                            <p className="rdsw_crfQtyAvailabilityNote mt-1 text-[10.5px] leading-[1.45] text-[#8a6100]">
-                              {toSafeNumber(
-                                vehicle.availableVehicles
-                              )}{" "}
-                              available now
-                              {nextAvailable
-                                ? ` · more available from ${formatDate(
-                                  nextAvailable,
-                                  {
-                                    pattern:
-                                      "dd MMM yyyy",
-                                    fallback: "",
-                                  }
-                                )}`
-                                : ""}
-                              . You can still request this
-                              quantity — our team will confirm
-                              it.
+                            <p className="rdsw_crfQtyAvailabilityNote rdsw_crfQtyAvailabilityNote--shortfall">
+                              <CircleAlert size={12} />
+                              <span>
+                                Only {available} available
+                                {fromDate ? ` from ${fromDate}` : ""}
+                                , but you're requesting{" "}
+                                {vehicle.quantity}
+                                {nextAvailable
+                                  ? ` · more free from ${formatDate(
+                                    nextAvailable,
+                                    {
+                                      pattern:
+                                        "dd MMM yyyy",
+                                      fallback: "",
+                                    }
+                                  )}`
+                                  : ""}
+                                . We'll confirm the rest with our
+                                team.
+                              </span>
                             </p>
                           );
                         })()}
@@ -1775,7 +1835,7 @@ export default function CampaignRequestPage() {
               <VehicleCrfSubmitBtn
                 type="button"
                 label="Continue"
-                loadingLabel="Submitting..."
+                loadingLabel="Opening Campaign Details..."
                 loading={submitting}
                 disabled={submitting}
                 ariaLabel="Continue to campaign details"
@@ -1829,7 +1889,7 @@ export default function CampaignRequestPage() {
               </h2>
 
               <p className="rdsw_crfProdDetailsDesc">
-                Review your roadshow campaign details and confirm your booking.
+                Choose your roadshow vehicles and campaign dates. You can add campaign details in the next step.
               </p>
             </div>
 
@@ -1899,6 +1959,24 @@ export default function CampaignRequestPage() {
                         ].join(" ")}
                       >
                         <div className="rdsw_crfProdDetailsImageWrapper">
+                          {selected && (
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                removeVehicle(vehicle.id);
+                              }}
+                              className="rdsw_crfProdDetailsRemoveVehicleBtn"
+                              aria-label={`Remove ${vehicle.name} from campaign`}
+                              title="Remove vehicle"
+                            >
+                              <Trash2
+                                size={17}
+                                strokeWidth={1.9}
+                              />
+                            </button>
+                          )}
+
                           <img
                             src={
                               vehicle.image ||
@@ -1972,7 +2050,7 @@ export default function CampaignRequestPage() {
 
                             <span>
                               {selected
-                                ? "Vehicle added"
+                                ? "Vehicle Added"
                                 : "Add Vehicle"}
                             </span>
                           </button>
@@ -2194,8 +2272,8 @@ export default function CampaignRequestPage() {
                   className="rdsw_crfStickyBarButton"
                 >
                   {submitting
-                    ? "Submitting..."
-                    : "Campaign Details"}
+                    ? "Opening..."
+                    : "Continue to Campaign Details"}
                 </button>
               </div>
             </motion.div>

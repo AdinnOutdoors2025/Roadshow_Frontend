@@ -1,0 +1,18 @@
+{
+  "taskId": "20260812-user-auth",
+  "taskSubject": "[MODULE] User Authentication",
+  "module": "user-authentication",
+  "overall": "BLOCKED",
+  "reportPath": ".qa/reports/20260812-user-auth-user-authentication.md",
+  "categories": {
+    "smoke": "PASS",
+    "functional": "PASS",
+    "regression": "PASS",
+    "regex": "PASS",
+    "api": "PASS",
+    "security": "PASS",
+    "performance": "PASS"
+  },
+  "note": "All 7 categories PASSED against the module as it existed on disk during this QA run, with real command output as evidence (96/96 Vitest tests, 7/7 Playwright tests, clean tsc/eslint). Overall is forced to BLOCKED because, mid-session, an external git commit+reset on this shared working tree (unrelated to this QA agent's actions) removed the module's source files (src/app/user-auth/*, src/app/utils/userAuth.tsx, src/app/utils/useUserAuthGuard.tsx), the test infrastructure (vitest.config.ts, playwright.config.ts, package.json test scripts/devDependencies), and the generated tests (tests/module-qa/user-authentication/*) from disk. None of these were ever committed to git, so they are very likely unrecoverable via git. This QA agent retains the exact content of every file in its session context and can regenerate all of it verbatim on request, but has not done so unilaterally per this repo's standing 'confirm before editing' instruction. A human decision is required before this task can be reopened (restore + re-run QA) or closed (if the removal was intentional). See the report's 'Critical anomaly' section for full detail.",
+  "completedAt": "2026-08-12T13:00:00+05:30"
+}

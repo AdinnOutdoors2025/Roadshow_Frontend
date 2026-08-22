@@ -1556,6 +1556,38 @@
   .RS_WhyAdRS_Left {
     left: 64px;
   }
+
+  /* This range previously had no orbit/wrap tuning at all, so it fell
+     back to full desktop values (--rs-orbit-f defaults to 1, wrap padding
+     stayed at the unconditional 120px px-30). A 1920px screen at 150%
+     Windows scaling lands at 1280px CSS width (just inside the ≤1280px
+     block below), while a 1366px/100%-scale laptop lands here instead —
+     that mismatch is why "Clients" and "Why Adinn" looked fine on one
+     laptop and cramped/oversized on the other. */
+  .RS_ClientsSection {
+    --rs-orbit-f: 0.95;
+  }
+
+  .RS_ClientsOrbitArea {
+    height: calc(380px * var(--rs-orbit-f, 1));
+  }
+
+  .RS_ClientCenterBubble {
+    width: calc(180px * var(--rs-orbit-f, 1));
+    height: calc(180px * var(--rs-orbit-f, 1));
+    border-width: calc(10px * var(--rs-orbit-f, 1));
+    font-size: calc(40px * var(--rs-orbit-f, 1));
+  }
+
+  .RS_ClientsSectionWrap,
+  .RS_WhyAdRSSectionWrap {
+    padding-right: 64px;
+    padding-left: 64px;
+  }
+
+  .RS_WhyAdRSMain {
+    width: calc(100% - 64px);
+  }
 }
 
 /* Laptops (1024px - 1280px) */

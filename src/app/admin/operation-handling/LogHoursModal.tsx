@@ -35,6 +35,14 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
   const [billingMode, setBillingMode] = useState("full");
   const [submitting, setSubmitting] = useState(false);
 
+  // ── Client-facing day-wise campaign metrics ──
+  const [distanceCoveredKm, setDistanceCoveredKm] = useState("");
+  const [activationsCount, setActivationsCount] = useState("");
+  const [leadsCollected, setLeadsCollected] = useState("");
+  const [peopleEngaged, setPeopleEngaged] = useState("");
+  const [routeNote, setRouteNote] = useState("");
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+
   const campaignFromISO = toISODate(vehicle.fromDate);
   const campaignToISO = toISODate(vehicle.toDate);
 
@@ -69,23 +77,55 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
       endISO = end.toISOString();
     }
 
+    const fields: Record<string, string> = {
+      vehicleIndex: String(vehicleIndex),
+      entryId: selectedEntryId,
+      day,
+      startTime: startISO || "",
+      endTime: endISO || "",
+      remarks,
+      isAbsentDay: String(isAbsentDay),
+      billingMode: isAbsentDay ? "absent" : billingMode,
+      absentDayResolution: isAbsentDay ? absentDayResolution : "",
+      distanceCoveredKm,
+      activationsCount,
+      leadsCollected,
+      peopleEngaged,
+      routeNote,
+    };
+
     setSubmitting(true);
     try {
-      await axios.post(
-        `${API_BASE}admin/pipeline/${order._id}/daily-hours`,
-        {
-          vehicleIndex,
-          entryId: selectedEntryId,
-          day,
-          startTime: startISO,
-          endTime: endISO,
-          remarks,
-          isAbsentDay,
-          billingMode: isAbsentDay ? "absent" : billingMode,
-          absentDayResolution: isAbsentDay ? absentDayResolution : null,
-        },
-        { headers: { Authorization: `Bearer ${getToken()}` } }
-      );
+      if (photoFiles.length) {
+        const formData = new FormData();
+        Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
+        photoFiles.forEach((file) => formData.append("photos", file));
+
+        await axios.post(`${API_BASE}admin/pipeline/${order._id}/daily-hours`, formData, {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        });
+      } else {
+        await axios.post(
+          `${API_BASE}admin/pipeline/${order._id}/daily-hours`,
+          {
+            vehicleIndex,
+            entryId: selectedEntryId,
+            day,
+            startTime: startISO,
+            endTime: endISO,
+            remarks,
+            isAbsentDay,
+            billingMode: isAbsentDay ? "absent" : billingMode,
+            absentDayResolution: isAbsentDay ? absentDayResolution : null,
+            distanceCoveredKm,
+            activationsCount,
+            leadsCollected,
+            peopleEngaged,
+            routeNote,
+          },
+          { headers: { Authorization: `Bearer ${getToken()}` } }
+        );
+      }
       toast.success("Daily hours logged!");
       onRefresh();
       onClose();
@@ -255,6 +295,82 @@ export default function LogHoursModal({ order, vehicle, vehicleIndex, vehicleEnt
                 </button>
               </div>
             </div>
+          )}
+
+          {!isAbsentDay && (
+            <>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  Today&apos;s Route (shown to client)
+                </label>
+                <input
+                  type="text"
+                  value={routeNote}
+                  onChange={(e) => setRouteNote(e.target.value)}
+                  placeholder="e.g. Pune → Satara"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Distance Covered (km)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={distanceCoveredKm}
+                    onChange={(e) => setDistanceCoveredKm(e.target.value)}
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Activations</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={activationsCount}
+                    onChange={(e) => setActivationsCount(e.target.value)}
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Leads Collected</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={leadsCollected}
+                    onChange={(e) => setLeadsCollected(e.target.value)}
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">People Engaged</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={peopleEngaged}
+                    onChange={(e) => setPeopleEngaged(e.target.value)}
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  Photos &amp; Proof (shown to client)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => setPhotoFiles(Array.from(e.target.files || []))}
+                  className="w-full text-xs text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-indigo-600 dark:file:bg-indigo-900/30 dark:file:text-indigo-300"
+                />
+                {photoFiles.length > 0 && (
+                  <p className="mt-1 text-[11px] text-gray-400">{photoFiles.length} photo(s) selected</p>
+                )}
+              </div>
+            </>
           )}
 
           <div>

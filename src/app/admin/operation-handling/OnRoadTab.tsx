@@ -134,6 +134,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const [activeIssueEntryId, setActiveIssueEntryId] = useState<string | null>(null);
   const [routeTrackId, setRouteTrackId] = useState<string | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
+  const [routeRefreshNonce, setRouteRefreshNonce] = useState(0);
   const [kmPage, setKmPage] = useState(0);
   const [liveTab, setLiveTab] = useState<"status" | "history" | "campaign">("status");
   const [activeExtraKmTab, setActiveExtraKmTab] = useState(0);
@@ -306,7 +307,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
     setGpsLoading(true);
     try {
       const { data } = await axios.get(
-        `${API_BASE}admin/vamosys/vehicle-locations`
+        `${API_BASE}admin/vamosys/vehicle-locations`,
+        { headers: { Authorization: `Bearer ${getToken()}` } }
       );
       const locations = data?.data?.data?.[0]?.vehicleLocations ?? [];
       setGpsData(locations);
@@ -343,6 +345,11 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
     const gps = gpsData.find(g => g.vehicleId === e.vehicleRegistrationNumber);
     return sum + (gps?.distanceCovered || 0);
   }, 0);
+
+  const dailyKmLimit = vehicle.dailyKmLimit || 0;
+  const routeCoveredPct = dailyKmLimit > 0
+    ? Math.min(100, Math.round((totalKm / dailyKmLimit) * 100))
+    : 0;
 
   const quantity = vehicle.quantity || 1;
   const savedCount = liveStatusEntries.length;
@@ -404,7 +411,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 On Road
               </span>
             )}
-            {liveStatusEntries.some((e) => e.unavailableStatus) && (
+            {vehicleEntries.some((e) => e.unavailableStatus) && (
               <span className="text-[14px] px-2 py-0.5 rounded-full bg-red-50 text-red-600 font-semibold border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800">
                 Vehicle Unavailable
               </span>
@@ -586,8 +593,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               iconBg="bg-emerald-50 dark:bg-emerald-900/20"
               iconColor="text-emerald-500"
               label="Route covered"
-              value="0%"
-              // sub={<><TrendingUp size={11} /> Today's progress</>}
+              value={`${routeCoveredPct}%`}
               subColor="text-emerald-600 dark:text-emerald-400"
             />
 
@@ -707,7 +713,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
               <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[520px] overflow-y-auto">
                 {liveTab === "status" ? (
                   <>
-                    {liveStatusEntries.map((entry, idx) => (
+                    {vehicleEntries.map((entry, idx) => (
                       <LiveVehicleRow
                         key={entry._id || idx}
                         entry={entry}
@@ -726,11 +732,9 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                         vehicleTypes={vehicleTypes}
                       />
                     ))}
-                    {liveStatusEntries.length === 0 && (
+                    {vehicleEntries.length === 0 && (
                       <div className="p-6 text-center text-gray-400 text-sm">
-                        {vehicleEntries.length > 0
-                          ? "All vehicles for this slot are currently marked Unavailable — see the Vehicle Unavailable tab."
-                          : "No drivers assigned."}
+                        No drivers assigned.
                       </div>
                     )}
 
@@ -806,11 +810,27 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
                   Today's route progress
                 </h3>
-                {selectedVehicleRegNo && (
-                  <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
-                    {selectedVehicleRegNo}
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {selectedVehicleRegNo && (
+                    <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+                      {selectedVehicleRegNo}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const regNo = selectedVehicleRegNo || vehicleEntries[0]?.vehicleRegistrationNumber;
+                      if (!regNo) return;
+                      setRouteRefreshNonce((n) => n + 1);
+                      fetchRouteTrackId(regNo);
+                    }}
+                    disabled={routeLoading}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-all"
+                    title="Refresh map"
+                  >
+                    <RefreshCw size={13} className={routeLoading ? "animate-spin" : ""} />
+                  </button>
+                </div>
               </div>
 
               <div className="border-b border-gray-100 dark:border-gray-800 relative overflow-hidden" style={{ height: "280px" }}>
@@ -821,7 +841,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   </div>
                 ) : routeTrackId ? (
                   <iframe
-                    key={routeTrackId}
+                    key={`${routeTrackId}-${routeRefreshNonce}`}
                     src={`https://gpsvts.vamosys.com/gps/public/track?vehicleId=${routeTrackId}&maps=track&userID=ADINN12`}
                     className="w-full h-full border-0"
                     title="Live Route Map"

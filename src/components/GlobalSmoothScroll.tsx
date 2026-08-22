@@ -31,6 +31,13 @@ const SMOOTH_SCROLL_DISABLED_PATHS = [
      bar, so they need the same opt-out for exactly the reason above. */
   "/roadshow/campaign-details",
   "/roadshow/review-order",
+
+  /* The campaign tracking console (/roadshow/my-bookings/[bookingId]) uses
+     the same paired sticky-column trick as CampaignRequest above. The list
+     page (/roadshow/my-bookings) also went paired-sticky (RS_BookingsPane /
+     RS_TrackingPane both position:sticky at >=1400px, see page.css) so it
+     needs the same opt-out — no trailing slash, so this covers both. */
+  "/roadshow/my-bookings",
 ];
 
 export default function GlobalSmoothScroll({

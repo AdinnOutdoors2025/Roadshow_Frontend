@@ -283,10 +283,10 @@
   align-items: center;
   gap: 7px;
   font-size: calc(var(--cd-label) - 0.5px);
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: #575757;
+  color: #1a1a1c;
 }
 
 .rdsw_cdSectionNote {

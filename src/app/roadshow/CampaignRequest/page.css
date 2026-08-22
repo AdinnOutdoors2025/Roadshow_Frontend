@@ -2607,6 +2607,35 @@
   transition: background 220ms ease, transform 220ms ease;
 }
 
+.rdsw_crfQtyAvailabilityNote {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+
+  margin-top: 6px;
+  padding: 5px 10px;
+
+  border-radius: 10px;
+
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.rdsw_crfQtyAvailabilityNote svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.rdsw_crfQtyAvailabilityNote--ok {
+  color: #157a3d;
+  background: rgba(21, 122, 61, 0.09);
+}
+
+.rdsw_crfQtyAvailabilityNote--shortfall {
+  color: #8a6100;
+  background: rgba(138, 97, 0, 0.1);
+}
+
 .rdsw_crfStickyBarButton:hover:not(:disabled) {
   background: #d70000;
   transform: translateY(-1px);
@@ -2818,5 +2847,98 @@
   .rdsw_crfStickyBarButton {
     padding: 13px 26px;
     font-size: 13px;
+  }
+}
+
+
+/* =========================================================
+   CAMPAIGN STEP + VEHICLE REMOVE UX
+   These rules only enhance selected-vehicle guidance.
+   Existing card dimensions, colors, carousel behavior and
+   responsive layout remain unchanged.
+========================================================= */
+
+.rdsw_crfProdDetailsSelectionHint {
+  max-width: 720px;
+  margin: 10px 0 0;
+  color: #777777;
+  font-family: "Outfit", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.rdsw_crfProdDetailsImageWrapper {
+  position: relative;
+}
+
+.rdsw_crfProdDetailsRemoveVehicleBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.94);
+  color: #d70000;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 5px 16px rgba(0, 0, 0, 0.08);
+
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 220ms ease,
+    color 220ms ease,
+    border-color 220ms ease;
+}
+
+.rdsw_crfProdDetailsRemoveVehicleBtn:hover {
+  border-color: #d70000;
+  background: #d70000;
+  color: #ffffff;
+  transform: scale(1.06);
+}
+
+.rdsw_crfProdDetailsRemoveVehicleBtn:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 1023px) {
+  .rdsw_crfProdDetailsSelectionHint {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 640px) {
+  .rdsw_crfProdDetailsSelectionHint {
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .rdsw_crfProdDetailsRemoveVehicleBtn {
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rdsw_crfProdDetailsRemoveVehicleBtn {
+    transition: none;
   }
 }

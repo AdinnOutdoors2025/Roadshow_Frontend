@@ -3,10 +3,13 @@
   "version": "2.3.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -44,12 +47,14 @@
     "next": "^16.1.6",
     "react": "^19.2.0",
     "react-apexcharts": "^1.8.0",
+    "react-datepicker": "^9.1.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^19.2.0",
     "react-dropzone": "^14.3.8",
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.6.0",
+    "react-select": "^5.10.2",
     "react-toastify": "^11.1.0",
     "shadcn": "^4.16.2",
     "swiper": "^11.2.10",
@@ -58,18 +63,27 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@playwright/test": "^1.62.1",
     "@svgr/webpack": "^8.1.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.4",
     "@types/jwt-decode": "^2.2.1",
     "@types/node": "^20.19.25",
     "@types/react": "^19.2.1",
     "@types/react-dom": "^19.2.1",
     "@types/react-transition-group": "^4.4.12",
+    "@vitejs/plugin-react": "^6.0.5",
     "eslint": "^9.39.1",
     "eslint-config-next": "16.0.7",
+    "jsdom": "^30.0.1",
     "patch-package": "^8.0.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite-plugin-svgr": "^5.2.0",
+    "vitest": "^4.1.10"
   },
   "overrides": {
     "@react-jvectormap/core": {

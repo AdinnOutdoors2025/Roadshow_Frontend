@@ -231,6 +231,7 @@
 
 .rdsw_rvFactBody {
   min-width: 0;
+  align-items: center; align-content:center;
 }
 
 .rdsw_rvFactLabel {
@@ -545,7 +546,8 @@
 .rdsw_rvTotalRow strong {
   font-size: var(--rv-total);
   font-weight: 700;
-  color: #d70000;
+  /* color: #d70000; */
+  color: #2563eb;
   font-variant-numeric: tabular-nums;
 }
 
@@ -646,6 +648,23 @@
   font-size: var(--rv-micro);
   line-height: 1.5;
   color: #a0a0a5;
+}
+
+.rdsw_rvTermsLink {
+  padding: 0;
+  border: none;
+  background: none;
+
+  font: inherit;
+  color: #6b6b70;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  cursor: pointer;
+}
+
+.rdsw_rvTermsLink:hover {
+  color: #d70000;
 }
 
 /* ── Responsive ────────────────────────────────────────────────────────────

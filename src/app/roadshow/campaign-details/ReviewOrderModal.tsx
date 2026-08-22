@@ -24,7 +24,7 @@
 /*  Lenis checks the whole composed path, so declaring it once on the overlay  */
 /*  covers every scroller inside.                                              */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   CalendarDays,
@@ -52,6 +52,7 @@ import {
   resolveCampaignType,
   resolvePromoterType,
 } from "@/lib/roadshowRequestSubmit";
+import TermsAndConditionsModal from "@/components/Client/Reusable_Components/TermsAndConditionsModal";
 
 import "./ReviewOrderModal.css";
 
@@ -67,6 +68,8 @@ export default function ReviewOrderModal({
   onSubmit,
   onEditVehicle,
 }) {
+  const [termsOpen, setTermsOpen] = useState(false);
+
   useScrollLock(open);
 
   /* Escape closes — but never mid-send, or the customer loses sight of a
@@ -104,7 +107,9 @@ export default function ReviewOrderModal({
 
   const firstDetails = rows[0]?.details;
 
-  return createPortal(
+  return (
+    <>
+      {createPortal(
     <div
       className="rdsw_rvOverlay"
       role="dialog"
@@ -191,7 +196,7 @@ export default function ReviewOrderModal({
                     })}
                   </p>
 
-                  <p className="rdsw_rvFactMeta">to</p>
+                  <p className="rdsw_rvFactMeta" style={{textAlign:'center'}}>to</p>
 
                   <p className="rdsw_rvFactValue">
                     {formatDate(campaignEnd, {
@@ -200,7 +205,7 @@ export default function ReviewOrderModal({
                     })}
                   </p>
 
-                  <p className="rdsw_rvFactHighlight">
+                  <p className="rdsw_rvFactHighlight" >
                     {totalDays} {totalDays === 1 ? "Day" : "Days"}
                   </p>
                 </div>
@@ -431,10 +436,7 @@ export default function ReviewOrderModal({
                 <p className="rdsw_rvNotesTitle">Important Notes</p>
 
                 <p className="rdsw_rvNotesBody">
-                  The final quotation may vary based on campaign
-                  requirements, branding, fabrication, logistics, permits and
-                  other applicable charges. Vehicle availability is confirmed
-                  by our team after the request is received.
+                  The final quotation may vary depending on campaign requirements, branding, fabrication, logistics, permits, and applicable location-based RTO charges. Vehicle availability and final pricing will be confirmed by our team after reviewing your campaign request.
                 </p>
               </div>
             </div>
@@ -527,7 +529,7 @@ export default function ReviewOrderModal({
                 <strong>{formatMoney(pricing.grandTotal)}</strong>
               </div>
 
-              <div className="rdsw_rvCallout rdsw_rvCalloutRed">
+              {/* <div className="rdsw_rvCallout rdsw_rvCalloutRed">
                 <p className="rdsw_rvCalloutTitle">
                   This is an estimated cost.
                 </p>
@@ -536,7 +538,7 @@ export default function ReviewOrderModal({
                   The final quotation may vary based on campaign requirements
                   and other applicable charges.
                 </p>
-              </div>
+              </div> */}
 
               <div className="rdsw_rvCallout rdsw_rvCalloutGreen">
                 <p className="rdsw_rvCalloutTitle">
@@ -579,8 +581,15 @@ export default function ReviewOrderModal({
               </div>
 
               <p className="rdsw_rvTerms">
-                By sending the request, you agree to our Terms &amp;
-                Conditions.
+                By sending the request, you agree to our{" "}
+                <button
+                  type="button"
+                  className="rdsw_rvTermsLink"
+                  onClick={() => setTermsOpen(true)}
+                >
+                  Terms &amp; Conditions
+                </button>
+                .
               </p>
             </div>
           </aside>
@@ -588,5 +597,12 @@ export default function ReviewOrderModal({
       </div>
     </div>,
     document.body
+      )}
+
+      <TermsAndConditionsModal
+        open={termsOpen}
+        onClose={() => setTermsOpen(false)}
+      />
+    </>
   );
 }

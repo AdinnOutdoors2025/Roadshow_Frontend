@@ -27,6 +27,8 @@ import {
   useRouter,
 } from "next/navigation";
 
+import { ScrollSmoother } from "gsap/ScrollSmoother";
+
 import { baseUrl } from "../../../../BaseUrl";
 import { useAuth } from "@/context/AuthContext";
 import { clientAuthHeaders } from "@/lib/roadshowAuthToken";
@@ -340,12 +342,6 @@ export default function BookingRequestSubmittedPage() {
     useState("");
 
   const [
-    downloadAttention,
-    setDownloadAttention,
-  ] =
-    useState(false);
-
-  const [
     copied,
     setCopied,
   ] =
@@ -353,11 +349,6 @@ export default function BookingRequestSubmittedPage() {
 
   const downloadButtonRef =
     useRef<HTMLButtonElement>(
-      null,
-    );
-
-  const downloadAttentionTimerRef =
-    useRef<number | null>(
       null,
     );
 
@@ -556,14 +547,6 @@ export default function BookingRequestSubmittedPage() {
 
   useEffect(() => {
     return () => {
-      if (
-        downloadAttentionTimerRef.current
-      ) {
-        window.clearTimeout(
-          downloadAttentionTimerRef.current,
-        );
-      }
-
       if (
         downloadFeedbackTimerRef.current
       ) {
@@ -820,54 +803,57 @@ export default function BookingRequestSubmittedPage() {
 
   const handleSummaryNoteClick =
     () => {
-      if (
-        downloadAttentionTimerRef.current
-      ) {
-        window.clearTimeout(
-          downloadAttentionTimerRef.current,
+      /*
+        Clicking the Booking Summary hint only smooth-scrolls
+        to the action button section. No highlight/orbit/focus
+        animation is triggered.
+
+        This page runs under GSAP ScrollSmoother (it's not in
+        GlobalSmoothScroll's opt-out list), which translates
+        #smooth-content rather than scrolling the window — the native
+        scrollIntoView() below computed against a scrollport whose
+        scrollTop is permanently 0, landed nowhere near the target, and
+        left the smoother's tracked position out of sync with what the
+        browser's native scroll thought it was, which is what made
+        further scrolling appear "stuck". Same fix already used by
+        scrollToSection.ts: hand it to the smoother when one is alive.
+      */
+      const target =
+        buttonsRef.current;
+
+      if (!target) return;
+
+      const prefersReducedMotion =
+        window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+
+      const smooth =
+        !prefersReducedMotion;
+
+      const smoother =
+        ScrollSmoother.get?.();
+
+      if (smoother) {
+        smoother.scrollTo(
+          target,
+          smooth,
+          "center center",
         );
+        return;
       }
 
-      setDownloadAttention(
-        true,
-      );
-
-      window.requestAnimationFrame(
-        () => {
-          buttonsRef.current?.scrollIntoView(
-            {
-              behavior:
-                "smooth",
-              block:
-                "center",
-              inline:
-                "nearest",
-            },
-          );
+      target.scrollIntoView(
+        {
+          behavior: smooth
+            ? "smooth"
+            : "auto",
+          block:
+            "center",
+          inline:
+            "nearest",
         },
       );
-
-      window.setTimeout(
-        () => {
-          downloadButtonRef.current?.focus(
-            {
-              preventScroll:
-                true,
-            },
-          );
-        },
-        650,
-      );
-
-      downloadAttentionTimerRef.current =
-        window.setTimeout(
-          () => {
-            setDownloadAttention(
-              false,
-            );
-          },
-          3200,
-        );
     };
 
   /* =========================================================
@@ -1375,15 +1361,10 @@ export default function BookingRequestSubmittedPage() {
                 </p>
 
                 <p
-                  className="RS_TileSub mt-0.5 truncate text-[12px] text-[#8a8a92]"
-                  title={
-                    vehicleSummary
-                  }
-                >
-                  {
-                    vehicleSummary
-                  }
-                </p>
+  className="RS_TileSub mt-0.5 break-words whitespace-normal text-[12px] leading-[1.45] text-[#8a8a92]"
+  title={vehicleSummary}>
+  {vehicleSummary}
+</p>
               </div>
             </div>
 
@@ -1403,7 +1384,7 @@ export default function BookingRequestSubmittedPage() {
                   Campaign
                 </p>
 
-                <p className="RS_TileValue mt-1 break-words text-[13px] font-semibold text-[#202024]">
+                <p className="RS_TileValue mt-1 break-words text-[13px] font-semibold text-[#202024] whitespace-normal leading-[1.45]">
                   {
                     campaignSummary.title
                   }
@@ -1411,15 +1392,10 @@ export default function BookingRequestSubmittedPage() {
 
                 {campaignSummary.sub ? (
                   <p
-                    className="RS_TileSub mt-0.5 truncate text-[12px] text-[#8a8a92]"
-                    title={
-                      campaignSummary.sub
-                    }
-                  >
-                    {
-                      campaignSummary.sub
-                    }
-                  </p>
+  className="RS_TileSub mt-0.5 break-words whitespace-normal text-[12px] leading-[1.45] text-[#8a8a92]"
+  title={campaignSummary.sub}>
+  {campaignSummary.sub}
+</p>
                 ) : null}
               </div>
             </div>
@@ -1485,9 +1461,7 @@ export default function BookingRequestSubmittedPage() {
             </span>
 
             <span>
-              Need vehicle-wise
-              pricing, GST and
-              campaign details?
+             View the complete booking summary for vehicle-wise pricing, GST, and campaign details.
 
               <strong>
                 {" "}
@@ -1661,10 +1635,6 @@ export default function BookingRequestSubmittedPage() {
 
           <div
             className={`RS_DownloadActionWrap ${
-              downloadAttention
-                ? "RS_DownloadActionWrap--attention"
-                : ""
-            } ${
               downloading
                 ? "RS_DownloadActionWrap--loading"
                 : ""
@@ -1776,6 +1746,7 @@ export default function BookingRequestSubmittedPage() {
             </p>
           ) : downloadStatus ===
               "error" &&
+              
             downloadError ? (
             <p className="RS_DownloadStatus RS_DownloadStatus--error">
               {

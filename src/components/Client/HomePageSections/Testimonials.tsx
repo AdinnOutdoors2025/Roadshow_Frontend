@@ -132,6 +132,7 @@ export function Testimonials() {
   const shouldReduceMotion = useReducedMotion();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
   const selectedItem = items[selectedIndex];
   //STOP TO AUTOPLAY
@@ -186,16 +187,28 @@ export function Testimonials() {
               delay: 0.1,
             }}
           >
+            {!videoReady && (
+              <div
+                className="adinn-testimonial-bg-loading"
+                aria-hidden="true"
+              />
+            )}
+
             <video
-              className="adinn-testimonial-bg-video"
+              className={`adinn-testimonial-bg-video ${
+                videoReady ? "" : "adinn-testimonial-bg-video--loading"
+              }`}
               autoPlay
               muted
               loop
               playsInline
               preload="auto"
               aria-hidden="true"
+              onCanPlay={() => setVideoReady(true)}
             >
-              <source src="./images/assets/Rdsw_Testimonials_BgVideoCopy.mp4" type="video/webm" />
+              {/* File is an actual .mp4 — the `type` hint has to match or
+                  some browsers refuse the source without ever fetching it. */}
+              <source src="./images/assets/Rdsw_Testimonials_BgVideoCopy.mp4" type="video/mp4" />
             </video>
 
             <div className="adinn-testimonial-truck-stage">

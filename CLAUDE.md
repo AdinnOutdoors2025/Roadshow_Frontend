@@ -273,4 +273,29 @@ Token-based, not NextAuth:
 - SVGs are imported as React components via `@svgr/webpack` (configured in both the webpack and turbopack sections of `next.config.ts`).
 - Path alias: `@/*` → `src/*` (see `tsconfig.json`).
 
+## Mandatory Module Completion QA
+
+For meaningful feature/module implementations, track the work using:
+
+```
+[MODULE] <Module Name>
+```
+
+Do not run full QA after every edit or intermediate development step. Do not run it while a module is still being developed. The full QA workflow is a **module completion gate**, not an every-turn hook — see `COMMON_PROMPT.md` for the portable version of this policy and the full rationale.
+
+Before marking any `[MODULE]` task complete:
+
+1. Invoke the `module-qa` subagent (`.claude/agents/module-qa.md`).
+2. Pass it: TASK_ID, the exact TASK_SUBJECT, the module name, requirements/acceptance criteria, and the relevant changed files.
+3. Require Smoke, Functional, Regression, Regex/Input Validation, API, Security, and Performance testing — each category resolves to `PASS`, `FAIL`, `BLOCKED`, or `NOT_APPLICABLE`.
+4. Require generated module tests under `tests/module-qa/<module-slug>/` when coverage is missing, in this repo's existing test framework (Vitest + React Testing Library for unit/functional/regex/API-shaped tests, Playwright for smoke/e2e browser flows — see `vitest.config.ts` / `playwright.config.ts`).
+5. Require a QA report at `.qa/reports/<task-id>-<module-slug>.md`.
+6. Require a QA status file at `.qa/status/<task-id>.json`.
+7. If QA returns `FAIL` or `BLOCKED`, keep the module `IN_PROGRESS`.
+8. Fix module-caused failures.
+9. Rerun relevant tests.
+10. Mark the task complete only when overall QA status is `PASS`.
+
+This is enforced mechanically: a `TaskCompleted` hook (`.claude/hooks/module-qa-gate.cjs`, wired in `.claude/settings.json`) blocks completion of any task whose subject starts with `[MODULE]` unless a matching `.qa/status/<task-id>.json` reports `overall: PASS` with every required category `PASS` or `NOT_APPLICABLE`. Tasks without the `[MODULE]` prefix (bug fixes, CSS tweaks, refactors, small file updates, debugging, documentation) are never gated.
+
 

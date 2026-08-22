@@ -309,7 +309,10 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
 
 
 
-  const routeProgress = entry.routeProgress ?? 0;
+  const entryDailyKmLimit = vehicle?.dailyKmLimit || 0;
+  const routeProgress = entryDailyKmLimit > 0
+    ? Math.min(100, Math.round((distanceCovered / entryDailyKmLimit) * 100))
+    : 0;
   const isUnavailable = entry.unavailableStatus === true;
 
   // ── NEW: booking mismatch check ──
