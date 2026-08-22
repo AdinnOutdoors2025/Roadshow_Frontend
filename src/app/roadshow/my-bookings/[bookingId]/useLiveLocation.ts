@@ -10,7 +10,7 @@ import { clientAuthHeaders } from "@/lib/roadshowAuthToken";
 const POLL_INTERVAL_MS = 18000;
 
 export type LiveVehicle = {
-  registrationNumber: string;
+  registrationNumber: string | null;
   latitude?: number;
   longitude?: number;
   address?: string;
@@ -20,6 +20,13 @@ export type LiveVehicle = {
   lastUpdatedAt?: string | null;
   isStale?: boolean;
   unavailable: boolean;
+  /* A booked vehicle slot operations hasn't assigned a driver + reg number
+     to yet — reported instead of being omitted, so a booking with N
+     vehicle types always renders N cards. */
+  pending?: boolean;
+  vehicleIndex?: number;
+  vehicleName?: string;
+  message?: string;
 };
 
 export function useLiveLocation(
@@ -79,6 +86,7 @@ export function useLiveLocation(
             lastUpdatedAt: vehicle.lastUpdatedAt,
             isStale: vehicle.isStale,
             unavailable: vehicle.unavailable,
+            pending: vehicle.pending,
           })),
         );
 

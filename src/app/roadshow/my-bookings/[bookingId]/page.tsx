@@ -445,15 +445,23 @@ function TrackingPageContent({
         (vehicle) => vehicle.registrationNumber === current,
       );
 
-      if (currentVehicle && !currentVehicle.unavailable) {
+      if (currentVehicle && !currentVehicle.unavailable && !currentVehicle.pending) {
         return current;
       }
 
+      /* Prefer a vehicle that's actually trackable (live) over one that's
+         merely unavailable, and prefer either of those over a "pending"
+         placeholder — a pending slot has no registration/GPS data at all,
+         so auto-selecting it first would leave the map with nothing to
+         show even when a sibling vehicle on the same booking is live. */
       const firstAvailable = liveVehicles.find(
-        (vehicle) => !vehicle.unavailable,
+        (vehicle) => !vehicle.unavailable && !vehicle.pending,
+      );
+      const firstUnavailable = liveVehicles.find(
+        (vehicle) => vehicle.unavailable,
       );
 
-      return (firstAvailable || liveVehicles[0]).registrationNumber;
+      return (firstAvailable || firstUnavailable || liveVehicles[0]).registrationNumber;
     });
   }, [liveVehicles]);
 
@@ -791,11 +799,11 @@ function TrackingPageContent({
 
                       return (
                         <button
-                          key={vehicle.registrationNumber || index}
+                          key={vehicle.registrationNumber || `pending-${index}`}
                           type="button"
                           className={`RST_VehicleCard ${
                             selected ? "RST_VehicleCard--active" : ""
-                          }`}
+                          } ${vehicle.pending ? "RST_VehicleCard--pending" : ""}`}
                           onClick={() =>
                             setSelectedVehicleReg(
                               vehicle.registrationNumber,
@@ -813,13 +821,20 @@ function TrackingPageContent({
 
                           <span className="RST_VehicleCopy">
                             <strong>
-                              Vehicle {String(index + 1).padStart(2, "0")}
+                              {vehicle.vehicleName ||
+                                `Vehicle ${String(index + 1).padStart(2, "0")}`}
                             </strong>
                             <small>
-                              {vehicle.registrationNumber ||
-                                "Registration unavailable"}
+                              {vehicle.pending
+                                ? "Not yet assigned"
+                                : vehicle.registrationNumber ||
+                                  "Registration unavailable"}
                             </small>
-                            {vehicle.unavailable ? (
+                            {vehicle.pending ? (
+                              <span className="RST_VehicleState RST_VehicleState--pending">
+                                Awaiting assignment
+                              </span>
+                            ) : vehicle.unavailable ? (
                               <span className="RST_VehicleState RST_VehicleState--unavailable">
                                 Unavailable
                               </span>
@@ -836,7 +851,12 @@ function TrackingPageContent({
                             )}
                           </span>
 
-                          {vehicle.unavailable ? (
+                          {vehicle.pending ? (
+                            <span className="RST_VehicleKm">
+                              <small>Status</small>
+                              <strong>Pending</strong>
+                            </span>
+                          ) : vehicle.unavailable ? (
                             <span className="RST_VehicleKm">
                               <small>Status</small>
                               <strong>Not tracked</strong>
@@ -877,9 +897,11 @@ function TrackingPageContent({
                   <div>
                     <span>TODAY&apos;S ROUTE</span>
                     <h2>
-                      {selectedLiveVehicle
-                        ? selectedLiveVehicle.registrationNumber
-                        : "Live route"}
+                      {selectedLiveVehicle?.pending
+                        ? selectedLiveVehicle.vehicleName || "Live route"
+                        : selectedLiveVehicle
+                          ? selectedLiveVehicle.registrationNumber
+                          : "Live route"}
                     </h2>
                   </div>
 
@@ -902,23 +924,42 @@ function TrackingPageContent({
                     {selectedLiveVehicle && (
                     <span
                       className={`RST_VehicleState ${
-                        selectedLiveVehicle.unavailable
-                          ? "RST_VehicleState--unavailable"
-                          : statusClass(selectedLiveVehicle.status)
+                        selectedLiveVehicle.pending
+                          ? "RST_VehicleState--pending"
+                          : selectedLiveVehicle.unavailable
+                            ? "RST_VehicleState--unavailable"
+                            : statusClass(selectedLiveVehicle.status)
                       }`}
                     >
-                      {selectedLiveVehicle.unavailable
-                        ? "Unavailable"
-                        : selectedLiveVehicle.isStale
-                          ? "Location delayed"
-                          : selectedLiveVehicle.status}
+                      {selectedLiveVehicle.pending
+                        ? "Awaiting assignment"
+                        : selectedLiveVehicle.unavailable
+                          ? "Unavailable"
+                          : selectedLiveVehicle.isStale
+                            ? "Location delayed"
+                            : selectedLiveVehicle.status}
                     </span>
                     )}
                   </div>
                 </div>
 
                 <div className="RST_Map">
-                  {selectedLiveVehicle?.unavailable ? (
+                  {selectedLiveVehicle?.pending ? (
+                    <div className="RST_MapFallback RST_MapFallback--info">
+                      <span className="RST_MapFallbackIcon">
+                        <Truck size={23} />
+                      </span>
+
+                      <strong className="RST_MapFallbackTitle">
+                        Vehicle not yet assigned
+                      </strong>
+
+                      <p className="RST_MapFallbackText">
+                        {selectedLiveVehicle.message ||
+                          "A driver and vehicle haven't been assigned to this booking yet. Tracking will appear here automatically once they are."}
+                      </p>
+                    </div>
+                  ) : selectedLiveVehicle?.unavailable ? (
                     <div className="RST_MapFallback RST_MapFallback--warning">
                       <span className="RST_MapFallbackIcon RST_MapFallbackIcon--warning">
                         <Truck size={23} />
@@ -994,17 +1035,20 @@ function TrackingPageContent({
                   <div>
                     <span>Latest location</span>
                     <strong>
-                      {selectedLiveVehicle?.unavailable
-                        ? "Not tracked"
-                        : selectedLiveVehicle?.address ||
-                          "Location not available yet"}
+                      {selectedLiveVehicle?.pending
+                        ? "Not yet assigned"
+                        : selectedLiveVehicle?.unavailable
+                          ? "Not tracked"
+                          : selectedLiveVehicle?.address ||
+                            "Location not available yet"}
                     </strong>
                   </div>
 
                   <div>
                     <span>Last update</span>
                     <strong>
-                      {selectedLiveVehicle?.unavailable
+                      {selectedLiveVehicle?.pending ||
+                      selectedLiveVehicle?.unavailable
                         ? "—"
                         : relativeTime(liveRefreshedAt)}
                     </strong>
@@ -1013,7 +1057,9 @@ function TrackingPageContent({
                   <div>
                     <span>Speed</span>
                     <strong>
-                      {selectedLiveVehicle && !selectedLiveVehicle.unavailable
+                      {selectedLiveVehicle &&
+                      !selectedLiveVehicle.unavailable &&
+                      !selectedLiveVehicle.pending
                         ? `${Number(
                             selectedLiveVehicle.speedKmh || 0,
                           ).toFixed(0)} km/h`
@@ -1107,7 +1153,7 @@ function TrackingPageContent({
                     )}
                 </div>
 
-                {selectedLiveVehicle && (
+                {selectedLiveVehicle && !selectedLiveVehicle.pending && (
                   <div className="RST_CurrentVehicleStrip">
                     {!selectedLiveVehicle.unavailable &&
                       selectedLiveVehicle.speedKmh != null && (

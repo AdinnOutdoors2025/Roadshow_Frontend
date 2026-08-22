@@ -829,6 +829,15 @@
   color: var(--rst-red);
 }
 
+.RST_VehicleState--pending {
+  background: var(--rst-orange-soft);
+  color: var(--rst-orange);
+}
+
+.RST_VehicleCard--pending {
+  opacity: 0.82;
+}
+
 .RST_VehicleKm {
   display: flex;
   grid-column: 1 / -1;
