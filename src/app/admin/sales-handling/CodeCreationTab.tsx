@@ -184,15 +184,23 @@ export default function CodeCreationTab({
     setEstimationCodeError("");
 
     let valid = true;
-    if (!projectCode.trim()) { setProjectCodeError("Project code is required"); valid = false; }
-    if (!estimationCode.trim()) { setEstimationCodeError("Estimation code is required"); valid = false; }
+    // Frontend already sanitizes on every keystroke/paste, but re-validate
+    // here too rather than trusting only the input handler before saving.
+    if (!/^[0-9]{1,8}$/.test(projectCode)) {
+      setProjectCodeError(projectCode ? "Project code must be numbers only (max 8 digits)" : "Project code is required");
+      valid = false;
+    }
+    if (!/^[0-9]{1,6}$/.test(estimationCode)) {
+      setEstimationCodeError(estimationCode ? "Estimation code must be numbers only (max 6 digits)" : "Estimation code is required");
+      valid = false;
+    }
     if (!valid) return;
 
     setCodeSaving(true);
     try {
       await axios.post(
         `${API_BASE}sales/pipeline/${order._id}/save-project-code`,
-        { projectCode, estimationCode }
+        { projectCode, estimationCode: `EST-${estimationCode}` }
       );
       toast.success("Project code saved successfully!");
       setCodeSavedSuccess(true);
@@ -1010,11 +1018,21 @@ export default function CodeCreationTab({
                       </label>
                       <input
                         value={projectCode}
-                        placeholder="e.g. PROJ-2024-001"
+                        placeholder="e.g. 22067221"
+                        inputMode="numeric"
+                        maxLength={8}
                         onChange={(e) => {
-                          const upper = e.target.value.toUpperCase();
-                          setProjectCode(upper);
-                          if (!upper.trim()) setProjectCodeError("Project code is required");
+                          const digitsOnly = e.target.value.replace(/[^0-9]/g, "").slice(0, 8);
+                          setProjectCode(digitsOnly);
+                          if (!digitsOnly) setProjectCodeError("Project code is required");
+                          else setProjectCodeError("");
+                        }}
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          const pasted = e.clipboardData.getData("text");
+                          const digitsOnly = pasted.replace(/[^0-9]/g, "").slice(0, 8);
+                          setProjectCode(digitsOnly);
+                          if (!digitsOnly) setProjectCodeError("Project code is required");
                           else setProjectCodeError("");
                         }}
                         className={`w-full border rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 transition-all ${projectCodeError
@@ -1034,20 +1052,37 @@ export default function CodeCreationTab({
                       <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
                         Estimation Code <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        value={estimationCode}
-                        placeholder="e.g. EST-2024-001"
-                        onChange={(e) => {
-                          const upper = e.target.value.toUpperCase();
-                          setEstimationCode(upper);
-                          if (!upper.trim()) setEstimationCodeError("Estimation code is required");
-                          else setEstimationCodeError("");
-                        }}
-                        className={`w-full border rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 transition-all ${estimationCodeError
-                          ? "border-red-400 focus:ring-red-400"
-                          : "border-gray-200 dark:border-gray-700 focus:ring-teal-400"
+                      <div
+                        className={`flex items-center w-full border rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 focus-within:ring-2 transition-all ${estimationCodeError
+                          ? "border-red-400 focus-within:ring-red-400"
+                          : "border-gray-200 dark:border-gray-700 focus-within:ring-teal-400"
                           }`}
-                      />
+                      >
+                        <span className="text-gray-500 dark:text-gray-400 font-semibold select-none mr-0.5">EST-</span>
+                        <input
+                          value={estimationCode}
+                          placeholder="018796"
+                          inputMode="numeric"
+                          maxLength={6}
+                          onChange={(e) => {
+                            const digitsOnly = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
+                            setEstimationCode(digitsOnly);
+                            if (!digitsOnly) setEstimationCodeError("Estimation code is required");
+                            else setEstimationCodeError("");
+                          }}
+                          onPaste={(e) => {
+                            e.preventDefault();
+                            const pasted = e.clipboardData.getData("text");
+                            // Strip a pasted "EST-" prefix too, so pasting an already-formatted
+                            // code (e.g. from a previous saved value) doesn't duplicate it.
+                            const digitsOnly = pasted.replace(/^EST-?/i, "").replace(/[^0-9]/g, "").slice(0, 6);
+                            setEstimationCode(digitsOnly);
+                            if (!digitsOnly) setEstimationCodeError("Estimation code is required");
+                            else setEstimationCodeError("");
+                          }}
+                          className="flex-1 min-w-0 bg-transparent text-gray-800 dark:text-white outline-none"
+                        />
+                      </div>
                       {estimationCodeError && (
                         <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
                           {estimationCodeError}

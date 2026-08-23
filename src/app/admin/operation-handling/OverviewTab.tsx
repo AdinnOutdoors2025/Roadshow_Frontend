@@ -440,7 +440,9 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                                         options={
                                             isStaffUser
                                                 ? (currentUsername ? [{ value: currentUsername, label: currentUsername }] : [])
-                                                : staffAdmins.map((s) => ({ value: s.username, label: s.username }))
+                                                : staffAdmins
+                                                    .filter((s) => s.username !== order.handlerName)
+                                                    .map((s) => ({ value: s.username, label: s.username }))
                                         }
                                     />
                                 </div>

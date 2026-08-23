@@ -1037,7 +1037,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
               </div>
               {d.magnitude > 0 && (
                 <div className="flex items-center justify-between rounded-lg bg-white dark:bg-gray-900 px-3 py-2">
-                  <span className="text-xs font-semibold text-gray-500">Discount Amount</span>
+                  <span className="text-xs font-semibold text-gray-500"> Amount</span>
                   <span className={"text-sm font-bold tabular-nums " + (d.mode === "decrease" ? "text-red-600" : "text-green-700 dark:text-green-400")}>
                     {d.mode === "decrease" ? "-" : "+"}₹{fmtMoney(d.magnitude)}
                   </span>

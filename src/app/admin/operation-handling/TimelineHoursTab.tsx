@@ -285,7 +285,7 @@ export default function TimelineHoursTab({ order, vehicleTypes }: { order: { _id
         return (
           <div key={vt.vehicleIndex} className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900">
             <button
-              onClick={() => setExpanded((p) => ({ ...p, [vt.vehicleIndex]: !p[vt.vehicleIndex] }))}
+              onClick={() => setExpanded((p) => (p[vt.vehicleIndex] ? {} : { [vt.vehicleIndex]: true }))}
               className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-all"
             >
               <div className="flex items-center gap-2.5 min-w-0">
