@@ -18,6 +18,7 @@ import OnRoadSubmitModal from "./DriverForm";
 import ClosedLostModal from "./ClosedLostModal";
 import ClosedWonModal from "./ClosedWonModal";
 import OrderDatePicker from "@/app/utils/OrderDatePicker";
+import SearchableSelect from "@/app/utils/SearchableSelect";
 // import "./../admin_css/admin.css";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -308,15 +309,14 @@ function FilterBar({
         </div>
 
         {/* Handler dropdown */}
-        <select
-          value={handlerFilter}
-          onChange={(e) => setHandlerFilter(e.target.value)}
-          className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        >
-          {staffAdmins.map((s: any) => (
-            <option key={s.username} value={s.username}>{s.username}</option>
-          ))}
-        </select>
+        <div className="w-44">
+          <SearchableSelect
+            value={handlerFilter}
+            onChange={setHandlerFilter}
+            placeholder="All Handlers"
+            options={staffAdmins.map((s: any) => ({ value: s.username, label: s.username }))}
+          />
+        </div>
 
         {/* Customer type chips */}
         <div className="flex items-center gap-1 border border-gray-200 dark:border-gray-700 rounded-lg p-0.5">

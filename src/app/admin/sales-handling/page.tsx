@@ -12,6 +12,7 @@ import { User, Clock, TrendingUp, AlertCircle, Search, X, SlidersHorizontal } fr
 import SalesDetailDrawer from "./SalesDetailDrawer";
 import API_BASE from "../../../../baseurl";
 import OrderDatePicker from "@/app/utils/OrderDatePicker";
+import SearchableSelect from "@/app/utils/SearchableSelect";
 // import "../admin_css/admin.css";
 import {
   FiClipboard,
@@ -379,16 +380,17 @@ function SalesFilterBar({
         </div>
 
         {/* Handler dropdown */}
-        <select
-          value={handlerFilter}
-          onChange={(e) => setHandlerFilter(e.target.value)}
-          className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        >
-          <option value="">All Handlers</option>
-          {staffAdmins.map((s: any) => (
-            <option key={s.username} value={s.username}>{s.username}</option>
-          ))}
-        </select>
+        <div className="w-44">
+          <SearchableSelect
+            value={handlerFilter}
+            onChange={setHandlerFilter}
+            placeholder="All Handlers"
+            options={[
+              { value: "", label: "All Handlers" },
+              ...staffAdmins.map((s: any) => ({ value: s.username, label: s.username })),
+            ]}
+          />
+        </div>
 
         {/* Customer type chips */}
         <div className="flex items-center gap-1 border border-gray-200 dark:border-gray-700 rounded-lg p-0.5">

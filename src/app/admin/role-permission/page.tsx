@@ -6,6 +6,7 @@ import { toast, Toaster } from "react-hot-toast";
 import { HiOutlineShieldCheck } from "react-icons/hi";
 import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
+import SearchableSelect from "../../utils/SearchableSelect";
 
 type Role = "sales" | "operation";
 
@@ -148,37 +149,32 @@ export default function RolePermissionPage() {
 
       <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
-          <div>
+          <div className="w-full max-w-xs">
             <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Select Role
             </label>
-            <select
+            <SearchableSelect
               value={role}
-              onChange={(e) => setRole(e.target.value as Role)}
-              className="w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-            >
-              <option value="sales">Sales Management</option>
-              <option value="operation">Operation Management</option>
-            </select>
+              onChange={(v) => setRole(v as Role)}
+              placeholder="Select role..."
+              options={[
+                { value: "sales", label: "Sales Management" },
+                { value: "operation", label: "Operation Management" },
+              ]}
+            />
           </div>
 
-          <div>
+          <div className="w-full max-w-xs">
             <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Select User
             </label>
-            <select
+            <SearchableSelect
               value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value)}
+              onChange={setSelectedUserId}
               disabled={usersLoading || users.length === 0}
-              className="w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-            >
-              {users.length === 0 && <option value="">No users found</option>}
-              {users.map((u) => (
-                <option key={u._id} value={u._id}>
-                  {u.username}
-                </option>
-              ))}
-            </select>
+              placeholder={users.length === 0 ? "No users found" : "Select user..."}
+              options={users.map((u) => ({ value: u._id, label: u.username }))}
+            />
           </div>
         </div>
 
