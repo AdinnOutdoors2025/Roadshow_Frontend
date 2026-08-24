@@ -315,6 +315,13 @@ function useCarousel(length) {
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 function HomePageSection2() {
+
+    /* =====================================================
+       RESPONSIVE HELP CENTER ONLY
+       This value does NOT affect desktop.
+    ===================================================== */
+    const HELP_CENTER_BOTTOM_SPACE = 100;
+
     // VOICES FROM THE ROAD SECTION
     const [activeAdvantage, setActiveAdvantage] = useState<number | null>(null);
     const testimonials = [
@@ -542,7 +549,749 @@ function HomePageSection2() {
             >
                 <RdswWebGPSTrackingSection />
             </div>
-            {/* Roadshow Advantages */}
+            <style>{`
+                /* =====================================================
+                   STRICT BREAKPOINT SWITCH
+
+                   0 - 1023px  : OLD RESPONSIVE CODE
+                   1024px +    : ORIGINAL DESKTOP CODE
+                ===================================================== */
+
+                .RA_ResponsiveOnly,
+                .HC_ResponsiveOnly {
+                    display: none !important;
+                }
+
+                .RA_DesktopOnly,
+                .HC_DesktopOnly {
+                    display: block !important;
+                }
+
+                @media (max-width: 1023px) {
+                    .RA_ResponsiveOnly,
+                    .HC_ResponsiveOnly {
+                        display: block !important;
+                    }
+
+                    .RA_DesktopOnly,
+                    .HC_DesktopOnly {
+                        display: none !important;
+                    }
+                }
+
+                @media (min-width: 1024px) {
+                    .RA_ResponsiveOnly,
+                    .HC_ResponsiveOnly {
+                        display: none !important;
+                    }
+
+                    .RA_DesktopOnly,
+                    .HC_DesktopOnly {
+                        display: block !important;
+                    }
+                }
+            `}</style>
+
+            {/* =========================================================
+                OLD RESPONSIVE ROADSHOW ADVANTAGES
+                MOBILE + TABLET ONLY (0 - 1023px)
+            ========================================================= */}
+            <style>{`
+
+
+                /*
+                =========================================================
+                IMPORTANT
+
+                These rules are scoped ONLY to Roadshow Advantages.
+
+                Existing CSS may contain width/flex/position styles,
+                therefore !important is intentionally used here.
+                =========================================================
+                */
+
+
+                .RA_ResponsiveOnly .RA_Main .RA_LeftRightMain {
+
+                    display: block !important;
+
+                    width: 100% !important;
+
+                    max-width: 100% !important;
+
+                }
+
+
+
+                /*
+                =========================================================
+                PILLS + VEHICLE ROW
+                =========================================================
+                */
+
+                .RA_ResponsiveOnly .RA_Main .RA_AdvantagesVehicleRow {
+
+                    width: 100% !important;
+
+                    display: grid !important;
+
+                    grid-template-columns:
+                        minmax(0, 1fr)
+                        minmax(0, 1fr) !important;
+
+                    align-items: center !important;
+
+                    column-gap: 20px !important;
+
+                    position: relative !important;
+
+                }
+
+
+
+                /*
+                =========================================================
+                LEFT SIDE — FAST / FLEXIBLE / RELIABLE
+                =========================================================
+                */
+
+                .RA_ResponsiveOnly .RA_Main
+                .RA_AdvantagesVehicleRow
+                .RA_leftMain {
+
+                    grid-column: 1 !important;
+
+                    width: 100% !important;
+
+                    max-width: 100% !important;
+
+                    min-width: 0 !important;
+
+                    margin: 0 !important;
+
+                    position: relative !important;
+
+                    z-index: 2 !important;
+
+                }
+
+
+
+                /*
+                =========================================================
+                RIGHT SIDE — VEHICLE
+                =========================================================
+                */
+
+                .RA_ResponsiveOnly .RA_Main .RA_VehicleOpposite {
+
+                    grid-column: 2 !important;
+
+                    width: 100% !important;
+
+                    min-width: 0 !important;
+
+                    display: flex !important;
+
+                    align-items: center !important;
+
+                    justify-content: center !important;
+
+                    overflow: visible !important;
+
+                    position: relative !important;
+
+                }
+
+
+
+                .RA_ResponsiveOnly .RA_Main .RA_RightVanImg {
+
+                    display: block !important;
+
+                    width: 100% !important;
+
+                    max-width: 520px !important;
+
+                    height: auto !important;
+
+                    object-fit: contain !important;
+
+                    margin: 0 !important;
+
+                    position: relative !important;
+
+                    /*
+                    =====================================================
+                    VEHICLE POSITION CONTROL
+
+                    X:
+                    positive  = vehicle moves RIGHT
+                    negative  = vehicle moves LEFT
+
+                    Y:
+                    positive  = vehicle moves DOWN
+                    negative  = vehicle moves UP
+                    =====================================================
+                    */
+
+                    transform:
+                        translateX(-20px)
+                        translateY(0px) !important;
+
+                }
+
+
+
+                /*
+                =========================================================
+                CTA BELOW PILLS + VEHICLE
+                =========================================================
+                */
+
+                .RA_ResponsiveOnly .RA_Main .RA_RightMain {
+
+                    width: 100% !important;
+
+                    max-width: 100% !important;
+
+                    margin-left: 0 !important;
+
+                    margin-right: 0 !important;
+
+                    position: relative !important;
+
+                }
+
+
+
+                /*
+                =========================================================
+                MOBILE
+                Up to 639px
+                =========================================================
+                */
+
+                @media (max-width: 639px) {
+
+
+                    .RA_ResponsiveOnly .RA_Main .RA_AdvantagesVehicleRow {
+
+                        /*
+                        58% = pills
+                        42% = vehicle
+                        */
+
+                        grid-template-columns:
+                            minmax(0, 58%)
+                            minmax(0, 42%) !important;
+
+                        column-gap: 4px !important;
+
+                        align-items: center !important;
+
+                    }
+
+
+
+                    /*
+                    =====================================================
+                    PILL COLUMN
+
+                    Keeping existing pill design.
+                    Only restricting it to its new column.
+                    =====================================================
+                    */
+
+                    .RA_ResponsiveOnly .RA_Main
+                    .RA_AdvantagesVehicleRow
+                    .RA_leftMain {
+
+                        width: 100% !important;
+
+                        max-width: 100% !important;
+
+                        margin-left: 0 !important;
+
+                        margin-right: 0 !important;
+
+                    }
+
+
+
+                    .RA_ResponsiveOnly .RA_Main
+                    .RA_AdvantagesVehicleRow
+                    .RS_RA_Item {
+
+                        width: 100% !important;
+
+                        max-width: 100% !important;
+
+                        margin-left: 0 !important;
+
+                        margin-right: 0 !important;
+
+                    }
+
+
+
+                    /*
+                    =====================================================
+                    MOBILE VEHICLE
+
+                    Increase max-width if vehicle needs larger.
+
+                    Example:
+                    190px
+                    210px
+                    230px
+                    =====================================================
+                    */
+
+                    .RA_ResponsiveOnly .RA_Main .RA_RightVanImg {
+
+                        /* MOBILE VEHICLE SIZE CONTROL */
+                        width: 175px !important;
+
+                        max-width: 175px !important;
+
+                        transform:
+                            translateX(-6px)
+                            translateY(0px) !important;
+
+                    }
+
+
+
+                    .RA_ResponsiveOnly .RA_Main .RA_VehicleOpposite {
+
+                        justify-content: center !important;
+
+                        overflow: visible !important;
+
+                    }
+
+
+
+                    /*
+                    CTA remains underneath
+                    */
+
+                    .RA_ResponsiveOnly .RA_Main .RA_RightMain {
+
+                        margin-top: 24px !important;
+
+                    }
+
+                }
+
+
+
+                /*
+                =========================================================
+                VERY SMALL MOBILE
+                =========================================================
+                */
+
+                @media (max-width: 420px) {
+
+
+                    .RA_ResponsiveOnly .RA_Main .RA_AdvantagesVehicleRow {
+
+                        grid-template-columns:
+                            minmax(0, 60%)
+                            minmax(0, 40%) !important;
+
+                        column-gap: 0 !important;
+
+                    }
+
+
+                    .RA_ResponsiveOnly .RA_Main .RA_RightVanImg {
+
+                        /* VERY SMALL MOBILE VEHICLE SIZE CONTROL */
+                        width: 150px !important;
+
+                        max-width: 150px !important;
+
+                        transform:
+                            translateX(-4px)
+                            translateY(0px) !important;
+
+                    }
+
+                }
+
+
+
+                /*
+                =========================================================
+                TABLET
+                640px – 1023px
+                =========================================================
+                */
+
+                @media
+                (min-width: 640px)
+                and
+                (max-width: 1023px) {
+
+
+                    .RA_ResponsiveOnly .RA_Main .RA_AdvantagesVehicleRow {
+
+                        grid-template-columns:
+                            minmax(0, 48%)
+                            minmax(0, 52%) !important;
+
+                        column-gap: 12px !important;
+
+                    }
+
+
+                    .RA_ResponsiveOnly .RA_Main .RA_RightVanImg {
+
+                        /* TABLET VEHICLE SIZE CONTROL */
+                        width: 400px !important;
+
+                        max-width: 400px !important;
+
+                        transform:
+                            translateX(-8px)
+                            translateY(0px) !important;
+
+                    }
+
+
+                    .RA_ResponsiveOnly .RA_Main .RA_RightMain {
+
+                        margin-top: 28px !important;
+
+                    }
+
+                }
+
+
+
+                
+
+
+
+            `}</style>
+
+            <div className="RA_ResponsiveOnly">
+<div
+                className="
+                    RA_Main
+                    px-30
+                    mx-auto
+                "
+            >
+
+
+                {/* =====================================================
+                    ROADSHOW ADVANTAGES HEADING
+                ===================================================== */}
+
+                <div className="RS_OurRdwHeading">
+
+
+                    <SplitHeading
+                        className="
+                            RS_OurRdwHeadingContent1
+                        "
+                    >
+                        Roadshow
+                    </SplitHeading>
+
+
+                    <RevealText
+                        className="
+                            RS_OurRdwHeadingContent1
+                            RS_OurRdwHeadingContent2
+                        "
+                        effect="wipe"
+                        delay={0.18}
+                    >
+                        Advantages
+                    </RevealText>
+
+
+                </div>
+
+
+
+                <div className="RA_LeftRightMain">
+
+
+                    {/* =================================================
+                        NEW ROW
+
+                        LEFT  = Fast / Flexible / Reliable
+                        RIGHT = Vehicle
+                    ================================================= */}
+
+                    <div className="RA_AdvantagesVehicleRow">
+
+
+                        {/* =============================================
+                            LEFT — ADVANTAGE PILLS
+                        ============================================= */}
+
+                        <div className="RA_leftMain">
+
+
+                            {roadshow_Advantages.map(
+                                (RA, idx) => (
+
+                                    <div
+
+                                        key={idx}
+
+                                        className={`
+                                            RS_RA_Item
+
+                                            ${
+                                                activeIndex === idx
+                                                    ? "active"
+                                                    : ""
+                                            }
+                                        `}
+
+                                        onClick={() =>
+                                            handleItemClick(
+                                                idx
+                                            )
+                                        }
+
+                                    >
+
+
+                                        {/* HEADER */}
+
+                                        <div
+                                            className="
+                                                RA_leftContentMain
+                                                flex
+                                                justify-between
+                                            "
+                                        >
+
+
+                                            <div
+                                                className="
+                                                    RA_leftContentHeading
+                                                "
+                                            >
+                                                {RA.name}
+                                            </div>
+
+
+                                            <div
+                                                className="
+                                                    RA_leftContentIcon
+                                                "
+                                            >
+
+                                                <i
+                                                    className="
+                                                        fa-solid
+                                                        fa-plus
+                                                    "
+                                                />
+
+                                            </div>
+
+
+                                        </div>
+
+
+
+                                        {/* DESCRIPTION */}
+
+                                        <div
+                                            className={`
+                                                RA_collapseWrapper
+
+                                                ${
+                                                    activeIndex === idx
+                                                        ? "open"
+                                                        : ""
+                                                }
+                                            `}
+                                        >
+
+                                            <div
+                                                className="
+                                                    RA_leftContentDesc
+                                                "
+                                            >
+                                                {RA.desc}
+                                            </div>
+
+                                        </div>
+
+
+                                    </div>
+
+                                )
+                            )}
+
+
+                        </div>
+
+
+
+                        {/* =============================================
+                            RIGHT — VEHICLE
+
+                            VEHICLE IS NOW OPPOSITE THE PILLS.
+                        ============================================= */}
+
+                        <div className="RA_VehicleOpposite">
+
+
+                            <img
+
+                                src="./images/assets/RA_RightVanImg.png"
+
+                                alt="Adinn Roadshow Vehicle"
+
+                                className="RA_RightVanImg"
+
+                            />
+
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    {/* =================================================
+                        CTA
+
+                        KEPT AS A SEPARATE BLOCK BELOW
+                        PILLS + VEHICLE.
+                    ================================================= */}
+
+                    <div className="RA_RightMain">
+
+
+                        <div className="RA_RightContent1">
+
+                            Make Streets Your Stage
+
+                        </div>
+
+
+
+                        <div className="RA_RightSecondContentMain">
+
+
+                            <div className="RA_RightSecondContentInsideMain">
+
+
+                                <div className="RA_RightSecondContent1">
+
+                                    Don't Need to Miss out
+
+                                </div>
+
+
+
+                                <div
+                                    className="
+                                        RA_RightContent2Main
+                                        flex
+                                        gap-5
+                                        items-center
+                                        bg-white
+                                        rounded-full
+                                        overflow-hidden
+                                        pr-1
+                                        pl-4
+                                        py-1
+                                        w-full
+                                        max-w-xs
+                                    "
+                                >
+
+
+                                    <input
+
+                                        type="email"
+
+                                        placeholder="Your email or phone number"
+
+                                        className="
+                                            RA_RightContent2Input
+                                            flex-1
+                                            bg-transparent
+                                            text-black
+                                            text-md
+                                            outline-none
+                                            placeholder-gray-400
+                                            min-w-0
+                                        "
+
+                                    />
+
+
+                                    <button
+
+                                        className="
+                                            RA_RightContent2InpBtn
+                                            transition-colors
+                                            duration-200
+                                            rounded-full
+                                            p-2
+                                            flex
+                                            items-center
+                                            justify-center
+                                            flex-shrink-0
+                                        "
+
+                                        aria-label="Subscribe"
+
+                                    >
+
+
+                                        <i
+                                            className="
+                                                fa-solid
+                                                fa-chevron-right
+                                            "
+                                        />
+
+
+                                    </button>
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+            </div>
+
+            {/* =========================================================
+                DESKTOP ROADSHOW ADVANTAGES
+                ORIGINAL DESKTOP CODE - DO NOT TOUCH
+                1024px AND ABOVE ONLY
+            ========================================================= */}
+            <div className="RA_DesktopOnly">
             <div className='RA_Main px-30 mx-auto'>
 
                 <div className="RS_OurRdwHeading">
@@ -607,15 +1356,257 @@ function HomePageSection2() {
                                 </div>
                             </div>
                             <div>
-                                <img src='./images/assets/RA_RightVanImg.png' className=' RA_RightVanImg  w-120' />
+                                <img src='./images/assets/RA_RightVanImg.png' className=' RA_RightVanImg  w-100' />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {raCaptchaModal}
+            </div>
+  {raCaptchaModal}
+            {/* =========================================================
+                OLD RESPONSIVE HELP CENTER
+                MOBILE + TABLET ONLY (0 - 1023px)
+            ========================================================= */}
+            <div className="HC_ResponsiveOnly">
+            {/* =========================================================
+                HELP CENTER CROP FIX
+            ========================================================= */}
 
+            <style>{`
+
+                .HC_ResponsiveOnly .HC_Main.HC_Main_Cropped {
+
+                    height: auto !important;
+
+                    min-height: 0 !important;
+
+                    max-height: none !important;
+
+                    block-size: auto !important;
+
+                    min-block-size: 0 !important;
+
+                    /*
+                    =====================================================
+                    HELP CENTER HEIGHT ADJUSTMENT
+
+                    Controlled by:
+                    const HELP_CENTER_BOTTOM_SPACE = 20;
+
+                    Increase = taller section
+                    Decrease = shorter section
+                    0        = tightest crop
+                    =====================================================
+                    */
+                    padding-bottom: ${HELP_CENTER_BOTTOM_SPACE}px !important;
+
+                    margin-bottom: 0 !important;
+
+                    overflow: hidden !important;
+
+                }
+
+
+                .HC_ResponsiveOnly .HC_Main.HC_Main_Cropped > div {
+
+                    min-height: 0 !important;
+
+                    padding-bottom: 0 !important;
+
+                    margin-bottom: 0 !important;
+
+                }
+
+
+                .HC_ResponsiveOnly .HC_Main.HC_Main_Cropped
+                .HC_FAQMain {
+
+                    min-height: 0 !important;
+
+                    padding-bottom: 0 !important;
+
+                    margin-bottom: 0 !important;
+
+                }
+
+
+                .HC_ResponsiveOnly .HC_Main.HC_Main_Cropped
+                .HC_FAQ_QnAnsMain:last-child {
+
+                    margin-bottom: 0 !important;
+
+                }
+
+            `}</style>
+
+
+
+            {/* =========================================================
+                HELP CENTER
+            ========================================================= */}
+
+            <div
+                className="
+                    HC_Main
+                    HC_Main_Cropped
+                "
+            >
+
+
+                <div
+                    className="
+                        px-30
+                        mx-auto
+                    "
+                >
+
+
+                    <div className="HC_headingMain">
+
+
+                        <SplitHeading
+                            className="
+                                HC_HeadingContent1
+                            "
+                        >
+                            Help Center
+                        </SplitHeading>
+
+
+                        <SplitHeading
+                            className="
+                                HC_HeadingContent2
+                            "
+                            delay={0.12}
+                        >
+
+                            Find quick answers to common questions about our services, process, and support.
+
+                        </SplitHeading>
+
+
+                    </div>
+
+
+
+                    <div
+                        className="
+                            px-30
+                            mx-auto
+                            HC_FAQMain
+                        "
+                    >
+
+
+                        <div>
+
+
+                            {help_Center_Faq.map(
+                                (faq) => (
+
+                                    <div
+
+                                        key={faq.id}
+
+                                        className="
+                                            HC_FAQ_QnAnsMain
+                                        "
+
+                                        onClick={() =>
+                                            handleFaqClick(
+                                                faq.id
+                                            )
+                                        }
+
+                                    >
+
+
+                                        <div className="HC_FAQ_TopRow">
+
+
+                                            <div className="HC_FAQ_Question">
+
+                                                {faq.question}
+
+                                            </div>
+
+
+                                            <div
+                                                className={`
+                                                    HC_FAQ_Question_Arrow
+
+                                                    ${
+                                                        activeFaqIndex === faq.id
+                                                            ? "open"
+                                                            : ""
+                                                    }
+                                                `}
+                                            >
+
+                                                <i
+                                                    className="
+                                                        fa-solid
+                                                        fa-chevron-down
+                                                    "
+                                                />
+
+                                            </div>
+
+
+                                        </div>
+
+
+
+                                        <div
+                                            className={`
+                                                HC_FAQ_Answer_Wrapper
+
+                                                ${
+                                                    activeFaqIndex === faq.id
+                                                        ? "open"
+                                                        : ""
+                                                }
+                                            `}
+                                        >
+
+
+                                            <div className="HC_FAQ_Answer">
+
+                                                {faq.answer}
+
+                                            </div>
+
+
+                                        </div>
+
+
+                                    </div>
+
+                                )
+                            )}
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+            </div>
+
+            {/* =========================================================
+                DESKTOP HELP CENTER
+                ORIGINAL DESKTOP CODE - DO NOT TOUCH
+                1024px AND ABOVE ONLY
+            ========================================================= */}
+            <div className="HC_DesktopOnly">
             <div className='HC_Main'>
                 <div className='px-30 mx-auto'>
 
@@ -649,6 +1640,8 @@ function HomePageSection2() {
                     </div>
                 </div>
             </div>
+            </div>
+
         </>
     );
 }

@@ -179,8 +179,7 @@ const whyAdinnWorksBest = [
     name: "GPS Support",
     description:
       "Live location tracking for vehicles with route visibility and movement updates throughout the campaign.",
-    image:
-      "./images/assets/HomeBanner_MainPageFinal.png",
+    image: "/images/assets/Why_Adinn_Roadshows/gps.png",
     collapsedWidth: 219,
     expandedWidth: 400,
   },
@@ -189,8 +188,7 @@ const whyAdinnWorksBest = [
     name: "RTO Certified",
     description:
       "Fully approved vehicles complying with road regulations for smooth and hassle-free campaign execution.",
-    image:
-      "./images/assets/tata ultra - 2.png",
+    image: "/images/assets/Why_Adinn_Roadshows/rto.png",
     collapsedWidth: 227,
     expandedWidth: 400,
   },
@@ -199,8 +197,7 @@ const whyAdinnWorksBest = [
     name: "One-Stop Solution",
     description:
       "From planning to execution, everything is managed in one place for a roadshow campaign.",
-    image:
-      "./images/assets/full side LED.png",
+    image: "/images/assets/Why_Adinn_Roadshows/one_stop.png",
     collapsedWidth: 270,
     expandedWidth: 410,
   },
@@ -210,13 +207,8 @@ const whyAdinnWorksBest = [
     description:
       "Strategic route planning focuses on high-visibility and high-traffic locations to maximize campaign reach.",
     image:
-      "./images/assets/HomeBanner_MainPageFinal.png",
-
-    /*
-     * Larger width fixes the cropped
-     * "High-Traffic Route Planning" text.
-     */
-    collapsedWidth: 390,
+      "/images/assets/Why_Adinn_Roadshows/High_Traffic_Route_Planning.png",
+    collapsedWidth: 360,
     expandedWidth: 470,
   },
 
@@ -225,7 +217,7 @@ const whyAdinnWorksBest = [
     description:
       "Experienced on-ground teams handle vehicle movement, branding and campaign execution with proper coordination.",
     image:
-      "./images/assets/tata ultra - 2.png",
+      "/images/assets/Why_Adinn_Roadshows/Professional_Execution.png",
     collapsedWidth: 335,
     expandedWidth: 440,
   },
@@ -234,8 +226,7 @@ const whyAdinnWorksBest = [
     name: "24/7 Support",
     description:
       "Dedicated team available anytime to monitor, coordinate, and assist throughout the campaign.",
-    image:
-      "./images/assets/HomeBanner_MainPageFinal.png",
+    image: "/images/assets/Why_Adinn_Roadshows/time.png",
     collapsedWidth: 215,
     expandedWidth: 400,
   },
@@ -1327,40 +1318,55 @@ export default function HomePageSection1() {
       <RoadshowWebsiteStreetVisibilitySection />
 
       {/* =====================================================
-          VEHICLES
-      ===================================================== */}
+    VEHICLES
+===================================================== */}
 
-      <div
-        id="our-roadshow-vehicles"
-        className="RS_OurRdwMainSection mx-auto px-20"
-      >
-        <VehicleListing
-          layout="carousel"
-          reveal
-          onLoaded={() =>
-            setVehiclesReady(
-              true,
-            )
-          }
-          heading={
-            <div className="RS_OurRdwHeading">
-              <SplitHeading className="RS_OurRdwHeadingContent1">
-                Our Roadshow
-              </SplitHeading>
+<div
+  id="our-roadshow-vehicles"
+  className="
+    RS_OurRdwMainSection
+    w-full
+    bg-[#f5f5f7]
 
-              <RevealText
-                className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
-                effect="wipe"
-                delay={
-                  0.18
-                }
-              >
-                Vehicles
-              </RevealText>
-            </div>
-          }
-        />
+    px-5
+    pt-[70px]
+
+    sm:px-8
+    sm:pt-[80px]
+
+    md:px-12
+    md:pt-[90px]
+
+    lg:px-20
+    lg:pt-[110px]
+  "
+>
+  <VehicleListing
+    layout="carousel"
+    reveal
+    onLoaded={() => {
+      setVehiclesReady(true);
+    }}
+    heading={
+      <div className="RS_OurRdwHeading">
+        <SplitHeading className="RS_OurRdwHeadingContent1">
+          Our Roadshow
+        </SplitHeading>
+
+        <RevealText
+          className="
+            RS_OurRdwHeadingContent1
+            RS_OurRdwHeadingContent2
+          "
+          effect="wipe"
+          delay={0.18}
+        >
+          Vehicles
+        </RevealText>
       </div>
+    }
+  />
+</div>
 
       {/* =====================================================
           WHY ADINN ROADSHOWS
@@ -1574,7 +1580,217 @@ export default function HomePageSection1() {
             }
           }
 
-          @media (max-width: 1023px) {
+          /* =================================================
+             TABLET: KEEP THE SAME DESKTOP 2-COLUMN COMPOSITION
+             - Left pills are reduced
+             - Vehicle stays on the RIGHT
+             - Desktop and mobile are untouched
+          ================================================= */
+
+          @media (min-width: 768px) and (max-width: 1023px) {
+            .RS_WhyAdRSFigmaUI {
+              padding-left: 24px !important;
+              padding-right: 24px !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSMain {
+              /* TABLET ONLY:
+                 Keep the card compact, remove the wasted top space,
+                 and give the complete 6-item list enough usable height. */
+              min-height: 430px !important;
+              height: auto !important;
+              padding: 14px 24px 60px 24px !important;
+              border-radius: 44px !important;
+
+              display: grid !important;
+              grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
+              column-gap: 18px !important;
+              align-items: center !important;
+
+              overflow: hidden !important;
+              box-sizing: border-box !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRS_Left {
+              width: 100% !important;
+              min-width: 0 !important;
+              max-width: none !important;
+              padding: 0 !important;
+              margin: 0 !important;
+
+              /* Move the complete left stack upward instead of
+                 leaving unused space above it. */
+              align-self: start !important;
+              transform: translateY(-22px) !important;
+
+              position: relative !important;
+              z-index: 4 !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSNavRow {
+              gap: 8px !important;
+              margin-bottom: 9px !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSNavButton {
+              width: 22px !important;
+              height: 22px !important;
+              min-width: 22px !important;
+              min-height: 22px !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSNavButton svg {
+              width: 12px !important;
+              height: 12px !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSList {
+              width: 100% !important;
+              gap: 8px !important;
+              align-items: flex-start !important;
+            }
+
+            /* CLOSED TABLET PILLS:
+               Hug only icon + text + 10px right padding.
+               This intentionally overrides the inline desktop width. */
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSItem:not(.active) {
+              display: inline-flex !important;
+              width: max-content !important;
+              min-width: 0 !important;
+              max-width: max-content !important;
+              align-self: flex-start !important;
+              flex: 0 0 auto !important;
+
+              height: 44px !important;
+              min-height: 44px !important;
+              border-radius: 26px !important;
+            }
+
+            /* ACTIVE pill still needs room for the description. */
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSItem.active {
+              width: 285px !important;
+              min-width: 0 !important;
+              max-width: 100% !important;
+              align-self: flex-start !important;
+
+              height: 96px !important;
+              min-height: 96px !important;
+              border-radius: 26px !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSItem:not(.active) .RS_WhyAdRS_ItemInner {
+              width: max-content !important;
+              min-width: 0 !important;
+              flex: 0 0 auto !important;
+
+              /* LEFT 7px / RIGHT EXACTLY 10px */
+              padding: 7px 10px 7px 7px !important;
+              gap: 7px !important;
+              align-items: center !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSItem:not(.active) .RS_WhyAdRS_ItemText {
+              width: auto !important;
+              min-width: 0 !important;
+              flex: 0 0 auto !important;
+              padding-top: 0 !important;
+              align-self: center !important;
+              justify-content: center !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSItem:not(.active) .RS_WhyAdRS_ItemName {
+              display: block !important;
+              width: max-content !important;
+              max-width: none !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSItem.active .RS_WhyAdRS_ItemInner {
+              width: 100% !important;
+              padding: 6px 10px 6px 7px !important;
+              gap: 7px !important;
+              align-items: flex-start !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSContentIcon {
+              width: 30px !important;
+              height: 30px !important;
+              min-width: 30px !important;
+              min-height: 30px !important;
+              flex: 0 0 30px !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSContentIcon svg {
+              width: 15px !important;
+              height: 15px !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSItem.active .RS_WhyAdRS_ItemText {
+              padding-top: 1px !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRS_ItemName {
+              font-size: 14px !important;
+              line-height: 18px !important;
+              font-weight: 500 !important;
+              white-space: nowrap !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRS_CollapseWrapper {
+              max-width: 235px !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRS_CollapseWrapper.open {
+              margin-top: 3px !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRS_ItemDesc {
+              max-width: 235px !important;
+              font-size: 11px !important;
+              line-height: 13px !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRS_Right {
+              position: relative !important;
+              width: 100% !important;
+              min-width: 0 !important;
+              height: 100% !important;
+              min-height: 398px !important;
+
+              margin: 0 !important;
+              padding: 0 !important;
+              translate: 0 25px !important;
+              align-self: stretch !important;
+              overflow: visible !important;
+              z-index: 2 !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRS_ImageLayer {
+              position: absolute !important;
+              inset: 0 !important;
+              width: 100% !important;
+              height: 100% !important;
+
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+            }
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRS_ImageLayer img {
+              display: block !important;
+              width: 118% !important;
+              max-width: 540px !important;
+              height: auto !important;
+              max-height: 96% !important;
+              object-fit: contain !important;
+              transform-origin: center center !important;
+            }
+          }
+
+          /* =================================================
+             MOBILE: KEEP THE EXISTING MOBILE COMPOSITION
+          ================================================= */
+
+          @media (max-width: 767px) {
             .RS_WhyAdRSFigmaUI .RS_WhyAdRSMain {
               border-radius: 44px !important;
             }
