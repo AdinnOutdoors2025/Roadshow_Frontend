@@ -10,6 +10,8 @@ import {
   CalendarDays,
   Car,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   RefreshCw,
   XCircle,
 } from "lucide-react";
@@ -58,6 +60,7 @@ export default function VehicleAvailabilityNotificationTab({
   const { vehicleTypes, fetchVehicleTypes } = useVehicle();
   const [loading, setLoading] = useState(true);
   const [groups, setGroups] = useState<AvailabilityGroup[]>([]);
+  const [activeVehicleIndex, setActiveVehicleIndex] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const requestedGroups = useMemo(() => {
@@ -71,10 +74,9 @@ export default function VehicleAvailabilityNotificationTab({
 
       if (!vehicleType || !fromDate || !toDate) return;
 
-      // Same vehicle type + same campaign date range = one easy-to-read card.
       const key = `${vehicleType}|${fromDate}|${toDate}`;
-
       const existing = map.get(key);
+
       if (existing) {
         existing.quantity += quantity;
       } else {
@@ -100,6 +102,16 @@ export default function VehicleAvailabilityNotificationTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order._id, requestedGroups.length, refreshKey]);
 
+  useEffect(() => {
+    setActiveVehicleIndex(0);
+  }, [order._id]);
+
+  useEffect(() => {
+    if (activeVehicleIndex >= groups.length) {
+      setActiveVehicleIndex(0);
+    }
+  }, [groups.length, activeVehicleIndex]);
+
   const fetchAvailability = async () => {
     setLoading(true);
 
@@ -112,28 +124,29 @@ export default function VehicleAvailabilityNotificationTab({
       const results = await Promise.all(
         requestedGroups.map(async (group) => {
           try {
-            // This is the existing real fleet/date availability API used by order creation.
-            const { data } = await axios.post(`${API_BASE}api/checkAvailability`, {
-              vehicleType: group.vehicleType,
-              quantity: group.quantity,
-              fromDate: group.fromDate,
-              toDate: group.toDate,
-            });
+            const { data } = await axios.post(
+              `${API_BASE}api/checkAvailability`,
+              {
+                vehicleType: group.vehicleType,
+                quantity: group.quantity,
+                fromDate: group.fromDate,
+                toDate: group.toDate,
+              }
+            );
 
             const result = data?.data || {};
-
-            // The availability API is the source of truth for date-wise availability.
-            // If totalFleet is not returned by an older backend build, read the actual
-            // onboarded vehicle group once so Total Vehicle still shows exact inventory.
             let totalFleet = Number(result.totalFleet ?? 0);
 
             if (!Number.isFinite(totalFleet) || totalFleet <= 0) {
               try {
                 const inventoryRes = await axios.get(
-                  `${API_BASE}api/getNewVehicles?vehicleType=${encodeURIComponent(group.vehicleType)}`
+                  `${API_BASE}api/getNewVehicles?vehicleType=${encodeURIComponent(
+                    group.vehicleType
+                  )}`
                 );
 
                 const rawGroups = inventoryRes?.data?.data || [];
+
                 totalFleet = rawGroups.reduce(
                   (sum: number, vehicleGroup: any) =>
                     sum + (vehicleGroup?.registrationVehicles?.length || 0),
@@ -185,13 +198,31 @@ export default function VehicleAvailabilityNotificationTab({
   };
 
   const getVehicleTypeName = (vehicleTypeId: string) => {
-    if (!vehicleTypeId || !vehicleTypes) return vehicleTypeId || "Vehicle";
+    if (!vehicleTypeId || !vehicleTypes) {
+      return vehicleTypeId || "Vehicle";
+    }
 
     const vehicle = vehicleTypes.find(
-      (item: any) => normalizeId(item?._id) === normalizeId(vehicleTypeId)
+      (item: any) =>
+        normalizeId(item?._id) === normalizeId(vehicleTypeId)
     );
 
     return vehicle?.typeName || vehicleTypeId;
+  };
+
+  const activeGroup = groups[activeVehicleIndex];
+
+  const scrollTabs = (direction: "left" | "right") => {
+    const container = document.getElementById(
+      "vehicle-availability-tabs"
+    );
+
+    if (!container) return;
+
+    container.scrollBy({
+      left: direction === "left" ? -220 : 220,
+      behavior: "smooth",
+    });
   };
 
   if (loading) {
@@ -211,7 +242,8 @@ export default function VehicleAvailabilityNotificationTab({
             Vehicle inventory data is unavailable.
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            This order does not contain a valid vehicle type and campaign date range.
+            This order does not contain a valid vehicle type and campaign date
+            range.
           </p>
         </div>
       </div>
@@ -231,139 +263,263 @@ export default function VehicleAvailabilityNotificationTab({
                 Vehicle Availability
               </h3>
               <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                Live inventory availability for this order&apos;s vehicle types and campaign dates.
+                Live inventory availability for this order&apos;s vehicle types
+                and campaign dates.
               </p>
             </div>
           </div>
 
           <button
             type="button"
-            onClick={() => setRefreshKey((v) => v + 1)}
+            onClick={() => setRefreshKey((value) => value + 1)}
             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800 bg-white/70 dark:bg-gray-900 text-blue-600 dark:text-blue-400 text-xs font-semibold hover:bg-white transition-all"
           >
-            <RefreshCw size={12} /> Refresh
+            <RefreshCw size={12} />
+            Refresh
           </button>
         </div>
       </div>
 
-      {groups.map((group, index) => {
-        const availability = group.availability;
-        if (!availability) return null;
-
-        const isAvailable =
-          !availability.error &&
-          availability.availableCount >= availability.requiredQuantity;
-
-        return (
-          <div
-            key={group.key || `${group.vehicleType}-${index}`}
-            className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden"
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
+        <div className="relative flex items-center border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          <button
+            type="button"
+            onClick={() => scrollTabs("left")}
+            className="w-9 h-12 flex items-center justify-center border-r border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0"
           >
-            <div className="flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-3 min-w-0">
-                <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    isAvailable
-                      ? "bg-emerald-100 dark:bg-emerald-900/30"
-                      : "bg-red-100 dark:bg-red-900/30"
-                  }`}
-                >
-                  <Car
-                    size={19}
-                    className={isAvailable ? "text-emerald-600" : "text-red-600"}
-                  />
-                </div>
+            <ChevronLeft size={16} />
+          </button>
 
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                    {getVehicleTypeName(group.vehicleType)}
-                  </p>
-                  <div className="flex items-center gap-1.5 mt-0.5 text-xs text-gray-500">
-                    <CalendarDays size={12} />
-                    <span>
-                      {fmtDate(group.fromDate)} → {fmtDate(group.toDate)}
-                    </span>
-                  </div>
-                </div>
-              </div>
+          <div
+            id="vehicle-availability-tabs"
+            className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden"
+            style={{
+              scrollbarWidth: "thin",
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
+            <div className="flex w-max min-w-full">
+              {groups.map((group, index) => {
+                const active = activeVehicleIndex === index;
+                const availability = group.availability;
 
-              {!availability.error && (
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                    isAvailable
-                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                      : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                  }`}
-                >
-                  {isAvailable ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
-                  {isAvailable ? "Available" : "Not Available"}
-                </span>
-              )}
-            </div>
+                const isAvailable =
+                  !availability?.error &&
+                  (availability?.availableCount ?? 0) >=
+                    (availability?.requiredQuantity ?? group.quantity);
 
-            <div className="p-4">
-              {availability.error ? (
-                <div className="rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-3">
-                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                    Vehicle inventory data is unavailable.
-                  </p>
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                    {availability.error}
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div
-                    className={`rounded-xl border p-3 mb-4 ${
-                      isAvailable
-                        ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/10 dark:border-emerald-800/50"
-                        : "bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-800/50"
+                return (
+                  <button
+                    type="button"
+                    key={group.key}
+                    onClick={() => setActiveVehicleIndex(index)}
+                    className={`relative flex-shrink-0 w-[220px] px-4 py-3 text-left border-r border-gray-200 dark:border-gray-700 transition-all ${
+                      active
+                        ? "bg-white dark:bg-gray-900"
+                        : "hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      {isAvailable ? (
-                        <CheckCircle2 size={17} className="text-emerald-600 flex-shrink-0" />
-                      ) : (
-                        <XCircle size={17} className="text-red-600 flex-shrink-0" />
-                      )}
-
-                      <p
-                        className={`text-sm font-semibold ${
-                          isAvailable
-                            ? "text-emerald-700 dark:text-emerald-300"
-                            : "text-red-700 dark:text-red-300"
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          active
+                            ? "bg-blue-100 dark:bg-blue-900/30"
+                            : "bg-gray-100 dark:bg-gray-800"
                         }`}
                       >
-                        {isAvailable
-                          ? "The vehicle is available for the selected date range."
-                          : "The vehicle is not available for the selected date range."}
+                        <Car
+                          size={14}
+                          className={
+                            active
+                              ? "text-blue-600"
+                              : "text-gray-400"
+                          }
+                        />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={`text-xs font-bold truncate ${
+                            active
+                              ? "text-blue-600 dark:text-blue-400"
+                              : "text-gray-700 dark:text-gray-300"
+                          }`}
+                        >
+                          {getVehicleTypeName(group.vehicleType)}
+                        </p>
+
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          Qty {group.quantity}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                          availability?.error
+                            ? "bg-amber-400"
+                            : isAvailable
+                              ? "bg-emerald-500"
+                              : "bg-red-500"
+                        }`}
+                      />
+                    </div>
+
+                    {active && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => scrollTabs("right")}
+            className="w-9 h-12 flex items-center justify-center border-l border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+
+        {activeGroup &&
+          (() => {
+            const availability = activeGroup.availability;
+
+            if (!availability) return null;
+
+            const isAvailable =
+              !availability.error &&
+              availability.availableCount >= availability.requiredQuantity;
+
+            return (
+              <div>
+                <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        availability.error
+                          ? "bg-amber-100 dark:bg-amber-900/30"
+                          : isAvailable
+                            ? "bg-emerald-100 dark:bg-emerald-900/30"
+                            : "bg-red-100 dark:bg-red-900/30"
+                      }`}
+                    >
+                      <Car
+                        size={20}
+                        className={
+                          availability.error
+                            ? "text-amber-600"
+                            : isAvailable
+                              ? "text-emerald-600"
+                              : "text-red-600"
+                        }
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-base font-bold text-gray-900 dark:text-white truncate">
+                        {getVehicleTypeName(activeGroup.vehicleType)}
                       </p>
+
+                      <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
+                        <CalendarDays size={13} />
+                        <span>
+                          {fmtDate(activeGroup.fromDate)} →{" "}
+                          {fmtDate(activeGroup.toDate)}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <AvailabilityCard
-                      label="Total Vehicle"
-                      value={availability.totalFleet}
-                      type="normal"
-                    />
-                    <AvailabilityCard
-                      label="Available Vehicle"
-                      value={availability.availableCount}
-                      type={isAvailable ? "success" : "danger"}
-                    />
-                    <AvailabilityCard
-                      label="This Order Vehicle Count"
-                      value={availability.requiredQuantity}
-                      type="primary"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        );
-      })}
+                  {!availability.error && (
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${
+                        isAvailable
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                      }`}
+                    >
+                      {isAvailable ? (
+                        <CheckCircle2 size={14} />
+                      ) : (
+                        <XCircle size={14} />
+                      )}
+                      {isAvailable ? "Available" : "Not Available"}
+                    </span>
+                  )}
+                </div>
+
+                <div className="p-5">
+                  {availability.error ? (
+                    <div className="rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-4">
+                      <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                        Vehicle inventory data is unavailable.
+                      </p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                        {availability.error}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div
+                        className={`rounded-xl border p-3.5 mb-4 ${
+                          isAvailable
+                            ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/10 dark:border-emerald-800/50"
+                            : "bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-800/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {isAvailable ? (
+                            <CheckCircle2
+                              size={18}
+                              className="text-emerald-600 flex-shrink-0"
+                            />
+                          ) : (
+                            <XCircle
+                              size={18}
+                              className="text-red-600 flex-shrink-0"
+                            />
+                          )}
+
+                          <p
+                            className={`text-sm font-semibold ${
+                              isAvailable
+                                ? "text-emerald-700 dark:text-emerald-300"
+                                : "text-red-700 dark:text-red-300"
+                            }`}
+                          >
+                            {isAvailable
+                              ? "The vehicle is available for the selected date range."
+                              : "The vehicle is not available for the selected date range."}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <AvailabilityCard
+                          label="Total Vehicle"
+                          value={availability.totalFleet}
+                          type="normal"
+                        />
+                        <AvailabilityCard
+                          label="Available Vehicle"
+                          value={availability.availableCount}
+                          type={isAvailable ? "success" : "danger"}
+                        />
+                        <AvailabilityCard
+                          label="This Order Vehicle Count"
+                          value={availability.requiredQuantity}
+                          type="primary"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+      </div>
     </div>
   );
 }
@@ -387,9 +543,11 @@ function AvailabilityCard({
           : "text-gray-900 dark:text-white";
 
   return (
-    <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/40 p-4 text-center">
-      <p className={`text-2xl font-extrabold ${valueClass}`}>{value ?? "—"}</p>
-      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1">
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/40 p-5 text-center">
+      <p className={`text-3xl font-extrabold ${valueClass}`}>
+        {value ?? "—"}
+      </p>
+      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1.5">
         {label}
       </p>
     </div>
