@@ -20,6 +20,7 @@ type PropsType = {
   error?: string;
   required?: boolean;
   minDate?: DateOption;
+  maxDate?: DateOption;
 };
 
 
@@ -48,6 +49,7 @@ export default function DatePicker({
   error,
   required,
   minDate,
+  maxDate,
   value,
 }: PropsType) {
 
@@ -92,14 +94,15 @@ useEffect(() => {
     dateFormat: "Y-m-d",
     defaultDate: value ?? defaultDate,
     minDate: minDate,
+    maxDate: maxDate,
     onChange,
     disableMobile: true,
-    appendTo: document.body,   
-    position: "auto",          
+    appendTo: document.body,
+    position: "auto",
   }) as flatpickr.Instance;
 
   return () => { if (fp) fp.destroy(); };
-}, [mode, onChange, id, defaultDate, minDate, value]);
+}, [mode, onChange, id, defaultDate, minDate, maxDate, value]);
 
 return (
     <div className="w-full">

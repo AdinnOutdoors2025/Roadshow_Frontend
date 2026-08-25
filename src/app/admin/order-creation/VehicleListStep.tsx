@@ -238,9 +238,11 @@ function PricingBreakdown({ vehicle: v, formatINR }: { vehicle: VehicleConfig; f
     { label: `Rental (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × Qty ${v.quantity})`, amount: p.rentalCost },
   ];
   if (v.needPromoter && p.promoterCost > 0)
-    rows.push({ label: `Promoter (${p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${v.promoterQuantity} promoter)`, amount: p.promoterCost });
+    rows.push({ label: `Promoter (${(p as any).promoterDays ?? p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${v.promoterQuantity} promoter)`, amount: p.promoterCost });
   if (p.rtoCost > 0)
     rows.push({ label: "RTO Charges", amount: p.rtoCost });
+  if ((p as any).brandingCost > 0)
+    rows.push({ label: "Branding Cost", amount: (p as any).brandingCost });
   if ((p as any).extraKmCost > 0)
     rows.push({ label: `Extra KM / K (${v.extraKm} × ${formatINR((p as any).dailyKmcharges || 0)})`, amount: (p as any).extraKmCost });
   if ((p as any).extraHourCost > 0)

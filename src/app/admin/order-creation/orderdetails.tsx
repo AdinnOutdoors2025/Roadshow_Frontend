@@ -92,12 +92,14 @@ interface BookingItem {
     perDayRentalCost?: number;
     driverCharges?: number;
     promoterChargePerDay?: number;
+    promoterDays?: number;
     rtoCharges?: number;
     additionalHourCharges?: number;
     rentalCost?: number;
     driverCost?: number;
     promoterCost?: number;
     rtoCost?: number;
+    brandingCost?: number;
     extraKmCost?: number;
     extraHourCost?: number;
     campaignImages?: string[];
@@ -528,7 +530,7 @@ export default function OrderDetailDrawer({
                                                             icon: (
                                                                 <HiOutlineTag className="w-4 h-4 text-gray-400" />
                                                             ),
-                                                            label: "Campaign",
+                                                            label: "Campaign Type",
                                                             value:
                                                                 item.campaignType === "Other"
                                                                     ? item.otherCampaignType || "Other"
@@ -728,7 +730,7 @@ export default function OrderDetailDrawer({
                                                     {(item.promoterCost ?? 0) > 0 && (
                                                         <div className="flex justify-between items-center py-1">
                                                             <span className="text-gray-600 dark:text-gray-400 text-sm">
-                                                                Promoter Charges ({item.totalDays}D × ₹
+                                                                Promoter Charges ({item.promoterDays ?? item.totalDays}D × ₹
                                                                 {item.promoterChargePerDay?.toLocaleString(
                                                                     "en-IN"
                                                                 )}{" "}
@@ -747,6 +749,17 @@ export default function OrderDetailDrawer({
                                                             </span>
                                                             <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
                                                                 ₹{item.rtoCost.toLocaleString("en-IN")}
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                    {(item.brandingCost ?? 0) > 0 && (
+                                                        <div className="flex justify-between items-center py-1">
+                                                            <span className="text-gray-600 dark:text-gray-400 text-sm">
+                                                                Branding Cost
+                                                            </span>
+                                                            <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
+                                                                ₹{item.brandingCost.toLocaleString("en-IN")}
                                                             </span>
                                                         </div>
                                                     )}

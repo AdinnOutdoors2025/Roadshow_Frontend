@@ -47,8 +47,8 @@ export type PricedVehicleInput = {
   quantity: number;
   /** Per-day rental. Falls back to packageDetails.perDayRentalCost. */
   rate: number;
-  /** The matched package, used for rtoCharges. */
-  packageDetails?: { rtoCharges?: number; perDayRentalCost?: number } | null;
+  /** The matched package, used for rtoCharges/brandingCost. */
+  packageDetails?: { rtoCharges?: number; brandingCost?: number; perDayRentalCost?: number } | null;
 } & PromoterRequirement;
 
 export type PricedVehicle = {
@@ -61,7 +61,8 @@ export type PricedVehicle = {
   promoterCost: number;
   rtoCharges: number;
   rtoCost: number;
-  /** rentalCost + promoterCost + rtoCost */
+  brandingCost: number;
+  /** rentalCost + promoterCost + rtoCost + brandingCost */
   lineTotal: number;
 };
 
@@ -129,14 +130,14 @@ export const priceVehicleLine = (
 
   const promoterCost = promoterChargePerDay * days * promoterQuantity;
 
-  /* RTO charges are not priced on the public booking flow for now — kept
-     at 0 rather than removed from the shape, so Review Order / the PDF /
-     the backend payload can start pricing this again later without a
-     shape change. */
-  const rtoCharges = 0;
-  const rtoCost = 0;
+  // RTO is a one-time flat charge per vehicle, from the matched package.
+  const rtoCharges = toSafeNumber(vehicle.packageDetails?.rtoCharges);
+  const rtoCost = rtoCharges * quantity;
 
-  const lineTotal = rentalCost + promoterCost + rtoCost;
+  // Branding Cost — only ever set on a Hybrid vehicle's package.
+  const brandingCost = toSafeNumber(vehicle.packageDetails?.brandingCost) * quantity;
+
+  const lineTotal = rentalCost + promoterCost + rtoCost + brandingCost;
 
   return {
     days,
@@ -148,6 +149,7 @@ export const priceVehicleLine = (
     promoterCost,
     rtoCharges,
     rtoCost,
+    brandingCost,
     lineTotal: Number.isFinite(lineTotal) ? lineTotal : 0,
   };
 };

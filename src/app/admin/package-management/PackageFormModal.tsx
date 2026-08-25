@@ -35,6 +35,7 @@ interface PackageFormData {
   promoterChargePerDay: number;
   driverCharges: number;
   rtoCharges: number;
+  brandingCost: number;
   perKmCharge: number;
   isActive: boolean;
   inactiveReason: string;
@@ -51,6 +52,7 @@ const defaultForm: PackageFormData = {
   promoterChargePerDay: 0,
   driverCharges: 0,
   rtoCharges: 0,
+  brandingCost: 0,
   perKmCharge: 0,
   isActive: true,
   inactiveReason: "",
@@ -80,6 +82,21 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
   const [existingPackageWarning, setExistingPackageWarning] = useState<string | null>(null);
   const [checkingExistence, setCheckingExistence] = useState(false);
   const [fetchingPackage, setFetchingPackage] = useState(false);
+  const [isHybrid, setIsHybrid] = useState(false);
+
+  // A vehicle type is "Hybrid" when its onboarded vehicle group's
+  // techSpecs.screenType was saved as "Hybrid" (Vehicle Onboarding) — same
+  // lookup Vehicle Onboarding itself uses to load a group's tech specs.
+  const checkIsHybrid = async (typeId: string) => {
+    if (!typeId) { setIsHybrid(false); return; }
+    try {
+      const res = await fetch(`${API_BASE}api/getVehicleGroupByType/${typeId}`);
+      const data = await res.json();
+      setIsHybrid(data?.data?.techSpecs?.screenType === "Hybrid");
+    } catch {
+      setIsHybrid(false);
+    }
+  };
 
   // Fetch vehicle types from database
   const fetchVehicleTypes = async () => {
@@ -140,14 +157,17 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
         promoterChargePerDay: editingPackage.promoterChargePerDay,
         driverCharges: editingPackage.driverCharges,
         rtoCharges: editingPackage.rtoCharges,
+        brandingCost: (editingPackage as any).brandingCost || 0,
         perKmCharge: editingPackage.perKmCharge,
         isActive: editingPackage.isActive,
         inactiveReason: editingPackage.inactiveReason || "",
       });
       setExistingPackageWarning(null);
+      checkIsHybrid(vehicleTypeId);
     } else {
       setForm(defaultForm);
       setExistingPackageWarning(null);
+      setIsHybrid(false);
     }
     setErrors({});
   }, [editingPackage]);
@@ -194,6 +214,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
               promoterChargePerDay: existing.promoterChargePerDay || 0,
               driverCharges: existing.driverCharges || 0,
               rtoCharges: existing.rtoCharges || 0,
+              brandingCost: existing.brandingCost || 0,
               perKmCharge: existing.perKmCharge || 0,
               isActive: existing.isActive ?? true,
               inactiveReason: existing.inactiveReason || "",
@@ -210,6 +231,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
               promoterChargePerDay: 0,
               driverCharges: 0,
               rtoCharges: 0,
+              brandingCost: 0,
               perKmCharge: 0,
             }));
           }
@@ -224,6 +246,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
 
   const handleVehicleTypeChange = (typeId: string) => {
     setForm((prev) => ({ ...prev, vehicleType: typeId }));
+    checkIsHybrid(typeId);
     setTimeout(() => {
       checkExistingCombination(typeId, form.vehicleModel);
     }, 100);
@@ -262,6 +285,8 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
     if (!form.dailyKmLimit || form.dailyKmLimit <= 0) newErrors.dailyKmLimit = "Enter a valid KM limit";
     if (!form.additionalHourCharges || form.additionalHourCharges <= 0)
       newErrors.additionalHourCharges = "Enter valid charges";
+    if (isHybrid && (!form.brandingCost || form.brandingCost <= 0))
+      newErrors.brandingCost = "Branding Cost is required for a Hybrid vehicle";
     // if (form.promoterAvailable && (!form.promoterChargePerDay || form.promoterChargePerDay <= 0)) {
     //   newErrors.promoterChargePerDay = "Enter promoter charge per day";
     // }
@@ -285,6 +310,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
       promoterChargePerDay: form.promoterAvailable ? Number(form.promoterChargePerDay) : 0,
       driverCharges: Number(form.driverCharges),
       rtoCharges: Number(form.rtoCharges),
+      brandingCost: isHybrid ? Number(form.brandingCost) : 0,
       perKmCharge: Number(form.perKmCharge),
       isActive: form.isActive,
       inactiveReason: form.isActive ? "" : form.inactiveReason || "",
@@ -452,6 +478,18 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                 className={inputClass(false)}
               />
             </FormField>
+
+            {isHybrid && (
+              <FormField label="Branding Cost (₹)" error={errors.brandingCost} required>
+                <input
+                  type="text"
+                  value={form.brandingCost ? formatAmount(form.brandingCost) : ""}
+                  onChange={(e) => handleAmountChange("brandingCost", e.target.value)}
+                  placeholder="e.g. 5,000"
+                  className={inputClass(!!errors.brandingCost)}
+                />
+              </FormField>
+            )}
 
             {/* <FormField label="End User Customization Permission">
               <select

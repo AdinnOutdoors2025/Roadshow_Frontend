@@ -62,15 +62,15 @@ const getCampaignDayInfo = (from, to) => {
   return { label, cls: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400" };
 };
 
-    const formatINR = (value: string | number) => {
-        const num = parseFloat(String(value).replace(/[^0-9.]/g, ""));
-        if (isNaN(num) || value === "" || value === undefined) return "";
-        return new Intl.NumberFormat("en-IN", {
-            style: "currency",
-            currency: "INR",
-            maximumFractionDigits: 0,
-        }).format(num);
-    };
+const formatINR = (value: string | number) => {
+  const num = parseFloat(String(value).replace(/[^0-9.]/g, ""));
+  if (isNaN(num) || value === "" || value === undefined) return "";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(num);
+};
 
 const fmtDatetime = (s) => {
   if (!s) return "—";
@@ -145,6 +145,8 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const [addVehicleModalOpen, setAddVehicleModalOpen] = useState(false);
   const [bookingStatusMap, setBookingStatusMap] = useState({});
   const [bookingStatusLoading, setBookingStatusLoading] = useState(false);
+  // one
+  const [vehicleAvailTab, setVehicleAvailTab] = useState<"available" | "unavailable">("available");
 
   // While a refresh (GPS + booking-status) is in flight, the stats/live-status/
   // route/issue/extra-KM sections below would briefly show stale or zeroed-out
@@ -279,6 +281,27 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
     (e) => e.vehicleIndex === vehicleIndex && e.entryStatus !== "removed"
   );
 
+  // two
+
+  // const availableVehicleEntries = vehicleEntries.filter((e) => !e.unavailableStatus);
+  // const unavailableVehicleEntries = vehicleEntries.filter((e) => e.unavailableStatus);
+  // const displayedVehicleEntries =
+  //   vehicleAvailTab === "available" ? availableVehicleEntries : unavailableVehicleEntries;
+
+    const availableVehicleEntries = vehicleEntries.filter((e) => !e.unavailableStatus);
+  const unavailableVehicleEntries = vehicleEntries.filter((e) => e.unavailableStatus);
+
+  // No unavailable vehicles left → force back to "available" so the (now hidden)
+  // tab switcher doesn't leave the list stuck showing an empty "unavailable" view
+  useEffect(() => {
+    if (unavailableVehicleEntries.length === 0 && vehicleAvailTab !== "available") {
+      setVehicleAvailTab("available");
+    }
+  }, [unavailableVehicleEntries.length, vehicleAvailTab]);
+
+  const displayedVehicleEntries =
+    vehicleAvailTab === "available" ? availableVehicleEntries : unavailableVehicleEntries;
+
   // Active + available — used for the On-Road live list. Vehicles flagged
   // unavailable move out of On-Road and only show under Vehicle Unavailable.
   const liveStatusEntries = vehicleEntries.filter((e) => !e.unavailableStatus);
@@ -411,11 +434,11 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 On Road
               </span>
             )}
-            {vehicleEntries.some((e) => e.unavailableStatus) && (
+            {/* {vehicleEntries.some((e) => e.unavailableStatus) && (
               <span className="text-[14px] px-2 py-0.5 rounded-full bg-red-50 text-red-600 font-semibold border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800">
                 Vehicle Unavailable
               </span>
-            )}
+            )} */}
             {pendingFoc && (
               <span className="text-[14px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold border border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800">
                 FOC — Waiting for Approval
@@ -560,7 +583,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                   </button>
 
                   {/* {savedCount < quantity && ( */}
-                    {/* <button
+                  {/* <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setAddVehicleModalOpen(true);
@@ -578,644 +601,680 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
           {/* ── Stats Row ── */}
           {isRefreshing ? <RefreshSkeleton /> : (
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
-            <StatCard
-              icon={Truck}
-              iconBg="bg-blue-50 dark:bg-blue-900/20"
-              iconColor="text-blue-500"
-              label="Vehicles live"
-              value={`${liveStatusEntries.length} / ${quantity}`}
-              subColor={mismatchVehicleCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}
-            />
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
+              <StatCard
+                icon={Truck}
+                iconBg="bg-blue-50 dark:bg-blue-900/20"
+                iconColor="text-blue-500"
+                label="Vehicles live"
+                value={`${liveStatusEntries.length} / ${quantity}`}
+                subColor={mismatchVehicleCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}
+              />
 
-            <StatCard
-              icon={Activity}
-              iconBg="bg-emerald-50 dark:bg-emerald-900/20"
-              iconColor="text-emerald-500"
-              label="Route covered"
-              value={`${routeCoveredPct}%`}
-              subColor="text-emerald-600 dark:text-emerald-400"
-            />
+              <StatCard
+                icon={Activity}
+                iconBg="bg-emerald-50 dark:bg-emerald-900/20"
+                iconColor="text-emerald-500"
+                label="Route covered"
+                value={`${routeCoveredPct}%`}
+                subColor="text-emerald-600 dark:text-emerald-400"
+              />
 
-            <StatCard
-              icon={AlertTriangle}
-              iconBg="bg-red-50 dark:bg-red-900/20"
-              iconColor="text-red-500"
-              label="Open issues"
-              value={<span className="text-red-500">{openIssues.length}</span>}
-              sub={
-                <span
-                  className="text-blue-500 cursor-pointer"
-                  onClick={() => issueRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                >
-                  View issues
-                </span>
-              }
-            />
+              <StatCard
+                icon={AlertTriangle}
+                iconBg="bg-red-50 dark:bg-red-900/20"
+                iconColor="text-red-500"
+                label="Open issues"
+                value={<span className="text-red-500">{openIssues.length}</span>}
+                sub={
+                  <span
+                    className="text-blue-500 cursor-pointer"
+                    onClick={() => issueRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                  >
+                    View issues
+                  </span>
+                }
+              />
 
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3.5 flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-50 dark:bg-gray-800">
-                  <Navigation size={15} className="text-gray-500" />
-                </div>
-                <span className="text-md text-gray-400">KM covered</span>
-              </div>
-
-              <div className="text-xl font-semibold text-gray-800 dark:text-gray-100 leading-tight">
-                {totalKm.toFixed(1)} km
-              </div>
-
-              {/* Carousel Row */}
-              <div className="flex items-center gap-2">
-                {/* Left Arrow */}
-                <button
-                  onClick={() => setKmPage(p => Math.max(0, p - 1))}
-                  disabled={kmPage === 0}
-                  className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 hover:bg-gray-200 disabled:opacity-30 transition-all flex-shrink-0"
-                >
-                  <ChevronDown size={12} className="rotate-90" />
-                </button>
-
-                {/* Vehicle KM display */}
-                <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-                  {liveStatusEntries.slice(kmPage * 2, kmPage * 2 + 2).map((e, i) => {
-                    const gps = gpsData.find(g => g.vehicleId === e.vehicleRegistrationNumber);
-                    const actualIdx = kmPage * 2 + i;
-                    return (
-                      <span key={actualIdx} className="text-xs text-gray-400 truncate">
-                        V{actualIdx + 1}: {(gps?.distanceCovered || 0).toFixed(1)}km
-                      </span>
-                    );
-                  })}
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3.5 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-50 dark:bg-gray-800">
+                    <Navigation size={15} className="text-gray-500" />
+                  </div>
+                  <span className="text-md text-gray-400">KM covered</span>
                 </div>
 
-                {/* Right Arrow */}
-                <button
-                  onClick={() => setKmPage(p => Math.min(Math.ceil(liveStatusEntries.length / 2) - 1, p + 1))}
-                  disabled={kmPage >= Math.ceil(liveStatusEntries.length / 2) - 1}
-                  className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 hover:bg-gray-200 disabled:opacity-30 transition-all flex-shrink-0"
-                >
-                  <ChevronDown size={12} className="-rotate-90" />
-                </button>
-              </div>
-
-              {/* Dot indicators */}
-              {liveStatusEntries.length > 2 && (
-                <div className="flex items-center justify-center gap-1">
-                  {Array.from({ length: Math.ceil(liveStatusEntries.length / 2) }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`rounded-full transition-all ${i === kmPage ? "w-3 h-1.5 bg-blue-400" : "w-1.5 h-1.5 bg-gray-200 dark:bg-gray-700"}`}
-                    />
-                  ))}
+                <div className="text-xl font-semibold text-gray-800 dark:text-gray-100 leading-tight">
+                  {totalKm.toFixed(1)} km
                 </div>
-              )}
+
+                {/* Carousel Row */}
+                <div className="flex items-center gap-2">
+                  {/* Left Arrow */}
+                  <button
+                    onClick={() => setKmPage(p => Math.max(0, p - 1))}
+                    disabled={kmPage === 0}
+                    className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 hover:bg-gray-200 disabled:opacity-30 transition-all flex-shrink-0"
+                  >
+                    <ChevronDown size={12} className="rotate-90" />
+                  </button>
+
+                  {/* Vehicle KM display */}
+                  <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+                    {liveStatusEntries.slice(kmPage * 2, kmPage * 2 + 2).map((e, i) => {
+                      const gps = gpsData.find(g => g.vehicleId === e.vehicleRegistrationNumber);
+                      const actualIdx = kmPage * 2 + i;
+                      return (
+                        <span key={actualIdx} className="text-xs text-gray-400 truncate">
+                          V{actualIdx + 1}: {(gps?.distanceCovered || 0).toFixed(1)}km
+                        </span>
+                      );
+                    })}
+                  </div>
+
+                  {/* Right Arrow */}
+                  <button
+                    onClick={() => setKmPage(p => Math.min(Math.ceil(liveStatusEntries.length / 2) - 1, p + 1))}
+                    disabled={kmPage >= Math.ceil(liveStatusEntries.length / 2) - 1}
+                    className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 hover:bg-gray-200 disabled:opacity-30 transition-all flex-shrink-0"
+                  >
+                    <ChevronDown size={12} className="-rotate-90" />
+                  </button>
+                </div>
+
+                {/* Dot indicators */}
+                {liveStatusEntries.length > 2 && (
+                  <div className="flex items-center justify-center gap-1">
+                    {Array.from({ length: Math.ceil(liveStatusEntries.length / 2) }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`rounded-full transition-all ${i === kmPage ? "w-3 h-1.5 bg-blue-400" : "w-1.5 h-1.5 bg-gray-200 dark:bg-gray-700"}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
           )}
 
           {isRefreshing ? null : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
-                  Live vehicle status ({liveStatusEntries.length}/{quantity} drivers)
-                </h3>
-              </div>
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
-                  <button
-                    onClick={() => setLiveTab("status")}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${liveTab === "status" ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
-                  >
-                    Vehicle Status
-                  </button>
-                  <button
-                    onClick={() => setLiveTab("history")}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${liveTab === "history" ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
-                  >
-                    Driver History
-                  </button>
-                  <button
-                    onClick={() => setLiveTab("campaign")}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${liveTab === "campaign" ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
-                  >
-                    Campaign History
-                  </button>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                  <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
+                    Live vehicle status ({liveStatusEntries.length}/{quantity} drivers)
+                  </h3>
                 </div>
-                {liveStatusEntries.filter(e => e.onRoadStatus === 1).length > 0 && (
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
-                    {liveStatusEntries.filter(e => e.onRoadStatus === 1).length} On Road
-                  </span>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
+                    <button
+                      onClick={() => setLiveTab("status")}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${liveTab === "status" ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+                    >
+                      Vehicle Status
+                    </button>
+                    <button
+                      onClick={() => setLiveTab("history")}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${liveTab === "history" ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+                    >
+                      Driver History
+                    </button>
+                    <button
+                      onClick={() => setLiveTab("campaign")}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${liveTab === "campaign" ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+                    >
+                      Campaign History
+                    </button>
+                  </div>
+                  {liveStatusEntries.filter(e => e.onRoadStatus === 1).length > 0 && (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+                      {liveStatusEntries.filter(e => e.onRoadStatus === 1).length} On Road
+                    </span>
+                  )}
+                </div>
+              {liveTab === "status" && unavailableVehicleEntries.length > 0 && (
+                <div className="flex items-center gap-1 px-4 pt-3 pb-2 border-b border-gray-100 dark:border-gray-800">
+                  <button
+                    onClick={() => setVehicleAvailTab("available")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${vehicleAvailTab === "available"
+                          ? "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
+                          : "text-gray-400 hover:text-gray-600 border border-transparent"
+                        }`}
+                    >
+                      Available Vehicle
+                      <span className="text-[10px] font-bold px-1.5 rounded-full bg-white/70 dark:bg-black/20">
+                        {availableVehicleEntries.length}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setVehicleAvailTab("unavailable")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${vehicleAvailTab === "unavailable"
+                          ? "bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                          : "text-gray-400 hover:text-gray-600 border border-transparent"
+                        }`}
+                    >
+                      Unavailable Vehicle
+                      <span className="text-[10px] font-bold px-1.5 rounded-full bg-white/70 dark:bg-black/20">
+                        {unavailableVehicleEntries.length}
+                      </span>
+                    </button>
+                  </div>
                 )}
-              </div>
 
-              <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[520px] overflow-y-auto">
-                {liveTab === "status" ? (
-                  <>
-                    {vehicleEntries.map((entry, idx) => (
-                      <LiveVehicleRow
-                        key={entry._id || idx}
-                        entry={entry}
-                        index={idx}
-                        order={order}
-                        onRefresh={onRefresh}
-                        vehicle={vehicle}
-                        gpsData={gpsData}
-                        bookingStatusMap={bookingStatusMap}
-                        onBookingStatusRefresh={fetchBookingStatus}
-                        onTrackIdFetched={(regNo) => fetchRouteTrackId(regNo)}
-                        correctVehicleIndex={vehicleIndex}
-                        forceOpen={activeIssueEntryId === entry.vehicleRegistrationNumber}
-                        onForceOpenHandled={() => setActiveIssueEntryId(null)}
-                        onViewDriverRoute={(regNo) => setSelectedVehicleRegNo(regNo)}
-                        vehicleTypes={vehicleTypes}
-                      />
-                    ))}
-                    {vehicleEntries.length === 0 && (
+                <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[520px] overflow-y-auto">
+                  {liveTab === "status" ? (
+                    <>
+                      {displayedVehicleEntries.map((entry, idx) => (
+                        <LiveVehicleRow
+                          key={entry._id || idx}
+                          entry={entry}
+                          index={idx}
+                          order={order}
+                          onRefresh={onRefresh}
+                          vehicle={vehicle}
+                          gpsData={gpsData}
+                          bookingStatusMap={bookingStatusMap}
+                          onBookingStatusRefresh={fetchBookingStatus}
+                          onTrackIdFetched={(regNo) => fetchRouteTrackId(regNo)}
+                          correctVehicleIndex={vehicleIndex}
+                          forceOpen={activeIssueEntryId === entry.vehicleRegistrationNumber}
+                          onForceOpenHandled={() => setActiveIssueEntryId(null)}
+                          onViewDriverRoute={(regNo) => setSelectedVehicleRegNo(regNo)}
+                          vehicleTypes={vehicleTypes}
+                        />
+                      ))}
+                      {/* {vehicleEntries.length === 0 && (
                       <div className="p-6 text-center text-gray-400 text-sm">
                         No drivers assigned.
                       </div>
-                    )}
+                    )} */}
 
-                    {/* ── NEW: Released vehicles summary — always visible, no tab-hunting needed ── */}
-                    {allVehicleEntriesIncludingRemoved.filter(e => e.entryStatus === "removed").length > 0 && (
-                      <div className="p-4 bg-gray-50 dark:bg-gray-800/40">
-                        <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                          <XCircle size={13} className="text-red-400" />
-                          Released vehicles ({allVehicleEntriesIncludingRemoved.filter(e => e.entryStatus === "removed").length})
-                        </p>
-                        <div className="space-y-2">
-                          {allVehicleEntriesIncludingRemoved
-                            .filter(e => e.entryStatus === "removed")
-                            .map((e, i) => {
-                              const issueIdx = issueVehicleEntries.findIndex(x => x._id === e._id);
-                              const extraKmIdx = extraKmVehicleEntries.findIndex(x => x._id === e._id);
-                              return (
-                                <button
-                                  key={e._id || i}
-                                  onClick={() => {
-                                    if (issueIdx !== -1) setActiveIssueVehicleTab(issueIdx);
-                                    if (extraKmIdx !== -1) setActiveExtraKmTab(extraKmIdx);
-                                    issueRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                                  }}
-                                  className="w-full text-left rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
-                                >
-                                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-                                        {e.vehicleRegistrationNumber || "—"}
-                                      </span>
-                                      <span className="text-xs text-gray-500">{e.driverName || "—"}</span>
-                                    </div>
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800">
-                                      Released
-                                    </span>
-                                  </div>
-                                  <p className="text-xs text-gray-400 mt-1.5">
-                                    By {e.removedBy || "—"} on {fmtDatetime(e.removedAt)}
-                                    {e.removalReason ? ` — ${e.removalReason}` : ""}
-                                  </p>
-                                  <p className="text-xs text-blue-500 mt-1">View issues / extra KM history →</p>
-                                </button>
-                              );
-                            })}
+                      {displayedVehicleEntries.length === 0 && (
+                        <div className="p-6 text-center text-gray-400 text-sm">
+                          {vehicleAvailTab === "available"
+                            ? "No available vehicles."
+                            : "No unavailable vehicles."}
                         </div>
-                      </div>
-                    )}
-                  </>
-                ) : liveTab === "history" ? (
-                  <DriverHistoryPanel
-                    vehicleEntries={allVehicleEntriesIncludingRemoved}
-                    driverHistory={order.onRoadDriverHistory || []}
-                    unavailableHistory={order.onRoadUnavailableHistory || []}
-                    vehicleIndex={vehicleIndex}
-                  />
-                ) : (
-                  <CampaignHistoryPanel
-                    vehicleEntries={allVehicleEntriesIncludingRemoved}
-                    driverHistory={order.onRoadDriverHistory || []}
-                    issueHistory={order.onRoadIssues || []}
-                    unavailableHistory={order.onRoadUnavailableHistory || []}
-                    vehicleIndex={vehicleIndex}
-                    campaignFromDate={vehicle.fromDate}
-                    campaignToDate={vehicle.toDate}
-                  />
-                )}
-              </div>
-            </div>
+                      )}
 
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
-                  Today's route progress
-                </h3>
-                <div className="flex items-center gap-2">
-                  {selectedVehicleRegNo && (
-                    <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
-                      {selectedVehicleRegNo}
-                    </span>
+                      {/* ── NEW: Released vehicles summary — always visible, no tab-hunting needed ── */}
+                      {allVehicleEntriesIncludingRemoved.filter(e => e.entryStatus === "removed").length > 0 && (
+                        <div className="p-4 bg-gray-50 dark:bg-gray-800/40">
+                          <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
+                            <XCircle size={13} className="text-red-400" />
+                            Released vehicles ({allVehicleEntriesIncludingRemoved.filter(e => e.entryStatus === "removed").length})
+                          </p>
+                          <div className="space-y-2">
+                            {allVehicleEntriesIncludingRemoved
+                              .filter(e => e.entryStatus === "removed")
+                              .map((e, i) => {
+                                const issueIdx = issueVehicleEntries.findIndex(x => x._id === e._id);
+                                const extraKmIdx = extraKmVehicleEntries.findIndex(x => x._id === e._id);
+                                return (
+                                  <button
+                                    key={e._id || i}
+                                    onClick={() => {
+                                      if (issueIdx !== -1) setActiveIssueVehicleTab(issueIdx);
+                                      if (extraKmIdx !== -1) setActiveExtraKmTab(extraKmIdx);
+                                      issueRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                                    }}
+                                    className="w-full text-left rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                                  >
+                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                                          {e.vehicleRegistrationNumber || "—"}
+                                        </span>
+                                        <span className="text-xs text-gray-500">{e.driverName || "—"}</span>
+                                      </div>
+                                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800">
+                                        Released
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-1.5">
+                                      By {e.removedBy || "—"} on {fmtDatetime(e.removedAt)}
+                                      {e.removalReason ? ` — ${e.removalReason}` : ""}
+                                    </p>
+                                    <p className="text-xs text-blue-500 mt-1">View issues / extra KM history →</p>
+                                  </button>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : liveTab === "history" ? (
+                    <DriverHistoryPanel
+                      vehicleEntries={allVehicleEntriesIncludingRemoved}
+                      driverHistory={order.onRoadDriverHistory || []}
+                      unavailableHistory={order.onRoadUnavailableHistory || []}
+                      vehicleIndex={vehicleIndex}
+                    />
+                  ) : (
+                    <CampaignHistoryPanel
+                      vehicleEntries={allVehicleEntriesIncludingRemoved}
+                      driverHistory={order.onRoadDriverHistory || []}
+                      issueHistory={order.onRoadIssues || []}
+                      unavailableHistory={order.onRoadUnavailableHistory || []}
+                      vehicleIndex={vehicleIndex}
+                      campaignFromDate={vehicle.fromDate}
+                      campaignToDate={vehicle.toDate}
+                    />
                   )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const regNo = selectedVehicleRegNo || vehicleEntries[0]?.vehicleRegistrationNumber;
-                      if (!regNo) return;
-                      setRouteRefreshNonce((n) => n + 1);
-                      fetchRouteTrackId(regNo);
-                    }}
-                    disabled={routeLoading}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-all"
-                    title="Refresh map"
-                  >
-                    <RefreshCw size={13} className={routeLoading ? "animate-spin" : ""} />
-                  </button>
                 </div>
               </div>
 
-              <div className="border-b border-gray-100 dark:border-gray-800 relative overflow-hidden" style={{ height: "280px" }}>
-                {routeLoading ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-                    <Loader2 size={24} className="animate-spin text-blue-400" />
-                    <p className="text-xs text-gray-400">Loading route map...</p>
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                  <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
+                    Today's route progress
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    {selectedVehicleRegNo && (
+                      <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+                        {selectedVehicleRegNo}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const regNo = selectedVehicleRegNo || vehicleEntries[0]?.vehicleRegistrationNumber;
+                        if (!regNo) return;
+                        setRouteRefreshNonce((n) => n + 1);
+                        fetchRouteTrackId(regNo);
+                      }}
+                      disabled={routeLoading}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-all"
+                      title="Refresh map"
+                    >
+                      <RefreshCw size={13} className={routeLoading ? "animate-spin" : ""} />
+                    </button>
                   </div>
-                ) : routeTrackId ? (
-                  <iframe
-                    key={`${routeTrackId}-${routeRefreshNonce}`}
-                    src={`https://gpsvts.vamosys.com/gps/public/track?vehicleId=${routeTrackId}&maps=track&userID=ADINN12`}
-                    className="w-full h-full border-0"
-                    title="Live Route Map"
-                    allowFullScreen
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gray-50 dark:bg-gray-800">
-                    <div className="absolute inset-0 opacity-5">
-                      <svg width="100%" height="100%">
-                        <defs>
-                          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                          </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill="url(#grid)" />
-                      </svg>
+                </div>
+
+                <div className="border-b border-gray-100 dark:border-gray-800 relative overflow-hidden" style={{ height: "280px" }}>
+                  {routeLoading ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                      <Loader2 size={24} className="animate-spin text-blue-400" />
+                      <p className="text-xs text-gray-400">Loading route map...</p>
                     </div>
-                    <Navigation size={28} className="text-gray-300 relative z-10" />
-                  </div>
-                )}
-              </div>
-
-              <div className="divide-y-0">
-                {(() => {
-                  const regNo = selectedVehicleRegNo || vehicleEntries[0]?.vehicleRegistrationNumber;
-                  const locations = driverLocations[regNo] || [];
-
-                  if (locations.length === 0) {
-                    return (
-                      <div className="p-6 text-center text-gray-400 text-sm">
-                        No location history found
+                  ) : routeTrackId ? (
+                    <iframe
+                      key={`${routeTrackId}-${routeRefreshNonce}`}
+                      src={`https://gpsvts.vamosys.com/gps/public/track?vehicleId=${routeTrackId}&maps=track&userID=ADINN12`}
+                      className="w-full h-full border-0"
+                      title="Live Route Map"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gray-50 dark:bg-gray-800">
+                      <div className="absolute inset-0 opacity-5">
+                        <svg width="100%" height="100%">
+                          <defs>
+                            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                            </pattern>
+                          </defs>
+                          <rect width="100%" height="100%" fill="url(#grid)" />
+                        </svg>
                       </div>
-                    );
-                  }
+                      <Navigation size={28} className="text-gray-300 relative z-10" />
+                    </div>
+                  )}
+                </div>
 
-                  return locations.map((loc, i) => {
-                    const isLast = i === locations.length - 1;
-                    const status = isLast ? "inprogress" : "completed";
-                    const shortAddress = loc.address?.split(",").slice(0, 2).join(", ") || "Unknown";
-                    const time = new Date(loc.updatedAt).toLocaleTimeString("en-IN", {
-                      hour: "2-digit", minute: "2-digit", hour12: true,
+                <div className="divide-y-0">
+                  {(() => {
+                    const regNo = selectedVehicleRegNo || vehicleEntries[0]?.vehicleRegistrationNumber;
+                    const locations = driverLocations[regNo] || [];
+
+                    if (locations.length === 0) {
+                      return (
+                        <div className="p-6 text-center text-gray-400 text-sm">
+                          No location history found
+                        </div>
+                      );
+                    }
+
+                    return locations.map((loc, i) => {
+                      const isLast = i === locations.length - 1;
+                      const status = isLast ? "inprogress" : "completed";
+                      const shortAddress = loc.address?.split(",").slice(0, 2).join(", ") || "Unknown";
+                      const time = new Date(loc.updatedAt).toLocaleTimeString("en-IN", {
+                        hour: "2-digit", minute: "2-digit", hour12: true,
+                      });
+
+                      return (
+                        <div key={loc._id} className="flex items-start gap-3 px-4 py-3 relative">
+                          {/* Left: icon + vertical line */}
+                          <div className="flex flex-col items-center flex-shrink-0">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${status === "completed"
+                              ? "bg-emerald-500"
+                              : "bg-amber-400"
+                              }`}>
+                              {status === "completed"
+                                ? <FaLocationDot size={15} className="text-white fill-white" />
+                                : <Navigation size={15} className="text-white" />
+                              }
+                            </div>
+
+                            {/* vertical connector — hidden on last item */}
+                            {i < locations.length - 1 && (
+                              <div className="w-0.5 bg-gray-200 dark:bg-gray-700 flex-1 min-h-[20px] mt-1" />
+                            )}
+                          </div>
+
+                          {/* Right: text + badge */}
+                          <div className="flex-1 min-w-0 flex items-start justify-between gap-2 pt-1">
+                            <div className="min-w-0">
+                              <p className="text-xs text-gray-400">{time}</p>
+                              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate">
+                                {shortAddress}
+                              </p>
+                            </div>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${status === "completed"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
+                              : "bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400"
+                              }`}>
+                              {status === "completed" ? "Visited" : "Current"}
+                            </span>
+                          </div>
+                        </div>
+                      );
                     });
-
-                    return (
-                      <div key={loc._id} className="flex items-start gap-3 px-4 py-3 relative">
-                        {/* Left: icon + vertical line */}
-                        <div className="flex flex-col items-center flex-shrink-0">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${status === "completed"
-                            ? "bg-emerald-500"
-                            : "bg-amber-400"
-                            }`}>
-                            {status === "completed"
-                              ? <FaLocationDot size={15} className="text-white fill-white" />
-                              : <Navigation size={15} className="text-white" />
-                            }
-                          </div>
-
-                          {/* vertical connector — hidden on last item */}
-                          {i < locations.length - 1 && (
-                            <div className="w-0.5 bg-gray-200 dark:bg-gray-700 flex-1 min-h-[20px] mt-1" />
-                          )}
-                        </div>
-
-                        {/* Right: text + badge */}
-                        <div className="flex-1 min-w-0 flex items-start justify-between gap-2 pt-1">
-                          <div className="min-w-0">
-                            <p className="text-xs text-gray-400">{time}</p>
-                            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate">
-                              {shortAddress}
-                            </p>
-                          </div>
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${status === "completed"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
-                            : "bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400"
-                            }`}>
-                            {status === "completed" ? "Visited" : "Current"}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  });
-                })()}
+                  })()}
+                </div>
               </div>
             </div>
-          </div>
           )}
 
           {/* ── Bottom Row ── */}
           {isRefreshing ? null : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div ref={issueRef} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
-                  Issue / escalation
-                </h3>
-                <div className="flex items-center gap-2">
-                  {openIssues.length > 0 && (
-                    <span className="text-sm font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-200">
-                      {openIssues.length} open
-                    </span>
-                  )}
-                  <span className="text-sm text-gray-400">{vehicleIssues.length} total</span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div ref={issueRef} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                  <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
+                    Issue / escalation
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    {openIssues.length > 0 && (
+                      <span className="text-sm font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-200">
+                        {openIssues.length} open
+                      </span>
+                    )}
+                    <span className="text-sm text-gray-400">{vehicleIssues.length} total</span>
+                  </div>
                 </div>
-              </div>
 
-              {issueVehicleEntries.length > 1 && (
-                <div className="flex gap-1 px-3 pt-3 pb-0 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
-                  {issueVehicleEntries.map((entry, i) => {
-                    const entryOpenCount = vehicleIssues.filter(
-                      (iss) =>
-                        (iss.entryId ? String(iss.entryId) === String(entry._id) : iss.vehicleRegNo === entry.vehicleRegistrationNumber) &&
-                        iss.status === "open"
-                    ).length;
-                    const isReleased = entry.entryStatus === "removed";
-                    return (
-                      <button
-                        key={entry._id || i}
-                        onClick={() => setActiveIssueVehicleTab(i)}
-                        className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${activeIssueVehicleTab === i
-                          ? "border-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20"
-                          : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                          }`}
-                      >
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center text-white ${isReleased ? "bg-gray-400" : "bg-red-500"}`} style={{ fontSize: "9px" }}>
-                          V{i + 1}
-                        </div>
-                        <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-                        <RegStatusBadge entry={entry} unavailableHistory={order.onRoadUnavailableHistory || []} />
-                        {entryOpenCount > 0 && (
-                          <span className="ml-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
-                            {entryOpenCount}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+                {issueVehicleEntries.length > 1 && (
+                  <div className="flex gap-1 px-3 pt-3 pb-0 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
+                    {issueVehicleEntries.map((entry, i) => {
+                      const entryOpenCount = vehicleIssues.filter(
+                        (iss) =>
+                          (iss.entryId ? String(iss.entryId) === String(entry._id) : iss.vehicleRegNo === entry.vehicleRegistrationNumber) &&
+                          iss.status === "open"
+                      ).length;
+                      const isReleased = entry.entryStatus === "removed";
+                      return (
+                        <button
+                          key={entry._id || i}
+                          onClick={() => setActiveIssueVehicleTab(i)}
+                          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${activeIssueVehicleTab === i
+                            ? "border-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20"
+                            : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            }`}
+                        >
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center text-white ${isReleased ? "bg-gray-400" : "bg-red-500"}`} style={{ fontSize: "9px" }}>
+                            V{i + 1}
+                          </div>
+                          <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
+                          <RegStatusBadge entry={entry} unavailableHistory={order.onRoadUnavailableHistory || []} />
+                          {entryOpenCount > 0 && (
+                            <span className="ml-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                              {entryOpenCount}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
-              <div className="p-4 space-y-4 max-h-72 overflow-y-auto">
-                {(() => {
-                  const activeEntry = issueVehicleEntries[activeIssueVehicleTab];
-                  if (!activeEntry) {
-                    return (
-                      <p className="text-xs text-gray-400 text-center py-4">
-                        No issues reported
-                      </p>
-                    );
-                  }
-
-                  const releasedBanner = activeEntry.entryStatus === "removed" ? (
-                    <div className="rounded-xl border border-gray-200 bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700 p-3">
-                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 flex items-center gap-1.5">
-                        <XCircle size={12} className="text-red-500" />
-                        This vehicle was released from the campaign
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        By {activeEntry.removedBy || "—"} on {fmtDatetime(activeEntry.removedAt)}
-                        {activeEntry.removalReason ? ` — ${activeEntry.removalReason}` : ""}
-                      </p>
-                    </div>
-                  ) : null;
-
-                  const tabIssues = vehicleIssues.filter((iss) => {
-                    if (iss.entryId) return String(iss.entryId) === String(activeEntry._id);
-                    return iss.vehicleRegNo === activeEntry.vehicleRegistrationNumber;
-                  });
-
-                  if (tabIssues.length === 0) {
-                    return (
-                      <>
-                        {releasedBanner}
+                <div className="p-4 space-y-4 max-h-72 overflow-y-auto">
+                  {(() => {
+                    const activeEntry = issueVehicleEntries[activeIssueVehicleTab];
+                    if (!activeEntry) {
+                      return (
                         <p className="text-xs text-gray-400 text-center py-4">
                           No issues reported
                         </p>
+                      );
+                    }
+
+                    const releasedBanner = activeEntry.entryStatus === "removed" ? (
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700 p-3">
+                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 flex items-center gap-1.5">
+                          <XCircle size={12} className="text-red-500" />
+                          This vehicle was released from the campaign
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          By {activeEntry.removedBy || "—"} on {fmtDatetime(activeEntry.removedAt)}
+                          {activeEntry.removalReason ? ` — ${activeEntry.removalReason}` : ""}
+                        </p>
+                      </div>
+                    ) : null;
+
+                    const tabIssues = vehicleIssues.filter((iss) => {
+                      if (iss.entryId) return String(iss.entryId) === String(activeEntry._id);
+                      return iss.vehicleRegNo === activeEntry.vehicleRegistrationNumber;
+                    });
+
+                    if (tabIssues.length === 0) {
+                      return (
+                        <>
+                          {releasedBanner}
+                          <p className="text-xs text-gray-400 text-center py-4">
+                            No issues reported
+                          </p>
+                        </>
+                      );
+                    }
+
+                    const groups = {};
+                    tabIssues.forEach((iss) => {
+                      const key = iss.vehicleRegNo || "—";
+                      if (!groups[key]) groups[key] = [];
+                      groups[key].push(iss);
+                    });
+
+                    return (
+                      <>
+                        {releasedBanner}
+                        {Object.keys(groups).map((regNo) => {
+                          const groupIssues = [...groups[regNo]].reverse();
+                          const isCurrentReg = regNo === activeEntry.vehicleRegistrationNumber;
+                          const groupOpenCount = groupIssues.filter((i) => i.status === "open").length;
+
+                          return (
+                            <div key={regNo} className="space-y-2">
+                              <div className="flex items-center justify-between px-1">
+                                <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${isCurrentReg
+                                  ? "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
+                                  : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400"
+                                  }`}>
+                                  {regNo} {isCurrentReg ? "(current)" : "(old)"}
+                                </span>
+                                <span className="text-xs text-gray-400">
+                                  {groupIssues.length} issues{groupOpenCount > 0 ? ` · ${groupOpenCount} open` : ""}
+                                </span>
+                              </div>
+
+                              {groupIssues.map((iss) => (
+                                <IssueHistoryCard
+                                  key={iss._id}
+                                  iss={iss}
+                                  onOpenModal={() => setActiveIssueEntryId(iss.vehicleRegNo)}
+                                />
+                              ))}
+                            </div>
+                          );
+                        })}
                       </>
                     );
-                  }
-
-                  const groups = {};
-                  tabIssues.forEach((iss) => {
-                    const key = iss.vehicleRegNo || "—";
-                    if (!groups[key]) groups[key] = [];
-                    groups[key].push(iss);
-                  });
-
-                  return (
-                    <>
-                      {releasedBanner}
-                      {Object.keys(groups).map((regNo) => {
-                        const groupIssues = [...groups[regNo]].reverse();
-                        const isCurrentReg = regNo === activeEntry.vehicleRegistrationNumber;
-                        const groupOpenCount = groupIssues.filter((i) => i.status === "open").length;
-
-                        return (
-                          <div key={regNo} className="space-y-2">
-                            <div className="flex items-center justify-between px-1">
-                              <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${isCurrentReg
-                                ? "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
-                                : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400"
-                                }`}>
-                                {regNo} {isCurrentReg ? "(current)" : "(old)"}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                {groupIssues.length} issues{groupOpenCount > 0 ? ` · ${groupOpenCount} open` : ""}
-                              </span>
-                            </div>
-
-                            {groupIssues.map((iss) => (
-                              <IssueHistoryCard
-                                key={iss._id}
-                                iss={iss}
-                                onOpenModal={() => setActiveIssueEntryId(iss.vehicleRegNo)}
-                              />
-                            ))}
-                          </div>
-                        );
-                      })}
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-
-            <AttendanceSummaryCard vehicleEntries={vehicleEntries} order={order} vehicleIndex={vehicleIndex} />
-
-            {/* ── Extra KM History ── */}
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
-                  Extra KM History
-                </h3>
-                <span className="text-sm text-gray-400">
-                  {(order.extraKmDetailsArray || []).filter((e) => e.vehicleIndex === vehicleIndex).length} entries
-                </span>
-              </div>
-
-              {extraKmVehicleEntries.length > 1 && (
-                <div className="flex gap-1 px-3 pt-3 pb-0 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
-                  {extraKmVehicleEntries.map((entry, i) => {
-                    const isReleased = entry.entryStatus === "removed";
-                    return (
-                      <button
-                        key={entry._id || i}
-                        onClick={() => setActiveExtraKmTab(i)}
-                        className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${activeExtraKmTab === i
-                          ? "border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20"
-                          : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                          }`}
-                      >
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center text-white ${isReleased ? "bg-gray-400" : "bg-orange-500"}`} style={{ fontSize: "9px" }}>
-                          V{i + 1}
-                        </div>
-                        <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-                        <RegStatusBadge entry={entry} unavailableHistory={order.onRoadUnavailableHistory || []} />
-                      </button>
-                    );
-                  })}
+                  })()}
                 </div>
-              )}
+              </div>
 
-              <div className="p-4 space-y-4 max-h-72 overflow-y-auto">
-                {(() => {
-                  const activeEntry = extraKmVehicleEntries[activeExtraKmTab];
+              <AttendanceSummaryCard vehicleEntries={vehicleEntries} order={order} vehicleIndex={vehicleIndex} />
 
-                  const entries = (order.extraKmDetailsArray || []).filter((e) => {
-                    if (e.vehicleIndex !== vehicleIndex) return false;
-                    if (!activeEntry) return false;
-                    // entryId irundha adha vachu match pannu (reg no maari irundhalum sariya varum)
-                    if (e.entryId) return String(e.entryId) === String(activeEntry._id);
-                    // pazhaya entries la entryId illana reg no vachu match pannu
-                    return e.vehicleRegistrationNumber === activeEntry.vehicleRegistrationNumber;
-                  }).reverse();
+              {/* ── Extra KM History ── */}
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                  <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
+                    Extra KM History
+                  </h3>
+                  <span className="text-sm text-gray-400">
+                    {(order.extraKmDetailsArray || []).filter((e) => e.vehicleIndex === vehicleIndex).length} entries
+                  </span>
+                </div>
 
-                  if (entries.length === 0) {
-                    return (
-                      <p className="text-xs text-gray-400 text-center py-4">
-                        No extra KM records
-                      </p>
-                    );
-                  }
-
-                  const groups = {};
-                  entries.forEach((e) => {
-                    const key = e.vehicleRegistrationNumber || "—";
-                    if (!groups[key]) groups[key] = [];
-                    groups[key].push(e);
-                  });
-
-                  return Object.keys(groups).map((regNo) => {
-                    const groupEntries = [...groups[regNo]].reverse();
-                    const isCurrentReg = regNo === activeEntry.vehicleRegistrationNumber;
-                    const groupTotalKm = groupEntries.reduce((s, e) => s + (e.extraKm || 0), 0);
-                    const groupTotalHrs = groupEntries.reduce((s, e) => s + (e.extraHours || 0), 0);
-                    const groupTotalCost = groupEntries.reduce((s, e) => s + (e.totalCost || 0), 0);
-
-                    return (
-                      <div key={regNo} className="space-y-2">
-                        <div className="flex items-center justify-between px-1">
-                          <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${isCurrentReg
-                            ? "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
-                            : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400"
-                            }`}>
-                            {regNo} {isCurrentReg ? "(current)" : "(old)"}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            {groupTotalKm} km · {groupTotalHrs} hrs · {formatINR(groupTotalCost)}
-                          </span>
-                        </div>
-
-                        {groupEntries.map((e) => (
-                          <div
-                            key={e._id}
-                            className="relative rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow p-3 pl-4 overflow-hidden"
-                          >
-                            <div className="absolute left-0 top-0 bottom-0 w-1" />
-
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <div>
-                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                  {e.driverName || "—"}
-                                </p>
-                                <p className="text-xs text-gray-400">
-                                  {e.vehicleRegistrationNumber || "—"}
-                                </p>
-                              </div>
-                              <span className="text-sm font-bold text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
-                                {formatINR(e.totalCost)}
-                              </span>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-gray-600 dark:text-gray-400 mb-2">
-                              <span className="flex items-center gap-1">
-                                <svg className="w-3.5 h-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                                </svg>
-                                Extra KM: <b className="text-gray-800 dark:text-gray-200">{e.extraKm} km</b>
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <svg className="w-3.5 h-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Extra Hours: <b className="text-gray-800 dark:text-gray-200">{e.extraHours} hrs</b>
-                              </span>
-                           <span className="pl-4.5">KM cost: {formatINR(e.extraKmCost)}</span>
-                          <span className="pl-4.5">Hour cost: {formatINR(e.extraHourCost)}</span>
-                            </div>
-
-                            <div className="flex items-center justify-between flex-wrap gap-1.5 pt-2 border-t border-gray-50 dark:border-gray-800">
-                              <span className="text-xs font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-md">
-                                {fmtDate(e.fromDate)} → {fmtDate(e.toDate)}
-                              </span>
-                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${e.distributionMethod === "split"
-                                ? "bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20 dark:text-fuchsia-400"
-                                : "bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-400"
-                                }`}>
-                                {e.distributionMethod === "split" ? "Split" : "Daily"}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                {e.addedBy} · {new Date(e.addedAt).toLocaleString("en-IN", {
-                                  day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
-                                })}
-                              </span>
-                            </div>
-                           
+                {extraKmVehicleEntries.length > 1 && (
+                  <div className="flex gap-1 px-3 pt-3 pb-0 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
+                    {extraKmVehicleEntries.map((entry, i) => {
+                      const isReleased = entry.entryStatus === "removed";
+                      return (
+                        <button
+                          key={entry._id || i}
+                          onClick={() => setActiveExtraKmTab(i)}
+                          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${activeExtraKmTab === i
+                            ? "border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20"
+                            : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            }`}
+                        >
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center text-white ${isReleased ? "bg-gray-400" : "bg-orange-500"}`} style={{ fontSize: "9px" }}>
+                            V{i + 1}
                           </div>
-                        ))}
-                      </div>
-                    );
-                  });
-                })()}
+                          <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
+                          <RegStatusBadge entry={entry} unavailableHistory={order.onRoadUnavailableHistory || []} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="p-4 space-y-4 max-h-72 overflow-y-auto">
+                  {(() => {
+                    const activeEntry = extraKmVehicleEntries[activeExtraKmTab];
+
+                    const entries = (order.extraKmDetailsArray || []).filter((e) => {
+                      if (e.vehicleIndex !== vehicleIndex) return false;
+                      if (!activeEntry) return false;
+                      // entryId irundha adha vachu match pannu (reg no maari irundhalum sariya varum)
+                      if (e.entryId) return String(e.entryId) === String(activeEntry._id);
+                      // pazhaya entries la entryId illana reg no vachu match pannu
+                      return e.vehicleRegistrationNumber === activeEntry.vehicleRegistrationNumber;
+                    }).reverse();
+
+                    if (entries.length === 0) {
+                      return (
+                        <p className="text-xs text-gray-400 text-center py-4">
+                          No extra KM records
+                        </p>
+                      );
+                    }
+
+                    const groups = {};
+                    entries.forEach((e) => {
+                      const key = e.vehicleRegistrationNumber || "—";
+                      if (!groups[key]) groups[key] = [];
+                      groups[key].push(e);
+                    });
+
+                    return Object.keys(groups).map((regNo) => {
+                      const groupEntries = [...groups[regNo]].reverse();
+                      const isCurrentReg = regNo === activeEntry.vehicleRegistrationNumber;
+                      const groupTotalKm = groupEntries.reduce((s, e) => s + (e.extraKm || 0), 0);
+                      const groupTotalHrs = groupEntries.reduce((s, e) => s + (e.extraHours || 0), 0);
+                      const groupTotalCost = groupEntries.reduce((s, e) => s + (e.totalCost || 0), 0);
+
+                      return (
+                        <div key={regNo} className="space-y-2">
+                          <div className="flex items-center justify-between px-1">
+                            <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${isCurrentReg
+                              ? "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
+                              : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400"
+                              }`}>
+                              {regNo} {isCurrentReg ? "(current)" : "(old)"}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {groupTotalKm} km · {groupTotalHrs} hrs · {formatINR(groupTotalCost)}
+                            </span>
+                          </div>
+
+                          {groupEntries.map((e) => (
+                            <div
+                              key={e._id}
+                              className="relative rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow p-3 pl-4 overflow-hidden"
+                            >
+                              <div className="absolute left-0 top-0 bottom-0 w-1" />
+
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                    {e.driverName || "—"}
+                                  </p>
+                                  <p className="text-xs text-gray-400">
+                                    {e.vehicleRegistrationNumber || "—"}
+                                  </p>
+                                </div>
+                                <span className="text-sm font-bold text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
+                                  {formatINR(e.totalCost)}
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                <span className="flex items-center gap-1">
+                                  <svg className="w-3.5 h-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                  </svg>
+                                  Extra KM: <b className="text-gray-800 dark:text-gray-200">{e.extraKm} km</b>
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <svg className="w-3.5 h-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  Extra Hours: <b className="text-gray-800 dark:text-gray-200">{e.extraHours} hrs</b>
+                                </span>
+                                <span className="pl-4.5">KM cost: {formatINR(e.extraKmCost)}</span>
+                                <span className="pl-4.5">Hour cost: {formatINR(e.extraHourCost)}</span>
+                              </div>
+
+                              <div className="flex items-center justify-between flex-wrap gap-1.5 pt-2 border-t border-gray-50 dark:border-gray-800">
+                                <span className="text-xs font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                                  {fmtDate(e.fromDate)} → {fmtDate(e.toDate)}
+                                </span>
+                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${e.distributionMethod === "split"
+                                  ? "bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20 dark:text-fuchsia-400"
+                                  : "bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-400"
+                                  }`}>
+                                  {e.distributionMethod === "split" ? "Split" : "Daily"}
+                                </span>
+                                <span className="text-xs text-gray-400">
+                                  {e.addedBy} · {new Date(e.addedAt).toLocaleString("en-IN", {
+                                    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+                                  })}
+                                </span>
+                              </div>
+
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
               </div>
             </div>
-          </div>
           )}
         </div>
       )}

@@ -22,6 +22,7 @@ interface PackageOption {
   perDayRentalCost: number;
   driverCharges: number;
   rtoCharges: number;
+  brandingCost: number;
   dailyKmLimit: number;
   additionalHourCharges: number;
   promoterAvailable: boolean;
@@ -64,6 +65,8 @@ function defaultForm(): Omit<VehicleConfig, "id"> {
     extraKm: 0,
     extraDays: 0,
     needPromoter: false,
+    promoterFromDate: "",
+    promoterToDate: "",
     promoterType: "",
     otherPromoterType: "",
     campaignImages: [],
@@ -96,6 +99,8 @@ function calcPricing(
   additionalCharges: AdditionalCharge[],
   promoterQuantity: number,
   dailyKmcharges: number,
+  promoterFromDate?: string,
+  promoterToDate?: string,
 ): PricingPreview | null {
 
 
@@ -118,16 +123,31 @@ function calcPricing(
   //   ? (pkg.promoterChargePerDay || 0) * totalDays * promoterQuantity
   //   : 0;
 
+  // Promoter is priced only for the days actually selected (Promoter
+  // From/To, inclusive) — falls back to the full campaign totalDays when
+  // no promoter date range is set yet (keeps older saved orders working).
+  let promoterDays = totalDays;
+  if (promoterFromDate && promoterToDate) {
+    const pFrom = new Date(promoterFromDate);
+    const pTo = new Date(promoterToDate);
+    if (pFrom <= pTo) {
+      promoterDays = Math.ceil((pTo.getTime() - pFrom.getTime()) / 86400000) + 1;
+    }
+  }
+
   const promoterCost = needPromoter
-    ? DEFAULT_PROMOTER_CHARGE * totalDays * promoterQuantity
+    ? DEFAULT_PROMOTER_CHARGE * promoterDays * promoterQuantity
     : 0;
 
 
-  /* RTO charges are not priced in order-creation for now — kept at 0
-     rather than removed from the pricing shape, so every screen that
-     reads p.rtoCost (VehicleListStep, OrderSummaryStep, print,
-     orderdetails) just shows 0 without needing its own change. */
-  const rtoCost = 0;
+  // RTO is a one-time flat charge per vehicle-type slot (from the selected
+  // package), applied once regardless of totalDays — mirrors how the
+  // backend's Campaign Calculator applies it on the campaign's first day.
+  const rtoCost = (pkg.rtoCharges || 0) * quantity;
+
+  // Branding Cost — only ever set on a Hybrid vehicle's package; same
+  // one-time-per-vehicle-slot pattern as RTO.
+  const brandingCost = (pkg.brandingCost || 0) * quantity;
 
   const extraKmCost = extraKm > 0 ? pkg.perKmCharge * extraKm : 0;
   const extraHourCost = extraHours > 0 ? pkg.additionalHourCharges * extraHours : 0;
@@ -138,7 +158,7 @@ function calcPricing(
     return c.mode === "+" ? acc + amt : acc;
   }, 0);
 
-  const subtotal = rentalCost + promoterCost + rtoCost + extraKmCost + extraHourCost + additionalAdds;
+  const subtotal = rentalCost + promoterCost + rtoCost + brandingCost + extraKmCost + extraHourCost + additionalAdds;
 
 
   const MAX_DISCOUNT_PCT = parseFloat(process.env.NEXT_PUBLIC_MAX_DISCOUNT_PERCENT || "15");
@@ -172,7 +192,9 @@ function calcPricing(
     driverCharges: pkg.driverCharges,
     // promoterChargePerDay: needPromoter ? pkg.promoterChargePerDay : 0,
     promoterChargePerDay: needPromoter ? DEFAULT_PROMOTER_CHARGE : 0,
+    promoterDays,
     rtoCharges: pkg.rtoCharges,
+    brandingCost,
     additionalHourCharges: pkg.additionalHourCharges,
     dailyKmLimit: pkg.dailyKmLimit,
     dailyKmcharges: pkg.perKmCharge || dailyKmcharges || 0,
@@ -414,11 +436,13 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
       form.additionalCharges,
       form.promoterQuantity,
       mergedPkg.perKmCharge || 0,
-
+      form.promoterFromDate,
+      form.promoterToDate,
     );
     setForm(f => ({ ...f, pricing: p }));
   }, [selectedPackage, editablePackage, form.fromDate, form.toDate,
-    form.quantity, form.needPromoter, form.extraKm, form.extraDays, form.additionalCharges, form.promoterQuantity]);
+    form.quantity, form.needPromoter, form.extraKm, form.extraDays, form.additionalCharges, form.promoterQuantity,
+    form.promoterFromDate, form.promoterToDate]);
 
 
   const VEHICLE_TYPES = ["Non-Customizable Vehicle", "Customizable Vehicle"];
@@ -571,15 +595,34 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
       form.additionalCharges,
       form.promoterQuantity,
       selectedPackage.perKmCharge || 0,
-
+      form.promoterFromDate,
+      form.promoterToDate,
     );
     setForm((f) => ({ ...f, pricing: p }));
-  }, [selectedPackage, form.fromDate, form.toDate, form.quantity, form.needPromoter, form.extraKm, form.extraDays, form.extraHours, form.additionalCharges, form.promoterQuantity]);
+  }, [selectedPackage, form.fromDate, form.toDate, form.quantity, form.needPromoter, form.extraKm, form.extraDays, form.extraHours, form.additionalCharges, form.promoterQuantity,
+    form.promoterFromDate, form.promoterToDate]);
 
   const set = useCallback(<K extends keyof VehicleConfig>(key: K, val: VehicleConfig[K]) => {
     setForm((f) => ({ ...f, [key]: val }));
     setErrors((e) => { const n = { ...e }; delete n[key as string]; return n; });
   }, []);
+
+  // If the campaign From/To dates change such that the already-selected
+  // promoter dates fall outside the new window, clear them — a stale
+  // promoter date range shouldn't silently stay pinned to the old campaign.
+  useEffect(() => {
+    if (!form.needPromoter || !form.fromDate || !form.toDate) return;
+    const campFrom = new Date(form.fromDate);
+    const campTo = new Date(form.toDate);
+    const pFrom = form.promoterFromDate ? new Date(form.promoterFromDate) : null;
+    const pTo = form.promoterToDate ? new Date(form.promoterToDate) : null;
+    const fromInvalid = pFrom && (pFrom < campFrom || pFrom > campTo);
+    const toInvalid = pTo && (pTo < campFrom || pTo > campTo);
+    if (fromInvalid || toInvalid) {
+      setForm((f) => ({ ...f, promoterFromDate: "", promoterToDate: "" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.fromDate, form.toDate]);
 
 
   const handleVehicleTypeChange = async (type: string) => {
@@ -657,6 +700,21 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
     if (form.needPromoter && form.promoterLanguage.length === 0) e.promoterLanguage = "Select language";
     if (form.needPromoter && (!form.promoterQuantity || form.promoterQuantity < 1))
       e.promoterQuantity = "Enter valid quantity";
+    if (form.needPromoter) {
+      if (!form.promoterFromDate) e.promoterFromDate = "Select promoter start date";
+      if (!form.promoterToDate) e.promoterToDate = "Select promoter end date";
+      if (form.promoterFromDate && form.promoterToDate && new Date(form.promoterFromDate) > new Date(form.promoterToDate)) {
+        e.promoterToDate = "Promoter end date cannot be before start date";
+      }
+      if (form.promoterFromDate && form.fromDate && form.toDate &&
+        (new Date(form.promoterFromDate) < new Date(form.fromDate) || new Date(form.promoterFromDate) > new Date(form.toDate))) {
+        e.promoterFromDate = "Promoter start date must be within the campaign period";
+      }
+      if (form.promoterToDate && form.fromDate && form.toDate &&
+        (new Date(form.promoterToDate) < new Date(form.fromDate) || new Date(form.promoterToDate) > new Date(form.toDate))) {
+        e.promoterToDate = "Promoter end date must be within the campaign period";
+      }
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -1042,14 +1100,121 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
               )}
 
 
-              {/* {selectedPackage && ( */}
+           
+            </>
+
+          </section>
+
+
+          <section className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Booking Details</p>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* <div id="field-bookingFor">
+                <FormField label="Booking For" error={errors.bookingFor} required>
+                  <select value={form.bookingFor} onChange={(e) => set("bookingFor", e.target.value)} className={inputClass(!!errors.bookingFor)}>
+                    <option value="">Select</option>
+                    {BOOKING_FOR_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </FormField>
+              </div> */}
+
+
+
+
+              <div id="field-campaignType">
+                <FormField label="Campaign Type" error={errors.campaignType}>
+                  <select value={form.campaignType} onChange={(e) => set("campaignType", e.target.value)} className={inputClass(!!errors.campaignType)}>
+                    <option value="">Select</option>
+                    {campaignTypes.map((ct) => (
+                      <option key={ct._id} value={ct.name}>{ct.name}</option>
+                    ))}
+                    <option value="Other">Other</option>
+                  </select>
+                </FormField>
+              </div>
+
+
+              <div id="field-campaignName">
+                <FormField label="Campaign Name" error={errors.campaignName}>
+                  <input
+                    type="text"
+                    value={form.campaignName}
+                    onChange={(e) => {
+                      const onlyLetters = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                      set("campaignName", toTitleCase(onlyLetters));
+                    }}
+                    placeholder="Enter campaign name"
+                    className={inputClass(!!errors.campaignName)}
+                  />
+                </FormField>
+              </div>
+            </div>
+
+
+            {form.campaignType === "Other" && (
+              <FormField label="Specify Campaign" required error={errors.otherCampaignType}>
+                <input
+                  type="text"
+                  value={form.otherCampaignType}
+                  onChange={(e) => set("otherCampaignType", e.target.value)}
+                  placeholder="Enter campaign type name"
+                  className={inputClass(!!errors.otherCampaignType)}
+                />
+              </FormField>
+            )}
+
+
+            <div id="field-fromDate" className="grid grid-cols-2 gap-4">
+              <DatePicker
+                id="from-date"
+                label="From Date"
+                value={form.fromDate}
+                minDate={new Date().toLocaleDateString("en-CA")}
+                onChange={([date]) => {
+                  if (!date) { set("fromDate", ""); return; }
+                  const y = date.getFullYear();
+                  const m = String(date.getMonth() + 1).padStart(2, "0");
+                  const d = String(date.getDate()).padStart(2, "0");
+                  set("fromDate", `${y}-${m}-${d}`);
+                }}
+                error={errors.fromDate}
+                placeholder="From Date"
+                required
+              />
+
+              <DatePicker
+                id="field-toDate"
+                label="To Date"
+                value={form.toDate}
+                minDate={form.fromDate || new Date().toLocaleDateString("en-CA")}
+                onChange={([date]) => {
+                  if (!date) { set("toDate", ""); return; }
+                  const y = date.getFullYear();
+                  const m = String(date.getMonth() + 1).padStart(2, "0");
+                  const d = String(date.getDate()).padStart(2, "0");
+                  set("toDate", `${y}-${m}-${d}`);
+                }}
+                error={errors.toDate}
+                required
+              />
+            </div>
+
+            {form.fromDate && form.toDate && new Date(form.fromDate) < new Date(form.toDate) && (
+              <p className="text-xs text-blue-500">
+                {Math.ceil((new Date(form.toDate).getTime() - new Date(form.fromDate).getTime()) / 86400000) + 1} base day(s)
+                {form.extraDays > 0 ? ` + ${form.extraDays} extra = ${Math.ceil((new Date(form.toDate).getTime() - new Date(form.fromDate).getTime()) / 86400000) + 1 + form.extraDays} total days` : ""}
+              </p>
+            )}
+          </section>
+   {/* {selectedPackage && ( */}
               <div className="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4 space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Promoter Requirement</p>
 
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => { set("needPromoter", !form.needPromoter); if (form.needPromoter) { set("promoterType", ""); set("otherPromoterType", ""); } }}
+                    onClick={() => { set("needPromoter", !form.needPromoter); if (form.needPromoter) { set("promoterType", ""); set("otherPromoterType", ""); set("promoterFromDate", ""); set("promoterToDate", ""); } }}
                     // disabled={!selectedPackage.promoterAvailable}
                     className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${form.needPromoter ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-600"} disabled:opacity-40`}
                   >
@@ -1224,118 +1389,57 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                         />
                       </FormField>
                     </div>
+
+                    <div id="wrap-promoterFromDate">
+                      <DatePicker
+                        id="field-promoterFromDate"
+                        label="Promoter From Date"
+                        value={form.promoterFromDate}
+                        minDate={form.fromDate || undefined}
+                        maxDate={form.promoterToDate || form.toDate || undefined}
+                        onChange={([date]) => {
+                          if (!date) { set("promoterFromDate", ""); return; }
+                          const y = date.getFullYear();
+                          const m = String(date.getMonth() + 1).padStart(2, "0");
+                          const d = String(date.getDate()).padStart(2, "0");
+                          set("promoterFromDate", `${y}-${m}-${d}`);
+                        }}
+                        error={errors.promoterFromDate}
+                        placeholder="Promoter From Date"
+                        required
+                      />
+                    </div>
+
+                    <div id="wrap-promoterToDate">
+                      <DatePicker
+                        id="field-promoterToDate"
+                        label="Promoter To Date"
+                        value={form.promoterToDate}
+                        minDate={form.promoterFromDate || form.fromDate || undefined}
+                        maxDate={form.toDate || undefined}
+                        onChange={([date]) => {
+                          if (!date) { set("promoterToDate", ""); return; }
+                          const y = date.getFullYear();
+                          const m = String(date.getMonth() + 1).padStart(2, "0");
+                          const d = String(date.getDate()).padStart(2, "0");
+                          set("promoterToDate", `${y}-${m}-${d}`);
+                        }}
+                        error={errors.promoterToDate}
+                        placeholder="Promoter To Date"
+                        required
+                      />
+                    </div>
+
+                    {form.promoterFromDate && form.promoterToDate && new Date(form.promoterFromDate) <= new Date(form.promoterToDate) && (
+                      <p className="text-xs text-blue-500 col-span-2">
+                        {Math.ceil((new Date(form.promoterToDate).getTime() - new Date(form.promoterFromDate).getTime()) / 86400000) + 1} promoter day(s) (inclusive)
+                      </p>
+                    )}
                   </div>
                 )}
 
               </div>
               {/* )} */}
-            </>
-
-          </section>
-
-
-          <section className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Booking Details</p>
-
-            <div className="grid grid-cols-2 gap-4">
-              {/* <div id="field-bookingFor">
-                <FormField label="Booking For" error={errors.bookingFor} required>
-                  <select value={form.bookingFor} onChange={(e) => set("bookingFor", e.target.value)} className={inputClass(!!errors.bookingFor)}>
-                    <option value="">Select</option>
-                    {BOOKING_FOR_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </FormField>
-              </div> */}
-
-
-
-
-              <div id="field-campaignType">
-                <FormField label="Campaign Type" error={errors.campaignType}>
-                  <select value={form.campaignType} onChange={(e) => set("campaignType", e.target.value)} className={inputClass(!!errors.campaignType)}>
-                    <option value="">Select</option>
-                    {campaignTypes.map((ct) => (
-                      <option key={ct._id} value={ct.name}>{ct.name}</option>
-                    ))}
-                    <option value="Other">Other</option>
-                  </select>
-                </FormField>
-              </div>
-
-
-              <div id="field-campaignName">
-                <FormField label="Campaign Name" error={errors.campaignName}>
-                  <input
-                    type="text"
-                    value={form.campaignName}
-                    onChange={(e) => {
-                      const onlyLetters = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-                      set("campaignName", toTitleCase(onlyLetters));
-                    }}
-                    placeholder="Enter campaign name"
-                    className={inputClass(!!errors.campaignName)}
-                  />
-                </FormField>
-              </div>
-            </div>
-
-
-            {form.campaignType === "Other" && (
-              <FormField label="Specify Campaign" required error={errors.otherCampaignType}>
-                <input
-                  type="text"
-                  value={form.otherCampaignType}
-                  onChange={(e) => set("otherCampaignType", e.target.value)}
-                  placeholder="Enter campaign type name"
-                  className={inputClass(!!errors.otherCampaignType)}
-                />
-              </FormField>
-            )}
-
-
-            <div id="field-fromDate" className="grid grid-cols-2 gap-4">
-              <DatePicker
-                id="from-date"
-                label="From Date"
-                value={form.fromDate}
-                minDate={new Date().toLocaleDateString("en-CA")}
-                onChange={([date]) => {
-                  if (!date) { set("fromDate", ""); return; }
-                  const y = date.getFullYear();
-                  const m = String(date.getMonth() + 1).padStart(2, "0");
-                  const d = String(date.getDate()).padStart(2, "0");
-                  set("fromDate", `${y}-${m}-${d}`);
-                }}
-                error={errors.fromDate}
-                placeholder="From Date"
-                required
-              />
-
-              <DatePicker
-                id="field-toDate"
-                label="To Date"
-                value={form.toDate}
-                minDate={form.fromDate || new Date().toLocaleDateString("en-CA")}
-                onChange={([date]) => {
-                  if (!date) { set("toDate", ""); return; }
-                  const y = date.getFullYear();
-                  const m = String(date.getMonth() + 1).padStart(2, "0");
-                  const d = String(date.getDate()).padStart(2, "0");
-                  set("toDate", `${y}-${m}-${d}`);
-                }}
-                error={errors.toDate}
-                required
-              />
-            </div>
-
-            {form.fromDate && form.toDate && new Date(form.fromDate) < new Date(form.toDate) && (
-              <p className="text-xs text-blue-500">
-                {Math.ceil((new Date(form.toDate).getTime() - new Date(form.fromDate).getTime()) / 86400000) + 1} base day(s)
-                {form.extraDays > 0 ? ` + ${form.extraDays} extra = ${Math.ceil((new Date(form.toDate).getTime() - new Date(form.fromDate).getTime()) / 86400000) + 1 + form.extraDays} total days` : ""}
-              </p>
-            )}
-          </section>
-
 
           <section className="space-y-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Location</p>
@@ -1644,16 +1748,19 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
 
                 const hasRto = p.rtoCost > 0;
+                const hasBranding = (p as any).brandingCost > 0;
 
                 const lastRow = hasExtraHours
                   ? "extraHours"
                   : hasExtraKm
                     ? "extraKm"
-                    : hasRto
-                      ? "rto"
-                      : hasPromoter
-                        ? "promoter"
-                        : "rental";
+                    : hasBranding
+                      ? "branding"
+                      : hasRto
+                        ? "rto"
+                        : hasPromoter
+                          ? "promoter"
+                          : "rental";
 
                 const makeCharge = (): AdditionalCharge => ({
                   id: uid(), label: "", mode: "+",
@@ -1673,7 +1780,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                     {hasPromoter && (
                       <SummaryRow
                         // label={`Promoter (${p.totalDays}D × ${formatINR(selectedPackage.promoterChargePerDay)} × ${form.promoterQuantity} Promoter)`}
-                        label={`Promoter (${p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${form.promoterQuantity} Promoter)`}
+                        label={`Promoter (${(p as any).promoterDays ?? p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${form.promoterQuantity} Promoter)`}
                         val={p.promoterCost}
                         isLast={lastRow === "promoter"}
                         hasCharges={form.additionalCharges.length > 0}
@@ -1685,6 +1792,15 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                         label="RTO Charges"
                         val={p.rtoCost}
                         isLast={lastRow === "rto"}
+                        hasCharges={form.additionalCharges.length > 0}
+                        onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
+                      />
+                    )}
+                    {hasBranding && (
+                      <SummaryRow
+                        label="Branding Cost"
+                        val={(p as any).brandingCost}
+                        isLast={lastRow === "branding"}
                         hasCharges={form.additionalCharges.length > 0}
                         onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}
                       />

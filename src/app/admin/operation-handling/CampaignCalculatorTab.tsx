@@ -242,6 +242,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
             extraKmTotal: 0,
             extraHourTotal: 0,
             rtoTotal: 0,
+            brandingTotal: 0,
             promoterTotal: 0,
             compensationTotal: 0,
             grandTotal: 0,
@@ -253,6 +254,7 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
         m.extraKmTotal += v.extraKmCost || 0;
         m.extraHourTotal += v.extraHourCost || 0;
         m.rtoTotal += v.rtoAppliedToday || 0;
+        m.brandingTotal += v.brandingAppliedToday || 0;
         m.promoterTotal += v.promoterAmountToday || 0;
         m.compensationTotal += v.compensationToday || 0;
         m.grandTotal += v.itemDayTotal || 0;
@@ -685,6 +687,8 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
             </div>
             <div className="divide-y divide-gray-100 dark:divide-gray-800">
               <CompareRow label="Rental + Driver" estimated={fb.estimatedRental} actual={fb.actualRental} />
+              <CompareRow label="RTO Charges" estimated={fb.estimatedRto} actual={fb.actualRto} />
+              <CompareRow label="Branding Cost" estimated={fb.estimatedBranding} actual={fb.actualBranding} />
               <CompareRow label="Promoter Charges" estimated={fb.estimatedPromoter} actual={fb.actualPromoter} />
               <CompareRow label="Extra KM" estimated={fb.estimatedExtraKm} actual={fb.actualExtraKm} />
               <CompareRow label="Extra Hours" estimated={fb.estimatedExtraHours} actual={fb.actualExtraHours} />
@@ -1231,6 +1235,8 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                         </p>
                         <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden">
                           <PriceRow label={`Rental + Driver (${v.activeCount} vehicle${v.activeCount !== 1 ? "s" : ""} × ${fmt(v.baseDailyRate)})`} value={v.dailyVehicleAmount} />
+                          {v.rtoAppliedToday > 0 && <PriceRow label="RTO Charges (one-time, first day)" value={v.rtoAppliedToday} />}
+                          {v.brandingAppliedToday > 0 && <PriceRow label="Branding Cost (one-time, first day)" value={v.brandingAppliedToday} />}
                           {v.promoterAmountToday > 0 && <PriceRow label="Promoter Charges (today's share)" value={v.promoterAmountToday} />}
                           {(v.extraKmPoolFeeToday > 0 || v.extraHourPoolFeeToday > 0) && (
                             <PriceRow label="Extra KM/Hours Pool (one-time, first day)" value={v.extraKmPoolFeeToday + v.extraHourPoolFeeToday} />
@@ -1333,6 +1339,8 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
                 </div>
                 <div className="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
                   <CostLine label="Rental Total" value={v.rentalTotal} />
+                  {v.rtoTotal > 0 && <CostLine label="RTO Total" value={v.rtoTotal} />}
+                  {v.brandingTotal > 0 && <CostLine label="Branding Cost Total" value={v.brandingTotal} />}
                   <CostLine label="Promoter Total" value={v.promoterTotal} />
                   <CostLine label="Extra KM Total" value={v.extraKmTotal} />
                   <CostLine label="Extra Hours Total" value={v.extraHourTotal} />
@@ -1403,6 +1411,8 @@ export default function CampaignCalculatorTab({ order, onRefresh: parentOnRefres
           <div className="p-4 space-y-1.5 text-base">
             <BillingLine label="Estimated Amount" value={fb.estimatedAmount} />
             <BillingLine label="Actual Rental" value={fb.actualRental} />
+            {fb.actualRto > 0 && <BillingLine label="RTO Charges" value={fb.actualRto} />}
+            {fb.actualBranding > 0 && <BillingLine label="Branding Cost" value={fb.actualBranding} />}
             <BillingLine label="Extra KM" value={fb.actualExtraKm} />
             <BillingLine label="Extra Hours" value={fb.actualExtraHours} />
             <BillingLine label="Promoter Charges" value={fb.actualPromoter} />

@@ -401,6 +401,12 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
                 <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(item.rtoCost)}</span>
               </div>
             )}
+            {item.brandingCost > 0 && (
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Branding Cost</span>
+                <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(item.brandingCost)}</span>
+              </div>
+            )}
             {(item.additionalFields || []).filter((f: any) => f.label).map((f: any, i: number) => (
               <div key={i} className="flex justify-between text-xs">
                 <span className={f.mode === "-" ? "text-red-500" : "text-gray-500"}>{f.label}</span>
@@ -753,8 +759,10 @@ function OverviewTab({
                   ["Vehicle Model", getVehicleTypeName(currentVehicle.vehicleType)], // Fixed: changed 'vehicle' to 'currentVehicle'
                   ["Booking For", order.customerCategory],
                   (currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType)
-                    ? ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType]
+                    ? ["Campaign Type", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType]
                     : null,
+                  ["Campaign Name", currentVehicle.campaignName],
+                  ["Vehicle Model", getVehicleTypeName(currentVehicle.vehicleType)],
                   [
                     "Duration",
                     currentVehicle.fromDate && currentVehicle.toDate
@@ -813,7 +821,7 @@ function OverviewTab({
                 {(currentVehicle.promoterCost ?? 0) > 0 && (
                   <div className="flex justify-between items-center py-1">
                     <span className="text-gray-600 dark:text-gray-400 text-md">
-                      Promoter Charges ({currentVehicle.totalDays}D × {formatINR(currentVehicle.promoterChargePerDay)} × {currentVehicle.promoterQuantity})
+                      Promoter Charges ({currentVehicle.promoterDays ?? currentVehicle.totalDays}D × {formatINR(currentVehicle.promoterChargePerDay)} × {currentVehicle.promoterQuantity})
                     </span>
                     <span className="text-gray-800 dark:text-gray-200 font-medium">
                       {formatINR(currentVehicle.promoterCost)}
@@ -826,6 +834,15 @@ function OverviewTab({
                     <span className="text-gray-600 dark:text-gray-400 text-md">RTO Charges</span>
                     <span className="text-gray-800 dark:text-gray-200 font-medium">
                       {formatINR(currentVehicle.rtoCost)}
+                    </span>
+                  </div>
+                )}
+
+                {(currentVehicle.brandingCost ?? 0) > 0 && (
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-gray-600 dark:text-gray-400 text-md">Branding Cost</span>
+                    <span className="text-gray-800 dark:text-gray-200 font-medium">
+                      {formatINR(currentVehicle.brandingCost)}
                     </span>
                   </div>
                 )}

@@ -128,6 +128,7 @@ export const buildClientRequestPayload = ({
 
       rentalCost: line.rentalCost,
       rtoCost: line.rtoCost,
+      brandingCost: line.brandingCost,
     })),
 
     subtotal: pricing.subtotal,

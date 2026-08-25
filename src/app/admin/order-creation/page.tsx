@@ -63,6 +63,7 @@ interface BookingItem {
   driverCost?: number;
   promoterCost?: number;
   rtoCost?: number;
+  brandingCost?: number;
   extraKmCost?: number;
   extraHourCost?: number;
   campaignImages?: string[];

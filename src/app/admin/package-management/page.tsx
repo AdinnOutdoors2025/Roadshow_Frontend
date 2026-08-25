@@ -25,6 +25,7 @@ export interface Package {
   promoterChargePerDay: number;
   driverCharges: number;
   rtoCharges: number;
+  brandingCost?: number;
   perKmCharge: number;
   isActive: boolean;
   inactiveReason?: string;
@@ -39,7 +40,7 @@ interface VehicleType {
 const HEADERS = [
   "S.NO", "Vehicle Type", "Vehicle Model", "Per Day Cost",
   "KM Limit", "Extra Hour Charges",
-   "RTO Charges", "Status", "Actions",
+   "RTO Charges", "Branding Cost", "Status", "Actions",
 ];
 
 const ITEMS_PER_PAGE = 10;
@@ -460,6 +461,9 @@ export default function PackageTable() {
                         </td> */}
                         <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
                           {formatINR(pkg.rtoCharges)}
+                        </td>
+                        <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
+                          {pkg.brandingCost ? formatINR(pkg.brandingCost) : "—"}
                         </td>
                         <td className="px-5 py-4">
                           <button

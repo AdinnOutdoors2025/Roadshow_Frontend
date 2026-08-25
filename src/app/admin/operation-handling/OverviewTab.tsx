@@ -592,8 +592,9 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                                     ["Vehicle Model", getVehicleTypeName(currentVehicle.vehicleType)], // Fixed: changed 'vehicle' to 'currentVehicle'
                                     order.customerCategory ? ["Booking For", order.customerCategory] : null,
                                     (currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType)
-                                        ? ["Campaign", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType]
+                                        ? ["Campaign Type", currentVehicle.campaignType === "Other" ? currentVehicle.otherCampaignType : currentVehicle.campaignType]
                                         : null,
+                                         ["Campaign Name", currentVehicle.campaignName],
                                     // ["Duration", currentVehicle.fromDate && currentVehicle.toDate
                                     //     ? `${new Date(currentVehicle.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(currentVehicle.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000)}D base${currentVehicle.extraDays > 0 ? ` +${currentVehicle.extraDays} D = ${Math.ceil((new Date(currentVehicle.toDate).getTime() - new Date(currentVehicle.fromDate).getTime()) / 86400000) + currentVehicle.extraDays}D total` : ""})`
                                     //     : "—"],
@@ -659,7 +660,7 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                                 {(currentVehicle.promoterCost ?? 0) > 0 && (
                                     <div className="flex justify-between items-center py-1">
                                         <span className="text-gray-600 dark:text-gray-400 text-md">
-                                            Promoter Charges ({currentVehicle.totalDays}D × {formatINR(currentVehicle.promoterChargePerDay)} × {currentVehicle.promoterQuantity})
+                                            Promoter Charges ({currentVehicle.promoterDays ?? currentVehicle.totalDays}D × {formatINR(currentVehicle.promoterChargePerDay)} × {currentVehicle.promoterQuantity})
                                         </span>
                                         <span className="text-gray-800 dark:text-gray-200 font-medium">
                                             {formatINR(currentVehicle.promoterCost)}
@@ -672,6 +673,15 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                                         <span className="text-gray-600 dark:text-gray-400 text-md">RTO Charges</span>
                                         <span className="text-gray-800 dark:text-gray-200 font-medium">
                                             {formatINR(currentVehicle.rtoCost)}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {(currentVehicle.brandingCost ?? 0) > 0 && (
+                                    <div className="flex justify-between items-center py-1">
+                                        <span className="text-gray-600 dark:text-gray-400 text-md">Branding Cost</span>
+                                        <span className="text-gray-800 dark:text-gray-200 font-medium">
+                                            {formatINR(currentVehicle.brandingCost)}
                                         </span>
                                     </div>
                                 )}

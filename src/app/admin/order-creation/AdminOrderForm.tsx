@@ -52,6 +52,8 @@ export interface VehicleConfig {
   extraKm: number;
   extraDays: number;
   needPromoter: boolean;
+  promoterFromDate: string;
+  promoterToDate: string;
   promoterType: string;
   otherPromoterType: string;
   campaignImages: File[];
@@ -216,6 +218,8 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
     extraDays: item.extraDays || 0,
     extraHours: item.extraHours || 0,
     needPromoter: !!item.needPromoter,
+    promoterFromDate: item.promoterFromDate ? String(item.promoterFromDate).slice(0, 10) : "",
+    promoterToDate: item.promoterToDate ? String(item.promoterToDate).slice(0, 10) : "",
     promoterType: item.promoterType || "",
     otherPromoterType: item.otherPromoterType || "",
     promoterGender: item.promoterGender || "",
@@ -241,6 +245,7 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
       driverCharges: item.driverCharges || 0,
       promoterChargePerDay: item.promoterChargePerDay || 0,
       rtoCharges: item.rtoCharges || 0,
+      brandingCost: item.brandingCost || 0,
       additionalHourCharges: item.additionalHourCharges || 0,
       dailyKmLimit: item.dailyKmLimit || 0,
       dailyKmcharges: item.dailyKmcharges || 0,
@@ -319,6 +324,8 @@ export default function AdminOrderForm({ onClose, onSuccess, editingOrder ,getVe
           extraDays: v.extraDays,
           extraHours: v.extraHours,
           needPromoter: v.needPromoter,
+          promoterFromDate: v.promoterFromDate,
+          promoterToDate: v.promoterToDate,
           promoterType: v.promoterType,
           promoterGender: v.promoterGender,
           promoterLanguage: v.promoterLanguage,

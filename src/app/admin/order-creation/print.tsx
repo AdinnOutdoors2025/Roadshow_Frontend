@@ -47,6 +47,8 @@ interface BookingItem {
   driverCost?: number;
   driverCharges?: number;
   rtoCost?: number;
+  brandingCost?: number;
+  promoterDays?: number;
   dailyKmcharges?: number;
   additionalHourCharges?: number;
   additionalFields?: AdditionalField[];
@@ -953,7 +955,7 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, resolvedOrd
                                   {item.promoterCost > 0 && (
                                     <tr>
                                       <td>
-                                        Promoter Charges ({item.totalDays}D × ₹{fmt(item.promoterChargePerDay)} × {item.promoterQuantity})
+                                        Promoter Charges ({item.promoterDays ?? item.totalDays}D × ₹{fmt(item.promoterChargePerDay)} × {item.promoterQuantity})
                                       </td>
                                       <td>₹{fmt(item.promoterCost)}</td>
                                     </tr>
@@ -962,6 +964,12 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, resolvedOrd
                                     <tr>
                                       <td>RTO Charges</td>
                                       <td>₹{fmt(item.rtoCost)}</td>
+                                    </tr>
+                                  )}
+                                  {item.brandingCost > 0 && (
+                                    <tr>
+                                      <td>Branding Cost</td>
+                                      <td>₹{fmt(item.brandingCost)}</td>
                                     </tr>
                                   )}
                                   {item.extraKmCost > 0 && (

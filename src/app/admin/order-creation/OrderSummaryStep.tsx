@@ -180,8 +180,9 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
                 [
                   ["Booking For", order.customerCategory],
                   (v.campaignType === "Other" ? v.otherCampaignType : v.campaignType)
-                    ? ["Campaign", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType]
+                    ? ["Campaign Type", v.campaignType === "Other" ? v.otherCampaignType : v.campaignType]
                     : null,
+                     ["Campaign Name", v.campaignName],
                   ["Duration", v.fromDate && v.toDate
                     ? `${new Date(v.fromDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} → ${new Date(v.toDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} (${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + 1}D base${v.extraDays > 0 ? ` +${v.extraDays} D = ${Math.ceil((new Date(v.toDate).getTime() - new Date(v.fromDate).getTime()) / 86400000) + 1 + v.extraDays}D total` : ""})`
                     : "—"],
@@ -208,8 +209,9 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Pricing Breakdown</p>
                 {[
                   { label: `Rental (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × ${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"})`, val: p.rentalCost },
-                  v.needPromoter && p.promoterCost > 0 ? { label: `Promoter (${p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${v.promoterQuantity})`, val: p.promoterCost } : null,
+                  v.needPromoter && p.promoterCost > 0 ? { label: `Promoter (${(p as any).promoterDays ?? p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${v.promoterQuantity})`, val: p.promoterCost } : null,
                   p.rtoCost > 0 ? { label: "RTO Charges", val: p.rtoCost } : null,
+                  (p as any).brandingCost > 0 ? { label: "Branding Cost", val: (p as any).brandingCost } : null,
                   (p as any).extraKmCost > 0 ? { label: `Extra KM (${v.extraKm} × ₹${(p as any).dailyKmcharges || ""})`, val: (p as any).extraKmCost } : null,
                   (p as any).extraHourCost > 0 ? { label: `Extra Hours (${v.extraHours} × ${formatINR(p.additionalHourCharges)})`, val: (p as any).extraHourCost } : null,
                 ].filter(Boolean).map((row: any, i) => (

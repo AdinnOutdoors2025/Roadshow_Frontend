@@ -836,6 +836,14 @@ export default function CodeCreationTab({
                         </span>
                       </div>
                     )}
+                    {(v.brandingCost ?? 0) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Branding Cost</span>
+                        <span className="font-semibold text-gray-800 dark:text-gray-200">
+                          ₹{v.brandingCost?.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    )}
                     {(v.extraKmCost ?? 0) > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Extra KM</span>

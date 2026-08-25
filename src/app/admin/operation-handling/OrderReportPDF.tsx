@@ -545,12 +545,15 @@ export default function OrderReportPDF({ order, vehicleTypes, gpsData }: { order
                         )}
                         {(item.promoterCost ?? 0) > 0 && (
                           <tr>
-                            <td style={S.td}>Promoter ({item.totalDays}D × ₹{item.promoterChargePerDay?.toLocaleString("en-IN")} × {item.promoterQuantity})</td>
+                            <td style={S.td}>Promoter ({item.promoterDays ?? item.totalDays}D × ₹{item.promoterChargePerDay?.toLocaleString("en-IN")} × {item.promoterQuantity})</td>
                             <td style={S.tdRight}>{fmt(item.promoterCost)}</td>
                           </tr>
                         )}
                         {(item.rtoCost ?? 0) > 0 && (
                           <tr><td style={S.td}>RTO Charges</td><td style={S.tdRight}>{fmt(item.rtoCost)}</td></tr>
+                        )}
+                        {(item.brandingCost ?? 0) > 0 && (
+                          <tr><td style={S.td}>Branding Cost</td><td style={S.tdRight}>{fmt(item.brandingCost)}</td></tr>
                         )}
                         {(item.extraKmCost ?? 0) > 0 && (
                           <tr>

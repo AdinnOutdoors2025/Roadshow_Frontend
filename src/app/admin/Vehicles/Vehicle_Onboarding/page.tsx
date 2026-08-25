@@ -3306,6 +3306,11 @@ const validateStep = (step, { commonInfo, vehicles, techSpecs, vehicleDescriptio
     if (!techSpecs.numberOfScreens)
       errors.numberOfScreens = "Number of Screens is required";
 
+    if (techSpecs.screenType === "Flex + LED") {
+      if (!techSpecs.flexHeight) errors.flexHeight = "Flex Height is required";
+      if (!techSpecs.flexWidth) errors.flexWidth = "Flex Width is required";
+    }
+
     const num = techSpecs.numberOfScreens;
 
     if (num === "1") {
@@ -3912,7 +3917,7 @@ const AddVehicleModal = ({
               </div>
 
               <div>
-                <Label><span className="flex items-center gap-1"><Calendar size={14} /> Manufacturing Year <span className="text-red-500">*</span></span></Label>
+                <Label><span className="flex items-center gap-1"><Calendar size={14} /> Manufacturing Year <span className="text-red-500"></span></span></Label>
                 <Input
                   type="text"
                   placeholder="e.g. 2023"
@@ -4192,6 +4197,9 @@ export default function VehicleOnboardingForm() {
   const [techSpecs, setTechSpecs] = useState({
     screenType: "",
     numberOfScreens: "",
+    // Flex Height/Width — shown only when screenType === "Flex + LED"
+    flexHeight: "",
+    flexWidth: "",
     // Back screen fields (used when numberOfScreens === "1") — separate from
     // the "3 screens" back fields below so switching 1↔3 doesn't cross-populate.
     singleBackScreenWidth: "",
@@ -4636,6 +4644,8 @@ export default function VehicleOnboardingForm() {
           data.techSpecs || {
             screenType: "LED Only",
             numberOfScreens: "",
+            flexHeight: "",
+            flexWidth: "",
             singleBackScreenWidth: "",
             singleBackScreenHeight: "",
             singleBackResolutionWidth: "",
@@ -4860,6 +4870,8 @@ export default function VehicleOnboardingForm() {
     setTechSpecs({
       screenType: "",
       numberOfScreens: "",
+      flexHeight: "",
+      flexWidth: "",
       singleBackScreenWidth: "",
       singleBackScreenHeight: "",
       singleBackResolutionWidth: "",
@@ -5422,7 +5434,14 @@ export default function VehicleOnboardingForm() {
                       options={selectOptions.screenTypeOptions}
                       placeholder="Select"
                       value={techSpecs.screenType}
-                      onChange={(value) => setTechSpecs((prev) => ({ ...prev, screenType: value }))}
+                      onChange={(value) => setTechSpecs((prev) => ({
+                        ...prev,
+                        screenType: value,
+                        // Flex Height/Width only apply to "Flex + LED" — clear
+                        // them immediately on switching away so a stale value
+                        // never stays attached to a non-Flex+LED vehicle.
+                        ...(value !== "Flex + LED" ? { flexHeight: "", flexWidth: "" } : {}),
+                      }))}
                     />
                     <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
                       <ChevronDown size={16} />
@@ -5449,6 +5468,30 @@ export default function VehicleOnboardingForm() {
                   />
                   {stepErrors.numberOfScreens && <p className="mt-1 text-xs text-red-500">{stepErrors.numberOfScreens}</p>}
                 </div>
+
+                {/* ── Flex Height/Width: shown only for Screen Type = "Flex + LED" ── */}
+                {techSpecs.screenType === "Flex + LED" && (
+                  <>
+                    <div>
+                      <Label>Flex Height <span className="text-red-500">*</span></Label>
+                      <Input
+                        value={techSpecs.flexHeight}
+                        placeholder="Enter flex height"
+                        onChange={(e) => { if (validateNumber(e.target.value, true)) setTechSpecs((prev) => ({ ...prev, flexHeight: e.target.value })); }}
+                      />
+                      {stepErrors.flexHeight && <p className="mt-1 text-xs text-red-500">{stepErrors.flexHeight}</p>}
+                    </div>
+                    <div>
+                      <Label>Flex Width <span className="text-red-500">*</span></Label>
+                      <Input
+                        value={techSpecs.flexWidth}
+                        placeholder="Enter flex width"
+                        onChange={(e) => { if (validateNumber(e.target.value, true)) setTechSpecs((prev) => ({ ...prev, flexWidth: e.target.value })); }}
+                      />
+                      {stepErrors.flexWidth && <p className="mt-1 text-xs text-red-500">{stepErrors.flexWidth}</p>}
+                    </div>
+                  </>
+                )}
 
                 {/* ── CHANGE B: Dynamic screen fields based on numberOfScreens ── */}
 

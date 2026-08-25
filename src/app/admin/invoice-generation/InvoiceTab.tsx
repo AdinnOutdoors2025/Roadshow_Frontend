@@ -173,13 +173,34 @@ function buildDefaultLineItems(order, vehicleTypes) {
     });
     if (b.promoterChargePerDay) {
       const promoterQty = b.promoterQuantity || 1;
+      const promoterDays = b.promoterDays ?? b.totalDays ?? 0;
       items.push({
         id: uid(),
         groupLabel,
-        description: `Promoter Charges (${b.totalDays || 0}D × ₹${b.promoterChargePerDay || 0} × ${promoterQty})`,
+        description: `Promoter Charges (${promoterDays}D × ₹${b.promoterChargePerDay || 0} × ${promoterQty})`,
         hsnSac: "998361",
         qty: promoterQty,
-        rate: Math.round((b.promoterChargePerDay || 0) * (b.totalDays || 0)),
+        rate: Math.round((b.promoterChargePerDay || 0) * promoterDays),
+      });
+    }
+    if (b.rtoCost) {
+      items.push({
+        id: uid(),
+        groupLabel,
+        description: "RTO Charges",
+        hsnSac: "998361",
+        qty: vehicleQty,
+        rate: Math.round((b.rtoCost || 0) / vehicleQty),
+      });
+    }
+    if (b.brandingCost) {
+      items.push({
+        id: uid(),
+        groupLabel,
+        description: "Branding Cost",
+        hsnSac: "998361",
+        qty: vehicleQty,
+        rate: Math.round((b.brandingCost || 0) / vehicleQty),
       });
     }
     if (b.extraKmCost) {
