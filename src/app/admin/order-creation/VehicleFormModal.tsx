@@ -496,7 +496,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
       .catch(() => { });
   }, []);
 
-  console.log("packageslist", packageslist)
+  
 
   useEffect(() => {
     if (editing?.packageId && packageslist.length > 0) {

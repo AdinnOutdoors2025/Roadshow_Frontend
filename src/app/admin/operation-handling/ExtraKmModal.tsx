@@ -58,9 +58,9 @@ const handleSubmit = async () => {
     if (!campaignLevel) {
       if (!selectedEntryId) return toast.error("Select a driver / vehicle");
       const selectedEntry = activeEntries.find((e) => e._id === selectedEntryId);
-      if (selectedEntry && !isEntryBookingValid(selectedEntry)) {
-        return toast.error("This vehicle's registration doesn't match the booking. Please update driver first.");
-      }
+      // if (selectedEntry && !isEntryBookingValid(selectedEntry)) {
+      //   return toast.error("This vehicle's registration doesn't match the booking. Please update driver first.");
+      // }
     }
 
     const km = Number(extraKm) || 0;

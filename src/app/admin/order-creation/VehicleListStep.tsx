@@ -12,11 +12,11 @@ interface Props {
   onNext: () => void;
   onBack: () => void;
   selectedClientOrder?: any;
-  getVehicleTypeName?:any;
-  editingOrder?:any
+  getVehicleTypeName?: any;
+  editingOrder?: any
 }
 
-export default function VehicleListStep({ vehicles, onChange, onNext, onBack, selectedClientOrder ,getVehicleTypeName ,editingOrder }: Props) {
+export default function VehicleListStep({ vehicles, onChange, onNext, onBack, selectedClientOrder, getVehicleTypeName, editingOrder }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editingV, setEditingV] = useState<VehicleConfig | null>(null);
   const [error, setError] = useState("");
@@ -33,7 +33,7 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack, se
     setError("");
   };
 
-console.log("vehicles",vehicles)
+  console.log("vehicles", vehicles)
 
 
   const formatDate = (dateStr: string) => {
@@ -100,16 +100,25 @@ console.log("vehicles",vehicles)
       ) : (
         <div className="space-y-3">
           {vehicles.map((v, idx) => (
+        
             <div key={v.id} className="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600">V{idx + 1}</span>
                   <div>
 
-                    {editingOrder ? (
+                    {/* {editingOrder ? (
                       <p className="text-sm font-semibold text-gray-800 dark:text-gray-200"> {getVehicleTypeName(v.vehicleType)}</p>
-                    ) :(<p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p>)}
-
+                    ) :(<p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p>)} */}
+                    {editingOrder ? (
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                        {getVehicleTypeName(v.vehicleType) || `${v.vehicleModel}  ${v.vehicleType}`}
+                      </p>
+                    ) : (
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                        {v.vehicleModel}  {v.vehicleType}
+                      </p>
+                    )}
 
                     {/* <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p> */}
 

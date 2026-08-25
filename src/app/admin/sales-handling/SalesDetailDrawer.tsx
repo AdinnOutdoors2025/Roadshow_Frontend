@@ -14,7 +14,7 @@ import {
   PlusCircle, ImageIcon, Video,
   Users, BadgeCheck, Banknote,
   AlertTriangle, History, MoreHorizontal,
-  MessageSquare, RotateCcw, CheckCheck, UserCog,
+  MessageSquare, RotateCcw, CheckCheck, UserCog, Bell,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import axios from "axios";
@@ -116,7 +116,7 @@ const getFileUrl = (p: string) => {
 const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
 
 
-type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation" | "invoice" | "dateConflict" | "orderEditHistory";
+type Tab = "overview" | "comments" | "pipeline" | "documents" | "codeCreation" | "invoice" | "notification" | "dateConflict" | "orderEditHistory";
 
 function DocPreviewModal({ url, label, onClose }: { url: string; label: string; onClose: () => void }) {
   const img = isImage(url);
@@ -435,6 +435,7 @@ import { ChevronLeft } from "lucide-react";
 import DateConflictTab from "./DateConflictTab";
 import AdminOrderForm from "../order-creation/AdminOrderForm";
 import OrderEditHistoryTab from "./OrderEditHistoryTab";
+import VehicleAvailabilityNotificationTab from "./VehicleAvailabilityNotificationTab";
 
 
 function OverviewTab({
@@ -500,11 +501,11 @@ function OverviewTab({
 
 
   const baseDays =
-  Math.ceil(
-    (new Date(currentVehicle.toDate).getTime() -
-      new Date(currentVehicle.fromDate).getTime()) /
+    Math.ceil(
+      (new Date(currentVehicle.toDate).getTime() -
+        new Date(currentVehicle.fromDate).getTime()) /
       86400000
-  ) + 1;
+    ) + 1;
 
   return (
     <div className="p-4 space-y-4">
@@ -575,115 +576,115 @@ function OverviewTab({
 
       {/* Handler Assignment */}
       {order.salesPipelineStatus !== "enquiry" && !isOwnOrder && (
-      <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-2">
-            <UserCog size={15} className="text-gray-400" />
-            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Handler Assignment</h3>
-          </div>
-          {onOpenHandover && (
-            <button
-              onClick={onOpenHandover}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-violet-400 hover:text-violet-600 text-[12px] font-semibold"
-            >
-              <RotateCcw size={12} /> Reassign
-            </button>
-          )}
-        </div>
-        <div className="p-4 space-y-3">
-          {order.salesHandlerName ? (
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                {order.salesHandlerName.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.salesHandlerName}</p>
-                {activeTemporaryHandover && (
-                  <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Temporary handover</p>
-                )}
-              </div>
+              <UserCog size={15} className="text-gray-400" />
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Handler Assignment</h3>
             </div>
-          ) : (
-            <p className="text-sm text-gray-400">No handler assigned yet</p>
-          )}
-
-          {activeTemporaryHandover && (
-            <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-              <p className="text-[11px] text-amber-700 dark:text-amber-300">
-                Covering for <span className="font-semibold">{activeTemporaryHandover.previousHandler}</span> (
-                {activeTemporaryHandover.leaveStartDate ? fmtDatetime(activeTemporaryHandover.leaveStartDate).split(",")[0] : ""}
-                {" – "}
-                {activeTemporaryHandover.leaveEndDate ? fmtDatetime(activeTemporaryHandover.leaveEndDate).split(",")[0] : ""})
-              </p>
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <button
-                  onClick={() => onResolveHandover?.(activeTemporaryHandover._id, false)}
-                  className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 text-[10px] font-semibold"
-                >
-                  <RotateCcw size={10} /> Return
-                </button>
-                <button
-                  onClick={() => onResolveHandover?.(activeTemporaryHandover._id, true)}
-                  className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-semibold"
-                >
-                  <CheckCheck size={10} /> Make Permanent
-                </button>
+            {onOpenHandover && (
+              <button
+                onClick={onOpenHandover}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-violet-400 hover:text-violet-600 text-[12px] font-semibold"
+              >
+                <RotateCcw size={12} /> Reassign
+              </button>
+            )}
+          </div>
+          <div className="p-4 space-y-3">
+            {order.salesHandlerName ? (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                  {order.salesHandlerName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{order.salesHandlerName}</p>
+                  {activeTemporaryHandover && (
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Temporary handover</p>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-gray-400">No handler assigned yet</p>
+            )}
 
-          {handlerAssignmentHistory.length > 0 && (
-            <button
-              onClick={() => setShowHandoverHistory((v) => !v)}
-              className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600"
-            >
-              <History size={11} /> Handover history ({handlerAssignmentHistory.length})
-            </button>
-          )}
-          {showHandoverHistory && (
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
-              {handlerAssignmentHistory.slice().reverse().map((h: any) => {
-                const statusStyle =
-                  h.status === "madePermanent"
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
-                    : h.status === "reverted"
-                      ? "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
-                      : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800";
-                const statusLabel =
-                  h.status === "madePermanent" ? "Made Permanent"
-                    : h.status === "reverted" ? "Reverted"
-                      : "Active";
-                return (
-                  <div
-                    key={h._id}
-                    className="rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-2.5"
+            {activeTemporaryHandover && (
+              <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                  Covering for <span className="font-semibold">{activeTemporaryHandover.previousHandler}</span> (
+                  {activeTemporaryHandover.leaveStartDate ? fmtDatetime(activeTemporaryHandover.leaveStartDate).split(",")[0] : ""}
+                  {" – "}
+                  {activeTemporaryHandover.leaveEndDate ? fmtDatetime(activeTemporaryHandover.leaveEndDate).split(",")[0] : ""})
+                </p>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <button
+                    onClick={() => onResolveHandover?.(activeTemporaryHandover._id, false)}
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 text-[10px] font-semibold"
                   >
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 dark:text-gray-200">
-                        <span>{h.previousHandler || "—"}</span>
-                        <ChevronRight size={13} className="text-gray-400 flex-shrink-0" />
-                        <span>{h.newHandler}</span>
+                    <RotateCcw size={10} /> Return
+                  </button>
+                  <button
+                    onClick={() => onResolveHandover?.(activeTemporaryHandover._id, true)}
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-semibold"
+                  >
+                    <CheckCheck size={10} /> Make Permanent
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {handlerAssignmentHistory.length > 0 && (
+              <button
+                onClick={() => setShowHandoverHistory((v) => !v)}
+                className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600"
+              >
+                <History size={11} /> Handover history ({handlerAssignmentHistory.length})
+              </button>
+            )}
+            {showHandoverHistory && (
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+                {handlerAssignmentHistory.slice().reverse().map((h: any) => {
+                  const statusStyle =
+                    h.status === "madePermanent"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                      : h.status === "reverted"
+                        ? "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                        : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800";
+                  const statusLabel =
+                    h.status === "madePermanent" ? "Made Permanent"
+                      : h.status === "reverted" ? "Reverted"
+                        : "Active";
+                  return (
+                    <div
+                      key={h._id}
+                      className="rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-2.5"
+                    >
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                          <span>{h.previousHandler || "—"}</span>
+                          <ChevronRight size={13} className="text-gray-400 flex-shrink-0" />
+                          <span>{h.newHandler}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-1.5 py-0.5 rounded-md text-[11px] font-medium border bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400">
+                            {h.isTemporary ? "Temporary" : "Permanent"}
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-semibold border ${statusStyle}`}>
+                            {statusLabel}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="px-1.5 py-0.5 rounded-md text-[11px] font-medium border bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400">
-                          {h.isTemporary ? "Temporary" : "Permanent"}
-                        </span>
-                        <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-semibold border ${statusStyle}`}>
-                          {statusLabel}
-                        </span>
-                      </div>
+                      <p className="text-[13px] text-gray-600 dark:text-gray-300 mt-1.5">{h.reason}</p>
+                      <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-1">
+                        {fmtDatetime(h.assignedAt)} · by {h.assignedBy}
+                      </p>
                     </div>
-                    <p className="text-[13px] text-gray-600 dark:text-gray-300 mt-1.5">{h.reason}</p>
-                    <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-1">
-                      {fmtDatetime(h.assignedAt)} · by {h.assignedBy}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
       )}
 
 
@@ -781,22 +782,22 @@ function OverviewTab({
                       })`
                       : "—",
                   ],
-              ["Campaign Location", currentVehicle.campaignLocation || `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
-              (currentVehicle.state || currentVehicle.city) ? ["State / City", `${currentVehicle.state || ""} / ${currentVehicle.city || ""}`] : null,
-              ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
+                  ["Campaign Location", currentVehicle.campaignLocation || `${currentVehicle.fromLocation} → ${currentVehicle.toLocation}`],
+                  (currentVehicle.state || currentVehicle.city) ? ["State / City", `${currentVehicle.state || ""} / ${currentVehicle.city || ""}`] : null,
+                  ["Vehicle Count", `${currentVehicle.quantity} ${currentVehicle.quantity === 1 ? "Vehicle" : "Vehicles"}`],
                   currentVehicle.extraKm > 0 ? ["Extra KM", `${currentVehicle.extraKm} km`] : null,
                   currentVehicle.extraHours > 0 ? ["Extra Hours", `${currentVehicle.extraHours} hours`] : null,
-              currentVehicle.needPromoter ? ["Promoter", `${currentVehicle.promoterType === "Other" ? currentVehicle.otherPromoterType : currentVehicle.promoterType} · ${currentVehicle.promoterGender} · ${currentVehicle.promoterLanguage} · Qty ${currentVehicle.promoterQuantity}`] : null,
-              currentVehicle.gstNumber ? ["GST", currentVehicle.gstNumber] : null,
-              ] as ([string, string] | null)[]
+                  currentVehicle.needPromoter ? ["Promoter", `${currentVehicle.promoterType === "Other" ? currentVehicle.otherPromoterType : currentVehicle.promoterType} · ${currentVehicle.promoterGender} · ${currentVehicle.promoterLanguage} · Qty ${currentVehicle.promoterQuantity}`] : null,
+                  currentVehicle.gstNumber ? ["GST", currentVehicle.gstNumber] : null,
+                ] as ([string, string] | null)[]
               )
                 .filter((item): item is [string, string] => item !== null)
                 .map(([label, value], i) => (
-              <div key={i} className="flex justify-between text-md gap-4">
-                <span className="text-gray-500 shrink-0">{label}</span>
-                <span className="text-gray-800 dark:text-gray-200 font-medium text-right">{value}</span>
-              </div>
-              ))
+                  <div key={i} className="flex justify-between text-md gap-4">
+                    <span className="text-gray-500 shrink-0">{label}</span>
+                    <span className="text-gray-800 dark:text-gray-200 font-medium text-right">{value}</span>
+                  </div>
+                ))
               }
             </div>
 
@@ -1356,11 +1357,10 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
             <button
               key={t.key}
               onClick={() => setCommentsTab(t.key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
-                commentsTab === t.key
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${commentsTab === t.key
                   ? "bg-blue-600 border-blue-600 text-white"
                   : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
+                }`}
             >
               {t.label}
             </button>
@@ -1838,7 +1838,12 @@ export default function SalesDetailDrawer({
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: "Overview" },
     { key: "comments", label: "Comments" },
+
     { key: "pipeline", label: "Pipeline History" },
+    {
+      key: "notification" as Tab,
+      label: "Notification",
+    },
     ...(isPoStage ? [{ key: "documents" as Tab, label: "PO Document" }] : []),
     ...(order.hasDateConflict ? [{ key: "dateConflict" as Tab, label: "Date Conflict" }] : []),
     ...((order.orderEditHistory || []).length > 0
@@ -1980,6 +1985,16 @@ export default function SalesDetailDrawer({
                   }`}
               >
                 {tab.label}
+
+                {tab.key === "notification" &&
+
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                  </span>
+                }
+
                 {tab.key === "dateConflict" && order.hasDateConflict && (
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                 )}
@@ -2127,7 +2142,7 @@ export default function SalesDetailDrawer({
           {activeTab === "codeCreation" && (
             <CodeCreationTab order={order} onRefresh={onRefresh} />
           )}
-         
+
           {activeTab === "orderEditHistory" && (
             <OrderEditHistoryTab order={order} getVehicleTypeName={getVehicleTypeName} />
           )}
@@ -2140,6 +2155,12 @@ export default function SalesDetailDrawer({
               onEditConflictOrder={onEditConflictOrder}
             />
           )}
+
+          {activeTab === "notification" && (
+  <VehicleAvailabilityNotificationTab
+    order={order}
+  />
+)}
 
 
           {showEditForm && (
@@ -2177,8 +2198,8 @@ export default function SalesDetailDrawer({
                           isStaffUser
                             ? (currentUsername ? [{ value: currentUsername, label: currentUsername }] : [])
                             : staffAdmins
-                                .filter((s) => s.username !== order.salesHandlerName)
-                                .map((s) => ({ value: s.username, label: s.username }))
+                              .filter((s) => s.username !== order.salesHandlerName)
+                              .map((s) => ({ value: s.username, label: s.username }))
                         }
                       />
                     </div>
