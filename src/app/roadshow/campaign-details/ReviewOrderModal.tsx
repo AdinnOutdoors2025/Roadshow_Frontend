@@ -396,7 +396,8 @@ export default function ReviewOrderModal({
                             {resolvePromoterType(details)} ·{" "}
                             {details.promoterGender || "Any"} ·{" "}
                             {details.promoterLanguage.join(", ") || "—"} · Qty{" "}
-                            {line.promoterQuantity} ·{" "}
+                            {line.promoterQuantity} · {line.promoterDays}{" "}
+                            {line.promoterDays === 1 ? "Day" : "Days"} ·{" "}
                             {formatMoney(line.promoterCost)}
                           </p>
                         )}
@@ -454,7 +455,7 @@ export default function ReviewOrderModal({
               </div>
 
               <div className="rdsw_rvPricingRows">
-                {rows.map(({ vehicle, pricing: line }, index) => (
+                {/* {rows.map(({ vehicle, pricing: line }, index) => (
                   <div
                     key={String(vehicle.id)}
                     className="rdsw_rvPricingRow"
@@ -462,7 +463,7 @@ export default function ReviewOrderModal({
                     <span>Vehicle {index + 1} Total</span>
                     <span>{formatMoney(line.lineTotal)}</span>
                   </div>
-                ))}
+                ))} */}
 
                 <div className="rdsw_rvPricingRow rdsw_rvPricingDivider">
                   <span>Vehicle Rental</span>
@@ -481,9 +482,16 @@ export default function ReviewOrderModal({
                   </div>
                 )}
 
+                {pricing.brandingTotal > 0 && (
+                  <div className="rdsw_rvPricingRow">
+                    <span>Branding Cost</span>
+                    <span>{formatMoney(pricing.brandingTotal)}</span>
+                  </div>
+                )}
+
                 {pricing.additionalCharges + pricing.rtoTotal > 0 && (
                   <div className="rdsw_rvPricingRow">
-                    <span>Additional Charges</span>
+                    <span>RTO Charges</span>
                     <span>
                       {formatMoney(
                         pricing.additionalCharges + pricing.rtoTotal

@@ -5746,7 +5746,7 @@ export default function VehicleOnboardingForm() {
                     type="text"
                     value={techSpecs.generatorCapacity}
                     placeholder="e.g., 7 KV"
-                    onChange={handleInputChange(setTechSpecs, "generatorCapacity")}
+                    onChange={(e) => { if (validateNumber(e.target.value, false)) setTechSpecs((prev) => ({ ...prev, generatorCapacity: e.target.value })); }}
                   />
                   {stepErrors.generatorCapacity && <p className="mt-1 text-xs text-red-500">{stepErrors.generatorCapacity}</p>}
                 </div>
