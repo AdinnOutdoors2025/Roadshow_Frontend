@@ -153,9 +153,9 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
                     {v.vehicleModel} · {v.vehicleType}
                   </p> */}
 
-                    {editingOrder ? (
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">  {getVehicleTypeName(v.vehicleType) || `${v.vehicleModel}  ${v.vehicleType}`}</p>
-                    ) :(<p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel}  {v.vehicleType}</p>)}
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                      {getVehicleTypeName ? getVehicleTypeName(v.vehicleType) || v.vehicleModel : v.vehicleModel}
+                    </p>
 
 
                   <p className="text-xs text-gray-400">

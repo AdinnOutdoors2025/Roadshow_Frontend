@@ -526,6 +526,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
       vehicleModel: pkg
         ? (typeof pkg.vehicleType === "object" ? (pkg.vehicleType as any)?.typeName : "") || f.vehicleModel
         : f.vehicleModel,
+      vehicleType: vtId || f.vehicleType,
       fromDate: vt.fromDate ? String(vt.fromDate).slice(0, 10) : f.fromDate,
       toDate: vt.toDate ? String(vt.toDate).slice(0, 10) : f.toDate,
       campaignLocation: vt.campaignLocation || f.campaignLocation,
@@ -643,10 +644,18 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
         ? (pkg.vehicleType as any).typeName ?? ""
         : pkg?.vehicleType ?? "";
 
+    const vehicleTypeId =
+      typeof pkg?.vehicleType === "object" && pkg?.vehicleType !== null
+        ? (pkg.vehicleType as any)._id ?? ""
+        : typeof pkg?.vehicleType === "string"
+          ? pkg.vehicleType
+          : "";
+
     setForm((f) => ({
       ...f,
       packageId: modelId,
       vehicleModel: vehicleModelName,
+      vehicleType: vehicleTypeId,
     }));
   };
 
