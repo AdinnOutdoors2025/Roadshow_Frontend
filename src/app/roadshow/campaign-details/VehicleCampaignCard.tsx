@@ -475,7 +475,7 @@ export default function VehicleCampaignCard({
               )}
             </div>
 
-            <label
+            <div
               className="rdsw_cdField"
               style={{ gridColumn: "1 / -1" }}
             >
@@ -483,11 +483,11 @@ export default function VehicleCampaignCard({
                 Promoter Dates <i>*</i>
               </span>
 
-              <button
+              <div
                 type="button"
                 onClick={onEditPromoterDates}
                 disabled={!vehicle.startDate || !vehicle.endDate}
-                className="rdsw_cdDateButton"
+                className="rdsw_cdDateButton cursor-pointer"
                 title={
                   !vehicle.startDate || !vehicle.endDate
                     ? "Select campaign dates first"
@@ -509,7 +509,7 @@ export default function VehicleCampaignCard({
                 </span>
 
                 <span className="rdsw_cdDateEdit">Change</span>
-              </button>
+              </div>
 
               {(fieldError("promoterFromDate") ||
                 fieldError("promoterToDate")) && (
@@ -518,7 +518,7 @@ export default function VehicleCampaignCard({
                     fieldError("promoterToDate")}
                 </p>
               )}
-            </label>
+            </div>
 
             {/* Selected Promoter Days — shown below all Promoter Requirement
                 fields, driven by the same promoterDays the pricing uses, so
