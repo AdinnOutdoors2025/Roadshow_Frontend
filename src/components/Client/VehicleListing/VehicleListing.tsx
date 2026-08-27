@@ -15,8 +15,8 @@
 /*  onboarding). A card opens the spec popup; "Book Now" / "Book This Vehicle" */
 /*  goes to the existing vehicle details page, which still owns the booking    */
 /*  flow through to the campaign request form.                                 */
-
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
@@ -28,6 +28,7 @@ import {
 } from "@/lib/roadshowVehicles";
 import { formatCurrency } from "@/app/utils/currency";
 import { ButtonHover } from "@/components/Client/Reusable_Components/ButtonHover";
+import { navigateAfterRoadshowLoader } from "@/components/GlobalRoadshowLoader";
 import { useScrollReveal } from "@/components/motion/useScrollReveal";
 import {
   DISTANCE,
@@ -43,6 +44,13 @@ import {
   filterByCategory,
 } from "./vehicleCategories";
 import "./VehicleListing.css";
+
+/* true: show during the vehicle API request. false: never render the loader. */
+const ENABLE_ROADSHOW_LOADER = true;
+
+/* Minimum time that the overlay stays visible.
+   3000 = 3 seconds, 5000 = 5 seconds, 10000 = 10 seconds. */
+const MINIMUM_LOADER_TIME_MS = 3000;
 
 /* Narrowest a card is allowed to get. Deliberately the same 320px the grid's
    `repeat(auto-fill, minmax(320px, 1fr))` uses, so a row of carousel cards and
@@ -102,6 +110,11 @@ export default function VehicleListing({
 }: VehicleListingProps) {
   const router = useRouter();
 
+  const [loaderMounted, setLoaderMounted] = useState(false);
+  const [loaderVisible, setLoaderVisible] = useState(
+    ENABLE_ROADSHOW_LOADER
+  );
+
   const [vehicles, setVehicles] = useState<RoadshowVehicle[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -157,11 +170,21 @@ export default function VehicleListing({
   });
 
   useEffect(() => {
+    setLoaderMounted(true);
+  }, []);
+
+  useEffect(() => {
     let componentMounted = true;
 
     const loadVehicles = async () => {
+      const loaderStartedAt = Date.now();
+
       try {
         setLoading(true);
+
+        if (ENABLE_ROADSHOW_LOADER) {
+          setLoaderVisible(true);
+        }
 
         const apiVehicles = await fetchAllRoadshowVehicles();
 
@@ -170,7 +193,7 @@ export default function VehicleListing({
         setVehicles(apiVehicles || []);
         setLoadError("");
       } catch (error) {
-        console.error("Roadshow vehicle listing error:", error);
+        console.warn("Roadshow vehicle listing error:", error);
 
         if (!componentMounted) return;
 
@@ -183,8 +206,32 @@ export default function VehicleListing({
         toast.error("Unable to load vehicles.");
       } finally {
         if (componentMounted) {
+          /* Render the completed vehicle list behind the fixed overlay first.
+             This prevents visible card/image resizing when the overlay leaves. */
           setLoading(false);
           onLoadedRef.current?.();
+        }
+
+        const elapsedTime = Date.now() - loaderStartedAt;
+        const remainingTime = Math.max(
+          0,
+          MINIMUM_LOADER_TIME_MS - elapsedTime
+        );
+
+        if (remainingTime > 0) {
+          await new Promise<void>((resolve) => {
+            window.setTimeout(resolve, remainingTime);
+          });
+        }
+
+        /* Give React one paint opportunity with the completed content still
+           covered, so removing the overlay cannot expose a half-laid-out grid. */
+        await new Promise<void>((resolve) => {
+          window.setTimeout(resolve, 50);
+        });
+
+        if (componentMounted) {
+          setLoaderVisible(false);
         }
       }
     };
@@ -241,8 +288,7 @@ export default function VehicleListing({
     observer.observe(element);
 
     return () => observer.disconnect();
-    /* Runs in grid layout too — the skeleton count is one row's worth, so it
-       needs the same measurement even when there will never be a carousel. */
+    /* Re-measure once loading finishes and the vehicle cards are rendered. */
   }, [loading]);
 
   /* Arrows only earn their place once the list is longer than one view —
@@ -273,22 +319,61 @@ export default function VehicleListing({
     setOpeningVehicleId(vehicleId);
 
     window.setTimeout(() => {
-      router.push(
-        `/roadshow/VehicleDetails/${encodeURIComponent(vehicleId)}`
+      navigateAfterRoadshowLoader(
+        () =>
+          router.push(
+            `/roadshow/VehicleDetails/${encodeURIComponent(vehicleId)}`
+          ),
+        "Opening vehicle...",
       );
     }, 250);
   };
 
-  /* One row's worth of placeholders, so the skeleton occupies roughly the
-     space the real cards are about to take rather than a line of text that
-     the grid then shoves aside. */
-  const skeletonCards = Array.from(
-    { length: Math.max(1, visibleCount) },
-    (_unused, index) => index
-  );
-
   return (
     <div className={`RS_VehListRoot ${className}`}>
+      {ENABLE_ROADSHOW_LOADER &&
+        loaderMounted &&
+        loaderVisible &&
+        createPortal(
+          <div
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+            aria-label="Loading vehicles"
+            className="fixed inset-0 z-[2147483647] flex items-center justify-center px-4"
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.72)" }}
+          >
+            <div
+              className="flex w-[min(84vw,420px)] flex-col items-center !bg-transparent"
+              style={{ backgroundColor: "transparent" }}
+            >
+              <div
+                className="relative aspect-square w-full !bg-transparent"
+                style={{ backgroundColor: "transparent" }}
+              >
+                <video
+                  src="/images/loader_transparent.webm?v=4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="auto"
+                  controls={false}
+                  disablePictureInPicture
+                  aria-hidden="true"
+                  style={{ backgroundColor: "transparent" }}
+                  className="block h-full w-full object-contain !bg-transparent"
+                />
+              </div>
+
+              <p className="-mt-2 text-center text-sm font-medium text-white">
+                Loading vehicles...
+              </p>
+            </div>
+          </div>,
+          document.body
+        )}
+
       {/* Heading and tabs share one row when a heading is supplied; the
           heading stays put through the fetch while the tabs fill in beside it
           — they are meaningless until the counts exist, and showing them
@@ -356,29 +441,7 @@ export default function VehicleListing({
            row's real width from the first paint — including while the
            skeletons are up, which is what sizes them. */
         <div ref={viewportRef}>
-        {loading ? (
-          <>
-            <div className="RS_VehListGrid" aria-hidden="true">
-              {skeletonCards.map((index) => (
-                <div key={index} className="RS_VehListSkeleton">
-                  <div className="RS_VehListSkelImg" />
-
-                  <div className="RS_VehListSkelBody">
-                    <span className="RS_VehListSkelLine RS_VehListSkelLine--wide" />
-                    <span className="RS_VehListSkelLine RS_VehListSkelLine--mid" />
-                    <span className="RS_VehListSkelChip" />
-                    <span className="RS_VehListSkelBtn" />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* The visual skeleton is aria-hidden, so announce the wait */}
-            <span className="RS_VehListSrOnly" role="status">
-              Loading vehicles...
-            </span>
-          </>
-        ) : shownVehicles.length === 0 ? (
+        {loading ? null : shownVehicles.length === 0 ? (
           <div className="RS_VehListState">
             No vehicles in this category yet.
           </div>

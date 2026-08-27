@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import emailjs from "@emailjs/browser";
 import { useRouter } from "next/navigation";
 import { ButtonHover } from "./ButtonHover";
+import { navigateAfterRoadshowLoader } from "@/components/GlobalRoadshowLoader";
 
 type MathCaptcha = {
   firstNumber: number;
@@ -402,7 +403,24 @@ function Footer() {
               width={200}
               height={60}
               priority
-              onClick={() => router.push("/")}
+              role="button"
+              tabIndex={0}
+              data-loader="false"
+              onClick={() =>
+                navigateAfterRoadshowLoader(
+                  () => router.push("/"),
+                  "Loading home...",
+                )
+              }
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  navigateAfterRoadshowLoader(
+                    () => router.push("/"),
+                    "Loading home...",
+                  );
+                }
+              }}
             />
 
             {/* Social Icons */}
@@ -501,6 +519,7 @@ function Footer() {
                   type="button"
                   onClick={openCaptchaPopup}
                   disabled={loading || isNewsletterEmpty}
+                  data-loader="false"
                   className={`
     RA_RightContent2InpBtn
     transition-all duration-200
@@ -715,6 +734,7 @@ function Footer() {
               type="button"
               onClick={handleCaptchaVerification}
               disabled={loading}
+              data-loader="false"
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-black px-6 py-3.5 text-[14px] font-semibold text-white transition hover:bg-[#d70000] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {loading && (

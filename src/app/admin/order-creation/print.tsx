@@ -638,14 +638,24 @@ export default function OrderPDFView({ order, onClose, vehicleTypes }: OrderPDFV
               </div>
             </div>
             <div className="pdf-toolbar-actions">
-              <button className="pdf-btn pdf-btn-primary" onClick={handlePrint}>
+              <button
+                className="pdf-btn pdf-btn-primary"
+                onClick={handlePrint}
+                data-loader-label="Preparing document..."
+                data-loader-duration="900"
+              >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
                   <rect x="6" y="14" width="12" height="8" />
                 </svg>
                 Print Document
               </button>
-              <button className="pdf-btn pdf-btn-secondary" onClick={onClose}>
+              <button
+                className="pdf-btn pdf-btn-secondary"
+                onClick={onClose}
+                data-loader-label="Closing..."
+                data-loader-duration="400"
+              >
                 Close
               </button>
             </div>

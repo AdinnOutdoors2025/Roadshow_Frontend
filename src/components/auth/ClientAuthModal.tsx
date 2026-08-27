@@ -498,6 +498,7 @@ export default function ClientAuthModal() {
                                     className="client-auth-continue"
                                     onClick={() => sendOtp("login")}
                                     disabled={loading}
+                                    data-loader="false"
                                 >
                                     {loading
                                         ? "Sending OTP..."
@@ -595,6 +596,7 @@ export default function ClientAuthModal() {
                                     className="client-auth-continue"
                                     onClick={() => sendOtp("signup")}
                                     disabled={loading}
+                                    data-loader="false"
                                 >
                                     {loading
                                         ? "Sending OTP..."
@@ -709,6 +711,7 @@ export default function ClientAuthModal() {
                                             type="button"
                                             onClick={handleResendOtp}
                                             disabled={loading}
+                                            data-loader="false"
                                         >
                                             {loading ? "Resending..." : "Resend OTP"}
                                         </button>
@@ -720,6 +723,7 @@ export default function ClientAuthModal() {
                                     className="client-auth-continue"
                                     onClick={verifyOtp}
                                     disabled={loading}
+                                    data-loader="false"
                                 >
                                     {loading
                                         ? "Verifying..."

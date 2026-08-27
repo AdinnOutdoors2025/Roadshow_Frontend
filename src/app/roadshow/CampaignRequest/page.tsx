@@ -14,6 +14,7 @@ import DatePicker from "@/components/calendar/calendar_reusable/calender";
 import { ButtonHover as VehicleCrfSubmitBtn } from "@/components/Client/Reusable_Components/ButtonHover";
 import { ButtonHover as VehicleCrfAddMoreVehBtn } from "@/components/Client/Reusable_Components/ButtonHover";
 import '../../../components/Client/HomePageSections/HomePageSection1.css';
+import { navigateAfterRoadshowLoader, withRoadshowLoader } from "@/components/GlobalRoadshowLoader";
 
 import { useModal } from "@/hooks/useModal";
 import { useAuth } from "@/context/AuthContext";
@@ -1071,6 +1072,7 @@ export default function CampaignRequestPage() {
   const handleConfirmSend = async () => {
     if (submitting) return;
 
+    await withRoadshowLoader(async () => {
     try {
       setSubmitting(true);
 
@@ -1225,8 +1227,12 @@ export default function CampaignRequestPage() {
         "Booking request submitted successfully."
       );
 
-      router.push(
-        `/roadshow/booking-request-submitted/${result.data._id}`
+      navigateAfterRoadshowLoader(
+        () =>
+          router.push(
+            `/roadshow/booking-request-submitted/${result.data._id}`
+          ),
+        "Loading your confirmation...",
       );
     } catch (error) {
       console.error(
@@ -1242,6 +1248,7 @@ export default function CampaignRequestPage() {
     } finally {
       setSubmitting(false);
     }
+    }, "Submitting your request...");
   };
 
 
@@ -2290,6 +2297,7 @@ export default function CampaignRequestPage() {
                       type="button"
                       onClick={handleConfirmSend}
                       disabled={submitting}
+                      data-loader="false"
                       className="rdsw_reviewActionButton rdsw_reviewSendButton"
                     >
                       {submitting ? (

@@ -16,6 +16,7 @@ import "./page.css";
 
 import { baseUrl } from "../../../BaseUrl";
 import { useAuth } from "@/context/AuthContext";
+import { withRoadshowLoader } from "@/components/GlobalRoadshowLoader";
 
 /* =========================================================
    UPDATE VEHICLE IMAGE PATH HERE
@@ -1123,6 +1124,7 @@ function BookingModal({
             <BubbleButton
               onClick={onDownload}
               variant="light"
+              data-loader="false"
               className="h-12 px-5 text-[12px] font-semibold"
             >
               <FilledIcon
@@ -2240,8 +2242,11 @@ export default function MyBookingsPage() {
           onCancel={
             handleCancelBooking
           }
-          onDownload={
-            handleDownloadSummary
+          onDownload={() =>
+            withRoadshowLoader(
+              handleDownloadSummary,
+              "Preparing your PDF...",
+            )
           }
         />
       )}

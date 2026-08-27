@@ -1,5 +1,6 @@
 /* eslint-disable */
 // @ts-nocheck
+import GlobalRoadshowLoader from "@/components/GlobalRoadshowLoader";
 import { Outfit, Geist } from 'next/font/google';
 import './globals.css';
 import "flatpickr/dist/flatpickr.css";
@@ -64,6 +65,7 @@ export default function RootLayout({
                                                 the roadshow layout) */}
               {children}
 
+  <GlobalRoadshowLoader />
           {/* Bootstrap JS Bundle (includes Popper) - placed before closing body */}
           {/* <script
           src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
