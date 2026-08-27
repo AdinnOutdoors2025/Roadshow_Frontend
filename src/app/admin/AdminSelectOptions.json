@@ -66,8 +66,7 @@
   "screenTypeOptions": [
     { "value": "LED Only", "label": "LED Only" },
     { "value": "Flex Only", "label": "Flex Only" },
-    { "value": "Flex + LED", "label": "Flex + LED" },
-     { "value": "Hybrid", "label": "Hybrid" }
+    { "value": "Hybrid", "label": "Hybrid" }
   ],
   "soundQualityOptions": [
     { "value": "Standard", "label": "Standard" },

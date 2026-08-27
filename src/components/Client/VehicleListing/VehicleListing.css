@@ -845,7 +845,7 @@ background: black;
   cursor: not-allowed;
 }
 
-/* Only rendered for a "Flex + LED" vehicle — see VehicleSpecModal.tsx */
+/* Only rendered for a hybrid vehicle — see VehicleSpecModal.tsx */
 .RS_VehSpecTabs {
   display: flex;
   gap: 8px;

@@ -4,8 +4,10 @@
 /*  Vehicles are segregated by the screen type captured during onboarding      */
 /*  (techSpecs.screenType), whose allowed values live in                       */
 /*  src/app/admin/AdminSelectOptions.json -> screenTypeOptions.                */
-/*  "Flex + LED" is presented to customers as "Hybrid"; the stored value is    */
-/*  never rewritten, only relabelled, so existing vehicles need no re-entry.   */
+/*  "Hybrid" is the stored value saved by onboarding; legacy records saved      */
+/*  as "Flex + LED" (before that option was renamed) still map to the Hybrid    */
+/*  tab so existing vehicles need no re-entry. Both are presented to customers  */
+/*  as "Hybrid"; the stored value is never rewritten, only relabelled.          */
 
 import type { RoadshowVehicle } from "@/lib/roadshowVehicles";
 
@@ -38,7 +40,7 @@ export const VEHICLE_CATEGORIES: VehicleCategory[] = [
   {
     id: "hybrid",
     label: "Hybrid",
-    screenTypes: ["Flex + LED"],
+    screenTypes: ["Hybrid", "Flex + LED"],
     blurb:
       "Flex and LED on one vehicle: static branding plus a live screen for video.",
   },
@@ -76,8 +78,9 @@ export const categoryIdOf = (
   return matched?.id ?? UNCATEGORISED_ID;
 };
 
-/* Customer-facing name for a vehicle's screen type — "Flex + LED"
-   reads as "Hybrid", anything unrecognised keeps its stored wording */
+/* Customer-facing name for a vehicle's screen type — "Hybrid" (and legacy
+   "Flex + LED") reads as "Hybrid", anything unrecognised keeps its stored
+   wording */
 export const categoryLabelOf = (
   vehicle: RoadshowVehicle
 ): string => {

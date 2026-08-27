@@ -72,16 +72,25 @@ const dimension = (
   return `${w} × ${h} ft`;
 };
 
-/* Screen Type must be exactly this, saved by Vehicle Onboarding —
-   never inferred from vehicle type/title/category. */
-const FLEX_LED_SCREEN_TYPE = "Flex + LED";
+/* A vehicle gets the hybrid two-tab (LED / Flex Branding) treatment when its
+   saved Screen Type is the selectable "Hybrid", or the legacy "Flex + LED"
+   value old records saved before that option was renamed. */
+const HYBRID_SCREEN_TYPE = "Hybrid";
+const LEGACY_FLEX_LED_SCREEN_TYPE = "Flex + LED";
+const isHybridScreenType = (screenType: string): boolean =>
+  screenType === HYBRID_SCREEN_TYPE ||
+  screenType === LEGACY_FLEX_LED_SCREEN_TYPE;
 
-/* Flex Height/Width only ever exist on a "Flex + LED" vehicle (see
+/* Flex Height/Width only ever exist on a hybrid vehicle (see
    Vehicle_Onboarding/page.tsx techSpecs.flexHeight/flexWidth), same "ft"
    unit as every other onboarding screen dimension. Missing values are
    dropped, not shown as blank rows. */
 const buildFlexRows = (specs: any): SpecRow[] =>
   [
+    {
+      label: "Screen Type",
+      value: HYBRID_SCREEN_TYPE,
+    },
     { label: "Flex Height", value: withUnit(specs?.flexHeight, "ft") },
     { label: "Flex Width", value: withUnit(specs?.flexWidth, "ft") },
   ].filter((row) => row.value);
@@ -346,7 +355,7 @@ export default function VehicleSpecModal({
 }) {
   const [mounted, setMounted] = useState(false);
 
-  /* Only meaningful when the vehicle is "Flex + LED" — see isFlexLed below.
+  /* Only meaningful when the vehicle is hybrid — see isHybrid below.
      Reset to LED whenever a different vehicle's modal opens, so switching
      vehicles never leaves the previous one's tab selected. */
   const [activeTab, setActiveTab] = useState<"led" | "flex">("led");
@@ -385,9 +394,10 @@ export default function VehicleSpecModal({
   const specGroups = buildSpecGroups(vehicle);
 
   /* Saved Screen Type only — never Vehicle Type, title, or category. */
-  const isFlexLed =
-    text(vehicle?.techSpecs?.screenType) === FLEX_LED_SCREEN_TYPE;
-  const flexRows = isFlexLed ? buildFlexRows(vehicle?.techSpecs) : [];
+  const isHybrid = isHybridScreenType(
+    text(vehicle?.techSpecs?.screenType)
+  );
+  const flexRows = isHybrid ? buildFlexRows(vehicle?.techSpecs) : [];
 
   const rate = Number(vehicle.rate ?? 0);
 
@@ -453,9 +463,9 @@ export default function VehicleSpecModal({
           </div>
         </div>
 
-        {/* Only a "Flex + LED" vehicle gets tabs — every other Screen Type
-            keeps the single-view body exactly as it was. */}
-        {isFlexLed && (
+        {/* Only a hybrid vehicle gets tabs — every other Screen Type keeps
+            the single-view body exactly as it was. */}
+        {isHybrid && (
           <div className="RS_VehSpecTabs" role="tablist">
             <button
               type="button"
@@ -484,7 +494,7 @@ export default function VehicleSpecModal({
         )}
 
         <div className="RS_VehSpecBody">
-          {isFlexLed && activeTab === "flex" ? (
+          {isHybrid && activeTab === "flex" ? (
             flexRows.length === 0 ? (
               <p className="RS_VehSpecEmpty">
                 Flex branding dimensions for this vehicle are

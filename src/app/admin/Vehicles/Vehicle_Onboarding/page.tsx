@@ -3324,6 +3324,12 @@ const unformatRegistrationNumber = (regNumber) => {
 };
 
 // ─── Step validation rules ────────────────────────────────────────────────────
+// A vehicle is "hybrid" when its screen type is the selectable "Hybrid" or the
+// legacy "Flex + LED" value old records predate the rename to Hybrid by. Both
+// get the same Flex Height/Width treatment; only "Hybrid" is a dropdown option.
+const isHybridScreenType = (screenType) =>
+  screenType === "Hybrid" || screenType === "Flex + LED";
+
 const validateStep = (step, { commonInfo, vehicles, techSpecs, vehicleDescription }) => {
   const errors = {};
 
@@ -3338,7 +3344,7 @@ const validateStep = (step, { commonInfo, vehicles, techSpecs, vehicleDescriptio
     if (!techSpecs.numberOfScreens)
       errors.numberOfScreens = "Number of Screens is required";
 
-    if (techSpecs.screenType === "Flex + LED") {
+    if (isHybridScreenType(techSpecs.screenType)) {
       if (!techSpecs.flexHeight) errors.flexHeight = "Flex Height is required";
       if (!techSpecs.flexWidth) errors.flexWidth = "Flex Width is required";
     }
@@ -4229,7 +4235,7 @@ export default function VehicleOnboardingForm() {
   const [techSpecs, setTechSpecs] = useState({
     screenType: "",
     numberOfScreens: "",
-    // Flex Height/Width — shown only when screenType === "Flex + LED"
+    // Flex Height/Width — shown only for a Hybrid screen type
     flexHeight: "",
     flexWidth: "",
     // Back screen fields (used when numberOfScreens === "1") — separate from
@@ -4672,8 +4678,23 @@ export default function VehicleOnboardingForm() {
           vehicleName: resolvedTypeName,
         });
 
+        // Load a group's saved tech specs as-is, except a legacy record whose
+        // screenType was saved as "Flex + LED" (before that option was renamed
+        // to "Hybrid"). It is no longer a dropdown option, so map it to
+        // "Hybrid" so edit mode shows the correct value and still keeps its
+        // Flex Height/Width.
+        const loadedTechSpecs = data.techSpecs
+          ? {
+              ...data.techSpecs,
+              screenType:
+                data.techSpecs.screenType === "Flex + LED"
+                  ? "Hybrid"
+                  : data.techSpecs.screenType || "",
+            }
+          : data.techSpecs;
+
         setTechSpecs(
-          data.techSpecs || {
+          loadedTechSpecs || {
             screenType: "LED Only",
             numberOfScreens: "",
             flexHeight: "",
@@ -5469,10 +5490,11 @@ export default function VehicleOnboardingForm() {
                       onChange={(value) => setTechSpecs((prev) => ({
                         ...prev,
                         screenType: value,
-                        // Flex Height/Width only apply to "Flex + LED" — clear
-                        // them immediately on switching away so a stale value
-                        // never stays attached to a non-Flex+LED vehicle.
-                        ...(value !== "Flex + LED" ? { flexHeight: "", flexWidth: "" } : {}),
+                        // Flex Height/Width only apply to a Hybrid screen
+                        // type — clear them immediately on switching away so a
+                        // stale value never stays attached to a non-Hybrid
+                        // vehicle.
+                        ...(isHybridScreenType(value) ? {} : { flexHeight: "", flexWidth: "" }),
                       }))}
                     />
                     <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
@@ -5501,8 +5523,8 @@ export default function VehicleOnboardingForm() {
                   {stepErrors.numberOfScreens && <p className="mt-1 text-xs text-red-500">{stepErrors.numberOfScreens}</p>}
                 </div>
 
-                {/* ── Flex Height/Width: shown only for Screen Type = "Flex + LED" ── */}
-                {techSpecs.screenType === "Flex + LED" && (
+                {/* ── Flex Height/Width: shown only for a Hybrid screen type ── */}
+                {isHybridScreenType(techSpecs.screenType) && (
                   <>
                     <div>
                       <Label>Flex Height <span className="text-red-500">*</span></Label>
