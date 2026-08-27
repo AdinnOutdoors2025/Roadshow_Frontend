@@ -1,6 +1,27 @@
 # Project Context
 
-_Last updated: 2026-07-22_
+_Last updated: 2026-08-27_
+
+## Status as of 2026-08-27 (docs reconciliation)
+
+This file (plus `progress.md`/`todo.md`) went stale for about a month — everything below this section was last true as of 2026-07-22/23. In the meantime this became an **active multi-contributor repo**: commits since 07-23 come from `vignesh`, `karthika`, `Arun Prasath`, and `SathishKumar Dhanasekaran`, merged through feature branches (`vignesh_claude`, `karthi-claude`, `arun_claude`) into `collab_June_2026` (frontend) / `collab_backend` (backend). Do not assume solo-dev context for this repo going forward — check `git log` / recent authors before assuming a file's current shape.
+
+**Frontend** (`Roadshow_Frontend`, ~90 commits 07-23→08-27) and **Backend** (`roadshow_Backend`, ~50 commits) both moved in lockstep on the same features (paired commits, same day, matching messages), touching:
+
+- **Campaign Calculator / Operation Handling**: daily timeline summary, running-hours math, extra-charges, timeline-hours redesign, handler reassign/overview, "onroad vehicle only" filtering for timeline/calculator (2026-08-23).
+- **Invoice generation**: built, reworked, discount added, then partially removed from Sales Handling, then rebuilt again — iterated heavily across the month (see individual commits if you need the exact current state of invoice logic).
+- **RTO calculation**: added, removed ("Order RTO Calculation remove", 08-12; "invoice rto calculation removes", 08-14 backend), then reintroduced ("rto chages implement", 08-25) — history is back-and-forth. Confirmed via grep that RTO logic is still present in `order-creation/{VehicleListStep,print,orderdetails,VehicleFormModal,OrderSummaryStep}.tsx` as of today — **re-confirm current intended RTO behavior with the user before changing it**, don't trust either the "removed" or "added" commit message in isolation.
+- **Order creation**: campaign-location field, vehicle-type name/id handling fixes, date-conflict handling, vehicle list/summary vehicle-type display fix (08-26).
+- **Package management + vehicle inventory**: `package-management/*` module now exists (page/FormModal/DeleteModal); onroad available/unavailable vehicles split into separate handling (08-25).
+- **Sales Handling**: notification tab added (`VehicleAvailabilityNotificationTab.tsx`, confirmed present), project-code creation flow, role-permission changes, PO/invoice work.
+- **Public site** (`roadshow/*`, `components/Client/*`): full home page revamp, My Bookings pages, Thank You page, campaign details + order creation flow for customers, GPS tracking page (rebuilt UI + Vamosys history API), Terms & Conditions, agency login, email PDF generation, and — as of today (08-27) — vehicle Flex/LED specs split into a separate tab in the public `VehicleSpecModal`.
+- **Auth/infra**: CORS config changes, baseurl updates (multiple rounds), client-auth model changes, role-permission redesign, admin login/profile page redesign (08-24).
+- **Confirmed still NOT implemented**: the per-day "Estimated (Campaign Calculator)" breakdown on the Daily Timeline tab — grepped, no `estimatedTotalAmount`/`perDayEstimate` code found. Still an open item (see `todo.md`).
+- **QA note**: `.qa/status/20260812-user-auth.json` records the "User Authentication" module as QA-`BLOCKED` (an external git reset was reported to have wiped its source/test files mid-run on 08-12). Checked today — `src/app/user-auth/*` equivalents, `src/app/utils/userAuth.tsx`, `vitest.config.ts`, `playwright.config.ts` all exist on disk now, so this looks resolved, but the status JSON itself was never updated — flag to the user if a fresh `[MODULE]` QA gate is needed on this.
+
+This reconciliation is commit-message-level (git log across both repos), spot-checked with a handful of greps — not a full line-by-line code re-audit. Treat specifics above as a starting map, not verified business-logic truth; re-read the actual file before making claims about exact current behavior.
+
+## Historical status (as of 2026-07-22/23 — superseded by the above, kept for record)
 
 ## Current project status
 
