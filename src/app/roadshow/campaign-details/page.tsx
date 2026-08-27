@@ -134,6 +134,48 @@ const getVehicleErrors = (vehicle, details) => {
       vehicleErrors.promoterQuantity =
         "Enter the number of promoters needed.";
     }
+
+    if (!details.promoterFromDate) {
+      vehicleErrors.promoterFromDate = "Select promoter start date.";
+    }
+
+    if (!details.promoterToDate) {
+      vehicleErrors.promoterToDate = "Select promoter end date.";
+    }
+
+    if (
+      details.promoterFromDate &&
+      details.promoterToDate &&
+      details.promoterFromDate > details.promoterToDate
+    ) {
+      vehicleErrors.promoterToDate =
+        "Promoter end date cannot be before start date.";
+    }
+
+    const campFrom = vehicle.startDate
+      ? formatDateForApi(vehicle.startDate)
+      : "";
+    const campTo = vehicle.endDate ? formatDateForApi(vehicle.endDate) : "";
+
+    if (
+      details.promoterFromDate &&
+      campFrom &&
+      campTo &&
+      (details.promoterFromDate < campFrom || details.promoterFromDate > campTo)
+    ) {
+      vehicleErrors.promoterFromDate =
+        "Promoter start date must be within the campaign period.";
+    }
+
+    if (
+      details.promoterToDate &&
+      campFrom &&
+      campTo &&
+      (details.promoterToDate < campFrom || details.promoterToDate > campTo)
+    ) {
+      vehicleErrors.promoterToDate =
+        "Promoter end date must be within the campaign period.";
+    }
   }
 
   return vehicleErrors;
@@ -141,7 +183,7 @@ const getVehicleErrors = (vehicle, details) => {
 
 export default function CampaignDetailsPage() {
   const router = useRouter();
-  const { user, openAuth, authLoading, isAgency } = useAuth();
+  const { user, openAuth, authLoading, isAgency, logoutUser } = useAuth();
 
   const agencyBusiness = isAgency ? user?.business || null : null;
 
@@ -160,6 +202,11 @@ export default function CampaignDetailsPage() {
   const [activeDateVehicleId, setActiveDateVehicleId] = useState<
     string | null
   >(null);
+
+  /* Same shared calendar as Campaign Dates, opened for one vehicle's
+     Promoter From/To range instead. */
+  const [activePromoterDateVehicleId, setActivePromoterDateVehicleId] =
+    useState<string | null>(null);
 
   /* Review is a popup over this page — the customer confirms and sends
      without losing their place, and only a successful send navigates on. */
@@ -422,6 +469,39 @@ export default function CampaignDetailsPage() {
     },
     [persistCart]
   );
+
+  /* If a vehicle's campaign start/end dates change such that its already-
+     selected promoter dates fall outside the new window, clear them — a
+     stale promoter date range shouldn't silently stay pinned to the old
+     campaign. Mirrors the same guard in admin's VehicleFormModal. */
+  useEffect(() => {
+    selectedVehicles.forEach((vehicle) => {
+      const id = String(vehicle.id);
+      const details = draft.vehicles[id];
+
+      if (!details?.needPromoter) return;
+
+      const campFrom = vehicle.startDate
+        ? formatDateForApi(vehicle.startDate)
+        : "";
+      const campTo = vehicle.endDate ? formatDateForApi(vehicle.endDate) : "";
+
+      if (!campFrom || !campTo) return;
+
+      const fromInvalid =
+        details.promoterFromDate &&
+        (details.promoterFromDate < campFrom ||
+          details.promoterFromDate > campTo);
+      const toInvalid =
+        details.promoterToDate &&
+        (details.promoterToDate < campFrom || details.promoterToDate > campTo);
+
+      if (fromInvalid || toInvalid) {
+        updateDetails(id, { promoterFromDate: "", promoterToDate: "" });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVehicles]);
 
   const updateDetails = useCallback((vehicleId, patch) => {
     const id = String(vehicleId);
@@ -689,6 +769,8 @@ export default function CampaignDetailsPage() {
         packageDetails: vehicle.packageDetails,
         needPromoter: details.needPromoter,
         promoterQuantity: details.promoterQuantity,
+        promoterFromDate: details.promoterFromDate,
+        promoterToDate: details.promoterToDate,
       });
 
       return {
@@ -722,6 +804,20 @@ export default function CampaignDetailsPage() {
       ),
     [selectedVehicles, activeDateVehicleId]
   );
+
+  const activePromoterDateVehicle = useMemo(
+    () =>
+      selectedVehicles.find(
+        (vehicle) =>
+          String(vehicle.id) === String(activePromoterDateVehicleId)
+      ),
+    [selectedVehicles, activePromoterDateVehicleId]
+  );
+
+  const activePromoterDateDetails = activePromoterDateVehicle
+    ? draft.vehicles[String(activePromoterDateVehicle.id)] ||
+      emptyCampaignDetails(String(activePromoterDateVehicle.id))
+    : null;
 
   /* ── Stepper ───────────────────────────────────────────────────────────
      One vehicle is edited at a time. `activeIndex` is clamped rather than
@@ -914,6 +1010,18 @@ export default function CampaignDetailsPage() {
           ? error.message
           : "Unable to submit the campaign request."
       );
+
+      /* A 401 here means the session the page THINKS is signed in (user is
+         set, the auth gate passed) no longer holds server-side — an
+         expired/invalidated token, or one cleared from localStorage by
+         another tab. Clearing it and reopening sign-in gets the customer
+         out of a broken state instead of leaving them to retry the same
+         failing submit. Cart and campaign draft are untouched — nothing
+         they typed is lost. */
+      if ((error as any)?.status === 401) {
+        logoutUser();
+        openAuth("login");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -925,6 +1033,7 @@ export default function CampaignDetailsPage() {
     rows,
     pricing,
     openAuth,
+    logoutUser,
     router,
   ]);
 
@@ -1124,6 +1233,11 @@ export default function CampaignDetailsPage() {
                   onEditDates={() =>
                     setActiveDateVehicleId(String(activeRow.vehicle.id))
                   }
+                  onEditPromoterDates={() =>
+                    setActivePromoterDateVehicleId(
+                      String(activeRow.vehicle.id)
+                    )
+                  }
                   onQuantityChange={(quantity) =>
                     updateSelectedVehicle(String(activeRow.vehicle.id), {
                       quantity: Math.max(Number(quantity) || 1, 1),
@@ -1217,6 +1331,13 @@ export default function CampaignDetailsPage() {
                   <div className="rdsw_cdSummaryRow">
                     <span>RTO Charges</span>
                     <span>{formatMoney(pricing.rtoTotal)}</span>
+                  </div>
+                )}
+
+                {pricing.brandingTotal > 0 && (
+                  <div className="rdsw_cdSummaryRow">
+                    <span>Branding Cost</span>
+                    <span>{formatMoney(pricing.brandingTotal)}</span>
                   </div>
                 )}
 
@@ -1360,6 +1481,35 @@ export default function CampaignDetailsPage() {
           showInputCard={false}
           popupMode="dialog"
           title="Select campaign dates"
+        />
+      )}
+
+      {/* Promoter From/To — the exact same shared calendar component as
+          Campaign Dates above, bounded to that vehicle's already-selected
+          campaign start/end so promoter dates can never fall outside it. */}
+      {activePromoterDateVehicle && activePromoterDateDetails && (
+        <DatePicker
+          checkIn={parseStoredDate(activePromoterDateDetails.promoterFromDate)}
+          checkOut={parseStoredDate(activePromoterDateDetails.promoterToDate)}
+          setCheckIn={(date) =>
+            updateDetails(String(activePromoterDateVehicle.id), {
+              promoterFromDate: date ? formatDateForApi(date) : "",
+            })
+          }
+          setCheckOut={(date) =>
+            updateDetails(String(activePromoterDateVehicle.id), {
+              promoterToDate: date ? formatDateForApi(date) : "",
+            })
+          }
+          minimumDate={activePromoterDateVehicle.startDate}
+          maximumDate={activePromoterDateVehicle.endDate}
+          open
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setActivePromoterDateVehicleId(null);
+          }}
+          showInputCard={false}
+          popupMode="dialog"
+          title="Select promoter dates"
         />
       )}
     </main>

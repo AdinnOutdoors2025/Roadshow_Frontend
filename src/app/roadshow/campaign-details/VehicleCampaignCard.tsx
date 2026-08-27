@@ -56,6 +56,7 @@ export default function VehicleCampaignCard({
   onDetailsChange,
   onMediaChange,
   onEditDates,
+  onEditPromoterDates,
   onQuantityChange,
   onChangeVehicle,
 }) {
@@ -277,6 +278,8 @@ export default function VehicleCampaignCard({
                       promoterGender: "",
                       promoterLanguage: [],
                       promoterQuantity: 0,
+                      promoterFromDate: "",
+                      promoterToDate: "",
                     }
               );
             }}
@@ -465,20 +468,73 @@ export default function VehicleCampaignCard({
                 </button>
               </div>
 
-              {pricing.promoterCost > 0 && (
-                <p className="rdsw_cdSectionNote">
-                  {pricing.days}D × {formatMoney(pricing.promoterChargePerDay)}{" "}
-                  × {pricing.promoterQuantity} ={" "}
-                  <strong>{formatMoney(pricing.promoterCost)}</strong>
-                </p>
-              )}
-
               {fieldError("promoterQuantity") && (
                 <p className="rdsw_cdError">
                   {fieldError("promoterQuantity")}
                 </p>
               )}
             </div>
+
+            <label
+              className="rdsw_cdField"
+              style={{ gridColumn: "1 / -1" }}
+            >
+              <span className="rdsw_cdFieldLabel">
+                Promoter Dates <i>*</i>
+              </span>
+
+              <button
+                type="button"
+                onClick={onEditPromoterDates}
+                disabled={!vehicle.startDate || !vehicle.endDate}
+                className="rdsw_cdDateButton"
+                title={
+                  !vehicle.startDate || !vehicle.endDate
+                    ? "Select campaign dates first"
+                    : undefined
+                }
+              >
+                <CalendarDays size={15} className="shrink-0" />
+
+                <span className="rdsw_cdDateText">
+                  {formatDate(details.promoterFromDate, {
+                    pattern: "dd MMM yyyy",
+                    fallback: "Select date",
+                  })}
+                  {"  →  "}
+                  {formatDate(details.promoterToDate, {
+                    pattern: "dd MMM yyyy",
+                    fallback: "Select date",
+                  })}
+                </span>
+
+                <span className="rdsw_cdDateEdit">Change</span>
+              </button>
+
+              {(fieldError("promoterFromDate") ||
+                fieldError("promoterToDate")) && (
+                <p className="rdsw_cdError">
+                  {fieldError("promoterFromDate") ||
+                    fieldError("promoterToDate")}
+                </p>
+              )}
+            </label>
+
+            {/* Selected Promoter Days — shown below all Promoter Requirement
+                fields, driven by the same promoterDays the pricing uses, so
+                this number and the promoter cost below can never disagree. */}
+            <p className="rdsw_cdSectionNote" style={{ gridColumn: "1 / -1" }}>
+              Selected Promoter Days: <strong>{pricing.promoterDays}</strong>
+              {pricing.promoterCost > 0 && (
+                <>
+                  {" "}
+                  · {pricing.promoterDays}D ×{" "}
+                  {formatMoney(pricing.promoterChargePerDay)} ×{" "}
+                  {pricing.promoterQuantity} ={" "}
+                  <strong>{formatMoney(pricing.promoterCost)}</strong>
+                </>
+              )}
+            </p>
           </div>
         )}
       </section>

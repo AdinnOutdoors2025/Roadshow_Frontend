@@ -107,20 +107,9 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack, se
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-xs font-bold text-blue-600">V{idx + 1}</span>
                   <div>
 
-                    {/* {editingOrder ? (
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200"> {getVehicleTypeName(v.vehicleType)}</p>
-                    ) :(<p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p>)} */}
-                    {editingOrder ? (
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                        {getVehicleTypeName(v.vehicleType) || `${v.vehicleModel}  ${v.vehicleType}`}
-                      </p>
-                    ) : (
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                        {v.vehicleModel}  {v.vehicleType}
-                      </p>
-                    )}
-
-                    {/* <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{v.vehicleModel} · {v.vehicleType}</p> */}
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                      {getVehicleTypeName ? getVehicleTypeName(v.vehicleType) || v.vehicleModel : v.vehicleModel}
+                    </p>
 
                     <p className="text-xs text-gray-400">
                       {v.fromDate && v.toDate
@@ -281,4 +270,4 @@ function PricingBreakdown({ vehicle: v, formatINR }: { vehicle: VehicleConfig; f
       </div>
     </div>
   );
-}
+}                                                                                                                                                                                                                                                                                                                                              

@@ -48,6 +48,12 @@ export type DatePickerProps = {
 
   title?: string;
   minimumDate?: Date;
+
+  /* Optional upper bound — dates after it render disabled, same as dates
+     before minimumDate. Undefined (the default) leaves selection
+     unbounded above, so existing callers that never pass it are
+     unaffected. */
+  maximumDate?: Date;
 };
 
 const WEEKDAYS = [
@@ -71,6 +77,7 @@ export default function Calendar({
   popupMode = "dropdown",
   title = "Select campaign dates",
   minimumDate,
+  maximumDate,
 }: DatePickerProps) {
   const [internalOpen, setInternalOpen] =
     useState(false);
@@ -82,6 +89,11 @@ export default function Calendar({
   const minSelectableDate = useMemo(
     () => startOfDay(minimumDate ?? new Date()),
     [minimumDate]
+  );
+
+  const maxSelectableDate = useMemo(
+    () => (maximumDate ? startOfDay(maximumDate) : null),
+    [maximumDate]
   );
 
   const [visibleMonth, setVisibleMonth] =
@@ -259,6 +271,10 @@ export default function Calendar({
       return;
     }
 
+    if (maxSelectableDate && isAfter(selectedDate, maxSelectableDate)) {
+      return;
+    }
+
     // No start date selected yet.
     if (!start) {
       setCheckIn(selectedDate);
@@ -348,6 +364,13 @@ export default function Calendar({
               minSelectableDate
             );
 
+            const isBeyondMax = Boolean(
+              maxSelectableDate &&
+                isAfter(normalizedDate, maxSelectableDate)
+            );
+
+            const isDisabled = isPast || isBeyondMax;
+
             const isSelectedStart = checkIn
               ? isSameDay(date, checkIn)
               : false;
@@ -379,7 +402,7 @@ export default function Calendar({
               <button
                 key={date.toISOString()}
                 type="button"
-                disabled={isPast}
+                disabled={isDisabled}
                 onClick={() =>
                   handleDateSelect(date)
                 }
@@ -389,7 +412,7 @@ export default function Calendar({
                 className={`
                   flex h-10 w-10 items-center justify-center
                   rounded-[20px] text-lg transition
-                  ${isPast
+                  ${isDisabled
                     ? "cursor-not-allowed bg-white text-gray-300 opacity-40"
                     : isSelectedRange
                       ? "bg-black font-semibold text-white"
@@ -419,6 +442,13 @@ export default function Calendar({
     startOfMonth(visibleMonth),
     minimumVisibleMonth
   );
+
+  const canGoToNextMonth = maxSelectableDate
+    ? isBefore(
+        startOfMonth(visibleMonth),
+        startOfMonth(maxSelectableDate)
+      )
+    : true;
 
   const calendarPanel = (
     <div
@@ -452,12 +482,13 @@ export default function Calendar({
 
         <button
           type="button"
+          disabled={!canGoToNextMonth}
           onClick={() =>
             setVisibleMonth((current) =>
               addMonths(current, 1)
             )
           }
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-black transition hover:bg-gray-100"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-black transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-35"
           aria-label="Next month"
         >
           <ChevronRight size={20} />

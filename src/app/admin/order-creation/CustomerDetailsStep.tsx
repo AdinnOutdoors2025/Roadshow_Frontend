@@ -480,7 +480,7 @@ export default function CustomerDetailsStep({
             <input
               type="email"
               value={data.email || ""}
-              onChange={(e) => set("email", capitalizeFirstOnly(e.target.value))}
+              onChange={(e) => set("email", e.target.value.toLowerCase())}
               placeholder="customer@example.com"
               className={inputClass(!!errors.email)}
             // disabled={!!selectedClientOrder}
@@ -621,7 +621,7 @@ export default function CustomerDetailsStep({
             <input
               type="email"
               value={data.email || ""}
-              onChange={(e) => set("email", capitalizeFirstOnly(e.target.value))}
+              onChange={(e) => set("email", e.target.value.toLowerCase())}
               placeholder="company@example.com"
               className={inputClass(!!errors.email)}
             />

@@ -44,6 +44,42 @@ const navItems: NavItem[] = [
     key: "/admin/dashboard",
     subItems: [{ name: "Roadshow", path: "/admin/dashboard", pro: false }],
   },
+
+    {
+    name: "Vehicles",
+    icon: <ListIcon />,
+    subItems: [
+      { name: "Vehicle Onboarding", path: "/admin/Vehicles/Vehicle_Onboarding", key: "/admin/Vehicles/Vehicle_Onboarding", pro: false },
+      { name: "Vehicle Inventory", path: "/admin/Vehicles/Vehicle_Inventory", key: "/admin/Vehicles/Vehicle_Inventory", pro: false }
+    ],
+
+  },
+      {
+    name: "Package Management",
+    icon: <HiOutlineCube />,
+    path: "/admin/package-management"
+  },
+    {
+    name: "Project Settings",
+    icon: <HiOutlineCube />,
+    path: "/admin/project-setting"
+  },
+
+     {
+    name: "Order Creation",
+     icon: <HiOutlineClipboardList />,
+    path: "/admin/order-creation"
+  },
+
+        {
+    icon: <GridIcon />,
+    name: "Order Handling",
+    subItems: [
+      { name: "Sales Handling", path: "/admin/sales-handling", key: "/admin/sales-handling", pro: false },
+      { name: "Operation Handling", path: "/admin/operation-handling", key: "/admin/operation-handling", pro: false },
+    ],
+
+  },
      {
     name: "Sales User Management",
     icon: <HiOutlineUserGroup />,
@@ -54,31 +90,17 @@ const navItems: NavItem[] = [
     icon: <HiOutlineUserGroup />,
     path: "/admin/operation-management"
   },
+
+
   // {
   //   name: "Client Request Order",
   //   icon: <HiOutlineClipboardList />,
   //   path: "/admin/client-request-order"
   // },
-   {
-    name: "Order Creation",
-     icon: <HiOutlineClipboardList />,
-    path: "/admin/order-creation"
-  },
 
-    {
-    icon: <GridIcon />,
-    name: "Order Handling",
-    subItems: [
-      { name: "Sales Handling", path: "/admin/sales-handling", key: "/admin/sales-handling", pro: false },
-      { name: "Operation Handling", path: "/admin/operation-handling", key: "/admin/operation-handling", pro: false },
-    ],
 
-  },
-    {
-    name: "Package Management",
-    icon: <HiOutlineCube />,
-    path: "/admin/package-management"
-  },
+
+
   {
     name: "Driver Management",
     icon: <HiOutlineCube />,
@@ -90,32 +112,20 @@ const navItems: NavItem[] = [
     icon: <HiOutlineUsers />,
     path: "/admin/promoter"
   },
-
-  {
-    name: "Project Settings",
-    icon: <HiOutlineCube />,
-    path: "/admin/project-setting"
-  },
-  {
+ {
     name: "Invoice Generation",
     icon: <HiOutlineClipboardList />,
     path: "/admin/invoice-generation"
   },
+
+ 
   {
     name: "Role Permission",
     icon: <HiOutlineShieldCheck />,
     path: "/admin/role-permission"
   },
 
-  {
-    name: "Vehicles",
-    icon: <ListIcon />,
-    subItems: [
-      { name: "Vehicle Onboarding", path: "/admin/Vehicles/Vehicle_Onboarding", key: "/admin/Vehicles/Vehicle_Onboarding", pro: false },
-      { name: "Vehicle Inventory", path: "/admin/Vehicles/Vehicle_Inventory", key: "/admin/Vehicles/Vehicle_Inventory", pro: false }
-    ],
 
-  },
 ];
 
 const othersItems: NavItem[] = [];
