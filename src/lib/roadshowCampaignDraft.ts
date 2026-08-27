@@ -47,6 +47,10 @@ export type VehicleCampaignDetails = {
   promoterGender: string;
   promoterLanguage: string[];
   promoterQuantity: number;
+  /* Promoter's own date range — must stay within the vehicle's campaign
+     startDate/endDate (see priceVehicleLine in roadshowPricing.ts). */
+  promoterFromDate: string;
+  promoterToDate: string;
 
   /* Names/sizes only — the File objects live in the media store below. */
   campaignImages: CampaignMediaMeta[];
@@ -102,6 +106,8 @@ export const emptyCampaignDetails = (
   promoterGender: "",
   promoterLanguage: [],
   promoterQuantity: 0,
+  promoterFromDate: "",
+  promoterToDate: "",
   campaignImages: [],
   campaignVideos: [],
 });
@@ -148,6 +154,8 @@ const normalizeDetails = (
           .filter(Boolean)
       : [],
     promoterQuantity: Math.max(Number(source.promoterQuantity) || 0, 0),
+    promoterFromDate: String(source.promoterFromDate ?? ""),
+    promoterToDate: String(source.promoterToDate ?? ""),
     campaignImages: Array.isArray(source.campaignImages)
       ? (source.campaignImages
           .map(normalizeMediaMeta)

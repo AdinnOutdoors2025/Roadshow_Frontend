@@ -123,6 +123,9 @@ export const buildClientRequestPayload = ({
       promoterGender: details.promoterGender,
       promoterLanguage: details.promoterLanguage,
       promoterQuantity: line.promoterQuantity,
+      promoterFromDate: details.promoterFromDate || "",
+      promoterToDate: details.promoterToDate || "",
+      promoterDays: line.promoterDays,
       promoterChargePerDay: line.promoterChargePerDay,
       promoterCost: line.promoterCost,
 
@@ -196,9 +199,16 @@ export const submitClientRequest = async ({
   const result = await response.json().catch(() => null);
 
   if (!response.ok || !result?.success || !result?.data?._id) {
-    throw new Error(
+    const error = new Error(
       result?.message || "Unable to submit the campaign request."
     );
+
+    /* Lets the caller tell "the session is no longer valid" (401) apart
+       from any other failure, without matching on the message text —
+       backend copy can change without breaking this. */
+    (error as any).status = response.status;
+
+    throw error;
   }
 
   return result.data;

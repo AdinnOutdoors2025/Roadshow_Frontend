@@ -49,6 +49,11 @@ export type PricedVehicleInput = {
   rate: number;
   /** The matched package, used for rtoCharges/brandingCost. */
   packageDetails?: { rtoCharges?: number; brandingCost?: number; perDayRentalCost?: number } | null;
+  /** Promoter's own date range — must stay within startDate/endDate. Falls
+   *  back to the full campaign day count when either is unset, matching
+   *  admin's calcPricing() so older saved lines keep pricing the same way. */
+  promoterFromDate?: DateValue;
+  promoterToDate?: DateValue;
 } & PromoterRequirement;
 
 export type PricedVehicle = {
@@ -58,6 +63,9 @@ export type PricedVehicle = {
   rentalCost: number;
   promoterChargePerDay: number;
   promoterQuantity: number;
+  /** Days actually selected for the promoter (inclusive) — used to price
+   *  the promoter line and to render "Qty × Days" on Review Order. */
+  promoterDays: number;
   promoterCost: number;
   rtoCharges: number;
   rtoCost: number;
@@ -81,7 +89,8 @@ export type OrderPricing = {
   rentalTotal: number;
   promoterTotal: number;
   rtoTotal: number;
-  /** rental + promoter + rto */
+  brandingTotal: number;
+  /** rental + promoter + rto + branding */
   subtotal: number;
   /** Always 0 on the public site — no entry point exists. */
   additionalCharges: number;
@@ -122,13 +131,24 @@ export const priceVehicleLine = (
     ? Math.max(Math.floor(toSafeNumber(vehicle.promoterQuantity)), 0)
     : 0;
 
-  /* Promoter charge mirrors admin: flat env rate × days × promoter count.
-     The toggle being off zeroes the whole line, not just the quantity. */
+  /* Promoter charge mirrors admin: flat env rate × selected promoter days ×
+     promoter count. The toggle being off zeroes the whole line, not just
+     the quantity. */
   const promoterChargePerDay = vehicle.needPromoter
     ? DEFAULT_PROMOTER_CHARGE
     : 0;
 
-  const promoterCost = promoterChargePerDay * days * promoterQuantity;
+  /* Promoter is priced only for the days actually selected (Promoter
+     From/To, inclusive). Unlike admin's calcPricing() — which falls back to
+     the full campaign day count for orders saved before this field existed
+     — the public site has no such legacy data, so no promoter dates means
+     no promoter days and no promoter charge yet. */
+  const promoterDays =
+    vehicle.promoterFromDate && vehicle.promoterToDate
+      ? getInclusiveDayCount(vehicle.promoterFromDate, vehicle.promoterToDate)
+      : 0;
+
+  const promoterCost = promoterChargePerDay * promoterDays * promoterQuantity;
 
   // RTO is a one-time flat charge per vehicle, from the matched package.
   const rtoCharges = toSafeNumber(vehicle.packageDetails?.rtoCharges);
@@ -146,6 +166,7 @@ export const priceVehicleLine = (
     rentalCost,
     promoterChargePerDay,
     promoterQuantity,
+    promoterDays,
     promoterCost,
     rtoCharges,
     rtoCost,
@@ -226,7 +247,12 @@ export const priceOrder = (
     0
   );
 
-  const subtotal = rentalTotal + promoterTotal + rtoTotal;
+  const brandingTotal = lines.reduce(
+    (total, line) => total + toSafeNumber(line.brandingCost),
+    0
+  );
+
+  const subtotal = rentalTotal + promoterTotal + rtoTotal + brandingTotal;
 
   /* No public entry point for either — kept so Review Order can show the
      same rows admin does and admin can fill them in without a shape change. */
@@ -246,6 +272,7 @@ export const priceOrder = (
     rentalTotal,
     promoterTotal,
     rtoTotal,
+    brandingTotal,
     subtotal,
     additionalCharges,
     discount,

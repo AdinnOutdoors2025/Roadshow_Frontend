@@ -270,4 +270,4 @@ function PricingBreakdown({ vehicle: v, formatINR }: { vehicle: VehicleConfig; f
       </div>
     </div>
   );
-}
+}                                                                                                                                                                                                                                                                                                                                              
