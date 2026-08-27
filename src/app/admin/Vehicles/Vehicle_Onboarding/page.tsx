@@ -3144,11 +3144,11 @@ const MediaPreviewCard = ({
             <>
               <button
                 type="button"
-                onClick={() => setShowPreview(!showPreview)}
+                onClick={() => setShowPreview(true)}
                 className="inline-flex items-center gap-1 text-xs bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg transition-colors"
               >
                 <Eye size={12} />
-                {showPreview ? "Hide" : "Preview"}
+                Preview
               </button>
 
               <button
@@ -3166,6 +3166,38 @@ const MediaPreviewCard = ({
       <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mt-2">
         {label}
       </p>
+
+      {showPreview && displayUrl && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setShowPreview(false)}
+        >
+          <div className="relative max-w-3xl max-h-[85vh] w-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setShowPreview(false)}
+              className="absolute -top-10 right-0 inline-flex items-center gap-1 text-xs bg-white/90 hover:bg-white text-gray-800 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <X size={12} />
+              Close
+            </button>
+            {accept === "video/*" ? (
+              <video
+                src={displayUrl}
+                className="w-full max-h-[85vh] rounded-lg bg-black"
+                controls
+                autoPlay
+              />
+            ) : (
+              <img
+                src={displayUrl}
+                alt={label}
+                className="w-full max-h-[85vh] object-contain rounded-lg bg-white"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
