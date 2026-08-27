@@ -477,7 +477,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
         <button
           onClick={handleSave}
           disabled={loading}
-          className="w-full py-2.5 rounded-lg bg-gray-400 hover:bg-gray-450 disabled:opacity-40 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 dark:bg-gray-700 dark:hover:bg-gray-600"
+          className="w-full py-2.5 rounded-lg bg-gray-700 hover:bg-gray-450 disabled:opacity-40 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 dark:bg-gray-700 dark:hover:bg-gray-600"
         >
           {loading ? (
             <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>

@@ -110,352 +110,366 @@ export default function ReviewOrderModal({
   return (
     <>
       {createPortal(
-    <div
-      className="rdsw_rvOverlay"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Review your roadshow booking"
-      data-lenis-prevent
-    >
-      <div
-        className="rdsw_rvBackdrop"
-        onClick={() => {
-          if (!submitting) onClose();
-        }}
-      />
+        <div
+          className="rdsw_rvOverlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Review your roadshow booking"
+          data-lenis-prevent
+        >
+          <div
+            className="rdsw_rvBackdrop"
+            onClick={() => {
+              if (!submitting) onClose();
+            }}
+          />
 
-      <div className="rdsw_rvShell">
-        {/* ── Header ──────────────────────────────────────────────────── */}
-        <header className="rdsw_rvHeader">
-          <div className="rdsw_rvHeaderCopy">
-            <h2 className="rdsw_rvTitle">Review Your Roadshow Booking</h2>
+          <div className="rdsw_rvShell">
+            {/* ── Header ──────────────────────────────────────────────────── */}
+            <header className="rdsw_rvHeader">
+              <div className="rdsw_rvHeaderCopy">
+                <h2 className="rdsw_rvTitle">Review Your Roadshow Booking</h2>
 
-            <p className="rdsw_rvSubtitle">
-              Please review your details before sending the request
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={submitting}
-            aria-label="Close"
-            className="rdsw_rvClose"
-          >
-            <X size={18} />
-          </button>
-        </header>
-
-        {/* ── Body ────────────────────────────────────────────────────── */}
-        <div className="rdsw_rvBody">
-          <div className="rdsw_rvLeft">
-            {mediaMissing && (
-              <div className="rdsw_rvWarning">
-                <TriangleAlert size={15} className="shrink-0" />
-
-                <span>
-                  Campaign media needs re-attaching — files are held in this
-                  tab only and were cleared by a page reload. Close this and
-                  add them again, or send without media.
-                </span>
+                <p className="rdsw_rvSubtitle">
+                  Please review your details before sending the request
+                </p>
               </div>
-            )}
 
-            {/* ── Quick facts ──────────────────────────────────────────── */}
-            <div className="rdsw_rvFactRow">
-              <article className="rdsw_rvFact">
-                <span className="rdsw_rvFactIcon rdsw_rvFactIconBlue">
-                  <User size={15} />
-                </span>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={submitting}
+                aria-label="Close"
+                className="rdsw_rvClose"
+              >
+                <X size={18} />
+              </button>
+            </header>
 
-                <div className="rdsw_rvFactBody">
-                  <p className="rdsw_rvFactLabel">Contact Person</p>
+            {/* ── Body ────────────────────────────────────────────────────── */}
+            <div className="rdsw_rvBody">
+              <div className="rdsw_rvLeft">
+                {mediaMissing && (
+                  <div className="rdsw_rvWarning">
+                    <TriangleAlert size={15} className="shrink-0" />
 
-                  <p className="rdsw_rvFactValue">{user?.name || "—"}</p>
-
-                  <p className="rdsw_rvFactMeta">
-                    {formatPhone(user?.phone)}
-                  </p>
-
-                  <p className="rdsw_rvFactMeta">{user?.email || "—"}</p>
-                </div>
-              </article>
-
-              <article className="rdsw_rvFact">
-                <span className="rdsw_rvFactIcon rdsw_rvFactIconIndigo">
-                  <CalendarDays size={15} />
-                </span>
-
-                <div className="rdsw_rvFactBody">
-                  <p className="rdsw_rvFactLabel">Campaign Dates</p>
-
-                  <p className="rdsw_rvFactValue">
-                    {formatDate(campaignStart, {
-                      pattern: "dd MMM yyyy",
-                      fallback: "—",
-                    })}
-                  </p>
-
-                  <p className="rdsw_rvFactMeta" style={{textAlign:'center'}}>to</p>
-
-                  <p className="rdsw_rvFactValue">
-                    {formatDate(campaignEnd, {
-                      pattern: "dd MMM yyyy",
-                      fallback: "—",
-                    })}
-                  </p>
-
-                  <p className="rdsw_rvFactHighlight" >
-                    {totalDays} {totalDays === 1 ? "Day" : "Days"}
-                  </p>
-                </div>
-              </article>
-
-              <article className="rdsw_rvFact">
-                <span className="rdsw_rvFactIcon rdsw_rvFactIconGreen">
-                  <MapPin size={15} />
-                </span>
-
-                <div className="rdsw_rvFactBody">
-                  <p className="rdsw_rvFactLabel">Campaign</p>
-
-                  <p className="rdsw_rvFactValue">
-                    {firstDetails?.campaignName?.trim() || "—"}
-                  </p>
-
-                  <p className="rdsw_rvFactMeta">
-                    {firstDetails ? resolveCampaignType(firstDetails) : "—"}
-                  </p>
-
-                  <p className="rdsw_rvFactMeta">
-                    {firstDetails?.campaignLocation?.trim() || "—"}
-                  </p>
-                </div>
-              </article>
-
-              {agencyBusiness && (
-                <article className="rdsw_rvFact">
-                  <span className="rdsw_rvFactIcon rdsw_rvFactIconGreen">
-                    <ShieldCheck size={15} />
-                  </span>
-
-                  <div className="rdsw_rvFactBody">
-                    <p className="rdsw_rvFactLabel">
-                      Agency · GST Verified
-                    </p>
-
-                    <p className="rdsw_rvFactValue">
-                      {agencyBusiness.business_name}
-                    </p>
-
-                    <p className="rdsw_rvFactMeta rdsw_rvMono">
-                      {agencyBusiness.gst_number}
-                    </p>
-
-                    <p className="rdsw_rvFactMeta rdsw_rvMono">
-                      PAN {agencyBusiness.business_pan || "—"}
-                    </p>
+                    <span>
+                      Campaign media needs re-attaching — files are held in this
+                      tab only and were cleared by a page reload. Close this and
+                      add them again, or send without media.
+                    </span>
                   </div>
-                </article>
-              )}
-            </div>
+                )}
 
-            {/* ── Selected vehicles ────────────────────────────────────── */}
-            <section className="rdsw_rvPanel">
-              <div className="rdsw_rvPanelHead">
-                <Truck size={17} />
+                {/* ── Quick facts ──────────────────────────────────────────── */}
+                <div className="rdsw_rvFactRow">
+                  <article className="rdsw_rvFact">
+                    <span className="rdsw_rvFactIcon rdsw_rvFactIconBlue">
+                      <User size={15} />
+                    </span>
 
-                <h3>Selected Vehicles</h3>
+                    <div className="rdsw_rvFactBody">
+                      <p className="rdsw_rvFactLabel">Contact Person</p>
 
-                <span className="rdsw_rvPanelCount">
-                  {rows.length} {rows.length === 1 ? "Vehicle" : "Vehicles"}
-                </span>
-              </div>
+                      <p className="rdsw_rvFactValue">{user?.name || "—"}</p>
 
-              <div className="rdsw_rvVehicleList">
-                {rows.map(({ vehicle, details, pricing: line, media }, index) => (
-                  <article
-                    key={String(vehicle.id)}
-                    className="rdsw_rvVehicleCard"
-                  >
-                    <div className="rdsw_rvVehicleMedia">
-                      <span className="rdsw_rvVehicleBadge">
-                        Vehicle {index + 1}
+                      <p className="rdsw_rvFactMeta">
+                        {formatPhone(user?.phone)}
+                      </p>
+
+                      <p className="rdsw_rvFactMeta">{user?.email || "—"}</p>
+                    </div>
+                  </article>
+
+                  <article className="rdsw_rvFact">
+                    <span className="rdsw_rvFactIcon rdsw_rvFactIconIndigo">
+                      <CalendarDays size={15} />
+                    </span>
+
+                    <div className="rdsw_rvFactBody">
+                      <p className="rdsw_rvFactLabel">Campaign Dates</p>
+
+                      <p className="rdsw_rvFactValue">
+                        {formatDate(campaignStart, {
+                          pattern: "dd MMM yyyy",
+                          fallback: "—",
+                        })}
+                      </p>
+
+                      <p className="rdsw_rvFactMeta" style={{ textAlign: 'center' }}>to</p>
+
+                      <p className="rdsw_rvFactValue">
+                        {formatDate(campaignEnd, {
+                          pattern: "dd MMM yyyy",
+                          fallback: "—",
+                        })}
+                      </p>
+
+                      <p className="rdsw_rvFactHighlight" >
+                        {totalDays} {totalDays === 1 ? "Day" : "Days"}
+                      </p>
+                    </div>
+                  </article>
+
+                  <article className="rdsw_rvFact">
+                    <span className="rdsw_rvFactIcon rdsw_rvFactIconGreen">
+                      <MapPin size={15} />
+                    </span>
+
+                    <div className="rdsw_rvFactBody">
+                      <p className="rdsw_rvFactLabel">Campaign</p>
+
+                      <p className="rdsw_rvFactValue">
+                        {firstDetails?.campaignName?.trim() || "—"}
+                      </p>
+
+                      <p className="rdsw_rvFactMeta">
+                        {firstDetails ? resolveCampaignType(firstDetails) : "—"}
+                      </p>
+
+                      <p className="rdsw_rvFactMeta">
+                        {firstDetails?.campaignLocation?.trim() || "—"}
+                      </p>
+                    </div>
+                  </article>
+
+                  {agencyBusiness && (
+                    <article className="rdsw_rvFact">
+                      <span className="rdsw_rvFactIcon rdsw_rvFactIconGreen">
+                        <ShieldCheck size={15} />
                       </span>
 
-                      <img
-                        src={vehicle.image || FALLBACK_VEHICLE_IMAGE}
-                        alt={vehicle.name}
-                        className="rdsw_rvVehicleImage"
-                        onError={(event) => {
-                          const image = event.currentTarget;
+                      <div className="rdsw_rvFactBody">
+                        <p className="rdsw_rvFactLabel">
+                          Agency · GST Verified
+                        </p>
 
-                          if (image.src !== FALLBACK_VEHICLE_IMAGE) {
-                            image.src = FALLBACK_VEHICLE_IMAGE;
-                          }
-                        }}
-                      />
-                    </div>
+                        <p className="rdsw_rvFactValue">
+                          {agencyBusiness.business_name}
+                        </p>
 
-                    <div className="rdsw_rvVehicleInfo">
-                      <div className="rdsw_rvVehicleTop">
-                        <h4 className="rdsw_rvVehicleName">
-                          {vehicle.name}
-                        </h4>
+                        <p className="rdsw_rvFactMeta rdsw_rvMono">
+                          {agencyBusiness.gst_number}
+                        </p>
 
-                        {/* Closes the popup and opens THIS vehicle's step
+                        <p className="rdsw_rvFactMeta rdsw_rvMono">
+                          PAN {agencyBusiness.business_pan || "—"}
+                        </p>
+                      </div>
+                    </article>
+                  )}
+                </div>
+
+                {/* ── Selected vehicles ────────────────────────────────────── */}
+                <section className="rdsw_rvPanel">
+                  <div className="rdsw_rvPanelHead">
+                    <Truck size={17} />
+
+                    <h3>Selected Vehicles</h3>
+
+                    <span className="rdsw_rvPanelCount">
+                      {rows.length} {rows.length === 1 ? "Vehicle" : "Vehicles"}
+                    </span>
+                  </div>
+
+                  <div className="rdsw_rvVehicleList">
+                    {rows.map(({ vehicle, details, pricing: line, media }, index) => (
+                     
+                      <article
+                        key={String(vehicle.id)}
+                        className="rdsw_rvVehicleCard"
+                      >
+                        <div className="rdsw_rvVehicleMedia">
+                          <span className="rdsw_rvVehicleBadge">
+                            Vehicle {index + 1}
+                          </span>
+
+                          <img
+                            src={vehicle.image || FALLBACK_VEHICLE_IMAGE}
+                            alt={vehicle.name}
+                            className="rdsw_rvVehicleImage"
+                            onError={(event) => {
+                              const image = event.currentTarget;
+
+                              if (image.src !== FALLBACK_VEHICLE_IMAGE) {
+                                image.src = FALLBACK_VEHICLE_IMAGE;
+                              }
+                            }}
+                          />
+                        </div>
+
+                        <div className="rdsw_rvVehicleInfo">
+                          <div className="rdsw_rvVehicleTop">
+                            <h4 className="rdsw_rvVehicleName">
+                              {vehicle.name}
+                            </h4>
+
+                            {/* Closes the popup and opens THIS vehicle's step
                             in the form behind it. The values are already in
                             the campaign draft, so the step renders prefilled
                             with no extra fetch or hand-off. */}
-                        <button
-                          type="button"
-                          onClick={() => onEditVehicle(vehicle.id)}
-                          disabled={submitting}
-                          aria-label={`Edit campaign details for ${vehicle.name}`}
-                          className="rdsw_rvVehicleEdit"
-                        >
-                          <Pencil size={12} />
-                          Edit
-                        </button>
-                      </div>
+                            <button
+                              type="button"
+                              onClick={() => onEditVehicle(vehicle.id)}
+                              disabled={submitting}
+                              aria-label={`Edit campaign details for ${vehicle.name}`}
+                              className="rdsw_rvVehicleEdit"
+                            >
+                              <Pencil size={12} />
+                              Edit
+                            </button>
+                          </div>
 
-                      <div className="rdsw_rvVehicleGrid">
-                        <div className="rdsw_rvStat">
-                          <span>
-                            <CalendarDays size={12} /> Start Date
-                          </span>
+                          <div className="rdsw_rvVehicleGrid">
+                            <div className="rdsw_rvStat">
+                              <span>
+                                <CalendarDays size={12} /> Start Date
+                              </span>
 
-                          <strong>
-                            {formatDate(vehicle.startDate, {
-                              pattern: "dd MMM yyyy",
-                              fallback: "—",
-                            })}
-                          </strong>
-                        </div>
+                              <strong>
+                                {formatDate(vehicle.startDate, {
+                                  pattern: "dd MMM yyyy",
+                                  fallback: "—",
+                                })}
+                              </strong>
+                            </div>
 
-                        <div className="rdsw_rvStat">
-                          <span>
-                            <CalendarDays size={12} /> End Date
-                          </span>
+                            <div className="rdsw_rvStat">
+                              <span>
+                                <CalendarDays size={12} /> End Date
+                              </span>
 
-                          <strong>
-                            {formatDate(vehicle.endDate, {
-                              pattern: "dd MMM yyyy",
-                              fallback: "—",
-                            })}
-                          </strong>
-                        </div>
+                              <strong>
+                                {formatDate(vehicle.endDate, {
+                                  pattern: "dd MMM yyyy",
+                                  fallback: "—",
+                                })}
+                              </strong>
+                            </div>
 
-                        <div className="rdsw_rvStat">
-                          <span>Duration</span>
+                            <div className="rdsw_rvStat">
+                              <span>Duration</span>
 
-                          <strong>
-                            {line.days} {line.days === 1 ? "Day" : "Days"}
-                          </strong>
-                        </div>
+                              <strong>
+                                {line.days} {line.days === 1 ? "Day" : "Days"}
+                              </strong>
+                            </div>
 
-                        <div className="rdsw_rvStat">
-                          <span>Rate Per Day</span>
+                            <div className="rdsw_rvStat">
+                              <span>Rate Per Day</span>
 
-                          <strong>
-                            {formatMoney(line.perDayRentalCost)}
-                          </strong>
-                        </div>
+                              <strong>
+                                {formatMoney(line.perDayRentalCost)}
+                              </strong>
+                            </div>
 
-                        <div className="rdsw_rvStat">
-                          <span>Quantity</span>
+                            <div className="rdsw_rvStat">
+                              <span>RTO Charges</span>
 
-                          <strong>
-                            {line.quantity}{" "}
-                            {line.quantity === 1 ? "Vehicle" : "Vehicles"}
-                          </strong>
-                        </div>
+                              <strong>
+                                {formatMoney(line.rtoCharges)}
+                              </strong>
+                            </div>
 
-                        <div className="rdsw_rvStat rdsw_rvStatAmount">
-                          <span>Amount</span>
+                            {line.brandingCost > 0 && (
+                              <div className="rdsw_rvStat">
+                                <span>Branding Costs</span>
+                                <strong>{formatMoney(line.brandingCost)}</strong>
+                              </div>
+                            )}
 
-                          <strong>{formatMoney(line.lineTotal)}</strong>
-                        </div>
-                      </div>
+                            <div className="rdsw_rvStat">
+                              <span>Quantity</span>
 
-                      <div className="rdsw_rvVehicleMeta">
-                        <p>
-                          <MapPin size={12} />
-                          <span>Campaign</span>
-                          {details.campaignName.trim() || "—"} ·{" "}
-                          {resolveCampaignType(details) || "—"} ·{" "}
-                          {details.campaignLocation.trim() || "—"}
-                        </p>
+                              <strong>
+                                {line.quantity}{" "}
+                                {line.quantity === 1 ? "Vehicle" : "Vehicles"}
+                              </strong>
+                            </div>
 
-                        {/* Same rule per vehicle: the promoter line only
+                            <div className="rdsw_rvStat rdsw_rvStatAmount">
+                              <span>Amount</span>
+
+                              <strong>{formatMoney(line.lineTotal)}</strong>
+                            </div>
+                          </div>
+
+                          <div className="rdsw_rvVehicleMeta">
+                            <p>
+                              <MapPin size={12} />
+                              <span>Campaign</span>
+                              {details.campaignName.trim() || "—"} ·{" "}
+                              {resolveCampaignType(details) || "—"} ·{" "}
+                              {details.campaignLocation.trim() || "—"}
+                            </p>
+
+                            {/* Same rule per vehicle: the promoter line only
                             appears when one was actually requested. */}
-                        {details.needPromoter && (
-                          <p>
-                            <Users size={12} />
-                            <span>Promoter</span>
-                            {resolvePromoterType(details)} ·{" "}
-                            {details.promoterGender || "Any"} ·{" "}
-                            {details.promoterLanguage.join(", ") || "—"} · Qty{" "}
-                            {line.promoterQuantity} · {line.promoterDays}{" "}
-                            {line.promoterDays === 1 ? "Day" : "Days"} ·{" "}
-                            {formatMoney(line.promoterCost)}
-                          </p>
-                        )}
+                            {details.needPromoter && (
+                              <p>
+                                <Users size={12} />
+                                <span>Promoter</span>
+                                {resolvePromoterType(details)} ·{" "}
+                                {details.promoterGender || "Any"} ·{" "}
+                                {details.promoterLanguage.join(", ") || "—"} · Qty{" "}
+                                {line.promoterQuantity} · {line.promoterDays}{" "}
+                                {line.promoterDays === 1 ? "Day" : "Days"} ·{" "}
+                                {formatMoney(line.promoterCost)}
+                              </p>
+                            )}
 
-                        <p>
-                          <ImageIcon size={12} />
-                          <span>Media</span>
-                          {media.images.length + media.videos.length === 0
-                            ? "No media attached"
-                            : [
-                                media.images.length
-                                  ? `${media.images.length} image${
-                                      media.images.length === 1 ? "" : "s"
+                            <p>
+                              <ImageIcon size={12} />
+                              <span>Media</span>
+                              {media.images.length + media.videos.length === 0
+                                ? "No media attached"
+                                : [
+                                  media.images.length
+                                    ? `${media.images.length} image${media.images.length === 1 ? "" : "s"
                                     }`
-                                  : "",
-                                media.videos.length
-                                  ? `${media.videos.length} video${
-                                      media.videos.length === 1 ? "" : "s"
+                                    : "",
+                                  media.videos.length
+                                    ? `${media.videos.length} video${media.videos.length === 1 ? "" : "s"
                                     }`
-                                  : "",
-                              ]
-                                .filter(Boolean)
-                                .join(" · ")}
-                        </p>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
+                                    : "",
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
 
-            {/* ── Notes ────────────────────────────────────────────────── */}
-            <div className="rdsw_rvNotes">
-              <Info size={16} className="shrink-0" />
+                {/* ── Notes ────────────────────────────────────────────────── */}
+                <div className="rdsw_rvNotes">
+                  <Info size={16} className="shrink-0" />
 
-              <div>
-                <p className="rdsw_rvNotesTitle">Important Notes</p>
+                  <div>
+                    <p className="rdsw_rvNotesTitle">Important Notes</p>
 
-                <p className="rdsw_rvNotesBody">
-                  The final quotation may vary depending on campaign requirements, branding, fabrication, logistics, permits, and applicable location-based RTO charges. Vehicle availability and final pricing will be confirmed by our team after reviewing your campaign request.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Pricing ───────────────────────────────────────────────── */}
-          <aside className="rdsw_rvRight">
-            <div className="rdsw_rvPricingCard">
-              <div className="rdsw_rvPricingHead">
-                <span className="rdsw_rvFactIcon rdsw_rvFactIconRed">
-                  <Receipt size={15} />
-                </span>
-
-                <h3>Pricing Summary</h3>
+                    <p className="rdsw_rvNotesBody">
+                      The final quotation may vary depending on campaign requirements, branding, fabrication, logistics, permits, and applicable location-based RTO charges. Vehicle availability and final pricing will be confirmed by our team after reviewing your campaign request.
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="rdsw_rvPricingRows">
-                {/* {rows.map(({ vehicle, pricing: line }, index) => (
+              {/* ── Pricing ───────────────────────────────────────────────── */}
+              <aside className="rdsw_rvRight">
+                <div className="rdsw_rvPricingCard">
+                  <div className="rdsw_rvPricingHead">
+                    <span className="rdsw_rvFactIcon rdsw_rvFactIconRed">
+                      <Receipt size={15} />
+                    </span>
+
+                    <h3>Pricing Summary</h3>
+                  </div>
+
+                  <div className="rdsw_rvPricingRows">
+                    {/* {rows.map(({ vehicle, pricing: line }, index) => (
                   <div
                     key={String(vehicle.id)}
                     className="rdsw_rvPricingRow"
@@ -465,79 +479,79 @@ export default function ReviewOrderModal({
                   </div>
                 ))} */}
 
-                <div className="rdsw_rvPricingRow rdsw_rvPricingDivider">
-                  <span>Vehicle Rental</span>
-                  <span>{formatMoney(pricing.rentalTotal)}</span>
-                </div>
+                    <div className="rdsw_rvPricingRow rdsw_rvPricingDivider">
+                      <span>Vehicle Rental</span>
+                      <span>{formatMoney(pricing.rentalTotal)}</span>
+                    </div>
 
-                {/* Only charges that actually apply are listed. A column of
+                    {/* Only charges that actually apply are listed. A column of
                     ₹0.00 rows reads as though something failed to calculate
                     — promoter charges appear when a promoter is requested,
                     and the same rule is applied to every other optional
                     line rather than just that one. */}
-                {pricing.promoterTotal > 0 && (
-                  <div className="rdsw_rvPricingRow">
-                    <span>Promoter Charges</span>
-                    <span>{formatMoney(pricing.promoterTotal)}</span>
-                  </div>
-                )}
+                    {pricing.promoterTotal > 0 && (
+                      <div className="rdsw_rvPricingRow">
+                        <span>Promoter Charges</span>
+                        <span>{formatMoney(pricing.promoterTotal)}</span>
+                      </div>
+                    )}
 
-                {pricing.brandingTotal > 0 && (
-                  <div className="rdsw_rvPricingRow">
-                    <span>Branding Cost</span>
-                    <span>{formatMoney(pricing.brandingTotal)}</span>
-                  </div>
-                )}
+                    {pricing.brandingTotal > 0 && (
+                      <div className="rdsw_rvPricingRow">
+                        <span>Branding Cost</span>
+                        <span>{formatMoney(pricing.brandingTotal)}</span>
+                      </div>
+                    )}
 
-                {pricing.additionalCharges + pricing.rtoTotal > 0 && (
-                  <div className="rdsw_rvPricingRow">
-                    <span>RTO Charges</span>
-                    <span>
-                      {formatMoney(
-                        pricing.additionalCharges + pricing.rtoTotal
-                      )}
-                    </span>
-                  </div>
-                )}
+                    {pricing.additionalCharges + pricing.rtoTotal > 0 && (
+                      <div className="rdsw_rvPricingRow">
+                        <span>RTO Charges</span>
+                        <span>
+                          {formatMoney(
+                            pricing.additionalCharges + pricing.rtoTotal
+                          )}
+                        </span>
+                      </div>
+                    )}
 
-                {pricing.discount > 0 && (
-                  <div className="rdsw_rvPricingRow">
-                    <span>Discount</span>
-                    <span>− {formatMoney(pricing.discount)}</span>
-                  </div>
-                )}
+                    {pricing.discount > 0 && (
+                      <div className="rdsw_rvPricingRow">
+                        <span>Discount</span>
+                        <span>− {formatMoney(pricing.discount)}</span>
+                      </div>
+                    )}
 
-                <div className="rdsw_rvPricingRow rdsw_rvPricingDivider">
-                  <span>Taxable Amount</span>
-                  <span>{formatMoney(pricing.taxableAmount)}</span>
-                </div>
-
-                {pricing.isIntraState ? (
-                  <>
-                    <div className="rdsw_rvPricingRow">
-                      <span>CGST ({pricing.cgstPercent}%)</span>
-                      <span>{formatMoney(pricing.cgstAmount)}</span>
+                    <div className="rdsw_rvPricingRow rdsw_rvPricingDivider">
+                      <span>Taxable Amount</span>
+                      <span>{formatMoney(pricing.taxableAmount)}</span>
                     </div>
 
-                    <div className="rdsw_rvPricingRow">
-                      <span>SGST ({pricing.sgstPercent}%)</span>
-                      <span>{formatMoney(pricing.sgstAmount)}</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="rdsw_rvPricingRow">
-                    <span>IGST ({pricing.igstPercent}%)</span>
-                    <span>{formatMoney(pricing.igstAmount)}</span>
+                    {pricing.isIntraState ? (
+                      <>
+                        <div className="rdsw_rvPricingRow">
+                          <span>CGST ({pricing.cgstPercent}%)</span>
+                          <span>{formatMoney(pricing.cgstAmount)}</span>
+                        </div>
+
+                        <div className="rdsw_rvPricingRow">
+                          <span>SGST ({pricing.sgstPercent}%)</span>
+                          <span>{formatMoney(pricing.sgstAmount)}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="rdsw_rvPricingRow">
+                        <span>IGST ({pricing.igstPercent}%)</span>
+                        <span>{formatMoney(pricing.igstAmount)}</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              <div className="rdsw_rvTotalRow">
-                <span>Estimated Total</span>
-                <strong>{formatMoney(pricing.grandTotal)}</strong>
-              </div>
+                  <div className="rdsw_rvTotalRow">
+                    <span>Estimated Total</span>
+                    <strong>{formatMoney(pricing.grandTotal)}</strong>
+                  </div>
 
-              {/* <div className="rdsw_rvCallout rdsw_rvCalloutRed">
+                  {/* <div className="rdsw_rvCallout rdsw_rvCalloutRed">
                 <p className="rdsw_rvCalloutTitle">
                   This is an estimated cost.
                 </p>
@@ -548,63 +562,63 @@ export default function ReviewOrderModal({
                 </p>
               </div> */}
 
-              <div className="rdsw_rvCallout rdsw_rvCalloutGreen">
-                <p className="rdsw_rvCalloutTitle">
-                  <ShieldCheck size={13} /> Secure &amp; Reliable
-                </p>
+                  <div className="rdsw_rvCallout rdsw_rvCalloutGreen">
+                    <p className="rdsw_rvCalloutTitle">
+                      <ShieldCheck size={13} /> Secure &amp; Reliable
+                    </p>
 
-                <p className="rdsw_rvCalloutBody">
-                  Your information is safe with us.
-                </p>
-              </div>
+                    <p className="rdsw_rvCalloutBody">
+                      Your information is safe with us.
+                    </p>
+                  </div>
 
-              <div className="rdsw_rvActions">
-                {/* Goes back to the first vehicle's step rather than just
+                  <div className="rdsw_rvActions">
+                    {/* Goes back to the first vehicle's step rather than just
                     dismissing the popup — "Edit Details" that only closes
                     the dialog leaves the customer to find the form again. */}
-                <button
-                  type="button"
-                  onClick={() => onEditVehicle(rows[0]?.vehicle?.id)}
-                  disabled={submitting}
-                  className="rdsw_rvEditBtn"
-                >
-                  <Pencil size={15} />
-                  Edit Details
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => onEditVehicle(rows[0]?.vehicle?.id)}
+                      disabled={submitting}
+                      className="rdsw_rvEditBtn"
+                    >
+                      <Pencil size={15} />
+                      Edit Details
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={onSubmit}
-                  disabled={submitting}
-                  className="rdsw_rvSendBtn"
-                >
-                  {submitting ? (
-                    <LoaderCircle size={15} className="animate-spin" />
-                  ) : (
-                    <Send size={15} />
-                  )}
+                    <button
+                      type="button"
+                      onClick={onSubmit}
+                      disabled={submitting}
+                      className="rdsw_rvSendBtn"
+                    >
+                      {submitting ? (
+                        <LoaderCircle size={15} className="animate-spin" />
+                      ) : (
+                        <Send size={15} />
+                      )}
 
-                  {submitting ? "Sending..." : "Send Request"}
-                </button>
-              </div>
+                      {submitting ? "Sending..." : "Send Request"}
+                    </button>
+                  </div>
 
-              <p className="rdsw_rvTerms">
-                By sending the request, you agree to our{" "}
-                <button
-                  type="button"
-                  className="rdsw_rvTermsLink"
-                  onClick={() => setTermsOpen(true)}
-                >
-                  Terms &amp; Conditions
-                </button>
-                .
-              </p>
+                  <p className="rdsw_rvTerms">
+                    By sending the request, you agree to our{" "}
+                    <button
+                      type="button"
+                      className="rdsw_rvTermsLink"
+                      onClick={() => setTermsOpen(true)}
+                    >
+                      Terms &amp; Conditions
+                    </button>
+                    .
+                  </p>
+                </div>
+              </aside>
             </div>
-          </aside>
-        </div>
-      </div>
-    </div>,
-    document.body
+          </div>
+        </div>,
+        document.body
       )}
 
       <TermsAndConditionsModal

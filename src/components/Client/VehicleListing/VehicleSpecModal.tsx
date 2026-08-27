@@ -72,6 +72,20 @@ const dimension = (
   return `${w} × ${h} ft`;
 };
 
+/* Screen Type must be exactly this, saved by Vehicle Onboarding —
+   never inferred from vehicle type/title/category. */
+const FLEX_LED_SCREEN_TYPE = "Flex + LED";
+
+/* Flex Height/Width only ever exist on a "Flex + LED" vehicle (see
+   Vehicle_Onboarding/page.tsx techSpecs.flexHeight/flexWidth), same "ft"
+   unit as every other onboarding screen dimension. Missing values are
+   dropped, not shown as blank rows. */
+const buildFlexRows = (specs: any): SpecRow[] =>
+  [
+    { label: "Flex Height", value: withUnit(specs?.flexHeight, "ft") },
+    { label: "Flex Width", value: withUnit(specs?.flexWidth, "ft") },
+  ].filter((row) => row.value);
+
 const resolution = (
   width: unknown,
   height: unknown
@@ -332,9 +346,18 @@ export default function VehicleSpecModal({
 }) {
   const [mounted, setMounted] = useState(false);
 
+  /* Only meaningful when the vehicle is "Flex + LED" — see isFlexLed below.
+     Reset to LED whenever a different vehicle's modal opens, so switching
+     vehicles never leaves the previous one's tab selected. */
+  const [activeTab, setActiveTab] = useState<"led" | "flex">("led");
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setActiveTab("led");
+  }, [vehicle?.id]);
 
   /* Hold the background still while the popup is open. This has to go through
      useScrollLock rather than setting body overflow here: ScrollSmoother drives
@@ -360,6 +383,11 @@ export default function VehicleSpecModal({
   if (!mounted || !vehicle) return null;
 
   const specGroups = buildSpecGroups(vehicle);
+
+  /* Saved Screen Type only — never Vehicle Type, title, or category. */
+  const isFlexLed =
+    text(vehicle?.techSpecs?.screenType) === FLEX_LED_SCREEN_TYPE;
+  const flexRows = isFlexLed ? buildFlexRows(vehicle?.techSpecs) : [];
 
   const rate = Number(vehicle.rate ?? 0);
 
@@ -425,8 +453,69 @@ export default function VehicleSpecModal({
           </div>
         </div>
 
+        {/* Only a "Flex + LED" vehicle gets tabs — every other Screen Type
+            keeps the single-view body exactly as it was. */}
+        {isFlexLed && (
+          <div className="RS_VehSpecTabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "led"}
+              className={`RS_VehSpecTab${
+                activeTab === "led" ? " RS_VehSpecTabActive" : ""
+              }`}
+              onClick={() => setActiveTab("led")}
+            >
+              LED
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "flex"}
+              className={`RS_VehSpecTab${
+                activeTab === "flex" ? " RS_VehSpecTabActive" : ""
+              }`}
+              onClick={() => setActiveTab("flex")}
+            >
+              Flex Branding
+            </button>
+          </div>
+        )}
+
         <div className="RS_VehSpecBody">
-          {specGroups.length === 0 ? (
+          {isFlexLed && activeTab === "flex" ? (
+            flexRows.length === 0 ? (
+              <p className="RS_VehSpecEmpty">
+                Flex branding dimensions for this vehicle are
+                being updated. Please contact us for the full
+                spec sheet.
+              </p>
+            ) : (
+              <section className="RS_VehSpecGroup">
+                <h3 className="RS_VehSpecGroupTitle">
+                  Flex Branding
+                </h3>
+
+                <dl className="RS_VehSpecList">
+                  {flexRows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="RS_VehSpecRow"
+                    >
+                      <dt className="RS_VehSpecLabel">
+                        {row.label}
+                      </dt>
+
+                      <dd className="RS_VehSpecValue">
+                        {row.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )
+          ) : specGroups.length === 0 ? (
             <p className="RS_VehSpecEmpty">
               Detailed specifications for this vehicle are
               being updated. Please contact us for the full

@@ -845,6 +845,40 @@ background: black;
   cursor: not-allowed;
 }
 
+/* Only rendered for a "Flex + LED" vehicle — see VehicleSpecModal.tsx */
+.RS_VehSpecTabs {
+  display: flex;
+  gap: 8px;
+
+  padding: 16px 24px 0;
+}
+
+.RS_VehSpecTab {
+  padding: 8px 16px;
+
+  border: 1px solid #ededed;
+  border-radius: 999px;
+
+  background: #fff;
+  color: #6b6b70;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.RS_VehSpecTab:hover {
+  border-color: #d8d8db;
+}
+
+.RS_VehSpecTabActive {
+  border-color: transparent;
+  background: #1b1b1d;
+  color: #fff;
+}
+
 .RS_VehSpecBody {
   max-height: 52vh;
 
