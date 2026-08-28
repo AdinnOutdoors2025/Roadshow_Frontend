@@ -27,6 +27,8 @@ import {
   HiOutlineShieldCheck
 } from "react-icons/hi";
 import { getToken } from "../../utils/auth";
+import { parseAdminJwtPayload, fetchLiveAllowedMenus } from "../../utils/permissionSync";
+import API_BASE from "../../../../baseurl";
 
 type NavItem = {
   name: string;
@@ -130,18 +132,10 @@ const navItems: NavItem[] = [
 
 const othersItems: NavItem[] = [];
 
-function parseJwtPayload(token: string): { role?: string; allowedMenus?: string[] } | null {
-  try {
-    return JSON.parse(atob(token.split(".")[1]));
-  } catch {
-    return null;
-  }
-}
-
 function computeAllowedMenus(): string[] | null {
   const token = getToken();
   if (!token) return [];
-  const payload = parseJwtPayload(token);
+  const payload = parseAdminJwtPayload(token);
   if (!payload) return [];
   if (payload.role === "admin") return null; // null = no restriction
   return payload.allowedMenus || [];
@@ -166,7 +160,22 @@ const AppSidebar: React.FC = () => {
   const [allowedMenus, setAllowedMenus] = useState<string[] | null>([]);
 
   useEffect(() => {
+    // JWT-embedded value first (instant, no flash), then re-fetch the live
+    // value from the backend so a permission change Admin just made shows up
+    // here without the user having to log out/in.
     setAllowedMenus(computeAllowedMenus());
+
+    const token = getToken();
+    if (!token) return;
+    const payload = parseAdminJwtPayload(token);
+    if (!payload || payload.role === "admin" || !payload.id) return;
+    let cancelled = false;
+    fetchLiveAllowedMenus(API_BASE, token, payload.id).then((live) => {
+      if (!cancelled && live) setAllowedMenus(live);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const menuKey = (nav: NavItem) => nav.key || nav.path || nav.name;

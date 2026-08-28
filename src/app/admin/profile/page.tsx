@@ -438,7 +438,7 @@ export default function ProfilePage() {
       <div className="mb-5">
         <PageBreadcrumb pageTitle="Edit Profile" />
 
-        <p className="-mt-2 text-[13px] font-normal text-gray-500 dark:text-gray-400">
+        <p className="-mt-2 text-[15px] font-normal text-gray-500 dark:text-gray-400">
           Manage your account information and update your login
           details.
         </p>
@@ -568,7 +568,7 @@ export default function ProfilePage() {
                 from-violet-500
                 via-purple-600
                 to-indigo-600
-                text-[30px]
+                text-[32px]
                 font-bold
                 tracking-wide
                 text-white
@@ -582,7 +582,7 @@ export default function ProfilePage() {
 
             <div>
               <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-[22px] font-bold text-gray-900 dark:text-white">
+                <h2 className="text-[26px] font-bold text-gray-900 dark:text-white">
                   {username || "Your Account"}
                 </h2>
 
@@ -596,7 +596,7 @@ export default function ProfilePage() {
                     bg-violet-50
                     px-3.5
                     py-1.5
-                    text-[12px]
+                    text-[14px]
                     font-semibold
                     text-violet-600
                     dark:border-violet-800
@@ -608,7 +608,7 @@ export default function ProfilePage() {
                 </span>
               </div>
 
-              <p className="mt-2 text-[14px] font-medium text-gray-600 dark:text-gray-300">
+              <p className="mt-2 text-[16px] font-medium text-gray-600 dark:text-gray-300">
                 {roleLabel === "Admin"
                   ? "Administrator"
                   : roleLabel}
@@ -645,11 +645,11 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                <p className="text-[14px] font-medium text-gray-500 dark:text-gray-400">
                   Email Address
                 </p>
 
-                <p className="mt-1 break-all text-[13px] font-semibold text-gray-900 dark:text-white">
+                <p className="mt-1 break-all text-[15px] font-semibold text-gray-900 dark:text-white">
                   {email || "—"}
                 </p>
               </div>
@@ -700,11 +700,11 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
+                <h3 className="text-[18px] font-bold text-gray-900 dark:text-white">
                   Basic Information
                 </h3>
 
-                <p className="mt-1 text-[12px] text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-[14px] text-gray-500 dark:text-gray-400">
                   Update your personal information and login
                   details.
                 </p>
@@ -735,7 +735,7 @@ export default function ProfilePage() {
                   placeholder="e.g. johndoe"
                   className={`${inputClass(
                     !!errors.username,
-                  )} !h-[46px] !rounded-lg`}
+                  )} !h-[46px] !rounded-lg !text-[15px]`}
                 />
               </FormField>
 
@@ -762,7 +762,7 @@ export default function ProfilePage() {
                   placeholder="e.g. johndoe@example.com"
                   className={`${inputClass(
                     !!errors.email,
-                  )} !h-[46px] !rounded-lg`}
+                  )} !h-[46px] !rounded-lg !text-[15px]`}
                 />
               </FormField>
             </div>
@@ -772,7 +772,9 @@ export default function ProfilePage() {
 
           <div className="my-7 border-t border-gray-200 dark:border-gray-800" />
 
-     
+          {/* =====================================================
+              CHANGE PASSWORD
+          ====================================================== */}
 
           <div>
             <div className="mb-7 flex items-center gap-4">
@@ -795,11 +797,11 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
+                <h3 className="text-[18px] font-bold text-gray-900 dark:text-white">
                   Change Password
                 </h3>
 
-                <p className="mt-1 text-[12px] text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-[14px] text-gray-500 dark:text-gray-400">
                   Leave blank if you don&apos;t want to change your
                   password.
                 </p>
@@ -838,7 +840,7 @@ export default function ProfilePage() {
                     placeholder="Enter new password"
                     className={`${inputClass(
                       !!errors.password,
-                    )} !h-[46px] !rounded-lg !pr-11`}
+                    )} !h-[46px] !rounded-lg !pr-11 !text-[15px]`}
                   />
 
                   <button
@@ -873,7 +875,7 @@ export default function ProfilePage() {
                 </div>
               </FormField>
 
-      
+              {/* Confirm Password */}
 
               <FormField
                 label="Confirm Password"
@@ -901,7 +903,7 @@ export default function ProfilePage() {
                     placeholder="Confirm new password"
                     className={`${inputClass(
                       !!errors.confirmPassword,
-                    )} !h-[46px] !rounded-lg !pr-11 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 dark:disabled:bg-gray-800/50`}
+                    )} !h-[46px] !rounded-lg !pr-11 !text-[15px] disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 dark:disabled:bg-gray-800/50`}
                   />
 
                   <button
@@ -942,7 +944,9 @@ export default function ProfilePage() {
               </FormField>
             </div>
 
-        
+            {/* =====================================================
+                PASSWORD REQUIREMENTS
+            ====================================================== */}
 
             <div
               className="
@@ -962,11 +966,11 @@ export default function ProfilePage() {
             >
               <div className="flex gap-3">
                 <div className="mt-[2px] text-violet-600 dark:text-violet-300">
-                  <FaShieldAlt className="h-[16px] w-[16px]" />
+                  <FaShieldAlt className="h-[17px] w-[17px]" />
                 </div>
 
                 <div>
-                  <p className="mb-3 text-[12px] font-semibold text-gray-800 dark:text-gray-200">
+                  <p className="mb-3 text-[14px] font-semibold text-gray-800 dark:text-gray-200">
                     Password Requirements:
                   </p>
 
@@ -989,7 +993,9 @@ export default function ProfilePage() {
             </div>
           </div>
 
-    
+          {/* =====================================================
+              SAVE BUTTON
+          ====================================================== */}
 
           <div className="mt-7 flex justify-end">
             <button
@@ -1005,7 +1011,7 @@ export default function ProfilePage() {
                 rounded-lg
                 px-7
                 py-3
-                text-[13px]
+                text-[15px]
                 font-semibold
                 transition-all
                 duration-200
@@ -1060,7 +1066,7 @@ export default function ProfilePage() {
                 </>
               ) : (
                 <>
-                  <FaSave className="h-[14px] w-[14px]" />
+                  <FaSave className="h-[15px] w-[15px]" />
                   Save Changes
                 </>
               )}
@@ -1072,7 +1078,6 @@ export default function ProfilePage() {
   );
 }
 
-
 function PasswordRequirement({
   children,
 }: {
@@ -1083,8 +1088,8 @@ function PasswordRequirement({
       <span
         className="
           flex
-          h-[17px]
-          w-[17px]
+          h-[18px]
+          w-[18px]
           shrink-0
           items-center
           justify-center
@@ -1096,10 +1101,10 @@ function PasswordRequirement({
           dark:text-violet-300
         "
       >
-        <FaCheck className="h-[9px] w-[9px]" />
+        <FaCheck className="h-[10px] w-[10px]" />
       </span>
 
-      <span className="text-[11.5px] text-gray-600 dark:text-gray-400">
+      <span className="text-[13px] text-gray-600 dark:text-gray-400">
         {children}
       </span>
     </div>
