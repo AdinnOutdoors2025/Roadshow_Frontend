@@ -938,18 +938,17 @@ export default function PipelineBoard() {
                 <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
               </div>
 
-              <select
+              <SearchableSelect
                 value={staffAdmins.some((s) => s.username === handlerName) ? handlerName : ""}
-                onChange={(e) => setHandlerName(e.target.value)}
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
-              >
-                <option value="">-- Select Operation User --</option>
-                {staffAdmins.map((s) => (
-                  <option key={s.username} value={s.username}>
-                    {s.username}
-                  </option>
-                ))}
-              </select>
+                onChange={setHandlerName}
+                placeholder="-- Select Operation User --"
+                className="w-full"
+                noResultsText="No users found"
+                options={staffAdmins.map((s) => ({
+                  value: s.username,
+                  label: s.username,
+                }))}
+              />
             </div>
 
             {handlerError && (

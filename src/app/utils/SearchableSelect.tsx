@@ -20,6 +20,7 @@ export default function SearchableSelect({
   placeholder = "Search...",
   disabled = false,
   className = "",
+  noResultsText = "No results found",
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -27,6 +28,7 @@ export default function SearchableSelect({
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  noResultsText?: string;
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -82,7 +84,7 @@ export default function SearchableSelect({
       {open && (
         <div className="absolute z-[70] left-0 right-0 top-[calc(100%+4px)] max-h-56 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg">
           {filtered.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-gray-400">No results found</div>
+            <div className="px-3 py-2 text-sm text-gray-400">{noResultsText}</div>
           ) : (
             filtered.map((o) => (
               <button
