@@ -49,6 +49,11 @@ export type VehicleHistoryVehicle = {
   message?: string;
   rows: VehicleHistoryPoint[];
   summary: VehicleHistorySummary;
+  /* Replacement chain for this slot, oldest → current (e.g. ["2345",
+     "7852"]) — present whenever this row's vehicle replaced an earlier one. */
+  originalVehicle?: string;
+  registrationChain?: string[];
+  wasReplaced?: boolean;
 };
 
 type VehicleHistoryResponse = {

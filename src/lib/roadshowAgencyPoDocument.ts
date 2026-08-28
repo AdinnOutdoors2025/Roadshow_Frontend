@@ -38,7 +38,9 @@ export const validatePoDocumentFile = (file: File): string | null => {
   const fileMB = file.size / (1024 * 1024);
   const maxMB = isImage ? PO_DOCUMENT_IMAGE_MAX_MB : PO_DOCUMENT_FILE_MAX_MB;
 
-  if (fileMB > maxMB) {
+  /* >= not > — "10MB" is the largest size still rejected, not the last
+     size still allowed. */
+  if (fileMB >= maxMB) {
     return `"${file.name}" is ${fileMB.toFixed(2)}MB — max allowed is ${maxMB}MB.`;
   }
 

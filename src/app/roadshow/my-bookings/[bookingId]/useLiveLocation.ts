@@ -27,6 +27,13 @@ export type LiveVehicle = {
   vehicleIndex?: number;
   vehicleName?: string;
   message?: string;
+  /* Replacement chain for this slot, oldest → current (e.g. ["2345",
+     "7852"]) — present whenever the backend resolved more than one
+     onRoadExecutionArray entry into this slot. Absent/undefined for a
+     slot that was never replaced. */
+  originalVehicle?: string;
+  registrationChain?: string[];
+  wasReplaced?: boolean;
 };
 
 export function useLiveLocation(
@@ -87,6 +94,8 @@ export function useLiveLocation(
             isStale: vehicle.isStale,
             unavailable: vehicle.unavailable,
             pending: vehicle.pending,
+            wasReplaced: vehicle.wasReplaced,
+            registrationChain: vehicle.registrationChain,
           })),
         );
 

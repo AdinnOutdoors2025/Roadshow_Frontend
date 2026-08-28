@@ -1488,6 +1488,42 @@ function DocumentsTab({
     }
   };
 
+  // ── Agency PO document correction — the agency's own self-uploaded PO,
+  // a separate document from the sales-side one above ──────────────────
+  const agencyPODocument: any = (order as any).agencyPODocument;
+  const agencyPODocumentHistory: any[] = (order as any).agencyPODocumentHistory || [];
+  const [showAgencyPoEdit, setShowAgencyPoEdit] = useState(false);
+  const [showAgencyPoHistory, setShowAgencyPoHistory] = useState(false);
+  const [agencyPoEditFile, setAgencyPoEditFile] = useState<File | null>(null);
+  const [agencyPoEditReason, setAgencyPoEditReason] = useState("");
+  const [agencyPoEditSaving, setAgencyPoEditSaving] = useState(false);
+
+  const handleAgencyPoDocumentReplace = async () => {
+    if (!agencyPoEditFile) { toast.error("Select the replacement PO document"); return; }
+    const sizeErr = validateFileSize(agencyPoEditFile);
+    if (sizeErr) { toast.error(sizeErr); return; }
+    if (!agencyPoEditReason.trim()) { toast.error("Reason for replacement is required"); return; }
+    setAgencyPoEditSaving(true);
+    try {
+      const token = getToken();
+      const fd = new FormData();
+      fd.append("poDocument", agencyPoEditFile);
+      fd.append("reason", agencyPoEditReason.trim());
+      await axios.patch(`${API_BASE}sales/pipeline/${order._id}/agency-po-document`, fd, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Agency PO document replaced");
+      setShowAgencyPoEdit(false);
+      setAgencyPoEditFile(null);
+      setAgencyPoEditReason("");
+      await onRefresh();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Failed to replace the agency PO document");
+    } finally {
+      setAgencyPoEditSaving(false);
+    }
+  };
+
   const handlePoUpload = async () => {
     if (!poFile) { toast.error("Please select a PO document"); return; }
     const sizeErr = validateFileSize(poFile);
@@ -1663,6 +1699,128 @@ function DocumentsTab({
           </div>
         ))
       )}
+
+      {/* Agency's own self-uploaded PO document — separate from the
+          sales-side "PO Documents" section above (closedWonArray), and
+          always shown (even with none yet) so admin can attach/replace it
+          without waiting for a booking that already has one. */}
+      <div className="rounded-xl border overflow-hidden border-blue-100 dark:border-blue-900/40">
+        <div className="px-4 py-2.5 border-b bg-blue-50 dark:bg-blue-900/20">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+            Agency PO Document
+          </h3>
+        </div>
+        <div className="p-3 space-y-2 bg-white dark:bg-gray-900">
+          {agencyPODocument?.url ? (
+            <DocItem
+              docPath={agencyPODocument.url}
+              label={agencyPODocument.originalName || "Agency PO Document"}
+              by={agencyPODocument.storageType === "space" ? "Agency · stored in Spaces" : "Agency · stored locally"}
+              at={agencyPODocument.uploadedAt}
+            />
+          ) : (
+            <p className="text-sm text-gray-400 px-1">No agency PO document uploaded yet.</p>
+          )}
+
+          <div className="pt-1">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAgencyPoEdit((v) => !v)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-[12px] font-semibold"
+              >
+                <FileEdit size={12} /> {agencyPODocument?.url ? "Replace PO Document" : "Upload PO Document"}
+              </button>
+              {agencyPODocumentHistory.length > 0 && (
+                <button
+                  onClick={() => setShowAgencyPoHistory((v) => !v)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-[12px] font-semibold"
+                >
+                  <History size={12} /> Edit History ({agencyPODocumentHistory.length})
+                </button>
+              )}
+            </div>
+
+            {showAgencyPoHistory && agencyPODocumentHistory.length > 0 && (
+              <div className="mt-3 space-y-2.5">
+                {agencyPODocumentHistory.slice().reverse().map((h: any, hi: number) => (
+                  <div key={h._id} className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-900/10 p-2.5">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[11px] font-bold">
+                        <FileEdit size={10} /> Correction #{agencyPODocumentHistory.length - hi}
+                      </span>
+                      <span className="text-[11px] text-gray-400">{fmtDatetime(h.editedAt)}</span>
+                    </div>
+                    {h.previousDocument?.url && (
+                      <DocItem
+                        docPath={h.previousDocument.url}
+                        label={`Previous: ${h.previousDocument.originalName || "PO Document"}`}
+                      />
+                    )}
+                    <div className="mt-1.5">
+                      <DocItem
+                        docPath={h.newDocument.url}
+                        label={`New: ${h.newDocument.originalName || "PO Document"}`}
+                        by={h.editedBy}
+                        at={h.editedAt}
+                      />
+                    </div>
+                    <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-2 flex items-start gap-1">
+                      <StickyNote size={12} className="mt-0.5 flex-shrink-0 text-gray-400" />
+                      <span><span className="font-semibold text-gray-700 dark:text-gray-300">Reason:</span> <span className="italic">{h.reason}</span></span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showAgencyPoEdit && (
+              <div className="mt-3 space-y-3 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/40 dark:bg-blue-900/10 p-3">
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                    <Upload size={11} />PO Document
+                  </p>
+                  <DragDropFile
+                    file={agencyPoEditFile}
+                    onFile={setAgencyPoEditFile}
+                    onRemove={() => setAgencyPoEditFile(null)}
+                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
+                    label="Click or drag to upload the PO document"
+                  />
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                    <StickyNote size={11} /> Reason for {agencyPODocument?.url ? "Replacement" : "Upload"}
+                  </p>
+                  <textarea
+                    value={agencyPoEditReason}
+                    onChange={(e) => setAgencyPoEditReason(e.target.value)}
+                    placeholder="e.g. Agency sent a corrected PO..."
+                    rows={2}
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleAgencyPoDocumentReplace}
+                    disabled={agencyPoEditSaving}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-[12px] font-semibold transition-all"
+                  >
+                    <CheckCircle2 size={13} /> {agencyPoEditSaving ? "Saving..." : "Save Changes"}
+                  </button>
+                  <button
+                    onClick={() => { setShowAgencyPoEdit(false); setAgencyPoEditFile(null); setAgencyPoEditReason(""); }}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-[12px] font-semibold transition-all"
+                  >
+                    <X size={13} /> Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

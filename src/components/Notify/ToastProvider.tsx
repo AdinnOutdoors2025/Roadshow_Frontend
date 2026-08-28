@@ -9,7 +9,11 @@ export default function ToastProvider() {
       reverseOrder={false}
       gutter={10}
       containerStyle={{
-        zIndex: 99999,
+        /* Higher than any modal/overlay in the app (ReviewOrderModal, the
+           campaign-details popups, etc. all sit at 99999–100000) so a toast
+           fired while a popup is open — e.g. the PO document size-limit
+           error — is never painted behind it. */
+        zIndex: 2147483000,
       }}
       toastOptions={{
         duration: 3500,

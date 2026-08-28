@@ -165,6 +165,22 @@ function relativeTime(value?: string | null) {
   return formatDateTime(value);
 }
 
+/* "2345 → 7852" when a slot's vehicle has been replaced (registrationChain
+   has more than one link), otherwise just the current registration. */
+function formatVehicleChain(vehicle?: {
+  registrationNumber?: string | null;
+  registrationChain?: string[];
+  wasReplaced?: boolean;
+}) {
+  if (!vehicle) return "Registration unavailable";
+
+  if (vehicle.wasReplaced && vehicle.registrationChain?.length) {
+    return vehicle.registrationChain.join(" → ");
+  }
+
+  return vehicle.registrationNumber || "Registration unavailable";
+}
+
 function statusClass(status?: string) {
   const key = String(status || "Unknown").toLowerCase();
 
@@ -1109,9 +1125,9 @@ function TrackingPageContent({
                           <small>
                             {activeGroupVehicles[activeVehicleSlot].pending
                               ? "Not yet assigned"
-                              : activeGroupVehicles[activeVehicleSlot]
-                                  .registrationNumber ||
-                                "Registration unavailable"}
+                              : formatVehicleChain(
+                                  activeGroupVehicles[activeVehicleSlot],
+                                )}
                           </small>
                           {activeGroupVehicles[activeVehicleSlot].pending ? (
                             <span className="RST_VehicleState RST_VehicleState--pending">
@@ -1576,7 +1592,7 @@ function TrackingPageContent({
           </section>
         )}
 
-        <section className="RST_ReportSection">
+        {/* <section className="RST_ReportSection">
           <div className="RST_ReportTopline">
             <div className="RST_SectionHeading">
               <div>
@@ -1757,7 +1773,7 @@ function TrackingPageContent({
               <p>Reports will appear here automatically when they are available.</p>
             </div>
           )}
-        </section>
+        </section> */}
 
         <section className="RST_BottomGrid">
           <div className="RST_ActivityCard">
