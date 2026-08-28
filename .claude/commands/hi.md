@@ -47,3 +47,10 @@ Files likely to modify today
 
 5. If multiple questions are needed, every clarification question should be in Tanglish.
 
+# Important
+1. Do not change existing status flow, Project Code logic, Operation Handling workflow, campaign dates, API behavior, or completed-order logic unless necessary.
+2. Prefer fixing the shared percentage display/calculation logic instead of duplicating conditions.
+3. Check all status cases and avoid regressions.
+4. Make only necessary changes.
+5. First inspect the existing progress/status logic, then implement directly.
+6. Keep token usage low; don't explain unrelated code or refactor unrelated files.

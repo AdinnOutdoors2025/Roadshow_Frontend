@@ -58,6 +58,7 @@ import {
   writeCampaignDraft,
 } from "@/lib/roadshowCampaignDraft";
 import { submitClientRequest } from "@/lib/roadshowRequestSubmit";
+import { uploadAgencyPoDocument } from "@/lib/roadshowAgencyPoDocument";
 import {
   formatMoney,
   priceOrder,
@@ -186,6 +187,11 @@ export default function CampaignDetailsPage() {
   const { user, openAuth, authLoading, isAgency, logoutUser } = useAuth();
 
   const agencyBusiness = isAgency ? user?.business || null : null;
+
+  /* Agency-only, optional — uploaded after the request is created (see
+     roadshowAgencyPoDocument.ts for why it can't ride along with the main
+     submit). Staged here so ReviewOrderModal stays presentational. */
+  const [poDocumentFile, setPoDocumentFile] = useState<File | null>(null);
 
   const [vehicles, setVehicles] = useState<RoadshowVehicle[]>([]);
   const [selectedVehicles, setSelectedVehicles] = useState([]);
@@ -989,6 +995,25 @@ export default function CampaignDetailsPage() {
         JSON.stringify(created)
       );
 
+      /* Optional and best-effort: the booking itself already succeeded, so a
+         failed PO upload is toasted separately rather than failing the whole
+         submission. */
+      if (isAgency && poDocumentFile) {
+        try {
+          await uploadAgencyPoDocument(created._id, poDocumentFile);
+        } catch (poError) {
+          console.error("PO document upload error:", poError);
+
+          toast.error(
+            poError instanceof Error
+              ? poError.message
+              : "Booking submitted, but the PO document could not be uploaded."
+          );
+        }
+      }
+
+      setPoDocumentFile(null);
+
       /* The request is placed — neither the cart nor the draft is needed */
       clearCart(user?._id);
       clearCampaignDraft(user?._id);
@@ -1030,6 +1055,7 @@ export default function CampaignDetailsPage() {
     user,
     isAgency,
     agencyBusiness,
+    poDocumentFile,
     rows,
     pricing,
     openAuth,
@@ -1451,11 +1477,14 @@ export default function CampaignDetailsPage() {
         rows={rows}
         pricing={pricing}
         user={user}
+        isAgency={isAgency}
         agencyBusiness={agencyBusiness}
         mediaMissing={hasPendingMedia(draft)}
         submitting={submitting}
         onSubmit={handleSubmitOrder}
         onEditVehicle={handleEditVehicle}
+        poDocumentFile={poDocumentFile}
+        onPoDocumentChange={setPoDocumentFile}
       />
 
       {/* Shared picker — same component and props the CampaignRequest page

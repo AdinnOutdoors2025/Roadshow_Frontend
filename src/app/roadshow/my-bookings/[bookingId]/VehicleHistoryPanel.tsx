@@ -420,6 +420,7 @@ function HistoryVehicle({
             <div
               ref={tableWrapRef}
               className="RST_HistoryTableWrap"
+              data-lenis-prevent
               onPointerDown={startTableDrag}
               onPointerMove={moveTableDrag}
               onPointerUp={stopTableDrag}

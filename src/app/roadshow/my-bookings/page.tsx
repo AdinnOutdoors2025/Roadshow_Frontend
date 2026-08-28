@@ -660,7 +660,7 @@ function getBookingStatusLabel(booking: Booking) {
   );
 }
 
-function getCampaignProgress(booking: Booking) {
+function getCampaignProgress(booking: Booking): number | null {
   if (booking.onRoad?.totalDays) {
     const day = Math.max(
       0,
@@ -675,28 +675,11 @@ function getCampaignProgress(booking: Booking) {
     );
   }
 
-  const stages = Object.entries(JOURNEY_STAGE_COPY);
-
-  if (stages.length <= 1) return 0;
-
-  const keyIndex = stages.findIndex(
-    ([key]) => key === booking.journeyStage.key,
-  );
-
-  const stageIndex =
-    keyIndex >= 0
-      ? keyIndex
-      : Math.max(
-        0,
-        Math.min(
-          Number(booking.journeyStage.index || 0),
-          stages.length - 1,
-        ),
-      );
-
-  return Math.round(
-    (stageIndex / (stages.length - 1)) * 100,
-  );
+  // Before the campaign goes On Road there is no execution percentage to
+  // show — surfacing a stage-based percentage here is what caused the
+  // pre-campaign 20%/30%/40%/50% that then appeared to "drop" once real
+  // execution began. Callers should fall back to the status label instead.
+  return null;
 }
 
 function canTrackCampaign(booking: Booking) {
@@ -866,7 +849,9 @@ function BookingRow({
 
       <div className="RS_BookingCell RS_RowProgressCell">
         <span className="RS_CellLabel">Progress</span>
-        <strong className="RS_CellPrimary">{progress}%</strong>
+        <strong className="RS_CellPrimary">
+          {progress === null ? getBookingStatusLabel(booking) : `${progress}%`}
+        </strong>
       </div>
 
       <button
@@ -1282,12 +1267,14 @@ function CampaignSummaryCard({ booking }: { booking: Booking }) {
       </div>
 
       <div className="RS_ProgressNumber">
-        <strong>{progress}%</strong>
+        <strong>
+          {progress === null ? getBookingStatusLabel(booking) : `${progress}%`}
+        </strong>
         <span>Progress</span>
       </div>
 
       <div className="RS_ProgressBar">
-        <span style={{ width: `${progress}%` }} />
+        <span style={{ width: `${progress ?? 0}%` }} />
       </div>
 
       <div className="RS_SummaryMetrics">
