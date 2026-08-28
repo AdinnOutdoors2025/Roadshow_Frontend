@@ -1,7 +1,4 @@
 
-
-
-
 /* eslint-disable */
 // @ts-nocheck
 "use client";
@@ -680,8 +677,8 @@ export default function PipelineBoard() {
   // ── Apply filters to grouped data ────────────────────────────────
   const filteredGrouped = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const from = dateFrom ? new Date(dateFrom + "T00:00:00") : null;
-    const to = dateTo ? new Date(dateTo + "T23:59:59") : null;
+    const from = dateFrom || null;
+    const to = dateTo || null;
     const min = minAmount !== "" ? Number(minAmount) : null;
     const max = maxAmount !== "" ? Number(maxAmount) : null;
 
@@ -711,10 +708,13 @@ export default function PipelineBoard() {
       if (focOnly && !orderHasPendingFoc(order)) return false;
 
       if (from || to) {
-        const created = order.createdAt ? new Date(order.createdAt) : null;
-        if (!created) return false;
-        if (from && created < from) return false;
-        if (to && created > to) return false;
+        const savedAt = order.projectCodeArray?.[0]?.savedAt;
+        if (!savedAt) return false;
+        const d = new Date(savedAt);
+        if (isNaN(d.getTime())) return false;
+        const createdKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        if (from && createdKey < from) return false;
+        if (to && createdKey > to) return false;
       }
 
 
