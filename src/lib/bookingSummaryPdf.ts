@@ -80,7 +80,7 @@ export type BookingSummaryPdfData = {
  *  the public vehicle inventory. Falls back to the generic vehicle icon
  *  per line — offline, a deleted vehicle, or a missing vehicleId all
  *  degrade to that rather than failing the whole PDF. */
-async function resolveVehicleImages(vehicleTypes: PdfVehicleType[]): Promise<string[]> {
+export async function resolveVehicleImages(vehicleTypes: PdfVehicleType[]): Promise<string[]> {
   if (!vehicleTypes?.length) return [];
 
   try {
