@@ -1687,39 +1687,6 @@ function DocumentsTab({
                     )}
                   </div>
 
-                  {showPoEditHistory && poDocumentEditHistory.length > 0 && (
-                    <div className="mt-3 space-y-2.5">
-                      {poDocumentEditHistory.slice().reverse().map((h: any, hi: number) => (
-                        <div key={h._id} className="rounded-xl border border-amber-100 dark:border-amber-900/40 bg-amber-50/30 dark:bg-amber-900/10 p-2.5">
-                          <div className="flex items-center justify-between gap-2 mb-2">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold">
-                              <FileEdit size={10} /> Correction #{poDocumentEditHistory.length - hi}
-                            </span>
-                            <span className="text-[11px] text-gray-400">{fmtDatetime(h.editedAt)}</span>
-                          </div>
-                          {h.previousDocument && (
-                            <div className="mb-1.5">
-                              <DocItem
-                                docPath={h.previousDocument}
-                                label="Previous"
-                              />
-                            </div>
-                          )}
-                          <DocItem
-                            docPath={h.document}
-                            label="New"
-                            by={salesPoEditAttribution(h)}
-                            at={h.editedAt}
-                          />
-                          <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-2 flex items-start gap-1">
-                            <StickyNote size={12} className="mt-0.5 flex-shrink-0 text-gray-400" />
-                            <span><span className="font-semibold text-gray-700 dark:text-gray-300">Reason:</span> <span className="italic">{h.reason}</span></span>
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
                   {showPoEdit && !hasProjectCode && (
                     <div className="mt-3 space-y-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10 p-3">
                       <div>
@@ -1765,6 +1732,39 @@ function DocumentsTab({
                       </div>
                     </div>
                   )}
+
+                  {showPoEditHistory && poDocumentEditHistory.length > 0 && (
+                    <div className="mt-3 space-y-2.5">
+                      {poDocumentEditHistory.slice().reverse().map((h: any, hi: number) => (
+                        <div key={h._id} className="rounded-xl border border-amber-100 dark:border-amber-900/40 bg-amber-50/30 dark:bg-amber-900/10 p-2.5">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold">
+                              <FileEdit size={10} /> Correction #{poDocumentEditHistory.length - hi}
+                            </span>
+                            <span className="text-[11px] text-gray-400">{fmtDatetime(h.editedAt)}</span>
+                          </div>
+                          {h.previousDocument && (
+                            <div className="mb-1.5">
+                              <DocItem
+                                docPath={h.previousDocument}
+                                label="Previous"
+                              />
+                            </div>
+                          )}
+                          <DocItem
+                            docPath={h.document}
+                            label="New"
+                            by={salesPoEditAttribution(h)}
+                            at={h.editedAt}
+                          />
+                          <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-2 flex items-start gap-1">
+                            <StickyNote size={12} className="mt-0.5 flex-shrink-0 text-gray-400" />
+                            <span><span className="font-semibold text-gray-700 dark:text-gray-300">Reason:</span> <span className="italic">{h.reason}</span></span>
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1796,7 +1796,7 @@ function DocumentsTab({
 
           <div className="pt-1">
             <div className="flex items-center gap-2">
-              {!isEnquiryStage && (
+              {!isEnquiryStage && !hasProjectCode && (
                 <button
                   onClick={() => setShowAgencyPoEdit((v) => !v)}
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-[12px] font-semibold"
@@ -1814,42 +1814,7 @@ function DocumentsTab({
               )}
             </div>
 
-            {showAgencyPoHistory && agencyPODocumentHistory.length > 0 && (
-              <div className="mt-3 space-y-2.5">
-                {agencyPODocumentHistory.slice().reverse().map((h: any, hi: number) => (
-                  <div key={h._id} className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-900/10 p-2.5">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[11px] font-bold">
-                        <FileEdit size={10} /> Correction #{agencyPODocumentHistory.length - hi}
-                      </span>
-                      <span className="text-[11px] text-gray-400">{fmtDatetime(h.editedAt)}</span>
-                    </div>
-                    {resolveAgencyPoUrl(h.previousDocument) && (
-                      <DocItem
-                        docPath={resolveAgencyPoUrl(h.previousDocument)}
-                        label={`Previous: ${h.previousDocument.originalName || "PO Document"}`}
-                        by={agencyPoAttribution(h.previousDocument)}
-                        at={h.previousDocument.uploadedAt}
-                      />
-                    )}
-                    <div className="mt-1.5">
-                      <DocItem
-                        docPath={resolveAgencyPoUrl(h.newDocument)}
-                        label={`New: ${h.newDocument.originalName || "PO Document"}`}
-                        by={`Replaced by ${h.editedBy || "Admin"} (${AGENCY_PO_ROLE_LABEL[h.editedByRole] || "Admin"})`}
-                        at={h.editedAt}
-                      />
-                    </div>
-                    <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-2 flex items-start gap-1">
-                      <StickyNote size={12} className="mt-0.5 flex-shrink-0 text-gray-400" />
-                      <span><span className="font-semibold text-gray-700 dark:text-gray-300">Reason:</span> <span className="italic">{h.reason}</span></span>
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {showAgencyPoEdit && (
+            {showAgencyPoEdit && !isEnquiryStage && !hasProjectCode && (
               <div className="mt-3 space-y-3 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/40 dark:bg-blue-900/10 p-3">
                 <div>
                   <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
@@ -1892,6 +1857,41 @@ function DocumentsTab({
                     <X size={13} /> Cancel
                   </button>
                 </div>
+              </div>
+            )}
+
+            {showAgencyPoHistory && agencyPODocumentHistory.length > 0 && (
+              <div className="mt-3 space-y-2.5">
+                {agencyPODocumentHistory.slice().reverse().map((h: any, hi: number) => (
+                  <div key={h._id} className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-900/10 p-2.5">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[11px] font-bold">
+                        <FileEdit size={10} /> Correction #{agencyPODocumentHistory.length - hi}
+                      </span>
+                      <span className="text-[11px] text-gray-400">{fmtDatetime(h.editedAt)}</span>
+                    </div>
+                    {resolveAgencyPoUrl(h.previousDocument) && (
+                      <DocItem
+                        docPath={resolveAgencyPoUrl(h.previousDocument)}
+                        label={`Previous: ${h.previousDocument.originalName || "PO Document"}`}
+                        by={agencyPoAttribution(h.previousDocument)}
+                        at={h.previousDocument.uploadedAt}
+                      />
+                    )}
+                    <div className="mt-1.5">
+                      <DocItem
+                        docPath={resolveAgencyPoUrl(h.newDocument)}
+                        label={`New: ${h.newDocument.originalName || "PO Document"}`}
+                        by={`Replaced by ${h.editedBy || "Admin"} (${AGENCY_PO_ROLE_LABEL[h.editedByRole] || "Admin"})`}
+                        at={h.editedAt}
+                      />
+                    </div>
+                    <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-2 flex items-start gap-1">
+                      <StickyNote size={12} className="mt-0.5 flex-shrink-0 text-gray-400" />
+                      <span><span className="font-semibold text-gray-700 dark:text-gray-300">Reason:</span> <span className="italic">{h.reason}</span></span>
+                    </p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -2094,6 +2094,19 @@ export default function SalesDetailDrawer({
       : []),
   ];
 
+
+  // When the drawer is (re)opened for a different order, pick the initial
+  // tab — an Enquiry order that already has a client/agency PO opens
+  // straight on PO Document so staff see it immediately; everything else
+  // defaults to Overview. Keyed only on order._id, so this never re-fires
+  // for the SAME order (e.g. after a manual stage move mid-session), which
+  // would otherwise yank the user back off a tab they picked themselves.
+  useEffect(() => {
+    const isQualifyingEnquiryPO =
+      order.salesPipelineStatus === "enquiry" && !!(order as any).agencyPODocument?.url;
+    setActiveTab(isQualifyingEnquiryPO ? "documents" : "overview");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order._id]);
 
   useEffect(() => {
 
