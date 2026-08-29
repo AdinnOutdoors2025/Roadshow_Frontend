@@ -167,7 +167,7 @@ function DocItem({ docPath, label, notes, by, at }: {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{label}</p>
           {notes && <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1"><StickyNote size={15} /> {notes}</p>}
-          {by && <p className="text-[13px] text-gray-400 mt-0.5">By {by} · {fmtDatetime(at)}</p>}
+          {by && <p className="text-[13px] text-gray-400 mt-0.5"> {by} · {fmtDatetime(at)}</p>}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button onClick={() => setPreview(true)}
@@ -1440,6 +1440,48 @@ function CommentsTab({ order, onRefresh }: { order: SalesOrder; onRefresh: () =>
 }
 
 
+// Agency PO attribution — "agency" is the client/agency's own upload,
+// "admin"/"sales"/"operation" is a staff replacement. Missing `source` on an
+// old document (saved before this field existed) safely falls back to
+// "agency" (the only source that existed back then).
+const AGENCY_PO_ROLE_LABEL: Record<string, string> = {
+  agency: "Agency/Client",
+  admin: "Admin",
+  sales: "Sales",
+  operation: "Operation",
+};
+
+// Old agencyPODocument snapshots saved before `url` was always guaranteed
+// may only carry `fileName` + `storageType`. For a locally-stored file that
+// path is reconstructible (same folder convention as the upload utility);
+// a missing Spaces `url` can't be rebuilt without the CDN base, so those
+// just render with no working link — same as if the field were absent.
+function resolveAgencyPoUrl(doc: any): string {
+  if (!doc) return "";
+  if (doc.url) return doc.url;
+  if (doc.fileName && doc.storageType !== "space") {
+    return `/uploads/Roadshows/client_po_document/${doc.fileName}`;
+  }
+  return "";
+}
+
+function agencyPoAttribution(doc: any): string {
+  if (!doc) return "";
+  const source = doc.source || "agency";
+  if (source === "agency") {
+    return `Uploaded by Agency/Client${doc.uploadedBy ? ` (${doc.uploadedBy})` : ""}`;
+  }
+  return `Replaced by ${doc.uploadedBy || "Admin"} (${AGENCY_PO_ROLE_LABEL[source] || "Admin"})`;
+}
+
+// Sales/admin PO edit-history attribution — every correction here is always
+// a staff replacement (never "agency"); `editedByRole` is missing on
+// corrections saved before this field existed, so fall back to "Admin".
+function salesPoEditAttribution(h: any): string {
+  const role = AGENCY_PO_ROLE_LABEL[h?.editedByRole] || "Admin";
+  return `Replaced by ${h?.editedBy || "Admin"} (${role})`;
+}
+
 function DocumentsTab({
   order, onRefresh, onPoUploadSuccess,
 }: {
@@ -1492,6 +1534,9 @@ function DocumentsTab({
   // a separate document from the sales-side one above ──────────────────
   const agencyPODocument: any = (order as any).agencyPODocument;
   const agencyPODocumentHistory: any[] = (order as any).agencyPODocumentHistory || [];
+  // During Enquiry, the agency's PO (if any) is view-only — no upload/replace
+  // until the order actually moves past Enquiry.
+  const isEnquiryStage = order.salesPipelineStatus === "enquiry";
   const [showAgencyPoEdit, setShowAgencyPoEdit] = useState(false);
   const [showAgencyPoHistory, setShowAgencyPoHistory] = useState(false);
   const [agencyPoEditFile, setAgencyPoEditFile] = useState<File | null>(null);
@@ -1555,9 +1600,22 @@ function DocumentsTab({
     {
       label: "PO Documents",
       color: "green",
-      docs: (order.closedWonArray || []).filter(i => i.salesPoDocument).map(i => ({
-        path: i.salesPoDocument, notes: i.salesPoNotes, by: i.uploadedBy, at: i.uploadedAt,
-      })),
+      docs: (() => {
+        const items = (order.closedWonArray || []).filter(i => i.salesPoDocument);
+        const lastEdit = poDocumentEditHistory[poDocumentEditHistory.length - 1];
+        return items.map((i, idx) => {
+          // The last item is the currently-active PO; once it's been edited,
+          // its file is the latest correction's document, so attribution
+          // should reflect who made that correction, not who did the
+          // original upload — the original stays visible as its own
+          // "Initial Upload" entry when Edit History is expanded.
+          const isCurrent = idx === items.length - 1;
+          const attribution = isCurrent && lastEdit
+            ? salesPoEditAttribution(lastEdit)
+            : (i.uploadedBy ? `Uploaded by ${i.uploadedBy}${i.uploadedByRole ? ` (${AGENCY_PO_ROLE_LABEL[i.uploadedByRole] || "Sales"})` : ""}` : undefined);
+          return { path: i.salesPoDocument, notes: i.salesPoNotes, by: attribution, at: isCurrent && lastEdit ? lastEdit.editedAt : i.uploadedAt };
+        });
+      })(),
     },
 
   ].filter(s => s.docs.length > 0);
@@ -1578,7 +1636,7 @@ function DocumentsTab({
 
 
 
-      {sections.length === 0 ? (
+      {sections.length === 0 && !agencyPODocument?.url ? (
         <div className="text-center py-10 text-gray-400">
           <FileText size={32} className="mx-auto mb-2 opacity-30" />
           <p className="text-sm">No documents uploaded yet</p>
@@ -1595,7 +1653,13 @@ function DocumentsTab({
               {section.docs.map((doc, di) => (
                 <DocItem key={di}
                   docPath={doc.path}
-                  label={`${section.label.replace(" Documents", "")} ${di + 1}`}
+                  label={
+                    section.label === "PO Documents"
+                      ? (di === 0
+                          ? (poDocumentEditHistory.length > 0 ? "Current PO" : "Initial Upload")
+                          : `PO Document ${di + 1}`)
+                      : `${section.label.replace(" Documents", "")} ${di + 1}`
+                  }
                   notes={doc.notes}
                   by={doc.by}
                   at={doc.at}
@@ -1633,10 +1697,18 @@ function DocumentsTab({
                             </span>
                             <span className="text-[11px] text-gray-400">{fmtDatetime(h.editedAt)}</span>
                           </div>
+                          {h.previousDocument && (
+                            <div className="mb-1.5">
+                              <DocItem
+                                docPath={h.previousDocument}
+                                label="Previous"
+                              />
+                            </div>
+                          )}
                           <DocItem
                             docPath={h.document}
-                            label="PO Document"
-                            by={h.editedBy}
+                            label="New"
+                            by={salesPoEditAttribution(h)}
                             at={h.editedAt}
                           />
                           <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-2 flex items-start gap-1">
@@ -1701,9 +1773,13 @@ function DocumentsTab({
       )}
 
       {/* Agency's own self-uploaded PO document — separate from the
-          sales-side "PO Documents" section above (closedWonArray), and
-          always shown (even with none yet) so admin can attach/replace it
-          without waiting for a booking that already has one. */}
+          sales-side "PO Documents" section above (closedWonArray). This
+          section belongs ONLY to a client/agency upload: admin/sales must
+          never be able to create one, so it's hidden completely whenever
+          agencyPODocument doesn't exist, at any stage. When it does exist,
+          Enquiry shows it read-only; Replace + Edit History become available
+          from Proposal & Price Quote onward. */}
+      {agencyPODocument?.url && (
       <div className="rounded-xl border overflow-hidden border-blue-100 dark:border-blue-900/40">
         <div className="px-4 py-2.5 border-b bg-blue-50 dark:bg-blue-900/20">
           <h3 className="text-sm font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
@@ -1711,25 +1787,23 @@ function DocumentsTab({
           </h3>
         </div>
         <div className="p-3 space-y-2 bg-white dark:bg-gray-900">
-          {agencyPODocument?.url ? (
-            <DocItem
-              docPath={agencyPODocument.url}
-              label={agencyPODocument.originalName || "Agency PO Document"}
-              by={agencyPODocument.storageType === "space" ? "Agency · stored in Spaces" : "Agency · stored locally"}
-              at={agencyPODocument.uploadedAt}
-            />
-          ) : (
-            <p className="text-sm text-gray-400 px-1">No agency PO document uploaded yet.</p>
-          )}
+          <DocItem
+            docPath={resolveAgencyPoUrl(agencyPODocument)}
+            label={agencyPODocument.originalName || "Agency PO Document"}
+            by={agencyPoAttribution(agencyPODocument)}
+            at={agencyPODocument.uploadedAt}
+          />
 
           <div className="pt-1">
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowAgencyPoEdit((v) => !v)}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-[12px] font-semibold"
-              >
-                <FileEdit size={12} /> {agencyPODocument?.url ? "Replace PO Document" : "Upload PO Document"}
-              </button>
+              {!isEnquiryStage && (
+                <button
+                  onClick={() => setShowAgencyPoEdit((v) => !v)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-[12px] font-semibold"
+                >
+                  <FileEdit size={12} /> Replace PO Document
+                </button>
+              )}
               {agencyPODocumentHistory.length > 0 && (
                 <button
                   onClick={() => setShowAgencyPoHistory((v) => !v)}
@@ -1750,17 +1824,19 @@ function DocumentsTab({
                       </span>
                       <span className="text-[11px] text-gray-400">{fmtDatetime(h.editedAt)}</span>
                     </div>
-                    {h.previousDocument?.url && (
+                    {resolveAgencyPoUrl(h.previousDocument) && (
                       <DocItem
-                        docPath={h.previousDocument.url}
+                        docPath={resolveAgencyPoUrl(h.previousDocument)}
                         label={`Previous: ${h.previousDocument.originalName || "PO Document"}`}
+                        by={agencyPoAttribution(h.previousDocument)}
+                        at={h.previousDocument.uploadedAt}
                       />
                     )}
                     <div className="mt-1.5">
                       <DocItem
-                        docPath={h.newDocument.url}
+                        docPath={resolveAgencyPoUrl(h.newDocument)}
                         label={`New: ${h.newDocument.originalName || "PO Document"}`}
-                        by={h.editedBy}
+                        by={`Replaced by ${h.editedBy || "Admin"} (${AGENCY_PO_ROLE_LABEL[h.editedByRole] || "Admin"})`}
                         at={h.editedAt}
                       />
                     </div>
@@ -1821,6 +1897,7 @@ function DocumentsTab({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -2002,7 +2079,12 @@ export default function SalesDetailDrawer({
       key: "notification" as Tab,
       label: "Notification",
     },
-    ...(isPoStage ? [{ key: "documents" as Tab, label: "PO Document" }] : []),
+    // The "PO Document" tab normally only appears once the order reaches the
+    // PO stage — but if the agency already uploaded their own PO earlier
+    // (any stage, including Enquiry), it must still be visible read-only.
+    ...(isPoStage || (order as any).agencyPODocument?.url
+      ? [{ key: "documents" as Tab, label: "PO Document" }]
+      : []),
     ...(order.hasDateConflict ? [{ key: "dateConflict" as Tab, label: "Date Conflict" }] : []),
     ...((order.orderEditHistory || []).length > 0
       ? [{ key: "orderEditHistory" as Tab, label: "Edit History" }]

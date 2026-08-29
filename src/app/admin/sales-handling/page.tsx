@@ -53,6 +53,15 @@ export interface SalesOrder {
   updatedAt?: string;
   poCommentsArray: any[];
   hasDateConflict?: boolean;
+  agencyPODocument?: {
+    originalName?: string;
+    fileName?: string;
+    mimeType?: string;
+    size?: number;
+    url?: string;
+    storageType?: string;
+    uploadedAt?: string;
+  } | null;
   projectCodeCommentsArray: any[];
   closedLostCommentsArray: any[];
  orderEditHistory?: {
@@ -822,6 +831,12 @@ export default function SalesPipelineBoard() {
     }
 
     if (toStage === "closedWon") {
+      // Client/agency already supplied a PO document during booking — don't
+      // ask sales to upload/replace it again, just complete the transition.
+      if (order.agencyPODocument?.url) {
+        commitMove(order, "closedWon");
+        return;
+      }
       setPoFile(null);
       setPoNotes("");
       setPoError("");
