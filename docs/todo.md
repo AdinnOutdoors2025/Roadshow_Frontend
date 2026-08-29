@@ -1,5 +1,17 @@
 # TODO
 
+## Reconciliation notes (2026-08-27)
+
+Docs were stale for ~1 month (last touched 2026-07-23); a month of multi-contributor commits landed in between. See `docs/progress.md`'s 2026-08-27 entry and `docs/context.md`'s "Status as of 2026-08-27" section for the full theme breakdown. This pass did **not** re-verify every item below against current code — most entries under "Open"/"Backlog"/"Verification Still Needed" predate that gap and may already be resolved by the intervening work (e.g. items touching Campaign Calculator, invoice, handover, or order-creation vehicle-availability — all areas with heavy commit activity since). Re-check before acting on an old item rather than assuming it's still outstanding.
+
+**Confirmed still open** (spot-checked today):
+- [ ] Per-day "Estimated (Campaign Calculator)" breakdown on Daily Timeline tab — still not implemented (no `estimatedTotalAmount`/`perDayEstimate` in `operation-handling/*`).
+
+**Needs a fresh decision, not a code check** — RTO calculation has been added/removed/re-added at least 3 times across both repos this month (see progress.md). Current code still has RTO logic in `order-creation/{VehicleListStep,print,orderdetails,VehicleFormModal,OrderSummaryStep}.tsx`, but given the churn, confirm the *intended* current behavior with the user before modifying anything RTO-related.
+
+**New item surfaced from commit history** (not yet actioned, worth confirming with user):
+- [ ] "CTA banner creation pending" was explicitly called out in a commit message (`d8c8362`, 2026-08-08, home page revamp) — confirm whether this was completed in a later commit or is still outstanding.
+
 ## Open
 
 - [ ] Verify both `roadshow/CampaignRequest` button color changes ("Add Vehicle" → red, "Add More Vehicle" → blue) render correctly in the browser (dev server not run this session).

@@ -68,6 +68,8 @@ import {
   resolvePromoterType,
   submitClientRequest,
 } from "@/lib/roadshowRequestSubmit";
+import { uploadAgencyPoDocument } from "@/lib/roadshowAgencyPoDocument";
+import AgencyPoDocumentUpload from "@/components/Client/Reusable_Components/AgencyPoDocumentUpload";
 
 import "./page.css";
 
@@ -76,6 +78,11 @@ export default function ReviewOrderPage() {
   const { user, openAuth, authLoading, isAgency } = useAuth();
 
   const agencyBusiness = isAgency ? user?.business || null : null;
+
+  /* Agency-only, optional — uploaded after the request is created (see
+     roadshowAgencyPoDocument.ts for why it can't ride along with the main
+     submit). */
+  const [poDocumentFile, setPoDocumentFile] = useState(null);
 
   const [selectedVehicles, setSelectedVehicles] = useState([]);
   const [draft, setDraft] = useState(() => ({
@@ -267,6 +274,25 @@ export default function ReviewOrderPage() {
         JSON.stringify(created)
       );
 
+      /* Optional and best-effort: the booking itself already succeeded, so a
+         failed PO upload is toasted separately rather than failing the whole
+         submission. */
+      if (isAgency && poDocumentFile) {
+        try {
+          await uploadAgencyPoDocument(created._id, poDocumentFile);
+        } catch (poError) {
+          console.error("PO document upload error:", poError);
+
+          toast.error(
+            poError instanceof Error
+              ? poError.message
+              : "Booking submitted, but the PO document could not be uploaded."
+          );
+        }
+      }
+
+      setPoDocumentFile(null);
+
       /* The request is placed — neither the cart nor the draft is needed */
       clearCart(user?._id);
       clearCampaignDraft(user?._id);
@@ -293,6 +319,7 @@ export default function ReviewOrderPage() {
     user,
     isAgency,
     agencyBusiness,
+    poDocumentFile,
     rows,
     pricing,
     openAuth,
@@ -403,6 +430,22 @@ export default function ReviewOrderPage() {
                     </strong>
                   </div>
                 </div>
+              </section>
+            )}
+
+            {/* ── Agency PO document (optional) ────────────────────────── */}
+            {isAgency && (
+              <section className="rdsw_roSection">
+                <div className="rdsw_roSectionHead">
+                  <Building2 size={15} />
+                  <h2>PO Document</h2>
+                </div>
+
+                <AgencyPoDocumentUpload
+                  file={poDocumentFile}
+                  onFileChange={setPoDocumentFile}
+                  disabled={submitting}
+                />
               </section>
             )}
 

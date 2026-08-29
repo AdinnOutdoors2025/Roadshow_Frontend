@@ -53,6 +53,7 @@ import {
   resolvePromoterType,
 } from "@/lib/roadshowRequestSubmit";
 import TermsAndConditionsModal from "@/components/Client/Reusable_Components/TermsAndConditionsModal";
+import AgencyPoDocumentUpload from "@/components/Client/Reusable_Components/AgencyPoDocumentUpload";
 
 import "./ReviewOrderModal.css";
 
@@ -62,11 +63,14 @@ export default function ReviewOrderModal({
   rows,
   pricing,
   user,
+  isAgency,
   agencyBusiness,
   mediaMissing,
   submitting,
   onSubmit,
   onEditVehicle,
+  poDocumentFile,
+  onPoDocumentChange,
 }) {
   const [termsOpen, setTermsOpen] = useState(false);
 
@@ -259,6 +263,14 @@ export default function ReviewOrderModal({
                     </article>
                   )}
                 </div>
+
+                {isAgency && (
+                  <AgencyPoDocumentUpload
+                    file={poDocumentFile}
+                    onFileChange={onPoDocumentChange}
+                    disabled={submitting}
+                  />
+                )}
 
                 {/* ── Selected vehicles ────────────────────────────────────── */}
                 <section className="rdsw_rvPanel">

@@ -1,5 +1,24 @@
 # Progress Log
 
+## 2026-08-27 — docs reconciliation (no code changes)
+
+Docs (`context.md`/`progress.md`/`todo.md`) hadn't been touched since 2026-07-23, but the repo kept moving — ~90 frontend + ~50 backend commits from 4 contributors (`vignesh`, `karthika`, `Arun Prasath`, `SathishKumar Dhanasekaran`) merged in that gap. This entry reconciles the docs against `git log` for both repos (frontend `Roadshow_Frontend` branch `karthi-claude`, backend `roadshow_Backend` branch `karthi-claude`, both clean and in sync with origin as of today).
+
+**Themes of the last month** (see `context.md`'s "Status as of 2026-08-27" section for the full breakdown):
+- Campaign Calculator / Operation Handling: daily timeline, hours math, extra charges, handler reassign/overview, onroad-only filtering.
+- Invoice generation: built → discount added → partially removed from Sales Handling → rebuilt (iterated repeatedly, current state not re-verified line-by-line).
+- RTO calculation: removed and reintroduced more than once — needs a fresh confirmation with the user of intended current behavior before anyone touches it again.
+- Package Management module now exists; onroad available/unavailable vehicles handling split out.
+- Sales Handling notification tab (`VehicleAvailabilityNotificationTab.tsx`) added.
+- Public site: home page revamp, My Bookings, Thank You page, customer-facing order/campaign-details flow, GPS tracking page rebuild, T&Cs, agency login, email PDF export, and (today, 08-27) a separate Flex/LED spec tab on the public vehicle detail modal.
+- Auth/infra: CORS + baseurl fixes (recurring), client-auth model changes, admin login/profile/role-permission redesign.
+
+**Verified still true today**:
+- Per-day "Estimated (Campaign Calculator)" breakdown on Daily Timeline — still not implemented (grepped for `estimatedTotalAmount`/`perDayEstimate`, no hits). Carries forward as open.
+- `.qa/status/20260812-user-auth.json` still says `BLOCKED` (reported file-loss mid-QA-run), but the files it claimed were lost (`userAuth.tsx`, `vitest.config.ts`, `playwright.config.ts`, user-auth pages) all exist on disk now — looks resolved in practice, status file just never got updated. Flagged for the user to decide whether to re-run the QA gate.
+
+**Caveat**: this reconciliation is git-log + targeted grep level, not a full re-audit of business logic in each touched file. Treat the theme list as a map of where to look, not a verified statement of current behavior — especially for RTO and invoice logic, which changed direction multiple times.
+
 ## 2026-07-22
 
 **Completed:**

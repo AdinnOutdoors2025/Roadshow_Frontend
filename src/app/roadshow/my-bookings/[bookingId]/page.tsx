@@ -165,6 +165,22 @@ function relativeTime(value?: string | null) {
   return formatDateTime(value);
 }
 
+/* "2345 → 7852" when a slot's vehicle has been replaced (registrationChain
+   has more than one link), otherwise just the current registration. */
+function formatVehicleChain(vehicle?: {
+  registrationNumber?: string | null;
+  registrationChain?: string[];
+  wasReplaced?: boolean;
+}) {
+  if (!vehicle) return "Registration unavailable";
+
+  if (vehicle.wasReplaced && vehicle.registrationChain?.length) {
+    return vehicle.registrationChain.join(" → ");
+  }
+
+  return vehicle.registrationNumber || "Registration unavailable";
+}
+
 function statusClass(status?: string) {
   const key = String(status || "Unknown").toLowerCase();
 
@@ -201,7 +217,7 @@ function isFutureCampaignDay(value?: string | null) {
   return Boolean(dayKey && dayKey > todayKey);
 }
 
-function getCampaignProgress(data: any) {
+function getCampaignProgress(data: any): number | null {
   if (data?.isCancelled) return 0;
 
   if (data?.journeyStage?.key === "completed") return 100;
@@ -212,22 +228,10 @@ function getCampaignProgress(data: any) {
     return Math.round((day / total) * 100);
   }
 
-  const currentIndex = TRACKING_STAGE_ORDER.indexOf(
-    data?.journeyStage?.key as JourneyStageKey,
-  );
-
-  if (currentIndex <= 0) return currentIndex === 0 ? 10 : 0;
-
-  const campaignStages = TRACKING_STAGE_ORDER.filter(
-    (key) => key !== "cancelled",
-  );
-  const stageIndex = campaignStages.indexOf(
-    data?.journeyStage?.key as JourneyStageKey,
-  );
-
-  if (stageIndex < 0) return 0;
-
-  return Math.round((stageIndex / (campaignStages.length - 1)) * 100);
+  // Before On Road there is no execution percentage yet — showing a
+  // stage-based percentage here caused the pre-campaign 20%/30%/40%/50%
+  // that then appeared to "drop" once real execution began.
+  return null;
 }
 
 function CampaignStatusStrip({
@@ -594,6 +598,10 @@ function TrackingPageContent({
 
     const element = tabsRef.current;
     if (!element) return;
+
+    // Nothing to scroll means nothing to drag — never arm the drag/jitter
+    // logic below, so an ordinary click on a tab is never mistaken for one.
+    if (element.scrollWidth <= element.clientWidth) return;
 
     tabsDragRef.current = {
       active: true,
@@ -1117,9 +1125,9 @@ function TrackingPageContent({
                           <small>
                             {activeGroupVehicles[activeVehicleSlot].pending
                               ? "Not yet assigned"
-                              : activeGroupVehicles[activeVehicleSlot]
-                                  .registrationNumber ||
-                                "Registration unavailable"}
+                              : formatVehicleChain(
+                                  activeGroupVehicles[activeVehicleSlot],
+                                )}
                           </small>
                           {activeGroupVehicles[activeVehicleSlot].pending ? (
                             <span className="RST_VehicleState RST_VehicleState--pending">
@@ -1394,7 +1402,7 @@ function TrackingPageContent({
                     </div>
                   )}
 
-                  {selectedDay?.activationsCount != null && (
+                  {/* {selectedDay?.activationsCount != null && (
                     <div className="RST_TodayMetric">
                       <span className="RST_MetricIcon RST_MetricIcon--orange">
                         <Sparkles size={18} />
@@ -1404,7 +1412,7 @@ function TrackingPageContent({
                         <strong>{Number(selectedDay.activationsCount)}</strong>
                       </div>
                     </div>
-                  )}
+                  )} */}
 
                   {selectedDay?.peopleEngaged != null && (
                     <div className="RST_TodayMetric">
@@ -1413,12 +1421,14 @@ function TrackingPageContent({
                       </span>
                       <div>
                         <small>People engaged</small>
-                        <strong>{Number(selectedDay.peopleEngaged)}</strong>
+                        {/* <strong>{Number(selectedDay.peopleEngaged)}</strong> */}
+                        <strong>2000+</strong>
+
                       </div>
                     </div>
                   )}
 
-                  {selectedDay?.leadsCollected != null && (
+                  {/* {selectedDay?.leadsCollected != null && (
                     <div className="RST_TodayMetric">
                       <span className="RST_MetricIcon RST_MetricIcon--blue">
                         <CheckCircle2 size={18} />
@@ -1428,7 +1438,7 @@ function TrackingPageContent({
                         <strong>{Number(selectedDay.leadsCollected)}</strong>
                       </div>
                     </div>
-                  )}
+                  )} */}
 
                   {selectedDay?.distanceCoveredKm == null &&
                     selectedDay?.activationsCount == null &&
@@ -1582,7 +1592,7 @@ function TrackingPageContent({
           </section>
         )}
 
-        <section className="RST_ReportSection">
+        {/* <section className="RST_ReportSection">
           <div className="RST_ReportTopline">
             <div className="RST_SectionHeading">
               <div>
@@ -1763,7 +1773,7 @@ function TrackingPageContent({
               <p>Reports will appear here automatically when they are available.</p>
             </div>
           )}
-        </section>
+        </section> */}
 
         <section className="RST_BottomGrid">
           <div className="RST_ActivityCard">
@@ -1805,11 +1815,15 @@ function TrackingPageContent({
             <div className="RST_ProgressBody">
               <div
                 className="RST_ProgressRing"
-                style={{ "--rst-progress": `${campaignProgress * 3.6}deg` } as any}
+                style={{ "--rst-progress": `${(campaignProgress ?? 0) * 3.6}deg` } as any}
               >
                 <div>
-                  <strong>{campaignProgress}%</strong>
-                  <small>Completed</small>
+                  <strong>
+                    {campaignProgress === null
+                      ? stageMeta?.label || "Preparing"
+                      : `${campaignProgress}%`}
+                  </strong>
+                  <small>{campaignProgress === null ? "Status" : "Completed"}</small>
                 </div>
               </div>
 

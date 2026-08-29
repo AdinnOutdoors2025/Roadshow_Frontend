@@ -1367,16 +1367,16 @@ export default function HomePageSection1() {
     }
   />
 </div>
+          <RoadshowProcessSection />
 
       {/* =====================================================
           WHY ADINN ROADSHOWS
       ===================================================== */}
 
-      <div className="mx-auto px-30 RS_WhyAdRSSectionWrap RS_WhyAdRSFigmaUI">
+      <div id="why-adinn"  className="mx-auto px-30 RS_WhyAdRSSectionWrap RS_WhyAdRSFigmaUI">
         <div className="RS_OurRdwHeading">
-          <RoadshowProcessSection />
 
-          <RevealText
+          <RevealText id="why-adinn" 
             className="RS_OurRdwHeadingContent1"
             effect="blur"
           >

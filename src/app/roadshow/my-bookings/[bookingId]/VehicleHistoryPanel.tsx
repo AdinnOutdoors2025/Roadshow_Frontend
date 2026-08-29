@@ -43,6 +43,16 @@ type VehicleOption = {
   unavailable?: boolean;
 };
 
+/* "2345 → 7852" when this row's vehicle replaced an earlier one, otherwise
+   just its own registration number. */
+function formatVehicleChain(vehicle: VehicleHistoryVehicle) {
+  if (vehicle.wasReplaced && vehicle.registrationChain?.length) {
+    return vehicle.registrationChain.join(" → ");
+  }
+
+  return vehicle.registrationNumber;
+}
+
 function todayIndiaKey() {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Kolkata",
@@ -294,7 +304,7 @@ function HistoryVehicle({
             </span>
 
             <div>
-              <strong>{vehicle.registrationNumber}</strong>
+              <strong>{formatVehicleChain(vehicle)}</strong>
               <small>Vehicle unavailable</small>
             </div>
           </div>
@@ -325,7 +335,7 @@ function HistoryVehicle({
           </span>
 
           <div>
-            <strong>{vehicle.registrationNumber}</strong>
+            <strong>{formatVehicleChain(vehicle)}</strong>
             <small>
               {vehicle.summary.pointCount
                 ? `${vehicle.summary.pointCount} GPS records`
@@ -420,6 +430,7 @@ function HistoryVehicle({
             <div
               ref={tableWrapRef}
               className="RST_HistoryTableWrap"
+              data-lenis-prevent
               onPointerDown={startTableDrag}
               onPointerMove={moveTableDrag}
               onPointerUp={stopTableDrag}
@@ -918,9 +929,13 @@ export default function VehicleHistoryPanel({
         <div className="RST_InlineError">{error}</div>
       ) : returnedVehicles.length ? (
         <div className="RST_HistoryVehicleList">
-          {returnedVehicles.map((vehicle) => (
+          {returnedVehicles.map((vehicle, index) => (
             <HistoryVehicle
-              key={vehicle.registrationNumber}
+              /* Two rows can legitimately share a registration number — a
+                 vehicle marked unavailable and then reassigned to the same
+                 slot after repair (2345 → 2345). Index keeps rows unique
+                 without depending on backend-side dedup for React alone. */
+              key={`${vehicle.registrationNumber}-${index}`}
               vehicle={vehicle}
             />
           ))}
