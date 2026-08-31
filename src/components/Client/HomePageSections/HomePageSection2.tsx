@@ -1057,11 +1057,22 @@ function HomePageSection2() {
                                             }
                                         `}
 
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-expanded={activeIndex === idx}
+
                                         onClick={() =>
                                             handleItemClick(
                                                 idx
                                             )
                                         }
+
+                                        onKeyDown={(event) => {
+                                            if (event.key === "Enter" || event.key === " ") {
+                                                event.preventDefault();
+                                                handleItemClick(idx);
+                                            }
+                                        }}
 
                                     >
 
@@ -1514,6 +1525,16 @@ function HomePageSection2() {
                                             HC_FAQ_QnAnsMain
                                         "
 
+                                        role="button"
+                                        tabIndex={0}
+
+                                        onKeyDown={(event) => {
+                                            if (event.key === "Enter" || event.key === " ") {
+                                                event.preventDefault();
+                                                handleFaqClick(faq.id);
+                                            }
+                                        }}
+
                                         onClick={() =>
                                             handleFaqClick(
                                                 faq.id
@@ -1622,7 +1643,15 @@ function HomePageSection2() {
                                 <div
                                     key={faq.id}
                                     className='HC_FAQ_QnAnsMain'
+                                    role="button"
+                                    tabIndex={0}
                                     onClick={() => handleFaqClick(faq.id)}
+                                    onKeyDown={(event) => {
+                                        if (event.key === "Enter" || event.key === " ") {
+                                            event.preventDefault();
+                                            handleFaqClick(faq.id);
+                                        }
+                                    }}
                                 >
                                     <div className='HC_FAQ_TopRow'>
                                         <div className='HC_FAQ_Question'>{faq.question}</div>

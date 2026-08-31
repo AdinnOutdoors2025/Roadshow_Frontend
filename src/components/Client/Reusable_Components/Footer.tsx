@@ -10,6 +10,29 @@ import { useRouter } from "next/navigation";
 import { ButtonHover } from "./ButtonHover";
 import { useNewsletterSubscribe } from "./useNewsletterSubscribe";
 import TermsAndConditionsModal from "./TermsAndConditionsModal";
+import { navigateAfterRoadshowLoader } from "@/components/GlobalRoadshowLoader";
+
+type MathCaptcha = {
+  firstNumber: number;
+  secondNumber: number;
+  answer: number;
+};
+
+const EMAILJS_SERVICE_ID = "service_109ond7";
+const EMAILJS_PUBLIC_KEY = "hmRHPc3KZL8QoEtzw";
+const NEWSLETTER_TEMPLATE_ID = "template_ke6dt9s"; //adinndigitalservices account
+
+
+function createMathCaptcha(): MathCaptcha {
+  const firstNumber = Math.floor(Math.random() * 9) + 1;
+  const secondNumber = Math.floor(Math.random() * 9) + 1;
+
+  return {
+    firstNumber,
+    secondNumber,
+    answer: firstNumber + secondNumber,
+  };
+}
 
 function Footer() {
   const router = useRouter();
@@ -71,9 +94,24 @@ function Footer() {
               width={200}
               height={60}
               priority
+              role="button"
+              tabIndex={0}
+              data-loader="false"
               onClick={() =>
-                router.push("/")
+                navigateAfterRoadshowLoader(
+                  () => router.push("/"),
+                  "Loading home...",
+                )
               }
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  navigateAfterRoadshowLoader(
+                    () => router.push("/"),
+                    "Loading home...",
+                  );
+                }
+              }}
             />
 
             {/* Social Icons */}
@@ -188,13 +226,9 @@ function Footer() {
 
                 <button
                   type="button"
-                  onClick={
-                    openCaptchaPopup
-                  }
-                  disabled={
-                    loading ||
-                    isNewsletterEmpty
-                  }
+                  onClick={openCaptchaPopup}
+                  disabled={loading || isNewsletterEmpty}
+                  data-loader="false"
                   className={`
                     RA_RightContent2InpBtn
                     transition-all duration-200

@@ -59,6 +59,7 @@ import { clientAuthHeaders } from "@/lib/roadshowAuthToken";
 import { downloadBookingSummaryPdf } from "@/lib/bookingSummaryPdf";
 
 import { JOURNEY_STAGE_COPY, type JourneyStageKey } from "./journeyStageCopy";
+import { withRoadshowLoader } from "@/components/GlobalRoadshowLoader";
 
 /* =========================================================
    VEHICLE IMAGE

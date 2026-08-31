@@ -113,7 +113,7 @@ export default function GlobalSmoothScroll({
         smooth: 1.1,
 
         // Overall page-scroll speed
-        speed: 1.1,
+        speed: 0.8,
 
         // Enables data-speed and data-lag attributes
         effects: true,

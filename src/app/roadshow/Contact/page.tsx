@@ -14,6 +14,7 @@ import Image from "next/image";
 import emailjs from "@emailjs/browser";
 import { mailImageUrl } from "../../../BaseUrl";
 import toast, { Toaster } from "react-hot-toast";
+import { withRoadshowLoader } from "@/components/GlobalRoadshowLoader";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
@@ -821,6 +822,7 @@ export default function ContactPage() {
 
     toast.dismiss("contact-form-toast");
 
+    await withRoadshowLoader(async () => {
     try {
       await emailjs.send(
         serviceId,
@@ -856,6 +858,7 @@ export default function ContactPage() {
     } finally {
       setSubmitting(false);
     }
+    }, "Sending your enquiry...");
   };
 
   return (
@@ -1317,6 +1320,7 @@ export default function ContactPage() {
                 className="contact-submit"
                 type="submit"
                 disabled={submitting}
+                data-loader="false"
                 whileHover={
                   shouldReduceMotion || submitting
                     ? undefined

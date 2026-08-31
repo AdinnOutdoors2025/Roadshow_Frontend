@@ -1,16 +1,15 @@
 "use client";
 
+
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useCartCount } from "@/hooks/useCartCount";
-import {
-  HOME_VEHICLES_SECTION_ID,
-  scrollToSection,
-} from "./scrollToSection";
+import { navigateAfterRoadshowLoader } from "@/components/GlobalRoadshowLoader";
+import { HOME_VEHICLES_SECTION_ID } from "./scrollToSection";
 
 type NavLinkItem = {
   label: string;
@@ -33,6 +32,9 @@ const navLinks: NavLinkItem[] = [
     href: "/roadshow/Contact",
   },
 ];
+
+/* Change only this value if your profile page uses another route. */
+const PROFILE_PATH = "/roadshow/profile";
 
 type MenuGlyphName =
   | "user"
@@ -193,6 +195,11 @@ export default function Navbar() {
     | null
     | undefined;
 
+  const profileDisplayName =
+    accountUser?.name?.trim() ||
+    accountUser?.email?.split("@")[0] ||
+    "Profile";
+
   const cartCount = useCartCount(accountUser?._id);
 
   const [mounted, setMounted] = useState(false);
@@ -261,39 +268,52 @@ export default function Navbar() {
     return pathname === href || pathname?.startsWith(`${href}/`);
   };
 
-  const handleNavLinkClick = (
-    event: React.MouseEvent<HTMLAnchorElement>,
-    href: string,
-  ) => {
+  /* Home/Why Adinn/Vehicle/Contact Us are real <a href> links (see
+     navLinks above), so scroll-to-top, same-page section scrolling and
+     cross-page section scrolling are all handled centrally by
+     GlobalRoadshowLoader's click interception — it prevents the native
+     jump, shows the loader, scrolls, and updates the hash (dispatching a
+     synthetic "hashchange" that the effect above picks up to keep
+     activeHash in sync). This handler only needs to close the mobile
+     menu so a nav tap doesn't leave it open underneath the new section. */
+  const handleNavLinkClick = () => {
     setOpen(false);
-
-    if (href === "/" && pathname === "/") {
-      event.preventDefault();
-      window.history.replaceState(null, "", "/");
-      setActiveHash("");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-
-    const [path, hash] = href.split("#");
-
-    if (!hash || pathname !== (path || "/")) return;
-
-    event.preventDefault();
-
-    if (scrollToSection(hash)) {
-      window.history.replaceState(null, "", href);
-      setActiveHash(`#${hash}`);
-    }
   };
 
   const handleMenuItemClick = (
-    action: "cart" | "orders" | "signin" | "signup" | "signout",
+    action:
+      | "profile"
+      | "cart"
+      | "orders"
+      | "signin"
+      | "signup"
+      | "signout",
   ) => {
     setOpen(false);
 
-    if (action === "cart") router.push("/roadshow/CampaignRequest");
-    if (action === "orders") router.push("/roadshow/my-bookings");
+    if (action === "profile") {
+      if (accountUser) {
+        navigateAfterRoadshowLoader(
+          () => router.push(PROFILE_PATH),
+          "Opening your profile...",
+        );
+      } else {
+        openAuth("login");
+      }
+
+      return;
+    }
+
+    if (action === "cart")
+      navigateAfterRoadshowLoader(
+        () => router.push("/roadshow/CampaignRequest"),
+        "Loading your campaign request...",
+      );
+    if (action === "orders")
+      navigateAfterRoadshowLoader(
+        () => router.push("/roadshow/my-bookings"),
+        "Loading your bookings...",
+      );
     if (action === "signin") openAuth("login");
     if (action === "signup") openAuth("signup");
     if (action === "signout") logoutUser();
@@ -453,6 +473,35 @@ backdrop-filter: blur(10px);
               transform: translateY(-1px);
             }
 
+            .RS_RefProfileButton--signedIn {
+              width: auto;
+              min-width: 48px;
+              max-width: 190px;
+              padding: 0 14px;
+              gap: 8px;
+            }
+
+            .RS_RefProfileIcon {
+              width: 22px;
+              height: 22px;
+              display: block;
+              flex: 0 0 22px;
+              object-fit: contain;
+            }
+
+            .RS_RefProfileName {
+              display: block;
+              max-width: 120px;
+              overflow: hidden;
+              color: inherit;
+              font-family: "Outfit", sans-serif;
+              font-size: 14px;
+              font-weight: 600;
+              line-height: 1;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+
             .RS_RefCircleButton:focus-visible,
             .RS_RefContactButton:focus-visible,
             .RS_RefMenuRowButton:focus-visible,
@@ -465,6 +514,17 @@ backdrop-filter: blur(10px);
             .RS_RefCircleButton--menuOpen {
               background: #eaeaea;
               box-shadow: 0 3px 12px rgba(17, 24, 39, 0.1);
+            }
+
+            .RS_RefCircleButton--profileActive {
+              color: #ffffff;
+              background: #171717;
+              box-shadow: 0 4px 14px rgba(17, 24, 39, 0.16);
+            }
+
+            .RS_RefCircleButton--profileActive:hover {
+              color: #ffffff;
+              background: #ed1c2e;
             }
 
             .RS_RefMenu {
@@ -694,6 +754,16 @@ backdrop-filter: blur(10px);
                 height: 40px;
               }
 
+              .RS_RefProfileButton--signedIn {
+                width: 40px;
+                min-width: 40px;
+                padding: 0;
+              }
+
+              .RS_RefProfileName {
+                display: none;
+              }
+
               .RS_RefContactButton {
                 min-height: 39px;
                 padding: 0 14px;
@@ -725,7 +795,7 @@ backdrop-filter: blur(10px);
         <div className="RS_RefHeaderShell">
           <Link
             href="/"
-            onClick={(event) => handleNavLinkClick(event, "/")}
+            onClick={handleNavLinkClick}
             className="RS_RefBrand"
             aria-label="Adinn Roadshow home"
           >
@@ -749,7 +819,7 @@ backdrop-filter: blur(10px);
                   <Link
                     key={item.label}
                     href={item.href}
-                    onClick={(event) => handleNavLinkClick(event, item.href)}
+                    onClick={handleNavLinkClick}
                     className={`RS_RefNavLink ${
                       active ? "RS_RefNavLink--active" : ""
                     }`}
@@ -764,9 +834,7 @@ backdrop-filter: blur(10px);
           <div className="RS_RefRight">
             <Link
               href="/roadshow/Contact"
-              onClick={(event) =>
-                handleNavLinkClick(event, "/roadshow/Contact")
-              }
+              onClick={handleNavLinkClick}
               className={`RS_RefContactButton ${
                 isActive("/roadshow/Contact")
                   ? "RS_RefContactButton--active"
@@ -778,6 +846,36 @@ backdrop-filter: blur(10px);
             >
               Contact Us
             </Link>
+
+            <button
+              type="button"
+              onClick={() => handleMenuItemClick("profile")}
+              className={`RS_RefCircleButton ${
+                accountUser ? "RS_RefProfileButton--signedIn" : ""
+              } ${
+                isActive(PROFILE_PATH)
+                  ? "RS_RefCircleButton--profileActive"
+                  : ""
+              }`}
+              aria-label={
+                accountUser ? "Open your profile" : "Sign in to your account"
+              }
+              title={accountUser ? profileDisplayName : "Sign In"}
+            >
+              <Image
+  src="/images/profile.svg"
+  alt=""
+  width={35}
+  height={35}
+  aria-hidden="true"
+  className="RS_RefProfileIcon !h-[35px] !w-[35px] !min-w-[35px] !basis-[35px] !shrink-0"
+/>
+              {accountUser && (
+                <span className="RS_RefProfileName">
+                  {profileDisplayName}
+                </span>
+              )}
+            </button>
 
             <button
               type="button"
@@ -812,7 +910,7 @@ backdrop-filter: blur(10px);
                   <Link
                     key={item.label}
                     href={item.href}
-                    onClick={(event) => handleNavLinkClick(event, item.href)}
+                    onClick={handleNavLinkClick}
                     className={`RS_RefMobileLink ${
                       active ? "RS_RefMobileLink--active" : ""
                     }`}
@@ -869,6 +967,7 @@ backdrop-filter: blur(10px);
                   onClick={() => handleMenuItemClick("cart")}
                   className="RS_RefMenuRow RS_RefMenuRowButton"
                   role="menuitem"
+                  data-loader="false"
                 >
                   <span className="RS_RefMenuIcon">
                     <MenuGlyph name="cart" />
@@ -888,6 +987,7 @@ backdrop-filter: blur(10px);
                   onClick={() => handleMenuItemClick("orders")}
                   className="RS_RefMenuRow RS_RefMenuRowButton"
                   role="menuitem"
+                  data-loader="false"
                 >
                   <span className="RS_RefMenuIcon">
                     <MenuGlyph name="history" />

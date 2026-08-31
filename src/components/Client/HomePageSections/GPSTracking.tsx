@@ -1585,28 +1585,12 @@ export function GPSTracking() {
 
               <Reveal delay={4}>
                 <ButtonHover
-                  type="button"
+                  href="/roadshow/Contact"
                   className="RS_GpsConsultBtn mt-9 w-fit sm:mt-10"
                   label="Consult With Our Team"
                   style={{
                     fontSize: "18px",
                     fontWeight: 500,
-                  }}
-                  onClick={() => {
-                    const contactSection = document.getElementById("contact");
-
-                    if (contactSection) {
-                      contactSection.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start",
-                      });
-                    }
-
-                    window.history.replaceState(
-                      null,
-                      "",
-                      window.location.pathname,
-                    );
                   }}
                 />
               </Reveal>
