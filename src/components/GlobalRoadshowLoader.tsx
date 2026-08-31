@@ -7,137 +7,76 @@ import {
   useEffect,
   useRef,
   useState,
-  useSyncExternalStore,
   useTransition,
+  type CSSProperties,
+  type SyntheticEvent,
 } from "react";
-import { createPortal } from "react-dom";
 import { scrollToSection } from "@/components/Client/Reusable_Components/scrollToSection";
 
 /*
  * ============================================================
- * ONLY EDIT THIS SETTINGS BLOCK
+ * GLOBAL LOADER ADJUSTMENTS — edit these constants only.
  * ============================================================
  *
- * Search "MAIN LOADER ADJUSTMENTS" to change the full-refresh
- * loader. Search "MINI LOADER ADJUSTMENTS" to change the loader
- * used for internal links, sections, buttons and API actions.
+ * Exactly two modes, two videos, never shared:
+ *   MAIN — hard refresh / initial page load only. Opaque MP4,
+ *          solid black background, no label.
+ *   MINI — navigation to a different page and explicitly wrapped async work.
+ *          Transparent WebM, dim overlay, small size + label.
  */
-const LOADER_SETTINGS = {
-  enabled: true,
-  videoUrl: "/images/loader_transparent.webm?v=7",
+const ENABLE_GLOBAL_LOADER = true;
 
-  /* MAIN LOADER ADJUSTMENTS: browser open / full refresh only. */
-  main: {
-    label: "Loading Roadshow...",
-    backgroundColor: "#000000",
-    minimumVisibleMs: 1200,
-    maximumWaitMs: 12000,
-    fadeMs: 450,
-    size: {
-      mobileWidthVw: 88,
-      maximumWidthPx: 620,
-      aspectRatio: "1 / 1",
-    },
-  },
+const MAIN_VIDEO_URL =
+  "/images/assets/Rdsw_Web_images/loader.mp4?v=1";
+const MINI_VIDEO_URL = "/images/loader_transparent.webm?v=7";
 
-  /*
-   * MINI LOADER ADJUSTMENTS: internal navigation and actions.
-   * These preserve your current timeScale and sizeScale values.
-   */
-  mini: {
-    /*
-     * MINI TIME ADJUSTMENT: change only this value.
-     * 0.3 means 4000ms × 0.3 = 1200ms before navigation.
-     * Slow routes can remain visible longer until the real page
-     * is ready, but never shorter than this configured duration.
-     */
-    timeScale: 0.2,
-    sizeScale: 2.3,
-    backgroundColor: "rgba(0, 0, 0, 0.72)",
-    baseTiming: {
-      navigationVisibleMs: 4000,
-      actionVisibleMs: 1200,
-      minimumVisibleMs: 700,
-      fadeMs: 300,
-      showDelayMs: 60,
-      maximumWaitMs: 10000,
-    },
-    baseSize: {
-      mobileWidthVw: 38,
-      maximumWidthPx: 180,
-      aspectRatio: "1 / 1",
-    },
-  },
-} as const;
+/* Main: how long the MP4 stays up after the real page load
+   completes, and the hard failure-safe if load never fires. */
+const MAIN_MIN_VISIBLE_MS = 2500;
+const MAIN_MAX_WAIT_MS = 10000;
+
+/* Mini: how long it stays up once shown, and — for a link/route
+   click specifically — how long it shows BEFORE the actual
+   navigation/scroll is triggered underneath it. */
+const MINI_MIN_VISIBLE_MS = 700;
+const MINI_NAVIGATION_DELAY_MS = 1200;
+
+/* Shared fade-out duration for both modes. */
+const FADE_MS = 350;
+
+/* Video box width ceilings (see MAIN_VIDEO_STYLE / MINI sizing
+   below for how each mode actually uses these). */
+const MAIN_MAX_WIDTH_PX = 900;
+const MINI_MAX_WIDTH_PX = 400;
+
+/* Auxiliary timings not called out above but still needed for
+   correct behaviour — kept small/conservative on purpose. */
+const SHOW_DELAY_MS = 60;
+const MINI_MAX_WAIT_MS = MAIN_MAX_WAIT_MS;
+
+const MAIN_BACKGROUND_COLOR = "#000000";
+const MINI_BACKGROUND_COLOR = "rgba(0, 0, 0, 0.72)";
+
+/*
+ * Module-scoped client guard:
+ * - A real browser load/reload creates a fresh JavaScript runtime, so MAIN runs.
+ * - App Router navigation keeps the runtime, so a component remount cannot
+ *   incorrectly start MAIN again after MINI has handled the route change.
+ *
+ * This is intentionally set in an effect (not during render), which keeps the
+ * server and first client render identical and remains safe in React StrictMode.
+ */
+let hasMountedGlobalLoaderOnClient = false;
 
 type LoaderMode = "main" | "mini";
-
-const TIME_SCALE = Math.max(
-  0.1,
-  LOADER_SETTINGS.mini.timeScale,
-);
-const SIZE_SCALE = Math.max(
-  0.1,
-  LOADER_SETTINGS.mini.sizeScale,
-);
-
-const ENABLE_GLOBAL_LOADER = LOADER_SETTINGS.enabled;
-const VIDEO_URL = LOADER_SETTINGS.videoUrl;
-
-const NAVIGATION_VISIBLE_MS = Math.round(
-  LOADER_SETTINGS.mini.baseTiming.navigationVisibleMs *
-    TIME_SCALE,
-);
-const ACTION_VISIBLE_MS = Math.round(
-  LOADER_SETTINGS.mini.baseTiming.actionVisibleMs *
-    TIME_SCALE,
-);
-const MINIMUM_VISIBLE_MS = Math.round(
-  LOADER_SETTINGS.mini.baseTiming.minimumVisibleMs * TIME_SCALE,
-);
-const FADE_MS = Math.round(
-  LOADER_SETTINGS.mini.baseTiming.fadeMs * TIME_SCALE,
-);
-const SHOW_DELAY_MS = Math.round(
-  LOADER_SETTINGS.mini.baseTiming.showDelayMs * TIME_SCALE,
-);
-const MAXIMUM_WAIT_MS =
-  LOADER_SETTINGS.mini.baseTiming.maximumWaitMs;
-
-const MINI_LOADER_WIDTH = `min(${
-  LOADER_SETTINGS.mini.baseSize.mobileWidthVw * SIZE_SCALE
-}vw, ${
-  LOADER_SETTINGS.mini.baseSize.maximumWidthPx * SIZE_SCALE
-}px, calc(100vw - 32px))`;
-
-const MINI_LOADER_ASPECT_RATIO =
-  LOADER_SETTINGS.mini.baseSize.aspectRatio;
-
-const MAIN_LOADER_WIDTH = `min(${LOADER_SETTINGS.main.size.mobileWidthVw}vw, ${LOADER_SETTINGS.main.size.maximumWidthPx}px, calc(100vw - 32px))`;
-
-const MAIN_LOADER_ASPECT_RATIO =
-  LOADER_SETTINGS.main.size.aspectRatio;
-
-const MAIN_MINIMUM_VISIBLE_MS =
-  LOADER_SETTINGS.main.minimumVisibleMs;
-const MAIN_MAXIMUM_WAIT_MS =
-  LOADER_SETTINGS.main.maximumWaitMs;
-const MAIN_FADE_MS = LOADER_SETTINGS.main.fadeMs;
-
-const subscribeToHydration = () => () => {};
-const getClientSnapshot = () => true;
-const getServerSnapshot = () => false;
 
 const SHOW_EVENT = "roadshow-loader:show";
 const HIDE_EVENT = "roadshow-loader:hide";
 const NAVIGATE_EVENT = "roadshow-loader:navigate";
 
-/*
- * Real links are automatic. Non-link controls must explicitly use
- * data-loader="true". Visual controls such as tabs, filters,
- * accordions, sliders and map zoom buttons should not use it.
- */
-const CLICKABLE_SELECTOR = "a[href], [data-loader='true']";
+/* Only real links are detected automatically. Ordinary buttons and
+   same-page controls never show the loader. */
+const CLICKABLE_SELECTOR = "a[href]";
 
 interface LoaderEventDetail {
   label?: string;
@@ -266,6 +205,15 @@ function classifyAnchor(
     return { kind: "ignore" };
   }
 
+  /* Build internals and raw media files are not pages — never
+     gate a direct link to them behind the navigation loader. */
+  if (
+    url.pathname.startsWith("/_next") ||
+    /\.(mp4|webm)$/i.test(url.pathname)
+  ) {
+    return { kind: "ignore" };
+  }
+
   const pathWithSearch = `${url.pathname}${url.search}`;
   const currentPathWithSearch =
     `${window.location.pathname}${window.location.search}`;
@@ -312,66 +260,37 @@ function getDestinationPathname(href: string) {
   }
 }
 
-function getActionDuration(element: Element) {
-  const customDuration = Number(
-    element.getAttribute("data-loader-duration"),
-  );
-
-  if (
-    Number.isFinite(customDuration) &&
-    customDuration >= 0
-  ) {
-    return Math.min(
-      Math.round(customDuration * TIME_SCALE),
-      MAXIMUM_WAIT_MS,
-    );
-  }
-
-  return ACTION_VISIBLE_MS;
-}
-
 export default function GlobalRoadshowLoader() {
   const pathname = usePathname();
   const router = useRouter();
   const isAdminPage = pathname.startsWith("/admin");
-  const showInitialMainLoader =
-    ENABLE_GLOBAL_LOADER && !isAdminPage;
+  const [showInitialMainLoader] = useState(
+    () =>
+      ENABLE_GLOBAL_LOADER &&
+      !isAdminPage &&
+      (typeof window === "undefined" ||
+        !hasMountedGlobalLoaderOnClient),
+  );
 
-  const portalReady = useSyncExternalStore(
-    subscribeToHydration,
-    getClientSnapshot,
-    getServerSnapshot,
-  );
-  const [rendered, setRendered] = useState(
-    showInitialMainLoader,
-  );
-  const [visible, setVisible] = useState(
-    showInitialMainLoader,
-  );
-  const [label, setLabel] = useState(
-    showInitialMainLoader
-      ? LOADER_SETTINGS.main.label
-      : "Loading...",
-  );
-  const [loaderMode, setLoaderMode] =
-    useState<LoaderMode>(
-      showInitialMainLoader ? "main" : "mini",
-    );
+  useEffect(() => {
+    hasMountedGlobalLoaderOnClient = true;
+  }, []);
+
+  /*
+   * MINI loader visual state. Entirely independent of the MAIN
+   * loader below — mini's own requestCountRef never influences
+   * whether/when the main overlay closes, and vice versa.
+   */
+  const [rendered, setRendered] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [label, setLabel] = useState("Loading...");
   const [isRoutePending, beginRouteTransition] =
     useTransition();
 
-  const requestCountRef = useRef(
-    showInitialMainLoader ? 1 : 0,
-  );
+  const requestCountRef = useRef(0);
   const shownAtRef = useRef(0);
-  const visibleRef = useRef(showInitialMainLoader);
-  const renderedRef = useRef(showInitialMainLoader);
-  const loaderModeRef = useRef<LoaderMode>(
-    showInitialMainLoader ? "main" : "mini",
-  );
-  const initialLoadFinishedRef = useRef(
-    !showInitialMainLoader,
-  );
+  const visibleRef = useRef(false);
+  const renderedRef = useRef(false);
   const navigationPendingRef = useRef(false);
   const pendingRouteTransitionRef =
     useRef<PendingRouteTransition | null>(null);
@@ -384,6 +303,37 @@ export default function GlobalRoadshowLoader() {
   const afterHiddenCallbacksRef = useRef<Set<() => void>>(
     new Set(),
   );
+
+  /*
+   * MAIN loader visual state. Present in the server-rendered
+   * page (so a hard refresh starts on solid black) and closed
+   * through its own idempotent completion path — never through
+   * mini's requestCountRef — so mini traffic during the initial
+   * load can never keep it stuck.
+   */
+  const [mainRendered, setMainRendered] = useState(
+    showInitialMainLoader,
+  );
+  const [mainVisible, setMainVisible] = useState(
+    showInitialMainLoader,
+  );
+
+  const mainRenderedRef = useRef(showInitialMainLoader);
+  const mainVisibleRef = useRef(showInitialMainLoader);
+  const mainShownAtRef = useRef(0);
+  const mainHideTimerRef = useRef<number | null>(null);
+  const mainUnmountTimerRef = useRef<number | null>(null);
+
+  /* Idempotent completion latch: guarantees completeMainLoader's
+     fade/unmount timers are scheduled at most once no matter how
+     many of load/readyState/maximumWaitMs/video-error fire. */
+  const initialLoadFinishedRef = useRef(
+    !showInitialMainLoader,
+  );
+  /* Populated by the MAIN loader lifecycle effect below; called
+     from handleMainVideoError so a failed Loader.mp4 can close
+     the loader immediately instead of leaving it stuck. */
+  const finishInitialLoadRef = useRef<() => void>(() => {});
 
   const clearTimer = useCallback(
     (timerRef: { current: number | null }) => {
@@ -424,18 +374,7 @@ export default function GlobalRoadshowLoader() {
       clearTimer(hideTimerRef);
       clearTimer(unmountTimerRef);
 
-      if (
-        initialLoadFinishedRef.current &&
-        loaderModeRef.current === "main" &&
-        !visibleRef.current
-      ) {
-        loaderModeRef.current = "mini";
-        setLoaderMode("mini");
-      }
-
       if (!renderedRef.current) {
-        loaderModeRef.current = "mini";
-        setLoaderMode("mini");
         renderedRef.current = true;
         setRendered(true);
       }
@@ -489,20 +428,13 @@ export default function GlobalRoadshowLoader() {
         return;
       }
 
-      const activeMode = loaderModeRef.current;
-      const minimumVisibleTime =
-        activeMode === "main"
-          ? MAIN_MINIMUM_VISIBLE_MS
-          : MINIMUM_VISIBLE_MS;
-      const fadeTime =
-        activeMode === "main" ? MAIN_FADE_MS : FADE_MS;
       const visibleTime = Math.max(
         0,
         performance.now() - shownAtRef.current,
       );
       const remainingTime = Math.max(
         0,
-        minimumVisibleTime - visibleTime,
+        MINI_MIN_VISIBLE_MS - visibleTime,
       );
 
       clearTimer(hideTimerRef);
@@ -520,13 +452,8 @@ export default function GlobalRoadshowLoader() {
           setRendered(false);
           setLabel("Loading...");
 
-          if (activeMode === "main") {
-            loaderModeRef.current = "mini";
-            setLoaderMode("mini");
-          }
-
           flushAfterHiddenCallbacks();
-        }, fadeTime);
+        }, FADE_MS);
       }, remainingTime);
     },
     [clearTimer, flushAfterHiddenCallbacks],
@@ -537,6 +464,8 @@ export default function GlobalRoadshowLoader() {
     clearTimer(hideTimerRef);
     clearTimer(unmountTimerRef);
     clearTimer(routeFallbackTimerRef);
+    clearTimer(mainHideTimerRef);
+    clearTimer(mainUnmountTimerRef);
 
     actionTimersRef.current.forEach((timer) => {
       window.clearTimeout(timer);
@@ -548,14 +477,63 @@ export default function GlobalRoadshowLoader() {
     shownAtRef.current = 0;
     visibleRef.current = false;
     renderedRef.current = false;
-    loaderModeRef.current = "mini";
     navigationPendingRef.current = false;
     pendingRouteTransitionRef.current = null;
+
+    initialLoadFinishedRef.current = true;
+    mainVisibleRef.current = false;
+    mainRenderedRef.current = false;
 
     setVisible(false);
     setRendered(false);
     setLabel("Loading...");
-    setLoaderMode("mini");
+    setMainVisible(false);
+    setMainRendered(false);
+  }, [clearTimer]);
+
+  /*
+   * MAIN loader completion — entirely self-contained. Does NOT
+   * go through requestCountRef/stopLoader (mini's shared
+   * counter), so mini traffic during the initial load (an auth
+   * check, a toast gate mount, a click) can never keep this
+   * stuck: nothing but this function's own idempotent guard
+   * decides when the main overlay fades and unmounts. Never
+   * waits for the looping MP4 itself to finish.
+   */
+  const completeMainLoader = useCallback(() => {
+    if (initialLoadFinishedRef.current) return;
+    initialLoadFinishedRef.current = true;
+
+    if (!mainVisibleRef.current) {
+      mainRenderedRef.current = false;
+      setMainRendered(false);
+      return;
+    }
+
+    const visibleTime = Math.max(
+      0,
+      performance.now() - mainShownAtRef.current,
+    );
+    const remainingTime = Math.max(
+      0,
+      MAIN_MIN_VISIBLE_MS - visibleTime,
+    );
+
+    clearTimer(mainHideTimerRef);
+
+    mainHideTimerRef.current = window.setTimeout(() => {
+      mainHideTimerRef.current = null;
+      mainVisibleRef.current = false;
+      setMainVisible(false);
+
+      clearTimer(mainUnmountTimerRef);
+
+      mainUnmountTimerRef.current = window.setTimeout(() => {
+        mainUnmountTimerRef.current = null;
+        mainRenderedRef.current = false;
+        setMainRendered(false);
+      }, FADE_MS);
+    }, remainingTime);
   }, [clearTimer]);
 
   /*
@@ -574,29 +552,24 @@ export default function GlobalRoadshowLoader() {
       return;
     }
 
-    shownAtRef.current = performance.now();
+    mainShownAtRef.current = performance.now();
+
+    finishInitialLoadRef.current = completeMainLoader;
 
     let finishTimer: number | null = null;
-
-    const finishInitialLoad = () => {
-      if (initialLoadFinishedRef.current) return;
-
-      initialLoadFinishedRef.current = true;
-      stopLoader();
-    };
 
     const queueFinish = () => {
       if (finishTimer !== null) return;
 
       finishTimer = window.setTimeout(
-        finishInitialLoad,
+        completeMainLoader,
         0,
       );
     };
 
     const maximumTimer = window.setTimeout(
-      finishInitialLoad,
-      MAIN_MAXIMUM_WAIT_MS,
+      completeMainLoader,
+      MAIN_MAX_WAIT_MS,
     );
 
     if (document.readyState === "complete") {
@@ -615,7 +588,7 @@ export default function GlobalRoadshowLoader() {
         window.clearTimeout(finishTimer);
       }
     };
-  }, [isAdminPage, stopLoader]);
+  }, [isAdminPage, completeMainLoader]);
 
   const scrollToTopAfterLoader = useCallback(() => {
     const smoother = ScrollSmoother.get?.();
@@ -649,37 +622,6 @@ export default function GlobalRoadshowLoader() {
     [],
   );
 
-  /* Same-page section and scroll actions keep the old order. */
-  const runBeforeNavigation = useCallback(
-    (
-      navigationLabel: string,
-      navigate: () => void,
-      visibleDuration = NAVIGATION_VISIBLE_MS,
-    ) => {
-      if (navigationPendingRef.current) return;
-
-      navigationPendingRef.current = true;
-      startLoader(navigationLabel);
-
-      const safeVisibleDuration = Math.min(
-        Math.max(0, visibleDuration),
-        MAXIMUM_WAIT_MS,
-      );
-
-      const timer = window.setTimeout(() => {
-        actionTimersRef.current.delete(timer);
-
-        stopLoader(() => {
-          navigationPendingRef.current = false;
-          navigate();
-        });
-      }, SHOW_DELAY_MS + safeVisibleDuration);
-
-      actionTimersRef.current.add(timer);
-    },
-    [startLoader, stopLoader],
-  );
-
   const finishRouteTransition = useCallback(() => {
     if (!pendingRouteTransitionRef.current) return;
 
@@ -694,7 +636,7 @@ export default function GlobalRoadshowLoader() {
   /*
    * Route order:
    * 1. Keep showing the current page.
-   * 2. Run the MINI loader for the configured minimum time.
+   * 2. Run the MINI loader for MINI_NAVIGATION_DELAY_MS.
    * 3. Start router navigation behind the overlay.
    * 4. Wait until Next.js commits the destination page.
    * 5. Fade the MINI loader out.
@@ -707,7 +649,7 @@ export default function GlobalRoadshowLoader() {
       navigationLabel: string,
       navigate: () => void,
       destinationPathname?: string,
-      visibleDuration = NAVIGATION_VISIBLE_MS,
+      visibleDuration = MINI_NAVIGATION_DELAY_MS,
     ) => {
       if (navigationPendingRef.current) return;
 
@@ -716,7 +658,7 @@ export default function GlobalRoadshowLoader() {
 
       const safeVisibleDuration = Math.min(
         Math.max(0, visibleDuration),
-        MAXIMUM_WAIT_MS,
+        MINI_MAX_WAIT_MS,
       );
 
       const timer = window.setTimeout(() => {
@@ -739,32 +681,13 @@ export default function GlobalRoadshowLoader() {
 
         routeFallbackTimerRef.current = window.setTimeout(
           finishRouteTransition,
-          MAXIMUM_WAIT_MS,
+          MINI_MAX_WAIT_MS,
         );
       }, SHOW_DELAY_MS + safeVisibleDuration);
 
       actionTimersRef.current.add(timer);
     },
     [beginRouteTransition, finishRouteTransition, startLoader],
-  );
-
-  const runTimedActionLoader = useCallback(
-    (clickable: Element) => {
-      const actionLabel =
-        clickable.getAttribute("data-loader-label") ||
-        "Loading...";
-      const duration = getActionDuration(clickable);
-
-      startLoader(actionLabel);
-
-      const timer = window.setTimeout(() => {
-        actionTimersRef.current.delete(timer);
-        stopLoader();
-      }, SHOW_DELAY_MS + duration);
-
-      actionTimersRef.current.add(timer);
-    },
-    [startLoader, stopLoader],
   );
 
   /* Hide only after the destination route has rendered a frame. */
@@ -797,13 +720,16 @@ export default function GlobalRoadshowLoader() {
     };
   }, [finishRouteTransition, isRoutePending, pathname]);
 
-  /* Preload the one global video once. */
+  /* Preload the mini (navigation/action) video once. The main
+     video needs no separate preload — it is already rendered
+     directly in the initial tree with preload="auto" from the
+     very first paint on a hard refresh. */
   useEffect(() => {
     if (!ENABLE_GLOBAL_LOADER || isAdminPage) return;
 
     const video = document.createElement("video");
 
-    video.src = VIDEO_URL;
+    video.src = MINI_VIDEO_URL;
     video.preload = "auto";
     video.muted = true;
     video.playsInline = true;
@@ -843,10 +769,7 @@ export default function GlobalRoadshowLoader() {
         "a[href]",
       ) as HTMLAnchorElement | null;
 
-      if (!anchor) {
-        runTimedActionLoader(clickable);
-        return;
-      }
+      if (!anchor) return;
 
       if (!isPlainPrimaryClick(event)) return;
 
@@ -861,10 +784,7 @@ export default function GlobalRoadshowLoader() {
         "Loading...";
 
       if (action.kind === "scroll-top") {
-        runBeforeNavigation(
-          navigationLabel,
-          scrollToTopAfterLoader,
-        );
+        scrollToTopAfterLoader();
         return;
       }
 
@@ -874,9 +794,7 @@ export default function GlobalRoadshowLoader() {
           `${window.location.search}`;
 
         if (action.pathWithSearch === currentPathWithSearch) {
-          runBeforeNavigation(navigationLabel, () => {
-            scrollToHashAfterLoader(action.hash);
-          });
+          scrollToHashAfterLoader(action.hash);
           return;
         }
 
@@ -917,18 +835,8 @@ export default function GlobalRoadshowLoader() {
     };
 
     const handleHide = () => {
-      /*
-       * A child can finish an API call before its matching show
-       * event was observed during hydration. Never let that early
-       * hide event cancel the one protected MAIN-loader request.
-       */
-      if (
-        !initialLoadFinishedRef.current &&
-        requestCountRef.current <= 1
-      ) {
-        return;
-      }
-
+      /* mini's own counter — the main loader never touches it, so
+         there is no shared-slot to protect here any more. */
       stopLoader();
     };
 
@@ -1000,9 +908,7 @@ export default function GlobalRoadshowLoader() {
     closeLoaderImmediately,
     isAdminPage,
     router,
-    runBeforeNavigation,
     runRouteTransition,
-    runTimedActionLoader,
     scrollToHashAfterLoader,
     scrollToTopAfterLoader,
     startLoader,
@@ -1015,6 +921,8 @@ export default function GlobalRoadshowLoader() {
       clearTimer(hideTimerRef);
       clearTimer(unmountTimerRef);
       clearTimer(routeFallbackTimerRef);
+      clearTimer(mainHideTimerRef);
+      clearTimer(mainUnmountTimerRef);
 
       actionTimersRef.current.forEach((timer) => {
         window.clearTimeout(timer);
@@ -1024,31 +932,124 @@ export default function GlobalRoadshowLoader() {
       navigationPendingRef.current = false;
       pendingRouteTransitionRef.current = null;
       requestCountRef.current = 0;
+      /* Idempotent guard: blocks any queued completion path
+         (load event, maximumWaitMs timer, video onError) from
+         calling setState after this component has unmounted. */
+      initialLoadFinishedRef.current = true;
     };
   }, [clearTimer]);
 
+  /* If the main Loader.mp4 fails (network error, unsupported
+     format, missing file), close the loader safely instead of
+     leaving a blank/stuck black overlay on the visitor. */
+  const handleMainVideoError = useCallback(
+    (event: SyntheticEvent<HTMLVideoElement>) => {
+      console.error(
+        "Roadshow main loader video failed to load:",
+        event.currentTarget.error,
+      );
+
+      if (mainRenderedRef.current) {
+        finishInitialLoadRef.current();
+      }
+    },
+    [],
+  );
+
+  const loaderMode: LoaderMode = mainRendered
+    ? "main"
+    : "mini";
+
   if (
     !ENABLE_GLOBAL_LOADER ||
-    !rendered ||
+    (!rendered && !mainRendered) ||
     isAdminPage
   ) {
     return null;
   }
 
-  const activeFadeMs =
-    loaderMode === "main" ? MAIN_FADE_MS : FADE_MS;
-  const activeLoaderWidth =
-    loaderMode === "main"
-      ? MAIN_LOADER_WIDTH
-      : MINI_LOADER_WIDTH;
-  const activeAspectRatio =
-    loaderMode === "main"
-      ? MAIN_LOADER_ASPECT_RATIO
-      : MINI_LOADER_ASPECT_RATIO;
-  const activeBackgroundColor =
-    loaderMode === "main"
-      ? LOADER_SETTINGS.main.backgroundColor
-      : LOADER_SETTINGS.mini.backgroundColor;
+  const isMain = loaderMode === "main";
+  const activeVideoUrl = isMain
+    ? MAIN_VIDEO_URL
+    : MINI_VIDEO_URL;
+  const activeVisible = isMain ? mainVisible : visible;
+  const activeBackgroundColor = isMain
+    ? MAIN_BACKGROUND_COLOR
+    : MINI_BACKGROUND_COLOR;
+
+  /*
+   * Critical positioning/sizing is inline on purpose: the MAIN
+   * loader must render correctly on a hard refresh even if
+   * Tailwind's stylesheet hasn't finished loading/applying yet,
+   * and this is also what prevents the raw/unstyled-video flash
+   * this component previously had. Tailwind classes are kept
+   * only for the mini label's non-critical text styling below.
+   */
+  const overlayStyle: CSSProperties = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100vw",
+    height: "100vh",
+    zIndex: 2147483647,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    padding: "0 16px",
+    boxSizing: "border-box",
+    backgroundColor: activeVisible
+      ? activeBackgroundColor
+      : "rgba(0, 0, 0, 0)",
+    opacity: activeVisible ? 1 : 0,
+    pointerEvents: activeVisible ? "auto" : "none",
+    transition: [
+      `opacity ${FADE_MS}ms ease`,
+      `background-color ${FADE_MS}ms ease`,
+    ].join(", "),
+  };
+
+  const boxStyle: CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "transparent",
+    maxWidth: "100%",
+    opacity: activeVisible ? 1 : 0,
+    transform: activeVisible
+      ? "translateY(0) scale(1)"
+      : "translateY(10px) scale(0.96)",
+    transition: [
+      `opacity ${FADE_MS}ms ease`,
+      `transform ${FADE_MS}ms cubic-bezier(0.22,1,0.36,1)`,
+    ].join(", "),
+  };
+
+  /* MAIN: sized by width + a viewport-height cap, never forced
+     into a square crop — object-fit:contain shows the whole MP4
+     regardless of its native aspect ratio. MINI: unchanged square
+     frame + fixed width ceiling, matching its existing look. */
+  const videoStyle: CSSProperties = isMain
+    ? {
+        display: "block",
+        width: `min(90vw, ${MAIN_MAX_WIDTH_PX}px)`,
+        maxWidth: "100%",
+        maxHeight: "85dvh",
+        height: "auto",
+        objectFit: "contain",
+        background: "transparent",
+      }
+    : {
+        display: "block",
+        width: `min(87vw, ${MINI_MAX_WIDTH_PX}px, calc(100vw - 32px))`,
+        aspectRatio: "1 / 1",
+        maxWidth: "100%",
+        objectFit: "contain",
+        background: "transparent",
+      };
 
   const loaderOverlay = (
     <div
@@ -1057,94 +1058,52 @@ export default function GlobalRoadshowLoader() {
       aria-live="polite"
       aria-busy="true"
       aria-label={label}
-      className="fixed inset-0 z-[2147483647] flex items-center justify-center overflow-hidden px-4"
-      style={{
-        backgroundColor: visible
-          ? activeBackgroundColor
-          : "rgba(0, 0, 0, 0)",
-        opacity: visible ? 1 : 0,
-        pointerEvents: visible ? "auto" : "none",
-        transition: [
-          `opacity ${activeFadeMs}ms ease`,
-          `background-color ${activeFadeMs}ms ease`,
-        ].join(", "),
-      }}
+      style={overlayStyle}
     >
-      <style>{`
-        [data-roadshow-loader-box="true"] {
-          width: ${activeLoaderWidth} !important;
-          min-width: ${activeLoaderWidth} !important;
-          max-width: ${activeLoaderWidth} !important;
-        }
-
-        [data-roadshow-loader-frame="true"] {
-          width: ${activeLoaderWidth} !important;
-          min-width: ${activeLoaderWidth} !important;
-          max-width: ${activeLoaderWidth} !important;
-          aspect-ratio: ${activeAspectRatio} !important;
-        }
-
-        [data-roadshow-loader-video="true"] {
-          display: block !important;
-          width: 100% !important;
-          height: 100% !important;
-          min-width: 0 !important;
-          max-width: 100% !important;
-          min-height: 0 !important;
-          max-height: 100% !important;
-          object-fit: contain !important;
-          background: transparent !important;
-        }
-      `}</style>
+      {isMain && (
+        <style>{`
+          html,
+          body {
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+          }
+        `}</style>
+      )}
 
       <div
         data-roadshow-loader-box="true"
-        className="flex flex-col items-center bg-transparent"
-        style={{
-          opacity: visible ? 1 : 0,
-          transform: visible
-            ? "translateY(0) scale(1)"
-            : "translateY(10px) scale(0.96)",
-          transition: [
-            `opacity ${activeFadeMs}ms ease`,
-            `transform ${activeFadeMs}ms cubic-bezier(0.22,1,0.36,1)`,
-          ].join(", "),
-        }}
+        style={boxStyle}
       >
-        <div
-          data-roadshow-loader-frame="true"
-          className="overflow-hidden bg-transparent"
-        >
-          <video
-            data-roadshow-loader-video="true"
-            src={VIDEO_URL}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            controls={false}
-            disablePictureInPicture
-            aria-hidden="true"
-          />
-        </div>
+        <video
+          key={activeVideoUrl}
+          data-roadshow-loader-video="true"
+          src={activeVideoUrl}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          controls={false}
+          disablePictureInPicture
+          aria-hidden="true"
+          style={videoStyle}
+          onError={handleMainVideoError}
+        />
 
-        <p
-          className={`text-center font-semibold text-white ${
-            loaderMode === "main"
-              ? "-mt-5 text-base sm:text-lg"
-              : "-mt-3 text-sm"
-          }`}
-        >
-          {label}
-        </p>
+        {!isMain && (
+          <p className="-mt-3 text-center text-sm font-semibold text-white">
+            {label}
+          </p>
+        )}
       </div>
     </div>
   );
 
-  if (!portalReady || typeof document === "undefined") {
-    return loaderOverlay;
-  }
-
-  return createPortal(loaderOverlay, document.body);
+  /*
+   * Render directly where the component is mounted in the root layout.
+   * The overlay is already fixed to the viewport with the maximum z-index,
+   * so a portal is unnecessary. Keeping one render container also prevents
+   * the video from remounting/restarting once during hydration.
+   */
+  return loaderOverlay;
 }

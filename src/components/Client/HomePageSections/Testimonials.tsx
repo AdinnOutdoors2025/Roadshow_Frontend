@@ -79,36 +79,38 @@ const AUTO_CHANGE_TIME = 2000;
 
 /* ============================================================
    ============================================================
-   LED SCREEN ADJUSTMENT AREA
+      LED RESPONSIVE ADJUSTMENT AREA
    ============================================================
    ============================================================
 
-   THIS IS THE ONLY PLACE YOU NEED TO CHANGE.
+   ONLY CHANGE VALUES INSIDE THIS AREA.
 
-   width  = LED width
-   height = LED height
+   width:
+   increase = wider
+   decrease = narrower
+
+   height:
+   increase = taller
+   decrease = shorter
 
    left:
-   increase = move RIGHT
-   decrease = move LEFT
+   increase = RIGHT
+   decrease = LEFT
 
    top:
-   increase = move DOWN
-   decrease = move UP
-
+   increase = DOWN
+   decrease = UP
 ============================================================ */
 
 
 /* ============================================================
-   DESKTOP
-   1101px AND ABOVE
+   LARGE DESKTOP
+   1441px AND ABOVE
 
-   IMPORTANT:
-   THESE ARE YOUR ORIGINAL VALUES.
-   DON'T CHANGE THESE.
+   KEEP YOUR ORIGINAL DESKTOP VALUES.
 ============================================================ */
 
-const DESKTOP_LED_LAYOUT: LedLayout = {
+const LARGE_DESKTOP_LED_LAYOUT: LedLayout = {
   width: "85.5%",
   height: "86%",
   left: "4%",
@@ -117,10 +119,30 @@ const DESKTOP_LED_LAYOUT: LedLayout = {
 
 
 /* ============================================================
+   LAPTOP / COMPACT DESKTOP
+   1101px - 1440px
+
+   ✅ YOUR 1366 × 768 SCREEN USES THIS
+
+   SCREENSHOT-TUNED VALUES:
+   width  = unchanged
+   height = approximately 3.8% taller
+   top    = moved upward
+============================================================ */
+
+const LAPTOP_LED_LAYOUT: LedLayout = {
+  width: "85.5%",
+  height: "89.25%",
+  left: "4%",
+  top: "14.25%",
+};
+
+
+/* ============================================================
    TABLET
    768px - 1100px
 
-   ✅ ADJUST TABLET LED HERE
+   ✅ ADJUST TABLET HERE
 ============================================================ */
 
 const TABLET_LED_LAYOUT: LedLayout = {
@@ -135,7 +157,7 @@ const TABLET_LED_LAYOUT: LedLayout = {
    MOBILE
    BELOW 768px
 
-   ✅ ADJUST MOBILE LED HERE
+   ✅ ADJUST MOBILE HERE
 ============================================================ */
 
 const MOBILE_LED_LAYOUT: LedLayout = {
@@ -147,8 +169,9 @@ const MOBILE_LED_LAYOUT: LedLayout = {
 
 
 /* ============================================================
-   END OF LED ADJUSTMENT AREA
-   YOU DON'T NEED TO CHANGE ANYTHING BELOW THIS
+   END OF ADJUSTMENT AREA
+
+   NO NEED TO CHANGE ANYTHING BELOW.
 ============================================================ */
 
 
@@ -158,44 +181,39 @@ function getNextIndex(index: number) {
 
 
 /* ============================================================
-   RESPONSIVE LED BREAKPOINT
+   RESPONSIVE LED SELECTION
 ============================================================ */
 
 function getLedLayout(viewportWidth: number): LedLayout {
-  /*
-   * MOBILE
-   */
+  /* MOBILE */
   if (viewportWidth < 768) {
     return MOBILE_LED_LAYOUT;
   }
 
-  /*
-   * TABLET
-   *
-   * Includes:
-   * 768
-   * 800
-   * 820
-   * 834
-   * 900
-   * 1024
-   * 1080
-   */
+  /* TABLET */
   if (viewportWidth <= 1100) {
     return TABLET_LED_LAYOUT;
   }
 
-  /*
-   * DESKTOP
-   *
-   * No change to existing desktop LED values.
-   */
-  return DESKTOP_LED_LAYOUT;
+  /* LAPTOP / COMPACT DESKTOP
+     Includes:
+     1152
+     1280
+     1366
+     1400
+     1440
+  */
+  if (viewportWidth <= 1440) {
+    return LAPTOP_LED_LAYOUT;
+  }
+
+  /* LARGE DESKTOP */
+  return LARGE_DESKTOP_LED_LAYOUT;
 }
 
 
 /* ============================================================
-   LED CONTENT ANIMATION
+   LED TESTIMONIAL ANIMATION
 ============================================================ */
 
 const screenVariants: Variants = {
@@ -274,18 +292,7 @@ export function Testimonials() {
 
 
   /* ============================================================
-     RESPONSIVE LED POSITION + SIZE
-
-     ONLY THE LED OVERLAY IS CHANGED.
-
-     Truck
-     Heading
-     Section
-     Video
-     Dots
-     Desktop layout
-
-     ARE NOT CHANGED.
+     APPLY RESPONSIVE LED SIZE / POSITION
   ============================================================ */
 
   useEffect(() => {
@@ -293,20 +300,12 @@ export function Testimonials() {
 
     if (!ledScreen) return;
 
+    let resizeFrame: number | null = null;
+
     const applyLedLayout = () => {
       const viewportWidth = window.innerWidth;
 
       const layout = getLedLayout(viewportWidth);
-
-      /*
-       * !important is intentional.
-       *
-       * Your existing CSS can contain responsive
-       * !important rules for this LED screen.
-       *
-       * This guarantees these exact LED values win
-       * without changing any other section.
-       */
 
       ledScreen.style.setProperty(
         "width",
@@ -370,34 +369,51 @@ export function Testimonials() {
     };
 
 
-    /* Apply when page loads */
+    const handleResize = () => {
+      if (resizeFrame !== null) {
+        window.cancelAnimationFrame(resizeFrame);
+      }
+
+      resizeFrame = window.requestAnimationFrame(() => {
+        applyLedLayout();
+
+        resizeFrame = null;
+      });
+    };
+
+
+    /* Initial application */
     applyLedLayout();
 
 
-    /* Apply when browser/tablet size changes */
+    /* Responsive resize */
     window.addEventListener(
       "resize",
-      applyLedLayout
+      handleResize
     );
 
 
-    /* Apply when tablet/mobile rotates */
+    /* Mobile/tablet rotation */
     window.addEventListener(
       "orientationchange",
-      applyLedLayout
+      handleResize
     );
 
 
     return () => {
       window.removeEventListener(
         "resize",
-        applyLedLayout
+        handleResize
       );
 
       window.removeEventListener(
         "orientationchange",
-        applyLedLayout
+        handleResize
       );
+
+      if (resizeFrame !== null) {
+        window.cancelAnimationFrame(resizeFrame);
+      }
     };
   }, []);
 
@@ -413,7 +429,9 @@ export function Testimonials() {
       setSelectedIndex((prev) => getNextIndex(prev));
     }, AUTO_CHANGE_TIME);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearInterval(timer);
+    };
   }, [shouldReduceMotion, isPaused]);
 
 
@@ -454,7 +472,7 @@ export function Testimonials() {
 
 
           {/* ==================================================
-              VEHICLE / TESTIMONIAL AREA
+              VEHICLE / TESTIMONIAL
           ================================================== */}
 
           <motion.div
@@ -486,12 +504,14 @@ export function Testimonials() {
           >
 
             {/* ==================================================
-                BACKGROUND VIDEO
+                VEHICLE VIDEO
             ================================================== */}
 
             <video
               className={`adinn-testimonial-bg-video ${
-                videoReady ? "" : "adinn-testimonial-bg-video--loading"
+                videoReady
+                  ? ""
+                  : "adinn-testimonial-bg-video--loading"
               }`}
               autoPlay
               muted
@@ -509,16 +529,14 @@ export function Testimonials() {
 
 
             {/* ==================================================
-                TRUCK STAGE
+                TRUCK LED STAGE
             ================================================== */}
 
             <div className="adinn-testimonial-truck-stage">
 
 
               {/* =================================================
-                  LED SCREEN
-
-                  ONLY THIS ELEMENT GETS RESPONSIVE POSITION/SIZE.
+                  RESPONSIVE LED OVERLAY
               ================================================= */}
 
               <div
@@ -527,9 +545,9 @@ export function Testimonials() {
                 aria-live="polite"
               >
 
-                {/* ==============================================
-                    LED PROGRESS
-                ============================================== */}
+                {/* =============================================
+                    PROGRESS
+                ============================================= */}
 
                 {!shouldReduceMotion && !isPaused && (
                   <motion.div
@@ -545,16 +563,17 @@ export function Testimonials() {
                     }}
 
                     transition={{
-                      duration: AUTO_CHANGE_TIME / 1000,
+                      duration:
+                        AUTO_CHANGE_TIME / 1000,
                       ease: "linear",
                     }}
                   />
                 )}
 
 
-                {/* ==============================================
-                    TESTIMONIAL CONTENT
-                ============================================== */}
+                {/* =============================================
+                    TESTIMONIAL
+                ============================================= */}
 
                 <AnimatePresence
                   mode="wait"
@@ -581,9 +600,7 @@ export function Testimonials() {
                     <div className="adinn-led-screen-inner">
 
 
-                      {/* ==========================================
-                          CATEGORY TAG
-                      ========================================== */}
+                      {/* CATEGORY */}
 
                       <motion.div
                         className="adinn-led-screen-tag"
@@ -593,9 +610,7 @@ export function Testimonials() {
                       </motion.div>
 
 
-                      {/* ==========================================
-                          QUOTE
-                      ========================================== */}
+                      {/* QUOTE */}
 
                       <motion.p
                         className="adinn-led-screen-quote"
@@ -605,9 +620,7 @@ export function Testimonials() {
                       </motion.p>
 
 
-                      {/* ==========================================
-                          BOTTOM INFORMATION
-                      ========================================== */}
+                      {/* BOTTOM */}
 
                       <motion.div
                         className="adinn-led-screen-bottom"
@@ -617,9 +630,7 @@ export function Testimonials() {
                         <div>
 
 
-                          {/* ======================================
-                              STARS
-                          ====================================== */}
+                          {/* STARS */}
 
                           <div className="adinn-led-screen-stars">
 
@@ -652,7 +663,8 @@ export function Testimonials() {
 
                                     delay:
                                       0.16 +
-                                      starIndex * 0.045,
+                                      starIndex *
+                                        0.045,
 
                                     ease: [
                                       0.22,
@@ -669,24 +681,21 @@ export function Testimonials() {
                                   />
 
                                 </motion.span>
+
                               )
                             )}
 
                           </div>
 
 
-                          {/* ======================================
-                              NAME
-                          ====================================== */}
+                          {/* NAME */}
 
                           <strong>
                             {selectedItem.n}
                           </strong>
 
 
-                          {/* ======================================
-                              ROLE
-                          ====================================== */}
+                          {/* ROLE */}
 
                           <span>
                             {selectedItem.role}
@@ -695,9 +704,7 @@ export function Testimonials() {
                         </div>
 
 
-                        {/* ========================================
-                            LIVE LED BADGE
-                        ======================================== */}
+                        {/* LIVE BADGE */}
 
                         <motion.div
                           className="adinn-led-live-badge"
@@ -746,7 +753,7 @@ export function Testimonials() {
 
 
           {/* ==================================================
-              SLIDER DOTS
+              DOT NAVIGATION
           ================================================== */}
 
           <div
