@@ -1,6 +1,7 @@
 import API_BASE from "../../../../baseurl";
 import BookingSummaryDocument from "@/lib/BookingSummaryDocument";
 import { resolveVehicleImages, type BookingSummaryPdfData } from "@/lib/bookingSummaryPdf";
+import PdfReadySignal from "./PdfReadySignal";
 
 /* =========================================================
    PRINT-ONLY BOOKING SUMMARY ROUTE
@@ -41,10 +42,24 @@ export default async function PrintBookingSummaryPage({
   const data = await fetchBookingSummaryData(orderId);
 
   if (!data) {
-    return <div>Booking summary not found.</div>;
+    return (
+      <>
+        <PdfReadySignal />
+        <div>Booking summary not found.</div>
+      </>
+    );
   }
 
   const vehicleImages = await resolveVehicleImages(data.vehicleTypes || []);
 
-  return <BookingSummaryDocument data={data} vehicleImages={vehicleImages} />;
+  return (
+    <>
+      {/* Puppeteer's PDF capture must never show a mid-transition frame —
+          this route is only ever screenshotted once, so there is nothing
+          for an animation/transition to usefully do here. */}
+      <style>{`*, *::before, *::after { animation: none !important; transition: none !important; }`}</style>
+      <PdfReadySignal />
+      <BookingSummaryDocument data={data} vehicleImages={vehicleImages} />
+    </>
+  );
 }

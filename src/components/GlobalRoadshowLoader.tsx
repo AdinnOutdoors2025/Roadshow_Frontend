@@ -333,7 +333,13 @@ function getActionDuration(element: Element) {
 export default function GlobalRoadshowLoader() {
   const pathname = usePathname();
   const router = useRouter();
-  const isAdminPage = pathname.startsWith("/admin");
+  /* /print-summary is a headless-browser-only route (see
+     Utils/bookingSummaryPdfRenderer.js) — it must render nothing but the
+     booking summary document itself, with no loader overlay ever covering
+     it while Puppeteer captures the page. Reuses the same isAdminPage gate
+     that already skips chrome for /admin/*. */
+  const isAdminPage =
+    pathname.startsWith("/admin") || pathname.startsWith("/print-summary");
   const showInitialMainLoader =
     ENABLE_GLOBAL_LOADER && !isAdminPage;
 
