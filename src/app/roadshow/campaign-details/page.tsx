@@ -988,6 +988,7 @@ export default function CampaignDetailsPage() {
         rows,
         pricing,
         formatDateForApi,
+        hasAgencyPoDocument: isAgency && !!poDocumentFile,
       });
 
       sessionStorage.setItem(

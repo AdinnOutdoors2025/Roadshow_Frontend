@@ -52,6 +52,7 @@ export const buildClientRequestPayload = ({
   rows,
   pricing,
   formatDateForApi,
+  hasAgencyPoDocument,
 }) => {
   const firstDetails = rows[0]?.details;
 
@@ -90,6 +91,13 @@ export const buildClientRequestPayload = ({
     route: "",
 
     addOns: [],
+
+    /* Tells the backend a PO document is about to arrive via the separate
+       client-requests/:id/po-document upload right after this call
+       succeeds, so it defers sending the campaign-request mail to that
+       upload instead of sending it here too — otherwise both fire and the
+       customer/admin get the same email twice. */
+    hasAgencyPoDocument: Boolean(hasAgencyPoDocument),
 
     vehicleTypes: rows.map(({ vehicle, details, pricing: line }) => ({
       /* ── Fields the endpoint already stores ─────────────────────────── */
@@ -160,6 +168,7 @@ export const submitClientRequest = async ({
   rows,
   pricing,
   formatDateForApi,
+  hasAgencyPoDocument,
 }) => {
   const payload = buildClientRequestPayload({
     user,
@@ -168,6 +177,7 @@ export const submitClientRequest = async ({
     rows,
     pricing,
     formatDateForApi,
+    hasAgencyPoDocument,
   });
 
   const formData = new FormData();

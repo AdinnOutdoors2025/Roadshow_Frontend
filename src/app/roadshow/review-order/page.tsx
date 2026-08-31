@@ -267,6 +267,7 @@ export default function ReviewOrderPage() {
         rows,
         pricing,
         formatDateForApi,
+        hasAgencyPoDocument: isAgency && !!poDocumentFile,
       });
 
       sessionStorage.setItem(

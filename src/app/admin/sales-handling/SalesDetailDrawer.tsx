@@ -167,7 +167,7 @@ function DocItem({ docPath, label, notes, by, at }: {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{label}</p>
           {notes && <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1"><StickyNote size={15} /> {notes}</p>}
-          {by && <p className="text-[13px] text-gray-400 mt-0.5"> {by} · {fmtDatetime(at)}</p>}
+          {by && <p className="text-[15px] text-gray-500 mt-0.5"> {by} · {fmtDatetime(at)}</p>}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button onClick={() => setPreview(true)}
@@ -1759,7 +1759,7 @@ function DocumentsTab({
                           />
                           <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-2 flex items-start gap-1">
                             <StickyNote size={12} className="mt-0.5 flex-shrink-0 text-gray-400" />
-                            <span><span className="font-semibold text-gray-700 dark:text-gray-300">Reason:</span> <span className="italic">{h.reason}</span></span>
+                            <span><span className="font-semibold text-gray-700 dark:text-gray-300">Reason:</span> <span className="">{h.reason}</span></span>
                           </p>
                         </div>
                       ))}
@@ -1783,13 +1783,13 @@ function DocumentsTab({
       <div className="rounded-xl border overflow-hidden border-blue-100 dark:border-blue-900/40">
         <div className="px-4 py-2.5 border-b bg-blue-50 dark:bg-blue-900/20">
           <h3 className="text-sm font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
-            Agency PO Document
+            Client PO Document
           </h3>
         </div>
         <div className="p-3 space-y-2 bg-white dark:bg-gray-900">
           <DocItem
             docPath={resolveAgencyPoUrl(agencyPODocument)}
-            label={agencyPODocument.originalName || "Agency PO Document"}
+            label={agencyPODocument.originalName || "Client PO Document"}
             by={agencyPoAttribution(agencyPODocument)}
             at={agencyPODocument.uploadedAt}
           />
@@ -1868,7 +1868,7 @@ function DocumentsTab({
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[11px] font-bold">
                         <FileEdit size={10} /> Correction #{agencyPODocumentHistory.length - hi}
                       </span>
-                      <span className="text-[11px] text-gray-400">{fmtDatetime(h.editedAt)}</span>
+                      <span className="text-[12px] text-gray-400">{fmtDatetime(h.editedAt)}</span>
                     </div>
                     {resolveAgencyPoUrl(h.previousDocument) && (
                       <DocItem
@@ -1887,8 +1887,8 @@ function DocumentsTab({
                       />
                     </div>
                     <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-2 flex items-start gap-1">
-                      <StickyNote size={12} className="mt-0.5 flex-shrink-0 text-gray-400" />
-                      <span><span className="font-semibold text-gray-700 dark:text-gray-300">Reason:</span> <span className="italic">{h.reason}</span></span>
+                      <StickyNote size={13} className="mt-0.5 flex-shrink-0 text-gray-400" />
+                      <span><span className="font-semibold text-sm text-gray-700 dark:text-gray-300">Reason:</span> <span className="text-sm">{h.reason}</span></span>
                     </p>
                   </div>
                 ))}
