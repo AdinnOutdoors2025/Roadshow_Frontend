@@ -2,37 +2,86 @@
 
 import { ScrollSmoother } from "gsap/ScrollSmoother";
 
-/* The homepage section that the navbar "Vehicle" link targets.
-   Kept here (not inline) so the navbar and HomePageSection1 can never
-   drift apart on the id string. Must match the id on the
-   .RS_OurRdwMainSection wrapper in HomePageSection1.tsx. */
 export const HOME_VEHICLES_SECTION_ID = "our-roadshow-vehicles";
 
-/* Clearance for the fixed glass header (12px top offset + 78px pill),
-   so the section heading is never parked underneath it. */
+/* Clearance for the fixed glass header. */
 const HEADER_OFFSET = 110;
 
+/* Must be slightly longer than GlobalSmoothScroll's `smooth: 1.1`. */
+const HEADER_SCROLL_RELEASE_MS = 1400;
+
+export const HEADER_SCROLL_START_EVENT =
+  "roadshow:header-scroll-start";
+export const HEADER_SCROLL_END_EVENT =
+  "roadshow:header-scroll-end";
+
+export type HeaderScrollDirection = "up" | "down";
+
+export interface HeaderScrollEventDetail {
+  direction: HeaderScrollDirection;
+}
+
 type ScrollOptions = {
-  /* Jump with no easing — used when the motion would be unwanted
-     (prefers-reduced-motion) or redundant. */
   instant?: boolean;
+  headerNavigation?: boolean;
 };
 
-/* Scrolls the page to a section by id.
+let releaseTimer: number | null = null;
 
-   GlobalSmoothScroll runs ScrollSmoother on the homepage, which transforms
-   #smooth-content rather than scrolling the window — the browser's own hash
-   jump and element.scrollIntoView() both compute against a scrollport whose
-   scrollTop is permanently 0 and end up nowhere near the target. So: hand the
-   job to the smoother when one is alive, and fall back to a plain window
-   scroll (with the same header offset) on pages that render outside it or
-   when reduced motion has disabled it.
+function startHeaderScroll(direction: HeaderScrollDirection) {
+  if (releaseTimer !== null) {
+    window.clearTimeout(releaseTimer);
+  }
 
-   Returns false when the section is not on the current page, so callers can
-   let normal routing happen instead. */
+  window.dispatchEvent(
+    new CustomEvent<HeaderScrollEventDetail>(
+      HEADER_SCROLL_START_EVENT,
+      { detail: { direction } },
+    ),
+  );
+
+  releaseTimer = window.setTimeout(() => {
+    releaseTimer = null;
+    window.dispatchEvent(new Event(HEADER_SCROLL_END_EVENT));
+  }, HEADER_SCROLL_RELEASE_MS);
+}
+
+function getWindowScrollTop() {
+  return window.scrollY || document.documentElement.scrollTop || 0;
+}
+
+export const scrollToPageTop = (
+  { instant = false, headerNavigation = false }: ScrollOptions = {},
+): void => {
+  if (typeof window === "undefined") return;
+
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  const smooth = !instant && !prefersReducedMotion;
+  const smoother = ScrollSmoother.get?.();
+
+  if (smooth && headerNavigation) {
+    startHeaderScroll("up");
+  }
+
+  if (smoother) {
+    smoother.scrollTo(0, smooth, "top top");
+    return;
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior: smooth ? "smooth" : "auto",
+  });
+};
+
 export const scrollToSection = (
   sectionId: string,
-  { instant = false }: ScrollOptions = {},
+  {
+    instant = false,
+    headerNavigation = false,
+  }: ScrollOptions = {},
 ): boolean => {
   if (typeof window === "undefined") return false;
 
@@ -42,23 +91,41 @@ export const scrollToSection = (
   const prefersReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   ).matches;
-
   const smooth = !instant && !prefersReducedMotion;
-
   const smoother = ScrollSmoother.get?.();
 
+  const fallbackTargetTop = Math.max(
+    0,
+    target.getBoundingClientRect().top +
+      getWindowScrollTop() -
+      HEADER_OFFSET,
+  );
+
+  const currentTop = smoother
+    ? smoother.scrollTop()
+    : getWindowScrollTop();
+
+  const destinationTop = smoother
+    ? smoother.offset(target, `top ${HEADER_OFFSET}px`)
+    : fallbackTargetTop;
+
+  if (smooth && headerNavigation) {
+    startHeaderScroll(
+      destinationTop >= currentTop ? "down" : "up",
+    );
+  }
+
   if (smoother) {
-    /* "top 110px" = align the section's top 110px below the viewport top,
-       i.e. just clear of the floating header. */
-    smoother.scrollTo(target, smooth, `top ${HEADER_OFFSET}px`);
+    smoother.scrollTo(
+      target,
+      smooth,
+      `top ${HEADER_OFFSET}px`,
+    );
     return true;
   }
 
-  const top =
-    target.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
-
   window.scrollTo({
-    top: Math.max(0, top),
+    top: fallbackTargetTop,
     behavior: smooth ? "smooth" : "auto",
   });
 

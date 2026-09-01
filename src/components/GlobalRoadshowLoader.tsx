@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { ScrollSmoother } from "gsap/ScrollSmoother";
 import {
   useCallback,
   useEffect,
@@ -11,7 +10,10 @@ import {
   type CSSProperties,
   type SyntheticEvent,
 } from "react";
-import { scrollToSection } from "@/components/Client/Reusable_Components/scrollToSection";
+import {
+  scrollToPageTop,
+  scrollToSection,
+} from "@/components/Client/Reusable_Components/scrollToSection";
 
 /*
  * ============================================================
@@ -90,6 +92,7 @@ interface NavigateEventDetail {
 interface PendingRouteTransition {
   fromPathname: string;
   destinationPathname?: string;
+  afterComplete?: () => void;
 }
 
 export function showRoadshowLoader(
@@ -591,13 +594,7 @@ export default function GlobalRoadshowLoader() {
   }, [isAdminPage, completeMainLoader]);
 
   const scrollToTopAfterLoader = useCallback(() => {
-    const smoother = ScrollSmoother.get?.();
-
-    if (smoother) {
-      smoother.scrollTo(0, false, "top top");
-    } else {
-      window.scrollTo({ top: 0, behavior: "auto" });
-    }
+    scrollToPageTop({ headerNavigation: true });
 
     window.history.pushState(null, "", "/");
     window.dispatchEvent(new Event("hashchange"));
@@ -609,7 +606,7 @@ export default function GlobalRoadshowLoader() {
       const target = document.getElementById(hash);
 
       if (target) {
-        scrollToSection(hash, { instant: true });
+        scrollToSection(hash, { headerNavigation: true });
       }
 
       const newUrl =
@@ -623,13 +620,17 @@ export default function GlobalRoadshowLoader() {
   );
 
   const finishRouteTransition = useCallback(() => {
-    if (!pendingRouteTransitionRef.current) return;
+    const pendingTransition =
+      pendingRouteTransitionRef.current;
+
+    if (!pendingTransition) return;
 
     pendingRouteTransitionRef.current = null;
     clearTimer(routeFallbackTimerRef);
 
     stopLoader(() => {
       navigationPendingRef.current = false;
+      pendingTransition.afterComplete?.();
     });
   }, [clearTimer, stopLoader]);
 
@@ -650,6 +651,7 @@ export default function GlobalRoadshowLoader() {
       navigate: () => void,
       destinationPathname?: string,
       visibleDuration = MINI_NAVIGATION_DELAY_MS,
+      afterComplete?: () => void,
     ) => {
       if (navigationPendingRef.current) return;
 
@@ -667,6 +669,7 @@ export default function GlobalRoadshowLoader() {
         pendingRouteTransitionRef.current = {
           fromPathname: window.location.pathname,
           destinationPathname,
+          afterComplete,
         };
 
         try {
@@ -806,8 +809,10 @@ export default function GlobalRoadshowLoader() {
 
         runRouteTransition(
           navigationLabel,
-          () => router.push(action.href),
-          getDestinationPathname(action.href),
+          () => router.push(action.pathWithSearch),
+          getDestinationPathname(action.pathWithSearch),
+          MINI_NAVIGATION_DELAY_MS,
+          () => scrollToHashAfterLoader(action.hash),
         );
         return;
       }
