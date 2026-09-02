@@ -18,9 +18,9 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import toast from "react-hot-toast";
-import emailjs from "@emailjs/browser";
 
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { baseUrl } from "@/BaseUrl";
 import "./Footer.css";
 
 type MathCaptcha = {
@@ -29,9 +29,7 @@ type MathCaptcha = {
   answer: number;
 };
 
-const EMAILJS_SERVICE_ID = "service_109ond7";
-const EMAILJS_PUBLIC_KEY = "hmRHPc3KZL8QoEtzw";
-const NEWSLETTER_TEMPLATE_ID = "template_ke6dt9s";
+const NEWSLETTER_ENDPOINT = `${baseUrl}/newsletter`;
 
 function createMathCaptcha(): MathCaptcha {
   const firstNumber = Math.floor(Math.random() * 9) + 1;
@@ -169,83 +167,22 @@ export function useNewsletterSubscribe(source: string) {
       );
     }
 
-    if (
-      !EMAILJS_SERVICE_ID ||
-      !EMAILJS_PUBLIC_KEY ||
-      !NEWSLETTER_TEMPLATE_ID
-    ) {
-      console.error("EmailJS configuration is missing.");
-
-      throw new Error(
-        "The update request service is currently unavailable."
-      );
-    }
-
-    const subscriberType =
-      validation.type === "email" ? "Email" : "Phone";
-
-    const subscribedAt = new Intl.DateTimeFormat("en-IN", {
-      timeZone: "Asia/Kolkata",
-      dateStyle: "full",
-      timeStyle: "medium",
-    }).format(new Date());
-
-    /*
-     * IMPORTANT:
-     * Existing EmailJS parameter names are kept unchanged
-     * so the current EmailJS template continues to work.
-     */
-    const templateParams = {
-      contact_label: subscriberType,
-
-      subscriber: validation.normalizedValue,
-
-      subscriber_type: subscriberType,
-
-      subscribed_at: subscribedAt,
-
-      timezone: "Asia/Kolkata",
-
-      source,
-
-      page_url:
-        typeof window !== "undefined"
-          ? window.location.href
-          : "Adinn Roadshows Website",
-
-      verification_status:
-        "Human verification completed",
-    };
+    let response: Response;
 
     try {
-      const result = await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        NEWSLETTER_TEMPLATE_ID,
-        templateParams,
-        {
-          publicKey: EMAILJS_PUBLIC_KEY,
-        }
-      );
-
-      console.log(
-        "EmailJS request sent successfully:",
-        {
-          status: result.status,
-          text: result.text,
-        }
-      );
-
-      return {
-        success: true,
-
-        message:
-          validation.type === "email"
-            ? "Your email has been registered for Roadshow updates."
-            : "Your phone number has been registered for Roadshow updates.",
-      };
+      response = await fetch(NEWSLETTER_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contact: validation.normalizedValue,
+          source,
+        }),
+      });
     } catch (error) {
       console.error(
-        "EmailJS update request error:",
+        "Newsletter subscription request error:",
         error
       );
 
@@ -253,6 +190,37 @@ export function useNewsletterSubscribe(source: string) {
         "Unable to process your request. Please try again."
       );
     }
+
+    let data: { status?: string; message?: string } = {};
+
+    try {
+      data = await response.json();
+    } catch {
+      // Non-JSON response — leave data empty.
+    }
+
+    // 409 = already enquired today. Surface the professional message.
+    if (response.status === 409) {
+      throw new Error(
+        data.message ||
+          "You have already submitted an enquiry today. Please try again tomorrow."
+      );
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+          "Unable to process your request. Please try again."
+      );
+    }
+
+    return {
+      success: true,
+      message:
+        validation.type === "email"
+          ? "Your email has been registered for Roadshow updates."
+          : "Your phone number has been registered for Roadshow updates.",
+    };
   };
 
   const handleCaptchaVerification = async () => {

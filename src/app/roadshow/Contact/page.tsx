@@ -11,8 +11,7 @@ import {
 } from "react";
 
 import Image from "next/image";
-import emailjs from "@emailjs/browser";
-import { mailImageUrl } from "../../../BaseUrl";
+import { baseUrl, mailImageUrl } from "../../../BaseUrl";
 import toast, { Toaster } from "react-hot-toast";
 import { withRoadshowLoader } from "@/components/GlobalRoadshowLoader";
 
@@ -74,6 +73,10 @@ type ContactFormState = {
 
 type ServiceDetails = {
   image: string;
+  /** Small (~10-16KB) JPEG copy used only for the email notification — the
+   *  full-res `image` above is fine on-page (Next/Image optimizes it), but
+   *  a multi-MB remote image is unreliable for a mail client to fetch. */
+  mailImage: string;
   alt: string;
   title: string;
   description: string;
@@ -98,6 +101,7 @@ const SERVICE_OPTIONS: ServiceOption[] = [
 const SERVICE_DETAILS: Record<ServiceOption, ServiceDetails> = {
   "2 Sided Fabricated LED": {
     image: "/images/assets/HomeBanner_MainPageFinal.png",
+    mailImage: "/images/assets/mail/HomeBanner_MainPageFinal.jpg",
     alt: "2 sided fabricated LED roadshow vehicle",
     title: "2 Sided Fabricated LED",
     description:
@@ -123,6 +127,7 @@ const SERVICE_DETAILS: Record<ServiceOption, ServiceDetails> = {
 
   "Single Side Led Vehicle": {
     image: "/images/assets/single side edited (1)_NEW.png",
+    mailImage: "/images/assets/mail/single-side-edited-1-_NEW.jpg",
     alt: "single side LED roadshow vehicle",
     title: "Single Side LED Vehicle",
     description:
@@ -148,6 +153,7 @@ const SERVICE_DETAILS: Record<ServiceOption, ServiceDetails> = {
 
   "19 Feet Triple Side LED": {
     image: "/images/assets/full_side_LED_edited-1_new.png",
+    mailImage: "/images/assets/mail/full_side_LED_edited-1_new.jpg",
     alt: "19 feet triple side LED roadshow vehicle",
     title: "19 Feet Triple Side LED",
     description:
@@ -173,6 +179,7 @@ const SERVICE_DETAILS: Record<ServiceOption, ServiceDetails> = {
 
   "17 Feet Triple Side LED": {
     image: "/images/assets/tata ultra - 2.png",
+    mailImage: "/images/assets/mail/tata-ultra-2.jpg",
     alt: "17 feet triple side LED roadshow vehicle",
     title: "17 Feet Triple Side LED",
     description:
@@ -304,11 +311,10 @@ function FormField({
       </span>
 
       <span
-        className={`contact-field__control ${
-          isDateField
+        className={`contact-field__control ${isDateField
             ? "contact-field__control--date"
             : ""
-        }`}
+          }`}
       >
         {isDateField ? (
           <button
@@ -617,38 +623,38 @@ export default function ContactPage() {
 
   const handleChange =
     (field: keyof ContactFormState) =>
-    (
-      event: ChangeEvent<
-        HTMLInputElement | HTMLTextAreaElement
-      >,
-    ) => {
-      let value = event.target.value;
+      (
+        event: ChangeEvent<
+          HTMLInputElement | HTMLTextAreaElement
+        >,
+      ) => {
+        let value = event.target.value;
 
-      if (field === "contact") {
-        value = value.replace(
-          /[^0-9+\-\s()]/g,
-          "",
-        );
-      }
-
-      setForm((previous) => {
-        const nextForm = {
-          ...previous,
-          [field]: value,
-        };
-
-        if (
-          field === "startDate" &&
-          previous.endDate &&
-          value &&
-          previous.endDate < value
-        ) {
-          nextForm.endDate = "";
+        if (field === "contact") {
+          value = value.replace(
+            /[^0-9+\-\s()]/g,
+            "",
+          );
         }
 
-        return nextForm;
-      });
-    };
+        setForm((previous) => {
+          const nextForm = {
+            ...previous,
+            [field]: value,
+          };
+
+          if (
+            field === "startDate" &&
+            previous.endDate &&
+            value &&
+            previous.endDate < value
+          ) {
+            nextForm.endDate = "";
+          }
+
+          return nextForm;
+        });
+      };
 
   /* =========================================================
      VALIDATION
@@ -763,101 +769,104 @@ export default function ContactPage() {
 
     const enquiryId = generateEnquiryId();
 
-    const serviceId = "service_109ond7";
-    const publicKey = "hmRHPc3KZL8QoEtzw";
-    const templateId = "template_bgyb9rj";
-
-    if (!serviceId || !templateId || !publicKey) {
-      toast.error(
-        "Email service is not configured. Please check the EmailJS configuration.",
-        {
-          id: "contact-form-toast",
-        },
-      );
-
-      return;
-    }
-
+    /* Using the full-res `image` (not the smaller `mailImage`) for now —
+       mailImage's /images/assets/mail/*.jpg files aren't deployed to
+       Netlify yet (still local/uncommitted), so that URL would 404 in the
+       actual sent mail. `image` is already live. Switch this back to
+       `selectedService.mailImage` once those files are pushed/deployed. */
     const selectedVehicleImageUrl = new URL(
       selectedService.image,
       `${mailImageUrl}/`,
     ).href;
-
-    const templateParams = {
-      enquiry_id: enquiryId,
-
-      from_name: form.name.trim(),
-
-      contact_number: form.contact.trim(),
-
-      contact_email: form.email.trim(),
-
-      preferred_location:
-        form.preferredLocation.trim() ||
-        "Not specified",
-
-      selected_service: service,
-
-      campaign_start_date: form.startDate,
-
-      campaign_end_date: form.endDate,
-
-      message:
-        form.message.trim() ||
-        "No additional message",
-
-      submitted_at: new Date().toLocaleString(
-        "en-IN",
-        {
-          dateStyle: "medium",
-          timeStyle: "short",
-          timeZone: "Asia/Kolkata",
-        },
-      ),
-
-      vehicle_image: selectedVehicleImageUrl,
-    };
 
     setSubmitting(true);
 
     toast.dismiss("contact-form-toast");
 
     await withRoadshowLoader(async () => {
-    try {
-      await emailjs.send(
-        serviceId,
-        templateId,
-        templateParams,
-        {
-          publicKey,
-        },
-      );
+      try {
+        const response = await fetch(`${baseUrl}/contact-enquiry`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userName: form.name.trim(),
+            userContactNumber: form.contact.trim(),
+            userEnquiryEmail: form.email.trim(),
+            userPreferredLocation: form.preferredLocation.trim(),
+            userStartDate: form.startDate,
+            userEndDate: form.endDate,
+            userPreferredVehicle: service,
+            userPreferredVehicleImage: selectedVehicleImageUrl,
+            userEnquiryMessage: form.message.trim(),
+            source:"roadshow_contact_page",
+          }),
+        });
 
-      toast.success(
-        `Thank you! Your campaign enquiry ${enquiryId} has been sent successfully.`,
-        {
-          id: "contact-form-toast",
-        },
-      );
+        let data: { status?: string; message?: string } = {};
 
-      setForm(INITIAL_FORM);
+        try {
+          data = await response.json();
+        } catch (error) {
+          // Non-JSON response — leave data empty.
+        }
 
-      setService("2 Sided Fabricated LED");
-    } catch (error) {
-      console.error(
-        "EmailJS submission failed:",
-        error,
-      );
+        // 409 = already enquired today. Surface the professional message.
+        if (response.status === 409) {
+          throw new Error(
+            data.message ||
+            "You have already submitted an enquiry today. Please try again tomorrow."
+          );
+        }
 
-      toast.error(
-        "We could not send your enquiry. Please try again shortly.",
-        {
-          id: "contact-form-toast",
-        },
-      );
-    } finally {
-      setSubmitting(false);
-    }
+        if (!response.ok) {
+          throw new Error(
+            data.message || "We could not send your enquiry. Please try again shortly."
+          );
+        }
+
+        setForm(INITIAL_FORM);
+
+        setService("2 Sided Fabricated LED");
+
+        /* Delayed on purpose — the GlobalRoadshowLoader overlay this
+           submit runs under (see the withRoadshowLoader wrapper below)
+           uses z-[2147483647], the maximum valid CSS z-index, so nothing
+           can out-stack it. A toast fired immediately gets painted
+           underneath it and is invisible until the loader's own
+           minimum-visible + fade-out timers finish (~200ms after
+           hideRoadshowLoader() is dispatched in withRoadshowLoader's
+           finally block). This delay just waits that window out instead
+           of fighting an unwinnable z-index battle. */
+        window.setTimeout(() => {
+          toast.success(
+            `Thank you! Your campaign enquiry ${enquiryId} has been sent successfully.`,
+            {
+              id: "contact-form-toast",
+            },
+          );
+        }, 500);
+      } catch (error) {
+        console.error(
+          "Enquiry submission failed:",
+          error,
+        );
+
+        const message =
+          error instanceof Error
+            ? error.message
+            : "We could not send your enquiry. Please try again shortly.";
+
+        // See the success-path comment above — same loader-overlay timing issue.
+        window.setTimeout(() => {
+          toast.error(message, {
+            id: "contact-form-toast",
+          });
+        }, 500);
+      } finally {
+        setSubmitting(false);
+      }
     }, "Sending your enquiry...");
   };
 
@@ -981,13 +990,13 @@ export default function ContactPage() {
                       initial={
                         shouldReduceMotion
                           ? {
-                              opacity: 0,
-                            }
+                            opacity: 0,
+                          }
                           : {
-                              opacity: 0,
-                              x: -35,
-                              scale: 0.96,
-                            }
+                            opacity: 0,
+                            x: -35,
+                            scale: 0.96,
+                          }
                       }
                       animate={{
                         opacity: 1,
@@ -997,13 +1006,13 @@ export default function ContactPage() {
                       exit={
                         shouldReduceMotion
                           ? {
-                              opacity: 0,
-                            }
+                            opacity: 0,
+                          }
                           : {
-                              opacity: 0,
-                              x: 30,
-                              scale: 0.96,
-                            }
+                            opacity: 0,
+                            x: 30,
+                            scale: 0.96,
+                          }
                       }
                       transition={{
                         duration: shouldReduceMotion
@@ -1139,11 +1148,10 @@ export default function ContactPage() {
                       key={option}
                       type="button"
                       aria-pressed={active}
-                      className={`contact-service ${
-                        active
+                      className={`contact-service ${active
                           ? "contact-service--active"
                           : ""
-                      }`}
+                        }`}
                       onClick={() =>
                         handleServiceChange(option)
                       }
@@ -1151,15 +1159,15 @@ export default function ContactPage() {
                         shouldReduceMotion
                           ? undefined
                           : {
-                              y: -2,
-                            }
+                            y: -2,
+                          }
                       }
                       whileTap={
                         shouldReduceMotion
                           ? undefined
                           : {
-                              scale: 0.97,
-                            }
+                            scale: 0.97,
+                          }
                       }
                     >
                       <AnimatePresence initial={false}>
@@ -1325,15 +1333,15 @@ export default function ContactPage() {
                   shouldReduceMotion || submitting
                     ? undefined
                     : {
-                        y: -2,
-                      }
+                      y: -2,
+                    }
                 }
                 whileTap={
                   shouldReduceMotion || submitting
                     ? undefined
                     : {
-                        scale: 0.98,
-                      }
+                      scale: 0.98,
+                    }
                 }
               >
                 <span>

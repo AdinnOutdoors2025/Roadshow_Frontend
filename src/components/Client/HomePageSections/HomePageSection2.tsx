@@ -1235,6 +1235,11 @@ function HomePageSection2() {
 
                                         placeholder="Your email or phone number"
 
+                                        value={raEmail}
+                                        disabled={raLoading}
+                                        onChange={(event) => onRaEmailChange(event.target.value)}
+                                        onKeyDown={handleRaKeyDown}
+
                                         className="
                                             RA_RightContent2Input
                                             flex-1
@@ -1244,6 +1249,7 @@ function HomePageSection2() {
                                             outline-none
                                             placeholder-gray-400
                                             min-w-0
+                                            disabled:opacity-60
                                         "
 
                                     />
@@ -1251,9 +1257,13 @@ function HomePageSection2() {
 
                                     <button
 
-                                        className="
+                                        type="button"
+
+                                        onClick={openRaCaptchaPopup}
+                                        disabled={raLoading || isRaEmpty}
+                                        className={`
                                             RA_RightContent2InpBtn
-                                            transition-colors
+                                            transition-all
                                             duration-200
                                             rounded-full
                                             p-2
@@ -1261,20 +1271,24 @@ function HomePageSection2() {
                                             items-center
                                             justify-center
                                             flex-shrink-0
-                                        "
+                                            ${raLoading || isRaEmpty ? "cursor-not-allowed opacity-40" : "cursor-pointer opacity-100"}
+                                        `}
 
                                         aria-label="Subscribe"
 
                                     >
 
 
-                                        <i
-                                            className="
-                                                fa-solid
-                                                fa-chevron-right
-                                            "
-                                        />
-
+                                        {raLoading ? (
+                                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                                        ) : (
+                                            <i
+                                                className="
+                                                    fa-solid
+                                                    fa-chevron-right
+                                                "
+                                            />
+                                        )}
 
                                     </button>
 

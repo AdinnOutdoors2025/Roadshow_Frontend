@@ -12,28 +12,6 @@ import { useNewsletterSubscribe } from "./useNewsletterSubscribe";
 import TermsAndConditionsModal from "./TermsAndConditionsModal";
 import { navigateAfterRoadshowLoader } from "@/components/GlobalRoadshowLoader";
 
-type MathCaptcha = {
-  firstNumber: number;
-  secondNumber: number;
-  answer: number;
-};
-
-const EMAILJS_SERVICE_ID = "service_109ond7";
-const EMAILJS_PUBLIC_KEY = "hmRHPc3KZL8QoEtzw";
-const NEWSLETTER_TEMPLATE_ID = "template_ke6dt9s"; //adinndigitalservices account
-
-
-function createMathCaptcha(): MathCaptcha {
-  const firstNumber = Math.floor(Math.random() * 9) + 1;
-  const secondNumber = Math.floor(Math.random() * 9) + 1;
-
-  return {
-    firstNumber,
-    secondNumber,
-    answer: firstNumber + secondNumber,
-  };
-}
-
 function Footer() {
   const router = useRouter();
 

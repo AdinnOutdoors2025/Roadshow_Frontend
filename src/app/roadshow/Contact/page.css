@@ -626,7 +626,10 @@
 
 .contact-toast-container {
   top: 24px !important;
-  z-index: 99999 !important;
+  /* Must clear GlobalRoadshowLoader's overlay (z-[2147483647], the max
+     valid CSS z-index) for the brief window right after it's dismissed —
+     see the setTimeout comment in page.tsx's handleSubmit. */
+  z-index: 2147483647 !important;
 }
 
 .contact-toast {
