@@ -12,7 +12,7 @@ import {
 
 import Image from "next/image";
 import { baseUrl, mailImageUrl } from "../../../BaseUrl";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { withRoadshowLoader } from "@/components/GlobalRoadshowLoader";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -783,6 +783,23 @@ export default function ContactPage() {
 
     toast.dismiss("contact-form-toast");
 
+    /* Delayed on purpose — the GlobalRoadshowLoader overlay this submit runs
+       under (see the withRoadshowLoader wrapper below) uses
+       z-[2147483647], the maximum valid CSS z-index, so nothing can
+       out-stack it. A toast fired immediately gets painted underneath it
+       and is invisible until the loader's own minimum-visible + fade-out
+       timers finish (~200ms after hideRoadshowLoader() is dispatched in
+       withRoadshowLoader's finally block). This delay just waits that
+       window out instead of fighting an unwinnable z-index battle. */
+    const showResultToast = (
+      kind: "success" | "error",
+      message: string,
+    ) => {
+      window.setTimeout(() => {
+        toast[kind](message, { id: "contact-form-toast" });
+      }, 500);
+    };
+
     await withRoadshowLoader(async () => {
       try {
         const response = await fetch(`${baseUrl}/contact-enquiry`, {
@@ -812,42 +829,43 @@ export default function ContactPage() {
           // Non-JSON response — leave data empty.
         }
 
-        // 409 = already enquired today. Surface the professional message.
+        /* 409 (already enquired today) and any other non-OK response are
+           expected server outcomes, not exceptional conditions — handled
+           with an early return + toast rather than throw, so they don't
+           show up in Next's dev error overlay (which reports every thrown
+           error, even ones caught immediately after). The catch block
+           below is reserved for genuinely unexpected failures, e.g. the
+           fetch itself failing over a dropped connection. */
         if (response.status === 409) {
-          throw new Error(
+          showResultToast(
+            "error",
             data.message ||
-            "You have already submitted an enquiry today. Please try again tomorrow."
+              "You have already submitted an enquiry today. Please try again tomorrow.",
           );
+          return;
         }
 
         if (!response.ok) {
-          throw new Error(
-            data.message || "We could not send your enquiry. Please try again shortly."
+          showResultToast(
+            "error",
+            data.message || "We could not send your enquiry. Please try again shortly.",
           );
+          return;
         }
 
         setForm(INITIAL_FORM);
 
         setService("2 Sided Fabricated LED");
 
-        /* Delayed on purpose — the GlobalRoadshowLoader overlay this
-           submit runs under (see the withRoadshowLoader wrapper below)
-           uses z-[2147483647], the maximum valid CSS z-index, so nothing
-           can out-stack it. A toast fired immediately gets painted
-           underneath it and is invisible until the loader's own
-           minimum-visible + fade-out timers finish (~200ms after
-           hideRoadshowLoader() is dispatched in withRoadshowLoader's
-           finally block). This delay just waits that window out instead
-           of fighting an unwinnable z-index battle. */
-        window.setTimeout(() => {
-          toast.success(
-            `Thank you! Your campaign enquiry ${enquiryId} has been sent successfully.`,
-            {
-              id: "contact-form-toast",
-            },
-          );
-        }, 500);
+        showResultToast(
+          "success",
+          `Thank you! Your campaign enquiry ${enquiryId} has been sent successfully.`,
+        );
       } catch (error) {
+        /* Reached only for a genuinely unexpected failure (e.g. the fetch
+           itself rejecting over a dropped connection) — the 409/non-OK
+           response cases above return early instead of throwing, so they
+           never reach here. */
         console.error(
           "Enquiry submission failed:",
           error,
@@ -858,12 +876,7 @@ export default function ContactPage() {
             ? error.message
             : "We could not send your enquiry. Please try again shortly.";
 
-        // See the success-path comment above — same loader-overlay timing issue.
-        window.setTimeout(() => {
-          toast.error(message, {
-            id: "contact-form-toast",
-          });
-        }, 500);
+        showResultToast("error", message);
       } finally {
         setSubmitting(false);
       }
@@ -875,29 +888,11 @@ export default function ContactPage() {
       ref={pageRef}
       className="contact-page"
     >
-      <Toaster
-        position="top-center"
-        containerClassName="contact-toast-container"
-        toastOptions={{
-          duration: 4200,
-
-          className: "contact-toast",
-
-          success: {
-            iconTheme: {
-              primary: "#16784a",
-              secondary: "#ffffff",
-            },
-          },
-
-          error: {
-            iconTheme: {
-              primary: "#a52b2b",
-              secondary: "#ffffff",
-            },
-          },
-        }}
-      />
+      {/* Toaster for this page is mounted at root level by GlobalToastGate
+          (ContactToastProvider) — not here. This page sits inside
+          GlobalSmoothScroll's transformed wrapper, which breaks
+          position: fixed for anything mounted inside it (same reason
+          Navbar portals to document.body instead of rendering in place). */}
 
       <section className="contact-section">
         <div className="contact-layout">
