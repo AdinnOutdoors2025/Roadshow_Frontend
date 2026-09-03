@@ -16,7 +16,6 @@
 /*  goes to the existing vehicle details page, which still owns the booking    */
 /*  flow through to the campaign request form.                                 */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
@@ -44,13 +43,6 @@ import {
   filterByCategory,
 } from "./vehicleCategories";
 import "./VehicleListing.css";
-
-/* true: show during the vehicle API request. false: never render the loader. */
-const ENABLE_ROADSHOW_LOADER = true;
-
-/* Minimum time that the overlay stays visible.
-   3000 = 3 seconds, 5000 = 5 seconds, 10000 = 10 seconds. */
-const MINIMUM_LOADER_TIME_MS = 3000;
 
 /* Narrowest a card is allowed to get. Deliberately the same 320px the grid's
    `repeat(auto-fill, minmax(320px, 1fr))` uses, so a row of carousel cards and
@@ -110,11 +102,6 @@ export default function VehicleListing({
 }: VehicleListingProps) {
   const router = useRouter();
 
-  const [loaderMounted, setLoaderMounted] = useState(false);
-  const [loaderVisible, setLoaderVisible] = useState(
-    ENABLE_ROADSHOW_LOADER
-  );
-
   const [vehicles, setVehicles] = useState<RoadshowVehicle[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -170,21 +157,11 @@ export default function VehicleListing({
   });
 
   useEffect(() => {
-    setLoaderMounted(true);
-  }, []);
-
-  useEffect(() => {
     let componentMounted = true;
 
     const loadVehicles = async () => {
-      const loaderStartedAt = Date.now();
-
       try {
         setLoading(true);
-
-        if (ENABLE_ROADSHOW_LOADER) {
-          setLoaderVisible(true);
-        }
 
         const apiVehicles = await fetchAllRoadshowVehicles();
 
@@ -206,32 +183,8 @@ export default function VehicleListing({
         toast.error("Unable to load vehicles.");
       } finally {
         if (componentMounted) {
-          /* Render the completed vehicle list behind the fixed overlay first.
-             This prevents visible card/image resizing when the overlay leaves. */
           setLoading(false);
           onLoadedRef.current?.();
-        }
-
-        const elapsedTime = Date.now() - loaderStartedAt;
-        const remainingTime = Math.max(
-          0,
-          MINIMUM_LOADER_TIME_MS - elapsedTime
-        );
-
-        if (remainingTime > 0) {
-          await new Promise<void>((resolve) => {
-            window.setTimeout(resolve, remainingTime);
-          });
-        }
-
-        /* Give React one paint opportunity with the completed content still
-           covered, so removing the overlay cannot expose a half-laid-out grid. */
-        await new Promise<void>((resolve) => {
-          window.setTimeout(resolve, 50);
-        });
-
-        if (componentMounted) {
-          setLoaderVisible(false);
         }
       }
     };
@@ -343,49 +296,6 @@ export default function VehicleListing({
 
   return (
     <div className={`RS_VehListRoot ${className}`}>
-      {ENABLE_ROADSHOW_LOADER &&
-        loaderMounted &&
-        loaderVisible &&
-        createPortal(
-          <div
-            role="status"
-            aria-live="polite"
-            aria-busy="true"
-            aria-label="Loading vehicles"
-            className="fixed inset-0 z-[2147483647] flex items-center justify-center px-4"
-            style={{ backgroundColor: "rgba(0, 0, 0, 0.72)" }}
-          >
-            <div
-              className="flex w-[min(84vw,420px)] flex-col items-center !bg-transparent"
-              style={{ backgroundColor: "transparent" }}
-            >
-              <div
-                className="relative aspect-square w-full !bg-transparent"
-                style={{ backgroundColor: "transparent" }}
-              >
-                <video
-                  src="/images/loader_transparent.webm?v=4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="auto"
-                  controls={false}
-                  disablePictureInPicture
-                  aria-hidden="true"
-                  style={{ backgroundColor: "transparent" }}
-                  className="block h-full w-full object-contain !bg-transparent"
-                />
-              </div>
-
-              <p className="-mt-2 text-center text-sm font-medium text-white">
-                Loading vehicles...
-              </p>
-            </div>
-          </div>,
-          document.body
-        )}
-
       {/* Heading and tabs share one row when a heading is supplied; the
           heading stays put through the fetch while the tabs fill in beside it
           — they are meaningless until the counts exist, and showing them
@@ -593,14 +503,13 @@ export default function VehicleListing({
                       </div>
 
                       <div className="RS_VehListActions">
-                        <ButtonHover
-                          label="View Details"
-                          className="RS_VehicleButton RS_VehListSpecBtn"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setSpecVehicle(vehicle);
-                          }}
-                        />
+                        <div onClick={(event) => event.stopPropagation()}>
+                          <ButtonHover
+                            label="View Details"
+                            className="RS_VehicleButton RS_VehListSpecBtn"
+                            onClick={() => setSpecVehicle(vehicle)}
+                          />
+                        </div>
 
                         <div onClick={(event) => event.stopPropagation()}>
                           <ButtonHover

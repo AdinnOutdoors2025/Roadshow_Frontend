@@ -12,6 +12,11 @@ import Link from "next/link";
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  HEADER_SCROLL_END_EVENT,
+  HEADER_SCROLL_START_EVENT,
+  type HeaderScrollEventDetail,
+} from "../Reusable_Components/scrollToSection";
 
 /* =========================================================
    TYPES
@@ -358,6 +363,44 @@ export default function ImpactCtaBanner({
     const mm =
       gsap.matchMedia();
 
+    /* During header-controlled navigation only, stop this pinned story from
+       scrubbing/holding the trip to Home, Why Adinn, or Vehicles. Normal
+       wheel and touch scrolling are unchanged after the short trip ends. */
+    const headerNavigationTriggers =
+      new Set<ScrollTrigger>();
+
+    const handleHeaderScrollStart = (event: Event) => {
+      const customEvent =
+        event as CustomEvent<HeaderScrollEventDetail>;
+
+      const progress =
+        customEvent.detail?.direction === "up" ? 0 : 1;
+
+      headerNavigationTriggers.forEach((trigger) => {
+        trigger.getTween?.()?.kill();
+        trigger.animation?.progress(progress);
+        trigger.disable(false, false);
+      });
+    };
+
+    const handleHeaderScrollEnd = () => {
+      headerNavigationTriggers.forEach((trigger) => {
+        trigger.enable(false, true);
+      });
+
+      ScrollTrigger.refresh();
+    };
+
+    window.addEventListener(
+      HEADER_SCROLL_START_EVENT,
+      handleHeaderScrollStart,
+    );
+
+    window.addEventListener(
+      HEADER_SCROLL_END_EVENT,
+      handleHeaderScrollEnd,
+    );
+
     /* =====================================================
        DESKTOP
        KEEP EXISTING DESKTOP PINNED EXPERIENCE
@@ -366,6 +409,8 @@ export default function ImpactCtaBanner({
     mm.add(
       "(min-width: 1024px)",
       () => {
+        let desktopScrollTrigger: ScrollTrigger | null = null;
+
         const ctx =
           gsap.context(() => {
             const introItems =
@@ -521,6 +566,15 @@ export default function ImpactCtaBanner({
                     true,
                 },
               });
+
+            desktopScrollTrigger =
+              desktopTimeline.scrollTrigger ?? null;
+
+            if (desktopScrollTrigger) {
+              headerNavigationTriggers.add(
+                desktopScrollTrigger,
+              );
+            }
 
             /* =============================================
                INTRO OUT
@@ -679,6 +733,12 @@ export default function ImpactCtaBanner({
           }, section);
 
         return () => {
+          if (desktopScrollTrigger) {
+            headerNavigationTriggers.delete(
+              desktopScrollTrigger,
+            );
+          }
+
           ctx.revert();
         };
       },
@@ -729,6 +789,8 @@ export default function ImpactCtaBanner({
       },
 
       (context) => {
+        let responsiveScrollTrigger: ScrollTrigger | null = null;
+
         const isMobile =
           Boolean(
             context.conditions?.mobile,
@@ -1055,6 +1117,15 @@ export default function ImpactCtaBanner({
                 },
               });
 
+            responsiveScrollTrigger =
+              responsiveTimeline.scrollTrigger ?? null;
+
+            if (responsiveScrollTrigger) {
+              headerNavigationTriggers.add(
+                responsiveScrollTrigger,
+              );
+            }
+
             /* =============================================
                INITIAL HOLD
             ============================================= */
@@ -1299,6 +1370,12 @@ export default function ImpactCtaBanner({
         ================================================= */
 
         return () => {
+          if (responsiveScrollTrigger) {
+            headerNavigationTriggers.delete(
+              responsiveScrollTrigger,
+            );
+          }
+
           window.cancelAnimationFrame(
             refreshFrame,
           );
@@ -1335,7 +1412,18 @@ export default function ImpactCtaBanner({
     ===================================================== */
 
     return () => {
+      window.removeEventListener(
+        HEADER_SCROLL_START_EVENT,
+        handleHeaderScrollStart,
+      );
+
+      window.removeEventListener(
+        HEADER_SCROLL_END_EVENT,
+        handleHeaderScrollEnd,
+      );
+
       mm.revert();
+      headerNavigationTriggers.clear();
     };
   }, []);
 
