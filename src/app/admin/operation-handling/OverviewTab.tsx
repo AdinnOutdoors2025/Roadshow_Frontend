@@ -21,6 +21,7 @@ import { jwtDecode } from "jwt-decode";
 import toast from "react-hot-toast";
 import API_BASE from "../../../../baseurl";
 import { useVehicle } from '../../../context/vehicletypecontext';
+import FilePreviewModal from "@/components/ui/FilePreviewModal";
 import { ChevronLeft } from "lucide-react";
 import DatePicker from "../../utils/datepicker";
 import SearchableSelect from "../../utils/SearchableSelect";
@@ -884,34 +885,5 @@ function DocItem({ docPath, label, notes, by, at }: {
 }
 
 function DocPreviewModal({ url, label, onClose }: { url: string; label: string; onClose: () => void }) {
-    const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
-    const img = isImage(url);
-    return (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{label}</p>
-                    <div className="flex items-center gap-2">
-                        <a href={url} download target="_blank" rel="noreferrer"
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-sky-600 hover:bg-sky-50 transition-all">
-                            <Download size={13} /> Download
-                        </a>
-                        <button onClick={onClose}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-all">
-                            <X size={16} />
-                        </button>
-                    </div>
-                </div>
-                <div className="relative" style={{ height: "calc(90vh - 60px)" }}>
-                    {img ? (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-100 p-4">
-                            <img src={url} alt={label} className="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
-                        </div>
-                    ) : (
-                        <iframe src={url} className="w-full h-full" title={label} />
-                    )}
-                </div>
-            </div>
-        </div>
-    );
+    return <FilePreviewModal url={url} label={label} onClose={onClose} />;
 }

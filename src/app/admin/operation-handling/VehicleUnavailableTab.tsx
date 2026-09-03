@@ -7,7 +7,7 @@ import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import {
-  Truck, User, Phone, Car, Upload, Eye,
+  Truck, User, Phone, Car, Upload, Eye, Download,
   Plus, XCircle, AlertCircle, CheckCircle,
   Clock, ChevronDown, ChevronUp, MapPin,
   Wifi, WifiOff, Camera, Video, TrendingUp,
@@ -17,6 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 import API_BASE from "../../../../baseurl";
+import FilePreviewModal from "@/components/ui/FilePreviewModal";
 import { getToken } from "../../utils/auth";
 import { useVehicle } from "../../../context/vehicletypecontext";
 import LiveVehicleRow from "./LiveVehicleRow";
@@ -67,6 +68,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   const [routeLoading, setRouteLoading] = useState(false);
   const [kmPage, setKmPage] = useState(0);
   const [liveTab, setLiveTab] = useState<"status" | "history">("status");
+  const [preview, setPreview] = useState<{ url: string; label: string } | null>(null);
 
 
   const vehicleIssues = (order.onRoadIssues || []).filter(
@@ -339,16 +341,32 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                       </p>
 
                       {h.photo && (
-                        <a href={getImageUrl(h.photo)} target="_blank" rel="noreferrer">
-                          <img
-                            src={getImageUrl(h.photo)}
-                            className="w-14 h-12 rounded-lg object-cover border mb-1 hover:opacity-80"
-                            alt="unavailable"
-                          />
-                        </a>
+                        <div className="flex items-start gap-2 mt-1">
+                          <button
+                            type="button"
+                            onClick={() => setPreview({ url: getImageUrl(h.photo) })}
+                            className="flex-shrink-0"
+                          >
+                            <img
+                              src={getImageUrl(h.photo)}
+                              className="w-14 h-12 rounded-lg object-cover border mb-1 hover:opacity-80"
+                              alt="unavailable"
+                            />
+                          </button>
+                          <a
+                            href={getImageUrl(h.photo)}
+                            download
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Download"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-green-500 hover:bg-green-50 transition-all"
+                          >
+                            <Download size={14} />
+                          </a>
+                        </div>
                       )}
 
-                      <p className="text-xs text-gray-400">
+                      <p className="text-sm text-gray-400">
                         Reported by {h.reportedBy} · {fmtDatetime(h.reportedAt)}
                       </p>
 
@@ -356,14 +374,14 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                       {h.eventType === "replaced" && (
                         <div className="mt-2 pt-2 border-t border-red-200 dark:border-red-800/50 grid grid-cols-2 gap-2">
                           <div>
-                            <p className="text-xs text-gray-400">Old Vehicle</p>
-                            <p className="text-xs font-mono font-semibold text-gray-700 dark:text-gray-300">{h.vehicleRegNo}</p>
-                            <p className="text-xs text-gray-500">{h.driverName} · {h.driverPhone}</p>
+                            <p className="text-sm text-gray-400">Old Vehicle</p>
+                            <p className="text-sm font-mono font-semibold text-gray-700 dark:text-gray-300">{h.vehicleRegNo}</p>
+                            <p className="text-sm text-gray-500">{h.driverName} · {h.driverPhone}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-amber-600 dark:text-amber-400">Replacement Vehicle</p>
-                            <p className="text-xs font-mono font-semibold text-gray-700 dark:text-gray-300">{h.replacementVehicleRegNo}</p>
-                            <p className="text-xs text-gray-500">{h.replacementDriverName} · {h.replacementDriverPhone}</p>
+                            <p className="text-sm text-amber-600 dark:text-amber-400">Replacement Vehicle</p>
+                            <p className="text-sm font-mono font-semibold text-gray-700 dark:text-gray-300">{h.replacementVehicleRegNo}</p>
+                            <p className="text-sm text-gray-500">{h.replacementDriverName} · {h.replacementDriverPhone}</p>
                           </div>
                         </div>
                       )}
@@ -376,13 +394,29 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                             </p>
                           )}
                           {h.resolvePhoto && (
-                            <a href={getImageUrl(h.resolvePhoto)} target="_blank" rel="noreferrer">
-                              <img
-                                src={getImageUrl(h.resolvePhoto)}
-                                className="w-14 h-12 rounded-lg object-cover border border-emerald-200 mt-1 hover:opacity-80"
-                                alt="resolve"
-                              />
-                            </a>
+                            <div className="flex items-start gap-2 mt-1">
+                              <button
+                                type="button"
+                                onClick={() => setPreview({ url: getImageUrl(h.resolvePhoto), label: "Resolution Photo" })}
+                                className="flex-shrink-0"
+                              >
+                                <img
+                                  src={getImageUrl(h.resolvePhoto)}
+                                  className="w-14 h-12 rounded-lg object-cover border border-emerald-200 hover:opacity-80"
+                                  alt="resolve"
+                                />
+                              </button>
+                              <a
+                                href={getImageUrl(h.resolvePhoto)}
+                                download
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Download"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-green-500 hover:bg-green-50 transition-all"
+                              >
+                                <Download size={14} />
+                              </a>
+                            </div>
                           )}
                           <p className="text-xs text-gray-400">
                             Available by {h.resolvedBy} · {fmtDatetime(h.resolvedAt)}
@@ -400,6 +434,14 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
 
         </div>
+      )}
+
+      {preview && (
+        <FilePreviewModal
+          url={preview.url}
+          label={preview.label}
+          onClose={() => setPreview(null)}
+        />
       )}
 
     </div>

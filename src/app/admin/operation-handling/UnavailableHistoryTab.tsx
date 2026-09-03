@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Download } from "lucide-react";
+import FilePreviewModal from "@/components/ui/FilePreviewModal";
 
 const fmtDatetime = (s?: string) =>
     s ? new Date(s).toLocaleString("en-IN", {
@@ -32,6 +34,7 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
 
 
     const [activeRegNo, setActiveRegNo] = useState<string | null>(null);
+    const [preview, setPreview] = useState<{ url: string; label: string } | null>(null);
 
     const regNosForVehicle = activeVehicle
         ? [...new Set(
@@ -60,6 +63,7 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
     }
 
     return (
+        <>
         <div className="p-4 space-y-4">
 
             <div className="flex items-center justify-between">
@@ -188,13 +192,29 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
                                 <span className="font-medium">Reason:</span> {h.reason}
                             </p>
                             {h.photo && (
-                                <a href={getImageUrl(h.photo) || ""} target="_blank" rel="noreferrer">
-                                    <img
-                                        src={getImageUrl(h.photo) || ""}
-                                        className="w-16 h-14 rounded-lg object-cover border hover:opacity-80 mt-1"
-                                        alt="unavailable"
-                                    />
-                                </a>
+                                <div className="flex items-start gap-2 mt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPreview({ url: getImageUrl(h.photo) || "", label: "Unavailable Photo" })}
+                                        className="flex-shrink-0"
+                                    >
+                                        <img
+                                            src={getImageUrl(h.photo) || ""}
+                                            className="w-16 h-14 rounded-lg object-cover border hover:opacity-80"
+                                            alt="unavailable"
+                                        />
+                                    </button>
+                                    <a
+                                        href={getImageUrl(h.photo) || ""}
+                                        download
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        title="Download"
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-green-500 hover:bg-green-50 transition-all"
+                                    >
+                                        <Download size={14} />
+                                    </a>
+                                </div>
                             )}
                             <p className="text-xs text-gray-400">
                                 Reported by <span className="font-medium text-gray-600 dark:text-gray-300">{h.reportedBy}</span> · {fmtDatetime(h.reportedAt)}
@@ -224,13 +244,29 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
                                     </p>
                                 )}
                                 {h.resolvePhoto && (
-                                    <a href={getImageUrl(h.resolvePhoto) || ""} target="_blank" rel="noreferrer">
-                                        <img
-                                            src={getImageUrl(h.resolvePhoto) || ""}
-                                            className="w-16 h-14 rounded-lg object-cover border border-emerald-200 hover:opacity-80 mt-1"
-                                            alt="resolve"
-                                        />
-                                    </a>
+                                    <div className="flex items-start gap-2 mt-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreview({ url: getImageUrl(h.resolvePhoto) || "", label: "Resolution Photo" })}
+                                            className="flex-shrink-0"
+                                        >
+                                            <img
+                                                src={getImageUrl(h.resolvePhoto) || ""}
+                                                className="w-16 h-14 rounded-lg object-cover border border-emerald-200 hover:opacity-80"
+                                                alt="resolve"
+                                            />
+                                        </button>
+                                        <a
+                                            href={getImageUrl(h.resolvePhoto) || ""}
+                                            download
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            title="Download"
+                                            className="w-8 h-8 rounded-lg flex items-center justify-center text-green-500 hover:bg-green-50 transition-all"
+                                        >
+                                            <Download size={14} />
+                                        </a>
+                                    </div>
                                 )}
                                 <p className="text-xs text-gray-400">
                                     Available by <span className="font-medium text-emerald-600 dark:text-emerald-400">{h.resolvedBy}</span> · {fmtDatetime(h.resolvedAt)}
@@ -241,6 +277,14 @@ export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: 
                 ))}
             </div>
         </div>
+        {preview && (
+            <FilePreviewModal
+                url={preview.url}
+                label={preview.label}
+                onClose={() => setPreview(null)}
+            />
+        )}
+        </>
     );
 }
 
