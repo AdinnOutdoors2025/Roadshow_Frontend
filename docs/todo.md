@@ -1,5 +1,14 @@
 # TODO
 
+## Carried forward from 2026-09-03 session
+
+- [ ] **PHP-side fix required from the user**: `index_rdsw_Campaign.php` (`roadshow_contact_page` mail case) needs `$vehicleImageUrl = trim((string)($data['vehicleImageUrl'] ?? ''));` added right after the existing `$mailLogoUrl` line — that file isn't accessible from this repo, so it can't be applied here. Until this lands, the Contact page's mail template shows "vehicle image is not available" even though the frontend/backend now send `vehicleImageUrl` correctly.
+- [ ] Once the compressed `/images/assets/mail/*.jpg` assets are pushed/deployed to Netlify, swap `selectedVehicleImageUrl` on `roadshow/Contact/page.tsx` from `selectedService.image` back to `selectedService.mailImage` (currently reverted because those assets 404 on live Netlify — not deployed yet).
+- [ ] Phone-number dedup normalization mismatch in `enquiryDedup.js`: lookup normalizes to last-10-digits but the raw/untrimmed phone is what's actually saved, so a resubmission with differently-formatted phone (e.g. `+91 xxx` vs `91xxx`) won't be caught as a duplicate. Low severity, flagged not fixed.
+- [ ] Inconsistent mail-failure UX: `ContactEnquiry.js` shows an error toast if the mail send fails; `NewsletterController.js` always shows success regardless. Worth reconciling if it causes confusion.
+- [ ] Order Images / Sales-order-uploads still share a flat, non-env-driven `public/uploads` path (unlike the newly-separated PO document / Vehicle Onboarding paths) — bigger change across a large operations-pipeline surface, deliberately deferred.
+- [ ] Confirm which git branch Netlify actually deploys from — never resolved this session (moot while no push happens, but will matter once the mail-image swap-back above is ready to ship).
+
 ## Reconciliation notes (2026-08-27)
 
 Docs were stale for ~1 month (last touched 2026-07-23); a month of multi-contributor commits landed in between. See `docs/progress.md`'s 2026-08-27 entry and `docs/context.md`'s "Status as of 2026-08-27" section for the full theme breakdown. This pass did **not** re-verify every item below against current code — most entries under "Open"/"Backlog"/"Verification Still Needed" predate that gap and may already be resolved by the intervening work (e.g. items touching Campaign Calculator, invoice, handover, or order-creation vehicle-availability — all areas with heavy commit activity since). Re-check before acting on an old item rather than assuming it's still outstanding.

@@ -21,3 +21,10 @@ Living document of business rules discovered/introduced during development. Upda
 ## Cross-Cutting
 
 - Extra-KM/hour billing model differs between Order Creation (linear per-unit rate) and Operation Handling's Campaign Calculator (pooled allowance + overage) — flagged as a real pricing-consistency risk, not yet reconciled.
+
+## Order creation (added 2026-09-03)
+
+- **Campaign-request mail is sent at most once per order**: `Order.campaignMailSent` guards `sendCampaignRequestMail` (`Utils/campaignMailer.js`) — a later action on the same order (e.g. uploading a PO document after initial submission) must not trigger a second mail. Any new call site that might re-trigger this mail should go through the same shared function, not a direct duplicate call.
+- **Order creation sends an SMS** (Nettyfish, DLT-compliant Adinn Outdoors template carrying the order ID) to both the admin (`ADMIN_SMS_NUMBERS`, comma-separated) and the customer, on both admin-created orders (`Adminordercontroller.js`) and customer/agency-submitted requests (`ClientRequestController.js`). SMS send failures are non-fatal — never block order creation. `SMS_MODE` env var controls local (log-only) vs `production` (actually sends) — defaults to local if unset.
+- **OTP SMS is a separate, independent flow** from order-creation SMS — different template ID, different phone-formatting logic, different message text. Do not route OTP through the order-SMS utility (`Utils/orderSms.js`) or vice versa; they were deliberately kept apart per explicit decision after an earlier attempt conflated them.
+- **Local file-storage paths are separated by module**, each on its own env var, not shared: Vehicle Onboarding images under `LOCAL_UPLOAD_PATH` (`public/uploads`), PO documents under `PO_DOCUMENT_LOCAL_PATH` (`public/po_doc_uploads`, its own top-level folder, added 2026-09-03). Existing files are not migrated when a new path is introduced — only new uploads use the new path.

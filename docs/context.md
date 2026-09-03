@@ -1,6 +1,18 @@
 # Project Context
 
-_Last updated: 2026-08-27_
+_Last updated: 2026-09-03_
+
+## Status as of 2026-09-03
+
+Cross-repo bugfix + feature session (frontend `karthi-claude` + backend `karthi-claude`). Full detail in `progress.md`'s 2026-09-03 entry; short version:
+
+- Fixed the booking-summary PDF loader race, a duplicate campaign-request mail bug (now guarded by `Order.campaignMailSent`), and admin-edited booking dates not syncing to the client-facing tracking view.
+- Separated PO-document local storage from Vehicle Onboarding's (`PO_DOCUMENT_LOCAL_PATH` vs `LOCAL_UPLOAD_PATH`), no migration of existing files.
+- Added order-creation SMS (Nettyfish, Adinn Outdoors DLT template with order ID) to admin- and customer-created orders, for both admin and customer — deliberately kept fully separate from the existing OTP SMS flow after an early draft accidentally conflated them.
+- Fixed the Contact page's mail image showing "not available" (missing schema fields silently dropped by Mongoose, plus a PHP-side fix identified but **not yet applied** — must be done by the user, see `todo.md`).
+- Fixed the Contact page's toast being hidden behind the Navbar — root cause was a transformed ancestor (`GlobalSmoothScroll`'s `#smooth-content`) breaking `position: fixed`, same trap `Navbar` already avoids by portaling to `document.body`. Toaster relocated to root layout via `ContactToastProvider`/`GlobalToastGate`.
+- Fixed Next.js dev-overlay noise on the "already submitted today" (409) case by using early `return` instead of `throw` for that expected outcome.
+- See `todo.md`'s "Carried forward from 2026-09-03 session" for what's still outstanding (PHP fix, mail-image asset deploy + swap-back, dedup mismatch, mail-failure UX inconsistency).
 
 ## Status as of 2026-08-27 (docs reconciliation)
 
