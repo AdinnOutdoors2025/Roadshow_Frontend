@@ -636,9 +636,11 @@ import toast from "react-hot-toast";
 import {
   Truck, User, RefreshCw, ChevronDown, ChevronRight as ChevronRightIcon,
   ArrowRightLeft, AlertTriangle, Gauge, XCircle, Clock,
+  Download, FileText,
 } from "lucide-react";
 import { getToken } from "../../utils/auth";
 import API_BASE from "../../../../baseurl";
+import FilePreviewModal, { isImageFile } from "@/components/ui/FilePreviewModal";
 
 const fmtDatetime = (s?: string) => {
   if (!s) return "—";
@@ -671,6 +673,51 @@ const getImageUrl = (url: string) => {
   if (url.startsWith("http")) return url;
   return `${API_BASE.replace("/api", "")}${url}`;
 };
+
+// Reusable attachment row for the Timeline: thumbnail (or doc icon) opens the
+// shared FilePreviewModal on click; a separate icon downloads the original.
+// Reuses the same shared preview/blob logic as Comments / Vehicle Unavailable /
+// Sales PO so Space files preview instead of auto-downloading.
+function TimelineAttachment({ url, label }: { url: string; label: string }) {
+  const [preview, setPreview] = useState(false);
+  if (!url) return null;
+  const isImage = isImageFile(url);
+  return (
+    <>
+      {preview && <FilePreviewModal url={url} label={label} onClose={() => setPreview(false)} />}
+      <div className="flex items-start gap-2 mt-1.5">
+        <button
+          type="button"
+          onClick={() => setPreview(true)}
+          className="flex-shrink-0"
+          title="Preview"
+        >
+          {isImage ? (
+            <img
+              src={url}
+              className="w-14 h-12 rounded-lg object-cover border hover:opacity-80"
+              alt={label}
+            />
+          ) : (
+            <span className="w-14 h-12 rounded-lg border flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 text-blue-500">
+              <FileText size={18} />
+            </span>
+          )}
+        </button>
+        <a
+          href={url}
+          download
+          target="_blank"
+          rel="noreferrer"
+          title="Download"
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-green-500 hover:bg-green-50 transition-all"
+        >
+          <Download size={14} />
+        </a>
+      </div>
+    </>
+  );
+}
 
 // Unified per-category presentation metadata: icon, accent color, timestamp field, title/body renderer.
 const CATEGORY_META: Record<string, any> = {
@@ -712,11 +759,7 @@ const CATEGORY_META: Record<string, any> = {
     renderBody: (e: any) => (
       <>
         <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{e.issueDescription}</p>
-        {e.issuePhoto && (
-          <a href={getImageUrl(e.issuePhoto)} target="_blank" rel="noreferrer">
-            <img src={getImageUrl(e.issuePhoto)} className="w-14 h-12 rounded-lg object-cover border mt-1.5" alt="issue" />
-          </a>
-        )}
+        {getImageUrl(e.issuePhoto) && <TimelineAttachment url={getImageUrl(e.issuePhoto)} label="Issue Photo" />}
         {e.resolveDescription && (
           <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800/50">
             <p className="text-sm text-emerald-600 font-semibold">Resolved</p>
@@ -771,11 +814,7 @@ const CATEGORY_META: Record<string, any> = {
     renderBody: (e: any) => (
       <>
         <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{e.reason}</p>
-        {e.photo && (
-          <a href={getImageUrl(e.photo)} target="_blank" rel="noreferrer">
-            <img src={getImageUrl(e.photo)} className="w-14 h-12 rounded-lg object-cover border mt-1.5" alt="unavailable" />
-          </a>
-        )}
+        {getImageUrl(e.photo) && <TimelineAttachment url={getImageUrl(e.photo)} label="Unavailable Photo" />}
         {e.eventType === "replaced" && (
           <div className="mt-2 pt-2 border-t border-rose-200 dark:border-rose-800/50 grid grid-cols-2 gap-2 text-sm">
             <div>

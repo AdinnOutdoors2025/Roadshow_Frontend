@@ -8,7 +8,7 @@ import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import {
-  Truck, User, Phone, Car, Upload, Eye,
+  Truck, User, Phone, Car, Upload, Eye, Download,
   Plus, XCircle, AlertCircle, CheckCircle,
   Clock, ChevronDown, ChevronUp, MapPin,
   Wifi, WifiOff, Camera, Video, TrendingUp,
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { FaLocationDot } from "react-icons/fa6";
 import API_BASE from "../../../../baseurl";
+import FilePreviewModal from "@/components/ui/FilePreviewModal";
 import { getToken } from "../../utils/auth";
 import { useVehicle } from "../../../context/vehicletypecontext";
 import LiveVehicleRow from "./LiveVehicleRow";
@@ -1474,6 +1475,7 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, unavailableHistory 
 
 function IssueHistoryCard({ iss, onOpenModal }) {
   const [showResolved, setShowResolved] = useState(false);
+  const [preview, setPreview] = useState(null);
 
   return (
     <div
@@ -1510,13 +1512,29 @@ function IssueHistoryCard({ iss, onOpenModal }) {
 
       {/* Issue photo */}
       {iss.issuePhoto && (
-        <a href={getImageUrl(iss.issuePhoto)} target="_blank" rel="noreferrer">
-          <img
-            src={getImageUrl(iss.issuePhoto)}
-            className="w-14 h-12 rounded-lg object-cover border mb-1 hover:opacity-80"
-            alt="issue"
-          />
-        </a>
+        <div className="flex items-start gap-2 mt-1">
+          <button
+            type="button"
+            onClick={() => setPreview({ url: getImageUrl(iss.issuePhoto), label: "Issue Photo" })}
+            className="flex-shrink-0"
+          >
+            <img
+              src={getImageUrl(iss.issuePhoto)}
+              className="w-14 h-12 rounded-lg object-cover border mb-1 hover:opacity-80"
+              alt="issue"
+            />
+          </button>
+          <a
+            href={getImageUrl(iss.issuePhoto)}
+            download
+            target="_blank"
+            rel="noreferrer"
+            title="Download"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-green-500 hover:bg-green-50 transition-all"
+          >
+            <Download size={14} />
+          </a>
+        </div>
       )}
 
       <p className="text-sm text-gray-400">
@@ -1540,17 +1558,29 @@ function IssueHistoryCard({ iss, onOpenModal }) {
                 {iss.resolveDescription}
               </p>
               {iss.resolvePhoto && (
-                <a
-                  href={getImageUrl(iss.resolvePhoto)}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <img
-                    src={getImageUrl(iss.resolvePhoto)}
-                    className="w-14 h-12 rounded-lg object-cover border border-emerald-200 mt-1 hover:opacity-80"
-                    alt="resolve"
-                  />
-                </a>
+                <div className="flex items-start gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setPreview({ url: getImageUrl(iss.resolvePhoto), label: "Resolution Photo" })}
+                    className="flex-shrink-0"
+                  >
+                    <img
+                      src={getImageUrl(iss.resolvePhoto)}
+                      className="w-14 h-12 rounded-lg object-cover border border-emerald-200 hover:opacity-80"
+                      alt="resolve"
+                    />
+                  </button>
+                  <a
+                    href={getImageUrl(iss.resolvePhoto)}
+                    download
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Download"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-green-500 hover:bg-green-50 transition-all"
+                  >
+                    <Download size={14} />
+                  </a>
+                </div>
               )}
               <p className="text-sm text-gray-400 mt-0.5">
                 Resolved by {iss.resolvedBy} · {fmtDatetime(iss.resolvedAt)}
@@ -1558,6 +1588,14 @@ function IssueHistoryCard({ iss, onOpenModal }) {
             </div>
           )}
         </div>
+      )}
+
+      {preview && (
+        <FilePreviewModal
+          url={preview.url}
+          label={preview.label}
+          onClose={() => setPreview(null)}
+        />
       )}
     </div>
   );
