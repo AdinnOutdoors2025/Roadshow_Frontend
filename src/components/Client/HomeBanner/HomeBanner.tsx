@@ -31,6 +31,11 @@ function CrossfadeMainImage({ src }: { src: string }) {
             )}
 
             <img
+                ref={(el) => {
+                    if (el?.complete) {
+                        setLoaded(true);
+                    }
+                }}
                 src={src}
                 alt="Main Banner"
                 className={`HomeBannerMainImg HomeBannerCurrentImg ${
@@ -223,6 +228,15 @@ function HomeBanner() {
                                         )}
 
                                         <img
+                                            ref={(el) => {
+                                                if (el?.complete) {
+                                                    setSubLoaded((prev) =>
+                                                        prev[item.id]
+                                                            ? prev
+                                                            : { ...prev, [item.id]: true }
+                                                    );
+                                                }
+                                            }}
                                             src={item.image}
                                             alt={item.title}
                                             className={`HomeBannerSubImg ${

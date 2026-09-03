@@ -513,6 +513,7 @@ export function Testimonials() {
                   ? ""
                   : "adinn-testimonial-bg-video--loading"
               }`}
+              poster="/assets/led-truck_testimonials1.png"
               autoPlay
               muted
               loop
@@ -523,7 +524,7 @@ export function Testimonials() {
             >
               <source
                 src="./images/assets/Rdsw_Testimonials_BgVideoCopy.mp4"
-                type="video/webm"
+                type="video/mp4"
               />
             </video>
 
