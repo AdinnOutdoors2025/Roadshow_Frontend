@@ -1314,6 +1314,15 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   );
 }
 
+// Readable labels for the Driver History old→new diff — any key not listed
+// still renders using its raw name, so a future field isn't silently dropped.
+const DRIVER_HISTORY_FIELD_LABELS: Record<string, string> = {
+  driverName: "Driver Name",
+  driverPhone: "Driver Phone",
+  driverAlternatePhone: "Alternate Phone",
+  vehicleRegistrationNumber: "Vehicle",
+};
+
 function DriverHistoryPanel({ vehicleEntries, driverHistory, unavailableHistory = [], vehicleIndex }) {
   const [activeVehicleTab, setActiveVehicleTab] = useState(0);
 
@@ -1372,7 +1381,7 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, unavailableHistory 
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{activeEntry.driverName || "—"}</p>
-            <p className="text-xs text-gray-400 font-mono">{activeEntry.vehicleRegistrationNumber} · {activeEntry.driverPhone}</p>
+            <p className="text-sm text-gray-400 font-mono">{activeEntry.vehicleRegistrationNumber} · {activeEntry.driverPhone}</p>
           </div>
           <RegStatusBadge entry={activeEntry} unavailableHistory={unavailableHistory} className="!text-xs !px-2 !py-0.5 flex-shrink-0" />
         </div>
@@ -1435,25 +1444,31 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, unavailableHistory 
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${badgeClass}`}>
+                    <span className={`text-sm font-semibold px-1.5 py-0.5 rounded ${badgeClass}`}>
                       {badgeLabel}
                     </span>
-                    <span className="text-xs text-gray-400">{fmtDt(h.changedAt)}</span>
+                    <span className="text-sm text-gray-400">{fmtDt(h.changedAt)}</span>
                   </div>
-                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{h.driverName}</p>
-                  <p className="text-xs text-gray-500">{h.driverPhone} · <span className="font-mono">{h.vehicleRegistrationNumber}</span></p>
-                  <p className="text-xs text-gray-400 mt-0.5">By {h.changedBy}</p>
+                  <p className="text-md font-semibold text-gray-800 dark:text-gray-100">{h.driverName}</p>
+                  <p className="text-sm text-gray-500">{h.driverPhone} · <span className="font-mono">{h.vehicleRegistrationNumber}</span></p>
+                  <p className="text-sm text-gray-400 mt-0.5">By {h.changedBy}</p>
 
                   {isUpdated && h.changedFields && Object.keys(h.changedFields).length > 0 && (
                     <div className="mt-1.5 space-y-0.5 pt-1.5 border-t border-gray-100 dark:border-gray-800">
                       {Object.entries(h.changedFields).map(([field, val]: any) => (
-                        <p key={field} className="text-xs text-gray-500">
-                          <span className="font-medium capitalize">{field}:</span>{" "}
-                          <span className="line-through text-red-400">{val.old}</span>{" → "}
-                          <span className="text-emerald-600 font-medium">{val.new}</span>
+                        <p key={field} className="text-sm text-gray-500">
+                          <span className="font-medium">{DRIVER_HISTORY_FIELD_LABELS[field] || field}:</span>{" "}
+                          <span className="line-through text-red-400">{val.old || "—"}</span>{" → "}
+                          <span className="text-emerald-600 font-medium">{val.new || "—"}</span>
                         </p>
                       ))}
                     </div>
+                  )}
+
+                  {isUpdated && (h.reason || h.changedFields?.reason) && (
+                    <p className="text-sm text-gray-400 mt-1.5">
+                      <span className="font-medium">Reason:</span> {h.reason || h.changedFields.reason}
+                    </p>
                   )}
 
                   {isRemoved && (
