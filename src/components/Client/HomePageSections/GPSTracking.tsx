@@ -1441,9 +1441,10 @@ function SouthIndiaLiveMap() {
         .leaflet-tile {
           max-width: none !important;
           max-height: none !important;
+          outline: 1px solid transparent;
         }
 
-        .leaflet-tile {
+        .leaflet-tile-pane {
           filter: saturate(1.02) contrast(1.02) brightness(1.02);
         }
 
