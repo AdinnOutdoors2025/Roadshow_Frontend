@@ -168,6 +168,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem("roadshow_user");
     localStorage.removeItem("roadshow_token");
     localStorage.removeItem("roadshow_session_expiry");
+    toast.success("You have been signed out successfully.");
   }, []);
 
   return (

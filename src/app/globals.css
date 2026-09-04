@@ -9,6 +9,7 @@
 html {
   scroll-behavior: auto !important;
   scroll-padding-top: 90px;
+  overflow-x: hidden;
 }
 
 body {

@@ -8,7 +8,7 @@
 /*  whenever it's mounted. A booking has at most one PO document, so this is    */
 /*  a single-file picker, not a list like CampaignMediaUpload.                  */
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { FileText, Paperclip, X } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -17,6 +17,7 @@ import {
   resolvePoDocumentUrl,
   validatePoDocumentFile,
 } from "@/lib/roadshowAgencyPoDocument";
+import FilePreviewModal from "@/components/ui/FilePreviewModal";
 
 import "./AgencyPoDocumentUpload.css";
 
@@ -46,6 +47,7 @@ export default function AgencyPoDocumentUpload({
   disabled = false,
 }: AgencyPoDocumentUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const handlePick = (event: React.ChangeEvent<HTMLInputElement>) => {
     const picked = event.target.files?.[0] || null;
@@ -78,14 +80,14 @@ export default function AgencyPoDocumentUpload({
         <div className="rdsw_poDocExisting">
           <FileText size={15} />
 
-          <a
-            href={resolvePoDocumentUrl(existingDocument.url)}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={() => setPreviewOpen(true)}
             title={existingDocument.originalName}
+            className="rdsw_poDocPreviewTrigger"
           >
             {existingDocument.originalName || "PO document"}
-          </a>
+          </button>
 
           {onRemoveExisting && (
             <button
@@ -143,6 +145,14 @@ export default function AgencyPoDocumentUpload({
         className="hidden"
         disabled={disabled}
       />
+
+      {previewOpen && existingDocument?.url && (
+        <FilePreviewModal
+          url={resolvePoDocumentUrl(existingDocument.url)}
+          label={existingDocument.originalName || "PO document"}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
     </div>
   );
 }
