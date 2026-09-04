@@ -127,7 +127,7 @@
 //         throw new Error(errData?.message || "Failed to save");
 //       }
 //       setIsRoleDefault(false);
-//       toast.success("Permission saved. Takes effect on this user's next login.");
+//       toast.success(".");
 //     } catch (err: any) {
 //       toast.error(err.message || "Something went wrong");
 //     } finally {
@@ -557,7 +557,7 @@ export default function RolePermissionPage() {
       setIsRoleDefault(false);
 
       toast.success(
-        "Permission saved. Takes effect on this user's next login."
+        "Permission saved."
       );
     } catch (err: any) {
       toast.error(

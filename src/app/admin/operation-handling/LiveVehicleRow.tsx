@@ -301,11 +301,16 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
       : "Unavailable";
 
 
-  const vehicleIssues = (order.onRoadIssues || []).filter(
-    (iss) =>
-      iss.vehicleIndex === correctVehicleIndex &&
-      iss.vehicleRegNo === entry.vehicleRegistrationNumber
-  );
+  // Scope to THIS lifecycle instance (entryId), not the reg number string —
+  // `entry` here is always the current active entry (replaced entries never
+  // render as a LiveVehicleRow), so matching by regNo alone would leak in
+  // issues from an earlier, already-replaced lifecycle that happened to use
+  // the same reg number (e.g. A replaced by B, then later B replaced by A).
+  const vehicleIssues = (order.onRoadIssues || []).filter((iss) => {
+    if (iss.vehicleIndex !== correctVehicleIndex) return false;
+    if (iss.entryId) return String(iss.entryId) === String(entry._id);
+    return iss.vehicleRegNo === entry.vehicleRegistrationNumber;
+  });
   const openCount = vehicleIssues.filter((i) => i.status === "open").length;
 
 
