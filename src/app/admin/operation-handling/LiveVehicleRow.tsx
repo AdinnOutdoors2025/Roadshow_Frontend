@@ -21,12 +21,14 @@ import API_BASE from "../../../../baseurl";
 import { getToken } from "../../utils/auth";
 import { useVehicle } from "../../../context/vehicletypecontext";
 import RegNoHistoryModal from "./RegNoHistoryModal";
+import FilePreviewModal from "@/components/ui/FilePreviewModal";
 
 
 
 
 export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle, gpsData, bookingStatusMap, onBookingStatusRefresh, onTrackIdFetched, correctVehicleIndex, forceOpen, onForceOpenHandled, onViewDriverRoute, vehicleTypes }) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [issuePreview, setIssuePreview] = useState(null);
   const [commentText, setCommentText] = useState("");
   const [commentPhoto, setCommentPhoto] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -757,17 +759,19 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                           {iss.issueDescription}
                         </p>
                         {iss.issuePhoto && (
-                          <a
-                            href={getImageUrl(iss.issuePhoto)}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setIssuePreview({ url: getImageUrl(iss.issuePhoto), label: "Issue Photo" })
+                            }
+                            className="block"
                           >
                             <img
                               src={getImageUrl(iss.issuePhoto)}
                               className="w-14 h-12 rounded-lg object-cover border mb-1 hover:opacity-80"
                               alt="issue"
                             />
-                          </a>
+                          </button>
                         )}
                         <p className="text-xs text-gray-400">
                           {fmtDatetime(iss.reportedAt)}
@@ -796,17 +800,19 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
                               {iss.resolveDescription}
                             </p>
                             {iss.resolvePhoto && (
-                              <a
-                                href={getImageUrl(iss.resolvePhoto)}
-                                target="_blank"
-                                rel="noreferrer"
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setIssuePreview({ url: getImageUrl(iss.resolvePhoto), label: "Resolution Photo" })
+                                }
+                                className="block"
                               >
                                 <img
                                   src={getImageUrl(iss.resolvePhoto)}
                                   className="w-14 h-12 rounded-lg object-cover border border-emerald-200 mt-1 hover:opacity-80"
                                   alt="resolve"
                                 />
-                              </a>
+                              </button>
                             )}
                             <p className="text-xs text-gray-400 ml-8">
                               {fmtDatetime(iss.resolvedAt)}
@@ -821,6 +827,14 @@ export default function LiveVehicleRow({ entry, index, order, onRefresh, vehicle
             </div>
           </div>
         </div>
+      )}
+
+      {issuePreview && (
+        <FilePreviewModal
+          url={issuePreview.url}
+          label={issuePreview.label}
+          onClose={() => setIssuePreview(null)}
+        />
       )}
 
       {/* ── Call Driver Modal ── */}
