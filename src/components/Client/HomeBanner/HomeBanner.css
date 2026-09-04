@@ -39,6 +39,14 @@
     overflow: hidden;
     border-radius: 12px;
     isolation: isolate;
+
+    /* Reserves the image's real footprint (every banner image is 4096x1446)
+       before it loads, so the box never collapses to 0 height — without
+       this, .HomeBannerMainImg has no width/height/aspect-ratio and no
+       intrinsic size until its bytes arrive, so the wrapper shrinks to
+       nothing and .HomeBannerImgSpinner below has no properly-sized box to
+       center itself in. */
+    aspect-ratio: 4096 / 1446;
 }
 
 .HomeBannerMainImg {

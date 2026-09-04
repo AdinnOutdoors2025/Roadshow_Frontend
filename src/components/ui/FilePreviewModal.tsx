@@ -66,7 +66,15 @@ export default function FilePreviewModal({
   const [loading, setLoading] = useState(true);
   const objectUrlRef = useRef<string | null>(null);
 
-  const isImage = useMemo(() => isImageFile(url), [url]);
+  /* url alone is enough for a real server URL (always carries the file's
+     extension), but a locally-picked-not-yet-uploaded file previewed via
+     URL.createObjectURL has a blob: URL with no extension at all — fall
+     back to label (the real filename) only when url itself doesn't match,
+     so every existing caller's url-based detection is unaffected. */
+  const isImage = useMemo(
+    () => isImageFile(url) || (!!label && isImageFile(label)),
+    [url, label]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +87,7 @@ export default function FilePreviewModal({
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         let blob = await res.blob();
-        const expected = guessMime(url);
+        const expected = guessMime(url) || (label ? guessMime(label) : "");
         if (expected && blob.type !== expected) {
           blob = new Blob([blob], { type: expected });
         }
@@ -104,7 +112,7 @@ export default function FilePreviewModal({
         objectUrlRef.current = null;
       }
     };
-  }, [url]);
+  }, [url, label]);
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
