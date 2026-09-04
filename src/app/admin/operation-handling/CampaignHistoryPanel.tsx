@@ -21,6 +21,7 @@ interface DriverHistoryEntry {
   changedBy?: string;
   changedAt: string;
   changedFields?: Record<string, { old: any; new: any }>;
+  reason?: string;
 }
 
 interface IssueHistoryEntry {
@@ -32,6 +33,9 @@ interface IssueHistoryEntry {
   issueDescription: string;
   issuePhoto?: string;
   reportedBy?: string;
+  resolveDescription?: string;
+  resolvePhoto?: string;
+  resolvedBy?: string;
 }
 
 interface UnavailableHistoryEntry {
@@ -65,6 +69,9 @@ interface DateGroup {
 
 interface ActivityItem {
   kind: "issue" | "unavailable";
+  // For an "issue" item: which half of the issue's lifecycle this entry
+  // represents. Undefined/"reported" for backward compatibility.
+  stage?: "reported" | "resolved";
   date: string;
   data: IssueHistoryEntry | UnavailableHistoryEntry;
 }
@@ -119,6 +126,10 @@ sorted.forEach((entry) => {
     action: entry.action,
     changedBy: entry.changedBy,
     changedFields: entry.changedFields,
+    // The Update Driver endpoint stores the edit reason as its own
+    // top-level `reason` field; other event types nest it inside
+    // `changedFields.reason` instead — check both.
+    reason: entry.reason || entry.changedFields?.reason || "",
     startDate: entry.changedAt,
     endDate: campaignToDate,
     isOngoing: true,
@@ -151,6 +162,19 @@ function groupSegmentsByDate(segments: Segment[]): DateGroup[] {
 
 const dayKeyOf = (d: string): string =>
   new Date(d).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+
+// Field labels for the old→new diff shown under a "Driver Updated" segment.
+// Any key not listed still renders — just humanized from its camelCase key —
+// so a future field added upstream shows up automatically.
+const DRIVER_FIELD_LABELS: Record<string, string> = {
+  driverName: "Driver Name",
+  driverPhone: "Driver Mobile",
+  driverAlternatePhone: "Alternate Phone",
+  vehicleRegistrationNumber: "Vehicle",
+};
+
+const humanizeFieldKeyCH = (key: string) =>
+  key.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
 
 
 function generateCampaignDates(fromDate?: string, toDate?: string): string[] {
@@ -260,6 +284,126 @@ function getImageUrlCH(url?: string): string | null {
   return `${(window as any).API_BASE?.replace("/api", "") || ""}${url}`;
 }
 
+// One activity item per issue, always anchored at its report time — the
+// resolution (when present) is grouped INSIDE the same item/card rather
+// than shown as an unrelated second timeline entry, so it's always obvious
+// which resolution belongs to which reported issue.
+function issueToActivity(iss: IssueHistoryEntry): ActivityItem {
+  return { kind: "issue", date: iss.reportedAt, data: iss };
+}
+
+// Reusable attachment for a timeline activity row: thumbnail (or doc icon)
+// opens the shared FilePreviewModal on click; a separate icon downloads the
+// original. Same shared preview/blob logic as Vehicle Unavailable History /
+// Comments History / Issue Summary, so Space files preview instead of
+// auto-downloading, and PDFs open in the modal too.
+function ActivityAttachment({ url, label }: { url: string; label: string }) {
+  const [preview, setPreview] = useState(false);
+  if (!url) return null;
+  const isImage = isImageFile(url);
+  return (
+    <>
+      {preview && <FilePreviewModal url={url} label={label} onClose={() => setPreview(false)} />}
+      <div className="flex items-center gap-1.5 mt-1">
+        <button type="button" onClick={() => setPreview(true)} className="flex-shrink-0" title="Preview">
+          {isImage ? (
+            <img
+              src={url}
+              className="w-12 h-10 rounded-lg object-cover border hover:opacity-80"
+              alt={label}
+            />
+          ) : (
+            <span className="w-12 h-10 rounded-lg border flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 text-blue-500">
+              <FileText size={16} />
+            </span>
+          )}
+        </button>
+        <a
+          href={url}
+          download
+          target="_blank"
+          rel="noreferrer"
+          title="Download"
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-green-500 hover:bg-green-50 transition-all"
+        >
+          <Download size={13} />
+        </a>
+      </div>
+    </>
+  );
+}
+
+// Shared render for one Driver Status / Campaign Status activity row — used
+// by both sub-tabs so the issue-lifecycle/attachment logic lives in one
+// place instead of being duplicated.
+function ActivityRow({ act }: { act: ActivityItem }) {
+  const unavailableData = act.kind === "unavailable" ? (act.data as UnavailableHistoryEntry) : null;
+
+  if (act.kind === "unavailable") {
+    const unavailablePhotoUrl = getImageUrlCH(unavailableData?.photo);
+    const title = unavailableData?.status === "unavailable" ? "Marked unavailable" : "Marked available";
+    return (
+      <div className="flex gap-2">
+        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-white bg-orange-500">
+          <XCircle size={12} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{title}</span>
+            <span className="text-xs text-gray-400">{fmtDt(act.date)}</span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{unavailableData?.reason}</p>
+          {unavailablePhotoUrl && <ActivityAttachment url={unavailablePhotoUrl} label="Unavailable Photo" />}
+          <p className="text-xs text-gray-400 mt-0.5">By {unavailableData?.reportedBy || "—"}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // act.kind === "issue" — one grouped card covering the whole lifecycle:
+  // the report always shows; the resolution (when the issue has one) is
+  // grouped inside the same card instead of a separate timeline entry.
+  const issueData = act.data as IssueHistoryEntry;
+  const isResolved = issueData.status === "resolved";
+  const issuePhotoUrl = getImageUrlCH(issueData.issuePhoto);
+  const resolvePhotoUrl = getImageUrlCH(issueData.resolvePhoto);
+
+  return (
+    <div className="flex gap-2">
+      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-white ${isResolved ? "bg-emerald-500" : "bg-red-500"}`}>
+        {isResolved ? <CheckCircle2 size={12} /> : <AlertTriangle size={12} />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Issue reported</span>
+          {!isResolved && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
+              Open
+            </span>
+          )}
+          <span className="text-xs text-gray-400">{fmtDt(act.date)}</span>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{issueData.issueDescription}</p>
+        {issuePhotoUrl && <ActivityAttachment url={issuePhotoUrl} label="Issue Photo" />}
+        <p className="text-xs text-gray-400 mt-0.5">By {issueData.reportedBy || "—"}</p>
+
+        {isResolved && (
+          <div className="mt-1.5 pt-1.5 border-t border-emerald-200 dark:border-emerald-800/50">
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 size={11} className="text-emerald-500" />
+              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Issue resolved</span>
+              <span className="text-xs text-gray-400">{fmtDt(issueData.resolvedAt)}</span>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{issueData.resolveDescription || "—"}</p>
+            {resolvePhotoUrl && <ActivityAttachment url={resolvePhotoUrl} label="Resolution Photo" />}
+            <p className="text-xs text-gray-400 mt-0.5">By {issueData.resolvedBy || "—"}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Mirrors the status tag logic in OnRoadTab.tsx so a registration number's
 // current state (On Road / Unavailable / Released / Assigned) is never
 // ambiguous, even after chained replacements.
@@ -289,7 +433,8 @@ function RegStatusBadgeCH({ entry }: { entry: any }) {
 
 
 import React, { useState, useEffect } from "react";
-import { Clock, AlertTriangle, XCircle, User, CheckCircle2 } from "lucide-react";
+import { Clock, AlertTriangle, XCircle, User, CheckCircle2, FileText, Download } from "lucide-react";
+import FilePreviewModal, { isImageFile } from "@/components/ui/FilePreviewModal";
 
 export default function CampaignHistoryPanel({
   vehicleEntries,
@@ -372,6 +517,8 @@ export default function CampaignHistoryPanel({
 
     const dayIssues = scopedIssues.filter((iss) => {
       if (!regsForDay.has(iss.vehicleRegNo)) return false;
+      // The whole issue lifecycle card is anchored to its report day —
+      // its resolution (if any) is grouped inside that same card.
       return dayKeyOf(iss.reportedAt) === selectedDateKey;
     });
     const dayUnavailable = scopedUnavailable.filter((u) => {
@@ -379,7 +526,7 @@ export default function CampaignHistoryPanel({
       return dayKeyOf(u.reportedAt) === selectedDateKey;
     });
     return [
-      ...dayIssues.map((iss) => ({ kind: "issue" as const, date: iss.reportedAt, data: iss })),
+      ...dayIssues.map((iss) => issueToActivity(iss)),
       ...dayUnavailable.map((u) => ({ kind: "unavailable" as const, date: u.reportedAt, data: u })),
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   })();
@@ -491,6 +638,10 @@ export default function CampaignHistoryPanel({
               [...selectedGroup.segments].reverse().map((seg) => {
                 const segIssues = scopedIssues
                   .filter((iss) => iss.vehicleRegNo === seg.vehicleRegistrationNumber)
+                  // The whole issue lifecycle card is anchored to its report
+                  // time — its resolution (if any) is grouped inside that
+                  // same card, so only the report time needs to fall within
+                  // this segment for the issue to show under it.
                   .filter((iss) => isWithinSegment(iss.reportedAt, seg));
 
                 const segUnavailable = scopedUnavailable
@@ -498,7 +649,7 @@ export default function CampaignHistoryPanel({
                   .filter((u) => isWithinSegment(u.reportedAt, seg));
 
                 const activity: ActivityItem[] = [
-                  ...segIssues.map((iss) => ({ kind: "issue" as const, date: iss.reportedAt, data: iss })),
+                  ...segIssues.map((iss) => issueToActivity(iss)),
                   ...segUnavailable.map((u) => ({ kind: "unavailable" as const, date: u.reportedAt, data: u })),
                 ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -559,86 +710,31 @@ export default function CampaignHistoryPanel({
 
                       {seg.action === "updated" && seg.changedFields && Object.keys(seg.changedFields).length > 0 && (
                         <div className="mt-1.5 space-y-0.5 pt-1.5 border-t border-gray-200 dark:border-gray-700">
-                          {Object.entries(seg.changedFields).map(([field, val]) => (
-                            <p key={field} className="text-xs text-gray-500">
-                              <span className="font-medium capitalize">{field}:</span>{" "}
-                              <span className="line-through text-red-400">{val.old}</span>
-                              {" → "}
-                              <span className="text-emerald-600 font-medium">{val.new}</span>
-                            </p>
-                          ))}
+                          {Object.entries(seg.changedFields)
+                            .filter(([, val]: any) => val && typeof val === "object" && ("old" in val || "new" in val))
+                            .map(([field, val]: any) => (
+                              <p key={field} className="text-xs text-gray-500">
+                                <span className="font-medium">{DRIVER_FIELD_LABELS[field] || humanizeFieldKeyCH(field)}:</span>{" "}
+                                <span className="line-through text-red-400">{val.old || "—"}</span>
+                                {" → "}
+                                <span className="text-emerald-600 font-medium">{val.new || "—"}</span>
+                              </p>
+                            ))}
                         </div>
+                      )}
+                      {(seg as any).reason && (
+                        <p className="text-xs text-gray-500 mt-1.5">
+                          <span className="font-medium">Reason:</span> {(seg as any).reason}
+                        </p>
                       )}
                     </div>
 
                     {/* In-segment activity */}
                     {activity.length > 0 && (
                       <div className="mt-3 pl-4 border-l-2 border-gray-200 dark:border-gray-700 space-y-2">
-                        {activity.map((act, idx) => {
-                          const issueData = act.kind === "issue" ? (act.data as IssueHistoryEntry) : null;
-                          const unavailableData =
-                            act.kind === "unavailable" ? (act.data as UnavailableHistoryEntry) : null;
-
-                          return (
-                            <div key={idx} className="flex gap-2">
-                              <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-white ${act.kind === "issue"
-                                  ? issueData?.status === "open"
-                                    ? "bg-red-500"
-                                    : "bg-emerald-500"
-                                  : "bg-orange-500"
-                                  }`}
-                              >
-                                {act.kind === "issue" ? (
-                                  <AlertTriangle size={12} />
-                                ) : (
-                                  <XCircle size={12} />
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                    {act.kind === "issue"
-                                      ? issueData?.status === "open"
-                                        ? "Issue reported"
-                                        : "Issue resolved"
-                                      : unavailableData?.status === "unavailable"
-                                        ? "Marked unavailable"
-                                        : "Marked available"}
-                                  </span>
-                                  <span className="text-xs text-gray-400">{fmtDt(act.date)}</span>
-                                </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                  {act.kind === "issue" ? issueData?.issueDescription : unavailableData?.reason}
-                                </p>
-                                {act.kind === "issue" && issueData?.issuePhoto && (
-                                  <a href={getImageUrlCH(issueData.issuePhoto)} target="_blank" rel="noreferrer">
-                                    <img
-                                      src={getImageUrlCH(issueData.issuePhoto) || undefined}
-                                      className="w-12 h-10 rounded-lg object-cover border mt-1 hover:opacity-80"
-                                      alt="activity"
-                                    />
-                                  </a>
-                                )}
-                                {act.kind === "unavailable" && unavailableData?.photo && (
-                                  <a href={getImageUrlCH(unavailableData.photo)} target="_blank" rel="noreferrer">
-                                    <img
-                                      src={getImageUrlCH(unavailableData.photo) || undefined}
-                                      className="w-12 h-10 rounded-lg object-cover border mt-1 hover:opacity-80"
-                                      alt="activity"
-                                    />
-                                  </a>
-                                )}
-                                <p className="text-xs text-gray-400 mt-0.5">
-                                  By{" "}
-                                  {act.kind === "issue"
-                                    ? issueData?.reportedBy || "—"
-                                    : unavailableData?.reportedBy || "—"}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {activity.map((act, idx) => (
+                          <ActivityRow key={idx} act={act} />
+                        ))}
                       </div>
                     )}
                   </div>
@@ -787,71 +883,9 @@ export default function CampaignHistoryPanel({
 
                     {activityForSelectedDate.length > 0 && (
                       <div className="pl-4 border-l-2 border-gray-200 dark:border-gray-700 space-y-2">
-                        {activityForSelectedDate.map((act, idx) => {
-                          const issueData = act.kind === "issue" ? (act.data as IssueHistoryEntry) : null;
-                          const unavailableData =
-                            act.kind === "unavailable" ? (act.data as UnavailableHistoryEntry) : null;
-
-                          return (
-                            <div key={idx} className="flex gap-2">
-                              <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-white ${act.kind === "issue"
-                                  ? issueData?.status === "open"
-                                    ? "bg-red-500"
-                                    : "bg-emerald-500"
-                                  : "bg-orange-500"
-                                  }`}
-                              >
-                                {act.kind === "issue" ? (
-                                  <AlertTriangle size={12} />
-                                ) : (
-                                  <XCircle size={12} />
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                    {act.kind === "issue"
-                                      ? issueData?.status === "open"
-                                        ? "Issue reported"
-                                        : "Issue resolved"
-                                      : unavailableData?.status === "unavailable"
-                                        ? "Marked unavailable"
-                                        : "Marked available"}
-                                  </span>
-                                  <span className="text-xs text-gray-400">{fmtDt(act.date)}</span>
-                                </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                  {act.kind === "issue" ? issueData?.issueDescription : unavailableData?.reason}
-                                </p>
-                                {act.kind === "issue" && issueData?.issuePhoto && (
-                                  <a href={getImageUrlCH(issueData.issuePhoto)} target="_blank" rel="noreferrer">
-                                    <img
-                                      src={getImageUrlCH(issueData.issuePhoto) || undefined}
-                                      className="w-12 h-10 rounded-lg object-cover border mt-1 hover:opacity-80"
-                                      alt="activity"
-                                    />
-                                  </a>
-                                )}
-                                {act.kind === "unavailable" && unavailableData?.photo && (
-                                  <a href={getImageUrlCH(unavailableData.photo)} target="_blank" rel="noreferrer">
-                                    <img
-                                      src={getImageUrlCH(unavailableData.photo) || undefined}
-                                      className="w-12 h-10 rounded-lg object-cover border mt-1 hover:opacity-80"
-                                      alt="activity"
-                                    />
-                                  </a>
-                                )}
-                                <p className="text-xs text-gray-400 mt-0.5">
-                                  By{" "}
-                                  {act.kind === "issue"
-                                    ? issueData?.reportedBy || "—"
-                                    : unavailableData?.reportedBy || "—"}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {activityForSelectedDate.map((act, idx) => (
+                          <ActivityRow key={idx} act={act} />
+                        ))}
                       </div>
                     )}
 

@@ -636,7 +636,7 @@ import toast from "react-hot-toast";
 import {
   Truck, User, RefreshCw, ChevronDown, ChevronRight as ChevronRightIcon,
   ArrowRightLeft, AlertTriangle, Gauge, XCircle, Clock,
-  Download, FileText,
+  Download, FileText, CheckCircle,
 } from "lucide-react";
 import { getToken } from "../../utils/auth";
 import API_BASE from "../../../../baseurl";
@@ -719,6 +719,50 @@ function TimelineAttachment({ url, label }: { url: string; label: string }) {
   );
 }
 
+// Field labels for the generic old→new diff rendered under a "Vehicle
+// Updated"/"Driver Change" card. Any key on `changedFields` not listed here
+// still renders — just with a humanized version of its key — so a future
+// field added to the backend's diff object shows up automatically instead
+// of being silently dropped.
+const CHANGED_FIELD_LABELS: Record<string, string> = {
+  driverName: "Driver Name",
+  driverPhone: "Driver Phone",
+  driverAlternatePhone: "Alternate Phone",
+  vehicleRegistrationNumber: "Vehicle",
+};
+
+const humanizeFieldKey = (key: string) =>
+  key.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
+
+// Renders each `{ old, new }` pair in `changedFields` as its own
+// "Field: old → new" line. Only fields that actually changed are present in
+// the object to begin with (set at the source in the backend), and older
+// history records simply have no/empty `changedFields`, so this renders
+// nothing extra for them rather than breaking.
+function ChangedFieldsList({ changedFields }: { changedFields?: Record<string, { old?: any; new?: any }> }) {
+  // Not every `changedFields` entry across the different history event types
+  // is a real { old, new } diff pair — a few (e.g. the vehicle-replacement
+  // events' `reason`/`replacedBy`/`replacementFor`) are plain strings used
+  // for other purposes. Only render genuine before/after pairs here.
+  const entries = Object.entries(changedFields || {}).filter(
+    ([, v]) => v && typeof v === "object" && ("old" in v || "new" in v) && v.old !== v.new
+  );
+  if (entries.length === 0) return null;
+  return (
+    <div className="mt-1.5 space-y-1">
+      {entries.map(([key, v]) => (
+        <div key={key} className="flex items-center justify-between text-sm bg-gray-50 dark:bg-gray-800/40 rounded-lg px-2.5 py-1.5">
+          <span className="text-gray-500">{CHANGED_FIELD_LABELS[key] || humanizeFieldKey(key)}</span>
+          <span className="text-right">
+            <span className="text-red-500 line-through mr-2">{v.old || "—"}</span>
+            <span className="text-green-600 font-medium">{v.new || "—"}</span>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Unified per-category presentation metadata: icon, accent color, timestamp field, title/body renderer.
 const CATEGORY_META: Record<string, any> = {
   driverChangeHistory: {
@@ -746,7 +790,8 @@ const CATEGORY_META: Record<string, any> = {
             {e.driverName} · {fmtPhone(e.driverPhone)} — <span className="font-mono">{e.vehicleRegistrationNumber}</span>
           </p>
         )}
-        {e.comments && <p className="text-sm text-gray-400 mt-1.5">Comments: {e.comments}</p>}
+        <ChangedFieldsList changedFields={e.changedFields} />
+        {e.comments && <p className="text-sm text-gray-400 mt-1.5">Reason: {e.comments}</p>}
         <p className="text-sm text-gray-400 mt-1">Updated by {e.changedBy || "—"}</p>
       </>
     ),
@@ -754,20 +799,39 @@ const CATEGORY_META: Record<string, any> = {
   issueHistory: {
     icon: AlertTriangle,
     color: "amber",
-    getTimestamp: (e: any) => (e.status === "resolved-today" ? e.resolvedAt || e.createdAt : e.createdAt),
-    getTitle: (e: any) => (e.status === "resolved-today" ? "Issue Resolved" : e.status === "open" ? "Issue Reported" : "Issue"),
+    // Always the report time — one card represents the whole issue
+    // lifecycle now, positioned at when it was first reported, with the
+    // resolution (if any) grouped inside the same card rather than shown
+    // as its own separate timeline entry elsewhere.
+    getTimestamp: (e: any) => e.createdAt,
+    getTitle: () => "Issue",
     renderBody: (e: any) => (
       <>
-        <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{e.issueDescription}</p>
+        <div className="flex items-center gap-1.5 mt-1">
+          <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">Issue</span>
+          {e.status !== "resolved" && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">
+              Open
+            </span>
+          )}
+        </div>
+        <p className="text-base text-gray-700 dark:text-gray-300 mt-0.5">{e.issueDescription}</p>
         {getImageUrl(e.issuePhoto) && <TimelineAttachment url={getImageUrl(e.issuePhoto)} label="Issue Photo" />}
-        {e.resolveDescription && (
+        <p className="text-sm text-gray-400 mt-1">Reported: {fmtDatetime(e.createdAt)}</p>
+        <p className="text-sm text-gray-400">Reported by: {e.createdBy || "—"}</p>
+
+        {e.status === "resolved" && (
           <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800/50">
-            <p className="text-sm text-emerald-600 font-semibold">Resolved</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{e.resolveDescription}</p>
-            <p className="text-sm text-gray-400 mt-0.5">By {e.resolvedBy} · {fmtDatetime(e.resolvedAt)}</p>
+            <div className="flex items-center gap-1.5">
+              <CheckCircle size={13} className="text-emerald-500" />
+              <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Resolved</span>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{e.resolveDescription}</p>
+            {getImageUrl(e.resolvePhoto) && <TimelineAttachment url={getImageUrl(e.resolvePhoto)} label="Resolution Photo" />}
+            <p className="text-sm text-gray-400 mt-1">Resolved at: {fmtDatetime(e.resolvedAt)}</p>
+            <p className="text-sm text-gray-400">Resolved by: {e.resolvedBy || "—"}</p>
           </div>
         )}
-        <p className="text-sm text-gray-400 mt-1.5">Created by {e.createdBy}</p>
       </>
     ),
   },
