@@ -97,22 +97,17 @@ function OrderCard({ order, stageKey, onDragStart, onClick }: {
 
   const hasPendingFoc = orderHasPendingFoc(order);
 
-  // A vehicle that's been replaced (not just marked unavailable) has already
-  // been resolved — its old entry stays in onRoadExecutionArray with
-  // unavailableStatus still true, and a new replacement entry is added
-  // alongside it. Without excluding the old "replaced" entry, both counts
-  // double up (e.g. 1 old-unavailable + 2 active = "1 Unavailable / 2
-  // Available" shown for a 2-vehicle order). Same "replaced" detection used
-  // in OnRoadTab.tsx: an onRoadUnavailableHistory record with
-  // eventType "replaced" matching this entry's reg number.
+  // A vehicle that's been replaced (not just marked unavailable) or withdrawn
+  // has already been resolved and must drop out of the Kanban's active count —
+  // its entry stays in onRoadExecutionArray (for history) but entryStatus flips
+  // to "replaced"/"removed". Without excluding those, counts double up (e.g. 1
+  // old-unavailable + 2 active = "1 Unavailable / 2 Available" for a 2-vehicle
+  // order) or a released vehicle keeps showing as "Available". Same canonical
+  // entryStatus === "active" check used for the Vehicle Status tab in
+  // OnRoadTab.tsx — that tab's counts are the source of truth this must match.
   const executionEntries = order.onRoadExecutionArray || [];
-  const replacedRegNos = new Set(
-    (order.onRoadUnavailableHistory || [])
-      .filter((h: any) => h.eventType === "replaced")
-      .map((h: any) => h.vehicleRegNo)
-  );
   const activeExecutionEntries = executionEntries.filter(
-    (e: any) => !replacedRegNos.has(e.vehicleRegistrationNumber)
+    (e: any) => e.entryStatus === "active"
   );
   const unavailableVehicles = activeExecutionEntries.filter(
     e => e.unavailableStatus === true
