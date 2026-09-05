@@ -347,6 +347,20 @@ export default function CampaignRequestPage() {
 
     cartUserKeyRef.current = userKey;
     cartHydratedRef.current = true;
+
+    /* A vehicle restored from a saved cart sorts to the front of the
+       carousel like any other selected card, but the scroller itself
+       stays wherever it was rendered — leaving the restored selection
+       scrolled out of view on a fresh page load. Snap it back into view
+       once, right after restore. */
+    if (restoredVehicles.length > 0) {
+      requestAnimationFrame(() => {
+        productScrollerRef.current?.scrollTo({
+          left: 0,
+          behavior: "auto",
+        });
+      });
+    }
   }, [vehicles, user, authLoading]);
 
   /* Persist the on-screen selection against the current customer. Held back

@@ -404,11 +404,17 @@ function ActivityRow({ act }: { act: ActivityItem }) {
   );
 }
 
-// Mirrors the status tag logic in OnRoadTab.tsx so a registration number's
-// current state (On Road / Unavailable / Released / Assigned) is never
-// ambiguous, even after chained replacements.
-function getRegStatusCH(entry: any) {
+// Mirrors the status tag logic in OnRoadTab.tsx so a vehicle LIFECYCLE
+// INSTANCE's current state (On Road / Unavailable / Replaced / Released /
+// Assigned) is never ambiguous, even after chained replacements. Keyed off
+// `entry.entryStatus` (the specific onRoadExecutionArray sub-document) —
+// never off the reg number string, since a reg can cycle back as a
+// brand-new active entry after being replaced away earlier.
+function getRegStatusCH(entry: any, unavailableHistory: any[] = []) {
   if (!entry) return { label: "—", cls: "bg-gray-100 text-gray-400 border-gray-200" };
+  if (entry.entryStatus === "replaced") {
+    return { label: "Replaced", cls: "bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800" };
+  }
   if (entry.entryStatus === "removed") {
     return { label: "Released", cls: "bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600" };
   }
@@ -421,8 +427,8 @@ function getRegStatusCH(entry: any) {
   return { label: "Assigned", cls: "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800" };
 }
 
-function RegStatusBadgeCH({ entry }: { entry: any }) {
-  const { label, cls } = getRegStatusCH(entry);
+function RegStatusBadgeCH({ entry, unavailableHistory = [] }: { entry: any; unavailableHistory?: any[] }) {
+  const { label, cls } = getRegStatusCH(entry, unavailableHistory);
   return (
     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border leading-none ${cls}`}>
       {label}
@@ -562,7 +568,7 @@ export default function CampaignHistoryPanel({
                 V{i + 1}
               </div>
               <span className="font-mono text-xs">{entry.vehicleRegistrationNumber || `Vehicle ${i + 1}`}</span>
-              <RegStatusBadgeCH entry={entry} />
+              <RegStatusBadgeCH entry={entry} unavailableHistory={unavailableHistory} />
             </button>
           ))}
         </div>

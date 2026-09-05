@@ -463,7 +463,7 @@ backdrop-filter: blur(10px);
               background: #f5f5f5;
               border: 0;
               border-radius: 999px;
-              cursor: pointer;
+              // cursor: pointer;
               transition: background-color 180ms ease, box-shadow 180ms ease,
                 transform 180ms ease;
             }
@@ -847,9 +847,9 @@ backdrop-filter: blur(10px);
               Contact Us
             </Link>
 
-            <button
-              type="button"
-              onClick={() => handleMenuItemClick("profile")}
+            <div
+              // type="button"
+              // onClick={() => handleMenuItemClick("profile")}
               className={`RS_RefCircleButton ${
                 accountUser ? "RS_RefProfileButton--signedIn" : ""
               } ${
@@ -875,7 +875,7 @@ backdrop-filter: blur(10px);
                   {profileDisplayName}
                 </span>
               )}
-            </button>
+            </div>
 
             <button
               type="button"

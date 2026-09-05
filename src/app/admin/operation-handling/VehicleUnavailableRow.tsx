@@ -66,10 +66,10 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
         setAvailableSubmitting(true);
         try {
             const unavailableHistory = (order.onRoadUnavailableHistory || [])
-                .filter(
-                    (h) =>
-                        h.vehicleRegNo === entry.vehicleRegistrationNumber &&
-                        h.status === "unavailable"
+                .filter((h) =>
+                    entry._id && h.entryId
+                        ? String(h.entryId) === String(entry._id) && h.status === "unavailable"
+                        : h.vehicleRegNo === entry.vehicleRegistrationNumber && h.status === "unavailable"
                 )
                 .sort((a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime());
 
@@ -106,13 +106,25 @@ export default function VehicleUnavailableRow({ entry, index, order, onRefresh, 
         }
     };
 
-    const latestUnavailableHistory = (order.onRoadUnavailableHistory || [])
-        .filter(
-            (h) =>
-                h.vehicleRegNo === entry.vehicleRegistrationNumber &&
-                h.status === "unavailable"
-        )
-        .sort((a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime())[0];
+    // Scope strictly to THIS execution entry via entryId (backend always sets it —
+    // see replaceOnRoadVehicle in Adminordercontroller.js). Matching by regNo string
+    // alone is wrong: a driver-only replacement keeps the same reg number, so a later,
+    // unrelated replacement elsewhere that happens to touch the same reg string (e.g.
+    // vehicle1 TN58AP8479 → TN58AP8479, then vehicle2's own TN58AP8479 → TN58BF3818)
+    // would otherwise leak into vehicle1's "Replaced by" card too.
+    const entryUnavailableHistory = (order.onRoadUnavailableHistory || []).filter((h) =>
+        entry._id && h.entryId
+            ? String(h.entryId) === String(entry._id)
+            : h.vehicleRegNo === entry.vehicleRegistrationNumber
+    );
+    // A "replaced" event must always win over a later, unrelated "unavailable"/
+    // "available" cycle on the same entry — the reg's replacement status shouldn't
+    // ever get hidden just because a newer history row has a later timestamp.
+    const latestUnavailableHistory =
+        [...entryUnavailableHistory].reverse().find((h) => h.eventType === "replaced") ||
+        entryUnavailableHistory
+            .filter((h) => h.status === "unavailable")
+            .sort((a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime())[0];
 
 
 

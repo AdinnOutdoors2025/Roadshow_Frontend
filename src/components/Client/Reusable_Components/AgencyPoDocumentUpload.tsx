@@ -8,8 +8,8 @@
 /*  whenever it's mounted. A booking has at most one PO document, so this is    */
 /*  a single-file picker, not a list like CampaignMediaUpload.                  */
 
-import { useRef } from "react";
-import { FileText, Paperclip, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Download, Eye, FileText, Paperclip, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 import {
@@ -17,6 +17,7 @@ import {
   resolvePoDocumentUrl,
   validatePoDocumentFile,
 } from "@/lib/roadshowAgencyPoDocument";
+import FilePreviewModal from "@/components/ui/FilePreviewModal";
 
 import "./AgencyPoDocumentUpload.css";
 
@@ -46,6 +47,26 @@ export default function AgencyPoDocumentUpload({
   disabled = false,
 }: AgencyPoDocumentUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  /* Which preview is open, if any — "existing" for an already-saved
+     document (server URL), "local" for a freshly-picked file not yet
+     uploaded (previewed from an in-memory object URL). */
+  const [previewTarget, setPreviewTarget] = useState<
+    "existing" | "local" | null
+  >(null);
+
+  /* Backs both the Preview and Download icon buttons for a freshly-picked
+     file, so it's created as soon as a file is set rather than only once
+     the user opens the preview. */
+  const localFileUrl = useMemo(() => {
+    if (!file) return null;
+    return URL.createObjectURL(file);
+  }, [file]);
+
+  useEffect(() => {
+    return () => {
+      if (localFileUrl) URL.revokeObjectURL(localFileUrl);
+    };
+  }, [localFileUrl]);
 
   const handlePick = (event: React.ChangeEvent<HTMLInputElement>) => {
     const picked = event.target.files?.[0] || null;
@@ -78,14 +99,36 @@ export default function AgencyPoDocumentUpload({
         <div className="rdsw_poDocExisting">
           <FileText size={15} />
 
-          <a
-            href={resolvePoDocumentUrl(existingDocument.url)}
-            target="_blank"
-            rel="noreferrer"
+          <span
+            className="rdsw_poDocName"
             title={existingDocument.originalName}
           >
             {existingDocument.originalName || "PO document"}
-          </a>
+          </span>
+
+          <div className="rdsw_poDocActions">
+            <button
+              type="button"
+              onClick={() => setPreviewTarget("existing")}
+              title="Preview"
+              aria-label="Preview PO document"
+              className="rdsw_poDocIconBtn rdsw_poDocIconBtn--preview"
+            >
+              <Eye size={14} />
+            </button>
+
+            <a
+              href={resolvePoDocumentUrl(existingDocument.url)}
+              download
+              target="_blank"
+              rel="noreferrer"
+              title="Download"
+              aria-label="Download PO document"
+              className="rdsw_poDocIconBtn rdsw_poDocIconBtn--download"
+            >
+              <Download size={14} />
+            </a>
+          </div>
 
           {onRemoveExisting && (
             <button
@@ -108,6 +151,30 @@ export default function AgencyPoDocumentUpload({
             {file.name}
           </span>
           <span className="rdsw_poDocSize">{formatSize(file.size)}</span>
+
+          <div className="rdsw_poDocActions">
+            <button
+              type="button"
+              onClick={() => setPreviewTarget("local")}
+              title="Preview"
+              aria-label={`Preview ${file.name}`}
+              className="rdsw_poDocIconBtn rdsw_poDocIconBtn--preview"
+            >
+              <Eye size={14} />
+            </button>
+
+            {localFileUrl && (
+              <a
+                href={localFileUrl}
+                download={file.name}
+                title="Download"
+                aria-label={`Download ${file.name}`}
+                className="rdsw_poDocIconBtn rdsw_poDocIconBtn--download"
+              >
+                <Download size={14} />
+              </a>
+            )}
+          </div>
 
           <button
             type="button"
@@ -143,6 +210,22 @@ export default function AgencyPoDocumentUpload({
         className="hidden"
         disabled={disabled}
       />
+
+      {previewTarget === "existing" && existingDocument?.url && (
+        <FilePreviewModal
+          url={resolvePoDocumentUrl(existingDocument.url)}
+          label={existingDocument.originalName || "PO document"}
+          onClose={() => setPreviewTarget(null)}
+        />
+      )}
+
+      {previewTarget === "local" && file && localFileUrl && (
+        <FilePreviewModal
+          url={localFileUrl}
+          label={file.name}
+          onClose={() => setPreviewTarget(null)}
+        />
+      )}
     </div>
   );
 }

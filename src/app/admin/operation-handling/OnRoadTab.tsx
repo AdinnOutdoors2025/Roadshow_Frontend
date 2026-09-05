@@ -94,15 +94,18 @@ const getImageUrl = (url) => {
   return `${API_BASE.replace("/api", "")}${url}`;
 };
 
-// Single source of truth for a registration-number's current status tag,
-// used across the Issue, Extra KM, Driver History and Campaign History
-// panels so chained replacements are never ambiguous.
+// Single source of truth for a vehicle LIFECYCLE INSTANCE's status tag, used
+// across the Issue, Extra KM, Driver History and Campaign History panels so
+// chained replacements are never ambiguous. Status must key off `entry`
+// itself (a specific onRoadExecutionArray sub-document, identified by its own
+// _id/entryStatus) — never off the reg number string alone. A reg number can
+// cycle back as a brand-new active entry after being replaced away earlier
+// (A replaced by B, then later B replaced by A) — matching by regNo against
+// onRoadUnavailableHistory would then wrongly tag the new active A entry as
+// "Replaced" because an old history row for reg A still exists.
 function getRegStatus(entry, unavailableHistory = []) {
   if (!entry) return { label: "—", cls: "bg-gray-100 text-gray-400 border-gray-200" };
-  const wasReplaced = (unavailableHistory || []).some(
-    (h) => h.eventType === "replaced" && h.vehicleRegNo === entry.vehicleRegistrationNumber
-  );
-  if (wasReplaced) {
+  if (entry.entryStatus === "replaced") {
     return { label: "Replaced", cls: "bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800" };
   }
   if (entry.entryStatus === "removed") {
@@ -241,7 +244,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   // the "Open issues" stat card / header badge forever. Only count issues
   // against entries that are currently active (not removed, not unavailable).
   const activeEntriesForVehicle = (order.onRoadExecutionArray || []).filter(
-    (e) => e.vehicleIndex === vehicleIndex && e.entryStatus !== "removed" && !e.unavailableStatus
+    (e) => e.vehicleIndex === vehicleIndex && e.entryStatus === "active" && !e.unavailableStatus
   );
   const openIssues = vehicleIssues.filter((iss) => {
     if (iss.status !== "open") return false;
@@ -259,7 +262,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
       return entries.some(e => e.onRoadStatus === 1);
     });
   const allEntries = order.onRoadExecutionArray || [];
-  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus && e.entryStatus !== "removed").length;
+  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus && e.entryStatus === "active").length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 
@@ -277,9 +280,13 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
     return v?.typeName || "Vehicle";
   };
 
-  // Active entries — used for Vehicle Status tab, Extra KM add dropdown, new Issue add
+  // Active entries — used for Vehicle Status tab, Extra KM add dropdown, new Issue add.
+  // entryStatus === "active" excludes BOTH "removed" (explicit Withdraw Vehicle)
+  // and "replaced" (superseded by replaceOnRoadVehicle) — a replaced entry must
+  // not keep counting as an occupied Available/Unavailable slot once its
+  // replacement has taken over, or the total active count double-counts it.
   const vehicleEntries = (order.onRoadExecutionArray || []).filter(
-    (e) => e.vehicleIndex === vehicleIndex && e.entryStatus !== "removed"
+    (e) => e.vehicleIndex === vehicleIndex && e.entryStatus === "active"
   );
 
   // two
@@ -354,7 +361,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
   }, [isOpen]);
 
   const activeRegNosKey = vehicleEntries
-    .filter(e => e.entryStatus !== "removed")
+    .filter(e => e.entryStatus === "active")
     .map(e => e.vehicleRegistrationNumber)
     .filter(Boolean)
     .join(",");
@@ -612,14 +619,14 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                 subColor={mismatchVehicleCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}
               />
 
-              <StatCard
+              {/* <StatCard
                 icon={Activity}
                 iconBg="bg-emerald-50 dark:bg-emerald-900/20"
                 iconColor="text-emerald-500"
                 label="Route covered"
                 value={`${routeCoveredPct}%`}
                 subColor="text-emerald-600 dark:text-emerald-400"
-              />
+              /> */}
 
               <StatCard
                 icon={AlertTriangle}
@@ -720,12 +727,12 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     >
                       Driver History
                     </button>
-                    <button
+                    {/* <button
                       onClick={() => setLiveTab("campaign")}
                       className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${liveTab === "campaign" ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
                     >
                       Campaign History
-                    </button>
+                    </button> */}
                   </div>
                   {liveStatusEntries.filter(e => e.onRoadStatus === 1).length > 0 && (
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
@@ -1081,9 +1088,16 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                       );
                     }
 
+                    // Group by lifecycle instance (entryId), not by reg number string.
+                    // A reg can cycle back as a brand-new active entry after being
+                    // replaced away earlier — grouping by regNo would merge the old
+                    // (replaced) and new (active) instances into one bucket and
+                    // resolve to whichever entry .find() hits first, showing the
+                    // wrong status tag for issues that actually belong to the other
+                    // lifecycle instance.
                     const groups = {};
                     tabIssues.forEach((iss) => {
-                      const key = iss.vehicleRegNo || "—";
+                      const key = iss.entryId ? String(iss.entryId) : `reg:${iss.vehicleRegNo || "—"}`;
                       if (!groups[key]) groups[key] = [];
                       groups[key].push(iss);
                     });
@@ -1091,22 +1105,35 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     return (
                       <>
                         {releasedBanner}
-                        {Object.keys(groups).map((regNo) => {
-                          const groupIssues = [...groups[regNo]].reverse();
-                          const isCurrentReg = regNo === activeEntry.vehicleRegistrationNumber;
+                        {Object.keys(groups).map((key) => {
+                          const groupIssues = [...groups[key]].reverse();
+                          const regNo = groupIssues[0]?.vehicleRegNo || "—";
+                          const groupEntry =
+                            allVehicleEntriesIncludingRemoved.find((e) => key === String(e._id)) ||
+                            allVehicleEntriesIncludingRemoved.find((e) => e.vehicleRegistrationNumber === regNo) ||
+                            activeEntry;
+                          const { label: regLabel, cls: regCls } = getRegStatus(groupEntry, order.onRoadUnavailableHistory || []);
+                          const replacedByReg = regLabel === "Replaced"
+                            ? (order.onRoadUnavailableHistory || []).find(
+                                (h) => String(h.entryId || "") === String(groupEntry?._id || "") && h.eventType === "replaced"
+                              )?.replacementVehicleRegNo
+                            : null;
                           const groupOpenCount = groupIssues.filter((i) => i.status === "open").length;
 
                           return (
-                            <div key={regNo} className="space-y-2">
+                            <div key={key} className="space-y-2">
                               <div className="flex items-center justify-between px-1">
-                                <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${isCurrentReg
-                                  ? "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
-                                  : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400"
-                                  }`}>
-                                  {regNo} {isCurrentReg ? "(current)" : "(old)"}
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${regCls}`}>
+                                    {regNo} [{regLabel}]
+                                  </span>
+                                  {replacedByReg && (
+                                    <span className="text-xs text-gray-400">Replaced by {replacedByReg}</span>
+                                  )}
+                                </div>
                                 <span className="text-xs text-gray-400">
-                                  {groupIssues.length} issues{groupOpenCount > 0 ? ` · ${groupOpenCount} open` : ""}
+                                  {groupIssues.length} issues
+                                  {regLabel !== "Replaced" && groupOpenCount > 0 ? ` · ${groupOpenCount} open` : ""}
                                 </span>
                               </div>
 
@@ -1114,6 +1141,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                                 <IssueHistoryCard
                                   key={iss._id}
                                   iss={iss}
+                                  isReplacedLifecycle={regLabel === "Replaced"}
                                   onOpenModal={() => setActiveIssueEntryId(iss.vehicleRegNo)}
                                 />
                               ))}
@@ -1184,29 +1212,43 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                       );
                     }
 
+                    // Group by lifecycle instance (entryId), not by reg number string
+                    // — see the same fix in the Issue/Escalation panel above.
                     const groups = {};
                     entries.forEach((e) => {
-                      const key = e.vehicleRegistrationNumber || "—";
+                      const key = e.entryId ? String(e.entryId) : `reg:${e.vehicleRegistrationNumber || "—"}`;
                       if (!groups[key]) groups[key] = [];
                       groups[key].push(e);
                     });
 
-                    return Object.keys(groups).map((regNo) => {
-                      const groupEntries = [...groups[regNo]].reverse();
-                      const isCurrentReg = regNo === activeEntry.vehicleRegistrationNumber;
+                    return Object.keys(groups).map((key) => {
+                      const groupEntries = [...groups[key]].reverse();
+                      const regNo = groupEntries[0]?.vehicleRegistrationNumber || "—";
+                      const groupEntry =
+                        allVehicleEntriesIncludingRemoved.find((e) => key === String(e._id)) ||
+                        allVehicleEntriesIncludingRemoved.find((e) => e.vehicleRegistrationNumber === regNo) ||
+                        activeEntry;
+                      const { label: regLabel, cls: regCls } = getRegStatus(groupEntry, order.onRoadUnavailableHistory || []);
+                      const replacedByReg = regLabel === "Replaced"
+                        ? (order.onRoadUnavailableHistory || []).find(
+                            (h) => String(h.entryId || "") === String(groupEntry?._id || "") && h.eventType === "replaced"
+                          )?.replacementVehicleRegNo
+                        : null;
                       const groupTotalKm = groupEntries.reduce((s, e) => s + (e.extraKm || 0), 0);
                       const groupTotalHrs = groupEntries.reduce((s, e) => s + (e.extraHours || 0), 0);
                       const groupTotalCost = groupEntries.reduce((s, e) => s + (e.totalCost || 0), 0);
 
                       return (
-                        <div key={regNo} className="space-y-2">
+                        <div key={key} className="space-y-2">
                           <div className="flex items-center justify-between px-1">
-                            <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${isCurrentReg
-                              ? "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
-                              : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400"
-                              }`}>
-                              {regNo} {isCurrentReg ? "(current)" : "(old)"}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${regCls}`}>
+                                {regNo} [{regLabel}]
+                              </span>
+                              {replacedByReg && (
+                                <span className="text-xs text-gray-400">Replaced by {replacedByReg}</span>
+                              )}
+                            </div>
                             <span className="text-xs text-gray-400">
                               {groupTotalKm} km · {groupTotalHrs} hrs · {formatINR(groupTotalCost)}
                             </span>
@@ -1412,30 +1454,57 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, unavailableHistory 
             const isCreated = h.action === "created";
             const isRemoved = h.action === "removed";
             const isUpdated = h.action === "updated";
+            // A "removed" driver-history row is either a plain withdrawal, or the
+            // outgoing half of a same/other-vehicle replacement — the latter carries
+            // changedFields.replacedBy (set by replaceOnRoadVehicle on the backend).
+            const isReplaced = isRemoved && !!h.changedFields?.replacedBy;
+
+            // Match this row to its corresponding onRoadUnavailableHistory "replaced"
+            // record (old vehicle → replacement vehicle) so we can show the full
+            // old/new vehicle + driver context, not just the outgoing side.
+            const replacementRecord = isReplaced
+              ? [...unavailableHistory]
+                .filter((u) => u.eventType === "replaced")
+                .reverse()
+                .find(
+                  (u) =>
+                    (h.entryId && String(u.entryId || "") === String(h.entryId)) ||
+                    (u.vehicleRegNo === h.vehicleRegistrationNumber &&
+                      u.replacementVehicleRegNo === h.changedFields.replacedBy)
+                )
+              : null;
 
             const iconBg = isCreated
               ? "bg-blue-500"
-              : isRemoved
-                ? "bg-red-500"
-                : "bg-amber-500";
+              : isReplaced
+                ? "bg-indigo-500"
+                : isRemoved
+                  ? "bg-red-500"
+                  : "bg-amber-500";
 
             const badgeClass = isCreated
               ? "bg-blue-50 text-blue-600"
-              : isRemoved
-                ? "bg-red-50 text-red-600"
-                : "bg-amber-50 text-amber-600";
+              : isReplaced
+                ? "bg-indigo-50 text-indigo-600"
+                : isRemoved
+                  ? "bg-red-50 text-red-600"
+                  : "bg-amber-50 text-amber-600";
 
             const badgeLabel = isCreated
               ? "Driver added"
-              : isRemoved
-                ? "Vehicle released"
-                : "Driver updated";
+              : isReplaced
+                ? "Vehicle Replaced"
+                : isRemoved
+                  ? "Vehicle released"
+                  : "Driver updated";
 
             return (
               <div key={h._id || i} className="p-4 flex gap-3">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold ${iconBg}`}>
                   {isCreated ? (
                     <Plus size={14} />
+                  ) : isReplaced ? (
+                    <RefreshCw size={13} />
                   ) : isRemoved ? (
                     <XCircle size={14} />
                   ) : (
@@ -1449,9 +1518,42 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, unavailableHistory 
                     </span>
                     <span className="text-sm text-gray-400">{fmtDt(h.changedAt)}</span>
                   </div>
-                  <p className="text-md font-semibold text-gray-800 dark:text-gray-100">{h.driverName}</p>
-                  <p className="text-sm text-gray-500">{h.driverPhone} · <span className="font-mono">{h.vehicleRegistrationNumber}</span></p>
-                  <p className="text-sm text-gray-400 mt-0.5">By {h.changedBy}</p>
+
+                  {isReplaced ? (
+                    <div className="grid grid-cols-2 gap-3 mt-1">
+                      <div>
+                        <p className="text-xs text-gray-400">Old Vehicle</p>
+                        <p className="text-sm font-mono font-semibold text-gray-800 dark:text-gray-100">
+                          {h.vehicleRegistrationNumber || replacementRecord?.vehicleRegNo || "—"}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Driver: {h.driverName || "—"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-amber-600 dark:text-amber-400">Replaced Vehicle</p>
+                        <p className="text-sm font-mono font-semibold text-gray-800 dark:text-gray-100">
+                          {h.changedFields.replacedBy}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Driver: {replacementRecord?.replacementDriverName || "—"}
+                        </p>
+                      </div>
+                      <div className="col-span-2 pt-1.5 border-t border-gray-100 dark:border-gray-800">
+                        <p className="text-sm text-gray-400">
+                          <span className="font-medium">Reason:</span>{" "}
+                          {h.changedFields?.reason?.trim() || replacementRecord?.reason || "—"}
+                        </p>
+                        <p className="text-sm text-gray-400 mt-0.5">By {h.changedBy}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-md font-semibold text-gray-800 dark:text-gray-100">{h.driverName}</p>
+                      <p className="text-sm text-gray-500">{h.driverPhone} · <span className="font-mono">{h.vehicleRegistrationNumber}</span></p>
+                      <p className="text-sm text-gray-400 mt-0.5">By {h.changedBy}</p>
+                    </>
+                  )}
 
                   {isUpdated && h.changedFields && Object.keys(h.changedFields).length > 0 && (
                     <div className="mt-1.5 space-y-0.5 pt-1.5 border-t border-gray-100 dark:border-gray-800">
@@ -1471,7 +1573,7 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, unavailableHistory 
                     </p>
                   )}
 
-                  {isRemoved && (
+                  {isRemoved && !isReplaced && (
                     <div className="mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-800">
                       <p className="text-xs text-red-500">
                         Reason: {h.changedFields?.reason?.trim() ? h.changedFields.reason : "—"}
@@ -1488,35 +1590,46 @@ function DriverHistoryPanel({ vehicleEntries, driverHistory, unavailableHistory 
   );
 }
 
-function IssueHistoryCard({ iss, onOpenModal }) {
+function IssueHistoryCard({ iss, isReplacedLifecycle = false, onOpenModal }) {
   const [showResolved, setShowResolved] = useState(false);
   const [preview, setPreview] = useState(null);
 
+  // A vehicle-replaced lifecycle closes its issues as historical records —
+  // even one that was never explicitly marked "resolved" is no longer
+  // actionable (that vehicle is gone), so it must never read as "Open".
+  const isOpen = iss.status === "open" && !isReplacedLifecycle;
+
   return (
     <div
-      className={`rounded-xl border p-3 ${iss.status === "open"
-        ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10"
-        : "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10"
+      className={`rounded-xl border p-3 ${isReplacedLifecycle
+        ? "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/40"
+        : isOpen
+          ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10"
+          : "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10"
         }`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-1">
         <p
-          className={`text-sm font-semibold ${iss.status === "open"
-            ? "text-red-700 dark:text-red-400"
-            : "text-emerald-700 dark:text-emerald-400"
+          className={`text-sm font-semibold ${isReplacedLifecycle
+            ? "text-gray-600 dark:text-gray-400"
+            : isOpen
+              ? "text-red-700 dark:text-red-400"
+              : "text-emerald-700 dark:text-emerald-400"
             }`}
         >
           {iss.driverName} — {iss.vehicleRegNo}
         </p>
         <span
-          className={`text-xs font-semibold cursor-pointer px-2 py-0.5 rounded-full flex-shrink-0 ${iss.status === "open"
-            ? "bg-amber-100 text-amber-700"
-            : "bg-emerald-100 text-emerald-700"
+          className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${isReplacedLifecycle
+            ? "bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300 cursor-default"
+            : "cursor-pointer " + (isOpen
+              ? "bg-amber-100 text-amber-700"
+              : "bg-emerald-100 text-emerald-700")
             }`}
-          onClick={onOpenModal}
+          onClick={isReplacedLifecycle ? undefined : onOpenModal}
         >
-          {iss.status === "open" ? "Open" : "Resolved"}
+          {isReplacedLifecycle ? "Closed · Vehicle Replaced" : isOpen ? "Open" : "Resolved"}
         </span>
       </div>
 
@@ -1684,7 +1797,7 @@ export default function OnRoadTab({ order, onRefresh, vehicleTypes }) {
     });
 
   const allEntries = order.onRoadExecutionArray || [];
-  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus && e.entryStatus !== "removed").length;
+  const totalOnRoad = allEntries.filter((e) => e.onRoadStatus === 1 && !e.unavailableStatus && e.entryStatus === "active").length;
   const totalVehicles = vehicles.reduce((sum, v) => sum + (v.quantity || 1), 0);
   const totalDriversSaved = allEntries.length;
 

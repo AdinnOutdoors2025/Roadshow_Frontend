@@ -76,6 +76,34 @@ const SHOW_EVENT = "roadshow-loader:show";
 const HIDE_EVENT = "roadshow-loader:hide";
 const NAVIGATE_EVENT = "roadshow-loader:navigate";
 
+/* Fired the instant the MAIN (hard-refresh) loader starts fading out, so a
+   page's own entrance animations (e.g. HomeBanner) can start playing right
+   as the loader clears instead of finishing unseen behind it and popping
+   into their settled state the moment the overlay disappears. Only ever
+   fires once per browser session — see hasMainLoaderCompletedOnce below for
+   the synchronous fallback a component mounted AFTER that point needs. */
+export const MAIN_LOADER_DONE_EVENT = "roadshow-loader:main-done";
+
+let mainLoaderCompletedOnce = false;
+
+/* Synchronous check for a component mounting after the main loader has
+   already finished (e.g. a later client-side navigation back to "/" — the
+   MAIN loader only ever runs once per session, so MAIN_LOADER_DONE_EVENT
+   will never fire again). Such a component should animate in immediately
+   rather than wait forever for an event that already happened. */
+export function hasMainLoaderCompletedOnce() {
+  return mainLoaderCompletedOnce;
+}
+
+function announceMainLoaderDone() {
+  if (mainLoaderCompletedOnce) return;
+  mainLoaderCompletedOnce = true;
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(MAIN_LOADER_DONE_EVENT));
+  }
+}
+
 /* Only real links are detected automatically. Ordinary buttons and
    same-page controls never show the loader. */
 const CLICKABLE_SELECTOR = "a[href]";
@@ -516,6 +544,7 @@ export default function GlobalRoadshowLoader() {
     if (!mainVisibleRef.current) {
       mainRenderedRef.current = false;
       setMainRendered(false);
+      announceMainLoaderDone();
       return;
     }
 
@@ -534,6 +563,11 @@ export default function GlobalRoadshowLoader() {
       mainHideTimerRef.current = null;
       mainVisibleRef.current = false;
       setMainVisible(false);
+      /* Fired here, not after the unmount timer below — this is the exact
+         moment the overlay starts its opacity fade, so a listener's own
+         entrance animation plays concurrently with the loader clearing
+         rather than after a further FADE_MS delay. */
+      announceMainLoaderDone();
 
       clearTimer(mainUnmountTimerRef);
 

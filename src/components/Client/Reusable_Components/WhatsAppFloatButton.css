@@ -1,0 +1,59 @@
+.RS_WhatsAppFloat {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  background: #25d366;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  animation: RS_WhatsAppPulse 2.6s ease-out infinite;
+}
+
+/* Soft ripple pulse to draw the eye to the button — box-shadow only, so it
+   never affects layout/size of neighboring elements. Loops continuously but
+   stays subtle (low peak opacity, slow cadence) rather than a hard blink. */
+@keyframes RS_WhatsAppPulse {
+  0% {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), 0 0 0 0 rgba(37, 211, 102, 0.55);
+  }
+  70% {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), 0 0 0 16px rgba(37, 211, 102, 0);
+  }
+  100% {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), 0 0 0 0 rgba(37, 211, 102, 0);
+  }
+}
+
+.RS_WhatsAppFloat:hover {
+  animation-play-state: paused;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 520px) {
+  .RS_WhatsAppFloat {
+    right: 14px;
+    bottom: 14px;
+    width: 50px;
+    height: 50px;
+  }
+
+  .RS_WhatsAppFloat svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .RS_WhatsAppFloat {
+    transition: none;
+    animation: none;
+  }
+}
