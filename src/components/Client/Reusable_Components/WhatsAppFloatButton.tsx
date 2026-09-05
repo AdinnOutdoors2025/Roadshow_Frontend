@@ -1,11 +1,13 @@
 "use client";
 
 import "./WhatsAppFloatButton.css";
+import { NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER } from "../../../BaseUrl";
+
 
 /* Sourced from NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER (see .env). A bare 10-digit
    Indian number is normalized to the full country-coded form wa.me expects. */
-const rawAdminNumber =
-  process.env.NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER || "7200220645";
+// const rawAdminNumber = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER || "7200220645";
+const rawAdminNumber = `${NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER}`
 const adminNumberDigits = rawAdminNumber.replace(/\D/g, "");
 const WHATSAPP_NUMBER =
   adminNumberDigits.length === 10
