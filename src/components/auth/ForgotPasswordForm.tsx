@@ -1,7 +1,7 @@
 "use client";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
-import { EyeCloseIcon, EyeIcon } from "@/icons";
+import { CheckCircleIcon, ChevronLeftIcon, EyeCloseIcon, EyeIcon, LockIcon } from "@/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState, ChangeEvent, FormEvent } from "react";
@@ -90,10 +90,21 @@ export default function ForgotPasswordForm() {
 
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
-      <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
-        <div>
-          <div className="mb-5 sm:mb-8">
-            <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
+      <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto px-4 py-8 sm:px-0">
+        <Link
+          href="/admin/signin"
+          className="mb-6 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-brand-500 dark:text-gray-400 dark:hover:text-brand-400 transition-colors"
+        >
+          <ChevronLeftIcon className="size-5" />
+          Back to Sign In
+        </Link>
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm dark:border-gray-800 dark:bg-white/[0.03] sm:p-8">
+          <div className="mb-7 flex flex-col items-center text-center">
+            <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-500/10">
+              <LockIcon className="size-6 fill-brand-500" />
+            </div>
+            <h1 className="mb-1.5 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
               Forgot Password
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -102,12 +113,22 @@ export default function ForgotPasswordForm() {
           </div>
 
           {success ? (
-            <p className="text-sm text-green-600 dark:text-green-400">
-              Password reset successfully. Redirecting to Sign In...
-            </p>
+            <div className="flex flex-col items-center gap-3 py-2 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-success-50 dark:bg-success-500/10">
+                <CheckCircleIcon className="size-7 fill-success-600 dark:fill-success-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                  Password reset successfully
+                </p>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Redirecting to Sign In...
+                </p>
+              </div>
+            </div>
           ) : (
             <form onSubmit={handleSubmit}>
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <div>
                   <Label>Username or Email <span className="text-error-500">*</span></Label>
                   <input
@@ -142,6 +163,9 @@ export default function ForgotPasswordForm() {
                       )}
                     </span>
                   </div>
+                  <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                    Must be at least 6 characters.
+                  </p>
                 </div>
 
                 <div>
@@ -169,7 +193,9 @@ export default function ForgotPasswordForm() {
                 </div>
 
                 {error && (
-                  <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+                  <div className="rounded-lg border border-error-200 bg-error-50 px-3.5 py-2.5 dark:border-error-500/30 dark:bg-error-500/10">
+                    <p className="text-sm text-error-600 dark:text-error-400">{error}</p>
+                  </div>
                 )}
 
                 <div>
@@ -180,16 +206,18 @@ export default function ForgotPasswordForm() {
               </div>
             </form>
           )}
+        </div>
 
+        {!success && (
           <div className="mt-5">
-            <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
+            <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400">
               Remembered your password?{" "}
               <Link href="/admin/signin" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
                 Sign In
               </Link>
             </p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
