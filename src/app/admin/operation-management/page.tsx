@@ -28,6 +28,9 @@ export default function OperationManagementTable() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+
   const fetchOperationUsers = async () => {
     try {
       setLoading(true);
@@ -47,10 +50,25 @@ export default function OperationManagementTable() {
 
   useEffect(() => { fetchOperationUsers(); }, []);
 
-  const totalItems = operationUsers.length;
+  const filteredOperationUsers = operationUsers.filter((ou) => {
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      (ou.username || "").toLowerCase().includes(q) ||
+      (ou.email || "").toLowerCase().includes(q) ||
+      (ou.phone || "").toLowerCase().includes(q);
+    const matchesStatus = statusFilter === "all" ? true : ou.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalItems = filteredOperationUsers.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentItems = operationUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const currentItems = filteredOperationUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
 
   const handleDeleteConfirm = async () => {
     if (!deletingId) return;
@@ -88,6 +106,71 @@ export default function OperationManagementTable() {
           <HiOutlinePlus className="h-4 w-4 stroke-2" />
           Add Operation User
         </button>
+      </div>
+
+      {/* Search + Filter Bar */}
+      <div className="flex flex-wrap items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+        {/* Search */}
+        <div className="relative w-72">
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
+            />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search by username, email, phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-4 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Status Filter */}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")}
+          className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 cursor-pointer"
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+
+        {/* Clear Filter */}
+        {(searchQuery || statusFilter !== "all") && (
+          <button
+            onClick={() => {
+              setSearchQuery("");
+              setStatusFilter("all");
+              setCurrentPage(1);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-100 transition-colors dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Clear Filter
+          </button>
+        )}
       </div>
 
       <div className="p-4 sm:p-6">

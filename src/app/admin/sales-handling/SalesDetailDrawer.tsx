@@ -2108,7 +2108,7 @@ export default function SalesDetailDrawer({
           instance, which caused duplicate/stuck toast popups. */}
       {/* <div className="bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300"> */}
 
-      <div className={`bg-white dark:bg-gray-950 w-full sm:max-w-4xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300 transition-all ${highlightOrderId === order._id ? "ring-4 ring-amber-400" : ""
+      <div className={`bg-white dark:bg-gray-950 w-full sm:max-w-6xl h-full sm:max-h-[92vh] flex flex-col shadow-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300 transition-all ${highlightOrderId === order._id ? "ring-4 ring-amber-400" : ""
         }`}>
 
         <div className="flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800">

@@ -583,77 +583,276 @@ export default function PipelineBoard() {
     }
   };
 
-  const handleStageMove = (order: Order, toStage: string) => {
-    const fromStage = order.pipelineStatus;
+  // const handleStageMove = (order: Order, toStage: string) => {
+  //   const fromStage = order.pipelineStatus;
 
-    if (fromStage === "closedLost") {
-      toast.error("This order is closed lost and cannot be moved.");
-      return;
-    }
+  //   if (fromStage === "closedLost") {
+  //     toast.error("This order is closed lost and cannot be moved.");
+  //     return;
+  //   }
 
-    if (fromStage === "closedWon") {
-      toast.error("Not Move the Stage");
-      return;
-    }
+  //   if (fromStage === "closedWon") {
+  //     toast.error("Not Move the Stage");
+  //     return;
+  //   }
 
-    const PIPELINE_STAGE_ORDER = [
-      "todo",
-      "projectExecution",
+  //   const PIPELINE_STAGE_ORDER = [
+  //     "todo",
+  //     "projectExecution",
+  //     "onRoad",
+  //     "vehicleUnavailable",
+  //     "clientClosure",
+  //     "closedWon",
+  //     "closedLost",
+  //   ];
+  //   const LOCKED_BACK_STAGES = ["todo", "projectExecution"];
+  //   const fromIndex = PIPELINE_STAGE_ORDER.indexOf(fromStage);
+  //   const toIndex = PIPELINE_STAGE_ORDER.indexOf(toStage);
+
+  //   if (LOCKED_BACK_STAGES.includes(toStage) && toIndex < fromIndex) {
+  //     const stageLabel = toStage === "todo" ? "To-Do" : "Project Execution";
+  //     toast.error(`Cannot move back to the "${stageLabel}" stage!`);
+  //     return;
+  //   }
+
+  //   if (fromStage === "todo" && toStage !== "projectExecution" && toStage !== "closedLost") {
+  //     toast.error("Please move to Project Execution first!");
+  //     return;
+  //   }
+
+  //   if (toStage === "closedWon") {
+  //     setClosedWonModalOrder(order);
+  //     return;
+  //   }
+
+  //   if (toStage === "closedLost") {
+  //     setClosedLostModalOrder(order);
+  //     return;
+  //   }
+
+    
+
+
+
+  //   if (fromStage === "projectExecution" && toStage === "onRoad") {
+  //     // Mirrors the backend's own gate for this exact transition (see
+  //     // `admin/pipeline/:orderId` in Adminordercontroller.js — same message,
+  //     // same rule: at least one onRoadExecutionArray entry must have
+  //     // onRoadStatus === 1). handleStageMove is the single call site both the
+  //     // Details modal's "Next Stage" button and the Kanban drag-and-drop drop
+  //     // handler go through, so checking it here — instead of duplicating it
+  //     // in each caller — keeps both paths in sync automatically and blocks
+  //     // the transition before any API call, so a failed drag never touches
+  //     // the stage and the card stays in Project Execution.
+  //     const hasActiveDriver = (order.onRoadExecutionArray || []).some(
+  //       (e: any) => e.onRoadStatus === 1
+  //     );
+  //     if (!hasActiveDriver) {
+  //       toast.error("Please complete at least one vehicle Model details and enable On Road status");
+  //       return;
+  //     }
+  //     commitMove(order, toStage);
+  //     return;
+  //   }
+
+  //   if (fromStage === "todo" && toStage === "projectExecution") {
+  //     if (currentUserIsAdmin !== 1) {
+  //       commitMove(order, toStage);
+  //       return;
+  //     }
+  //     setHandlerName("");
+  //     setHandlerError("");
+  //     setPendingToStage(toStage);
+  //     setHandlerModal(order);
+  //     return;
+  //   }
+
+  //   if (fromStage === "todo") {
+  //     toast.error("Please move to Project Execution first!");
+  //     return;
+  //   }
+
+  //   commitMove(order, toStage);
+  // };
+
+const handleStageMove = (order: Order, toStage: string) => {
+  const fromStage = order.pipelineStatus;
+
+  if (fromStage === "closedLost") {
+    toast.error("This order is closed lost and cannot be moved.");
+    return;
+  }
+
+  if (fromStage === "closedWon") {
+    toast.error("Not Move the Stage");
+    return;
+  }
+
+  const PIPELINE_STAGE_ORDER = [
+    "todo",
+    "projectExecution",
+    "onRoad",
+    "vehicleUnavailable",
+    "clientClosure",
+    "closedWon",
+    "closedLost",
+  ];
+
+  const LOCKED_BACK_STAGES = ["todo", "projectExecution"];
+
+  const fromIndex = PIPELINE_STAGE_ORDER.indexOf(fromStage);
+  const toIndex = PIPELINE_STAGE_ORDER.indexOf(toStage);
+
+  if (
+    LOCKED_BACK_STAGES.includes(toStage) &&
+    toIndex < fromIndex
+  ) {
+    const stageLabel =
+      toStage === "todo"
+        ? "To-Do"
+        : "Project Execution";
+
+    toast.error(
+      `Cannot move back to the "${stageLabel}" stage!`
+    );
+    return;
+  }
+
+  if (
+    fromStage === "todo" &&
+    toStage !== "projectExecution" &&
+    toStage !== "closedLost"
+  ) {
+    toast.error(
+      "Please move to Project Execution first!"
+    );
+    return;
+  }
+
+  /*
+   * Project Execution stage restriction:
+   *
+   * Allowed:
+   * - Project Execution -> On Road
+   * - Project Execution -> Closed Lost
+   *
+   * Not allowed:
+   * - Client Closure
+   * - Closed Won
+   * - Vehicle Unavailable
+   * - Any other stage
+   */
+  if (fromStage === "projectExecution") {
+    const allowedStages = [
       "onRoad",
-      "vehicleUnavailable",
-      "clientClosure",
-      "closedWon",
       "closedLost",
     ];
-    const LOCKED_BACK_STAGES = ["todo", "projectExecution"];
-    const fromIndex = PIPELINE_STAGE_ORDER.indexOf(fromStage);
-    const toIndex = PIPELINE_STAGE_ORDER.indexOf(toStage);
 
-    if (LOCKED_BACK_STAGES.includes(toStage) && toIndex < fromIndex) {
-      const stageLabel = toStage === "todo" ? "To-Do" : "Project Execution";
-      toast.error(`Cannot move back to the "${stageLabel}" stage!`);
+    if (!allowedStages.includes(toStage)) {
+      toast.error(
+        "Project Execution can only move to On Road or Closed Lost"
+      );
       return;
     }
 
-    if (fromStage === "todo" && toStage !== "projectExecution" && toStage !== "closedLost") {
-      toast.error("Please move to Project Execution first!");
-      return;
-    }
+    /*
+     * Project Execution -> On Road
+     *
+     * At least one vehicle must have:
+     * onRoadStatus === 1
+     */
+    if (toStage === "onRoad") {
+      const hasActiveDriver = (
+        order.onRoadExecutionArray || []
+      ).some(
+        (entry: any) =>
+          entry.onRoadStatus === 1
+      );
 
-    if (toStage === "closedWon") {
-      setClosedWonModalOrder(order);
-      return;
-    }
+      if (!hasActiveDriver) {
+        toast.error(
+          "Please complete at least one vehicle Model details and enable On Road status"
+        );
+        return;
+      }
 
-    if (toStage === "closedLost") {
-      setClosedLostModalOrder(order);
-      return;
-    }
-
-    if (fromStage === "projectExecution" && toStage === "onRoad") {
       commitMove(order, toStage);
       return;
     }
 
-    if (fromStage === "todo" && toStage === "projectExecution") {
-      if (currentUserIsAdmin !== 1) {
-        commitMove(order, toStage);
-        return;
-      }
-      setHandlerName("");
-      setHandlerError("");
-      setPendingToStage(toStage);
-      setHandlerModal(order);
+    /*
+     * Project Execution -> Closed Lost
+     *
+     * Keep the existing Closed Lost modal flow.
+     */
+    if (toStage === "closedLost") {
+      setClosedLostModalOrder(order);
+      return;
+    }
+  }
+
+  /*
+   * Closed Won
+   *
+   * Existing modal flow.
+   */
+  if (toStage === "closedWon") {
+    setClosedWonModalOrder(order);
+    return;
+  }
+
+  /*
+   * Closed Lost
+   *
+   * Existing modal flow.
+   */
+  if (toStage === "closedLost") {
+    setClosedLostModalOrder(order);
+    return;
+  }
+
+  /*
+   * To-Do -> Project Execution
+   *
+   * Non-admin:
+   * directly move.
+   *
+   * Admin:
+   * open handler assignment modal.
+   */
+  if (
+    fromStage === "todo" &&
+    toStage === "projectExecution"
+  ) {
+    if (currentUserIsAdmin !== 1) {
+      commitMove(order, toStage);
       return;
     }
 
-    if (fromStage === "todo") {
-      toast.error("Please move to Project Execution first!");
-      return;
-    }
+    setHandlerName("");
+    setHandlerError("");
+    setPendingToStage(toStage);
+    setHandlerModal(order);
+    return;
+  }
 
-    commitMove(order, toStage);
-  };
+  /*
+   * Extra safety for To-Do.
+   */
+  if (fromStage === "todo") {
+    toast.error(
+      "Please move to Project Execution first!"
+    );
+    return;
+  }
+
+  /*
+   * All remaining valid transitions.
+   */
+  commitMove(order, toStage);
+};
+
+
 
   const submitHandlerModal = async () => {
     if (!handlerModal) return;
