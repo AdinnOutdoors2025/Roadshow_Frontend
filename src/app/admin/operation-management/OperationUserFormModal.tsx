@@ -45,6 +45,7 @@ export default function OperationUserFormModal({ editingOperationUser, onSuccess
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
   const isEdit = !!editingOperationUser;
 
@@ -52,6 +53,7 @@ export default function OperationUserFormModal({ editingOperationUser, onSuccess
     setForm(editingOperationUser ? { ...editingOperationUser, password: "" } : defaultForm);
     setErrors({});
     setConfirmPassword("");
+    setConfirmPasswordError("");
   }, [editingOperationUser]);
 
   const handleChange = (field: keyof OperationUser, value: any) => {
@@ -66,11 +68,19 @@ export default function OperationUserFormModal({ editingOperationUser, onSuccess
     if (!form.username.trim()) newErrors.username = "Username is required";
     if (!form.email.trim()) newErrors.email = "Email is required";
     else if (!EMAIL_REGEX.test(form.email.trim())) newErrors.email = "Enter a valid email";
-    if (!isEdit && !form.password) newErrors.password = "Password is required";
-    if (form.password && form.password !== confirmPassword)
-      newErrors.password = "Passwords do not match";
+    if (!isEdit && !form.password) newErrors.password = "Password must be at least 6 characters";
+    else if (form.password && form.password.length < 6)
+      newErrors.password = "Password must be at least 6 characters";
+
+    let confirmError = "";
+    if (form.password) {
+      if (!confirmPassword) confirmError = "Confirm Password is required";
+      else if (form.password !== confirmPassword) confirmError = "Passwords do not match";
+    }
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setConfirmPasswordError(confirmError);
+    return Object.keys(newErrors).length === 0 && !confirmError;
   };
 
   const handleSubmit = async () => {
@@ -132,7 +142,7 @@ export default function OperationUserFormModal({ editingOperationUser, onSuccess
             />
           </FormField>
 
-          <FormField label={isEdit ? "New Password (optional)" : "Password"}>
+          <FormField label={isEdit ? "New Password (optional)" : "Password"} error={errors.password}>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -152,15 +162,18 @@ export default function OperationUserFormModal({ editingOperationUser, onSuccess
           </FormField>
 
           {(form.password || !isEdit) && (
-            <FormField label="Confirm Password" required={!isEdit}>
+            <FormField label="Confirm Password" error={confirmPasswordError} required={!isEdit}>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (confirmPasswordError) setConfirmPasswordError("");
+                  }}
                   onPaste={(e) => e.preventDefault()}  // paste disable
                   placeholder="Re-enter password"
-                  className={inputClass(false)}
+                  className={inputClass(!!confirmPasswordError)}
                 />
                 <button
                   type="button"
