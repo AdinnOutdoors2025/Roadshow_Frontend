@@ -2036,7 +2036,7 @@
 
 .RST_ProgressRing strong {
   color: #3f2466;
-  font-size: 25px;
+  font-size: 15px;
   line-height: 1;
 }
 
@@ -2558,7 +2558,7 @@
   }
 
   .RST_ProgressRing strong {
-    font-size: 21px;
+    font-size: 18px;
   }
 }
 
