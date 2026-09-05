@@ -714,6 +714,7 @@
   .rdsw_rvVehicleImage {
     height: 100%;
     min-height: var(--rv-image);
+    object-fit: contain;
   }
 
   .rdsw_rvActions {

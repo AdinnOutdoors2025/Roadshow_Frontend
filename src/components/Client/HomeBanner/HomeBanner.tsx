@@ -15,6 +15,16 @@ import {
   fadeScale,
   staggerContainer,
 } from "@/components/motion/motionTokens";
+import {
+  MAIN_LOADER_DONE_EVENT,
+  hasMainLoaderCompletedOnce,
+} from "@/components/GlobalRoadshowLoader";
+
+/* Safety net only — the loader's own MAIN_MAX_WAIT_MS already caps how long
+   it can stay up, so this fallback should never actually fire in practice.
+   It exists purely so the banner can't get stuck un-animated forever if the
+   loader is ever disabled or the event fails to fire for some reason. */
+const READY_FALLBACK_MS = 6000;
 
 /* The fade-in keyframe on .HomeBannerCurrentImg runs on its own clock as
    soon as the class is applied — it has no idea whether the image bytes
@@ -104,6 +114,33 @@ function HomeBanner() {
         };
     }, []);
 
+    /* Gates every entrance animation below (heading, sub-text, main image,
+       thumbnail row) so they play once the initial full-page loader clears
+       instead of finishing unseen behind it and popping straight into their
+       settled state the instant the loader fades. hasMainLoaderCompletedOnce
+       covers a component mounting AFTER that already happened (e.g. a later
+       client-side navigation back to "/" — the loader only runs once per
+       session, so the event below won't fire again). */
+    const [ready, setReady] = useState(
+        () => hasMainLoaderCompletedOnce()
+    );
+
+    useEffect(() => {
+        if (ready) return;
+
+        const handleDone = () => setReady(true);
+        window.addEventListener(MAIN_LOADER_DONE_EVENT, handleDone);
+        const fallback = window.setTimeout(
+            () => setReady(true),
+            READY_FALLBACK_MS
+        );
+
+        return () => {
+            window.removeEventListener(MAIN_LOADER_DONE_EVENT, handleDone);
+            window.clearTimeout(fallback);
+        };
+    }, [ready]);
+
     const handleSubClick = (item, idx) => {
         if (idx === activeIdx) return;
 
@@ -125,7 +162,7 @@ function HomeBanner() {
         <>
             <div className="HomeBannerContainer">
                 {/* Heading — reveals word by word, each rising from behind a mask */}
-                <SplitHeading className="HomeBannerText">
+                <SplitHeading className="HomeBannerText" enabled={ready}>
                     Take{" "}
                     <span className="HomeBannerTextSpan">
                         Your Brand
@@ -136,7 +173,11 @@ function HomeBanner() {
                 {/* Sub-text image */}
                 <motion.div
                     initial={{ opacity: 0, y: DISTANCE.sm }}
-                    animate={{ opacity: 1, y: 0 }}
+                    animate={
+                        ready
+                            ? { opacity: 1, y: 0 }
+                            : { opacity: 0, y: DISTANCE.sm }
+                    }
                     transition={{
                         duration: DURATION.base,
                         delay: 0.35,
@@ -169,7 +210,7 @@ function HomeBanner() {
                         className="HomeBannerMainImgWrapper"
                         variants={fadeScale(0.96, DURATION.slow)}
                         initial="hidden"
-                        animate="visible"
+                        animate={ready ? "visible" : "hidden"}
                     >
                         {previousImg && (
                             <img
@@ -200,7 +241,7 @@ function HomeBanner() {
                             0.5
                         )}
                         initial="hidden"
-                        animate="visible"
+                        animate={ready ? "visible" : "hidden"}
                     >
                         {bannerItems.map((item, idx) => (
                             <motion.div

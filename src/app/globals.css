@@ -10,6 +10,13 @@ html {
   scroll-behavior: auto !important;
   scroll-padding-top: 90px;
   /* overflow-x: hidden; */
+
+  /* Reserves the vertical scrollbar's width at all times, even before the
+     page is tall enough to need one — without this, content that loads in
+     and pushes the page past viewport height (e.g. home page sections
+     fetching data after mount) makes the scrollbar pop in and squeeze the
+     page width, reading as a sudden shake/shift. */
+  scrollbar-gutter: stable;
 }
 
 body {

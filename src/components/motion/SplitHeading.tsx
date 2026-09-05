@@ -24,6 +24,11 @@ interface SplitHeadingProps {
   /* "words" is the safe default. "chars" suits short headings but multiplies
      the node count, so avoid it on long copy. */
   type?: SplitType;
+  /* Defaults to true (existing behavior everywhere else). Pass false to hold
+     the reveal off — e.g. HomeBanner keeps this false while the initial
+     full-page loader is still up, so the heading animates in once the
+     loader clears instead of finishing unseen behind it. */
+  enabled?: boolean;
 }
 
 /* Reveals a heading one word (or character) at a time, each sliding up from
@@ -39,6 +44,7 @@ export default function SplitHeading({
   delay = 0,
   stagger = STAGGER.tight,
   type = "words",
+  enabled = true,
 }: SplitHeadingProps) {
   const containerRef = useRef<HTMLElement | null>(
     null
@@ -47,7 +53,7 @@ export default function SplitHeading({
   useEffect(() => {
     const element = containerRef.current;
 
-    if (!element) return;
+    if (!element || !enabled) return;
 
     if (
       window.matchMedia(
@@ -106,7 +112,7 @@ export default function SplitHeading({
       context.revert();
       split?.revert();
     };
-  }, [delay, stagger, type]);
+  }, [delay, stagger, type, enabled]);
 
   return (
     <Tag ref={containerRef} className={className}>

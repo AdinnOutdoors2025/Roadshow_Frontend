@@ -68,38 +68,46 @@
   margin-bottom: 8px;
 }
 
-.rdsw_poDocExisting a {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  font-size: 12.5px;
-  color: #2476ca;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+/* Preview (eye) + Download icon buttons — shared by both the already-saved
+   document (inside .rdsw_poDocExisting) and a freshly-picked, not-yet-
+   uploaded file (inside .rdsw_poDocSelected). Sized/shaped to match
+   .rdsw_poDocRemove below (20px circle) so all three action icons in a row
+   read as one consistent set. */
+.rdsw_poDocActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
 }
 
-.rdsw_poDocExisting a:hover {
-  text-decoration: underline;
+.rdsw_poDocIconBtn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #f3f3f4;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
-.rdsw_poDocExisting button.rdsw_poDocPreviewTrigger {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  background: none;
-  border: 0;
-  padding: 0;
-  font: inherit;
-  font-size: 12.5px;
-  color: #2476ca;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  text-align: left;
-  cursor: pointer;
+.rdsw_poDocIconBtn--preview {
+  color: #0284c7;
 }
 
-.rdsw_poDocExisting button.rdsw_poDocPreviewTrigger:hover {
-  text-decoration: underline;
+.rdsw_poDocIconBtn--preview:hover {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.rdsw_poDocIconBtn--download {
+  color: #16a34a;
+}
+
+.rdsw_poDocIconBtn--download:hover {
+  background: #dcfce7;
+  color: #15803d;
 }
 
 .rdsw_poDocName {
