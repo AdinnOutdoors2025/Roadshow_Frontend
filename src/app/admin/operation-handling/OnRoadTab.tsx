@@ -609,7 +609,7 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
 
           {/* ── Stats Row ── */}
           {isRefreshing ? <RefreshSkeleton /> : (
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
               <StatCard
                 icon={Truck}
                 iconBg="bg-blue-50 dark:bg-blue-900/20"
