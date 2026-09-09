@@ -302,8 +302,8 @@ function Footer() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 md:gap-8 px-[5%] py-4 md:py-5 FooterBottomContents">
           <a
-            href="/cookies"
-            className="hover:text-white transition-colors"
+            // href="/cookies"
+            // className="hover:text-white transition-colors"
           >
             Cookies Policy
           </a>
@@ -319,8 +319,8 @@ function Footer() {
           </button>
 
           <a
-            href="/privacy"
-            className="hover:text-white transition-colors"
+            // href="/privacy"
+            // className="hover:text-white transition-colors"
           >
             Privacy Policy
           </a>

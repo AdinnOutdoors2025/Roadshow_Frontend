@@ -45,7 +45,7 @@ import {
 } from "./Process";
 
 import ImpactCtaBanner from "./ImpactCtaBanner";
-
+import Offers3DSection from "./Offers3DSection";
 /* =========================================================
    INLINE SVG ICONS
 ========================================================= */
@@ -1296,7 +1296,11 @@ export default function HomePageSection1() {
           </div>
         </div>
       </section>
+{/* =====================================================
+    3D OFFERS SECTION
+===================================================== */}
 
+{/* <Offers3DSection /> */}
       {/* =====================================================
           CTA
       ===================================================== */}

@@ -1,254 +1,774 @@
 * {
-  font-family: Outfit;
+    font-family: Outfit, sans-serif;
 }
 
-.RS_Navbar {
-  background: transparent;
+.RS_NewHeader,
+.RS_NewHeader *,
+.RS_NewMenu,
+.RS_NewMenu * {
+    box-sizing: border-box;
 }
 
-/* ================================
-   NAV LINK SCROLL ANIMATION
-================================ */
-
-.RS_NavContents {
-  font-weight: 300;
-  font-size: 30px;
-  color: #000;
-  text-decoration: none;
-  position: relative;
-  display: inline-block;
-  overflow: hidden;
-  line-height: 1.15;
-  height: 1.15em;
+.RS_NewHeader {
+    --rs-accent: #df6670;
+    --rs-accent-dark: #c64d58;
+    position: fixed;
+    top: 0;
+    left: 50%;
+    z-index: 9999;
+    width: 100%;
+    height: 76px;
+    transform: translate3d(-50%, 0, 0);
+    font-family: "Outfit", sans-serif;
+    will-change: width, top, height;
+    transition:
+        width 2.4s cubic-bezier(.22, 1, .36, 1),
+        height 2s cubic-bezier(.22, 1, .36, 1),
+        top 2s cubic-bezier(.22, 1, .36, 1);
 }
 
-.RS_NavLink {
-  min-width: max-content;
-}
-
-.RS_NavText {
-  display: block;
-  white-space: nowrap;
-  will-change: transform;
-}
-
-.RS_NavText--black {
-  color: #000;
-  transform: translateY(0%);
-}
-
-.RS_NavText--red {
-  color: #d62839;
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform: translateY(-115%);
-}
-
-/* Hover in: black goes down, red comes from top */
-.RS_NavLink--hover .RS_NavText--black {
-  animation: RS_BlackTextHoverIn 0.42s cubic-bezier(0.76, 0, 0.24, 1) forwards;
-}
-
-.RS_NavLink--hover .RS_NavText--red {
-  animation: RS_RedTextHoverIn 0.42s cubic-bezier(0.76, 0, 0.24, 1) forwards;
-}
-
-/* Hover out: red goes down, black comes from top */
-.RS_NavLink--leave .RS_NavText--black {
-  animation: RS_BlackTextHoverOut 0.42s cubic-bezier(0.76, 0, 0.24, 1) forwards;
-}
-
-.RS_NavLink--leave .RS_NavText--red {
-  animation: RS_RedTextHoverOut 0.42s cubic-bezier(0.76, 0, 0.24, 1) forwards;
-}
-
-@keyframes RS_BlackTextHoverIn {
-  0% {
-    transform: translateY(0%);
-  }
-  100% {
-    transform: translateY(115%);
-  }
-}
-
-@keyframes RS_RedTextHoverIn {
-  0% {
-    transform: translateY(-115%);
-  }
-  100% {
-    transform: translateY(0%);
-  }
-}
-
-@keyframes RS_BlackTextHoverOut {
-  0% {
-    transform: translateY(-115%);
-  }
-  100% {
-    transform: translateY(0%);
-  }
-}
-
-@keyframes RS_RedTextHoverOut {
-  0% {
-    transform: translateY(0%);
-  }
-  100% {
-    transform: translateY(115%);
-  }
+.RS_NewHeader::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    /* background:
+        linear-gradient(110deg,
+            rgba(255, 255, 255, .97),
+            rgba(248, 250, 255, .92),
+            rgba(255, 255, 255, .96));
+    border:
+        1px solid rgba(255, 255, 255, .85); */
+    box-shadow:
+        0 4px 18px rgba(15, 23, 42, .035);
+    backdrop-filter:
+        blur(20px) saturate(150%);
+    -webkit-backdrop-filter:
+        blur(20px) saturate(150%);
+    border-radius: 0;
+    transition:
+        border-radius 2s cubic-bezier(.22, 1, .36, 1),
+        box-shadow 1.5s ease;
 }
 
 /* ================================
-   HAMBURGER
+   5 SCROLL STAGES
 ================================ */
-
-.RS_HamBtn {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 6px;
-  background: none;
-  border: none;
-  cursor: pointer;
+.RS_NewHeader--stage-0 {
+    top: 0;
+    width: 100%;
+    height: 76px;
 }
 
-.RS_L {
-  display: block;
-  width: 28px;
-  height: 2.5px;
-  background: #111;
-  border-radius: 2px;
-  transform-origin: center;
-  transition:
-    transform 0.34s cubic-bezier(0.76, 0, 0.24, 1),
-    opacity 0.24s ease,
-    background 0.2s ease;
+.RS_NewHeader--stage-0::before {
+    border-radius: 0;
 }
 
-.RS_L1o {
-  transform: translateY(7.5px) rotate(45deg);
+.RS_NewHeader--stage-1 {
+    top: 12px;
+    width: 96%;
+    height: 74px;
+    
 }
 
-.RS_L2o {
-  opacity: 0;
-  transform: scaleX(0);
+.RS_NewHeader--stage-1::before {
+    border-radius: 24px;
+    box-shadow:
+        0 12px 35px rgba(15, 23, 42, .07);
+        
 }
 
-.RS_L3o {
-  transform: translateY(-7.5px) rotate(-45deg);
+.RS_NewHeader--stage-2 {
+    top: 16px;
+    width: 92%;
+    height: 71px;
+}
+
+.RS_NewHeader--stage-2::before {
+    border-radius: 30px;
+    box-shadow:
+        0 16px 42px rgba(15, 23, 42, .08);
+        background:
+        linear-gradient(110deg,
+            rgba(255, 255, 255, .97),
+            rgba(248, 250, 255, .92),
+            rgba(255, 255, 255, .96));
+    border:
+        1px solid rgba(255, 255, 255, .85);
+}
+
+.RS_NewHeader--stage-3 {
+    top: 20px;
+    width: 86%;
+    height: 68px;
+}
+
+.RS_NewHeader--stage-3::before {
+    border-radius: 36px;
+    background:
+        linear-gradient(110deg,
+            rgba(255, 255, 255, .97),
+            rgba(248, 250, 255, .92),
+            rgba(255, 255, 255, .96));
+    border:
+        1px solid rgba(255, 255, 255, .85);
+}
+
+.RS_NewHeader--stage-4 {
+    top: 24px;
+    width: 78%;
+    height: 64px;
+}
+
+.RS_NewHeader--stage-4::before {
+    border-radius: 42px;
+    background:
+        linear-gradient(110deg,
+            rgba(255, 255, 255, .97),
+            rgba(248, 250, 255, .92),
+            rgba(255, 255, 255, .96));
+    border:
+        1px solid rgba(255, 255, 255, .85);
+}
+
+.RS_NewHeader--stage-5 {
+    top: 28px;
+    width: 700px;
+    max-width: 75%;
+    height: 60px;
+}
+
+.RS_NewHeader--stage-5::before {
+    border-radius: 50px;
+    box-shadow:
+        0 22px 60px rgba(15, 23, 42, .13);
+        background:
+        linear-gradient(110deg,
+            rgba(255, 255, 255, .97),
+            rgba(248, 250, 255, .92),
+            rgba(255, 255, 255, .96));
+    border:
+        1px solid rgba(255, 255, 255, .85);
 }
 
 /* ================================
-   DROPDOWN
+   HEADER LAYOUT
 ================================ */
-
-.RS_Drop {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
-  min-width: 210px;
-  /* background: rgba(255, 255, 255, 0.96); */
-  /* border-radius: 16px; */
-  /* box-shadow: 0 14px 40px rgba(0, 0, 0, 0.14); */
-  overflow: hidden;
-  z-index: 200;
-  /* padding: 7px; */
-  transform-origin: top right;
-  will-change: opacity, transform;
-}
-
-.RS_Drop--open {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0) scale(1);
-  animation: RS_DropBoxOpen 0.32s cubic-bezier(0.76, 0, 0.24, 1) forwards;
-}
-
-.RS_Drop--closing {
-  pointer-events: none;
-  animation: RS_DropBoxClose 0.36s cubic-bezier(0.76, 0, 0.24, 1) forwards;
-}
-
-@keyframes RS_DropBoxOpen {
-  0% {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes RS_DropBoxClose {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-  }
-}
-
-/* Row default */
-.RS_DropRow {
-  display: block;
-  padding: 6px 18px;
-  font-size: 15px;
-  font-weight: 400;
-  color: #222;
-  text-decoration: none;
-  border-radius: 11px;
-  opacity: 0;
-  transform: translateX(34px);
-  will-change: opacity, transform;
-  transition:
-    opacity 0.34s cubic-bezier(0.76, 0, 0.24, 1),
-    transform 0.34s cubic-bezier(0.76, 0, 0.24, 1),
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-/* Open: each item comes right to left */
-.RS_Drop--open .RS_DropRow {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* Close: each item goes left to right */
-.RS_Drop--closing .RS_DropRow {
-  opacity: 0;
-  transform: translateX(34px);
-}
-/* 
-.RS_DropRow:hover {
-  background: #fff1f2;
-  color: #d62839;
-} */
-
-/* ================================
-   RESPONSIVE
-================================ */
-
-@media (max-width: 1024px) {
-  .RS_NavContents {
-    font-size: 24px;
-  }
-}
-
-@media (max-width: 768px) {
-  .RS_NavContents {
-    font-size: 18px;
-  }
-
-  .RS_HamBtn {
+.RS_NewHeaderShell {
+    width: 100%;
+    height: 100%;
+    padding: 0 42px;
     display: flex;
-  }
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    transition:
+        padding 2s cubic-bezier(.22, 1, .36, 1);
+}
 
-  .RS_Drop {
-    min-width: 190px;
-    right: 0;
-  }
+.RS_NewHeader--stage-5 .RS_NewHeaderShell {
+    padding: 0 14px;
+}
+
+/* ================================
+   LOGO
+================================ */
+.RS_NewBrand {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.RS_NewLogo {
+    width: 125px;
+    height: 47px;
+    object-fit: contain;
+    transition:
+        width 2s cubic-bezier(.22, 1, .36, 1),
+        height 2s cubic-bezier(.22, 1, .36, 1);
+}
+
+.RS_NewHeader--stage-1 .RS_NewLogo {
+    width: 118px;
+    height: 44px;
+}
+
+.RS_NewHeader--stage-2 .RS_NewLogo {
+    width: 110px;
+    height: 42px;
+}
+
+.RS_NewHeader--stage-3 .RS_NewLogo {
+    width: 98px;
+    height: 38px;
+}
+
+.RS_NewHeader--stage-4 .RS_NewLogo {
+    width: 86px;
+    height: 34px;
+}
+
+.RS_NewHeader--stage-5 .RS_NewLogo {
+    width: 76px;
+    height: 30px;
+}
+
+/* ================================
+ NAVIGATION
+================================ */
+.RS_NewDesktopNav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 18px;
+    transition:
+        gap 2s cubic-bezier(.22, 1, .36, 1);
+}
+
+.RS_NewHeader--stage-1 .RS_NewDesktopNav {
+    gap: 14px;
+}
+
+.RS_NewHeader--stage-2 .RS_NewDesktopNav {
+    gap: 11px;
+}
+
+.RS_NewHeader--stage-3 .RS_NewDesktopNav {
+    gap: 8px;
+}
+
+.RS_NewHeader--stage-4 .RS_NewDesktopNav {
+    gap: 6px;
+}
+
+.RS_NewHeader--stage-5 .RS_NewDesktopNav {
+    gap: 7px;
+}
+
+.RS_NewNavLink {
+    height: 46px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 28px;
+    color: #171b23;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        padding 2s cubic-bezier(.22, 1, .36, 1),
+        height 2s cubic-bezier(.22, 1, .36, 1),
+        width 2s cubic-bezier(.22, 1, .36, 1),
+        border-radius 1.5s ease,
+        background .3s ease;
+}
+
+.RS_NewHeader--stage-1 .RS_NewNavLink {
+    padding: 0 14px;
+}
+
+.RS_NewHeader--stage-2 .RS_NewNavLink {
+    padding: 0 12px;
+}
+
+.RS_NewHeader--stage-3 .RS_NewNavLink {
+    padding: 0 10px;
+}
+
+.RS_NewHeader--stage-4 .RS_NewNavLink {
+    padding: 0 7px;
+}
+
+.RS_NewHeader--stage-5 .RS_NewNavLink {
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border-radius: 50%;
+    gap: 0;
+}
+
+.RS_NewNavIcon {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition:
+        transform 2s ease;
+}
+
+.RS_NewHeader--stage-5 .RS_NewNavIcon {
+    transform: scale(1.05);
+}
+
+.RS_NewNavText {
+    max-width: 130px;
+    overflow: hidden;
+    font-size: 17px;
+    white-space: nowrap;
+    transition:
+        max-width 1.8s cubic-bezier(.22, 1, .36, 1),
+        opacity 1s ease,
+        transform 1.5s cubic-bezier(.22, 1, .36, 1);
+}
+
+.RS_NewHeader--stage-2 .RS_NewNavText {
+    font-size: 15px;
+}
+
+.RS_NewHeader--stage-3 .RS_NewNavText {
+    font-size: 14px;
+}
+
+.RS_NewHeader--stage-4 .RS_NewNavText {
+    max-width: 0;
+    opacity: 0;
+    transform: translateX(-15px);
+}
+
+.RS_NewHeader--stage-5 .RS_NewNavText {
+    display: none;
+}
+
+/* ================================
+ RIGHT SIDE
+================================ */
+.RS_NewRight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    transition:
+        gap 2s ease;
+}
+
+.RS_NewHeader--stage-5 .RS_NewRight {
+    gap: 6px;
+}
+
+.RS_NewCircleButton {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    border:
+        1px solid rgba(15, 23, 42, .05);
+    background:
+        rgba(246, 248, 252, .8);
+    transition:
+        width 2s cubic-bezier(.22, 1, .36, 1),
+        height 2s cubic-bezier(.22, 1, .36, 1),
+        border-radius 1.5s ease;
+}
+
+.RS_NewHeader--stage-4 .RS_NewCircleButton,
+.RS_NewHeader--stage-5 .RS_NewCircleButton {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+}
+
+.RS_NewProfileName {
+    max-width: 120px;
+    overflow: hidden;
+    white-space: nowrap;
+    transition:
+        max-width 1.8s ease,
+        opacity 1s ease;
+}
+
+.RS_NewHeader--stage-4 .RS_NewProfileName,
+.RS_NewHeader--stage-5 .RS_NewProfileName {
+    max-width: 0;
+    opacity: 0;
+}
+
+/* ================================
+ MENU
+================================ */
+.RS_MenuMorph {
+    position: relative;
+    width: 21px;
+    height: 16px;
+}
+
+.RS_MenuMorph span {
+    position: absolute;
+    left: 0;
+    width: 21px;
+    height: 2px;
+    background: #111;
+    border-radius: 10px;
+    transition: .4s ease;
+}
+
+.RS_MenuMorph span:nth-child(1) {
+    top: 0;
+}
+
+.RS_MenuMorph span:nth-child(2) {
+    top: 7px;
+}
+
+.RS_MenuMorph span:nth-child(3) {
+    top: 14px;
+}
+
+.RS_MenuMorph--open span:nth-child(1) {
+    top: 7px;
+    transform: rotate(45deg);
+}
+
+.RS_MenuMorph--open span:nth-child(2) {
+    opacity: 0;
+}
+
+.RS_MenuMorph--open span:nth-child(3) {
+    top: 7px;
+    transform: rotate(-45deg);
+}
+
+/* ================================
+ TABLET / MOBILE
+================================ */
+@media(max-width:767px) {
+
+    .RS_NewHeader,
+    .RS_NewHeader--stage-0,
+    .RS_NewHeader--stage-1,
+    .RS_NewHeader--stage-2,
+    .RS_NewHeader--stage-3,
+    .RS_NewHeader--stage-4,
+    .RS_NewHeader--stage-5 {
+        top: 8px;
+        width: calc(100% - 20px);
+        height: 62px;
+    }
+
+    .RS_NewHeader::before {
+        border-radius: 24px;
+    }
+
+    .RS_NewDesktopNav {
+        display: none;
+    }
+
+    .RS_NewHeaderShell {
+        padding: 0 12px;
+    }
+
+    .RS_NewLogo {
+        width: 90px;
+        height: 35px;
+    }
+
+    .RS_NewCircleButton {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+    }
+}
+
+@media(max-width:480px) {
+
+    .RS_NewHeader,
+    .RS_NewHeader--stage-0,
+    .RS_NewHeader--stage-1,
+    .RS_NewHeader--stage-2,
+    .RS_NewHeader--stage-3,
+    .RS_NewHeader--stage-4,
+    .RS_NewHeader--stage-5 {
+        width: calc(100% - 14px);
+        height: 58px;
+    }
+
+    .RS_NewLogo {
+        width: 82px;
+        height: 32px;
+    }
+
+    .RS_NewCircleButton {
+        width: 39px;
+        height: 39px;
+    }
+}
+
+/* ================================
+ ACCOUNT DROPDOWN
+================================ */
+.RS_NewMenu {
+    position: fixed;
+    top: 105px;
+    right: 40px;
+    width: 340px;
+    padding: 18px;
+    background:
+        linear-gradient(135deg,
+            rgba(255, 255, 255, .98),
+            rgba(247, 249, 255, .94));
+    border:
+        1px solid rgba(255, 255, 255, .9);
+    border-radius: 26px;
+    box-shadow:
+        0 30px 80px rgba(15, 23, 42, .15);
+    backdrop-filter:
+        blur(25px) saturate(150%);
+    -webkit-backdrop-filter:
+        blur(25px) saturate(150%);
+    transform-origin: top right;
+    animation:
+        RS_MenuOpen .45s cubic-bezier(.16, 1, .3, 1);
+    z-index: 10000;
+}
+
+@keyframes RS_MenuOpen {
+    from {
+        opacity: 0;
+        transform:
+            translateY(-15px) scale(.96);
+        filter: blur(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+.RS_ProfileTop {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 16px;
+}
+
+.RS_ProfileAvatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f2f3f8;
+}
+
+.RS_ProfileInfo {
+    min-width: 0;
+}
+
+.RS_ProfileName {
+    font-size: 17px;
+    font-weight: 600;
+    color: #20242c;
+}
+
+.RS_ProfileEmail {
+    font-size: 13px;
+    color: #707784;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 220px;
+}
+
+.RS_ProfilePhone {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 4px;
+    font-size: 14px;
+    color: #414754;
+}
+
+.RS_MenuDivider {
+    height: 1px;
+    background:
+        rgba(15, 23, 42, .08);
+    margin: 12px 0;
+}
+
+.RS_MenuAction {
+    width: 100%;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 12px;
+    border: 0;
+    background: transparent;
+    border-radius: 14px;
+    font-family: Outfit, sans-serif;
+    font-size: 15px;
+    color: #303641;
+    cursor: pointer;
+    transition:
+        background .25s ease,
+        transform .25s ease;
+}
+
+.RS_MenuAction:hover {
+    background:
+        rgba(223, 102, 112, .08);
+    transform:
+        translateX(3px);
+}
+
+.RS_MenuAction svg {
+    color: #596170;
+}
+
+.RS_CartBadge {
+    margin-left: auto;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #df6670;
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+}
+
+.RS_MenuLogout {
+    color: #d14e5c;
+}
+
+.RS_MenuButton.active {
+    background:
+        rgba(223, 102, 112, .12);
+}
+
+/* ================================
+ RESPONSIVE SIZING BY VIEWPORT WIDTH
+ (resting state only, stage-0/stage-1
+ for header elements. Scroll-driven
+ stage-2..5 sizing above is untouched.
+ Dropdown menu rules are unscoped —
+ the account menu is not part of the
+ scroll-stage header.)
+================================ */
+@media(min-width:1440px) {
+
+    .RS_NewHeader--stage-0 .RS_NewNavText,
+    .RS_NewHeader--stage-1 .RS_NewNavText {
+        font-size: 26px;
+    }
+
+    .RS_NewHeader--stage-0 .RS_NewNavIcon,
+    .RS_NewHeader--stage-1 .RS_NewNavIcon {
+        width: 30px;
+        height: 30px;
+    }
+
+    .RS_NewHeader--stage-0 .RS_NewLogo,
+    .RS_NewHeader--stage-1 .RS_NewLogo {
+        width: 130px;
+        height: 49px;
+    }
+
+    .RS_NewHeader--stage-0 .RS_NewCircleButton,
+    .RS_NewHeader--stage-1 .RS_NewCircleButton {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+@media(min-width:1024px) and (max-width:1439px) {
+
+    .RS_NewHeader--stage-0 .RS_NewNavText,
+    .RS_NewHeader--stage-1 .RS_NewNavText {
+        font-size: 25px;
+    }
+
+    .RS_NewHeader--stage-0 .RS_NewNavIcon,
+    .RS_NewHeader--stage-1 .RS_NewNavIcon {
+        width: 25px;
+        height: 25px;
+    }
+
+    .RS_NewHeader--stage-0 .RS_NewLogo,
+    .RS_NewHeader--stage-1 .RS_NewLogo {
+        width: 112px;
+        height: 43px;
+    }
+
+    .RS_NewHeader--stage-0 .RS_NewCircleButton,
+    .RS_NewHeader--stage-1 .RS_NewCircleButton {
+        width: 44px;
+        height: 44px;
+    }
+
+    .RS_ProfileAvatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .RS_ProfileAvatar img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .RS_MenuAction {
+        height: 44px;
+        font-size: 14px;
+    }
+
+    .RS_MenuAction svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+@media(min-width:768px) and (max-width:1023px) {
+
+    .RS_NewHeader--stage-0 .RS_NewNavText,
+    .RS_NewHeader--stage-1 .RS_NewNavText {
+        font-size: 22px;
+    }
+
+    .RS_NewHeader--stage-0 .RS_NewNavIcon,
+    .RS_NewHeader--stage-1 .RS_NewNavIcon {
+        width: 22px;
+        height: 22px;
+    }
+
+    .RS_NewHeader--stage-0 .RS_NewLogo,
+    .RS_NewHeader--stage-1 .RS_NewLogo {
+        width: 96px;
+        height: 37px;
+    }
+
+    .RS_NewHeader--stage-0 .RS_NewCircleButton,
+    .RS_NewHeader--stage-1 .RS_NewCircleButton {
+        width: 40px;
+        height: 40px;
+    }
+
+    .RS_ProfileAvatar {
+        width: 36px;
+        height: 36px;
+    }
+
+    .RS_ProfileAvatar img {
+        width: 36px;
+        height: 36px;
+    }
+
+    .RS_MenuAction {
+        height: 40px;
+        font-size: 13px;
+    }
+
+    .RS_MenuAction svg {
+        width: 15px;
+        height: 15px;
+    }
 }

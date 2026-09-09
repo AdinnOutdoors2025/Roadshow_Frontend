@@ -19,7 +19,7 @@ import {
   MAIN_LOADER_DONE_EVENT,
   hasMainLoaderCompletedOnce,
 } from "@/components/GlobalRoadshowLoader";
-
+import MoltenMetal from "./MoltenMetal";
 /* Safety net only — the loader's own MAIN_MAX_WAIT_MS already caps how long
    it can stay up, so this fallback should never actually fire in practice.
    It exists purely so the banner can't get stuck un-animated forever if the
@@ -161,6 +161,9 @@ function HomeBanner() {
     return (
         <>
             <div className="HomeBannerContainer">
+
+                            <MoltenMetal />
+                            
                 {/* Heading — reveals word by word, each rising from behind a mask */}
                 <SplitHeading className="HomeBannerText" enabled={ready}>
                     Take{" "}
