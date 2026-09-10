@@ -320,7 +320,6 @@ function HomePageSection2() {
        RESPONSIVE HELP CENTER ONLY
        This value does NOT affect desktop.
     ===================================================== */
-    const HELP_CENTER_BOTTOM_SPACE = 100;
 
     // VOICES FROM THE ROAD SECTION
     const [activeAdvantage, setActiveAdvantage] = useState<number | null>(null);
@@ -1390,299 +1389,44 @@ function HomePageSection2() {
 
             </div>
   {raCaptchaModal}
-            {/* =========================================================
-                OLD RESPONSIVE HELP CENTER
-                MOBILE + TABLET ONLY (0 - 1023px)
-            ========================================================= */}
-            <div className="HC_ResponsiveOnly">
-            {/* =========================================================
-                HELP CENTER CROP FIX
-            ========================================================= */}
-
-            <style>{`
-
-                .HC_ResponsiveOnly .HC_Main.HC_Main_Cropped {
-
-                    height: auto !important;
-
-                    min-height: 0 !important;
-
-                    max-height: none !important;
-
-                    block-size: auto !important;
-
-                    min-block-size: 0 !important;
-
-                    /*
-                    =====================================================
-                    HELP CENTER HEIGHT ADJUSTMENT
-
-                    Controlled by:
-                    const HELP_CENTER_BOTTOM_SPACE = 20;
-
-                    Increase = taller section
-                    Decrease = shorter section
-                    0        = tightest crop
-                    =====================================================
-                    */
-                    padding-bottom: ${HELP_CENTER_BOTTOM_SPACE}px !important;
-
-                    margin-bottom: 0 !important;
-
-                    overflow: hidden !important;
-
-                }
-
-
-                .HC_ResponsiveOnly .HC_Main.HC_Main_Cropped > div {
-
-                    min-height: 0 !important;
-
-                    padding-bottom: 0 !important;
-
-                    margin-bottom: 0 !important;
-
-                }
-
-
-                .HC_ResponsiveOnly .HC_Main.HC_Main_Cropped
-                .HC_FAQMain {
-
-                    min-height: 0 !important;
-
-                    padding-bottom: 0 !important;
-
-                    margin-bottom: 0 !important;
-
-                }
-
-
-                .HC_ResponsiveOnly .HC_Main.HC_Main_Cropped
-                .HC_FAQ_QnAnsMain:last-child {
-
-                    margin-bottom: 0 !important;
-
-                }
-
-            `}</style>
-
-
-
-            {/* =========================================================
-                HELP CENTER
-            ========================================================= */}
-
-            <div
-                className="
-                    HC_Main
-                    HC_Main_Cropped
-                "
-            >
-
-
-                <div
-                    className="
-                        px-30
-                        mx-auto
-                    "
-                >
-
-
-                    <div className="HC_headingMain">
-
-
-                        <SplitHeading
-                            className="
-                                HC_HeadingContent1
-                            "
-                        >
-                            Help Center
-                        </SplitHeading>
-
-
-                        <SplitHeading
-                            className="
-                                HC_HeadingContent2
-                            "
-                            delay={0.12}
-                        >
-
-                            Find quick answers to common questions about our services, process, and support.
-
-                        </SplitHeading>
-
-
-                    </div>
-
-
-
-                    <div
-                        className="
-                            px-30
-                            mx-auto
-                            HC_FAQMain
-                        "
-                    >
-
-
-                        <div>
-
-
-                            {help_Center_Faq.map(
-                                (faq) => (
-
-                                    <div
-
-                                        key={faq.id}
-
-                                        className="
-                                            HC_FAQ_QnAnsMain
-                                        "
-
-                                        role="button"
-                                        tabIndex={0}
-
-                                        onKeyDown={(event) => {
-                                            if (event.key === "Enter" || event.key === " ") {
-                                                event.preventDefault();
-                                                handleFaqClick(faq.id);
-                                            }
-                                        }}
-
-                                        onClick={() =>
-                                            handleFaqClick(
-                                                faq.id
-                                            )
-                                        }
-
-                                    >
-
-
-                                        <div className="HC_FAQ_TopRow">
-
-
-                                            <div className="HC_FAQ_Question">
-
-                                                {faq.question}
-
-                                            </div>
-
-
-                                            <div
-                                                className={`
-                                                    HC_FAQ_Question_Arrow
-
-                                                    ${
-                                                        activeFaqIndex === faq.id
-                                                            ? "open"
-                                                            : ""
-                                                    }
-                                                `}
-                                            >
-
-                                                <i
-                                                    className="
-                                                        fa-solid
-                                                        fa-chevron-down
-                                                    "
-                                                />
-
-                                            </div>
-
-
-                                        </div>
-
-
-
-                                        <div
-                                            className={`
-                                                HC_FAQ_Answer_Wrapper
-
-                                                ${
-                                                    activeFaqIndex === faq.id
-                                                        ? "open"
-                                                        : ""
-                                                }
-                                            `}
-                                        >
-
-
-                                            <div className="HC_FAQ_Answer">
-
-                                                {faq.answer}
-
-                                            </div>
-
-
-                                        </div>
-
-
-                                    </div>
-
-                                )
-                            )}
-
-
-                        </div>
-
-
-                    </div>
-
-
-                </div>
-
-
-            </div>
-
-            </div>
-
-            {/* =========================================================
-                DESKTOP HELP CENTER
-                ORIGINAL DESKTOP CODE - DO NOT TOUCH
-                1024px AND ABOVE ONLY
-            ========================================================= */}
-            <div className="HC_DesktopOnly">
-            <div className='HC_Main'>
-                <div className='px-30 mx-auto'>
-
+            {/* HELP CENTER */}
+            <div className="HC_Main">
+                <div className="HC_Container">
                     <div className="HC_headingMain">
                         <SplitHeading className="HC_HeadingContent1">Help Center</SplitHeading>
-                        <SplitHeading className="HC_HeadingContent2" delay={0.12}>Find quick answers to common questions about our services, process, and support.</SplitHeading>
+                        <SplitHeading className="HC_HeadingContent2" delay={0.12}>
+                            Find quick answers to common questions about our services, process, and support.
+                        </SplitHeading>
                     </div>
-
-                    <div className='px-30 mx-auto HC_FAQMain'>
-                        <div>
-                            {/* ── CHANGE 6: Updated FAQ accordion JSX ── */}
-                            {help_Center_Faq.map((faq) => (
-                                <div
-                                    key={faq.id}
-                                    className='HC_FAQ_QnAnsMain'
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={() => handleFaqClick(faq.id)}
-                                    onKeyDown={(event) => {
-                                        if (event.key === "Enter" || event.key === " ") {
-                                            event.preventDefault();
-                                            handleFaqClick(faq.id);
-                                        }
-                                    }}
-                                >
-                                    <div className='HC_FAQ_TopRow'>
-                                        <div className='HC_FAQ_Question'>{faq.question}</div>
-                                        <div className={`HC_FAQ_Question_Arrow ${activeFaqIndex === faq.id ? 'open' : ''}`}>
-                                            <i className="fa-solid fa-chevron-down"></i>
-                                        </div>
-                                    </div>
-                                    {/* Smooth collapse wrapper */}
-                                    <div className={`HC_FAQ_Answer_Wrapper ${activeFaqIndex === faq.id ? 'open' : ''}`}>
-                                        <div className='HC_FAQ_Answer'>{faq.answer}</div>
+                    <div className="HC_FAQMain">
+                        {help_Center_Faq.map((faq) => (
+                            <div
+                                key={faq.id}
+                                className={`HC_FAQ_QnAnsMain ${activeFaqIndex === faq.id ? "active" : ""}`}
+                                role="button"
+                                tabIndex={0}
+                                aria-expanded={activeFaqIndex === faq.id}
+                                onClick={() => handleFaqClick(faq.id)}
+                                onKeyDown={(event) => {
+                                    if (event.key === "Enter" || event.key === " ") {
+                                        event.preventDefault();
+                                        handleFaqClick(faq.id);
+                                    }
+                                }}
+                            >
+                                <div className="HC_FAQ_TopRow">
+                                    <div className="HC_FAQ_Question">{faq.question}</div>
+                                    <div className={`HC_FAQ_Question_Arrow ${activeFaqIndex === faq.id ? "open" : ""}`}>
+                                        <i className="fa-solid fa-chevron-down"></i>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                                <div className={`HC_FAQ_Answer_Wrapper ${activeFaqIndex === faq.id ? "open" : ""}`}>
+                                    <div className="HC_FAQ_Answer">{faq.answer}</div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
-            </div>
             </div>
 
         </>
