@@ -556,7 +556,7 @@ export default function MoltenMetal() {
 
 
             uOpacity:{
-                value:0.72,
+                value:0.82,
             },
 
         };
@@ -759,6 +759,11 @@ export default function MoltenMetal() {
 
 
 
+                float fineDetail=
+                fbm(flow*3.2+11.0);
+
+
+
                 float waves=
                 sin(
                     liquid*10.0
@@ -770,9 +775,15 @@ export default function MoltenMetal() {
 
                 float shine=
                 smoothstep(
-                    0.25,
-                    0.75,
+                    0.38,
+                    0.62,
                     waves
+                )
+                *
+                smoothstep(
+                    0.3,
+                    0.85,
+                    fineDetail
                 );
 
 
@@ -789,10 +800,12 @@ export default function MoltenMetal() {
                 color+=
                 shine*
                 vec3(
-                    0.20,
-                    0.18,
-                    0.35
-                );
+                    0.32,
+                    0.28,
+                    0.5
+                )
+                *
+                1.35;
 
 
 

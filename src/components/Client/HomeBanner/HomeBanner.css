@@ -10,7 +10,7 @@ height:100% !important;
 z-index:1;
 pointer-events:none;
 opacity:.92;
-mix-blend-mode:soft-light;
+mix-blend-mode:overlay;
 }
 
 

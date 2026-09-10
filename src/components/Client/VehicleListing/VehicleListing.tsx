@@ -501,19 +501,9 @@ export default function VehicleListing({
                       <div className="RS_VehListActions">
                         <div onClick={(event) => event.stopPropagation()}>
                           <ButtonHover
-                            label="View Details"
-                            className="RS_VehicleButton RS_VehListSpecBtn"
-                            loading={openingVehicleId === vehicle.id}
-                            disabled={Boolean(openingVehicleId)}
-                            onClick={() => openVehicleDetails(vehicle.id)}
-                          />
-                        </div>
-
-                        <div onClick={(event) => event.stopPropagation()}>
-                          <ButtonHover
                             label="Book Now"
                             loadingLabel="Opening..."
-                            className="RS_VehicleButton RS_VehListBookBtn"
+                            className="RS_VehicleButton RS_VehListBookBtn RS_VehListBookBtn--solo"
                             loading={openingVehicleId === vehicle.id}
                             disabled={Boolean(openingVehicleId)}
                             onClick={() => openVehicleDetails(vehicle.id)}
@@ -521,6 +511,16 @@ export default function VehicleListing({
                         </div>
                       </div>
                     </div>
+
+                    {/* Rotating gradient ring, revealed on hover/focus — see
+                        .RS_VehListCardGlow in VehicleListing.css. Placed last
+                        so it paints OVER the image/body — otherwise their
+                        opaque backgrounds hide the ring everywhere except
+                        where the (background-less) card body sits. */}
+                    <span
+                      className="RS_VehListCardGlow"
+                      aria-hidden="true"
+                    />
                   </article>
                 );
               })}

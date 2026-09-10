@@ -476,6 +476,8 @@ background: black;
 }
 
 .RS_VehListCard {
+  position: relative;
+
   overflow: hidden;
 
   border-radius: 20px;
@@ -672,6 +674,77 @@ background: black;
 .RS_VehListBookBtn {
   padding: 15px 26px;
   font-size: 16px;
+}
+
+/* Only action left in .RS_VehListActions now that "View Details" is gone —
+   fills the row instead of sitting pinned to one side. */
+.RS_VehListBookBtn--solo {
+  width: 100%;
+  text-align: center;
+}
+
+/* --------------- ANIMATED GRADIENT BORDER (hover/focus) --------------- */
+/* ReactBits-style rotating conic-gradient ring, masked down to a thin border
+   so only the ring itself is visible — the .RS_VehListCardGlow span (first
+   child of .RS_VehListCard, see VehicleListing.tsx) sits under the image and
+   body in paint order, so it never needs a z-index. Hidden at rest, spins in
+   on hover/focus. */
+
+@property --rs-vl-glow-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.RS_VehListCardGlow {
+  position: absolute;
+  inset: 0;
+
+  border-radius: inherit;
+
+  padding: 2px;
+
+  background: conic-gradient(
+    from var(--rs-vl-glow-angle, 0deg),
+    transparent 0%,
+    #ff0000 12%,
+    #7d0008 24%,
+    transparent 38%
+  );
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity 320ms ease;
+}
+
+.RS_VehListCard:hover .RS_VehListCardGlow,
+.RS_VehListCard:focus-visible .RS_VehListCardGlow {
+  opacity: 1;
+  animation: RS_VehListGlowSpin 2.6s linear infinite;
+}
+
+@keyframes RS_VehListGlowSpin {
+  to {
+    --rs-vl-glow-angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .RS_VehListCard:hover .RS_VehListCardGlow,
+  .RS_VehListCard:focus-visible .RS_VehListCardGlow {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 .RS_VehListState {

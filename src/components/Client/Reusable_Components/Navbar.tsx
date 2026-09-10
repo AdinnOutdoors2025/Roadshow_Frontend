@@ -442,10 +442,10 @@ export default function Navbar() {
                   href={item.href}
                   onClick={handleNavLinkClick}
                   className={`RS_NewNavLink ${isActive(item.href)
-                      ?
-                      "RS_NewNavLink--active"
-                      :
-                      ""
+                    ?
+                    "RS_NewNavLink--active"
+                    :
+                    ""
                     }`}
                 >
                   <span className="RS_NewNavIcon">
@@ -485,117 +485,117 @@ export default function Navbar() {
                 </span>
               }
             </button> */}
-           <button
-type="button"
-className={`RS_NewCircleButton RS_MenuButton ${open?"active":""}`}
-onClick={()=>setOpen(prev=>!prev)}
-aria-expanded={open}
-aria-label="Account menu"
->
-<MenuIcon close={open}/>
-</button>
+            <button
+              type="button"
+              className={`RS_NewCircleButton RS_MenuButton ${open ? "active" : ""}`}
+              onClick={() => setOpen(prev => !prev)}
+              aria-expanded={open}
+              aria-label="Account menu"
+            >
+              <MenuIcon close={open} />
+            </button>
           </div>
         </div>
       </header>
-     {
-open &&
-<aside
-ref={dropdownRef}
-className={`RS_NewMenu ${open?"RS_NewMenu--open":""}`}
->
-{
-accountUser ? (
-<>
-<div className="RS_ProfileTop">
-<div className="RS_ProfileAvatar">
-<Image
-src="/images/profile.svg"
-alt="Profile"
-width={42}
-height={42}
-/>
-</div>
-<div className="RS_ProfileInfo">
-<div className="RS_ProfileName">
-{accountUser.name || "Profile"}
-</div>
-<div className="RS_ProfileEmail">
-{accountUser.email}
-</div>
-</div>
-</div>
-{
-accountUser.phone &&
-<div className="RS_ProfilePhone">
-<MenuGlyph name="phone"/>
-<span>
-{formatPhoneWithCode(accountUser.phone)}
-</span>
-</div>
-}
-<div className="RS_MenuDivider"/>
-<button
-className="RS_MenuAction"
-onClick={()=>handleMenuItemClick("cart")}
->
-<MenuGlyph name="cart"/>
-<span>
-My Cart
-</span>
-{
-cartCount>0 &&
-<b className="RS_CartBadge">
-{cartCount}
-</b>
-}
-</button>
-<button
-className="RS_MenuAction"
-onClick={()=>handleMenuItemClick("orders")}
->
-<MenuGlyph name="history"/>
-<span>
-Order History
-</span>
-</button>
-<div className="RS_MenuDivider"/>
-<button
-className="RS_MenuAction RS_MenuLogout"
-onClick={()=>handleMenuItemClick("signout")}
->
-<MenuGlyph name="signout"/>
-<span>
-Logout
-</span>
-</button>
-</>
-)
-:
-(
-<>
-<button
-className="RS_MenuAction"
-onClick={()=>handleMenuItemClick("signin")}
->
-<MenuGlyph name="signin"/>
-<span>
-Sign In
-</span>
-</button>
-<button
-className="RS_MenuAction"
-onClick={()=>handleMenuItemClick("signup")}
->
-<MenuGlyph name="signup"/>
-<span>
-Sign Up
-</span>
-</button>
-</>
-)
-}
-</aside>
-}
+      {
+        open &&
+        <aside
+          ref={dropdownRef}
+          className={`RS_NewMenu ${open ? "RS_NewMenu--open" : ""}`}
+        >
+          {
+            accountUser ? (
+              <>
+                <div className="RS_ProfileTop">
+                  <div className="RS_ProfileAvatar">
+                    <Image
+                      src="/images/profile.svg"
+                      alt="Profile"
+                      width={42}
+                      height={42}
+                    />
+                  </div>
+                  <div className="RS_ProfileInfo">
+                    <div className="RS_ProfileName">
+                      {accountUser.name || "Profile"}
+                    </div>
+                    <div className="RS_ProfileEmail">
+                      {accountUser.email}
+                    </div>
+                  </div>
+                </div>
+                {
+                  accountUser.phone &&
+                  <div className="RS_ProfilePhone">
+                    <MenuGlyph name="phone" />
+                    <span>
+                      {formatPhoneWithCode(accountUser.phone)}
+                    </span>
+                  </div>
+                }
+                <div className="RS_MenuDivider" />
+                <button
+                  className="RS_MenuAction"
+                  onClick={() => handleMenuItemClick("cart")}
+                >
+                  <MenuGlyph name="cart" />
+                  <span>
+                    My Cart
+                  </span>
+                  {
+                    cartCount > 0 &&
+                    <b className="RS_CartBadge">
+                      {cartCount}
+                    </b>
+                  }
+                </button>
+                <button
+                  className="RS_MenuAction"
+                  onClick={() => handleMenuItemClick("orders")}
+                >
+                  <MenuGlyph name="history" />
+                  <span>
+                    Order History
+                  </span>
+                </button>
+                <div className="RS_MenuDivider" />
+                <button
+                  className="RS_MenuAction RS_MenuLogout"
+                  onClick={() => handleMenuItemClick("signout")}
+                >
+                  <MenuGlyph name="signout" />
+                  <span>
+                    Logout
+                  </span>
+                </button>
+              </>
+            )
+              :
+              (
+                <>
+                  <button
+                    className="RS_MenuAction"
+                    onClick={() => handleMenuItemClick("signin")}
+                  >
+                    <MenuGlyph name="signin" />
+                    <span>
+                      Sign In
+                    </span>
+                  </button>
+                  <button
+                    className="RS_MenuAction"
+                    onClick={() => handleMenuItemClick("signup")}
+                  >
+                    <MenuGlyph name="signup" />
+                    <span>
+                      Sign Up
+                    </span>
+                  </button>
+                </>
+              )
+          }
+        </aside>
+      }
     </>,
     document.body
   );
