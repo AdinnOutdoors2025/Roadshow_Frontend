@@ -389,15 +389,15 @@ function HomePageSection2() {
     const roadshow_Advantages = [
         {
             name: 'Fast',
-            desc: 'Quick campaign launch Book roadshow vehicles in minutes and start your brand promotion without delays.',
+            desc: 'Get your campaign moving quickly.',
         },
         {
             name: 'Flexible',
-            desc: 'Quick campaign launch Book roadshow vehicles in minutes and start your brand promotion without delays.'
+            desc: 'Choose the vehicle and coverage that fit your needs.'
         },
         {
             name: 'Reliable',
-            desc: 'From planning to execution, everything managed in one place for a seamless roadshow campaign.'
+            desc: 'Count on us from start to finish.'
         },
     ];
 
@@ -1191,7 +1191,7 @@ function HomePageSection2() {
 
                         <div className="RA_RightContent1">
 
-                            Make Streets Your Stage
+                            Make Your Brand Hard To Miss.
 
                         </div>
 
@@ -1205,7 +1205,7 @@ function HomePageSection2() {
 
                                 <div className="RA_RightSecondContent1">
 
-                                    Don't Need to Miss out
+                                    Launch your campaign now.
 
                                 </div>
 
@@ -1349,10 +1349,10 @@ function HomePageSection2() {
                         ))}
                     </div>
                     <div className='RA_RightMain'>
-                        <div className='RA_RightContent1'>Make Streets Your Stage</div>
+                        <div className='RA_RightContent1'>Make Your Brand Hard To Miss.</div>
                         <div className='RA_RightSecondContentMain'>
                             <div className='RA_RightSecondContentInsideMain'>
-                                <div className='RA_RightSecondContent1'>Don't Need to Miss out</div>
+                                <div className='RA_RightSecondContent1'>Launch your campaign now.</div>
                                 <div className=" RA_RightContent2Main flex gap-5 items-center bg-white rounded-full overflow-hidden pr-1 pl-4 py-1 w-full max-w-xs">
                                     <input
                                         type="text"

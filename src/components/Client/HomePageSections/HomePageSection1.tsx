@@ -45,7 +45,7 @@ import {
 } from "./Process";
 
 import ImpactCtaBanner from "./ImpactCtaBanner";
-
+import Offers3DSection from "./Offers3DSection";
 /* =========================================================
    INLINE SVG ICONS
 ========================================================= */
@@ -176,59 +176,41 @@ const marqueeItems = [
 
 const whyAdinnWorksBest = [
   {
-    name: "GPS Support",
+    name: "Live GPS Tracking & Support",
     description:
-      "Live location tracking for vehicles with route visibility and movement updates throughout the campaign.",
+      "Know where your vehicles are with live GPS tracking, regular updates and support throughout the campaign.",
     image: "/images/assets/Why_Adinn_Roadshows/gps.png",
-    collapsedWidth: 219,
-    expandedWidth: 400,
+    collapsedWidth: 340,
+    expandedWidth: 460,
   },
 
   {
-    name: "RTO Certified",
+    name: "Complete Campaign Management",
     description:
-      "Fully approved vehicles complying with road regulations for smooth and hassle-free campaign execution.",
-    image: "/images/assets/Why_Adinn_Roadshows/rto.png",
-    collapsedWidth: 227,
-    expandedWidth: 400,
-  },
-
-  {
-    name: "One-Stop Solution",
-    description:
-      "From planning to execution, everything is managed in one place for a roadshow campaign.",
+      "From choosing the vehicle and branding it to handling permissions, routes and execution—we take care of it all.",
     image: "/images/assets/Why_Adinn_Roadshows/one_stop.png",
-    collapsedWidth: 270,
-    expandedWidth: 410,
+    collapsedWidth: 370,
+    expandedWidth: 480,
   },
 
   {
-    name: "High-Traffic Route Planning",
+    name: "Smart Routes, Better Visibility",
     description:
-      "Strategic route planning focuses on high-visibility and high-traffic locations to maximize campaign reach.",
+      "We plan routes through busy markets, key locations and areas where your audience is most likely to be.",
     image:
       "/images/assets/Why_Adinn_Roadshows/High_Traffic_Route_Planning.png",
-    collapsedWidth: 360,
-    expandedWidth: 470,
+    collapsedWidth: 380,
+    expandedWidth: 480,
   },
 
   {
-    name: "Professional Execution",
+    name: "Professional & Road-Ready",
     description:
-      "Experienced on-ground teams handle vehicle movement, branding and campaign execution with proper coordination.",
+      "RTO-compliant vehicles and an experienced on-ground team ensure your campaign runs safely and smoothly.",
     image:
       "/images/assets/Why_Adinn_Roadshows/Professional_Execution.png",
-    collapsedWidth: 335,
-    expandedWidth: 440,
-  },
-
-  {
-    name: "24/7 Support",
-    description:
-      "Dedicated team available anytime to monitor, coordinate, and assist throughout the campaign.",
-    image: "/images/assets/Why_Adinn_Roadshows/time.png",
-    collapsedWidth: 215,
-    expandedWidth: 400,
+    collapsedWidth: 350,
+    expandedWidth: 460,
   },
 ];
 
@@ -1332,7 +1314,11 @@ export default function HomePageSection1() {
           </div>
         </div>
       </section>
+{/* =====================================================
+    3D OFFERS SECTION
+===================================================== */}
 
+{/* <Offers3DSection /> */}
       {/* =====================================================
           CTA
       ===================================================== */}
@@ -2083,7 +2069,7 @@ export default function HomePageSection1() {
               className="RS_OurRdwHeadingContent1"
               type="chars"
             >
-              Some of Our
+              Brands That
             </SplitHeading>
 
             <RevealText
@@ -2093,7 +2079,7 @@ export default function HomePageSection1() {
                 0.25
               }
             >
-              Clients
+              Trust Us
             </RevealText>
           </div>
 

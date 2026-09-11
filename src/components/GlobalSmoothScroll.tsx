@@ -38,6 +38,11 @@ const SMOOTH_SCROLL_DISABLED_PATHS = [
      RS_TrackingPane both position:sticky at >=1400px, see page.css) so it
      needs the same opt-out — no trailing slash, so this covers both. */
   "/roadshow/my-bookings",
+
+  /* Vehicle Details also uses the same paired sticky-column trick (fixed
+     left image, independently-scrolling right details column) — same
+     opt-out for the same reason. */
+  "/roadshow/VehicleDetails",
 ];
 
 export default function GlobalSmoothScroll({

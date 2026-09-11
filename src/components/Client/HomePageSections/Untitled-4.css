@@ -1,0 +1,1959 @@
+* {
+    font-family: Outfit;
+}
+
+/* =========================================================
+   HERO ROOT
+========================================================= */
+
+.HomeBannerContainer {
+    position: relative;
+    width: 100%;
+
+    /*
+      IMPORTANT:
+      Large desktop layout values below remain based on
+      your original design.
+    */
+    padding: 3% 0;
+    padding-top: 6%;
+
+    overflow: hidden;
+    isolation: isolate;
+
+    perspective: 1600px;
+
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   CUSTOM SOFT MOLTEN BACKGROUND
+
+   Top = violet
+   Middle = pearl/lavender
+   Bottom = white
+
+   No strong visible wave bands.
+========================================================= */
+
+.HBSoftFluidBG {
+    position: absolute;
+    inset: 0;
+
+    z-index: 0;
+
+    overflow: hidden;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            180deg,
+            #d9d4f7 0%,
+            #e5e0f9 22%,
+            #efebfc 43%,
+            #f7f5fd 67%,
+            #ffffff 100%
+        );
+
+    isolation: isolate;
+}
+
+
+/* =========================================================
+   BASE LIQUID FIELD
+========================================================= */
+
+.HBSoftBase {
+    position: absolute;
+
+    inset: -20%;
+
+    background:
+        radial-gradient(
+            ellipse at 12% 7%,
+            rgba(117, 91, 204, 0.16),
+            transparent 33%
+        ),
+        radial-gradient(
+            ellipse at 88% 12%,
+            rgba(150, 127, 221, 0.14),
+            transparent 33%
+        ),
+        radial-gradient(
+            ellipse at 52% 25%,
+            rgba(200, 188, 240, 0.22),
+            transparent 42%
+        );
+
+    filter: blur(45px);
+
+    transform:
+        translate3d(0, 0, 0);
+
+    animation:
+        HBSoftBaseMove
+        18s
+        ease-in-out
+        infinite alternate;
+
+    will-change: transform;
+}
+
+
+@keyframes HBSoftBaseMove {
+
+    0% {
+        transform:
+            translate3d(-2%, -1%, 0)
+            scale(1.04);
+    }
+
+    50% {
+        transform:
+            translate3d(2%, 1%, 0)
+            scale(1.07);
+    }
+
+    100% {
+        transform:
+            translate3d(-1%, 2%, 0)
+            scale(1.05);
+    }
+}
+
+
+/* =========================================================
+   SOFT LIQUID BLOBS
+========================================================= */
+
+.HBSoftBlob {
+    position: absolute;
+
+    border-radius: 50%;
+
+    filter:
+        blur(85px);
+
+    opacity: 0.28;
+
+    will-change:
+        transform;
+}
+
+
+/* left */
+
+.HBSoftBlob--left {
+    width: 46vw;
+    height: 32vw;
+
+    left: -16%;
+    top: -10%;
+
+    background:
+        rgba(
+            105,
+            80,
+            193,
+            0.22
+        );
+
+    animation:
+        HBBlobLeft
+        16s
+        ease-in-out
+        infinite alternate;
+}
+
+
+/* right */
+
+.HBSoftBlob--right {
+    width: 44vw;
+    height: 30vw;
+
+    right: -15%;
+    top: 2%;
+
+    background:
+        rgba(
+            159,
+            139,
+            224,
+            0.23
+        );
+
+    animation:
+        HBBlobRight
+        19s
+        ease-in-out
+        infinite alternate;
+}
+
+
+/* centre */
+
+.HBSoftBlob--center {
+    width: 54vw;
+    height: 26vw;
+
+    left: 24%;
+    top: 26%;
+
+    background:
+        rgba(
+            213,
+            205,
+            246,
+            0.25
+        );
+
+    opacity: 0.23;
+
+    animation:
+        HBBlobCenter
+        22s
+        ease-in-out
+        infinite alternate;
+}
+
+
+@keyframes HBBlobLeft {
+
+    from {
+        transform:
+            translate3d(
+                -4%,
+                -3%,
+                0
+            )
+            scale(1);
+    }
+
+    to {
+        transform:
+            translate3d(
+                15%,
+                10%,
+                0
+            )
+            scale(1.14);
+    }
+}
+
+
+@keyframes HBBlobRight {
+
+    from {
+        transform:
+            translate3d(
+                5%,
+                -3%,
+                0
+            )
+            scale(1.08);
+    }
+
+    to {
+        transform:
+            translate3d(
+                -15%,
+                12%,
+                0
+            )
+            scale(0.96);
+    }
+}
+
+
+@keyframes HBBlobCenter {
+
+    from {
+        transform:
+            translate3d(
+                -6%,
+                0,
+                0
+            )
+            scale(1);
+    }
+
+    to {
+        transform:
+            translate3d(
+                10%,
+                -4%,
+                0
+            )
+            scale(1.12);
+    }
+}
+
+
+/* =========================================================
+   VERY SOFT MOVING LIGHT
+
+   Not a visible wave.
+   Just blurred reflective movement.
+========================================================= */
+
+.HBSoftLight {
+    position: absolute;
+
+    height: 34%;
+
+    border-radius: 50%;
+
+    filter:
+        blur(70px);
+
+    opacity: 0.22;
+
+    will-change:
+        transform;
+}
+
+
+.HBSoftLight--one {
+    width: 66%;
+
+    left: -15%;
+    top: 14%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,0.64),
+            transparent
+        );
+
+    transform:
+        rotate(-5deg);
+
+    animation:
+        HBLightOne
+        17s
+        ease-in-out
+        infinite alternate;
+}
+
+
+.HBSoftLight--two {
+    width: 62%;
+
+    right: -12%;
+    top: 30%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,0.48),
+            transparent
+        );
+
+    transform:
+        rotate(4deg);
+
+    animation:
+        HBLightTwo
+        21s
+        ease-in-out
+        infinite alternate;
+}
+
+
+@keyframes HBLightOne {
+
+    from {
+        transform:
+            translate3d(
+                -8%,
+                0,
+                0
+            )
+            rotate(-5deg);
+    }
+
+    to {
+        transform:
+            translate3d(
+                20%,
+                5%,
+                0
+            )
+            rotate(-1deg);
+    }
+}
+
+
+@keyframes HBLightTwo {
+
+    from {
+        transform:
+            translate3d(
+                8%,
+                0,
+                0
+            )
+            rotate(4deg);
+    }
+
+    to {
+        transform:
+            translate3d(
+                -20%,
+                -4%,
+                0
+            )
+            rotate(1deg);
+    }
+}
+
+
+/* =========================================================
+   PEARL CENTRE LIGHT
+========================================================= */
+
+.HBSoftPearl {
+    position: absolute;
+
+    left: 50%;
+    top: 18%;
+
+    width: 62%;
+    height: 54%;
+
+    transform:
+        translateX(-50%);
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(255,255,255,0.32) 0%,
+            rgba(255,255,255,0.16) 38%,
+            transparent 72%
+        );
+
+    filter:
+        blur(35px);
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   WHITE BOTTOM FADE
+========================================================= */
+
+.HBSoftBottomFade {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    height: 48%;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,0) 0%,
+            rgba(255,255,255,0.18) 24%,
+            rgba(255,255,255,0.52) 58%,
+            rgba(255,255,255,0.82) 78%,
+            #ffffff 100%
+        );
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   CONTENT STAGE
+========================================================= */
+
+.HomeBannerStage {
+    position: relative;
+
+    z-index: 2;
+
+    width: 100%;
+
+    transform-style:
+        preserve-3d;
+
+    will-change:
+        transform,
+        opacity;
+}
+
+
+/* =========================================================
+   HEADING
+
+   LARGE DESKTOP ORIGINAL SIZE PRESERVED
+========================================================= */
+
+.HomeBannerText {
+    margin: 0;
+
+    font-weight: 400;
+    font-style: normal;
+
+    font-size: 70px;
+
+    text-align: center;
+
+    color: #111116;
+}
+
+
+.HomeBannerTextSpan {
+    color:
+        #7057C3;
+
+    font-weight:
+        700;
+}
+
+
+/* =========================================================
+   SUBTEXT
+========================================================= */
+
+.HomeBannerSubHeading {
+    position:
+        relative;
+
+    z-index:
+        2;
+}
+
+
+.HomeBannerTextImg {
+    margin-left:
+        auto;
+
+    margin-right:
+        47%;
+}
+
+
+/* =========================================================
+   IMAGE CONTAINER
+
+   IMPORTANT:
+   ORIGINAL LARGE-DESKTOP VALUE = 75%
+========================================================= */
+
+.HomeBannerImgContainer {
+    position:
+        relative;
+
+    z-index:
+        2;
+
+    margin:
+        auto;
+
+    margin-top:
+        50px;
+
+    width:
+        75%;
+
+    transform-style:
+        preserve-3d;
+}
+
+
+/* =========================================================
+   FLOATING LAYER
+
+   Does NOT change original image size.
+========================================================= */
+
+.HomeBannerFloatLayer {
+    position:
+        relative;
+
+    width:
+        100%;
+
+    transform-style:
+        preserve-3d;
+
+    will-change:
+        transform;
+}
+
+
+@media (min-width: 992px) {
+
+    .HomeBannerFloatLayer {
+        animation:
+            HomeBannerSoftFloat
+            8s
+            ease-in-out
+            infinite;
+    }
+}
+
+
+@keyframes HomeBannerSoftFloat {
+
+    0%,
+    100% {
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            );
+    }
+
+    45% {
+        transform:
+            translate3d(
+                0,
+                -5px,
+                6px
+            );
+    }
+
+    75% {
+        transform:
+            translate3d(
+                0,
+                2px,
+                3px
+            );
+    }
+}
+
+
+/* =========================================================
+   MAIN BANNER
+
+   No extra white card.
+   ORIGINAL image footprint preserved.
+========================================================= */
+
+.HomeBannerMainImgWrapper {
+    width:
+        100%;
+
+    position:
+        relative;
+
+    overflow:
+        visible;
+
+    isolation:
+        isolate;
+
+    aspect-ratio:
+        4096 / 1446;
+
+    background:
+        transparent;
+
+    box-shadow:
+        none;
+
+    border:
+        0;
+
+    border-radius:
+        0;
+
+    transform-style:
+        preserve-3d;
+
+    backface-visibility:
+        hidden;
+}
+
+
+.HomeBannerMainImg {
+    width:
+        100%;
+
+    display:
+        block;
+
+    background:
+        transparent;
+
+    border:
+        0;
+
+    border-radius:
+        0;
+
+    user-select:
+        none;
+
+    pointer-events:
+        none;
+
+    backface-visibility:
+        hidden;
+
+    will-change:
+        opacity,
+        transform,
+        filter;
+}
+
+
+/* =========================================================
+   IMAGE CHANGE ANIMATION
+========================================================= */
+
+.HomeBannerCurrentImg {
+    position:
+        relative;
+
+    z-index:
+        1;
+
+    animation:
+        HomeBannerNewImgIn
+        700ms
+        cubic-bezier(
+            0.22,
+            1,
+            0.36,
+            1
+        )
+        both;
+}
+
+
+.HomeBannerPrevImg {
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    z-index:
+        2;
+
+    animation:
+        HomeBannerOldImgOut
+        700ms
+        cubic-bezier(
+            0.22,
+            1,
+            0.36,
+            1
+        )
+        both;
+}
+
+
+@keyframes HomeBannerNewImgIn {
+
+    0% {
+        opacity:
+            0;
+
+        transform:
+            scale(1.025)
+            translateY(6px);
+
+        filter:
+            blur(2px);
+    }
+
+    45% {
+        opacity:
+            1;
+    }
+
+    100% {
+        opacity:
+            1;
+
+        transform:
+            scale(1)
+            translateY(0);
+
+        filter:
+            blur(0);
+    }
+}
+
+
+@keyframes HomeBannerOldImgOut {
+
+    0% {
+        opacity:
+            1;
+
+        transform:
+            scale(1);
+
+        filter:
+            blur(0);
+    }
+
+    100% {
+        opacity:
+            0;
+
+        transform:
+            scale(0.988)
+            translateY(-4px);
+
+        filter:
+            blur(1px);
+    }
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.HomeBannerImgSpinner {
+    position:
+        absolute;
+
+    top:
+        50%;
+
+    left:
+        50%;
+
+    z-index:
+        0;
+
+    width:
+        34px;
+
+    height:
+        34px;
+
+    margin:
+        -17px
+        0
+        0
+        -17px;
+
+    border-radius:
+        999px;
+
+    border:
+        3px solid
+        rgba(
+            112,
+            87,
+            195,
+            0.16
+        );
+
+    border-top-color:
+        #7057c3;
+
+    animation:
+        HomeBannerSpin
+        800ms
+        linear
+        infinite;
+}
+
+
+.HomeBannerImgSpinner--thumb {
+    width:
+        18px;
+
+    height:
+        18px;
+
+    margin:
+        -9px
+        0
+        0
+        -9px;
+
+    border-width:
+        2px;
+}
+
+
+@keyframes HomeBannerSpin {
+
+    to {
+        transform:
+            rotate(360deg);
+    }
+}
+
+
+.HomeBannerMainImg.HomeBannerImgLoading,
+.HomeBannerSubImg.HomeBannerImgLoading {
+    opacity:
+        0;
+}
+
+
+/* =========================================================
+   THUMBNAIL
+
+   ORIGINAL LARGE DESKTOP VALUES PRESERVED
+========================================================= */
+
+.HomeBannerSubImgThumb {
+    position:
+        relative;
+
+    display:
+        inline-block;
+
+    line-height:
+        0;
+
+    border-radius:
+        8px;
+
+    overflow:
+        hidden;
+}
+
+
+.HomeBannerSubImgRow {
+    display:
+        flex;
+
+    gap:
+        20px;
+
+    margin-top:
+        20px;
+
+    justify-content:
+        center;
+
+    align-items:
+        flex-start;
+
+    min-height:
+        100px;
+}
+
+
+.HomeBannerSubImgMain {
+    height:
+        100px;
+}
+
+
+.HomeBannerSubImgBtn {
+    background:
+        none;
+
+    border:
+        none;
+
+    padding:
+        0;
+
+    cursor:
+        pointer;
+
+    border-radius:
+        8px;
+
+    outline:
+        2px solid
+        transparent;
+
+    outline-offset:
+        3px;
+
+    height:
+        100%;
+
+    transform:
+        translateY(0)
+        scale(1);
+
+    transition:
+        outline-color
+        300ms ease,
+
+        transform
+        400ms
+        cubic-bezier(
+            0.16,
+            1,
+            0.3,
+            1
+        ),
+
+        opacity
+        300ms ease;
+}
+
+
+.HomeBannerSubImgBtn:hover {
+    transform:
+        translateY(-3px)
+        scale(1.05);
+
+    outline-color:
+        #7057C3;
+}
+
+
+.HomeBannerSubImgBtn.active {
+    outline-color:
+        #7057C3;
+
+    outline-width:
+        2px;
+
+    transform:
+        translateY(-4px)
+        scale(1.06);
+}
+
+
+.HomeBannerSubImg {
+    display:
+        block;
+
+    border-radius:
+        8px;
+
+    /*
+      ORIGINAL LARGE DESKTOP
+    */
+    width:
+        100px;
+
+    height:
+        auto;
+
+    transition:
+        opacity
+        300ms ease,
+
+        transform
+        400ms
+        cubic-bezier(
+            0.16,
+            1,
+            0.3,
+            1
+        );
+}
+
+
+.HomeBannerSubImgBtn:hover
+.HomeBannerSubImg {
+    opacity:
+        0.9;
+}
+
+
+.HomeBannerSubImgTitle {
+    color:
+        #000000;
+
+    font-weight:
+        500;
+
+    /*
+      ORIGINAL
+    */
+    font-size:
+        16px;
+
+    line-height:
+        100%;
+
+    margin-top:
+        4px;
+
+    white-space:
+        nowrap;
+
+    transition:
+        color
+        300ms ease,
+
+        transform
+        300ms ease;
+}
+
+
+.HomeBannerSubImgBtn.active
+.HomeBannerSubImgTitle {
+    color:
+        #7057C3;
+
+    transform:
+        translateY(1px);
+}
+
+
+/* =========================================================
+   4K
+
+   ORIGINAL VALUES PRESERVED
+========================================================= */
+
+@media (min-width: 2560px) {
+
+    .HomeBannerContainer {
+        padding-top:
+            6%;
+    }
+
+    .HomeBannerText {
+        font-size:
+            92px;
+    }
+
+    .HomeBannerImgContainer {
+        width:
+            68%;
+
+        margin-top:
+            64px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap:
+            28px;
+
+        margin-top:
+            28px;
+
+        min-height:
+            130px;
+    }
+
+    .HomeBannerSubImgMain {
+        height:
+            130px;
+    }
+
+    .HomeBannerSubImg {
+        width:
+            130px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size:
+            20px;
+    }
+}
+
+
+/* =========================================================
+   1440 - 2559
+
+   EXACT ORIGINAL BASE DESIGN.
+   NO IMAGE SIZE CHANGE.
+========================================================= */
+
+@media
+(min-width: 1440px)
+and
+(max-width: 2559px) {
+
+    /*
+      Intentionally no image resizing.
+    */
+}
+
+
+/* =========================================================
+   1281 - 1439
+
+   ORIGINAL VALUES PRESERVED
+========================================================= */
+
+@media
+(min-width: 1281px)
+and
+(max-width: 1439px) {
+
+    .HomeBannerText {
+        font-size:
+            62px;
+    }
+
+    .HomeBannerTextImg {
+        margin-right:
+            44%;
+    }
+
+    .HomeBannerImgContainer {
+        width:
+            80%;
+
+        margin-top:
+            44px;
+    }
+
+    .HomeBannerSubImg {
+        width:
+            94px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size:
+            15px;
+    }
+}
+
+
+/* =========================================================
+   1024 - 1280
+
+   ORIGINAL VALUES PRESERVED
+========================================================= */
+
+@media
+(min-width: 1024px)
+and
+(max-width: 1280px) {
+
+    .HomeBannerText {
+        font-size:
+            52px;
+    }
+
+    .HomeBannerTextImg {
+        margin-right:
+            38%;
+    }
+
+    .HomeBannerImgContainer {
+        width:
+            71%;
+
+        margin-top:
+            -10px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap:
+            16px;
+    }
+
+    .HomeBannerSubImg {
+        width:
+            88px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size:
+            14px;
+    }
+    .HomeBannerSubImgMain {
+        height:78px;
+    }
+}
+
+
+/* =========================================================
+   SMALL DESKTOP ONLY
+   992 - 1023
+
+   ONLY THIS DESKTOP RANGE IS COMPACTED.
+========================================================= */
+
+@media
+(min-width: 992px)
+and
+(max-width: 1023px) {
+
+    /*
+      Make this particular small desktop
+      finish inside viewport.
+    */
+
+    .HomeBannerContainer {
+        height:
+            100svh;
+
+        min-height:
+            100svh;
+
+        max-height:
+            100svh;
+
+        padding:
+            78px 0 8px;
+
+        display:
+            flex;
+
+        align-items:
+            center;
+
+        justify-content:
+            center;
+    }
+
+
+    .HomeBannerStage {
+        width:
+            100%;
+
+        max-height:
+            calc(
+                100svh - 70px
+            );
+
+        display:
+            flex;
+
+        flex-direction:
+            column;
+
+        justify-content:
+            center;
+    }
+
+
+    .HomeBannerText {
+        font-size:
+            clamp(
+                38px,
+                5.6vh,
+                46px
+            );
+
+        line-height:
+            1.03;
+    }
+
+
+    .HomeBannerTextImg {
+        margin-right:
+            32%;
+
+        max-height:
+            24px;
+    }
+
+
+    /*
+      Only 992-1023 image gets smaller.
+    */
+
+    .HomeBannerImgContainer {
+        width:
+            min(
+                88%,
+                calc(
+                    35svh
+                    *
+                    2.8326
+                )
+            );
+
+        margin-top:
+            12px;
+    }
+
+
+    .HomeBannerSubImgRow {
+        gap:
+            13px;
+
+        margin-top:
+            8px;
+
+        min-height:
+            70px;
+    }
+
+
+    .HomeBannerSubImgMain {
+        height:
+            70px;
+    }
+
+
+    .HomeBannerSubImg {
+        width:
+            68px;
+    }
+
+
+    .HomeBannerSubImgTitle {
+        font-size:
+            11.5px;
+    }
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media
+(min-width: 768px)
+and
+(max-width: 991px) {
+
+    .HomeBannerContainer {
+        height:
+            auto;
+
+        min-height:
+            auto;
+
+        max-height:
+            none;
+
+        padding-top:
+            11%;
+
+        padding-bottom:
+            4%;
+    }
+
+    .HomeBannerText {
+        font-size:
+            42px;
+    }
+
+    .HomeBannerTextImg {
+        display:
+            block;
+
+        max-width:
+            46%;
+
+        margin-right:
+            auto;
+
+        margin-left:
+            auto;
+    }
+
+    .HomeBannerImgContainer {
+        width:
+            94%;
+
+        margin-top:
+            34px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap:
+            14px;
+
+        min-height:
+            92px;
+    }
+
+    .HomeBannerSubImgMain {
+        height:
+            92px;
+    }
+
+    .HomeBannerSubImg {
+        width:
+            78px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size:
+            13px;
+    }
+
+    /*
+      Reduce heavy background motion.
+    */
+
+    .HBSoftLight {
+        display:
+            none;
+    }
+
+    .HBSoftBlob {
+        opacity:
+            0.16;
+    }
+
+    .HomeBannerFloatLayer {
+        animation:
+            none;
+    }
+}
+
+
+/* =========================================================
+   MOBILE STRUCTURE
+========================================================= */
+
+@media (max-width: 767px) {
+
+    .HomeBannerContainer {
+        height:
+            auto;
+
+        min-height:
+            auto;
+
+        max-height:
+            none;
+
+        overflow:
+            visible;
+    }
+
+
+    .HomeBannerText {
+        padding:
+            0 5%;
+
+        line-height:
+            1.18;
+    }
+
+
+    .HomeBannerTextImg {
+        display:
+            block;
+
+        margin-right:
+            auto;
+
+        margin-left:
+            auto;
+    }
+
+
+    .HomeBannerSubImgRow {
+        flex-wrap:
+            nowrap;
+
+        overflow-x:
+            auto;
+
+        overflow-y:
+            hidden;
+
+        padding:
+            4px 4px 12px;
+
+        scroll-snap-type:
+            x mandatory;
+
+        -webkit-overflow-scrolling:
+            touch;
+    }
+
+
+    .HomeBannerSubImgMain {
+        flex:
+            0 0 auto;
+
+        scroll-snap-align:
+            center;
+    }
+
+
+    .HomeBannerSubImgBtn:hover {
+        outline-color:
+            transparent;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+
+    .HomeBannerSubImgBtn:hover
+    .HomeBannerSubImg {
+        opacity:
+            1;
+    }
+
+
+    .HomeBannerSubImgBtn.active {
+        outline-color:
+            #7057c3;
+
+        transform:
+            translateY(-4px)
+            scale(1.06);
+    }
+
+
+    .HBSoftLight {
+        display:
+            none;
+    }
+
+
+    .HBSoftBlob {
+        opacity:
+            0.12;
+
+        animation:
+            none;
+    }
+
+
+    .HomeBannerFloatLayer {
+        animation:
+            none;
+    }
+}
+
+
+/* =========================================================
+   480 - 767
+========================================================= */
+
+@media
+(min-width: 480px)
+and
+(max-width: 767px) {
+
+    .HomeBannerContainer {
+        padding-top:
+            15%;
+
+        padding-bottom:
+            4%;
+    }
+
+    .HomeBannerText {
+        font-size:
+            34px;
+    }
+
+    .HomeBannerTextImg {
+        max-width:
+            55%;
+    }
+
+    .HomeBannerImgContainer {
+        width:
+            95%;
+
+        margin-top:
+            32px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap:
+            12px;
+
+        min-height:
+            88px;
+    }
+
+    .HomeBannerSubImgMain {
+        height:
+            88px;
+    }
+
+    .HomeBannerSubImg {
+        width:
+            76px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size:
+            12px;
+    }
+}
+
+
+/* =========================================================
+   425 - 479
+========================================================= */
+
+@media
+(min-width: 425px)
+and
+(max-width: 479px) {
+
+    .HomeBannerContainer {
+        padding-top:
+            17%;
+
+        padding-bottom:
+            4%;
+    }
+
+    .HomeBannerText {
+        font-size:
+            31px;
+    }
+
+    .HomeBannerTextImg {
+        max-width:
+            58%;
+    }
+
+    .HomeBannerImgContainer {
+        width:
+            96%;
+
+        margin-top:
+            28px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap:
+            11px;
+
+        min-height:
+            84px;
+    }
+
+    .HomeBannerSubImgMain {
+        height:
+            84px;
+    }
+
+    .HomeBannerSubImg {
+        width:
+            72px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size:
+            11.5px;
+    }
+}
+
+
+/* =========================================================
+   375 - 424
+========================================================= */
+
+@media
+(min-width: 375px)
+and
+(max-width: 424px) {
+
+    .HomeBannerContainer {
+        padding-top:
+            19%;
+
+        padding-bottom:
+            4%;
+    }
+
+    .HomeBannerText {
+        font-size:
+            28px;
+    }
+
+    .HomeBannerTextImg {
+        max-width:
+            62%;
+    }
+
+    .HomeBannerImgContainer {
+        width:
+            96%;
+
+        margin-top:
+            26px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap:
+            10px;
+
+        min-height:
+            80px;
+    }
+
+    .HomeBannerSubImgMain {
+        height:
+            80px;
+    }
+
+    .HomeBannerSubImg {
+        width:
+            68px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size:
+            11px;
+    }
+}
+
+
+/* =========================================================
+   360 - 374
+========================================================= */
+
+@media
+(min-width: 360px)
+and
+(max-width: 374px) {
+
+    .HomeBannerContainer {
+        padding-top:
+            20%;
+
+        padding-bottom:
+            4%;
+    }
+
+    .HomeBannerText {
+        font-size:
+            26px;
+    }
+
+    .HomeBannerTextImg {
+        max-width:
+            64%;
+    }
+
+    .HomeBannerImgContainer {
+        width:
+            97%;
+
+        margin-top:
+            24px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap:
+            10px;
+
+        min-height:
+            76px;
+    }
+
+    .HomeBannerSubImgMain {
+        height:
+            76px;
+    }
+
+    .HomeBannerSubImg {
+        width:
+            64px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size:
+            10.5px;
+    }
+}
+
+
+/* =========================================================
+   320 - 359
+========================================================= */
+
+@media
+(min-width: 320px)
+and
+(max-width: 359px) {
+
+    .HomeBannerContainer {
+        padding-top:
+            22%;
+
+        padding-bottom:
+            4%;
+    }
+
+    .HomeBannerText {
+        font-size:
+            23px;
+    }
+
+    .HomeBannerTextImg {
+        max-width:
+            68%;
+    }
+
+    .HomeBannerImgContainer {
+        width:
+            98%;
+
+        margin-top:
+            22px;
+    }
+
+    .HomeBannerSubImgRow {
+        gap:
+            9px;
+
+        min-height:
+            70px;
+    }
+
+    .HomeBannerSubImgMain {
+        height:
+            70px;
+    }
+
+    .HomeBannerSubImg {
+        width:
+            58px;
+    }
+
+    .HomeBannerSubImgTitle {
+        font-size:
+            10px;
+    }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media
+(prefers-reduced-motion: reduce) {
+
+    .HBSoftBase,
+    .HBSoftBlob,
+    .HBSoftLight,
+    .HomeBannerFloatLayer {
+        animation:
+            none !important;
+    }
+
+
+    .HomeBannerCurrentImg,
+    .HomeBannerPrevImg {
+        animation-duration:
+            1ms !important;
+    }
+
+
+    .HomeBannerSubImgBtn,
+    .HomeBannerSubImg,
+    .HomeBannerSubImgTitle {
+        transition-duration:
+            1ms !important;
+    }
+
+
+    .HomeBannerImgSpinner {
+        animation:
+            none;
+    }
+}

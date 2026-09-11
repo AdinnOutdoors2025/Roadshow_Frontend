@@ -12,9 +12,9 @@
 /*                                                                            */
 /*  It owns its own fetch, so neither caller has to hold vehicle state. Tabs   */
 /*  come from ./vehicleCategories (techSpecs.screenType, captured during admin */
-/*  onboarding). A card opens the spec popup; "Book Now" / "Book This Vehicle" */
-/*  goes to the existing vehicle details page, which still owns the booking    */
-/*  flow through to the campaign request form.                                 */
+/*  onboarding). A card, "View Details", and "Book Now" all navigate to the    */
+/*  vehicle details page, which owns the full spec display and booking flow    */
+/*  through to the campaign request form.                                      */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -34,7 +34,6 @@ import {
   STAGGER,
 } from "@/components/motion/motionTokens";
 
-import VehicleSpecModal from "./VehicleSpecModal";
 import {
   ALL_CATEGORY_ID,
   VEHICLE_CATEGORIES,
@@ -113,9 +112,6 @@ export default function VehicleListing({
      alone: on the homepage the GSAP scroll reveal owns that entrance, and
      running both would fight over the same opacity. */
   const [hasSwitchedCategory, setHasSwitchedCategory] = useState(false);
-
-  const [specVehicle, setSpecVehicle] =
-    useState<RoadshowVehicle | null>(null);
 
   const [openingVehicleId, setOpeningVehicleId] =
     useState<string | null>(null);
@@ -446,13 +442,13 @@ export default function VehicleListing({
                     style={
                       { "--rs-vl-i": index } as React.CSSProperties
                     }
-                    onClick={() => setSpecVehicle(vehicle)}
+                    onClick={() => openVehicleDetails(vehicle.id)}
                     role="button"
                     tabIndex={0}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        setSpecVehicle(vehicle);
+                        openVehicleDetails(vehicle.id);
                       }
                     }}
                   >
@@ -505,17 +501,9 @@ export default function VehicleListing({
                       <div className="RS_VehListActions">
                         <div onClick={(event) => event.stopPropagation()}>
                           <ButtonHover
-                            label="View Details"
-                            className="RS_VehicleButton RS_VehListSpecBtn"
-                            onClick={() => setSpecVehicle(vehicle)}
-                          />
-                        </div>
-
-                        <div onClick={(event) => event.stopPropagation()}>
-                          <ButtonHover
                             label="Book Now"
                             loadingLabel="Opening..."
-                            className="RS_VehicleButton RS_VehListBookBtn"
+                            className="RS_VehicleButton RS_VehListBookBtn RS_VehListBookBtn--solo"
                             loading={openingVehicleId === vehicle.id}
                             disabled={Boolean(openingVehicleId)}
                             onClick={() => openVehicleDetails(vehicle.id)}
@@ -523,6 +511,16 @@ export default function VehicleListing({
                         </div>
                       </div>
                     </div>
+
+                    {/* Rotating gradient ring, revealed on hover/focus — see
+                        .RS_VehListCardGlow in VehicleListing.css. Placed last
+                        so it paints OVER the image/body — otherwise their
+                        opaque backgrounds hide the ring everywhere except
+                        where the (background-less) card body sits. */}
+                    <span
+                      className="RS_VehListCardGlow"
+                      aria-hidden="true"
+                    />
                   </article>
                 );
               })}
@@ -562,16 +560,6 @@ export default function VehicleListing({
         )}
         </div>
       )}
-
-      <VehicleSpecModal
-        vehicle={specVehicle}
-        onClose={() => setSpecVehicle(null)}
-        onBook={(vehicleId) => {
-          setSpecVehicle(null);
-          openVehicleDetails(vehicleId);
-        }}
-        booking={Boolean(openingVehicleId)}
-      />
     </div>
   );
 }

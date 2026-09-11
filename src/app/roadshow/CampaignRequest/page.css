@@ -190,6 +190,12 @@
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   overscroll-behavior-inline: contain;
+  /* Without this, the browser's scroll anchoring "helpfully" re-adjusts
+     scrollLeft to keep whatever card was previously in view visually in
+     place whenever the row reorders (selected cards moving to the front) —
+     fighting the intentional scrollTo(0) reset in page.tsx and leaving the
+     newly-restored/selected card sliced off at the left edge. */
+  overflow-anchor: none;
 }
 
 .rdsw_crfProdDetailsScroller::-webkit-scrollbar {

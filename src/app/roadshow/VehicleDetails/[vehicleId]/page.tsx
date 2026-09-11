@@ -33,6 +33,11 @@ import {
   type RoadshowVehicle,
 } from "@/lib/roadshowVehicles";
 import { addToCart } from "@/lib/roadshowCart";
+import {
+  buildFlexRows,
+  buildSpecGroups,
+  isHybridScreenType,
+} from "@/lib/vehicleSpecGroups";
 
 /* P4 / P6 display-version descriptions (techSpecs.displayVersion) */
 const DISPLAY_VERSION_DESC: Record<string, string> = {
@@ -215,7 +220,15 @@ export default function VehicleDetailsPage() {
   const [redirectingToCampaign, setRedirectingToCampaign] =
     useState(false);
 
+  /* Only meaningful when the vehicle is hybrid — see isHybrid below. Reset
+     to LED whenever a different vehicle loads, same as the old spec popup. */
+  const [activeSpecTab, setActiveSpecTab] =
+    useState<"led" | "flex">("led");
+
   const loginModalOpenedRef = useRef(false);
+
+  const leftColumnRef = useRef<HTMLDivElement>(null);
+  const rightColumnRef = useRef<HTMLDivElement>(null);
 
   const loadVehicle = useCallback(async () => {
     if (!vehicleId) {
@@ -251,6 +264,80 @@ export default function VehicleDetailsPage() {
   useEffect(() => {
     loadVehicle();
   }, [loadVehicle]);
+
+  useEffect(() => {
+    setActiveSpecTab("led");
+  }, [vehicle?.id]);
+
+  /* Paired-column scrolling — same technique as CampaignRequest's form/
+     summary columns. Each column is sticky with a `top` derived from its
+     own measured height:
+
+       - Column SHORTER than the viewport -> top = TOP_GAP. It pins as soon
+         as it reaches the navbar and then waits, so the image doesn't leave
+         a block of dead whitespace while the details column scrolls on.
+
+       - Column TALLER than the viewport -> top = viewport - height - gap,
+         which is negative. Sticky then lets the column scroll all the way
+         through its own content first and only pins once its bottom edge
+         reaches the bottom of the viewport.
+
+     Net effect: whichever column is taller keeps scrolling while the
+     shorter one holds in place, and once both are exhausted (or neither
+     overflows the viewport — e.g. a short description with few specs) the
+     page just scrolls on as one, with no separate inner scrollbar. */
+  useEffect(() => {
+    const leftColumn = leftColumnRef.current;
+    const rightColumn = rightColumnRef.current;
+
+    if (!leftColumn || !rightColumn) return;
+
+    const TOP_GAP = 96;
+    const BOTTOM_GAP = 24;
+    const DESKTOP_MIN_WIDTH = 1024;
+
+    const applyStickyOffsets = () => {
+      const columns = [leftColumn, rightColumn];
+
+      /* Below lg the grid is a single column and the page just scrolls. */
+      if (window.innerWidth < DESKTOP_MIN_WIDTH) {
+        columns.forEach((column) => {
+          column.style.position = "";
+          column.style.top = "";
+        });
+
+        return;
+      }
+
+      columns.forEach((column) => {
+        const height = column.offsetHeight;
+        const viewportHeight = window.innerHeight;
+
+        const overflowsViewport = height + TOP_GAP + BOTTOM_GAP > viewportHeight;
+
+        const top = overflowsViewport ? viewportHeight - height - BOTTOM_GAP : TOP_GAP;
+
+        column.style.position = "sticky";
+        column.style.top = `${top}px`;
+      });
+    };
+
+    applyStickyOffsets();
+
+    /* Setting position/top does not change offsetHeight, so observing the
+       same elements we write to cannot feed back into itself. */
+    const resizeObserver = new ResizeObserver(applyStickyOffsets);
+
+    resizeObserver.observe(leftColumn);
+    resizeObserver.observe(rightColumn);
+
+    window.addEventListener("resize", applyStickyOffsets);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", applyStickyOffsets);
+    };
+  }, [vehicle]);
 
   useEffect(() => {
     if (!waitingForLogin) return;
@@ -370,6 +457,21 @@ export default function VehicleDetailsPage() {
     ];
   }, [vehicle]);
 
+  const specGroups = useMemo(
+    () => (vehicle ? buildSpecGroups(vehicle) : []),
+    [vehicle]
+  );
+
+  /* Saved Screen Type only — never Vehicle Type, title, or category. */
+  const isHybridVehicle = isHybridScreenType(
+    String(vehicle?.techSpecs?.screenType || "").trim()
+  );
+
+  const flexRows = useMemo(
+    () => (isHybridVehicle ? buildFlexRows(vehicle?.techSpecs) : []),
+    [isHybridVehicle, vehicle]
+  );
+
   const handleBookNow = () => {
     if (!vehicle || checkingLogin) return;
 
@@ -483,18 +585,13 @@ export default function VehicleDetailsPage() {
   return (
     <>
       <main className="min-h-screen bg-white text-black">
-        <section className="mx-auto grid max-w-355 grid-cols-1 gap-20 px-4 pb-14 pt-32 lg:grid-cols-[1.12fr_0.88fr]">
-          {/* Sticky on large screens only. The grid row is already as tall
-              as the (taller) details column on the right, because grid
-              items stretch to fill their row by default and nothing here
-              overrides that — that stretched height is exactly the room a
-              sticky child needs to pin near the top of the viewport and
-              travel with the scroll until the right column runs out,
-              instead of sitting at its own short height with empty grid
-              space below it. Do NOT add self-start/h-fit here: that would
-              shrink this cell back to its content height and remove the
-              room sticky needs. */}
-          <div className="lg:sticky lg:top-12">
+        <section className="mx-auto grid max-w-355 grid-cols-1 gap-20 px-4 pb-14 pt-32 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
+          {/* Paired-column scrolling (see the applyStickyOffsets effect
+              above): sticky position/top are set from JS, not a static
+              lg:sticky lg:top-*, because the correct offset depends on this
+              column's own measured height vs. the taller right column —
+              same technique as CampaignRequest's form/summary columns. */}
+          <div ref={leftColumnRef}>
             <h1 className="mb-5 text-[25px] font-bold">
               {vehicle.name}
             </h1>
@@ -555,7 +652,7 @@ export default function VehicleDetailsPage() {
             </div>
           </div>
 
-          <div className="pt-14">
+          <div ref={rightColumnRef} className="pt-14">
             <h2 className="text-[30px] font-bold">
               {vehicle.rate > 0 ? (
                 <>
@@ -603,6 +700,92 @@ export default function VehicleDetailsPage() {
                 </div>
               ))}
             </div>
+
+            {/* Full field-by-field spec breakdown — this used to live in a
+                separate "View Details" popup opened from the vehicle listing
+                card; it now renders directly here instead. */}
+            {(specGroups.length > 0 || isHybridVehicle) && (
+              <div className="mt-9">
+                <h3 className="mb-4 text-[24px] font-bold text-[#d70000]">
+                  Specifications
+                </h3>
+
+                {isHybridVehicle && (
+                  <div className="mb-5 flex gap-2 border-b border-[#e5e5e5]">
+                    <button
+                      type="button"
+                      onClick={() => setActiveSpecTab("led")}
+                      className={`px-4 py-2 text-[14px] font-semibold ${
+                        activeSpecTab === "led"
+                          ? "border-b-2 border-[#d70000] text-[#d70000]"
+                          : "text-[#666666]"
+                      }`}
+                    >
+                      LED
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveSpecTab("flex")}
+                      className={`px-4 py-2 text-[14px] font-semibold ${
+                        activeSpecTab === "flex"
+                          ? "border-b-2 border-[#d70000] text-[#d70000]"
+                          : "text-[#666666]"
+                      }`}
+                    >
+                      Flex Branding
+                    </button>
+                  </div>
+                )}
+
+                {isHybridVehicle && activeSpecTab === "flex" ? (
+                  flexRows.length === 0 ? (
+                    <p className="text-[13px] text-[#666666]">
+                      Flex branding dimensions for this vehicle are being
+                      updated. Please contact us for the full spec sheet.
+                    </p>
+                  ) : (
+                    <dl className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
+                      {flexRows.map((row) => (
+                        <div
+                          key={row.label}
+                          className="flex items-center justify-between border-b border-[#f0f0f0] pb-2 text-[13px]"
+                        >
+                          <dt className="text-[#666666]">{row.label}</dt>
+                          <dd className="font-semibold">{row.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )
+                ) : (
+                  specGroups.map((group) => (
+                    <div key={group.title} className="mb-6">
+                      <h4 className="mb-2 text-[16px] font-bold">
+                        {group.title}
+                      </h4>
+
+                      <dl className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
+                        {group.rows.map((row) => (
+                          <div
+                            key={row.label}
+                            className="flex items-center justify-between border-b border-[#f0f0f0] pb-2 text-[13px]"
+                          >
+                            <dt className="text-[#666666]">{row.label}</dt>
+                            <dd
+                              className={`font-semibold ${
+                                row.soldOut ? "text-[#d70000]" : ""
+                              }`}
+                            >
+                              {row.value}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
 
             <div className="mt-9">
               <h3 className="mb-2 text-[20px] font-bold text-[#d70000]">

@@ -226,7 +226,7 @@ export default function BookingSummaryDocument({
 }: BookingSummaryDocumentProps) {
   const first = data.vehicleTypes?.[0];
 
-  const campaignVehicle = (data.vehicleTypes || []).find(
+  const campaignVehicles = (data.vehicleTypes || []).filter(
     (vehicle) => vehicle.campaignName || vehicle.campaignType
   );
 
@@ -362,7 +362,7 @@ export default function BookingSummaryDocument({
       </div>
 
       {/* ══ CAMPAIGN DETAILS ══ */}
-      {campaignVehicle ? (
+      {campaignVehicles.length ? (
         <>
           <hr style={S.divider} />
           <div style={S.section}>
@@ -373,46 +373,59 @@ export default function BookingSummaryDocument({
               <span style={S.sectionTitle}>Campaign Details</span>
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
-              {campaignVehicle.campaignName ? (
-                <div style={S.campaignField}>
-                  <div style={S.fieldLabel}>Campaign</div>
-                  <div style={S.fieldValue}>{campaignVehicle.campaignName}</div>
-                </div>
-              ) : null}
-
-              {campaignVehicle.campaignType ? (
-                <div style={S.campaignField}>
-                  <div style={S.fieldLabel}>Campaign Type</div>
-                  <div style={S.fieldValue}>{campaignVehicle.campaignType}</div>
-                </div>
-              ) : null}
-
-              {campaignVehicle.campaignLocation ? (
-                <div style={S.campaignField}>
-                  <div style={S.fieldLabel}>Location</div>
-                  <div style={S.fieldValue}>{campaignVehicle.campaignLocation}</div>
-                </div>
-              ) : null}
-
-              {campaignVehicle.needPromoter ? (
-                <div style={S.campaignField}>
-                  <div style={S.fieldLabel}>Promoter</div>
-                  <div style={S.fieldValue}>
-                    {[
-                      campaignVehicle.promoterType,
-                      campaignVehicle.promoterGender,
-                      campaignVehicle.promoterLanguage?.length
-                        ? campaignVehicle.promoterLanguage.join(", ")
-                        : "",
-                      campaignVehicle.promoterQuantity ? `Qty ${campaignVehicle.promoterQuantity}` : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" · ") || "-"}
+            {campaignVehicles.map((campaignVehicle, index) => (
+              <div
+                key={index}
+                style={index > 0 ? { marginTop: "14px", paddingTop: "14px", borderTop: "1px dashed #d7d7db" } : undefined}
+              >
+                {campaignVehicles.length > 1 ? (
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#111114", marginBottom: "8px" }}>
+                    {vehicleName(campaignVehicle)}
                   </div>
+                ) : null}
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
+                  {campaignVehicle.campaignName ? (
+                    <div style={S.campaignField}>
+                      <div style={S.fieldLabel}>Campaign</div>
+                      <div style={S.fieldValue}>{campaignVehicle.campaignName}</div>
+                    </div>
+                  ) : null}
+
+                  {campaignVehicle.campaignType ? (
+                    <div style={S.campaignField}>
+                      <div style={S.fieldLabel}>Campaign Type</div>
+                      <div style={S.fieldValue}>{campaignVehicle.campaignType}</div>
+                    </div>
+                  ) : null}
+
+                  {campaignVehicle.campaignLocation ? (
+                    <div style={S.campaignField}>
+                      <div style={S.fieldLabel}>Location</div>
+                      <div style={S.fieldValue}>{campaignVehicle.campaignLocation}</div>
+                    </div>
+                  ) : null}
+
+                  {campaignVehicle.needPromoter ? (
+                    <div style={S.campaignField}>
+                      <div style={S.fieldLabel}>Promoter</div>
+                      <div style={S.fieldValue}>
+                        {[
+                          campaignVehicle.promoterType,
+                          campaignVehicle.promoterGender,
+                          campaignVehicle.promoterLanguage?.length
+                            ? campaignVehicle.promoterLanguage.join(", ")
+                            : "",
+                          campaignVehicle.promoterQuantity ? `Qty ${campaignVehicle.promoterQuantity}` : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "-"}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
+              </div>
+            ))}
           </div>
         </>
       ) : null}

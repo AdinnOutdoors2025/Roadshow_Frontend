@@ -1603,7 +1603,7 @@ export default function ImpactCtaBanner({
                   text-[#969088]
                 "
               >
-                Powerful roadshow advertising
+                Turn every stop into a brand opportunity
               </span>
             </p>
           </div>
@@ -1639,11 +1639,7 @@ export default function ImpactCtaBanner({
                 text-[#111111]
               "
             >
-              to amplify your brand
-
-              <br />
-
-              where it matters most
+              Take your message beyond screens
             </h2>
           </div>
         </div>
@@ -2202,7 +2198,7 @@ export default function ImpactCtaBanner({
                     text-[#969088]
                   "
                 >
-                  Powerful roadshow advertising
+                  Turn every stop into a brand opportunity
                 </span>
               </p>
             </div>
@@ -2244,11 +2240,7 @@ export default function ImpactCtaBanner({
                   sm:!text-[clamp(28px,3.7vw,37px)]
                 "
               >
-                to amplify your brand
-
-                <br />
-
-                where it matters most
+                Take your message beyond screens
               </h2>
             </div>
           </div>

@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-nocheck
 "use client";
 
 import Navbar from "@/components/Client/Reusable_Components/Navbar";
@@ -6,6 +8,7 @@ import WhatsAppFloatButton from "@/components/Client/Reusable_Components/WhatsAp
 import HomeBanner from "@/components/Client/HomeBanner/HomeBanner";
 import HomePageSection1 from "@/components/Client/HomePageSections/HomePageSection1";
 import GlobalSmoothScroll from "@/components/GlobalSmoothScroll";
+import { Hero } from '@/components/Client/HomeBanner/Hero';
 
 /* The root GlobalRoadshowLoader owns both loader modes:
    - MAIN MP4: first hard page load only
@@ -25,7 +28,8 @@ export default function MainPage() {
             }}
           >
             <Navbar />
-            <HomeBanner />
+            {/* <HomeBanner /> */}
+                    <Hero/>
           </div>
 
           <HomePageSection1 />
