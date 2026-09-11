@@ -1403,7 +1403,7 @@
    and centre the carousel arrows. --- */
 @media (max-width: 767px) {
   .OffersSection {
-    flex-direction: column;
+    /* flex-direction: column; */
   }
 
   .OffersHeadingMain {
@@ -1422,6 +1422,17 @@
     border-color: #ffffff;
     background: linear-gradient(98.03deg, #c71a38 6.31%, #700a1c 92.14%);
     transform: scale(1.06);
+  }
+
+  /* The Process section's content is currently commented out (see
+     Process.tsx), leaving an empty <section id="process"> whose
+     py-16 (mobile) / md:py-24 Tailwind padding shows up as a large
+     blank gap between Offers and the vehicle listing below. Desktop
+     already collapses this via lg:py-0; mirror that intent on phones
+     without touching the Tailwind classes on the element itself. */
+  #process {
+    padding-top: 24px;
+    padding-bottom: 24px;
   }
 }
 

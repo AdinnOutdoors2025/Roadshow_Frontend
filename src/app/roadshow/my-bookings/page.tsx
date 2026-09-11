@@ -340,7 +340,7 @@ function formatBookingDateTime(value?: string) {
   Cancelled remains local-only until a cancellation API exists.
 */
 
-function mapRequestStatus(status?: number): BookingStatus {
+export function mapRequestStatus(status?: number): BookingStatus {
   switch (Number(status ?? 0)) {
     case 1:
       return "In Progress";
@@ -362,7 +362,7 @@ function mapRequestStatus(status?: number): BookingStatus {
   emits (see journeyStageCopy.ts) — mapRequestStatus is kept only as a
   fallback for an unrecognized/missing stage key.
 */
-function mapJourneyStageToStatus(
+export function mapJourneyStageToStatus(
   journeyStageKey: string | undefined,
   onRoad: OnRoadDay | null | undefined,
   fallbackStatus?: number,
@@ -652,7 +652,7 @@ function getStageMeta(booking: Booking) {
   );
 }
 
-function getBookingStatusLabel(booking: Booking) {
+export function getBookingStatusLabel(booking: Booking) {
   const stageMeta = getStageMeta(booking);
 
   return (
@@ -661,7 +661,7 @@ function getBookingStatusLabel(booking: Booking) {
   );
 }
 
-function getCampaignProgress(booking: Booking): number | null {
+export function getCampaignProgress(booking: Booking): number | null {
   if (booking.onRoad?.totalDays) {
     const day = Math.max(
       0,
@@ -691,7 +691,7 @@ function canTrackCampaign(booking: Booking) {
   );
 }
 
-function getExpandedVehicles(booking: Booking) {
+export function getExpandedVehicles(booking: Booking) {
   const items: Array<{ label: string; name: string; image: string | null }> =
     [];
 

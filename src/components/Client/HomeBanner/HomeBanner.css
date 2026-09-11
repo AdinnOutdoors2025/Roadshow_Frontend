@@ -302,6 +302,7 @@
 
     .HomeBannerSubImgBtn.active {
         outline-color: #7057c3;
+        outline-offset: 1px;
         transform: translateY(-4px) scale(1.06);
     }
 }

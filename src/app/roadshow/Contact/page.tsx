@@ -226,8 +226,8 @@ const FIELD_LIMITS = {
   message: 1000,
 };
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const CONTACT_PATTERN = /^[0-9+\-\s()]{8,15}$/;
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const CONTACT_PATTERN = /^[0-9+\-\s()]{8,15}$/;
 
 /* =========================================================
    HELPERS

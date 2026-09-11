@@ -4,6 +4,7 @@
 // behavior and static page rendering).
 
 import { test, expect } from "@playwright/test";
+import { waitForMainLoaderGone } from "../../e2e/helpers";
 
 test.describe("user-auth module smoke", () => {
   // Forced serial within this file only (does not touch the shared
@@ -79,7 +80,9 @@ test.describe("user-auth module smoke", () => {
 
   test("navigating between signin and signup via the footer links works", async ({ page }) => {
     await page.goto("/user-auth/signin");
+    await waitForMainLoaderGone(page);
     await page.getByRole("link", { name: /sign up/i }).click();
+    await waitForMainLoaderGone(page); // loader overlay can swallow the return-click on the fresh page
     await page.waitForURL("**/user-auth/signup");
     await expect(page.getByRole("heading", { name: "Create Account" })).toBeVisible();
 

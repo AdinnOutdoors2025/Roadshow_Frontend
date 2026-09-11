@@ -90,7 +90,7 @@ export default function VehicleListStep({ vehicles, onChange, onNext, onBack, se
           </span>
           <div className="text-center">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-300">No vehicles added</p>
-            <p className="text-xs text-gray-400 mt-0.5">Click "Add Vehicle" to configure the first vehicle</p>
+            <p className="text-xs text-gray-400 mt-0.5">Click &quot;Add Vehicle&quot; to configure the first vehicle</p>
           </div>
           <button onClick={openAdd} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
             <HiOutlinePlus className="h-4 w-4 stroke-2" />

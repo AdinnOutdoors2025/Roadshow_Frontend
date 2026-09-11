@@ -87,7 +87,7 @@ function defaultForm(): Omit<VehicleConfig, "id"> {
 }
 
 
-function calcPricing(
+export function calcPricing(
   pkg: PackageOption,
   fromDate: string,
   toDate: string,

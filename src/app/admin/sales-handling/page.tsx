@@ -157,7 +157,7 @@ const IMAGE_MIMES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const IMAGE_MAX_MB = 5;
 const DOC_MAX_MB = 10;
 
-const validateFileSize = (file: File): string | null => {
+export const validateFileSize = (file: File): string | null => {
   const isImage = IMAGE_MIMES.includes(file.type);
   const maxMB = isImage ? IMAGE_MAX_MB : DOC_MAX_MB;
   const fileMB = file.size / (1024 * 1024);

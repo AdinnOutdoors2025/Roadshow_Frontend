@@ -204,7 +204,14 @@ async function renderSummaryDoc(data: BookingSummaryPdfData) {
  *  that want the file saved directly rather than previewed first. */
 export async function downloadBookingSummaryPdf(data: BookingSummaryPdfData) {
   const doc = await renderSummaryDoc(data);
-  doc.save(`Booking_Summary_${data.clientOrderId}.pdf`);
+  const fileName = `Booking_Summary_${data.clientOrderId}.pdf`;
+  const blobUrl = doc.output("bloburl") as unknown as string;
+  const anchor = document.createElement("a");
+  anchor.href = blobUrl;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
 }
 
 /** Blob URL for inline preview (the "View Summary PDF" page embeds this

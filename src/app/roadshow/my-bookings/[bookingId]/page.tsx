@@ -138,7 +138,7 @@ function formatDateTime(value?: string | null) {
   }).format(date);
 }
 
-function relativeTime(value?: string | null) {
+export function relativeTime(value?: string | null) {
   if (!value) return "No update yet";
 
   const date = new Date(value);
@@ -208,7 +208,7 @@ function reportStatusClass(status?: string) {
   return `RST_ReportStatus--${status || "not_reported"}`;
 }
 
-function isFutureCampaignDay(value?: string | null) {
+export function isFutureCampaignDay(value?: string | null) {
   if (!value) return false;
 
   const dayKey = String(value).slice(0, 10);
@@ -217,7 +217,7 @@ function isFutureCampaignDay(value?: string | null) {
   return Boolean(dayKey && dayKey > todayKey);
 }
 
-function getCampaignProgress(data: any): number | null {
+export function getCampaignProgress(data: any): number | null {
   if (data?.isCancelled) return 0;
 
   if (data?.journeyStage?.key === "completed") return 100;
