@@ -462,10 +462,16 @@
 ================================ */
 .RS_NewMenu {
     position: fixed;
+    /* top/right here are only a same-frame fallback for the instant before
+       Navbar.tsx's layout effect measures the account button and sets an
+       exact inline top/right (which always wins over these, on width
+       >=768px) — see the menuPos state and its useLayoutEffect in
+       Navbar.tsx. A flat percentage can't itself track the button's real
+       position, since the header's width changes both per breakpoint AND
+       continuously while scrolling (the GSAP hero->docked stage
+       animation) — measuring the actual DOM position is what handles
+       both at once instead of needing a right% tuned per breakpoint. */
     top: 105px;
-    /* Percentage, not a fixed px offset, so this tracks the profile button's
-       rough position as the viewport width changes instead of only being
-       correct at one width. */
     right: 20%;
     width: 340px;
     padding: 18px;
@@ -844,13 +850,6 @@
         font-size: 14.5px;
     }
 
-    /* Header stays at its base 60% width in this band (no override above),
-       so the account button sits further in from the edge than at
-       1024-1280px (where the header widens to 80%) — a bit more than the
-       base 20% keeps the dropdown under the button here. */
-    .RS_NewMenu {
-        right: 22%;
-    }
 }
 
 @media(min-width:1024px) and (max-width:1280px) {
@@ -871,12 +870,6 @@
         font-size: 13.5px;
     }
 
-    /* Header widens to 80% of viewport in this band, so the account button
-       sits closer to the edge than at wider breakpoints — a smaller
-       right% than the base 20% keeps the dropdown tracking under it. */
-    .RS_NewMenu {
-        right: 15%;
-    }
 }
 
 

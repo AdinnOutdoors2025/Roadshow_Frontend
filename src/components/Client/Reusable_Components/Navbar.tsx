@@ -256,6 +256,13 @@ export default function Navbar() {
     activeHash,
     setActiveHash
   ] = useState("");
+  /* Measured from the account button's real on-screen position rather than
+     a fixed/percentage CSS value — a static right:X% can only ever be
+     correct for one header width, and the header's width itself changes
+     both per breakpoint AND continuously while scrolling (the GSAP
+     hero->docked stage animation). Measuring the button directly is the
+     only way this tracks correctly through both axes at once. */
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const navbarRef =
     useRef<HTMLElement | null>(null);
   const dropdownRef =
@@ -469,6 +476,44 @@ export default function Navbar() {
       ctx.revert();
     };
   }, [mounted]);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const MENU_GAP = 45; // value increase top gap decrease 
+    const updateMenuPosition = () => {
+      // Below 768px the menu uses its own deliberate full-width mobile
+      // layout (left/right/width all set in CSS) — a measured `right`
+      // here would fight that, so leave menuPos null and let the CSS
+      // media query own positioning entirely on small screens.
+      if (window.innerWidth < 768) {
+        setMenuPos(null);
+        return;
+      }
+      const btn = accountBtnRef.current;
+      if (!btn) return;
+      const rect = btn.getBoundingClientRect();
+      // +20% on both: the exact button-flush values read as too tight/
+      // congested against the header (menu nearly touching it, sitting
+      // hard against the header's right edge) — a uniform 20% bump on
+      // each gives it breathing room on both axes, same formula at every
+      // screen size since both are derived from the button's own measured
+      // position rather than a per-breakpoint constant.
+      const SPACING_SCALE = 0.9; // value decrease top gap decrease
+      setMenuPos({
+        top: (rect.bottom + MENU_GAP) * SPACING_SCALE,
+        right: (window.innerWidth - rect.right) * SPACING_SCALE,
+      });
+    };
+    updateMenuPosition();
+    // Covers both a window resize and the GSAP dock animation shrinking/
+    // moving the header while the menu happens to still be open — neither
+    // fires a "resize" event, so re-measure on a plain scroll too.
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, { passive: true });
+    return () => {
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition);
+    };
+  }, [open]);
   useEffect(() => {
     if (!open) return;
     const handleOutsideClick = (event: MouseEvent) => {
@@ -694,6 +739,11 @@ export default function Navbar() {
             ref={dropdownRef}
             className="RS_NewMenu"
             data-theme={NAV_LIGHT_THEME ? "light" : "dark"}
+            style={
+              menuPos
+                ? { top: menuPos.top, right: menuPos.right }
+                : undefined
+            }
             variants={menuPanelVariants}
             initial="hidden"
             animate="visible"

@@ -92,6 +92,31 @@ profile avatar gradient, the bubbles, the cart badge) — those were
 deliberately left alone when the nav links switched palette, so don't fold
 the two variable pairs back into one without checking that's actually wanted.
 
+## Account dropdown positioning
+
+`.RS_NewMenu` (the account dropdown) is a DOM **sibling** of `<header>` — it's
+rendered by its own `AnimatePresence`/`open` block, not nested inside
+`.RS_NewHeader` — so it can't inherit header layout via descendant selectors
+and can't be positioned relative to the header in CSS alone.
+
+Position is measured, not guessed: a `useLayoutEffect` keyed on `open` reads
+`accountBtnRef.current.getBoundingClientRect()` and sets `menuPos` state
+(`{ top, right }`), applied as an inline `style` on the menu — which always
+wins over the CSS class for the same properties. Re-measured on `resize` and
+on `scroll` (the GSAP hero→docked stage animation changes the header's,
+and so the button's, width/position purely via scroll, which fires no
+`resize` event). Below 768px `menuPos` is intentionally left `null` so the
+mobile CSS override (`left/right/width` all set) owns positioning
+untouched.
+
+This replaced an earlier approach of hand-tuning `right: X%` per breakpoint
+in CSS (20% base, 15% for 1024-1280px, 22% for 1281-1439px) — those were
+guesses at where the button *should* be for a given viewport width, and
+could never account for the header's width also changing continuously
+while scrolling. Measuring the real DOM position handles both at once, so
+don't reintroduce per-breakpoint `right:%` tuning for this element — fix
+the measurement/gap constant in Navbar.tsx instead if the position is off.
+
 ## Route-scoped inactive-tab gradient border
 
 `Navbar.tsx` computes `isInnerPage` from `usePathname()` and stamps
