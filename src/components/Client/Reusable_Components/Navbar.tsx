@@ -693,6 +693,7 @@ export default function Navbar() {
           <motion.aside
             ref={dropdownRef}
             className="RS_NewMenu"
+            data-theme={NAV_LIGHT_THEME ? "light" : "dark"}
             variants={menuPanelVariants}
             initial="hidden"
             animate="visible"
@@ -752,6 +753,7 @@ export default function Navbar() {
                     className="RS_MenuDivider"
                     variants={menuItemVariants}
                   />
+
                   <motion.button
                     className="RS_MenuAction RS_MenuLogout"
                     variants={menuItemVariants}
