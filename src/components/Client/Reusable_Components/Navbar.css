@@ -277,7 +277,7 @@
 .RS_TabItem:focus-visible::before {
     background: linear-gradient(135deg, rgba(227, 0, 15, .3), rgba(28, 28, 28, .32));
     border-color: rgba(255, 255, 255, .28);
-    box-shadow: 0 6px 16px rgba(227, 0, 15, .22);
+    /* box-shadow: 0 6px 16px rgba(227, 0, 15, .22); */
 }
 
 .RS_TabItem--active {
@@ -314,7 +314,7 @@
 
 .RS_NewHeader[data-theme="light"] .RS_TabItem:hover,
 .RS_NewHeader[data-theme="light"] .RS_TabItem:focus-visible {
-    color: #171b23;
+    /* color: #171b23; */
 }
 
 .RS_NewHeader[data-theme="light"] .RS_TabItem::before {
@@ -328,7 +328,7 @@
 .RS_NewHeader[data-theme="light"] .RS_TabItem:focus-visible::before {
     background: linear-gradient(135deg, rgba(227, 0, 15, .16), rgba(28, 28, 28, .1));
     border-color: rgba(227, 0, 15, .35);
-    box-shadow: 0 6px 14px rgba(227, 0, 15, .16);
+    /* box-shadow: 0 6px 14px rgba(227, 0, 15, .16); */
 }
 
 .RS_NewHeader[data-theme="light"] .RS_TabItem--active {
@@ -426,14 +426,14 @@
 .RS_NewHeader[data-theme="light"] .RS_ProfileBtn {
     background: linear-gradient(135deg, rgba(227, 0, 15, .8), rgba(28, 28, 28, .8));
     color: #fff;
-    box-shadow: 0 8px 16px rgba(227, 0, 15, .25);
+    box-shadow: 0 3px 7px rgba(227, 0, 15, .25);
 }
 
 .RS_NewHeader[data-theme="light"] .RS_ProfileBtn:hover,
 .RS_NewHeader[data-theme="light"] .RS_ProfileBtn.active {
     background: linear-gradient(135deg, rgba(227, 0, 15, .92), rgba(28, 28, 28, .92));
     color: #fff;
-    box-shadow: 0 8px 20px rgba(227, 0, 15, .35);
+    box-shadow: 0 5px 10px rgba(227, 0, 15, .35);
 }
 
 .RS_CartBadge--dark {
@@ -835,15 +835,10 @@
 .RS_TabItem--active .RS_TabPill{
 
 
-    border:
-
-    1px solid transparent;
+    border: 1px solid transparent;
 
 
-    background:
-
-
-    linear-gradient(
+    background: linear-gradient(
         135deg,
         var(--rs-nav-red),
         var(--rs-nav-black)
@@ -894,17 +889,8 @@
    look regardless of theme. */
 
 .RS_NewHeader:not([data-theme="light"]) .RS_TabItem:not(.RS_TabItem--active):not(:hover):not(:focus-visible)::before{
-
-
-border:
-
-1px solid rgba(255,255,255,.12);
-
-
-background:
-
-rgba(255,255,255,.04);
-
+border: 1px solid rgba(255,255,255,.12);
+background:rgba(255,255,255,.04);
 
 }
 
@@ -913,41 +899,27 @@ rgba(255,255,255,.04);
    gradient border for inactive tabs, at rest — both corners red, a clearly
    visible black band across the middle, glassy translucent fill underneath.
 
-   padding-box/border-box double background: the first layer paints the fill
-   inside the border, the second paints the border area itself, so `border`
-   can read as a gradient without `border-image` (which ignores
-   border-radius and would square off this shape's rounded/skewed corners).
+   Uses a class (.RS_TabItem--inner) on each tab item instead of the
+   data-innerpage attribute on the ancestor <header>, which avoided a
+   Chromium compositing bug where ::before pseudo-elements wouldn't repaint
+   when ancestor attributes changed via client-side navigation.
 
-   !important: hover on this same element demonstrably paints its own
-   ::before fine (the hover-fill rule works), which rules out a rendering
-   problem with this pseudo-element in general — so the resting state not
-   showing despite this rule's selector matching (verified: isInnerPage is
-   true in the compiled JS, and this rule ties in specificity with, but is
-   declared after, the dark-glass rule above) points at something about the
-   cascade resolution here that isn't matching the on-paper analysis.
-   !important sidesteps that uncertainty rather than continuing to guess at
-   its cause — safe here because :not(:hover):not(:focus-visible) already
-   keeps this selector from ever matching during hover/focus, so it can't
-   leak into and override those states.
+   Split across two pseudo-elements, same division of labor as
+   .RS_NewHeader::before/::after above: ::before paints only the glassy fill,
+   ::after paints the gradient ring via webkit-mask (padded pseudo-element,
+   masked down to its outer band with mask-composite) instead of the
+   border-box/padding-box double-background trick this used previously. The
+   mask ring stays crisp on this shape's skewed/rounded corners the same way
+   it already does on the header capsule, rather than relying on
+   background-clip: border-box, which is more prone to antialiasing seams at
+   a skew.
 
    Explicit percentage stops (not evenly-spaced red/black/red) so black gets
    a real ~30%-wide band across the middle instead of vanishing to a single
    point on a ring this thin. */
-.RS_NewHeader[data-innerpage="true"] .RS_TabItem:not(.RS_TabItem--active):not(:hover):not(:focus-visible)::before {
-    /* Exact shorthand form the user specified directly (matching a tested
-       reference button) — no separate background-color declaration this
-       time. A standalone background-color would get clipped using the last
-       background-clip box (border-box) and paint under the whole element,
-       not just the padding-box fill layer's area; leaving it out avoids
-       that extra, unintended full-box layer. */
+.RS_TabItem.RS_TabItem--inner:not(.RS_TabItem--active):not(:hover):not(:focus-visible)::before {
     border: 1px solid transparent !important;
-    background:
-        linear-gradient(#ffffff0a, #ffffff0a) padding-box,
-        linear-gradient(120deg,
-            var(--rs-nav-red) 0%,
-            var(--rs-nav-black) 35%,
-            var(--rs-nav-black) 65%,
-            var(--rs-nav-red) 100%) border-box !important;
+    background: linear-gradient(#ffffff0a, #ffffff0a) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     /* Confirmed via DevTools: this rule computes correctly the whole time
@@ -962,6 +934,32 @@ rgba(255,255,255,.04);
        transform as the shape's skew (transform isn't additive across
        rules — this replaces, not adds to, the base rule's skewX). */
     transform: skewX(-16deg) translateZ(0);
+}
+
+.RS_TabItem.RS_TabItem--inner:not(.RS_TabItem--active):not(:hover):not(:focus-visible)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: 10px;
+    padding: 2px;
+    background: linear-gradient(120deg,
+            var(--rs-nav-red) 0%,
+            var(--rs-nav-black) 35%,
+            var(--rs-nav-black) 65%,
+            var(--rs-nav-red) 100%);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    /* Same repaint fix and shape-matching skew as the ::before fill above —
+       this ring must stay pinned to the same skewed shape. */
+    transform: skewX(-16deg) translateZ(0);
+    pointer-events: none;
 }
 
 

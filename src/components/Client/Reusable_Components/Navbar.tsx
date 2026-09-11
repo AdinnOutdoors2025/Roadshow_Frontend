@@ -17,11 +17,7 @@ import "./Navbar.css";
 type NavLinkItem = {
   label: string;
   href: string;
-  icon:
-  | "home"
-  | "spark"
-  | "vehicle"
-  | "contact";
+  icon: | "home" | "spark" | "vehicle" | "contact";
 };
 const navLinks: NavLinkItem[] = [
   {
@@ -49,8 +45,8 @@ const PROFILE_PATH = "/roadshow/profile";
 // Navbar skin toggle: true = light/frosted pill, false = dark glass pill.
 // Same markup and behavior either way — this only switches which CSS theme
 // attribute the header renders with (see [data-theme] rules in Navbar.css).
-// const NAV_LIGHT_THEME = true;
-const NAV_LIGHT_THEME = false;
+// const NAV_LIGHT_THEME = true; // for white theme
+const NAV_LIGHT_THEME = false; // for black theme
 
 // Scroll positions (px) at which the header steps to stage 1 and stage 2 —
 // two discrete thresholds, not a continuous scrub range (see the effect
@@ -144,22 +140,7 @@ function NavGlyph({
     </svg>
   );
 }
-type MenuGlyphName =
-  "user"
-  |
-  "mail"
-  |
-  "phone"
-  |
-  "cart"
-  |
-  "history"
-  |
-  "signin"
-  |
-  "signup"
-  |
-  "signout";
+type MenuGlyphName = "user" | "mail" | "phone" | "cart" | "history" |"signin" | "signup" | "signout";
 function MenuGlyph({
   name,
 }: {
@@ -637,7 +618,7 @@ export default function Navbar() {
                       "RS_TabItem--active"
                       :
                       ""
-                      }`}
+                      } ${isInnerPage ? "RS_TabItem--inner" : ""}`}
                   >
                     {
                       isActive(item.href) &&
