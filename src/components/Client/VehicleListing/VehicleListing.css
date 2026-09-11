@@ -646,9 +646,9 @@ background: black;
 }
 
 .RS_VehListActions {
-  display: flex;
+  /* display: flex; */
   align-items: center;
-  gap: 10px;
+  /* gap: 10px; */
 }
 
 /* Base look (rest state) only — the cursor-bleed hover interaction and
@@ -1098,7 +1098,7 @@ background: black;
   }
 
   .RS_VehListActions {
-    flex-wrap: wrap;
+    /* flex-wrap: wrap; */
   }
 
   .RS_VehListSpecBtn,

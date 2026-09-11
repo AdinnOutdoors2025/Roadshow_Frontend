@@ -166,11 +166,11 @@ function HomeBanner() {
                             
                 {/* Heading — reveals word by word, each rising from behind a mask */}
                 <SplitHeading className="HomeBannerText" enabled={ready}>
-                    Take{" "}
+                    Why{" "}
                     <span className="HomeBannerTextSpan">
-                        Your Brand
+                        Wait For People
                     </span>{" "}
-                    to the Streets
+                    To Find You?
                 </SplitHeading>
 
                 {/* Sub-text image */}

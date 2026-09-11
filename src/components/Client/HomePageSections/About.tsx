@@ -6,9 +6,7 @@ import {
   Award,
   MapPin,
   Megaphone,
-  Paintbrush,
   Route as RouteIcon,
-  ShieldCheck,
   UsersRound,
 } from "lucide-react";
 
@@ -33,19 +31,9 @@ const features = [
     icon: UsersRound,
   },
   {
-    title: "RTO certified roadshow vehicles",
-    desc: "Fully compliant, safe & road-ready vehicles for seamless campaigns.",
-    icon: ShieldCheck,
-  },
-  {
     title: "Live GPS execution monitoring",
     desc: "Real-time tracking and live updates for complete transparency.",
     icon: MapPin,
-  },
-  {
-    title: "Custom branding & route planning",
-    desc: "Eye-catching branding and optimized routes for maximum visibility.",
-    icon: Paintbrush,
   },
 ];
 
@@ -647,7 +635,7 @@ export function About() {
                 lg:text-[56px]
               "
             >
-              Turn Every Road Into Your Stage
+              Put Your Brand In The Middle Of The Action.
             </h2>
 
             {/* =================================================

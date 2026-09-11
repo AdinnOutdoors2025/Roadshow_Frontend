@@ -4,8 +4,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useCartCount } from "@/hooks/useCartCount";
 import { navigateAfterRoadshowLoader } from "@/components/GlobalRoadshowLoader";
@@ -43,14 +46,62 @@ const navLinks: NavLinkItem[] = [
   },
 ];
 const PROFILE_PATH = "/roadshow/profile";
+// Navbar skin toggle: true = light/frosted pill, false = dark glass pill.
+// Same markup and behavior either way — this only switches which CSS theme
+// attribute the header renders with (see [data-theme] rules in Navbar.css).
+// const NAV_LIGHT_THEME = true;
+const NAV_LIGHT_THEME = false;
+
+// Scroll positions (px) at which the header steps to stage 1 and stage 2 —
+// two discrete thresholds, not a continuous scrub range (see the effect
+// below for why).
+const DOCK_THRESHOLD_1 = 100;
+const DOCK_THRESHOLD_2 = 280;
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+const menuPanelVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.85,
+    y: -14,
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 320,
+      damping: 26,
+      staggerChildren: 0.05,
+      delayChildren: 0.05,
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.9,
+    y: -10,
+    transition: { duration: 0.15, ease: "easeIn" },
+  },
+};
+const menuItemVariants = {
+  hidden: { opacity: 0, y: -10, scale: 0.92 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: "spring", stiffness: 380, damping: 24 },
+  },
+};
 function NavGlyph({
   name,
 }: {
   name: NavLinkItem["icon"];
 }) {
   const props = {
-    width: 21,
-    height: 21,
+    width: 18,
+    height: 18,
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
@@ -171,17 +222,20 @@ function MenuGlyph({
     </svg>
   );
 }
-function MenuIcon({
-  close = false
-}: {
-  close?: boolean;
-}) {
+function SearchGlyph() {
   return (
-    <span className={`RS_MenuMorph ${close ? "RS_MenuMorph--open" : ""}`}>
-      <span />
-      <span />
-      <span />
-    </span>
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20.5 20.5-4-4" />
+    </svg>
+  );
+}
+function ProfileGlyph() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8.2" r="3.4" />
+      <path d="M4.8 20c1.1-4 4-6 7.2-6s6.1 2 7.2 6" />
+    </svg>
   );
 }
 const formatPhoneWithCode = (phone?: string) => {
@@ -221,16 +275,14 @@ export default function Navbar() {
     activeHash,
     setActiveHash
   ] = useState("");
-  const [
-    scrollStage,
-    setScrollStage
-  ] = useState(0);
   const navbarRef =
     useRef<HTMLElement | null>(null);
   const dropdownRef =
     useRef<HTMLElement | null>(null);
-  const scrollStageRef =
-    useRef(0);
+  const logoRef =
+    useRef<HTMLImageElement | null>(null);
+  const accountBtnRef =
+    useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -256,58 +308,184 @@ export default function Navbar() {
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
-  /*
-   Smooth stages:
-   0 Normal
-   1 Floating
-   2 Compact width
-   3 Reduced spacing
-   4 Text collapse
-   5 Icon pill
-  */
+  // First-paint entrance: logo + tabs flip in from a 3D tilt with a
+  // staggered bounce, instead of just sitting there static until hover.
   useEffect(() => {
-    if (!mounted)
-      return;
-    let rafId: number | null = null;
-    const updateNavbar = () => {
-      const y = window.scrollY;
-      let stage = 0;
-      if (y > 100) stage = 1;
-      if (y > 280) stage = 2;
-      if (y > 500) stage = 3;
-      if (y > 750) stage = 4;
-      if (y > 1100) stage = 5;
-      if (stage !== scrollStageRef.current) {
-        scrollStageRef.current = stage;
-        setScrollStage(stage);
-      }
-      rafId = null;
-    };
-    const handleScroll = () => {
-      if (rafId !== null)
-        return;
-      rafId = requestAnimationFrame(
-        updateNavbar
-      );
-    };
-    updateNavbar();
-    window.addEventListener(
-      "scroll",
-      handleScroll,
-      {
-        passive: true
-      }
-    );
-    return () => {
-      window.removeEventListener(
-        "scroll",
-        handleScroll
-      );
-      if (rafId !== null) {
-        cancelAnimationFrame(
-          rafId
+    if (!mounted) return;
+    const items = gsap.utils.toArray<HTMLElement>(".RS_TabItem");
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        defaults: { ease: "back.out(1.8)" },
+      });
+      tl.from(".RS_NewBrand", {
+        opacity: 0,
+        y: -18,
+        scale: 0.75,
+        duration: 0.55,
+      })
+        .from(
+          items,
+          {
+            opacity: 0,
+            y: -26,
+            scale: 0.4,
+            rotateX: -70,
+            stagger: 0.08,
+            duration: 0.55,
+          },
+          "-=0.3"
+        )
+        .from(
+          ".RS_IconBtn",
+          {
+            opacity: 0,
+            scale: 0.4,
+            rotate: -120,
+            stagger: 0.06,
+            duration: 0.5,
+          },
+          "-=0.35"
         );
-      }
+      // Idle float on the logo so the resting header stays alive.
+      gsap.to(".RS_NewBrand", {
+        y: -4,
+        duration: 2.4,
+        ease: "sine.inOut",
+        yoyo: true,
+        repeat: -1,
+        delay: tl.duration(),
+      });
+    });
+    return () => ctx.revert();
+  }, [mounted]);
+  // Three-stage dock: triggered once at each of two scroll thresholds,
+  // rather than scrubbed continuously. Continuously tweening width/height/top
+  // on every scroll frame forces a layout reflow 60x/sec on top of whatever
+  // ScrollSmoother is already doing each frame — that's what read as
+  // "shaking" earlier. Each onEnter/onLeaveBack-triggered tween only touches
+  // layout for its own ~0.5s, not for the whole scroll range. Horizontal
+  // centering stays owned entirely by the CSS `left: 50%` +
+  // `transform: translate(-50%, 0)` on .RS_NewHeader — this never touches
+  // `transform`, so it can't fight that.
+  //   Stage 0 (top of page):        60% wide,  82px tall, 26px radius
+  //   Stage 1 (past DOCK_THRESHOLD_1): 58% wide, 82px tall, 30px radius
+  //   Stage 2 (past DOCK_THRESHOLD_2): 50% wide, 64px tall, 30px radius
+  // Scrolling back up reverses through the same stages; scrolling further
+  // past stage 2 does nothing more — there is no third threshold.
+  useLayoutEffect(() => {
+    if (!mounted) return;
+    const header = navbarRef.current;
+    if (!header) return;
+    // Below this width the header is a small fixed pill defined entirely by
+    // CSS (see the max-width:767px block in Navbar.css) — there's no room
+    // for a full hero-sized nav to shrink from, so skip this entirely.
+    if (window.innerWidth < 768) return;
+    const shadowStage0 = NAV_LIGHT_THEME
+      ? "0 12px 30px rgba(15, 23, 42, .1)"
+      : "0 16px 40px rgba(0, 0, 0, .28)";
+    const shadowStage1 = NAV_LIGHT_THEME
+      ? "0 16px 40px rgba(15, 23, 42, .13)"
+      : "0 18px 46px rgba(0, 0, 0, .32)";
+    const shadowStage2 = NAV_LIGHT_THEME
+      ? "0 20px 50px rgba(15, 23, 42, .16)"
+      : "0 20px 55px rgba(0, 0, 0, .38)";
+    // Below 1440px, 60/58/50% leaves too little room for the logo + 4 tabs +
+    // icons at that narrower absolute pixel width (e.g. 50% of 1024px is only
+    // ~512px) — the pill isn't actually broken, it's just too cramped for its
+    // own content. Widen the percentages in that band only; >=1440px keeps
+    // the exact 60/58/50% from before, untouched. Recomputed from
+    // window.innerWidth on every resize (not just once at mount) so it stays
+    // correct if the viewport is resized live (e.g. dragging the browser
+    // window or a DevTools responsive-mode resize) rather than reloaded.
+    const buildStages = (vw: number) => {
+      const isNarrowDesktop = vw < 1440;
+      return {
+        stage0: {
+          top: 14,
+          width: isNarrowDesktop ? vw * 0.7 : Math.min(1180, vw * 0.6),
+          height: 82,
+          borderRadius: 26,
+          boxShadow: shadowStage0,
+        },
+        stage1: {
+          top: 15,
+          width: isNarrowDesktop ? vw * 0.66 : Math.min(1140, vw * 0.58),
+          height: 82,
+          borderRadius: 30,
+          boxShadow: shadowStage1,
+        },
+        stage2: {
+          top: 16,
+          width: isNarrowDesktop ? vw * 0.6 : Math.min(980, vw * 0.5),
+          height: 64,
+          borderRadius: 30,
+          boxShadow: shadowStage2,
+        },
+      };
+    };
+    const stage0Logo = { width: 150, height: 42 };
+    const stage2Logo = { width: 118, height: 33 };
+    let stages = buildStages(window.innerWidth);
+    let currentStage: 0 | 1 | 2 = 0;
+    const ctx = gsap.context(() => {
+      // Slower, gentler than a snappy power3.out: power2.inOut eases in and
+      // out symmetrically (no sudden start/stop), and a longer duration
+      // makes the width/border-radius change read as a smooth glide instead
+      // of a quick snap.
+      const animateHeader = (state: object) =>
+        gsap.to(header, { ...state, duration: 1.1, ease: "power2.inOut", overwrite: "auto" });
+      const animateLogo = (state: object) => {
+        if (logoRef.current) {
+          gsap.to(logoRef.current, { ...state, duration: 1.1, ease: "power2.inOut", overwrite: "auto" });
+        }
+      };
+      ScrollTrigger.create({
+        trigger: document.body,
+        start: `${DOCK_THRESHOLD_1} top`,
+        onEnter: () => {
+          currentStage = 1;
+          animateHeader(stages.stage1);
+        },
+        onLeaveBack: () => {
+          currentStage = 0;
+          animateHeader(stages.stage0);
+          animateLogo(stage0Logo);
+        },
+      });
+      ScrollTrigger.create({
+        trigger: document.body,
+        start: `${DOCK_THRESHOLD_2} top`,
+        onEnter: () => {
+          currentStage = 2;
+          animateHeader(stages.stage2);
+          animateLogo(stage2Logo);
+        },
+        onLeaveBack: () => {
+          currentStage = 1;
+          animateHeader(stages.stage1);
+          animateLogo(stage0Logo);
+        },
+      });
+    });
+    // Kept outside gsap.context deliberately — a value returned from the
+    // context callback is not treated as a cleanup hook (that's a React
+    // convention, not something gsap.context does), so the listener is
+    // attached/removed directly on the effect's own lifecycle instead.
+    let resizeTimer: number | undefined;
+    const handleResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        if (window.innerWidth < 768) return;
+        stages = buildStages(window.innerWidth);
+        const stageKey = (["stage0", "stage1", "stage2"] as const)[currentStage];
+        gsap.set(header, stages[stageKey]);
+      }, 150);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.clearTimeout(resizeTimer);
+      window.removeEventListener("resize", handleResize);
+      ctx.revert();
     };
   }, [mounted]);
   useEffect(() => {
@@ -346,6 +524,15 @@ export default function Navbar() {
       );
     };
   }, [open]);
+  /* Pages where inactive tabs should read as gradient-bordered glass instead
+     of the default flat border — every roadshow page except the marketing
+     homepage and the Contact Us page. */
+  const FLAT_BORDER_PREFIXES = [
+    "/roadshow/Contact",
+  ];
+  const isInnerPage =
+    pathname !== "/" &&
+    !FLAT_BORDER_PREFIXES.some((prefix) => pathname?.startsWith(prefix));
   const isActive = (href: string) => {
     const [
       path,
@@ -409,193 +596,222 @@ export default function Navbar() {
   };
   if (!mounted)
     return null;
-  const headerClasses =
-    `RS_NewHeader RS_NewHeader--stage-${scrollStage}`;
   return createPortal(
     <>
-      <header
-        ref={navbarRef}
-        className={headerClasses}
-      >
-        <div className="RS_NewHeaderShell">
-          <Link
-            href="/"
-            className="RS_NewBrand"
-            onClick={handleNavLinkClick}
-          >
-            <Image
-              src="/images/assets/Roadshow_AdinnLogo.svg"
-              alt="Adinn Roadshow"
-              width={170}
-              height={46}
-              priority
-              className="RS_NewLogo"
-            />
-          </Link>
-          <nav
-            className="RS_NewDesktopNav"
-          >
-            {
-              navLinks.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={handleNavLinkClick}
-                  className={`RS_NewNavLink ${isActive(item.href)
-                    ?
-                    "RS_NewNavLink--active"
-                    :
-                    ""
-                    }`}
-                >
-                  <span className="RS_NewNavIcon">
-                    <NavGlyph
-                      name={item.icon}
-                    />
-                  </span>
-                  <span className="RS_NewNavText">
-                    {item.label}
-                  </span>
-                </Link>
-              ))
-            }
-          </nav>
-          <div className="RS_NewRight">
-            {/* <button
-              type="button"
-              className={`RS_NewCircleButton ${accountUser
-                  ?
-                  "RS_NewProfileButton--signedIn"
-                  :
-                  ""
-                }`}
-              onClick={() => handleMenuItemClick("profile")}
+      <div className="RS_HeaderStage">
+        <header
+          ref={navbarRef}
+          data-theme={NAV_LIGHT_THEME ? "light" : "dark"}
+          data-innerpage={isInnerPage ? "true" : undefined}
+          className="RS_NewHeader"
+        >
+          <div className="RS_NewHeaderShell">
+            <Link
+              href="/"
+              className="RS_NewBrand"
+              onClick={handleNavLinkClick}
             >
               <Image
-                src="/images/profile.svg"
-                alt="Profile"
-                width={30}
-                height={30}
-                className="RS_NewProfileIcon"
-              />
-              {
-                accountUser &&
-                <span className="RS_NewProfileName">
-                  {accountUser.name || "Profile"}
-                </span>
-              }
-            </button> */}
-            <button
-              type="button"
-              className={`RS_NewCircleButton RS_MenuButton ${open ? "active" : ""}`}
-              onClick={() => setOpen(prev => !prev)}
-              aria-expanded={open}
-              aria-label="Account menu"
-            >
-              <MenuIcon close={open} />
-            </button>
-          </div>
-        </div>
-      </header>
-      {
-        open &&
-        <aside
-          ref={dropdownRef}
-          className={`RS_NewMenu ${open ? "RS_NewMenu--open" : ""}`}
-        >
-          {
-            accountUser ? (
-              <>
-                <div className="RS_ProfileTop">
-                  <div className="RS_ProfileAvatar">
-                    <Image
-                      src="/images/profile.svg"
-                      alt="Profile"
-                      width={42}
-                      height={42}
-                    />
-                  </div>
-                  <div className="RS_ProfileInfo">
-                    <div className="RS_ProfileName">
-                      {accountUser.name || "Profile"}
-                    </div>
-                    <div className="RS_ProfileEmail">
-                      {accountUser.email}
-                    </div>
-                  </div>
-                </div>
-                {
-                  accountUser.phone &&
-                  <div className="RS_ProfilePhone">
-                    <MenuGlyph name="phone" />
-                    <span>
-                      {formatPhoneWithCode(accountUser.phone)}
-                    </span>
-                  </div>
+                src={
+                  NAV_LIGHT_THEME
+                    ? "/images/assets/Roadshow_AdinnLogo.svg"
+                    : "/images/assets/Roadshow_AdinnLogo_WithoutBg.svg"
                 }
-                <div className="RS_MenuDivider" />
-                <button
-                  className="RS_MenuAction"
-                  onClick={() => handleMenuItemClick("cart")}
-                >
-                  <MenuGlyph name="cart" />
-                  <span>
-                    My Cart
-                  </span>
-                  {
-                    cartCount > 0 &&
-                    <b className="RS_CartBadge">
-                      {cartCount}
-                    </b>
-                  }
-                </button>
-                <button
-                  className="RS_MenuAction"
-                  onClick={() => handleMenuItemClick("orders")}
-                >
-                  <MenuGlyph name="history" />
-                  <span>
-                    Order History
-                  </span>
-                </button>
-                <div className="RS_MenuDivider" />
-                <button
-                  className="RS_MenuAction RS_MenuLogout"
-                  onClick={() => handleMenuItemClick("signout")}
-                >
-                  <MenuGlyph name="signout" />
-                  <span>
-                    Logout
-                  </span>
-                </button>
-              </>
-            )
-              :
-              (
+                alt="Adinn Roadshow"
+                width={170}
+                height={46}
+                priority
+                ref={logoRef}
+                className="RS_NewLogo"
+              />
+            </Link>
+            <nav className="RS_TabBar">
+              {
+                navLinks.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    onClick={handleNavLinkClick}
+                    className={`RS_TabItem ${isActive(item.href)
+                      ?
+                      "RS_TabItem--active"
+                      :
+                      ""
+                      }`}
+                  >
+                    {
+                      isActive(item.href) &&
+                      <motion.span
+                        className="RS_TabPillWrap"
+                        layoutId="RS_TabPill"
+                        transition={{ type: "spring", stiffness: 480, damping: 34 }}
+                        aria-hidden="true"
+                      >
+                        <span className="RS_TabPill" />
+                      </motion.span>
+                    }
+                    <span className="RS_TabIcon">
+                      <NavGlyph
+                        name={item.icon}
+                      />
+                    </span>
+                    <span className="RS_TabLabel">
+                      {item.label}
+                    </span>
+                    {
+                      isActive(item.href) &&
+                      <>
+                        <span className="RS_Bubble RS_Bubble--1" aria-hidden="true" />
+                        <span className="RS_Bubble RS_Bubble--2" aria-hidden="true" />
+                        <span className="RS_Bubble RS_Bubble--3" aria-hidden="true" />
+                      </>
+                    }
+                  </Link>
+                ))
+              }
+            </nav>
+            <div className="RS_NewRight">
+              {/* <button
+                type="button"
+                className="RS_IconBtn"
+                aria-label="Search"
+              >
+                <SearchGlyph />
+              </button> */}
+              <button
+                type="button"
+                className="RS_IconBtn"
+                onClick={() => handleMenuItemClick("cart")}
+                aria-label="My cart"
+              >
+                <MenuGlyph name="cart" />
+                {
+                  cartCount > 0 &&
+                  <b className="RS_CartBadge RS_CartBadge--dark">
+                    {cartCount}
+                  </b>
+                }
+              </button>
+              <button
+                type="button"
+                ref={accountBtnRef}
+                className={`RS_IconBtn RS_ProfileBtn ${open ? "active" : ""}`}
+                onClick={() => setOpen(prev => !prev)}
+                aria-expanded={open}
+                aria-label="Account menu"
+              >
+                <ProfileGlyph />
+              </button>
+            </div>
+          </div>
+        </header>
+      </div>
+      <AnimatePresence>
+        {
+          open &&
+          <motion.aside
+            ref={dropdownRef}
+            className="RS_NewMenu"
+            variants={menuPanelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            {
+              accountUser ? (
                 <>
-                  <button
-                    className="RS_MenuAction"
-                    onClick={() => handleMenuItemClick("signin")}
+                  <motion.div
+                    className="RS_ProfileTop"
+                    variants={menuItemVariants}
                   >
-                    <MenuGlyph name="signin" />
-                    <span>
-                      Sign In
-                    </span>
-                  </button>
-                  <button
+                    <div className="RS_ProfileAvatar">
+                      <Image
+                        src="/images/profile.svg"
+                        alt="Profile"
+                        width={42}
+                        height={42}
+                      />
+                    </div>
+                    <div className="RS_ProfileInfo">
+                      <div className="RS_ProfileName">
+                        {accountUser.name || "Profile"}
+                      </div>
+                      <div className="RS_ProfileEmail">
+                        {accountUser.email}
+                      </div>
+                    </div>
+                  </motion.div>
+                  {
+                    accountUser.phone &&
+                    <motion.div
+                      className="RS_ProfilePhone"
+                      variants={menuItemVariants}
+                    >
+                      <MenuGlyph name="phone" />
+                      <span>
+                        {formatPhoneWithCode(accountUser.phone)}
+                      </span>
+                    </motion.div>
+                  }
+                  <motion.div
+                    className="RS_MenuDivider"
+                    variants={menuItemVariants}
+                  />
+                  <motion.button
                     className="RS_MenuAction"
-                    onClick={() => handleMenuItemClick("signup")}
+                    variants={menuItemVariants}
+                    onClick={() => handleMenuItemClick("orders")}
                   >
-                    <MenuGlyph name="signup" />
+                    <MenuGlyph name="history" />
                     <span>
-                      Sign Up
+                      Order History
                     </span>
-                  </button>
+                  </motion.button>
+                  <motion.div
+                    className="RS_MenuDivider"
+                    variants={menuItemVariants}
+                  />
+                  <motion.button
+                    className="RS_MenuAction RS_MenuLogout"
+                    variants={menuItemVariants}
+                    onClick={() => handleMenuItemClick("signout")}
+                  >
+                    <MenuGlyph name="signout" />
+                    <span>
+                      Logout
+                    </span>
+                  </motion.button>
                 </>
               )
-          }
-        </aside>
-      }
+                :
+                (
+                  <>
+                    <motion.button
+                      className="RS_MenuAction"
+                      variants={menuItemVariants}
+                      onClick={() => handleMenuItemClick("signin")}
+                    >
+                      <MenuGlyph name="signin" />
+                      <span>
+                        Sign In
+                      </span>
+                    </motion.button>
+                    <motion.button
+                      className="RS_MenuAction"
+                      variants={menuItemVariants}
+                      onClick={() => handleMenuItemClick("signup")}
+                    >
+                      <MenuGlyph name="signup" />
+                      <span>
+                        Sign Up
+                      </span>
+                    </motion.button>
+                  </>
+                )
+            }
+          </motion.aside>
+        }
+      </AnimatePresence>
     </>,
     document.body
   );

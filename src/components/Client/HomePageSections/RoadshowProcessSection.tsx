@@ -39,36 +39,25 @@ const DESKTOP_MEDIA_QUERY = "(min-width: 1024px)";
 const PROCESS_STEPS: ProcessStep[] = [
   {
     id: "requirement",
-    title: "Share Campaign Requirement",
-    description: "Tell us your brand goal, target city and timeline.",
+    title: "01 — Tell Us What You Want",
+    description:
+      "Share your goal, target locations, timeline and campaign needs. We'll help you choose the right vehicle and coverage.",
     image: "/images/process/requirement.jpg",
     imageAlt: "Roadshow campaign requirement discussion",
   },
   {
-    id: "vehicle",
-    title: "Choose Vehicle & Coverage",
-    description: "Select the right format and city routes.",
-    image: "/images/process/vehicle.jpg",
-    imageAlt: "Roadshow vehicle and coverage selection",
-  },
-  {
     id: "planning",
-    title: "Plan Route, Branding, Schedule",
-    description: "We design routes, creatives and timing.",
+    title: "02 — We Plan & Launch",
+    description:
+      "We take care of the routes, timings, branding, permissions and on-ground execution to get your campaign moving.",
     image: "/images/process/planning.jpg",
     imageAlt: "Roadshow route branding and schedule planning",
   },
   {
-    id: "launch",
-    title: "Launch Roadshow Campaign",
-    description: "On-ground team executes with precision.",
-    image: "/images/process/launch.jpg",
-    imageAlt: "Roadshow campaign execution",
-  },
-  {
     id: "tracking",
-    title: "Track Campaign Execution",
-    description: "Live GPS, location updates and reporting.",
+    title: "03 — Track It As It Happens",
+    description:
+      "Stay updated with live GPS tracking, location updates and campaign reports while your roadshow is on the move.",
     image: "/images/process/tracking.jpg",
     imageAlt: "Roadshow live GPS campaign tracking",
   },

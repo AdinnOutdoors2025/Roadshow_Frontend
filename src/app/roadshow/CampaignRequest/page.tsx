@@ -129,6 +129,14 @@ export default function CampaignRequestPage() {
     string | null
   >(null);
 
+  /* The reorder that restores a saved cart on page load should land the
+     selected card in place immediately, not slide it in from wherever it
+     sat in the unsorted catalogue — a slide covering that much distance on
+     first paint reads as the card being missing/hidden rather than as a
+     reorder. Set right before the restoring setSelectedVehicles call so the
+     very next FLIP pass knows to skip animating. */
+  const skipNextFlipRef = useRef(false);
+
   const leftColumnRef =
     useRef<HTMLElement>(null);
 
@@ -343,6 +351,8 @@ export default function CampaignRequestPage() {
 
     hydratedSelectionRef.current = restoredVehicles;
 
+    skipNextFlipRef.current = true;
+
     setSelectedVehicles(restoredVehicles);
 
     cartUserKeyRef.current = userKey;
@@ -352,12 +362,21 @@ export default function CampaignRequestPage() {
        carousel like any other selected card, but the scroller itself
        stays wherever it was rendered — leaving the restored selection
        scrolled out of view on a fresh page load. Snap it back into view
-       once, right after restore. */
+       once, right after restore.
+
+       Double rAF, not single: a single frame can fire before the
+       setSelectedVehicles above has actually been re-rendered/painted into
+       the reordered DOM, so scrollTo(0) reads the *old* (unsorted) layout —
+       a no-op since scrollLeft is already 0 on a fresh load, leaving the
+       restored card off-screen. Waiting one extra frame guarantees the
+       reorder has painted first. */
     if (restoredVehicles.length > 0) {
       requestAnimationFrame(() => {
-        productScrollerRef.current?.scrollTo({
-          left: 0,
-          behavior: "auto",
+        requestAnimationFrame(() => {
+          productScrollerRef.current?.scrollTo({
+            left: 0,
+            behavior: "auto",
+          });
         });
       });
     }
@@ -437,9 +456,15 @@ export default function CampaignRequestPage() {
       });
     });
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+    const skipAnimation = skipNextFlipRef.current;
+
+    skipNextFlipRef.current = false;
+
+    const prefersReducedMotion =
+      skipAnimation ||
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
 
     /* Cleanups for cards still mid-slide, so a reorder that lands while an
        earlier one is running does not leave stale listeners behind. */
