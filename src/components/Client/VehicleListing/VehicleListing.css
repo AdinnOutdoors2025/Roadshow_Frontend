@@ -670,12 +670,6 @@ background: black;
   white-space: nowrap;
 }
 
-/* Inherits the shared cursor-bleed pill from HomePageSection1.css */
-.RS_VehListBookBtn {
-  padding: 15px 26px;
-  font-size: 16px;
-}
-
 /* Only action left in .RS_VehListActions now that "View Details" is gone —
    fills the row instead of sitting pinned to one side. */
 .RS_VehListBookBtn--solo {
@@ -1103,7 +1097,7 @@ background: black;
 
   .RS_VehListSpecBtn,
   .RS_VehListBookBtn {
-    flex: 1 1 auto;
+    /* flex: 1 1 auto; */
     padding: 13px 18px;
     font-size: 15px;
   }

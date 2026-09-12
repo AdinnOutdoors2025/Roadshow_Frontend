@@ -1335,11 +1335,14 @@ export default function HomePageSection1() {
     }}
     heading={
       <div className="RS_OurRdwHeading">
-        <SplitHeading className="RS_OurRdwHeadingContent1">
+        <div>
+          <SplitHeading className="RS_OurRdwHeadingContent1">
           Our Roadshow
         </SplitHeading>
+          </div>
 
-        <RevealText
+        <div>
+          <RevealText
           className="
             RS_OurRdwHeadingContent1
             RS_OurRdwHeadingContent2
@@ -1349,6 +1352,7 @@ export default function HomePageSection1() {
         >
           Vehicles
         </RevealText>
+          </div>
       </div>
     }
   />

@@ -11,7 +11,8 @@ import {
 } from "react";
 
 import gsap from "gsap";
-
+import SplitHeading from "@/components/motion/SplitHeading";
+import RevealText from "@/components/motion/RevealText";
 /* =========================================================
    TYPES
 ========================================================= */
@@ -466,7 +467,7 @@ export default function RoadshowProcessSection() {
               Desktop: existing 58px / 64px
           =============================================== */}
 
-          <h2
+          {/* <h2
             ref={headingRef}
             className="
               mb-6
@@ -490,22 +491,45 @@ export default function RoadshowProcessSection() {
 
               xl:text-[64px]
             "
-          >
+          > */}
+
+
             {/* Mobile and tablet: intentional three-line title */}
-            <span className="block lg:hidden">How the roadshow </span>
+            {/* <span className="block lg:hidden">How the roadshow </span>
             
             <span className="block text-[#b5121b] lg:hidden">
-              roadshow Works
-            </span>
+               Works
+            </span> */}
 
             {/* Desktop: preserve the existing title layout */}
-            <span className="hidden lg:block">
+            {/* <span className="hidden lg:block">
               How the roadshow
             </span>
             <span className="hidden text-[#b5121b] lg:block">
               Works
-            </span>
-          </h2>
+            </span> */}
+          {/* </h2> */}
+
+           <div className="RS_OurRdwHeading">
+                  <div>
+                    <SplitHeading className="RS_OurRdwHeadingContent1">
+                    How the Roadshow
+                  </SplitHeading>
+                    </div>
+        
+                  <div>
+                    <RevealText
+                    className="
+                      RS_OurRdwHeadingContent1
+                      RS_OurRdwHeadingContent2
+                    "
+                    effect="wipe"
+                    delay={0.18}
+                  >
+                    Works
+                  </RevealText>
+                    </div>
+                </div>
 
           {/* ===============================================
               MOBILE / TABLET ACTIVE IMAGE

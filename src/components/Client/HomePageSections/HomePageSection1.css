@@ -127,11 +127,9 @@
 
 .OffersPill:hover {
   border-color: #ffffff;
-  background: linear-gradient(
-    98.03deg,
-    #c71a38 6.31%,
-    #700a1c 92.14%
-  );
+  background: linear-gradient(98.03deg,
+      #c71a38 6.31%,
+      #700a1c 92.14%);
   transform: scale(1.06);
 }
 
@@ -158,6 +156,8 @@
 }
 
 .RS_OurRdwHeading {
+  display: flex;
+  gap:10px;
   padding: 5% 0;
 }
 
@@ -169,11 +169,9 @@
 
 .RS_OurRdwHeadingContent2 {
   width: fit-content;
-  background: linear-gradient(
-    180deg,
-    #7d0008 0%,
-    #e3000f 100%
-  );
+  background: linear-gradient(180deg,
+      #7d0008 0%,
+      #e3000f 100%);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
@@ -220,11 +218,9 @@
 }
 
 .RS_VehicleRatingValue {
-  background: linear-gradient(
-    270deg,
-    #7d1114 0%,
-    #e31f25 100%
-  );
+  background: linear-gradient(270deg,
+      #7d1114 0%,
+      #e31f25 100%);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
@@ -241,8 +237,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: 100% !important;
   width: fit-content;
-  padding: 15px 30px;
+  padding: 10px 30px;
   border-radius: 50px;
   background: #e8e8e8;
   font-size: 18px;
@@ -268,31 +265,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   width: fit-content;
-
   height: 80px;
   min-height: 70px;
-
   padding: 0 42px;
-
   box-sizing: border-box;
-
   border-radius: 9999px;
-
   background: #e8e8e8;
   color: #1f1f1f;
-
   font-family: Outfit, sans-serif;
-
   font-size: 24px;
   font-weight: 500;
-
   line-height: 1;
   letter-spacing: -0.01em;
-
   white-space: nowrap;
-
   cursor: pointer;
 }
 
@@ -341,14 +327,15 @@
   transform: translate(-50%, -50%) scale(1);
 }
 
-.RS_VehicleButton > span:not(.RS_BtnBubble),
-.RS_ViewAllClientsBtn > span:not(.RS_BtnBubble),
-.RS_GpsConsultBtn > span:not(.RS_BtnBubble) {
+.RS_VehicleButton>span:not(.RS_BtnBubble),
+.RS_ViewAllClientsBtn>span:not(.RS_BtnBubble),
+.RS_GpsConsultBtn>span:not(.RS_BtnBubble) {
   position: relative;
   z-index: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .RS_VehicleButton,
   .RS_ViewAllClientsBtn,
   .RS_GpsConsultBtn,
@@ -453,8 +440,7 @@
   cursor: pointer;
   transition:
     background-color 250ms ease,
-    transform 350ms
-      cubic-bezier(0.22, 1, 0.36, 1);
+    transform 350ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .RS_WhyAdRSNavButton:hover:not(:disabled) {
@@ -522,8 +508,7 @@
   transition:
     background 350ms ease,
     width 800ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-radius 800ms
-      cubic-bezier(0.22, 1, 0.36, 1);
+    border-radius 800ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .RS_WhyAdRSItem:hover {
@@ -561,8 +546,7 @@
   transform: rotate(0deg);
 
   transition:
-    transform 850ms
-      cubic-bezier(0.22, 1, 0.36, 1);
+    transform 850ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .RS_WhyAdRSItem.active .RS_WhyAdRSContentIcon {
@@ -615,13 +599,10 @@
   will-change: grid-template-rows, opacity, transform;
 
   transition:
-    grid-template-rows 2s
-      cubic-bezier(0.22, 1, 0.36, 1),
-    padding-top 2s
-      cubic-bezier(0.22, 1, 0.36, 1),
+    grid-template-rows 2s cubic-bezier(0.22, 1, 0.36, 1),
+    padding-top 2s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 300ms ease,
-    transform 2s
-      cubic-bezier(0.22, 1, 0.36, 1);
+    transform 2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .RS_WhyAdRS_CollapseWrapper.open {
@@ -656,17 +637,13 @@
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(
-      90deg,
+    linear-gradient(90deg,
       #eeedf0f2 0%,
       #eeedf0a6 4%,
-      #eeedf000 18%
-    ),
-    linear-gradient(
-      #eeedf000 72%,
+      #eeedf000 18%),
+    linear-gradient(#eeedf000 72%,
       #eeedf08c 88%,
-      #eeedf0 100%
-    );
+      #eeedf0 100%);
 }
 
 .RS_WhyAdRS_Right {
@@ -698,26 +675,21 @@
      stay the single source of truth for where the vehicle sits -
      including every responsive override further down this file. */
   opacity: 0;
-  transform: translate3d(135%, 48%, 0)
-    scale(var(--rs-img-small-scale));
+  transform: translate3d(135%, 48%, 0) scale(var(--rs-img-small-scale));
   transform-origin: 50% 50%;
   filter: blur(12px);
   will-change: transform, opacity, filter;
   backface-visibility: hidden;
 
   /* Feathers the vehicle's edges instead of cutting them off. */
-  -webkit-mask-image: radial-gradient(
-    86% 74% at 50% 52%,
-    #000000 0% 58%,
-    #000000b8 76%,
-    #00000000 100%
-  );
-  mask-image: radial-gradient(
-    86% 74% at 50% 52%,
-    #000000 0% 58%,
-    #000000b8 76%,
-    #00000000 100%
-  );
+  -webkit-mask-image: radial-gradient(86% 74% at 50% 52%,
+      #000000 0% 58%,
+      #000000b8 76%,
+      #00000000 100%);
+  mask-image: radial-gradient(86% 74% at 50% 52%,
+      #000000 0% 58%,
+      #000000b8 76%,
+      #00000000 100%);
 }
 
 .RS_WhyAdRS_ImageLayer img {
@@ -765,38 +737,32 @@
 }
 
 .RS_WhyAdRS_ImageLayer.enter-from-right {
-  animation: RS_WhyVehicleEnterFromBottomRight
-    var(--rs-img-enter-time) var(--rs-img-ease) forwards;
+  animation: RS_WhyVehicleEnterFromBottomRight var(--rs-img-enter-time) var(--rs-img-ease) forwards;
 }
 
 .RS_WhyAdRS_ImageLayer.enter-from-left {
-  animation: RS_WhyVehicleEnterFromBottomLeft
-    var(--rs-img-enter-time) var(--rs-img-ease) forwards;
+  animation: RS_WhyVehicleEnterFromBottomLeft var(--rs-img-enter-time) var(--rs-img-ease) forwards;
 }
 
 .RS_WhyAdRS_ImageLayer.exit-left {
-  animation: RS_WhyVehicleExitToBottomLeft
-    var(--rs-img-exit-time) var(--rs-img-ease) forwards;
+  animation: RS_WhyVehicleExitToBottomLeft var(--rs-img-exit-time) var(--rs-img-ease) forwards;
 }
 
 .RS_WhyAdRS_ImageLayer.exit-right {
-  animation: RS_WhyVehicleExitToBottomRight
-    var(--rs-img-exit-time) var(--rs-img-ease) forwards;
+  animation: RS_WhyVehicleExitToBottomRight var(--rs-img-exit-time) var(--rs-img-ease) forwards;
 }
 
 @keyframes RS_WhyVehicleEnterFromBottomRight {
   0% {
     opacity: 0;
     filter: blur(4px);
-    transform: translate3d(150%, 55%, 0)
-      scale(var(--rs-img-small-scale));
+    transform: translate3d(150%, 55%, 0) scale(var(--rs-img-small-scale));
   }
 
   to {
     opacity: 1;
     filter: blur(0);
-    transform: translate3d(0, 0, 0)
-      scale(var(--rs-img-active-scale));
+    transform: translate3d(0, 0, 0) scale(var(--rs-img-active-scale));
   }
 }
 
@@ -804,15 +770,13 @@
   0% {
     opacity: 0;
     filter: blur(4px);
-    transform: translate3d(-150%, 55%, 0)
-      scale(var(--rs-img-small-scale));
+    transform: translate3d(-150%, 55%, 0) scale(var(--rs-img-small-scale));
   }
 
   to {
     opacity: 1;
     filter: blur(0);
-    transform: translate3d(0, 0, 0)
-      scale(var(--rs-img-active-scale));
+    transform: translate3d(0, 0, 0) scale(var(--rs-img-active-scale));
   }
 }
 
@@ -820,15 +784,13 @@
   0% {
     opacity: 1;
     filter: blur(0);
-    transform: translate3d(0, 0, 0)
-      scale(var(--rs-img-active-scale));
+    transform: translate3d(0, 0, 0) scale(var(--rs-img-active-scale));
   }
 
   to {
     opacity: 0;
     filter: blur(4px);
-    transform: translate3d(-150%, 55%, 0)
-      scale(var(--rs-img-small-scale));
+    transform: translate3d(-150%, 55%, 0) scale(var(--rs-img-small-scale));
   }
 }
 
@@ -836,15 +798,13 @@
   0% {
     opacity: 1;
     filter: blur(0);
-    transform: translate3d(0, 0, 0)
-      scale(var(--rs-img-active-scale));
+    transform: translate3d(0, 0, 0) scale(var(--rs-img-active-scale));
   }
 
   to {
     opacity: 0;
     filter: blur(4px);
-    transform: translate3d(150%, 55%, 0)
-      scale(var(--rs-img-small-scale));
+    transform: translate3d(150%, 55%, 0) scale(var(--rs-img-small-scale));
   }
 }
 
@@ -893,8 +853,7 @@
   inset: 0;
   border-radius: 50%;
   animation:
-    RS_InsetGlowBottom
-    3s ease-in infinite;
+    RS_InsetGlowBottom 3s ease-in infinite;
 }
 
 @keyframes RS_InsetGlowBottom {
@@ -959,10 +918,7 @@
      Because the second is keyed to the slot rather than the brand, the
      inside/outside rhythm of the layout stays put while "View All Clients"
      rotates different logos through it. */
-  width: calc(
-    var(--rs-logo-w, 140px) * var(--rs-logo-scale, 0.72) *
-      var(--rs-orbit-f, 1)
-  );
+  width: calc(var(--rs-logo-w, 140px) * var(--rs-logo-scale, 0.72) * var(--rs-orbit-f, 1));
 
   /* REQUIRED for the logo to overhang its bubble at all.
 
@@ -1009,8 +965,7 @@
   max-width: 130px;
 }
 
-.RS_ClientBubble.RS_TextLgLogo
-  .RS_ClientLogo {
+.RS_ClientBubble.RS_TextLgLogo .RS_ClientLogo {
   width: 120px;
   max-width: 130px;
 }
@@ -1188,6 +1143,7 @@
    fall in lockstep and read as the whole section wobbling.
    --------------------------------------------------------------- */
 @keyframes RS_ClientBubbleFloat {
+
   0%,
   100% {
     translate: 0 0;
@@ -1199,9 +1155,7 @@
 }
 
 .RS_ClientBubble {
-  animation: RS_ClientBubbleFloat
-    var(--rs-float-dur, 6s) ease-in-out
-    var(--rs-float-delay, 0s) infinite;
+  animation: RS_ClientBubbleFloat var(--rs-float-dur, 6s) ease-in-out var(--rs-float-delay, 0s) infinite;
 }
 
 /* Pausing on hover stops the logo sliding out from under the cursor. */
@@ -1209,21 +1163,80 @@
   animation-play-state: paused;
 }
 
-.RS_Bubble_0  { --rs-float-dur: 7.5s;  --rs-float-delay: -0.4s; }
-.RS_Bubble_1  { --rs-float-dur: 9s;    --rs-float-delay: -2.6s; }
-.RS_Bubble_2  { --rs-float-dur: 6.8s;  --rs-float-delay: -1.2s; }
-.RS_Bubble_3  { --rs-float-dur: 8.4s;  --rs-float-delay: -3.9s; }
-.RS_Bubble_4  { --rs-float-dur: 7.1s;  --rs-float-delay: -0.9s; }
-.RS_Bubble_5  { --rs-float-dur: 9.6s;  --rs-float-delay: -4.7s; }
-.RS_Bubble_6  { --rs-float-dur: 6.4s;  --rs-float-delay: -2.1s; }
-.RS_Bubble_7  { --rs-float-dur: 8.8s;  --rs-float-delay: -5.3s; }
-.RS_Bubble_8  { --rs-float-dur: 7.8s;  --rs-float-delay: -1.7s; }
-.RS_Bubble_9  { --rs-float-dur: 9.2s;  --rs-float-delay: -3.1s; }
-.RS_Bubble_10 { --rs-float-dur: 6.6s;  --rs-float-delay: -4.2s; }
-.RS_Bubble_11 { --rs-float-dur: 8.1s;  --rs-float-delay: -0.6s; }
-.RS_Bubble_12 { --rs-float-dur: 9.9s;  --rs-float-delay: -5.8s; }
-.RS_Bubble_13 { --rs-float-dur: 7.3s;  --rs-float-delay: -2.9s; }
-.RS_Bubble_14 { --rs-float-dur: 8.6s;  --rs-float-delay: -1.4s; }
+.RS_Bubble_0 {
+  --rs-float-dur: 7.5s;
+  --rs-float-delay: -0.4s;
+}
+
+.RS_Bubble_1 {
+  --rs-float-dur: 9s;
+  --rs-float-delay: -2.6s;
+}
+
+.RS_Bubble_2 {
+  --rs-float-dur: 6.8s;
+  --rs-float-delay: -1.2s;
+}
+
+.RS_Bubble_3 {
+  --rs-float-dur: 8.4s;
+  --rs-float-delay: -3.9s;
+}
+
+.RS_Bubble_4 {
+  --rs-float-dur: 7.1s;
+  --rs-float-delay: -0.9s;
+}
+
+.RS_Bubble_5 {
+  --rs-float-dur: 9.6s;
+  --rs-float-delay: -4.7s;
+}
+
+.RS_Bubble_6 {
+  --rs-float-dur: 6.4s;
+  --rs-float-delay: -2.1s;
+}
+
+.RS_Bubble_7 {
+  --rs-float-dur: 8.8s;
+  --rs-float-delay: -5.3s;
+}
+
+.RS_Bubble_8 {
+  --rs-float-dur: 7.8s;
+  --rs-float-delay: -1.7s;
+}
+
+.RS_Bubble_9 {
+  --rs-float-dur: 9.2s;
+  --rs-float-delay: -3.1s;
+}
+
+.RS_Bubble_10 {
+  --rs-float-dur: 6.6s;
+  --rs-float-delay: -4.2s;
+}
+
+.RS_Bubble_11 {
+  --rs-float-dur: 8.1s;
+  --rs-float-delay: -0.6s;
+}
+
+.RS_Bubble_12 {
+  --rs-float-dur: 9.9s;
+  --rs-float-delay: -5.8s;
+}
+
+.RS_Bubble_13 {
+  --rs-float-dur: 7.3s;
+  --rs-float-delay: -2.9s;
+}
+
+.RS_Bubble_14 {
+  --rs-float-dur: 8.6s;
+  --rs-float-delay: -1.4s;
+}
 
 /* The centre bubble drifts too, but slower and shorter — it is the anchor, so
    it should feel heavier than the logos orbiting it. */
@@ -1232,6 +1245,7 @@
    `translate` property IN ADDITION to `transform`, so repeating the -50% would
    shift the bubble a further half of its own size up and to the left. */
 @keyframes RS_ClientCentreFloat {
+
   0%,
   100% {
     translate: 0 0;
@@ -1243,11 +1257,11 @@
 }
 
 .RS_ClientCenterBubble {
-  animation: RS_ClientCentreFloat 11s ease-in-out
-    infinite;
+  animation: RS_ClientCentreFloat 11s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .RS_ClientBubble,
   .RS_ClientCenterBubble {
     animation: none;
@@ -1510,6 +1524,19 @@
 /* Large Screens (1440px - 2559px) - Large Desktop 1440
    This is the reference design: base rules apply as-is. */
 @media (min-width: 1440px) and (max-width: 2559px) {
+  
+.RS_VehicleButton {
+  align-items: center;
+  justify-content: center;
+  height: 100% !important;
+  width: 100%;
+  padding: 10px 30px;
+  border-radius: 50px;
+  background: #e8e8e8;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
+}
   /* intentionally empty - base styles are the design */
 }
 
@@ -2644,6 +2671,7 @@
    phones. They are only disabled here.
 --------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
+
   .RS_WhyAdRSItem,
   .RS_WhyAdRSContentIcon,
   .RS_WhyAdRS_CollapseWrapper {
@@ -2713,36 +2741,32 @@
 
   width: fit-content;
 
-  height: 50px;
+  /* height: 50px;
   min-height: 50px;
 
-  padding: 0 22px;
-
+   */
+  width: 100%;
+  height: 100%;
+  padding: 9px 15px;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
   box-sizing: border-box;
-
   border-radius: 9999px;
-
   font-family: Outfit, sans-serif;
-
-  font-size: 14px;
+  font-size: 22px;
   font-weight: 500;
-
   line-height: 1;
   letter-spacing: -0.01em;
-
-  white-space: nowrap;
-
   flex-shrink: 0;
 }
 
 /* 4K / very large screens */
 @media (min-width: 2560px) {
   .RS_VehicleButton {
-    height: 50px;
-    min-height: 50px;
-
-    padding: 0 26px;
-
+    width: 100%;
+    height: 100%;
+    padding: 9px 15px;
     font-size: 15px;
   }
 }
@@ -2762,12 +2786,13 @@
 /* Laptop */
 @media (min-width: 992px) and (max-width: 1280px) {
   .RS_VehicleButton {
-    height: 44px;
-    min-height: 44px;
+    /* height: 44px; */
+    /* min-height: 44px; */
+    /* padding: 0 38%; */
+    width: 100%;
+    max-width: 100%;
+    font-size: 17.5px;
 
-    padding: 0 18px;
-
-    font-size: 13.5px;
   }
 }
 
