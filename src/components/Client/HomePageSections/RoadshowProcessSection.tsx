@@ -13,6 +13,7 @@ import {
 import gsap from "gsap";
 import SplitHeading from "@/components/motion/SplitHeading";
 import RevealText from "@/components/motion/RevealText";
+import './RoadshowProcessSection.css'
 /* =========================================================
    TYPES
 ========================================================= */
@@ -412,44 +413,10 @@ export default function RoadshowProcessSection() {
     <section
       ref={sectionRef}
       id="roadshow-process"
-      className="
-        w-full
-        overflow-hidden
-        bg-white
-
-        px-5
-        py-12
-
-        min-[375px]:px-6
-
-        sm:px-7
-        sm:py-14
-
-        md:px-10
-        md:py-16
-
-        lg:px-14
-        lg:py-24
-
-        xl:px-20
-        xl:py-28
-      "
+      className="w-full overflow-hidden bg-white px-5 py-12 min-[375px]:px-6 sm:px-7 sm:py-14 md:px-10 md:py-16 lg:px-14 lg:py-24 xl:px-20 xl:py-28 min-[1281px]:py-[88px] min-[1440px]:py-[112px]"
     >
       <div
-        className="
-          mx-auto
-          grid
-          w-full
-          max-w-[1400px]
-          grid-cols-1
-
-          lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]
-          lg:items-center
-          lg:gap-16
-
-          xl:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.7fr)]
-          xl:gap-24
-        "
+        className="mx-auto grid w-full max-w-[1400px] grid-cols-1 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:items-center lg:gap-16 xl:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.7fr)] xl:gap-24"
         onMouseLeave={handleMouseLeave}
       >
         {/* =================================================
@@ -469,28 +436,7 @@ export default function RoadshowProcessSection() {
 
           {/* <h2
             ref={headingRef}
-            className="
-              mb-6
-              font-normal
-              text-[38px]
-              leading-[0.98]
-              tracking-[-0.045em]
-              text-[#111111]
-
-              min-[375px]:text-[42px]
-              min-[430px]:text-[44px]
-
-              sm:mb-7
-              sm:text-[50px]
-
-              md:mb-8
-              md:text-[52px]
-
-              lg:mb-16
-              lg:text-[58px]
-
-              xl:text-[64px]
-            "
+            className="mb-6 font-normal text-[38px] leading-[0.98] tracking-[-0.045em] text-[#111111] min-[375px]:text-[42px] min-[430px]:text-[44px] sm:mb-7 sm:text-[50px] md:mb-8 md:text-[52px] lg:mb-16 lg:text-[58px] xl:text-[64px]"
           > */}
 
 
@@ -510,19 +456,17 @@ export default function RoadshowProcessSection() {
             </span> */}
           {/* </h2> */}
 
-           <div className="RS_OurRdwHeading">
+           <div className="mx-auto px-30 RS_WhyAdRSSectionWrap RS_ProcessHeadingAlign">
+             <div className="RS_OurRdwHeading">
                   <div>
                     <SplitHeading className="RS_OurRdwHeadingContent1">
                     How the Roadshow
                   </SplitHeading>
                     </div>
-        
+
                   <div>
                     <RevealText
-                    className="
-                      RS_OurRdwHeadingContent1
-                      RS_OurRdwHeadingContent2
-                    "
+                    className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
                     effect="wipe"
                     delay={0.18}
                   >
@@ -530,6 +474,7 @@ export default function RoadshowProcessSection() {
                   </RevealText>
                     </div>
                 </div>
+             </div>
 
           {/* ===============================================
               MOBILE / TABLET ACTIVE IMAGE
@@ -544,18 +489,7 @@ export default function RoadshowProcessSection() {
             aria-live="polite"
           >
             <div
-              className="
-                relative
-                aspect-[16/10]
-                w-full
-                overflow-hidden
-                rounded-[20px]
-                bg-[#eeeeec]
-
-                sm:rounded-[22px]
-                md:aspect-[16/9]
-                md:rounded-[24px]
-              "
+              className="relative aspect-[16/10] w-full overflow-hidden rounded-[20px] bg-[#eeeeec] sm:rounded-[22px] md:aspect-[16/9] md:rounded-[24px]"
             >
               {PROCESS_STEPS.map((step, index) => {
                 const active = index === activeIndex;
@@ -589,29 +523,7 @@ export default function RoadshowProcessSection() {
 
               {/* Current step indicator from the approved UI */}
               <div
-                className="
-                  absolute
-                  bottom-3
-                  left-3
-                  z-10
-                  flex
-                  items-baseline
-                  gap-1
-                  rounded-full
-                  border
-                  border-white/25
-                  bg-black/70
-                  px-3
-                  py-1.5
-                  text-white
-                  shadow-[0_8px_24px_rgba(0,0,0,0.16)]
-                  backdrop-blur-sm
-
-                  sm:bottom-4
-                  sm:left-4
-                  sm:px-4
-                  sm:py-2
-                "
+                className="absolute bottom-3 left-3 z-10 flex items-baseline gap-1 rounded-full border border-white/25 bg-black/70 px-3 py-1.5 text-white shadow-[0_8px_24px_rgba(0,0,0,0.16)] backdrop-blur-sm sm:bottom-4 sm:left-4 sm:px-4 sm:py-2"
                 aria-hidden="true"
               >
                 <span className="text-[15px] font-medium leading-none sm:text-[17px]">
@@ -647,51 +559,10 @@ export default function RoadshowProcessSection() {
                   onFocus={() => setActiveIndex(index)}
                   onClick={() => setActiveIndex(index)}
                   onKeyDown={(event) => handleKeyDown(event, index)}
-                  className="
-                    group
-                    relative
-                    block
-                    w-full
-                    cursor-pointer
-                    border-b
-                    border-[#ddddda]
-                    py-5
-                    text-left
-                    outline-none
-
-                    sm:py-6
-                    md:py-6
-
-                    lg:min-h-[112px]
-                    lg:py-7
-
-                    focus-visible:outline
-                    focus-visible:outline-1
-                    focus-visible:outline-offset-4
-                    focus-visible:outline-[#222222]
-                  "
+                  className=" rdswHTRWOvBtn group relative block w-full cursor-pointer border-b border-[#ddddda] py-5 text-left outline-none sm:py-6 md:py-6 lg:min-h-[112px] lg:py-7 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#222222]"
                 >
                   <div
-                    className="
-                      relative
-                      grid
-                      grid-cols-[42px_minmax(0,1fr)_24px]
-                      items-start
-                      gap-x-3
-
-                      min-[375px]:grid-cols-[46px_minmax(0,1fr)_26px]
-                      min-[375px]:gap-x-4
-
-                      sm:grid-cols-[52px_minmax(0,1fr)_28px]
-                      sm:gap-x-5
-
-                      lg:flex
-                      lg:min-h-[54px]
-                      lg:items-center
-                      lg:pr-[175px]
-
-                      xl:pr-[205px]
-                    "
+                    className="relative grid grid-cols-[42px_minmax(0,1fr)_24px] items-start gap-x-3 min-[375px]:grid-cols-[46px_minmax(0,1fr)_26px] min-[375px]:gap-x-4 sm:grid-cols-[52px_minmax(0,1fr)_28px] sm:gap-x-5 lg:flex lg:min-h-[54px] lg:items-center lg:pr-[175px] xl:pr-[205px]"
                   >
                     {/* Mobile / tablet step number */}
                     <span
@@ -720,27 +591,13 @@ export default function RoadshowProcessSection() {
                     {/* Text */}
                     <div className="min-w-0 lg:flex-1">
                       <h3
-                        className="
-                          max-w-[480px]
-                          text-[17px]
-                          font-medium
-                          leading-[1.22]
-                          tracking-[-0.025em]
-                          text-[#1b1b1b]
-
-                          min-[375px]:text-[18px]
-                          sm:text-[20px]
-                          md:text-[21px]
-
-                          lg:text-[24px]
-                          lg:leading-[1.18]
-                        "
+                        className=" rdswHTRWHeading max-w-[480px] text-[17px] font-medium leading-[1.22] tracking-[-0.025em] text-[#1b1b1b] min-[375px]:text-[18px] sm:text-[20px] md:text-[21px] lg:text-[24px] lg:leading-[1.18]"
                       >
                         {step.title}
                       </h3>
 
                       <p
-                        className={`
+                        className={` rdswHTRWHeadingPara
                           mt-1.5
                           max-w-[470px]
                           text-[13px]
@@ -769,24 +626,7 @@ export default function RoadshowProcessSection() {
                         previewRefs.current[index] = element;
                       }}
                       aria-hidden="true"
-                      className="
-                        pointer-events-none
-                        absolute
-                        right-9
-                        top-1/2
-                        hidden
-                        aspect-[3/4]
-                        h-[76px]
-                        origin-center
-                        overflow-hidden
-                        rounded-[10px]
-                        bg-[#eeeeec]
-                        opacity-0
-                        will-change-[transform,opacity]
-
-                        lg:block
-                        xl:h-[80px]
-                      "
+                      className="pointer-events-none absolute right-9 top-1/2 hidden aspect-[3/4] h-[76px] origin-center overflow-hidden rounded-[10px] bg-[#eeeeec] opacity-0 will-change-[transform,opacity] lg:block xl:h-[80px]"
                     >
                       <img
                         key={`${step.id}-${PROCESS_IMAGE_VERSION}-preview`}
@@ -800,28 +640,8 @@ export default function RoadshowProcessSection() {
                     </div>
 
                     {/* Chevron */}
-                    <div
-                      className="
-                        col-start-3
-                        row-start-1
-                        flex
-                        h-7
-                        w-6
-                        items-center
-                        justify-end
-                        self-start
-                        text-[#454545]
-
-                        lg:absolute
-                        lg:right-0
-                        lg:top-1/2
-                        lg:h-6
-                        lg:w-6
-                        lg:-translate-y-1/2
-                        lg:items-center
-                        lg:justify-center
-                        lg:self-auto
-                      "
+                    {/* <div
+                      className="col-start-3 row-start-1 flex h-7 w-6 items-center justify-end self-start text-[#454545] lg:absolute lg:right-0 lg:top-1/2 lg:h-6 lg:w-6 lg:-translate-y-1/2 lg:items-center lg:justify-center lg:self-auto"
                     >
                       <div
                         ref={(element) => {
@@ -831,7 +651,7 @@ export default function RoadshowProcessSection() {
                       >
                         <Chevron />
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 </button>
               );
@@ -852,18 +672,7 @@ export default function RoadshowProcessSection() {
           aria-live="polite"
         >
           <div
-            className="
-              relative
-              aspect-[3/4]
-              w-full
-              max-w-[340px]
-              rotate-[4deg]
-              overflow-hidden
-              rounded-[20px]
-              bg-[#eeeeec]
-
-              xl:max-w-[365px]
-            "
+            className="relative aspect-[3/4] w-full max-w-[340px] rotate-[4deg] overflow-hidden rounded-[20px] bg-[#eeeeec] xl:max-w-[365px]"
           >
             {PROCESS_STEPS.map((step, index) => {
               const active = index === activeIndex;

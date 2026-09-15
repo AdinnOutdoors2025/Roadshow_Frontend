@@ -402,7 +402,7 @@
   width: 60%;
   max-width: 1140px;
 
-  height: 798px;
+  height: 100%;
   margin: 0 auto 5%;
   overflow: hidden;
   border-radius: 70px;
@@ -701,7 +701,7 @@
   object-fit: contain;
   object-position: center;
 
-  transform: scale(0.52);
+  transform: scale(0.8); /*  0.52 to 0.8*/
   transform-origin: center center;
 
   user-select: none;
@@ -1417,7 +1417,7 @@
    and centre the carousel arrows. --- */
 @media (max-width: 767px) {
   .OffersSection {
-    flex-direction: column;
+    /* flex-direction: column; */
   }
 
   .OffersHeadingMain {
@@ -1537,6 +1537,16 @@
   font-weight: 500;
   line-height: 1;
 }
+
+.RS_WhyAdRSMain {
+    width: 90%;
+    max-width: 1140px;
+    /* height: 550px; */
+    margin: 0 auto 5%;
+    min-height: 765px !important;
+    padding-bottom: 50px;
+}
+
   /* intentionally empty - base styles are the design */
 }
 
@@ -1567,6 +1577,22 @@
 
   .RS_OurRdwHeadingContent1 {
     font-size: 54px;
+  }
+
+  /* ID + class beats the Tailwind lg:pt-[110px] utility on the same
+     element regardless of stylesheet load order. */
+  #our-roadshow-vehicles.RS_OurRdwMainSection {
+    padding-top: 68px;
+    padding-bottom: 52px;
+  }
+
+  .RS_OurRdwHeading {
+    padding: 44px 0;
+  }
+
+  .RS_ClientsOrbitArea {
+            margin-top: 6%;
+    height: calc(380px * var(--rs-orbit-f, 1));
   }
 
   .RS_VehicleImg {
@@ -1622,18 +1648,38 @@
 
   .RS_WhyAdRSMain {
     width: calc(100% - 64px);
+       max-width: 1140px;
+    /* height: 550px; */
+    margin: 0 auto 5%;
+    min-height: 565px !important;
+    padding-bottom: 50px;
   }
 }
 
 /* Laptops (1024px - 1280px) */
 @media (min-width: 1024px) and (max-width: 1280px) {
   .RS_ClientsSection {
-    --rs-orbit-f: 0.9;
+    --rs-orbit-f: 0.7;
   }
 
   .RS_OurRdwMainSection {
     padding-right: 48px;
     padding-left: 48px;
+  }
+
+  /* ID + class beats the Tailwind lg:pt-[110px] utility on the same
+     element regardless of stylesheet load order. */
+  #our-roadshow-vehicles.RS_OurRdwMainSection {
+    padding-top: 64px;
+    padding-bottom: 48px;
+  }
+
+  .RS_OurRdwHeading {
+    padding: 30px 0;
+  }
+   .RS_ClientsOrbitArea {
+            margin-top: 6%;
+    height: calc(380px * var(--rs-orbit-f, 1));
   }
 
   .RS_WhyAdRSSectionWrap,
@@ -1692,8 +1738,9 @@
   }
 
   .RS_VehicleButton {
-    padding: 12px 22px;
+    padding: 18px 20px  !important;
     font-size: 16px;
+    min-height: 0px !important;
   }
 
   .RS_CarouselBtn {
@@ -1704,9 +1751,16 @@
 
   .RS_WhyAdRSMain {
     width: calc(100% - 48px);
+       /* max-width: 1140px; */
+    /* height: 550px; */
+    /* margin: 0 auto 5%; */
+    min-height: 765px !important;
+    padding-bottom: 50px;
+
   }
 
   .RS_WhyAdRS_Left {
+    top: 15%;
     left: 64px;
   }
 }
@@ -2263,7 +2317,7 @@
   }
 
   .RS_OurRdwHeadingContent1 {
-    font-size: 26px;
+    font-size: 23px;
   }
 
   .RS_VehicleImg {

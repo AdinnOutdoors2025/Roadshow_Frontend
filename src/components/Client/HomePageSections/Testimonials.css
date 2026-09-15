@@ -10,7 +10,7 @@
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  padding: clamp(46px, 4.8vw, 78px) 0;
+  /* padding: clamp(46px, 4.8vw, 78px) 0; */
   background:
     radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 1) 0%, rgba(246, 247, 249, 0.98) 38%, rgba(238, 240, 243, 1) 100%);
 }
@@ -73,7 +73,7 @@
 /* Heading */
 .adinn-testimonial-heading {
   /* text-align: center; */
-  padding-top: clamp(28px, 3vw, 44px);
+  /* padding-top: clamp(28px, 3vw, 44px); */
 }
 
 /* This section reuses the homepage heading classes for a consistent type scale,
@@ -83,13 +83,6 @@
    centre — a block narrower than its parent needs auto side margins. Without
    this the gradient line sits hard against the left edge while the line above
    it is centred. */
-.adinn-testimonial-heading .RS_OurRdwHeading {
-  padding-top: 0;
-}
-
-.adinn-testimonial-heading .RS_OurRdwHeadingContent2 {
-  /* margin-inline: auto; */
-}
 
 .adinn-testimonial-eyebrow {
   display: inline-block;
@@ -620,6 +613,12 @@
   background: var(--adinn-red);
 }
 
+/* HEADING  */
+
+.RS_OurRdwHeadingTestimonialsHeading {
+  /* padding: 30px 6%; */
+}
+
 /* Responsive */
 @media (max-width: 1180px) {
   .adinn-testimonial-container {
@@ -704,9 +703,7 @@
   }
 
   .adinn-led-screen-tag {
-    padding: 5px 9px;
-    font-size: 7px;
-    margin-bottom: 7px;
+       display: none;
   }
 
   .adinn-led-screen-quote {
@@ -1034,6 +1031,10 @@
     left: 24.1%;
     overflow: hidden;
   }
+
+  .RS_OurRdwHeadingTestimonialsHeading {
+    padding: 48px 0px;
+  }
 }
 
 @media (max-width: 1180px) {
@@ -1077,6 +1078,15 @@
 }
 
 @media (max-width: 640px) {
+  .adinn-led-screen-overlay{
+    width: 85% !important;
+    height: 80% !important;
+    inset: 15.5% auto auto 4.5% !important;
+    min-width: 0px !important;
+    min-height: 0px !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
   .adinn-led-screen-content {
     padding: 14px 22px;
   }
@@ -1281,6 +1291,15 @@
 
 
 /* RESPONSIVE FOR DESKTOP - MOBILE SCREENS  */
+@media (min-width: 1440px) and (max-width: 2559px) {
+  /* HEADING  */
+
+  .RS_OurRdwHeadingTestimonialsHeading {
+    /* padding: 30px 6% !important; */
+    margin-left: -4%;
+  }
+}
+
 @media (min-width: 1024px) and (max-width: 1280px) {
   .adinn-testimonial-hero {
     width: 120%;
@@ -1294,6 +1313,15 @@
     height: 290px;
     top: 34%;
     left: 56.4%;
+  }
+  .adinn-led-screen-overlay{
+    width: 86% !important;
+    height: 83.45% !important;
+    inset: 17.25% auto auto 4% !important;
+    min-width: 0px !important;
+    min-height: 0px !important;
+    max-width: none !important;
+    max-height: none !important;
   }
 }
 
@@ -1520,9 +1548,7 @@
   }
 
   .adinn-led-screen-tag {
-    margin-bottom: 7px;
-    padding: 3px 6px;
-    font-size: 6px;
+    display: none;
   }
 
   .adinn-led-screen-bottom {
@@ -1531,5 +1557,57 @@
 
   .adinn-testimonial-section {
     padding: 0px 0;
+  }
+}
+
+/* =========================================================
+   "Trusted by Brands Across Industries" HEADING — ALIGNMENT
+
+   1) TOP/BOTTOM SPACING
+      The rule near the top of this file
+      (".adinn-testimonial-heading .RS_OurRdwHeading { padding-top: 0; }")
+      zeroes only the top half of the shared ".RS_OurRdwHeading { padding: 5% 0; }"
+      rule, leaving the bottom padding at 5% — this re-asserts the
+      matching 5% top so the spacing is symmetric again, same as the
+      other RS_OurRdwHeading headings on the homepage.
+
+   2) LEFT INSET
+      The heading is now wrapped (see Testimonials.tsx) in the SAME
+      "mx-auto px-30 RS_WhyAdRSSectionWrap" combo used by the "Why
+      Adinn Roadshows" / "Brands That Trust Us" / "Roadshow
+      Advantages" sections, so it inherits the identical left-inset
+      ladder automatically (defined once in HomePageSection1.css)
+      instead of duplicating those numbers here.
+
+      ".adinn-testimonial-container" is itself a centered,
+      capped-width box (min(1540px, 100% - Npx)) that already insets
+      its own content from the viewport edge — without cancelling
+      that, the new px-30 padding would stack on top of it and
+      over-indent the heading. ".RS_TestimonialHeadingAlign" cancels
+      exactly that inset (at this container's own breakpoints) via a
+      negative margin so only the shared px-30 padding is left.
+      ".adinn-testimonial-shell" has overflow: hidden, so this stays
+      safe even if a breakpoint edge is slightly off.
+========================================================= */
+
+.RS_TestimonialHeadingAlign {
+  margin-left: -38px;
+}
+
+@media (max-width: 1180px) {
+  .RS_TestimonialHeadingAlign {
+    margin-left: -22px;
+  }
+}
+
+@media (max-width: 900px) {
+  .RS_TestimonialHeadingAlign {
+    margin-left: -35px;
+  }
+}
+
+@media (max-width: 640px) {
+  .RS_TestimonialHeadingAlign {
+    margin-left: -25px;
   }
 }

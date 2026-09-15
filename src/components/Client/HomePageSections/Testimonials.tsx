@@ -139,8 +139,23 @@ const LAPTOP_LED_LAYOUT: LedLayout = {
 
 
 /* ============================================================
+   TABLET LARGE
+   1024px - 1100px
+
+   ✅ ADJUST 1024px SCREENS HERE
+============================================================ */
+
+const TABLET_LARGE_LED_LAYOUT: LedLayout = {
+  width: "85%",
+  height: "80%",
+  left: "4.5%",
+  top: "15.5%",
+};
+
+
+/* ============================================================
    TABLET
-   768px - 1100px
+   768px - 1023px
 
    ✅ ADJUST TABLET HERE
 ============================================================ */
@@ -154,8 +169,23 @@ const TABLET_LED_LAYOUT: LedLayout = {
 
 
 /* ============================================================
+   MOBILE LANDSCAPE
+   640px - 767px
+
+   ✅ ADJUST 640px SCREENS HERE
+============================================================ */
+
+const MOBILE_LANDSCAPE_LED_LAYOUT: LedLayout = {
+  width: "86%",
+  height: "83.45%",
+  left: "4%",
+  top: "17.25%",
+};
+
+
+/* ============================================================
    MOBILE
-   BELOW 768px
+   BELOW 640px
 
    ✅ ADJUST MOBILE HERE
 ============================================================ */
@@ -185,14 +215,24 @@ function getNextIndex(index: number) {
 ============================================================ */
 
 function getLedLayout(viewportWidth: number): LedLayout {
-  /* MOBILE */
-  if (viewportWidth < 768) {
+  /* MOBILE (below 640px) */
+  if (viewportWidth < 640) {
     return MOBILE_LED_LAYOUT;
   }
 
-  /* TABLET */
-  if (viewportWidth <= 1100) {
+  /* MOBILE LANDSCAPE (640px - 767px) */
+  if (viewportWidth < 768) {
+    return MOBILE_LANDSCAPE_LED_LAYOUT;
+  }
+
+  /* TABLET (768px - 1023px) */
+  if (viewportWidth < 1024) {
     return TABLET_LED_LAYOUT;
+  }
+
+  /* TABLET LARGE (1024px - 1100px) */
+  if (viewportWidth <= 1100) {
+    return TABLET_LARGE_LED_LAYOUT;
   }
 
   /* LAPTOP / COMPACT DESKTOP
@@ -422,17 +462,17 @@ export function Testimonials() {
      TESTIMONIAL AUTOPLAY
   ============================================================ */
 
-  useEffect(() => {
-    if (shouldReduceMotion || isPaused) return;
+  // useEffect(() => {
+  //   if (shouldReduceMotion || isPaused) return;
 
-    const timer = window.setInterval(() => {
-      setSelectedIndex((prev) => getNextIndex(prev));
-    }, AUTO_CHANGE_TIME);
+  //   const timer = window.setInterval(() => {
+  //     setSelectedIndex((prev) => getNextIndex(prev));
+  //   }, AUTO_CHANGE_TIME);
 
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, [shouldReduceMotion, isPaused]);
+  //   return () => {
+  //     window.clearInterval(timer);
+  //   };
+  // }, [shouldReduceMotion, isPaused]);
 
 
   return (
@@ -450,17 +490,14 @@ export function Testimonials() {
           ================================================== */}
 
           <div className="adinn-testimonial-heading">
-            <div className="RS_OurRdwHeading">
+            <div className="RS_OurRdwHeading RS_OurRdwHeadingTestimonialsHeading">
 
               <SplitHeading className="RS_OurRdwHeadingContent1">
                 Trusted by Brands Across
               </SplitHeading>
 
               <RevealText
-                className="
-                  RS_OurRdwHeadingContent1
-                  RS_OurRdwHeadingContent2
-                "
+                className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
                 effect="wipe"
                 delay={0.18}
               >

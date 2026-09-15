@@ -270,7 +270,7 @@
 }
 
 .RA_RightContent2InpBtn {
-    color: #FFFFFF;
+    /* color: #FFFFFF; */
     background: linear-gradient(270deg, #E3000F 0%, #7D0008 100%);
     padding: 8px 30px;
     font-size: 25px;
@@ -309,17 +309,18 @@
 
 /* HELP Center  */
 .HC_Main {
-    background: url('/images/assets/HelpCenterFAQImg.png');
+    /* background: url('/images/assets/HelpCenterFAQImg.png'); */
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
     height: 1000px;
     padding: 3% 0px;
+    background-color: #eeedf0 !important;
 }
 
 .HC_HeadingContent1,
 .HC_HeadingContent2 {
-    color: #FFFFFF;
+    /* color: #FFFFFF; */
     font-weight: 400;
     font-size: 70px;
     leading-trim: NONE;
@@ -334,12 +335,12 @@
 }
 
 .HC_FAQMain {
-    color: #FFFFFF;
+    /* color: #FFFFFF; */
     margin: 8% auto;
 }
 
 .HC_FAQ_QnAnsMain {
-    border-bottom: 1px solid white;
+    border-bottom: 1px solid black;
     width: 70%;
     margin: auto;
     padding: 20px 0px;
@@ -386,7 +387,7 @@
     padding-top: 12px;
     font-size: 16px;
     font-weight: 300;
-    color: rgba(255, 255, 255, 0.85);
+    /* color: rgba(255, 255, 255, 0.85); */
     line-height: 1.6;
 }
 
@@ -652,6 +653,10 @@
     .HC_FAQ_Question {
         font-size: 22px;
     }
+
+    .RA_LeftRightMain {
+        height: 660px;
+    }
 }
 
 /* Laptops (1024px - 1280px) */
@@ -694,7 +699,7 @@
     }
 
     .RA_LeftRightMain {
-        height: 640px;
+        height: 500px; /* 640px -> 500px changed*/
     }
 
     .RA_leftContentMain {

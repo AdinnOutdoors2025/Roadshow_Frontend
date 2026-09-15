@@ -3085,13 +3085,16 @@ export default function MyBookingsPage() {
             >
               <header className="RS_PageHeader RS_Reveal">
                 <h1>My Bookings</h1>
-                <p>View and manage all your vehicle booking requests.</p>
+                <p>
+                  {/* View and manage all your vehicle booking requests. */}
+View and manage your vehicle booking requests.
+                </p>
                 <div className="RS_PageGuide">
                   <span>1</span> Select a booking
                   <i />
-                  <span>2</span> Review campaign status
+                  <span>2</span> Check campaign status
                   <i />
-                  <span>3</span> Open live tracking
+                  <span>3</span> View live tracking
                 </div>
               </header>
 

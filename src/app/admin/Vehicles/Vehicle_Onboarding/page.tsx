@@ -2253,6 +2253,8 @@ export default function VehicleOnboardingForm() {
   };
 
   const handleNextStep = async () => {
+    if (loading) return;
+
     const errors = validateStep(currentStep, { commonInfo, vehicles, techSpecs, vehicleDescription });
     if (Object.keys(errors).length > 0) {
       setStepErrors(errors);
@@ -2260,10 +2262,15 @@ export default function VehicleOnboardingForm() {
       return;
     }
     setStepErrors({});
-    const success = await saveCurrentStep(currentStep, currentStep + 1);
-    if (!success && currentStep !== 1) return;
-    if (currentStep === 1 && !currentEditingGroupId) return;
-    if (currentStep < 4) setCurrentStep(currentStep + 1);
+    setLoading(true);
+    try {
+      const success = await saveCurrentStep(currentStep, currentStep + 1);
+      if (!success && currentStep !== 1) return;
+      if (currentStep === 1 && !currentEditingGroupId) return;
+      if (currentStep < 4) setCurrentStep(currentStep + 1);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const validateForm = () => {
@@ -3128,9 +3135,19 @@ export default function VehicleOnboardingForm() {
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2"
+                  disabled={loading}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium flex items-center gap-2"
                 >
-                  <Save size={16} /> Save & Next <ChevronRight size={16} />
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={16} /> Save & Next <ChevronRight size={16} />
+                    </>
+                  )}
                 </button>
               ) : (
                 <button

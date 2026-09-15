@@ -392,14 +392,7 @@ export function useNewsletterSubscribe(source: string) {
     captchaOpen && mounted
       ? createPortal(
           <div
-            className="
-              FooterCaptchaOverlay
-              fixed inset-0 z-[200]
-              flex overflow-y-auto
-              bg-black/55
-              px-4 py-6
-              backdrop-blur-[5px]
-            "
+            className="FooterCaptchaOverlay fixed inset-0 z-[200] flex overflow-y-auto bg-black/55 px-4 py-6 backdrop-blur-[5px]"
             onMouseDown={handleCaptchaOverlayClick}
           >
             <section
@@ -407,66 +400,23 @@ export function useNewsletterSubscribe(source: string) {
               aria-modal="true"
               aria-labelledby="newsletter-captcha-title"
               aria-describedby="newsletter-captcha-description"
-              className="
-                FooterCaptchaModal
-                relative
-                w-full max-w-[430px]
-                m-auto
-                overflow-hidden
-                rounded-[28px]
-                bg-white
-                p-7
-                text-center
-                text-black
-                shadow-[0_30px_90px_rgba(0,0,0,0.32)]
-                sm:p-9
-              "
+              className="FooterCaptchaModal relative w-full max-w-[430px] m-auto overflow-hidden rounded-[28px] bg-white p-7 text-center text-black shadow-[0_30px_90px_rgba(0,0,0,0.32)] sm:p-9"
             >
               <button
                 type="button"
                 onClick={closeCaptchaPopup}
                 disabled={loading}
                 aria-label="Close verification popup"
-                className="
-                  absolute right-5 top-5
-                  flex h-9 w-9
-                  items-center justify-center
-                  rounded-full
-                  bg-[#f1f1f1]
-                  text-[21px]
-                  text-black
-                  transition-all
-                  duration-200
-                  hover:bg-[#e5e5e5]
-                  hover:rotate-90
-                  disabled:cursor-not-allowed
-                  disabled:opacity-50
-                "
+                className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-[#f1f1f1] text-[21px] text-black transition-all duration-200 hover:bg-[#e5e5e5] hover:rotate-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 ×
               </button>
 
               <div
-                className="
-                  FooterCaptchaShield
-                  mx-auto
-                  flex
-                  h-[70px] w-[70px]
-                  items-center justify-center
-                  rounded-full
-                  bg-[#fdeaea]
-                "
+                className="FooterCaptchaShield mx-auto flex h-[70px] w-[70px] items-center justify-center rounded-full bg-[#fdeaea]"
               >
                 <div
-                  className="
-                    FooterCaptchaShieldInner
-                    flex
-                    h-[50px] w-[50px]
-                    items-center justify-center
-                    rounded-full
-                    bg-[#d70000]
-                    text-white
-                  "
+                  className="FooterCaptchaShieldInner flex h-[50px] w-[50px] items-center justify-center rounded-full bg-[#d70000] text-white"
                 >
                   <i className="fa-solid fa-shield-halved text-[21px]"></i>
                 </div>
@@ -475,26 +425,14 @@ export function useNewsletterSubscribe(source: string) {
               <div className="FooterCaptchaContent">
                 <h2
                   id="newsletter-captcha-title"
-                  className="
-                    mt-5
-                    text-[24px]
-                    font-bold
-                    leading-tight
-                  "
+                  className="mt-5 text-[24px] font-bold leading-tight"
                 >
                   Human Verification
                 </h2>
 
                 <p
                   id="newsletter-captcha-description"
-                  className="
-                    mx-auto
-                    mt-2
-                    max-w-[340px]
-                    text-[14px]
-                    leading-[1.6]
-                    text-[#666666]
-                  "
+                  className="mx-auto mt-2 max-w-[340px] text-[14px] leading-[1.6] text-[#666666]"
                 >
                   Complete this quick security check
                   to submit your contact details for
@@ -503,17 +441,7 @@ export function useNewsletterSubscribe(source: string) {
               </div>
 
               <div
-                className="
-                  FooterCaptchaQuestion
-                  relative
-                  mt-6
-                  rounded-[18px]
-                  bg-[#f5f5f5]
-                  px-5 py-5
-                  transition-all
-                  duration-300
-                  hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]
-                "
+                className="FooterCaptchaQuestion relative mt-6 rounded-[18px] bg-[#f5f5f5] px-5 py-5 transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
               >
                 <button
                   type="button"
@@ -521,45 +449,19 @@ export function useNewsletterSubscribe(source: string) {
                   disabled={loading}
                   aria-label="Generate a new security question"
                   title="Generate new question"
-                  className="
-                    absolute right-3 top-3
-                    flex h-9 w-9
-                    items-center justify-center
-                    rounded-full
-                    bg-white
-                    text-[#555555]
-                    shadow-sm
-                    transition-all
-                    duration-300
-                    hover:rotate-180
-                    hover:text-[#d70000]
-                    hover:shadow-md
-                    disabled:cursor-not-allowed
-                    disabled:opacity-50
-                  "
+                  className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#555555] shadow-sm transition-all duration-300 hover:rotate-180 hover:text-[#d70000] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <i className="fa-solid fa-rotate-right text-[14px]"></i>
                 </button>
 
                 <p
-                  className="
-                    text-[12px]
-                    font-semibold
-                    uppercase
-                    tracking-[0.1em]
-                    text-[#888888]
-                  "
+                  className="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#888888]"
                 >
                   Security question
                 </p>
 
                 <p
-                  className="
-                    mt-2
-                    text-[32px]
-                    font-bold
-                    text-black
-                  "
+                  className="mt-2 text-[32px] font-bold text-black"
                 >
                   {captcha.firstNumber} +{" "}
                   {captcha.secondNumber} = ?
@@ -615,13 +517,7 @@ export function useNewsletterSubscribe(source: string) {
               {captchaError && (
                 <p
                   role="alert"
-                  className="
-                    FooterCaptchaError
-                    mt-2
-                    text-[13px]
-                    font-medium
-                    text-[#d70000]
-                  "
+                  className="FooterCaptchaError mt-2 text-[13px] font-medium text-[#d70000]"
                 >
                   {captchaError}
                 </p>
@@ -631,41 +527,12 @@ export function useNewsletterSubscribe(source: string) {
                 type="button"
                 onClick={handleCaptchaVerification}
                 disabled={loading}
-                className="
-                  FooterCaptchaAction
-                  group
-                  mt-5
-                  flex
-                  w-full
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-full
-                  bg-black
-                  px-6
-                  py-3.5
-                  text-[14px]
-                  font-semibold
-                  text-white
-                  transition-all
-                  duration-300
-                  hover:bg-[#d70000]
-                  hover:shadow-[0_8px_24px_rgba(215,0,0,0.18)]
-                  disabled:cursor-not-allowed
-                  disabled:opacity-70
-                "
+                className="FooterCaptchaAction group mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-black px-6 py-3.5 text-[14px] font-semibold text-white transition-all duration-300 hover:bg-[#d70000] hover:shadow-[0_8px_24px_rgba(215,0,0,0.18)] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading ? (
                   <>
                     <span
-                      className="
-                        h-4 w-4
-                        animate-spin
-                        rounded-full
-                        border-2
-                        border-white/40
-                        border-t-white
-                      "
+                      className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
                     />
 
                     <span>Verifying your request...</span>
@@ -675,31 +542,14 @@ export function useNewsletterSubscribe(source: string) {
                     <span>Verify & Continue</span>
 
                     <i
-                      className="
-                        fa-solid
-                        fa-arrow-right
-                        text-[12px]
-                        transition-transform
-                        duration-300
-                        group-hover:translate-x-1
-                      "
+                      className="fa-solid fa-arrow-right text-[12px] transition-transform duration-300 group-hover:translate-x-1"
                     ></i>
                   </>
                 )}
               </button>
 
               <div
-                className="
-                  FooterCaptchaSecurityNote
-                  mt-4
-                  flex
-                  items-center
-                  justify-center
-                  gap-2
-                  text-[11px]
-                  font-medium
-                  text-[#8a8a8a]
-                "
+                className="FooterCaptchaSecurityNote mt-4 flex items-center justify-center gap-2 text-[11px] font-medium text-[#8a8a8a]"
               >
                 <i className="fa-solid fa-lock text-[10px]"></i>
 

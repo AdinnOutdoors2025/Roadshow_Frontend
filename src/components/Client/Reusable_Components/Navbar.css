@@ -72,8 +72,25 @@
     backdrop-filter: blur(18px) saturate(140%);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     border: 1px solid rgba(255, 255, 255, .08);
-    will-change: top, width, height, border-radius, box-shadow;
-    transition: background .4s ease, border-color .4s ease;
+    will-change: top, width, height, border-radius, box-shadow, transform, opacity;
+    transition: background .4s ease, border-color .4s ease, opacity .4s ease;
+    /* translateZ(0) only forces its own GPU compositing layer — it doesn't
+       move anything, so it can't reintroduce the centering bugs above (those
+       were about GSAP/perspective fighting an X/Y transform). Same fix as
+       the ::before rule further down (see Known bugs #10 in Navbar.md): a
+       fixed, backdrop-filter element can go stale/invisible until something
+       forces a repaint, and this pins it to a persistent layer instead. */
+    transform: translateZ(0);
+}
+
+/* Idle-fade: applied when the user has stopped scrolling for a while (see
+   the idle-fade effect in Navbar.tsx). Opacity only — width/height/position
+   stay exactly as the dock stage left them, so it doesn't fight that
+   animation, and pointer-events is dropped so the invisible pill can't
+   swallow clicks meant for the section underneath it. */
+.RS_NewHeader--idle {
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* Light pill skin (NAV_LIGHT_THEME = true in Navbar.tsx) */

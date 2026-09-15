@@ -3,17 +3,22 @@
 "use client";
 
 import {
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
+  type KeyboardEvent,
+  type MouseEvent,
 } from "react";
 
 import Image from "next/image";
+import { createPortal } from "react-dom";
 import { baseUrl, mailImageUrl } from "../../../BaseUrl";
 import toast from "react-hot-toast";
 import { withRoadshowLoader } from "@/components/GlobalRoadshowLoader";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
@@ -43,8 +48,12 @@ import {
   ArrowRight,
   Check,
   Headphones,
+  Lock,
   MapPinned,
   MonitorCheck,
+  RotateCw,
+  ShieldCheck,
+  X,
 } from "lucide-react";
 
 import "./page.css";
@@ -230,6 +239,33 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CONTACT_PATTERN = /^[0-9+\-\s()]{8,15}$/;
 
 /* =========================================================
+   HUMAN VERIFICATION (MATH CAPTCHA)
+
+   Gates the actual enquiry submission behind a simple math
+   question, same purpose as the FooterCaptcha used for the
+   newsletter/"Roadshow Advantages" capture elsewhere on the
+   site — kept local to this page since this form submits a
+   different payload to a different endpoint.
+========================================================= */
+
+type MathCaptcha = {
+  firstNumber: number;
+  secondNumber: number;
+  answer: number;
+};
+
+function createMathCaptcha(): MathCaptcha {
+  const firstNumber = Math.floor(Math.random() * 9) + 1;
+  const secondNumber = Math.floor(Math.random() * 9) + 1;
+
+  return {
+    firstNumber,
+    secondNumber,
+    answer: firstNumber + secondNumber,
+  };
+}
+
+/* =========================================================
    HELPERS
 ========================================================= */
 
@@ -388,6 +424,20 @@ export default function ContactPage() {
     useState<ContactFormState>(INITIAL_FORM);
 
   const [submitting, setSubmitting] = useState(false);
+
+  const [captchaOpen, setCaptchaOpen] = useState(false);
+
+  const [captcha, setCaptcha] =
+    useState<MathCaptcha>(createMathCaptcha);
+
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [captchaError, setCaptchaError] = useState("");
+
+  const captchaInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [mounted] = useState(
+    () => typeof document !== "undefined",
+  );
 
   const selectedService = SERVICE_DETAILS[service];
 
@@ -697,6 +747,145 @@ export default function ContactPage() {
   };
 
   /* =========================================================
+     HUMAN VERIFICATION HANDLERS
+  ========================================================= */
+
+  const refreshCaptcha = () => {
+    setCaptcha((previousCaptcha) => {
+      let newCaptcha = createMathCaptcha();
+
+      while (
+        newCaptcha.firstNumber === previousCaptcha.firstNumber &&
+        newCaptcha.secondNumber === previousCaptcha.secondNumber
+      ) {
+        newCaptcha = createMathCaptcha();
+      }
+
+      return newCaptcha;
+    });
+
+    setCaptchaAnswer("");
+    setCaptchaError("");
+
+    toast.dismiss("contact-captcha-error");
+
+    window.setTimeout(() => {
+      captchaInputRef.current?.focus();
+    }, 50);
+  };
+
+  const openCaptchaPopup = () => {
+    setCaptcha(createMathCaptcha());
+    setCaptchaAnswer("");
+    setCaptchaError("");
+    setCaptchaOpen(true);
+
+    window.setTimeout(() => {
+      captchaInputRef.current?.focus();
+    }, 100);
+  };
+
+  const closeCaptchaPopup = () => {
+    setCaptchaOpen(false);
+    setCaptchaAnswer("");
+    setCaptchaError("");
+
+    toast.dismiss("contact-captcha-error");
+  };
+
+  const handleCaptchaAnswerChange = (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    setCaptchaAnswer(
+      event.target.value.replace(/\D/g, "").slice(0, 3),
+    );
+
+    setCaptchaError("");
+
+    toast.dismiss("contact-captcha-error");
+  };
+
+  const handleCaptchaVerification = () => {
+    if (!captchaAnswer.trim()) {
+      const message = "Please enter the answer to continue.";
+
+      setCaptchaError(message);
+
+      toast.error(message, {
+        id: "contact-captcha-error",
+      });
+
+      captchaInputRef.current?.focus();
+
+      return;
+    }
+
+    const enteredAnswer = Number(captchaAnswer.trim());
+
+    if (
+      Number.isNaN(enteredAnswer) ||
+      enteredAnswer !== captcha.answer
+    ) {
+      const message =
+        "The answer is incorrect. Please check the question and try again.";
+
+      setCaptchaError(message);
+      setCaptchaAnswer("");
+
+      toast.error("Incorrect answer. Please try again.", {
+        id: "contact-captcha-error",
+      });
+
+      window.setTimeout(() => {
+        captchaInputRef.current?.focus();
+      }, 50);
+
+      return;
+    }
+
+    setCaptchaOpen(false);
+    setCaptchaAnswer("");
+    setCaptchaError("");
+
+    void submitEnquiry();
+  };
+
+  const handleCaptchaKeyDown = (
+    event: KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleCaptchaVerification();
+    }
+  };
+
+  const handleCaptchaOverlayClick = (
+    event: MouseEvent<HTMLDivElement>,
+  ) => {
+    if (event.target === event.currentTarget) {
+      closeCaptchaPopup();
+    }
+  };
+
+  useScrollLock(captchaOpen);
+
+  useEffect(() => {
+    if (!captchaOpen) return;
+
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeCaptchaPopup();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [captchaOpen]);
+
+  /* =========================================================
      ENQUIRY ID
   ========================================================= */
 
@@ -748,7 +937,7 @@ export default function ContactPage() {
      SUBMIT
   ========================================================= */
 
-  const handleSubmit = async (
+  const handleSubmit = (
     event: FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
@@ -767,6 +956,10 @@ export default function ContactPage() {
       return;
     }
 
+    openCaptchaPopup();
+  };
+
+  const submitEnquiry = async () => {
     const enquiryId = generateEnquiryId();
 
     /* Using the full-res `image` (not the smaller `mailImage`) for now —
@@ -908,13 +1101,15 @@ export default function ContactPage() {
               >
                 <div className="contact-hero__title-mask">
                   <span className="contact-hero__title-line">
-                    Let&rsquo;s make it
+                    {/* Let&rsquo;s make it */}
+                    Time To Get Moving
                   </span>
                 </div>
 
                 <div className="contact-hero__title-mask">
                   <span className="contact-hero__title-line">
-                    Happen
+                    {/* Happen */}
+                    {/* Moving */}
                   </span>
                 </div>
               </div>
@@ -1356,6 +1551,124 @@ export default function ContactPage() {
           </motion.form>
         </div>
       </section>
+
+      {captchaOpen &&
+        mounted &&
+        createPortal(
+          <div
+            className="ContactCaptchaOverlay fixed inset-0 z-[200] flex overflow-y-auto bg-black/55 px-4 py-6 backdrop-blur-[5px]"
+            onMouseDown={handleCaptchaOverlayClick}
+          >
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="contact-captcha-title"
+              aria-describedby="contact-captcha-description"
+              className="ContactCaptchaModal relative m-auto w-full max-w-[430px] overflow-hidden rounded-[28px] bg-white p-7 text-center text-black shadow-[0_30px_90px_rgba(0,0,0,0.32)] sm:p-9"
+            >
+              <button
+                type="button"
+                onClick={closeCaptchaPopup}
+                aria-label="Close verification popup"
+                className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-[#f1f1f1] text-black transition-all duration-200 hover:bg-[#e5e5e5] hover:rotate-90"
+              >
+                <X size={16} strokeWidth={2} />
+              </button>
+
+              <div className="ContactCaptchaShield mx-auto flex h-[70px] w-[70px] items-center justify-center rounded-full bg-[#fdeaea]">
+                <div className="ContactCaptchaShieldInner flex h-[50px] w-[50px] items-center justify-center rounded-full bg-[#d70000] text-white">
+                  <ShieldCheck size={22} strokeWidth={2} />
+                </div>
+              </div>
+
+              <div className="ContactCaptchaContent">
+                <h2
+                  id="contact-captcha-title"
+                  className="mt-5 text-[24px] font-bold leading-tight"
+                >
+                  Human Verification
+                </h2>
+
+                <p
+                  id="contact-captcha-description"
+                  className="mx-auto mt-2 max-w-[340px] text-[14px] leading-[1.6] text-[#666666]"
+                >
+                  Complete this quick security check to submit your
+                  campaign enquiry.
+                </p>
+              </div>
+
+              <div className="ContactCaptchaQuestion relative mt-6 rounded-[18px] bg-[#f5f5f5] px-5 py-5 transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+                <button
+                  type="button"
+                  onClick={refreshCaptcha}
+                  aria-label="Generate a new security question"
+                  title="Generate new question"
+                  className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#555555] shadow-sm transition-all duration-300 hover:rotate-180 hover:text-[#d70000] hover:shadow-md"
+                >
+                  <RotateCw size={14} strokeWidth={2} />
+                </button>
+
+                <p className="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#888888]">
+                  Security question
+                </p>
+
+                <p className="mt-2 text-[32px] font-bold text-black">
+                  {captcha.firstNumber} + {captcha.secondNumber} = ?
+                </p>
+              </div>
+
+              <input
+                ref={captchaInputRef}
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={captchaAnswer}
+                placeholder="Enter the result"
+                aria-label="Security question answer"
+                onChange={handleCaptchaAnswerChange}
+                onKeyDown={handleCaptchaKeyDown}
+                className={`ContactCaptchaInput mt-5 w-full rounded-[12px] border bg-white px-4 py-3.5 text-center text-[17px] font-semibold text-black outline-none transition-all duration-200 ${
+                  captchaError
+                    ? "border-[#d70000] focus:border-[#d70000] focus:ring-2 focus:ring-[#d70000]/10"
+                    : "border-[#d6d6d6] focus:border-black focus:ring-2 focus:ring-black/5"
+                }`}
+              />
+
+              {captchaError && (
+                <p
+                  role="alert"
+                  className="ContactCaptchaError mt-2 text-[13px] font-medium text-[#d70000]"
+                >
+                  {captchaError}
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={handleCaptchaVerification}
+                className="ContactCaptchaAction group mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-black px-6 py-3.5 text-[14px] font-semibold text-white transition-all duration-300 hover:bg-[#d70000] hover:shadow-[0_8px_24px_rgba(215,0,0,0.18)]"
+              >
+                <span>Verify & Continue</span>
+
+                <ArrowRight
+                  size={16}
+                  strokeWidth={2}
+                  className="transition-transform duration-300 group-hover:translate-x-1"
+                />
+              </button>
+
+              <div className="ContactCaptchaSecurityNote mt-4 flex items-center justify-center gap-2 text-[11px] font-medium text-[#8a8a8a]">
+                <Lock size={11} strokeWidth={2} />
+
+                <span>
+                  Verification helps prevent automated submissions.
+                </span>
+              </div>
+            </section>
+          </div>,
+          document.body,
+        )}
     </main>
   );
 }

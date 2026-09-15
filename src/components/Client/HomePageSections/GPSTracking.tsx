@@ -7,6 +7,7 @@ import { Activity, MapPin, Navigation2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import { ButtonHover } from "../Reusable_Components/ButtonHover";
+import './GPSTracking.css'; 
 
 type LatLng = [number, number];
 
@@ -1549,24 +1550,24 @@ export function GPSTracking() {
         <div className="overflow-hidden rounded-[32px] bg-white sm:rounded-[38px]">
           <div className="grid lg:grid-cols-[0.86fr_1.14fr]">
             {/* LEFT CONTENT */}
-            <div className="flex flex-col justify-center px-6 py-9 sm:px-10 sm:py-12 lg:px-12 lg:py-14 xl:px-16 xl:py-16">
+            <div className=" rdswGPSLeftMain flex flex-col justify-center px-6 py-9 sm:px-10 sm:py-12 lg:px-12 lg:py-14 xl:px-16 xl:py-16">
               <Reveal delay={1}>
-                <h2 className="max-w-[620px] font-outfit text-[34px] font-normal leading-[1.07] tracking-[-0.035em] text-[#111111] sm:text-[40px] lg:text-[44px] xl:text-[48px]">
+                <h2 className="rdswGPSLeftHeading max-w-[620px] font-outfit text-[34px] font-normal leading-[1.07] tracking-[-0.035em] text-[#111111] sm:text-[40px] lg:text-[44px] xl:text-[48px]">
                   GPS Tracking to monitor your campaign with confidence.
                 </h2>
               </Reveal>
 
               <Reveal delay={2}>
-                <p className="mt-5 max-w-[610px] text-[15px] leading-[1.75] text-[#667085] sm:text-[16px] lg:text-[17px]">
+                <p className="rdswGPSLeftPara mt-5 max-w-[610px] text-[15px] leading-[1.75] text-[#667085] sm:text-[16px] lg:text-[17px]">
                   GPS-supported visibility for routes, movement, and live execution
                   updates across city roads and district campaign zones.
                 </p>
               </Reveal>
 
               <Reveal delay={3}>
-                <ul className="mt-8 space-y-6 sm:mt-9">
+                <ul className="rdswGPSLeftContentMain mt-8 space-y-6 sm:mt-9">
                   {features.map((feature) => (
-                    <li key={feature.t} className="flex items-start gap-4">
+                    <li key={feature.t} className=" rdswGPSLeftContentInner flex items-start gap-4">
                       <div className="flex size-9 shrink-0 items-center justify-center text-[#E3000F] sm:size-10">
                         <feature.i className="size-[21px]" strokeWidth={1.65} />
                       </div>

@@ -180,7 +180,7 @@ const whyAdinnWorksBest = [
     description:
       "Know where your vehicles are with live GPS tracking, regular updates and support throughout the campaign.",
     image: "/images/assets/Why_Adinn_Roadshows/gps.png",
-    collapsedWidth: 340,
+    collapsedWidth: 375,
     expandedWidth: 460,
   },
 
@@ -189,7 +189,7 @@ const whyAdinnWorksBest = [
     description:
       "From choosing the vehicle and branding it to handling permissions, routes and execution—we take care of it all.",
     image: "/images/assets/Why_Adinn_Roadshows/one_stop.png",
-    collapsedWidth: 370,
+    collapsedWidth: 440,
     expandedWidth: 480,
   },
 
@@ -1309,23 +1309,7 @@ export default function HomePageSection1() {
 
 <div
   id="our-roadshow-vehicles"
-  className="
-    RS_OurRdwMainSection
-    w-full
-    bg-[#f5f5f7]
-
-    px-5
-    pt-[70px]
-
-    sm:px-8
-    sm:pt-[80px]
-
-    md:px-12
-    md:pt-[90px]
-
-    lg:px-20
-    lg:pt-[110px]
-  "
+  className="RS_OurRdwMainSection w-full bg-[#f5f5f7] px-5 pt-[70px] sm:px-8 sm:pt-[80px] md:px-12 md:pt-[90px] lg:px-20 lg:pt-[110px]"
 >
   <VehicleListing
     layout="carousel"
@@ -1343,10 +1327,7 @@ export default function HomePageSection1() {
 
         <div>
           <RevealText
-          className="
-            RS_OurRdwHeadingContent1
-            RS_OurRdwHeadingContent2
-          "
+          className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
           effect="wipe"
           delay={0.18}
         >
@@ -1365,7 +1346,6 @@ export default function HomePageSection1() {
 
       <div id="why-adinn"  className="mx-auto px-30 RS_WhyAdRSSectionWrap RS_WhyAdRSFigmaUI">
         <div className="RS_OurRdwHeading">
-
           <RevealText id="why-adinn" 
             className="RS_OurRdwHeadingContent1"
             effect="blur"
@@ -1450,6 +1430,18 @@ export default function HomePageSection1() {
               border-radius 620ms cubic-bezier(0.22, 1, 0.36, 1) !important;
           }
 
+          /* Desktop has room beside the fixed 405px left column before the
+             vehicle art begins, so let a capsule grow past that column
+             instead of clipping a long title. Mobile/tablet keep the
+             inline maxWidth:100% cap from the JSX (this override only
+             applies at 1024px+, where the collapsedWidth values below are
+             actually used). */
+          @media (min-width: 1024px) {
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSItem {
+              max-width: none !important;
+            }
+          }
+
           .RS_WhyAdRSFigmaUI .RS_WhyAdRSItem.active {
             height: 140px !important;
             min-height: 140px !important;
@@ -1462,7 +1454,7 @@ export default function HomePageSection1() {
             padding: 12px 18px 12px 12px !important;
             display: flex !important;
             align-items: flex-start !important;
-            gap: 12px !important;
+            gap: 5px !important;
             box-sizing: border-box !important;
           }
 
@@ -1780,20 +1772,41 @@ export default function HomePageSection1() {
              MOBILE: KEEP THE EXISTING MOBILE COMPOSITION
           ================================================= */
 
+          /* =================================================
+             SMALL DESKTOP (1024px - 1439px): keep the desktop
+             two-column composition, but the inline
+             minHeight:900px / paddingBottom:80px on
+             .RS_WhyAdRSMain forces ~980px regardless of how
+             little height the 4-capsule list actually needs at
+             this width. Cap it back down, the same way the
+             tablet block above already does.
+          ================================================= */
+
+          @media (min-width: 1024px) and (max-width: 1439px) {
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSMain {
+              min-height: 620px !important;
+              height: auto !important;
+              padding-bottom: 40px !important;
+            }
+          }
+
           @media (max-width: 767px) {
             .RS_WhyAdRSFigmaUI .RS_WhyAdRSMain {
               border-radius: 44px !important;
             }
 
             .RS_WhyAdRSFigmaUI .RS_WhyAdRS_ItemName {
-              font-size: 20px !important;
+              font-size: 15px !important;
               line-height: 26px !important;
             }
 
             .RS_WhyAdRSFigmaUI .RS_WhyAdRS_ItemDesc {
-              font-size: 17px !important;
-              line-height: 22px !important;
+              font-size: 15px !important;
+              line-height: 20px !important;
             }
+              .RS_WhyAdRSFigmaUI .RS_WhyAdRS_CollapseWrapper.open{
+              margin-top:3px;
+          }
           }
         `}</style>
 

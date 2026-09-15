@@ -40,11 +40,14 @@ function Footer() {
         <div className="FooterCTAMain flex flex-col md:flex-row items-start md:items-center justify-around px-[5%] py-6 md:py-10 gap-4 md:gap-6">
           <div>
             <div className="FooterCTAContent1 leading-tight">
-              Launch your campaign now.
+              {/* Launch your campaign now. */}
+              {/* READY TO PUT YOUR BRAND ON THE MOVE? */}
+              Ready to put your Brand on the move ?
             </div>
 
             <div className="FooterCTAContent2 mt-1">
-              Quick setup, instant visibility.
+              {/* Quick setup, instant visibility. */}
+              Let’s plan your roadshow.
             </div>
           </div>
 
