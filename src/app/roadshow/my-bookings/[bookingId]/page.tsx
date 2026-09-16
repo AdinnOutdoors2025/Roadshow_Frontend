@@ -135,6 +135,7 @@ function formatDateTime(value?: string | null) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true,
   }).format(date);
 }
 
@@ -629,6 +630,17 @@ function TrackingPageContent({
   function endTabsDrag() {
     tabsDragRef.current.active = false;
     setTabsDragging(false);
+
+    // suppressTabClickAfterDrag normally consumes `moved` on the click that
+    // ends a drag, but some browsers/gestures never fire that click at all
+    // (release outside the element, pointer capture lost mid-drag, etc.).
+    // Without this fallback, `moved` would stay stuck true and every later
+    // genuine tab click would keep getting swallowed.
+    if (tabsDragRef.current.moved) {
+      window.setTimeout(() => {
+        tabsDragRef.current.moved = false;
+      }, 300);
+    }
   }
 
   // Runs in the capture phase, before a tab button's own onClick — swallows

@@ -40,11 +40,14 @@ function Footer() {
         <div className="FooterCTAMain flex flex-col md:flex-row items-start md:items-center justify-around px-[5%] py-6 md:py-10 gap-4 md:gap-6">
           <div>
             <div className="FooterCTAContent1 leading-tight">
-              Launch your campaign now.
+              {/* Launch your campaign now. */}
+              {/* READY TO PUT YOUR BRAND ON THE MOVE? */}
+              Ready to put your Brand on the move ?
             </div>
 
             <div className="FooterCTAContent2 mt-1">
-              Quick setup, instant visibility.
+              {/* Quick setup, instant visibility. */}
+              Let’s plan your roadshow.
             </div>
           </div>
 
@@ -302,8 +305,8 @@ function Footer() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 md:gap-8 px-[5%] py-4 md:py-5 FooterBottomContents">
           <a
-            href="/cookies"
-            className="hover:text-white transition-colors"
+            // href="/cookies"
+            // className="hover:text-white transition-colors"
           >
             Cookies Policy
           </a>
@@ -319,8 +322,8 @@ function Footer() {
           </button>
 
           <a
-            href="/privacy"
-            className="hover:text-white transition-colors"
+            // href="/privacy"
+            // className="hover:text-white transition-colors"
           >
             Privacy Policy
           </a>

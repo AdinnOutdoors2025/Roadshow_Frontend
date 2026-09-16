@@ -129,6 +129,14 @@ export default function CampaignRequestPage() {
     string | null
   >(null);
 
+  /* The reorder that restores a saved cart on page load should land the
+     selected card in place immediately, not slide it in from wherever it
+     sat in the unsorted catalogue — a slide covering that much distance on
+     first paint reads as the card being missing/hidden rather than as a
+     reorder. Set right before the restoring setSelectedVehicles call so the
+     very next FLIP pass knows to skip animating. */
+  const skipNextFlipRef = useRef(false);
+
   const leftColumnRef =
     useRef<HTMLElement>(null);
 
@@ -343,6 +351,8 @@ export default function CampaignRequestPage() {
 
     hydratedSelectionRef.current = restoredVehicles;
 
+    skipNextFlipRef.current = true;
+
     setSelectedVehicles(restoredVehicles);
 
     cartUserKeyRef.current = userKey;
@@ -352,12 +362,21 @@ export default function CampaignRequestPage() {
        carousel like any other selected card, but the scroller itself
        stays wherever it was rendered — leaving the restored selection
        scrolled out of view on a fresh page load. Snap it back into view
-       once, right after restore. */
+       once, right after restore.
+
+       Double rAF, not single: a single frame can fire before the
+       setSelectedVehicles above has actually been re-rendered/painted into
+       the reordered DOM, so scrollTo(0) reads the *old* (unsorted) layout —
+       a no-op since scrollLeft is already 0 on a fresh load, leaving the
+       restored card off-screen. Waiting one extra frame guarantees the
+       reorder has painted first. */
     if (restoredVehicles.length > 0) {
       requestAnimationFrame(() => {
-        productScrollerRef.current?.scrollTo({
-          left: 0,
-          behavior: "auto",
+        requestAnimationFrame(() => {
+          productScrollerRef.current?.scrollTo({
+            left: 0,
+            behavior: "auto",
+          });
         });
       });
     }
@@ -437,9 +456,15 @@ export default function CampaignRequestPage() {
       });
     });
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+    const skipAnimation = skipNextFlipRef.current;
+
+    skipNextFlipRef.current = false;
+
+    const prefersReducedMotion =
+      skipAnimation ||
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
 
     /* Cleanups for cards still mid-slide, so a reorder that lands while an
        earlier one is running does not leave stale listeners behind. */
@@ -1411,8 +1436,319 @@ export default function CampaignRequestPage() {
     <main className="min-h-screen bg-white  pt-8 text-[#171719] sm:pt-10 lg:pt-14">
       <section className="mx-auto w-full  px-4 sm:px-6 lg:px-8 xl:px-12">
         <div
-          className=" Rdsw_CrfMainSection  grid grid-cols-1 gap-8 lg:grid-cols-[minmax(320px,0.76fr)_minmax(0,1.28fr)] lg:items-start xl:gap-10"
+          className=" Rdsw_CrfMainSection  grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.28fr)_minmax(320px,0.76fr)] lg:items-start xl:gap-10"
         >
+          {/* Product details */}
+          <section
+            ref={rightColumnRef}
+            className="rdsw_crfProdDetailsMain min-w-0 rdsw_crfProdDetailsScrollPane"
+          >
+            {/* Section heading */}
+            <div className="rdsw_crfProdDetailsHeadingWrapper">
+              <p className="rdsw_crfProdDetails1stHeading">
+                Roadshow booking
+              </p>
+
+              <h2 className="rdsw_crfProdDetails2ndHeading">
+                {/* Product Details */}
+                CHOOSE YOUR RIDE. SET YOUR REACH.
+              </h2>
+
+              <p className="rdsw_crfProdDetailsDesc">
+                {/* Choose your roadshow vehicles and campaign dates. You can add campaign details in the next step. */}
+             Pick your roadshow vehicle and campaign dates. <br></br>
+Add your campaign details in the next step.
+              </p>
+            </div>
+
+            {/* Vehicle cards */}
+            <div className="rdsw_crfProdDetailsVehicleSection">
+              <div
+                ref={productScrollerRef}
+                className="rdsw_crfProdDetailsScroller"
+              >
+                {/* Loading skeleton */}
+                {loadingVehicles &&
+                  Array.from({ length: 4 }).map((_, index) => (
+                    <article
+                      key={index}
+                      className="rdsw_crfProdDetailsSkeletonCard"
+                    >
+                      <div className="rdsw_crfProdDetailsSkeletonImage" />
+
+                      <div className="rdsw_crfProdDetailsSkeletonTitle" />
+
+                      <div className="rdsw_crfProdDetailsSkeletonPrice" />
+
+                      <div className="rdsw_crfProdDetailsSkeletonRating" />
+
+                      <div className="rdsw_crfProdDetailsSkeletonButton" />
+                    </article>
+                  ))}
+
+                {/* Empty state */}
+                {!loadingVehicles && vehicles.length === 0 && (
+                  <div className="rdsw_crfProdDetailsEmptyState">
+                    <p className="rdsw_crfProdDetailsEmptyTitle">
+                      No vehicles available
+                    </p>
+
+                    <p className="rdsw_crfProdDetailsEmptyDesc">
+                      Campaign vehicles could not be found.
+                    </p>
+                  </div>
+                )}
+
+                {/* Vehicle cards */}
+                {!loadingVehicles &&
+                  sortedVehicles.map((vehicle) => {
+                    const selected = isSelected(vehicle.id);
+
+                    return (
+                      <article
+                        key={vehicle.id}
+                        ref={(node) => {
+                          if (node) {
+                            cardNodesRef.current.set(
+                              vehicle.id,
+                              node
+                            );
+                          } else {
+                            cardNodesRef.current.delete(
+                              vehicle.id
+                            );
+                          }
+                        }}
+                        className={[
+                          "rdsw_crfProdDetailsCardMain",
+                          selected
+                            ? "rdsw_crfProdDetailsCardSelected"
+                            : "",
+                        ].join(" ")}
+                      >
+                        <div className="rdsw_crfProdDetailsImageWrapper">
+                          {selected && (
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                removeVehicle(vehicle.id);
+                              }}
+                              className="rdsw_crfProdDetailsRemoveVehicleBtn"
+                              aria-label={`Remove ${vehicle.name} from campaign`}
+                              title="Remove vehicle"
+                            >
+                              <Trash2
+                                size={17}
+                                strokeWidth={1.9}
+                              />
+                            </button>
+                          )}
+
+                          <img
+                            src={
+                              vehicle.image ||
+                              FALLBACK_VEHICLE_IMAGE
+                            }
+                            alt={vehicle.name}
+                            className="rdsw_crfProdDetailsVehicleImage"
+                            onError={(event) => {
+                              const image = event.currentTarget;
+
+                              if (
+                                image.src !==
+                                FALLBACK_VEHICLE_IMAGE
+                              ) {
+                                image.src =
+                                  FALLBACK_VEHICLE_IMAGE;
+                              }
+                            }}
+                          />
+                        </div>
+
+                        <div className="rdsw_crfProdDetailsCardContent">
+                          <h3 className="rdsw_crfProdDetailsVehicleName">
+                            {vehicle.name}
+                          </h3>
+
+                          <p className="rdsw_crfProdDetailsVehiclePrice">
+                            {formatCurrency(vehicle.rate)}
+                            <span>/ Per Day</span>
+                          </p>
+
+                          {vehicle.rating !== undefined &&
+                            vehicle.rating !== null && (
+                              <div className="rdsw_crfProdDetailsRating">
+                                <span className="rdsw_crfProdDetailsRatingValue">
+                                  {vehicle.rating}
+                                </span>
+
+                                {/* <span className="rdsw_crfProdDetailsRatingStar"> */}
+                                <div><img src='/images/assets/RS_VehicleRateStar.svg' className='rdsw_crfVehRatingStar' alt="Rating" /></div>
+                                {/* </span> */}
+                              </div>
+                            )}
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              toggleVehicle(vehicle)
+                            }
+                            aria-label={
+                              selected
+                                ? `Remove ${vehicle.name}`
+                                : `Add ${vehicle.name}`
+                            }
+                            className={[
+                              "rdsw_crfProdDetailsVehicleButton",
+                              selected
+                                ? "rdsw_crfProdDetailsVehicleButtonSelected"
+                                : "",
+                            ].join(" ")}
+                          >
+                            {selected && (
+                              <Image
+                                src="/images/assets/rdsw_crfProdDetailsCheckMark.svg"
+                                alt=""
+                                width={18}
+                                height={18}
+                                className="rdsw_crfProdDetailsCheckMark"
+                              />
+                            )}
+
+                            <span>
+                              {selected
+                                ? "Vehicle Added"
+                                : "Add Vehicle"}
+                            </span>
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+              </div>
+
+              {/* Carousel navigation */}
+              <div className="rdsw_crfProdDetailsNavigation">
+                <button
+                  type="button"
+                  onClick={() => scrollProducts("left")}
+                  className="rdsw_crfProdDetailsNavigationButton"
+                  aria-label="Previous vehicles"
+                  disabled={!canScrollLeft}
+                >
+                  <ChevronLeft size={26} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => scrollProducts("right")}
+                  className="rdsw_crfProdDetailsNavigationButton"
+                  aria-label="Next vehicles"
+                  disabled={!canScrollRight}
+                >
+                  <ChevronRight size={26} />
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop summary table */}
+            <div className="rdsw_crfProdDetailsDesktopTable">
+              <div className="rdsw_crfProdDetailsTableHeader">
+                <span>Name</span>
+                <span>Price</span>
+                <span>Days</span>
+                <span>Qty</span>
+                <span>Total</span>
+              </div>
+
+              <div className="rdsw_crfProdDetailsTableBody">
+                {bookingRows.length === 0 && (
+                  <div className="rdsw_crfProdDetailsTableEmpty">
+                    Select a vehicle to view the booking summary.
+                  </div>
+                )}
+
+                {bookingRows.map((vehicle, index) => (
+                  <div
+                    key={vehicle.id}
+                    className="rdsw_crfProdDetailsTableRow"
+                    style={{
+                      animationDelay: `${index * 60}ms`,
+                    }}
+                  >
+                    <span className="rdsw_crfProdDetailsTableVehicleName">
+                      {vehicle.name}
+                    </span>
+
+                    <span>
+                      {formatCurrency(vehicle.rate)}
+                    </span>
+
+                    <span>
+                      {vehicle.days} day(s)
+                    </span>
+
+                    <span>
+                      {vehicle.quantity} vehicle(s)
+                    </span>
+
+                    <span>
+                      {formatCurrency(vehicle.total)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mobile summary */}
+            <div className="rdsw_crfProdDetailsMobileSummary">
+              <div className="rdsw_crfProdDetailsMobileSummaryHeader">
+                <h3>Booking summary</h3>
+
+                <span>
+                  {bookingRows.length} vehicle
+                  {bookingRows.length === 1 ? "" : "s"}
+                </span>
+              </div>
+
+              {bookingRows.length === 0 && (
+                <div className="rdsw_crfProdDetailsMobileEmpty">
+                  Select a vehicle to view the booking summary.
+                </div>
+              )}
+
+              {bookingRows.map((vehicle) => (
+                <article
+                  key={vehicle.id}
+                  className="rdsw_crfProdDetailsMobileCard"
+                >
+                  <div className="rdsw_crfProdDetailsMobileCardTop">
+                    <div>
+                      <h4>{vehicle.name}</h4>
+
+                      <p>
+                        {vehicle.days} day(s) ·{" "}
+                        {vehicle.quantity} vehicle(s)
+                      </p>
+                    </div>
+
+                    <strong>
+                      {formatCurrency(vehicle.total)}
+                    </strong>
+                  </div>
+
+                  <div className="rdsw_crfProdDetailsMobilePrice">
+                    <span>Price per day</span>
+
+                    <strong>
+                      {formatCurrency(vehicle.rate)}
+                    </strong>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
           {/* Campaign request form */}
           {/* Sticky position/top are set from JS (see the paired-column effect
               above) because the correct offset depends on this column's
@@ -1894,314 +2230,6 @@ export default function CampaignRequestPage() {
 
             </div>
           </aside>
-          {/* Product details */}
-          <section
-            ref={rightColumnRef}
-            className="rdsw_crfProdDetailsMain min-w-0 rdsw_crfProdDetailsScrollPane"
-          >
-            {/* Section heading */}
-            <div className="rdsw_crfProdDetailsHeadingWrapper">
-              <p className="rdsw_crfProdDetails1stHeading">
-                Roadshow booking
-              </p>
-
-              <h2 className="rdsw_crfProdDetails2ndHeading">
-                Product Details
-              </h2>
-
-              <p className="rdsw_crfProdDetailsDesc">
-                Choose your roadshow vehicles and campaign dates. You can add campaign details in the next step.
-              </p>
-            </div>
-
-            {/* Vehicle cards */}
-            <div className="rdsw_crfProdDetailsVehicleSection">
-              <div
-                ref={productScrollerRef}
-                className="rdsw_crfProdDetailsScroller"
-              >
-                {/* Loading skeleton */}
-                {loadingVehicles &&
-                  Array.from({ length: 4 }).map((_, index) => (
-                    <article
-                      key={index}
-                      className="rdsw_crfProdDetailsSkeletonCard"
-                    >
-                      <div className="rdsw_crfProdDetailsSkeletonImage" />
-
-                      <div className="rdsw_crfProdDetailsSkeletonTitle" />
-
-                      <div className="rdsw_crfProdDetailsSkeletonPrice" />
-
-                      <div className="rdsw_crfProdDetailsSkeletonRating" />
-
-                      <div className="rdsw_crfProdDetailsSkeletonButton" />
-                    </article>
-                  ))}
-
-                {/* Empty state */}
-                {!loadingVehicles && vehicles.length === 0 && (
-                  <div className="rdsw_crfProdDetailsEmptyState">
-                    <p className="rdsw_crfProdDetailsEmptyTitle">
-                      No vehicles available
-                    </p>
-
-                    <p className="rdsw_crfProdDetailsEmptyDesc">
-                      Campaign vehicles could not be found.
-                    </p>
-                  </div>
-                )}
-
-                {/* Vehicle cards */}
-                {!loadingVehicles &&
-                  sortedVehicles.map((vehicle) => {
-                    const selected = isSelected(vehicle.id);
-
-                    return (
-                      <article
-                        key={vehicle.id}
-                        ref={(node) => {
-                          if (node) {
-                            cardNodesRef.current.set(
-                              vehicle.id,
-                              node
-                            );
-                          } else {
-                            cardNodesRef.current.delete(
-                              vehicle.id
-                            );
-                          }
-                        }}
-                        className={[
-                          "rdsw_crfProdDetailsCardMain",
-                          selected
-                            ? "rdsw_crfProdDetailsCardSelected"
-                            : "",
-                        ].join(" ")}
-                      >
-                        <div className="rdsw_crfProdDetailsImageWrapper">
-                          {selected && (
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                removeVehicle(vehicle.id);
-                              }}
-                              className="rdsw_crfProdDetailsRemoveVehicleBtn"
-                              aria-label={`Remove ${vehicle.name} from campaign`}
-                              title="Remove vehicle"
-                            >
-                              <Trash2
-                                size={17}
-                                strokeWidth={1.9}
-                              />
-                            </button>
-                          )}
-
-                          <img
-                            src={
-                              vehicle.image ||
-                              FALLBACK_VEHICLE_IMAGE
-                            }
-                            alt={vehicle.name}
-                            className="rdsw_crfProdDetailsVehicleImage"
-                            onError={(event) => {
-                              const image = event.currentTarget;
-
-                              if (
-                                image.src !==
-                                FALLBACK_VEHICLE_IMAGE
-                              ) {
-                                image.src =
-                                  FALLBACK_VEHICLE_IMAGE;
-                              }
-                            }}
-                          />
-                        </div>
-
-                        <div className="rdsw_crfProdDetailsCardContent">
-                          <h3 className="rdsw_crfProdDetailsVehicleName">
-                            {vehicle.name}
-                          </h3>
-
-                          <p className="rdsw_crfProdDetailsVehiclePrice">
-                            {formatCurrency(vehicle.rate)}
-                            <span>/ Per Day</span>
-                          </p>
-
-                          {vehicle.rating !== undefined &&
-                            vehicle.rating !== null && (
-                              <div className="rdsw_crfProdDetailsRating">
-                                <span className="rdsw_crfProdDetailsRatingValue">
-                                  {vehicle.rating}
-                                </span>
-
-                                {/* <span className="rdsw_crfProdDetailsRatingStar"> */}
-                                <div><img src='/images/assets/RS_VehicleRateStar.svg' className='rdsw_crfVehRatingStar' alt="Rating" /></div>
-                                {/* </span> */}
-                              </div>
-                            )}
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              toggleVehicle(vehicle)
-                            }
-                            aria-label={
-                              selected
-                                ? `Remove ${vehicle.name}`
-                                : `Add ${vehicle.name}`
-                            }
-                            className={[
-                              "rdsw_crfProdDetailsVehicleButton",
-                              selected
-                                ? "rdsw_crfProdDetailsVehicleButtonSelected"
-                                : "",
-                            ].join(" ")}
-                          >
-                            {selected && (
-                              <Image
-                                src="/images/assets/rdsw_crfProdDetailsCheckMark.svg"
-                                alt=""
-                                width={18}
-                                height={18}
-                                className="rdsw_crfProdDetailsCheckMark"
-                              />
-                            )}
-
-                            <span>
-                              {selected
-                                ? "Vehicle Added"
-                                : "Add Vehicle"}
-                            </span>
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })}
-              </div>
-
-              {/* Carousel navigation */}
-              <div className="rdsw_crfProdDetailsNavigation">
-                <button
-                  type="button"
-                  onClick={() => scrollProducts("left")}
-                  className="rdsw_crfProdDetailsNavigationButton"
-                  aria-label="Previous vehicles"
-                  disabled={!canScrollLeft}
-                >
-                  <ChevronLeft size={26} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => scrollProducts("right")}
-                  className="rdsw_crfProdDetailsNavigationButton"
-                  aria-label="Next vehicles"
-                  disabled={!canScrollRight}
-                >
-                  <ChevronRight size={26} />
-                </button>
-              </div>
-            </div>
-
-            {/* Desktop summary table */}
-            <div className="rdsw_crfProdDetailsDesktopTable">
-              <div className="rdsw_crfProdDetailsTableHeader">
-                <span>Name</span>
-                <span>Price</span>
-                <span>Days</span>
-                <span>Qty</span>
-                <span>Total</span>
-              </div>
-
-              <div className="rdsw_crfProdDetailsTableBody">
-                {bookingRows.length === 0 && (
-                  <div className="rdsw_crfProdDetailsTableEmpty">
-                    Select a vehicle to view the booking summary.
-                  </div>
-                )}
-
-                {bookingRows.map((vehicle, index) => (
-                  <div
-                    key={vehicle.id}
-                    className="rdsw_crfProdDetailsTableRow"
-                    style={{
-                      animationDelay: `${index * 60}ms`,
-                    }}
-                  >
-                    <span className="rdsw_crfProdDetailsTableVehicleName">
-                      {vehicle.name}
-                    </span>
-
-                    <span>
-                      {formatCurrency(vehicle.rate)}
-                    </span>
-
-                    <span>
-                      {vehicle.days} day(s)
-                    </span>
-
-                    <span>
-                      {vehicle.quantity} vehicle(s)
-                    </span>
-
-                    <span>
-                      {formatCurrency(vehicle.total)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Mobile summary */}
-            <div className="rdsw_crfProdDetailsMobileSummary">
-              <div className="rdsw_crfProdDetailsMobileSummaryHeader">
-                <h3>Booking summary</h3>
-
-                <span>
-                  {bookingRows.length} vehicle
-                  {bookingRows.length === 1 ? "" : "s"}
-                </span>
-              </div>
-
-              {bookingRows.length === 0 && (
-                <div className="rdsw_crfProdDetailsMobileEmpty">
-                  Select a vehicle to view the booking summary.
-                </div>
-              )}
-
-              {bookingRows.map((vehicle) => (
-                <article
-                  key={vehicle.id}
-                  className="rdsw_crfProdDetailsMobileCard"
-                >
-                  <div className="rdsw_crfProdDetailsMobileCardTop">
-                    <div>
-                      <h4>{vehicle.name}</h4>
-
-                      <p>
-                        {vehicle.days} day(s) ·{" "}
-                        {vehicle.quantity} vehicle(s)
-                      </p>
-                    </div>
-
-                    <strong>
-                      {formatCurrency(vehicle.total)}
-                    </strong>
-                  </div>
-
-                  <div className="rdsw_crfProdDetailsMobilePrice">
-                    <span>Price per day</span>
-
-                    <strong>
-                      {formatCurrency(vehicle.rate)}
-                    </strong>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
         </div>
       </section>
 

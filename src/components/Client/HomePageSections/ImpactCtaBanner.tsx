@@ -17,7 +17,7 @@ import {
   HEADER_SCROLL_START_EVENT,
   type HeaderScrollEventDetail,
 } from "../Reusable_Components/scrollToSection";
-
+import './ImpactCtaBanner.css';
 /* =========================================================
    TYPES
 ========================================================= */
@@ -181,50 +181,7 @@ function BleedCta({
   return (
     <Link
       href={href}
-      className="
-        inline-flex
-        items-center
-        justify-center
-
-        !h-[42px]
-        !min-h-[42px]
-
-        w-fit
-
-        rounded-full
-        border-0
-
-        bg-[#e8e8e8]
-
-        !px-5
-
-        font-sans
-        !text-[11px]
-        font-semibold
-
-        leading-none
-        tracking-[-0.01em]
-
-        text-[#1f1f1f]
-
-        no-underline
-
-        shadow-[0_8px_22px_rgba(0,0,0,0.05)]
-
-        sm:!h-[44px]
-        sm:!min-h-[44px]
-        sm:!px-6
-        sm:!text-[12px]
-
-        lg:!h-[56px]
-        lg:!min-h-[56px]
-        lg:!px-9
-        lg:!text-[15px]
-
-        lg:transition-transform
-        lg:duration-300
-        lg:hover:-translate-y-[2px]
-      "
+      className="inline-flex items-center justify-center !h-[42px] !min-h-[42px] w-fit rounded-full border-0 bg-[#e8e8e8] !px-5 font-sans !text-[11px] font-semibold leading-none tracking-[-0.01em] text-[#1f1f1f] no-underline shadow-[0_8px_22px_rgba(0,0,0,0.05)] sm:!h-[44px] sm:!min-h-[44px] sm:!px-6 sm:!text-[12px] lg:!h-[56px] lg:!min-h-[56px] lg:!px-9 lg:!text-[15px] lg:transition-transform lg:duration-300 lg:hover:-translate-y-[2px]"
     >
       {label}
     </Link>
@@ -1435,19 +1392,7 @@ export default function ImpactCtaBanner({
     <section
       ref={sectionRef}
       data-responsive-scroll="GSAP_PIN_PUSH_V17"
-      className="
-        relative
-
-        !m-0
-        !mb-0
-
-        !p-0
-        !pb-0
-
-        w-full
-
-        bg-[#f8f8f6]
-      "
+      className="relative !m-0 !mb-0 !p-0 !pb-0 w-full bg-[#f8f8f6]"
     >
       {/* ===================================================
           DESKTOP STAGE
@@ -1455,23 +1400,7 @@ export default function ImpactCtaBanner({
 
       <div
         ref={stageRef}
-        className="
-          relative
-
-          hidden
-
-          h-[100svh]
-
-          min-h-[760px]
-
-          w-full
-
-          overflow-hidden
-
-          bg-[#f8f8f6]
-
-          lg:block
-        "
+        className="relative hidden h-[100svh] min-h-[640px] min-[1440px]:min-h-[760px] w-full overflow-hidden bg-[#f8f8f6] lg:block"
       >
         {/* =================================================
             BACKGROUND
@@ -1479,15 +1408,7 @@ export default function ImpactCtaBanner({
 
         <div
           aria-hidden="true"
-          className="
-            pointer-events-none
-
-            absolute
-
-            inset-0
-
-            bg-[radial-gradient(circle_at_50%_43%,rgba(255,255,255,1)_0%,rgba(255,255,255,0.82)_34%,rgba(248,248,246,0)_76%)]
-          "
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_43%,rgba(255,255,255,1)_0%,rgba(255,255,255,0.82)_34%,rgba(248,248,246,0)_76%)]"
         />
 
         {/* =================================================
@@ -1496,46 +1417,10 @@ export default function ImpactCtaBanner({
 
         <div
           aria-hidden="true"
-          className="
-            pointer-events-none
-
-            absolute
-
-            bottom-[-4vw]
-
-            left-[48%]
-
-            z-[2]
-
-            w-max
-
-            -translate-x-1/2
-          "
+          className="pointer-events-none absolute bottom-[-4vw] left-[48%] z-[2] w-max -translate-x-1/2"
         >
           <span
-            className="
-              block
-
-              select-none
-
-              whitespace-nowrap
-
-              text-center
-
-              font-serif
-
-              text-[22vw]
-
-              font-normal
-
-              italic
-
-              leading-none
-
-              tracking-[-0.055em]
-
-              text-black/[0.032]
-            "
+            className="block select-none whitespace-nowrap text-center font-serif text-[22vw] font-normal italic leading-none tracking-[-0.055em] text-black/[0.032]"
           >
             roadshows
           </span>
@@ -1547,103 +1432,24 @@ export default function ImpactCtaBanner({
 
         <div
           ref={introRef}
-          className="
-            pointer-events-none
-
-            absolute
-
-            left-1/2
-
-            top-[clamp(135px,14vh,165px)]
-
-            z-30
-
-            w-[min(900px,76vw)]
-
-            -translate-x-1/2
-
-            text-center
-          "
-        >
-          <div
-            className="
-              overflow-hidden
-            "
-          >
+          className="pointer-events-none absolute left-1/2 top-[clamp(135px,14vh,165px)] z-30 w-[min(900px,76vw)] -translate-x-1/2 text-center">
+          <div className=" rdswImpact1stHeading overflow-hidden " >
             <p
               data-intro-reveal
-              className="
-                m-0
-
-                transform-gpu
-
-                will-change-transform
-
-                font-sans
-
-                text-[clamp(32px,3.6vw,58px)]
-
-                font-normal
-
-                leading-[0.98]
-
-                tracking-[-0.05em]
-
-                text-[#a2a19e]
-              "
-            >
+              className="m-0 rdswimpactHeading1 transform-gpu will-change-transform font-sans text-[clamp(32px,3.6vw,58px)] font-normal leading-[0.98] tracking-[-0.05em] text-[#a2a19e]" >
               <span
-                className="
-                  font-serif
-
-                  font-normal
-
-                  italic
-
-                  text-[#969088]
-                "
-              >
-                Powerful roadshow advertising
+                className=" font-serif font-normal italic text-[#969088] " >
+                Turn every stop into a brand opportunity
               </span>
             </p>
           </div>
 
           <div
-            className="
-              mt-1
-
-              overflow-hidden
-            "
-          >
+            className=" mt-1 overflow-hidden "  >
             <h2
               data-intro-reveal
-              className="
-                mx-auto
-
-                max-w-[820px]
-
-                transform-gpu
-
-                will-change-transform
-
-                font-sans
-
-                text-[clamp(38px,4.3vw,68px)]
-
-                font-medium
-
-                leading-[0.98]
-
-                tracking-[-0.058em]
-
-                text-[#111111]
-              "
-            >
-              to amplify your brand
-
-              <br />
-
-              where it matters most
+              className="rdswImpact2ndHeading  mx-auto max-w-[820px] transform-gpu will-change-transform font-sans text-[clamp(38px,4.3vw,68px)] font-medium  leading-[0.98] tracking-[-0.058em] text-[#111111] " >
+              Take your message beyond screens
             </h2>
           </div>
         </div>
@@ -1653,36 +1459,11 @@ export default function ImpactCtaBanner({
         ================================================= */}
 
         <div
-          className="
-            pointer-events-none
-
-            absolute
-
-            left-1/2
-
-            top-[53%]
-
-            z-20
-
-            w-[min(780px,43vw)]
-
-            -translate-x-1/2
-            -translate-y-1/2
-          "
+          className="rdswImpactVehImage pointer-events-none absolute left-1/2 top-[53%] z-20 w-[min(780px,43vw)] -translate-x-1/2 -translate-y-1/2"
         >
           <div
             ref={desktopVehicleRef}
-            className="
-              relative
-
-              w-full
-
-              transform-gpu
-
-              backface-hidden
-
-              will-change-transform
-            "
+            className="relative w-full transform-gpu backface-hidden will-change-transform"
           >
             <Image
               src={HERO_VEHICLE_IMAGE}
@@ -1692,46 +1473,12 @@ export default function ImpactCtaBanner({
               priority
               draggable={false}
               sizes="43vw"
-              className="
-                relative
-
-                z-[2]
-
-                block
-
-                h-auto
-
-                w-full
-
-                select-none
-
-                object-contain
-
-                drop-shadow-[0_28px_24px_rgba(0,0,0,0.15)]
-              "
+              className="relative z-[2] block h-auto w-full select-none object-contain drop-shadow-[0_28px_24px_rgba(0,0,0,0.15)]"
             />
 
             <div
               aria-hidden="true"
-              className="
-                absolute
-
-                bottom-[1%]
-
-                left-[13%]
-
-                right-[8%]
-
-                z-[1]
-
-                h-[7%]
-
-                rounded-[50%]
-
-                bg-black/20
-
-                blur-[25px]
-              "
+              className="absolute bottom-[1%] left-[13%] right-[8%] z-[1] h-[7%] rounded-[50%] bg-black/20 blur-[25px]"
             />
           </div>
         </div>
@@ -1741,31 +1488,7 @@ export default function ImpactCtaBanner({
         ================================================= */}
 
         <div
-          className="
-            absolute
-
-            left-[61%]
-
-            top-1/2
-
-            z-40
-
-            h-[430px]
-
-            w-[31%]
-
-            min-w-[390px]
-
-            max-w-[500px]
-
-            -translate-y-1/2
-
-            overflow-hidden
-
-            xl:left-[61.5%]
-
-            2xl:left-[62%]
-          "
+          className="absolute left-[61%] top-1/2 z-40 h-[430px] w-[31%] min-w-[390px] max-w-[500px] -translate-y-1/2 overflow-hidden xl:left-[61.5%] 2xl:left-[62%]"
         >
           {/* ===============================================
               FRAME TWO
@@ -1773,98 +1496,36 @@ export default function ImpactCtaBanner({
 
           <div
             ref={frameTwoRef}
-            className="
-              invisible
-
-              absolute
-
-              inset-0
-
-              flex
-
-              flex-col
-
-              justify-center
-
-              opacity-0
-            "
+            className="invisible absolute inset-0 flex flex-col justify-center opacity-0"
           >
             <div
-              className="
-                overflow-hidden
-              "
+              className="overflow-hidden"
             >
               <div
                 data-frame-two-reveal
-                className="
-                  transform-gpu
-
-                  will-change-transform
-
-                  font-sans
-
-                  text-[clamp(82px,6.5vw,116px)]
-
-                  font-normal
-
-                  leading-[0.8]
-
-                  tracking-[-0.07em]
-
-                  text-[#111111]
-                "
+                className="transform-gpu will-change-transform font-sans text-[clamp(82px,6.5vw,116px)] font-normal leading-[0.8] tracking-[-0.07em] text-[#111111]"
               >
                 250+
               </div>
             </div>
 
             <div
-              className="
-                mt-7
-
-                overflow-hidden
-              "
+              className="mt-7 overflow-hidden"
             >
               <h3
                 data-frame-two-reveal
-                className="
-                  transform-gpu
-
-                  will-change-transform
-
-                  font-sans
-
-                  text-[clamp(34px,2.7vw,47px)]
-
-                  font-medium
-
-                  leading-[0.98]
-
-                  tracking-[-0.046em]
-
-                  text-[#111111]
-                "
+                className="transform-gpu will-change-transform font-sans text-[clamp(34px,2.7vw,47px)] font-medium leading-[0.98] tracking-[-0.046em] text-[#111111]"
               >
                 Roadshow Vehicles
               </h3>
             </div>
 
             <div
-              className="
-                mt-5
-
-                overflow-hidden
-
-                pb-3
-              "
+              className="mt-5 overflow-hidden pb-3"
             >
               <div
                 data-frame-two-reveal
-                className="
-                  transform-gpu
-
-                  will-change-transform
-                "
+                className="transform-gpu will-change-transform"
               >
                 <BleedCta
                   href={ctaHref}
@@ -1880,98 +1541,36 @@ export default function ImpactCtaBanner({
 
           <div
             ref={frameThreeRef}
-            className="
-              invisible
-
-              absolute
-
-              inset-0
-
-              flex
-
-              flex-col
-
-              justify-center
-
-              opacity-0
-            "
+            className="invisible absolute inset-0 flex flex-col justify-center opacity-0"
           >
             <div
-              className="
-                overflow-hidden
-              "
+              className="overflow-hidden"
             >
               <div
                 data-frame-three-reveal
-                className="
-                  transform-gpu
-
-                  will-change-transform
-
-                  font-sans
-
-                  text-[clamp(82px,6.5vw,116px)]
-
-                  font-normal
-
-                  leading-[0.8]
-
-                  tracking-[-0.07em]
-
-                  text-[#111111]
-                "
+                className="transform-gpu will-change-transform font-sans text-[clamp(82px,6.5vw,116px)] font-normal leading-[0.8] tracking-[-0.07em] text-[#111111]"
               >
                 20L+
               </div>
             </div>
 
             <div
-              className="
-                mt-7
-
-                overflow-hidden
-              "
+              className="mt-7 overflow-hidden"
             >
               <h3
                 data-frame-three-reveal
-                className="
-                  transform-gpu
-
-                  will-change-transform
-
-                  font-sans
-
-                  text-[clamp(34px,2.7vw,47px)]
-
-                  font-medium
-
-                  leading-[0.98]
-
-                  tracking-[-0.046em]
-
-                  text-[#111111]
-                "
+                className="transform-gpu will-change-transform font-sans text-[clamp(34px,2.7vw,47px)] font-medium leading-[0.98] tracking-[-0.046em] text-[#111111]"
               >
                 Daily Impressions
               </h3>
             </div>
 
             <div
-              className="
-                mt-5
-
-                overflow-hidden
-
-                pb-3
-              "
+              className="mt-5 overflow-hidden pb-3"
             >
               <div
                 data-frame-three-reveal
-                className="
-                  transform-gpu
-
-                  will-change-transform
-                "
+                className="transform-gpu will-change-transform"
               >
                 <BleedCta
                   href={ctaHref}
@@ -1995,23 +1594,7 @@ export default function ImpactCtaBanner({
 
       <div
         ref={responsiveStoryRef}
-        className="
-          relative
-
-          !m-0
-          !mb-0
-
-          !p-0
-          !pb-0
-
-          w-full
-
-          overflow-visible
-
-          bg-[#f8f8f6]
-
-          lg:hidden
-        "
+        className="relative !m-0 !mb-0 !p-0 !pb-0 w-full overflow-visible bg-[#f8f8f6] lg:hidden"
       >
         {/* =================================================
             MOBILE + TABLET PINNED STAGE
@@ -2033,30 +1616,7 @@ export default function ImpactCtaBanner({
 
         <div
           ref={responsiveStageRef}
-          className="
-            relative
-
-            z-[30]
-
-            !m-0
-            !mb-0
-
-            !p-0
-            !pb-0
-
-            w-full
-
-            overflow-hidden
-
-            bg-[#f8f8f6]
-
-            !h-[calc(100svh-92px)]
-            !min-h-[500px]
-
-            sm:!h-[clamp(420px,58svh,520px)]
-            sm:!min-h-[420px]
-            sm:!max-h-[520px]
-          "
+          className="relative z-[30] !m-0 !mb-0 !p-0 !pb-0 w-full overflow-hidden bg-[#f8f8f6] !h-[calc(100svh-92px)] !min-h-[500px] sm:!h-[clamp(420px,58svh,520px)] sm:!min-h-[420px] sm:!max-h-[520px]"
         >
           {/* ===============================================
               RESPONSIVE BACKGROUND
@@ -2064,15 +1624,7 @@ export default function ImpactCtaBanner({
 
           <div
             aria-hidden="true"
-            className="
-              pointer-events-none
-
-              absolute
-
-              inset-0
-
-              bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,1)_0%,rgba(255,255,255,0.85)_38%,rgba(248,248,246,0)_78%)]
-            "
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,1)_0%,rgba(255,255,255,0.85)_38%,rgba(248,248,246,0)_78%)]"
           />
 
           {/* ===============================================
@@ -2081,50 +1633,10 @@ export default function ImpactCtaBanner({
 
           <div
             aria-hidden="true"
-            className="
-              pointer-events-none
-
-              absolute
-
-              !bottom-[-3vw]
-
-              left-1/2
-
-              z-[2]
-
-              w-max
-
-              -translate-x-1/2
-
-              sm:!bottom-[-2vw]
-            "
+            className="pointer-events-none absolute !bottom-[-3vw] left-1/2 z-[2] w-max -translate-x-1/2 sm:!bottom-[-2vw]"
           >
             <span
-              className="
-                block
-
-                select-none
-
-                whitespace-nowrap
-
-                text-center
-
-                font-serif
-
-                text-[22vw]
-
-                font-normal
-
-                italic
-
-                leading-none
-
-                tracking-[-0.055em]
-
-                text-black/[0.028]
-
-                sm:!text-[17vw]
-              "
+              className="block select-none whitespace-nowrap text-center font-serif text-[22vw] font-normal italic leading-none tracking-[-0.055em] text-black/[0.028] sm:!text-[17vw]"
             >
               roadshows
             </span>
@@ -2136,119 +1648,31 @@ export default function ImpactCtaBanner({
 
           <div
             ref={responsiveIntroRef}
-            className="
-              pointer-events-none
-
-              absolute
-
-              left-1/2
-
-              !top-[5%]
-
-              z-30
-
-              !w-[calc(100%-40px)]
-
-              max-w-[700px]
-
-              -translate-x-1/2
-
-              text-center
-
-              sm:!top-[7%]
-
-              sm:!w-[76%]
-            "
+            className="pointer-events-none absolute left-1/2 !top-[5%] z-30 !w-[calc(100%-40px)] max-w-[700px] -translate-x-1/2 text-center sm:!top-[7%] sm:!w-[76%]"
           >
             <div
-              className="
-                overflow-hidden
-
-                pb-1
-              "
+              className="overflow-hidden pb-1"
             >
               <p
                 data-responsive-intro-reveal
-                className="
-                  m-0
-
-                  transform-gpu
-
-                  will-change-transform
-
-                  font-sans
-
-                  !text-[clamp(16px,5vw,19px)]
-
-                  font-normal
-
-                  leading-[1.02]
-
-                  tracking-[-0.045em]
-
-                  text-[#a2a19e]
-
-                  sm:!text-[clamp(19px,2.6vw,25px)]
-                "
+                className="m-0 transform-gpu will-change-transform font-sans !text-[clamp(16px,5vw,19px)] font-normal leading-[1.02] tracking-[-0.045em] text-[#a2a19e] sm:!text-[clamp(19px,2.6vw,25px)]"
               >
                 <span
-                  className="
-                    font-serif
-
-                    font-normal
-
-                    italic
-
-                    text-[#969088]
-                  "
+                  className="font-serif font-normal italic text-[#969088]"
                 >
-                  Powerful roadshow advertising
+                  Turn every stop into a brand opportunity
                 </span>
               </p>
             </div>
 
             <div
-              className="
-                mt-1
-
-                overflow-hidden
-
-                pb-2
-              "
+              className="mt-1 overflow-hidden pb-2"
             >
               <h2
                 data-responsive-intro-reveal
-                className="
-                  mx-auto
-
-                  max-w-[680px]
-
-                  transform-gpu
-
-                  will-change-transform
-
-                  text-balance
-
-                  font-sans
-
-                  !text-[clamp(24px,7.6vw,30px)]
-
-                  font-medium
-
-                  leading-[0.98]
-
-                  tracking-[-0.052em]
-
-                  text-[#111111]
-
-                  sm:!text-[clamp(28px,3.7vw,37px)]
-                "
+                className="mx-auto max-w-[680px] transform-gpu will-change-transform text-balance font-sans !text-[clamp(24px,7.6vw,30px)] font-medium leading-[0.98] tracking-[-0.052em] text-[#111111] sm:!text-[clamp(28px,3.7vw,37px)]"
               >
-                to amplify your brand
-
-                <br />
-
-                where it matters most
+                Take your message beyond screens
               </h2>
             </div>
           </div>
@@ -2260,44 +1684,11 @@ export default function ImpactCtaBanner({
           =============================================== */}
 
           <div
-            className="
-              pointer-events-none
-
-              absolute
-
-              left-1/2
-
-              !top-[40%]
-
-              z-20
-
-              !w-[160vw]
-
-              max-w-none
-
-              -translate-x-1/2
-              -translate-y-1/2
-
-              sm:!left-1/2
-
-              sm:!top-[52%]
-
-              sm:!w-[min(620px,64vw)]
-            "
+            className="pointer-events-none absolute left-1/2 !top-[40%] z-20 !w-[160vw] max-w-none -translate-x-1/2 -translate-y-1/2 sm:!left-1/2 sm:!top-[52%] sm:!w-[min(620px,64vw)]"
           >
             <div
               ref={responsiveVehicleRef}
-              className="
-                relative
-
-                w-full
-
-                transform-gpu
-
-                backface-hidden
-
-                will-change-transform
-              "
+              className="relative w-full transform-gpu backface-hidden will-change-transform"
             >
               <Image
                 src={HERO_VEHICLE_IMAGE}
@@ -2311,24 +1702,7 @@ export default function ImpactCtaBanner({
                   (max-width:1023px) 64vw,
                   43vw
                 "
-                className="
-                  relative
-
-                  z-[2]
-
-                  block
-
-                  !h-auto
-                  !w-full
-
-                  max-w-none
-
-                  select-none
-
-                  object-contain
-
-                  drop-shadow-[0_20px_18px_rgba(0,0,0,0.15)]
-                "
+                className="relative z-[2] block !h-auto !w-full max-w-none select-none object-contain drop-shadow-[0_20px_18px_rgba(0,0,0,0.15)]"
                 onLoad={() => {
                   window.requestAnimationFrame(
                     () => {
@@ -2340,25 +1714,7 @@ export default function ImpactCtaBanner({
 
               <div
                 aria-hidden="true"
-                className="
-                  absolute
-
-                  bottom-[1%]
-
-                  left-[13%]
-
-                  right-[8%]
-
-                  z-[1]
-
-                  h-[7%]
-
-                  rounded-[50%]
-
-                  bg-black/[0.15]
-
-                  blur-[20px]
-                "
+                className="absolute bottom-[1%] left-[13%] right-[8%] z-[1] h-[7%] rounded-[50%] bg-black/[0.15] blur-[20px]"
               />
             </div>
           </div>
@@ -2371,34 +1727,7 @@ export default function ImpactCtaBanner({
 
           <div
             aria-live="polite"
-            className="
-              absolute
-
-              left-5
-              right-5
-
-              !top-[6%]
-
-              z-40
-
-              !h-[250px]
-
-              overflow-hidden
-
-              sm:!left-[61%]
-              sm:!right-auto
-
-              sm:!top-[49%]
-
-              sm:!h-[260px]
-
-              sm:!w-[36%]
-
-              sm:!min-w-[230px]
-              sm:!max-w-[340px]
-
-              sm:-translate-y-1/2
-            "
+            className="absolute left-5 right-5 !top-[6%] z-40 !h-[250px] overflow-hidden sm:!left-[61%] sm:!right-auto sm:!top-[49%] sm:!h-[260px] sm:!w-[36%] sm:!min-w-[230px] sm:!max-w-[340px] sm:-translate-y-1/2"
           >
             {/* =============================================
                 FRAME TWO
@@ -2406,56 +1735,18 @@ export default function ImpactCtaBanner({
 
             <div
               ref={responsiveFrameTwoRef}
-              className="
-                invisible
-
-                absolute
-
-                inset-0
-
-                flex
-
-                flex-col
-
-                justify-start
-
-                opacity-0
-
-                sm:justify-center
-              "
+              className="invisible absolute inset-0 flex flex-col justify-start opacity-0 sm:justify-center"
             >
               {/* ===========================================
                   250+
               =========================================== */}
 
               <div
-                className="
-                  overflow-hidden
-
-                  !pb-3
-                "
+                className="overflow-hidden !pb-3"
               >
                 <div
                   data-responsive-frame-two-reveal
-                  className="
-                    transform-gpu
-
-                    will-change-transform
-
-                    font-sans
-
-                    !text-[clamp(48px,14.5vw,62px)]
-
-                    font-normal
-
-                    leading-[0.86]
-
-                    tracking-[-0.065em]
-
-                    text-[#111111]
-
-                    sm:!text-[clamp(52px,6.6vw,68px)]
-                  "
+                  className="transform-gpu will-change-transform font-sans !text-[clamp(48px,14.5vw,62px)] font-normal leading-[0.86] tracking-[-0.065em] text-[#111111] sm:!text-[clamp(52px,6.6vw,68px)]"
                 >
                   250+
                 </div>
@@ -2466,37 +1757,11 @@ export default function ImpactCtaBanner({
               =========================================== */}
 
               <div
-                className="
-                  !mt-3
-
-                  overflow-hidden
-
-                  !pb-2
-                "
+                className="!mt-3 overflow-hidden !pb-2"
               >
                 <h3
                   data-responsive-frame-two-reveal
-                  className="
-                    transform-gpu
-
-                    will-change-transform
-
-                    whitespace-nowrap
-
-                    font-sans
-
-                    !text-[clamp(23px,7vw,29px)]
-
-                    font-medium
-
-                    leading-[1.05]
-
-                    tracking-[-0.045em]
-
-                    text-[#111111]
-
-                    sm:!text-[clamp(22px,2.8vw,29px)]
-                  "
+                  className="transform-gpu will-change-transform whitespace-nowrap font-sans !text-[clamp(23px,7vw,29px)] font-medium leading-[1.05] tracking-[-0.045em] text-[#111111] sm:!text-[clamp(22px,2.8vw,29px)]"
                 >
                   Roadshow Vehicles
                 </h3>
@@ -2507,21 +1772,11 @@ export default function ImpactCtaBanner({
               =========================================== */}
 
               <div
-                className="
-                  !mt-4
-
-                  overflow-hidden
-
-                  !pb-4
-                "
+                className="!mt-4 overflow-hidden !pb-4"
               >
                 <div
                   data-responsive-frame-two-reveal
-                  className="
-                    transform-gpu
-
-                    will-change-transform
-                  "
+                  className="transform-gpu will-change-transform"
                 >
                   <BleedCta
                     href={ctaHref}
@@ -2537,56 +1792,18 @@ export default function ImpactCtaBanner({
 
             <div
               ref={responsiveFrameThreeRef}
-              className="
-                invisible
-
-                absolute
-
-                inset-0
-
-                flex
-
-                flex-col
-
-                justify-start
-
-                opacity-0
-
-                sm:justify-center
-              "
+              className="invisible absolute inset-0 flex flex-col justify-start opacity-0 sm:justify-center"
             >
               {/* ===========================================
                   20L+
               =========================================== */}
 
               <div
-                className="
-                  overflow-hidden
-
-                  !pb-3
-                "
+                className="overflow-hidden !pb-3"
               >
                 <div
                   data-responsive-frame-three-reveal
-                  className="
-                    transform-gpu
-
-                    will-change-transform
-
-                    font-sans
-
-                    !text-[clamp(48px,14.5vw,62px)]
-
-                    font-normal
-
-                    leading-[0.86]
-
-                    tracking-[-0.065em]
-
-                    text-[#111111]
-
-                    sm:!text-[clamp(52px,6.6vw,68px)]
-                  "
+                  className="transform-gpu will-change-transform font-sans !text-[clamp(48px,14.5vw,62px)] font-normal leading-[0.86] tracking-[-0.065em] text-[#111111] sm:!text-[clamp(52px,6.6vw,68px)]"
                 >
                   20L+
                 </div>
@@ -2597,37 +1814,11 @@ export default function ImpactCtaBanner({
               =========================================== */}
 
               <div
-                className="
-                  !mt-3
-
-                  overflow-hidden
-
-                  !pb-2
-                "
+                className="!mt-3 overflow-hidden !pb-2"
               >
                 <h3
                   data-responsive-frame-three-reveal
-                  className="
-                    transform-gpu
-
-                    will-change-transform
-
-                    whitespace-nowrap
-
-                    font-sans
-
-                    !text-[clamp(23px,7vw,29px)]
-
-                    font-medium
-
-                    leading-[1.05]
-
-                    tracking-[-0.045em]
-
-                    text-[#111111]
-
-                    sm:!text-[clamp(22px,2.8vw,29px)]
-                  "
+                  className="transform-gpu will-change-transform whitespace-nowrap font-sans !text-[clamp(23px,7vw,29px)] font-medium leading-[1.05] tracking-[-0.045em] text-[#111111] sm:!text-[clamp(22px,2.8vw,29px)]"
                 >
                   Daily Impressions
                 </h3>
@@ -2638,21 +1829,11 @@ export default function ImpactCtaBanner({
               =========================================== */}
 
               <div
-                className="
-                  !mt-4
-
-                  overflow-hidden
-
-                  !pb-4
-                "
+                className="!mt-4 overflow-hidden !pb-4"
               >
                 <div
                   data-responsive-frame-three-reveal
-                  className="
-                    transform-gpu
-
-                    will-change-transform
-                  "
+                  className="transform-gpu will-change-transform"
                 >
                   <BleedCta
                     href={ctaHref}

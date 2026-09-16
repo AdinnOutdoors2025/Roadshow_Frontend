@@ -1,0 +1,118 @@
+.rdswHTRWHeading {
+    font-size: 25px;
+}
+
+.rdswHTRWHeadingPara {
+    font-size: 19px;
+    width: 90% !important;
+}
+
+@media (min-width: 1440px) and (max-width: 2559px) {
+    .rdswHTRWHeading {
+        font-size: 35px;
+    }
+
+    .rdswHTRWHeadingPara {
+        font-size: 22px;
+        width: 90% !important;
+        max-width: 600px;
+    }
+}
+
+@media (min-width: 1024px) and (max-width: 1280px) {
+    .RS_ProcessHeadingAlign {
+        margin-left: -82px !important;
+    }
+
+    .rdswHTRWHeading {
+        font-size: 25px;
+    }
+
+    .rdswHTRWHeadingPara {
+        font-size: 18px;
+        width: 90% !important;
+        max-width: 600px;
+    }
+
+    .rdswHTRWOverallBtn {
+        padding: 3% 0px;
+    }
+}
+
+@media (min-width: 1281px) and (max-width: 1439px) {
+    .RS_ProcessHeadingAlign {
+        margin-left: -72px !important;
+    }
+
+    .rdswHTRWHeading {
+        font-size: 25px;
+    }
+
+    .rdswHTRWHeadingPara {
+        font-size: 18px;
+        width: 90% !important;
+        max-width: 600px;
+    }
+
+    .rdswHTRWOverallBtn {
+        padding: 3% 0px;
+    }
+}
+
+/* =========================================================
+   "How the Roadshow Works" HEADING — ALIGNMENT
+
+   The heading is now wrapped (see RoadshowProcessSection.tsx) in
+   the SAME "mx-auto px-30 RS_WhyAdRSSectionWrap" combo used by the
+   "Why Adinn Roadshows" / "Brands That Trust Us" / "Roadshow
+   Advantages" headings, so it inherits the identical left-inset
+   ladder automatically (defined once in HomePageSection1.css)
+   instead of duplicating those numbers here. Top/bottom spacing
+   needs no fix here — this heading already uses the shared,
+   un-overridden ".RS_OurRdwHeading { padding: 5% 0; }" rule.
+
+   This section's own <section> already has its own Tailwind
+   padding (px-5 ... xl:px-20) on top of which the new px-30
+   padding would stack — ".RS_ProcessHeadingAlign" cancels exactly
+   that local padding (at this section's own Tailwind breakpoints)
+   via a negative margin, so only the shared px-30 padding is left.
+   #roadshow-process has overflow: hidden, so this stays safe even
+   if a breakpoint edge is slightly off.
+========================================================= */
+
+.RS_ProcessHeadingAlign {
+    margin-left: -20px;
+}
+
+@media (min-width: 375px) {
+    /* .RS_ProcessHeadingAlign {
+        margin-left: -24px;
+    } */
+}
+
+@media (min-width: 640px) {
+    /* .RS_ProcessHeadingAlign {
+        margin-left: -28px;
+    } */
+}
+
+@media (min-width: 768px) {
+    /* .RS_ProcessHeadingAlign {
+        margin-left: -40px;
+    } 
+        */
+}
+
+
+@media (min-width: 1440px) and (max-width: 2559px) {
+
+    .RS_ProcessHeadingAlign {
+        margin-left: -255px;
+    }
+}
+
+@media (min-width: 640px) and (max-width: 375px) {
+    .RS_ProcessHeadingAlign {
+        margin-left: -28px !important;
+    }
+}

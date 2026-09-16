@@ -1,254 +1,1099 @@
 * {
-  font-family: Outfit;
+    font-family: Outfit, sans-serif;
 }
 
-.RS_Navbar {
-  background: transparent;
-}
-
-/* ================================
-   NAV LINK SCROLL ANIMATION
-================================ */
-
-.RS_NavContents {
-  font-weight: 300;
-  font-size: 30px;
-  color: #000;
-  text-decoration: none;
-  position: relative;
-  display: inline-block;
-  overflow: hidden;
-  line-height: 1.15;
-  height: 1.15em;
-}
-
-.RS_NavLink {
-  min-width: max-content;
-}
-
-.RS_NavText {
-  display: block;
-  white-space: nowrap;
-  will-change: transform;
-}
-
-.RS_NavText--black {
-  color: #000;
-  transform: translateY(0%);
-}
-
-.RS_NavText--red {
-  color: #d62839;
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform: translateY(-115%);
-}
-
-/* Hover in: black goes down, red comes from top */
-.RS_NavLink--hover .RS_NavText--black {
-  animation: RS_BlackTextHoverIn 0.42s cubic-bezier(0.76, 0, 0.24, 1) forwards;
-}
-
-.RS_NavLink--hover .RS_NavText--red {
-  animation: RS_RedTextHoverIn 0.42s cubic-bezier(0.76, 0, 0.24, 1) forwards;
-}
-
-/* Hover out: red goes down, black comes from top */
-.RS_NavLink--leave .RS_NavText--black {
-  animation: RS_BlackTextHoverOut 0.42s cubic-bezier(0.76, 0, 0.24, 1) forwards;
-}
-
-.RS_NavLink--leave .RS_NavText--red {
-  animation: RS_RedTextHoverOut 0.42s cubic-bezier(0.76, 0, 0.24, 1) forwards;
-}
-
-@keyframes RS_BlackTextHoverIn {
-  0% {
-    transform: translateY(0%);
-  }
-  100% {
-    transform: translateY(115%);
-  }
-}
-
-@keyframes RS_RedTextHoverIn {
-  0% {
-    transform: translateY(-115%);
-  }
-  100% {
-    transform: translateY(0%);
-  }
-}
-
-@keyframes RS_BlackTextHoverOut {
-  0% {
-    transform: translateY(-115%);
-  }
-  100% {
-    transform: translateY(0%);
-  }
-}
-
-@keyframes RS_RedTextHoverOut {
-  0% {
-    transform: translateY(0%);
-  }
-  100% {
-    transform: translateY(115%);
-  }
+.RS_NewHeader,
+.RS_NewHeader *,
+.RS_NewMenu,
+.RS_NewMenu * {
+    box-sizing: border-box;
 }
 
 /* ================================
-   HAMBURGER
+   HEADER SHELL (dark glass capsule)
+   top / width / height / border-radius /
+   box-shadow / rotateX are driven by GSAP
+   in Navbar.tsx (hero <-> docked scrub) —
+   only secondary properties transition
+   here in plain CSS.
 ================================ */
-
-.RS_HamBtn {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 6px;
-  background: none;
-  border: none;
-  cursor: pointer;
+@property --rs-angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
 }
 
-.RS_L {
-  display: block;
-  width: 28px;
-  height: 2.5px;
-  background: #111;
-  border-radius: 2px;
-  transform-origin: center;
-  transition:
-    transform 0.34s cubic-bezier(0.76, 0, 0.24, 1),
-    opacity 0.24s ease,
-    background 0.2s ease;
+@keyframes rs-border-spin {
+    to {
+        --rs-angle: 360deg;
+    }
 }
 
-.RS_L1o {
-  transform: translateY(7.5px) rotate(45deg);
+.RS_HeaderStage {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    /* No perspective here: CSS `perspective` on an ancestor creates a new
+       containing block for `position: fixed` descendants (same as
+       `transform`), which broke .RS_NewHeader's viewport-relative centering.
+       The tab-item 3D entrance flip gets its own perspective further down,
+       scoped to .RS_TabBar instead. */
 }
 
-.RS_L2o {
-  opacity: 0;
-  transform: scaleX(0);
-}
-
-.RS_L3o {
-  transform: translateY(-7.5px) rotate(-45deg);
-}
-
-/* ================================
-   DROPDOWN
-================================ */
-
-.RS_Drop {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
-  min-width: 210px;
-  /* background: rgba(255, 255, 255, 0.96); */
-  /* border-radius: 16px; */
-  /* box-shadow: 0 14px 40px rgba(0, 0, 0, 0.14); */
-  overflow: hidden;
-  z-index: 200;
-  /* padding: 7px; */
-  transform-origin: top right;
-  will-change: opacity, transform;
-}
-
-.RS_Drop--open {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0) scale(1);
-  animation: RS_DropBoxOpen 0.32s cubic-bezier(0.76, 0, 0.24, 1) forwards;
-}
-
-.RS_Drop--closing {
-  pointer-events: none;
-  animation: RS_DropBoxClose 0.36s cubic-bezier(0.76, 0, 0.24, 1) forwards;
-}
-
-@keyframes RS_DropBoxOpen {
-  0% {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes RS_DropBoxClose {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-  }
-}
-
-/* Row default */
-.RS_DropRow {
-  display: block;
-  padding: 6px 18px;
-  font-size: 15px;
-  font-weight: 400;
-  color: #222;
-  text-decoration: none;
-  border-radius: 11px;
-  opacity: 0;
-  transform: translateX(34px);
-  will-change: opacity, transform;
-  transition:
-    opacity 0.34s cubic-bezier(0.76, 0, 0.24, 1),
-    transform 0.34s cubic-bezier(0.76, 0, 0.24, 1),
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-/* Open: each item comes right to left */
-.RS_Drop--open .RS_DropRow {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* Close: each item goes left to right */
-.RS_Drop--closing .RS_DropRow {
-  opacity: 0;
-  transform: translateX(34px);
-}
-/* 
-.RS_DropRow:hover {
-  background: #fff1f2;
-  color: #d62839;
-} */
-
-/* ================================
-   RESPONSIVE
-================================ */
-
-@media (max-width: 1024px) {
-  .RS_NavContents {
-    font-size: 24px;
-  }
-}
-
-@media (max-width: 768px) {
-  .RS_NavContents {
-    font-size: 18px;
-  }
-
-  .RS_HamBtn {
-    display: flex;
-  }
-
-  .RS_Drop {
-    min-width: 190px;
+.RS_NewHeader {
+    --rs-pink: #ec4899;
+    --rs-purple: #7c3aed;
+    /* Nav-link-only accent, kept separate from --rs-pink/--rs-purple above:
+       those two still drive the header's outer glow, the profile avatar and
+       the cart badge unchanged. These two are red/black, sampled from the
+       Adinn logo (#E3000F), and are used only by the active tab pill and the
+       inactive-tab gradient border below. */
+    --rs-nav-red: #e3000f;
+    --rs-nav-black: #1c1c1c;
+    position: fixed;
+    top: 14px;
+    /* Centered via left:0/right:0 + auto margins — NOT left:50% + a
+       compensating translate(-50%). That combination is what broke: GSAP
+       (and, separately, `perspective` on an ancestor) each fought the
+       percentage-based transform and pushed the bar off-center. Auto-margin
+       centering needs no transform and no percentage math at all, so it
+       can't be knocked off-center by anything that touches `transform`. */
+    left: 0;
     right: 0;
-  }
+    margin-inline: auto;
+    width: 60%;
+    height: 82px;
+    border-radius: 26px;
+    pointer-events: auto;
+    font-family: "Outfit", sans-serif;
+    background: linear-gradient(135deg, rgba(24, 22, 28, .92), rgba(16, 15, 19, .92));
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .28);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, .08);
+    will-change: top, width, height, border-radius, box-shadow, transform, opacity;
+    transition: background .4s ease, border-color .4s ease, opacity .4s ease;
+    /* translateZ(0) only forces its own GPU compositing layer — it doesn't
+       move anything, so it can't reintroduce the centering bugs above (those
+       were about GSAP/perspective fighting an X/Y transform). Same fix as
+       the ::before rule further down (see Known bugs #10 in Navbar.md): a
+       fixed, backdrop-filter element can go stale/invisible until something
+       forces a repaint, and this pins it to a persistent layer instead. */
+    transform: translateZ(0);
+}
+
+/* Idle-fade: applied when the user has stopped scrolling for a while (see
+   the idle-fade effect in Navbar.tsx). Opacity only — width/height/position
+   stay exactly as the dock stage left them, so it doesn't fight that
+   animation, and pointer-events is dropped so the invisible pill can't
+   swallow clicks meant for the section underneath it. */
+.RS_NewHeader--idle {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Light pill skin (NAV_LIGHT_THEME = true in Navbar.tsx) */
+.RS_NewHeader[data-theme="light"] {
+    background: linear-gradient(135deg, rgba(255, 255, 255, .97), rgba(253, 244, 250, .92), rgba(247, 243, 253, .92));
+    border-color: rgba(255, 255, 255, .7);
+}
+
+/* Glass edge highlight: a separate pseudo (not the header's own box-shadow,
+   which Navbar.tsx's GSAP scrub timeline drives inline and would overwrite)
+   so the frosted top-edge sheen survives the scroll animation untouched.
+   Dark theme also gets a faint pink/violet glass reflection at each end —
+   deliberately subtle (professional/corporate, not a bright neon glow). */
+.RS_NewHeader::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), inset 0 0 0 1px rgba(255, 255, 255, .04);
+    pointer-events: none;
+}
+
+.RS_NewHeader[data-theme="dark"]::before {
+    /* background:
+        radial-gradient(circle at 0% 50%, rgba(236, 72, 153, .14), transparent 55%),
+        radial-gradient(circle at 100% 50%, rgba(124, 58, 237, .14), transparent 55%); */
+}
+
+.RS_NewHeader[data-theme="light"]::before {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 0 0 1px rgba(15, 23, 42, .04);
+}
+
+/* Always-on rotating gradient border (react-bits "glowing border" style) so
+   the resting/idle capsule reads as animated, not just on hover. */
+.RS_NewHeader::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: conic-gradient(from var(--rs-angle),
+            transparent 0deg,
+            rgba(227, 0, 15, .95) 45deg,
+            rgba(28, 28, 28, .75) 110deg,
+            transparent 160deg,
+            transparent 360deg);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: rs-border-spin 7s linear infinite;
+    pointer-events: none;
+}
+
+/* ================================
+   FLOATING BUBBLE ACCENTS
+   (rendered only inside the active tab
+   item now, so they travel with
+   whichever link is active instead of
+   sitting in one fixed spot.)
+================================ */
+.RS_Bubble {
+    position: absolute;
+    top: -5px;
+    z-index: 2;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(255, 96, 90, .95), rgba(227, 0, 15, .45));
+    box-shadow: 0 0 8px rgba(227, 0, 15, .55);
+    animation: rs-bubble-float 5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.RS_Bubble--1 {
+    width: 6px;
+    height: 6px;
+    left: 14%;
+    animation-delay: 0s;
+}
+
+.RS_Bubble--2 {
+    width: 4px;
+    height: 4px;
+    left: 48%;
+    top: -8px;
+    animation-delay: .6s;
+}
+
+.RS_Bubble--3 {
+    width: 8px;
+    height: 8px;
+    left: 78%;
+    top: -2px;
+    animation-delay: 1.2s;
+}
+
+@keyframes rs-bubble-float {
+
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: .85;
+    }
+
+    50% {
+        transform: translateY(-10px) scale(1.12);
+        opacity: 1;
+    }
+}
+
+/* ================================
+   HEADER LAYOUT
+================================ */
+.RS_NewHeaderShell {
+    width: 100%;
+    height: 100%;
+    padding: 0 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+/* ================================
+   LOGO
+================================ */
+.RS_NewBrand {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.RS_NewLogo {
+    width: 150px;
+    height: 42px;
+    object-fit: contain;
+}
+
+/* ================================
+   TAB BAR
+================================ */
+.RS_TabBar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 6px;
+    perspective: 900px;
+}
+
+.RS_TabItem {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 18px;
+    color: rgba(255, 255, 255, .75);
+    text-decoration: none;
+    font-size: 14.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: color .25s ease;
+}
+
+/* Same softly-slanted, rounded shape for resting/hover/active — only the
+   fill and border differ — via a shared ::before, so hover never falls back
+   to a plain rounded background. A light skewX (not a sharp clip-path
+   polygon) keeps real rounded corners while still leaning both edges the
+   same direction, and it sits behind the (counter-stable, still readable)
+   icon+label. A glassy translucent border + light blur ride along on every
+   state; hover fades in a soft version of the same pink->violet gradient
+   (not just a flat tint), so the fill itself "arrives" smoothly instead of
+   snapping in. */
+.RS_TabItem::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: 10px;
+    transform: skewX(-16deg);
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .09);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: none;
+    transition: background .35s ease, border-color .35s ease, box-shadow .35s ease;
+}
+
+.RS_TabItem:hover,
+.RS_TabItem:focus-visible {
+    color: #fff;
+}
+
+.RS_TabItem:hover::before,
+.RS_TabItem:focus-visible::before {
+    background: linear-gradient(135deg, rgba(227, 0, 15, .3), rgba(28, 28, 28, .32));
+    border-color: rgba(255, 255, 255, .28);
+    /* box-shadow: 0 6px 16px rgba(227, 0, 15, .22); */
+}
+
+.RS_TabItem--active {
+    color: #fff;
+}
+
+/* Sliding active pill: a real element (Navbar.tsx renders it inside
+   whichever tab is active, with Framer Motion `layoutId="RS_TabPill"`) so
+   it glides smoothly from one tab to another on click instead of the
+   background instantly snapping to the new item. The wrapper is the only
+   part Framer Motion animates (position/size); the skewed gradient visual
+   lives on a static inner child so the two transforms never fight. */
+.RS_TabPillWrap {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.RS_TabPill {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    transform: skewX(-16deg);
+    background: linear-gradient(135deg, var(--rs-nav-red), var(--rs-nav-black));
+    border: 1px solid rgba(255, 255, 255, .4);
+    box-shadow: 0 10px 18px rgba(227, 0, 15, .35), inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+
+.RS_NewHeader[data-theme="light"] .RS_TabItem {
+    color: rgba(23, 27, 35, .68);
+}
+
+.RS_NewHeader[data-theme="light"] .RS_TabItem:hover,
+.RS_NewHeader[data-theme="light"] .RS_TabItem:focus-visible {
+    /* color: #171b23; */
+}
+
+.RS_NewHeader[data-theme="light"] .RS_TabItem::before {
+    background: rgba(15, 23, 42, .025);
+    /* A mild red tint, not the near-invisible dark-navy-at-8% this used to
+       be — that read as "no border at all" against a white pill. */
+    border-color: rgba(227, 0, 15, .18);
+}
+
+.RS_NewHeader[data-theme="light"] .RS_TabItem:hover::before,
+.RS_NewHeader[data-theme="light"] .RS_TabItem:focus-visible::before {
+    background: linear-gradient(135deg, rgba(227, 0, 15, .16), rgba(28, 28, 28, .1));
+    border-color: rgba(227, 0, 15, .35);
+    /* box-shadow: 0 6px 14px rgba(227, 0, 15, .16); */
+}
+
+.RS_NewHeader[data-theme="light"] .RS_TabItem--active {
+    color: #fff;
+}
+
+.RS_NewHeader[data-theme="light"] .RS_TabPill {
+    border-color: rgba(255, 255, 255, .55);
+    box-shadow: 0 10px 18px rgba(227, 0, 15, .3), inset 0 1px 0 rgba(255, 255, 255, .4);
+}
+
+.RS_TabIcon {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.RS_TabLabel {
+    position: relative;
+    z-index: 1;
+    line-height: 1;
+}
+
+/* ================================
+   RIGHT SIDE / ICON BUTTONS
+================================ */
+.RS_NewRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.RS_IconBtn {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .06);
+    backdrop-filter: blur(8px) saturate(140%);
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+    color: rgba(255, 255, 255, .82);
+    cursor: pointer;
+    transition:
+        background .25s ease,
+        border-color .25s ease,
+        color .25s ease,
+        box-shadow .25s ease;
+}
+
+.RS_IconBtn:hover {
+    background: rgba(255, 255, 255, .12);
+    border-color: rgba(255, 255, 255, .24);
+    color: #fff;
+}
+
+/* Mild red/white/black wash — translucent, so the button's own white glass
+   still shows through underneath (kept "mild" rather than a solid fill). */
+.RS_NewHeader[data-theme="light"] .RS_IconBtn {
+    background: linear-gradient(135deg, rgba(227, 0, 15, .12), rgba(255, 255, 255, .55), rgba(28, 28, 28, .1));
+    border-color: rgba(227, 0, 15, .16);
+    color: rgba(23, 27, 35, .75);
+}
+
+.RS_NewHeader[data-theme="light"] .RS_IconBtn:hover {
+    background: linear-gradient(135deg, rgba(227, 0, 15, .2), rgba(255, 255, 255, .7), rgba(28, 28, 28, .16));
+    border-color: rgba(227, 0, 15, .3);
+    color: #171b23;
+}
+
+/* Dark theme: profile button is a red->black gradient avatar (same
+   --rs-nav-red/--rs-nav-black as the nav links, for one consistent accent
+   color across the whole capsule). Light theme: a mild red/white/black wash
+   (see override below) instead of dark theme's solid fill. */
+.RS_ProfileBtn {
+    background: linear-gradient(135deg, var(--rs-nav-red), var(--rs-nav-black));
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(227, 0, 15, .35);
+}
+
+.RS_ProfileBtn:hover,
+.RS_ProfileBtn.active {
+    background: linear-gradient(135deg, var(--rs-nav-red), var(--rs-nav-black));
+    box-shadow: 0 8px 14px rgba(227, 0, 15, .55);
+    color: #fff;
+}
+
+.RS_NewHeader[data-theme="light"] .RS_ProfileBtn {
+    background: linear-gradient(135deg, rgba(227, 0, 15, .8), rgba(28, 28, 28, .8));
+    color: #fff;
+    box-shadow: 0 3px 7px rgba(227, 0, 15, .25);
+}
+
+.RS_NewHeader[data-theme="light"] .RS_ProfileBtn:hover,
+.RS_NewHeader[data-theme="light"] .RS_ProfileBtn.active {
+    background: linear-gradient(135deg, rgba(227, 0, 15, .92), rgba(28, 28, 28, .92));
+    color: #fff;
+    box-shadow: 0 5px 10px rgba(227, 0, 15, .35);
+}
+
+.RS_CartBadge--dark {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    margin-left: 0;
+    width: 18px;
+    height: 18px;
+    font-size: 10.5px;
+    border: 2px solid #171319;
+}
+
+.RS_NewHeader[data-theme="light"] .RS_CartBadge--dark {
+    border-color: #f5f2fb;
+}
+
+/* ================================
+   ACCOUNT / BLOOM MENU
+   (open/close motion + stagger now
+   handled by Framer Motion variants
+   in Navbar.tsx — this only carries
+   static appearance. Kept light so it
+   reads as a distinct surface against
+   the dark tab bar.)
+================================ */
+.RS_NewMenu {
+    position: fixed;
+    /* top/right here are only a same-frame fallback for the instant before
+       Navbar.tsx's layout effect measures the account button and sets an
+       exact inline top/right (which always wins over these, on width
+       >=768px) — see the menuPos state and its useLayoutEffect in
+       Navbar.tsx. A flat percentage can't itself track the button's real
+       position, since the header's width changes both per breakpoint AND
+       continuously while scrolling (the GSAP hero->docked stage
+       animation) — measuring the actual DOM position is what handles
+       both at once instead of needing a right% tuned per breakpoint. */
+    top: 105px;
+    right: 20%;
+    width: 340px;
+    padding: 18px;
+    background: linear-gradient(135deg, #fffffffa, #f7f9fff0);
+    border: 1px solid #ffffffe6;
+    border-radius: 26px;
+    box-shadow: 0 30px 80px #0f172a4d;
+    backdrop-filter: blur(25px) saturate(150%);
+    -webkit-backdrop-filter: blur(25px) saturate(150%);
+    transform-origin: 100% 0;
+    z-index: 10000;
+}
+
+.RS_ProfileTop {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 16px;
+}
+
+.RS_ProfileAvatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f2f3f8;
+}
+
+.RS_ProfileInfo {
+    min-width: 0;
+}
+
+.RS_ProfileName {
+    font-size: 17px;
+    font-weight: 600;
+    color: #20242c;
+}
+
+.RS_ProfileEmail {
+    font-size: 13px;
+    color: #707784;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 220px;
+}
+
+.RS_ProfilePhone {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 4px;
+    font-size: 14px;
+    color: #414754;
+}
+
+.RS_MenuDivider {
+    height: 1px;
+    background:
+        rgba(15, 23, 42, .08);
+    margin: 12px 0;
+}
+
+.RS_MenuAction {
+    position: relative;
+    width: 100%;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 12px;
+    border: 0;
+    background: transparent;
+    border-radius: 14px;
+    font-family: Outfit, sans-serif;
+    font-size: 15px;
+    color: #303641;
+    cursor: pointer;
+    transition:
+        background .25s ease,
+        transform .25s ease;
+}
+
+.RS_MenuAction:hover {
+    background: rgba(223, 102, 112, .08);
+    transform: translateX(3px);
+}
+
+/* Rotating gradient border on hover, same technique/palette as the header
+   capsule's own always-on border (.RS_NewHeader::after) — here it's
+   hover-only (opacity fade, not shown at rest) since these are compact list
+   items in an otherwise plain dropdown, not a floating capsule. The
+   gradient itself doesn't need a per-theme variant (red/black reads fine on
+   both the light and dark dropdown surfaces below), only the panel's own
+   background/text colors do. */
+.RS_MenuAction::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: conic-gradient(from var(--rs-angle),
+            transparent 0deg,
+            rgba(227, 0, 15, .95) 45deg,
+            rgba(28, 28, 28, .75) 110deg,
+            transparent 160deg,
+            transparent 360deg);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity .25s ease;
+    animation: rs-border-spin 4s linear infinite;
+    pointer-events: none;
+}
+
+.RS_MenuAction:hover::after {
+    opacity: 1;
+}
+
+.RS_MenuAction svg {
+    color: #596170;
+}
+
+.RS_CartBadge {
+    margin-left: auto;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #df6670;
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+}
+
+.RS_MenuLogout {
+    color: #d14e5c;
+}
+
+/* Dark-theme dropdown (NAV_LIGHT_THEME = false in Navbar.tsx). The menu is
+   a sibling of <header> in the DOM (rendered by a separate AnimatePresence
+   block), not a descendant of .RS_NewHeader, so it carries its own
+   data-theme attribute (set in Navbar.tsx) rather than being reachable via
+   a `.RS_NewHeader[data-theme="dark"] .RS_NewMenu` descendant selector. */
+.RS_NewMenu[data-theme="dark"] {
+    background: linear-gradient(135deg, rgba(26, 24, 30, .97), rgba(17, 16, 20, .96));
+    border-color: rgba(255, 255, 255, .12);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .55);
+}
+
+.RS_NewMenu[data-theme="dark"] .RS_ProfileAvatar {
+    background: rgba(255, 255, 255, .08);
+    color: rgba(255, 255, 255, .85);
+}
+
+/* profile.svg is a black person-silhouette inside a white ring, referenced
+   as a static file via next/image (`<img src="/images/profile.svg">`) —
+   its internal fills can't be reached with CSS since the browser treats it
+   as an opaque raster/vector image, not inline markup. Inverting flips
+   black -> white (the silhouette becomes visible on the dark avatar
+   background) and white -> black (the ring, which just blends into the
+   dark background instead). */
+.RS_NewMenu[data-theme="dark"] .RS_ProfileAvatar img {
+    filter: invert(1);
+}
+
+.RS_NewMenu[data-theme="dark"] .RS_ProfileName {
+    color: #fff;
+}
+
+.RS_NewMenu[data-theme="dark"] .RS_ProfileEmail {
+    color: rgba(255, 255, 255, .55);
+}
+
+.RS_NewMenu[data-theme="dark"] .RS_ProfilePhone {
+    color: rgba(255, 255, 255, .75);
+}
+
+.RS_NewMenu[data-theme="dark"] .RS_MenuDivider {
+    background: rgba(255, 255, 255, .1);
+}
+
+.RS_NewMenu[data-theme="dark"] .RS_MenuAction {
+    color: rgba(255, 255, 255, .85);
+}
+
+.RS_NewMenu[data-theme="dark"] .RS_MenuAction:hover {
+    background: rgba(255, 255, 255, .08);
+}
+
+.RS_NewMenu[data-theme="dark"] .RS_MenuAction svg {
+    color: rgba(255, 255, 255, .6);
+}
+
+.RS_NewMenu[data-theme="dark"] .RS_MenuLogout {
+    color: #ff7a7a;
+}
+
+/* ================================
+   TABLET / MOBILE
+   (Navbar.tsx skips the hero-scrub
+   ScrollTrigger timeline below the
+   768px breakpoint — there's no room
+   for a full-size hero nav, so mobile
+   just gets a fixed compact dark pill,
+   tabs collapsed to icon-only.)
+================================ */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .RS_NewHeader {
+        width: 100% !important;
+    }
+
+}
+@media(max-width:767px) {
+
+    .RS_NewHeader {
+        width: calc(100% - 20px) !important;
+        top: 8px !important;
+        height: 60px !important;
+        border-radius: 22px !important;
+    }
+
+    .RS_NewHeaderShell {
+        padding: 0 10px;
+    }
+
+    .RS_NewLogo {
+        width: 66px;
+        height: 25px;
+    }
+
+    .RS_TabBar {
+        gap: 2px;
+    }
+
+    .RS_TabItem {
+        padding: 0 10px;
+        height: 38px;
+        gap: 0;
+    }
+
+    .RS_TabLabel {
+        display: none;
+    }
+
+    .RS_IconBtn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .RS_NewMenu {
+        top: 74px;
+        right: 12px;
+        left: 12px;
+        width: auto;
+    }
+}
+
+@media(max-width:480px) {
+    .RS_TabItem {
+        padding: 0 8px;
+    }
+
+    .RS_NewRight {
+        gap: 4px;
+    }
+}
+
+/* ================================
+   RESPONSIVE SIZING BY VIEWPORT WIDTH
+   (header/logo sizing on >=768px is
+   driven by the GSAP scrub timeline in
+   Navbar.tsx instead — these breakpoints
+   only cover the account dropdown menu,
+   which isn't scrubbed.)
+================================ */
+@media(min-width:1024px) and (max-width:1439px) {
+
+    .RS_ProfileAvatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .RS_ProfileAvatar img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .RS_MenuAction {
+        height: 44px;
+        font-size: 14px;
+    }
+
+    .RS_MenuAction svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+@media(min-width:768px) and (max-width:1023px) {
+
+    .RS_ProfileAvatar {
+        width: 36px;
+        height: 36px;
+    }
+
+    .RS_ProfileAvatar img {
+        width: 36px;
+        height: 36px;
+    }
+
+    .RS_MenuAction {
+        height: 40px;
+        font-size: 13px;
+    }
+
+    .RS_MenuAction svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .RS_NewHeaderShell {
+        padding: 0 32px;
+    }
+
+    .RS_TabBar {
+        gap: 3px;
+    }
+
+    .RS_TabItem {
+        padding: 0 12px;
+        gap: 6px;
+        font-size: 13px;
+    }
+}
+
+/* Tab-bar font/spacing tiers — the header's own width/height still comes
+   from the GSAP scrub timeline (continuous, tied to window.innerWidth at
+   mount), this only tunes the tab labels/icons/padding at each band so text
+   doesn't crowd or look oversized at in-between desktop widths. */
+@media(min-width:1440px) {
+
+.RS_NewHeader {
+    width:1180px;
+}
+    .RS_TabBar {
+        gap: 8px;
+    }
+
+    .RS_TabItem {
+        padding: 0 20px;
+        font-size: 15px;
+    }
+}
+
+@media(min-width:1281px) and (max-width:1439px) {
+
+    /* Stage 2 (docked) is only 64px tall with a 30px border-radius, so the
+       rounded corners eat almost the entire height — content sitting near
+       the shell's edge (the profile button especially) can visually poke
+       past the curve at this narrower pill width. Extra horizontal padding
+       keeps everything inside the straight part of the pill. */
+    .RS_NewHeaderShell {
+        padding: 0 38px;
+    }
+
+    .RS_TabBar {
+        gap: 6px;
+    }
+
+    .RS_TabItem {
+        padding: 0 18px;
+        font-size: 14.5px;
+    }
+
+}
+
+@media(min-width:1024px) and (max-width:1280px) {
+.RS_NewHeader {
+    width: 80%;
+}
+    .RS_NewHeaderShell {
+        padding: 0 16px;
+    }
+
+    .RS_TabBar {
+        gap: 4px;
+    }
+
+    .RS_TabItem {
+        padding: 0 14px;
+        gap: 7px;
+        font-size: 13.5px;
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   REMOVE WHITE BORDER FROM ACTIVE GLASS TAB
+========================================================= */
+
+
+.RS_TabItem--active::before{
+
+    border-color:transparent !important;
+
+    background:
+
+    transparent !important;
+
+    box-shadow:none !important;
+
+}
+
+
+
+/* Active pill owns the complete glass border */
+
+.RS_TabItem--active .RS_TabPill{
+
+
+    border: 1px solid transparent;
+
+
+    background: linear-gradient(
+        135deg,
+        var(--rs-nav-red),
+        var(--rs-nav-black)
+    )
+    padding-box,
+
+
+    linear-gradient(
+        120deg,
+        var(--rs-nav-red),
+        var(--rs-nav-black),
+        var(--rs-nav-red)
+    )
+    border-box;
+
+
+
+    box-shadow:
+
+
+    0 10px 30px
+    rgba(227,0,15,.35),
+
+
+    inset 0 1px 8px
+    rgba(255,255,255,.45);
+
+
+
+}
+
+
+
+/* keep inactive tabs glass (dark theme only — see :not([data-theme="light"])
+   below). :not(:hover):not(:focus-visible) is load-bearing: without it, this
+   rule ties in specificity with .RS_TabItem:hover::before above and (being
+   later in the file) always wins the cascade tie, silently cancelling the
+   hover gradient on every inactive tab regardless of what color that rule
+   sets. Excluding hover/focus here lets this rule drop out of the cascade
+   entirely while hovering, so the hover rule's background applies with
+   nothing left to fight it.
+
+   :not([data-theme="light"]) is equally load-bearing, added after the fact:
+   the extra :not()s above raised this rule's specificity past
+   .RS_NewHeader[data-theme="light"] .RS_TabItem::before's, so without this
+   it started winning on the light theme too — silently overriding that
+   rule's own (correct) border/background with this dark-theme white-glass
+   look regardless of theme. */
+
+.RS_NewHeader:not([data-theme="light"]) .RS_TabItem:not(.RS_TabItem--active):not(:hover):not(:focus-visible)::before{
+border: 1px solid rgba(255,255,255,.12);
+background:rgba(255,255,255,.04);
+
+}
+
+/* Inner-page-only (CampaignRequest, VehicleDetails, campaign-details,
+   booking-request-submitted — see isInnerPage in Navbar.tsx) red-black-red
+   gradient border for inactive tabs, at rest — both corners red, a clearly
+   visible black band across the middle, glassy translucent fill underneath.
+
+   Uses a class (.RS_TabItem--inner) on each tab item instead of the
+   data-innerpage attribute on the ancestor <header>, which avoided a
+   Chromium compositing bug where ::before pseudo-elements wouldn't repaint
+   when ancestor attributes changed via client-side navigation.
+
+   Split across two pseudo-elements, same division of labor as
+   .RS_NewHeader::before/::after above: ::before paints only the glassy fill,
+   ::after paints the gradient ring via webkit-mask (padded pseudo-element,
+   masked down to its outer band with mask-composite) instead of the
+   border-box/padding-box double-background trick this used previously. The
+   mask ring stays crisp on this shape's skewed/rounded corners the same way
+   it already does on the header capsule, rather than relying on
+   background-clip: border-box, which is more prone to antialiasing seams at
+   a skew.
+
+   Explicit percentage stops (not evenly-spaced red/black/red) so black gets
+   a real ~30%-wide band across the middle instead of vanishing to a single
+   point on a ring this thin. */
+.RS_TabItem.RS_TabItem--inner:not(.RS_TabItem--active):not(:hover):not(:focus-visible)::before {
+    border: 1px solid transparent !important;
+    background: linear-gradient(#ffffff0a, #ffffff0a) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    /* Confirmed via DevTools: this rule computes correctly the whole time
+       (visible, un-struck-through in the Styles panel) but doesn't get
+       painted until something forces a repaint (resizing the window makes
+       it appear). data-innerpage changes on the ANCESTOR <header> via
+       client-side navigation (no full reload), and the browser fails to
+       recomposite this ::before's cached layer in response — a real
+       Chromium compositing bug, not a cascade issue. translateZ(0) forces
+       this pseudo-element onto its own GPU layer so attribute-driven style
+       changes get tracked and repainted properly. Combined into the same
+       transform as the shape's skew (transform isn't additive across
+       rules — this replaces, not adds to, the base rule's skewX). */
+    transform: skewX(-16deg) translateZ(0);
+}
+
+.RS_TabItem.RS_TabItem--inner:not(.RS_TabItem--active):not(:hover):not(:focus-visible)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: 10px;
+    padding: 2px;
+    background: linear-gradient(120deg,
+            var(--rs-nav-red) 0%,
+            var(--rs-nav-black) 35%,
+            var(--rs-nav-black) 65%,
+            var(--rs-nav-red) 100%);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    /* Same repaint fix and shape-matching skew as the ::before fill above —
+       this ring must stay pinned to the same skewed shape. */
+    transform: skewX(-16deg) translateZ(0);
+    pointer-events: none;
+}
+
+
+
+/* active icon/text alignment */
+
+.RS_TabItem--active .RS_TabIcon,
+.RS_TabItem--active .RS_TabLabel{
+
+position:relative;
+
+z-index:5;
+
 }

@@ -67,7 +67,7 @@
   color: var(--contact-black);
   font-size: clamp(58px, 5.45vw, 108px);
   font-weight: 400;
-  line-height: 0.98;
+  line-height: 116%;
   letter-spacing: -0.058em;
 }
 
@@ -263,9 +263,9 @@
   border: 1px solid rgba(218, 222, 223, 0.9);
   border-radius: clamp(24px, 2vw, 38px);
   background: rgba(255, 255, 255, 0.96);
-  box-shadow:
+  /* box-shadow:
     0 30px 80px rgba(15, 23, 24, 0.08),
-    0 6px 20px rgba(15, 23, 24, 0.04);
+    0 6px 20px rgba(15, 23, 24, 0.04); */
   will-change: transform, opacity;
 }
 
@@ -960,5 +960,105 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* =========================================================
+   HUMAN VERIFICATION (MATH CAPTCHA)
+
+   Portaled to document.body (see page.tsx), so it sits outside
+   .contact-page and needs its own entrance animations / reduced
+   motion override rather than relying on the rules above.
+========================================================= */
+
+.ContactCaptchaOverlay {
+      z-index: 999999;
+  animation: ContactCaptchaOverlayIn 220ms ease-out both;
+}
+
+.ContactCaptchaModal {
+  animation: ContactCaptchaModalIn 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: center;
+}
+
+.ContactCaptchaShield {
+  animation: ContactCaptchaShieldIn 520ms cubic-bezier(0.16, 1, 0.3, 1) 70ms both;
+}
+
+.ContactCaptchaShieldInner {
+  transition: transform 300ms ease, box-shadow 300ms ease;
+}
+
+.ContactCaptchaShield:hover .ContactCaptchaShieldInner {
+  transform: scale(1.06);
+  box-shadow: 0 8px 22px rgba(215, 0, 0, 0.2);
+}
+
+.ContactCaptchaContent {
+  animation: ContactCaptchaContentIn 420ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
+}
+
+.ContactCaptchaQuestion {
+  animation: ContactCaptchaContentIn 420ms cubic-bezier(0.16, 1, 0.3, 1) 150ms both;
+}
+
+.ContactCaptchaInput {
+  animation: ContactCaptchaContentIn 420ms cubic-bezier(0.16, 1, 0.3, 1) 190ms both;
+}
+
+.ContactCaptchaAction {
+  animation: ContactCaptchaContentIn 420ms cubic-bezier(0.16, 1, 0.3, 1) 230ms both;
+}
+
+.ContactCaptchaSecurityNote {
+  animation: ContactCaptchaContentIn 420ms cubic-bezier(0.16, 1, 0.3, 1) 270ms both;
+}
+
+.ContactCaptchaError {
+  animation: ContactCaptchaErrorIn 240ms ease-out both;
+}
+
+@keyframes ContactCaptchaOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ContactCaptchaModalIn {
+  0% { opacity: 0; transform: translateY(18px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes ContactCaptchaShieldIn {
+  0% { opacity: 0; transform: translateY(8px) scale(0.8); }
+  65% { opacity: 1; transform: translateY(-2px) scale(1.04); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes ContactCaptchaContentIn {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ContactCaptchaErrorIn {
+  0% { opacity: 0; transform: translateY(-4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ContactCaptchaOverlay,
+  .ContactCaptchaModal,
+  .ContactCaptchaShield,
+  .ContactCaptchaContent,
+  .ContactCaptchaQuestion,
+  .ContactCaptchaInput,
+  .ContactCaptchaAction,
+  .ContactCaptchaSecurityNote,
+  .ContactCaptchaError {
+    animation: none !important;
+  }
+
+  .ContactCaptchaShieldInner,
+  .ContactCaptchaAction {
+    transition: none !important;
   }
 }

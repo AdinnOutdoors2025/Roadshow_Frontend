@@ -1,6 +1,74 @@
 * {
     font-family: Outfit;
 }
+.MoltenMetalCanvas{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100% !important;
+z-index:1;
+pointer-events:none;
+opacity:.92;
+mix-blend-mode:overlay;
+}
+
+
+.HomeBannerContainer{
+position:relative;
+overflow:hidden;
+isolation:isolate;
+min-height:100vh;
+}
+
+
+.HomeBannerContainer::after{
+content:"";
+position:absolute;
+inset:0;
+background:linear-gradient(180deg,rgba(255,255,255,0) 55%,rgba(255,255,255,.85) 100%);
+z-index:1;
+pointer-events:none;
+}
+
+
+.HomeBannerText,
+.HomeBannerTextImg,
+.HomeBannerImgContainer{
+position:relative;
+z-index:3;
+}
+
+.HomeBannerContainer::before{
+content:"";
+position:absolute;
+inset:-20%;
+z-index:2;
+pointer-events:none;
+
+background:
+radial-gradient(circle at 20% 20%,rgba(132,99,220,.18),transparent 30%),
+radial-gradient(circle at 80% 30%,rgba(184,160,240,.18),transparent 35%);
+
+filter:blur(50px);
+
+animation:HBSoftFlow 18s ease-in-out infinite alternate;
+}
+
+
+@keyframes HBSoftFlow{
+
+0%{
+transform:translate3d(-2%,-2%,0) scale(1);
+}
+
+100%{
+transform:translate3d(3%,4%,0) scale(1.08);
+}
+
+}
+
+
 
 /* ── Container ── */
 .HomeBannerContainer {
@@ -379,6 +447,9 @@
 
 /* Laptops (1024px - 1280px) */
 @media (min-width: 1024px) and (max-width: 1280px) {
+    .HomeBannerContainer {
+    padding: 6% 0 3%;
+    }
     .HomeBannerText {
         font-size: 52px;
     }
@@ -388,8 +459,8 @@
     }
 
     .HomeBannerImgContainer {
-        width: 88%;
-        margin-top: 40px;
+        width: 71%;
+        margin-top: -10px;
     }
 
     .HomeBannerSubImgRow {
@@ -402,6 +473,9 @@
 
     .HomeBannerSubImgTitle {
         font-size: 14px;
+    }
+    .HomeBannerSubImgMain {
+    height: 80px;
     }
 }
 
@@ -681,4 +755,134 @@
     .HomeBannerImgSpinner {
         animation: none;
     }
+}
+
+
+@media(min-width:992px) and (max-width:1024px){
+
+
+.HomeBannerContainer{
+
+height:100svh;
+
+min-height:100svh;
+
+max-height:100svh;
+
+padding-top:80px;
+
+padding-bottom:10px;
+
+display:flex;
+
+align-items:center;
+
+overflow:hidden;
+
+}
+
+
+
+.HomeBannerText{
+
+font-size:42px;
+
+line-height:1.05;
+
+}
+
+
+
+.HomeBannerTextImg{
+
+max-height:28px;
+
+}
+
+
+
+.HomeBannerImgContainer{
+
+width:86%;
+
+margin-top:20px;
+
+}
+
+
+
+.HomeBannerMainImgWrapper{
+
+aspect-ratio:4096 / 1446;
+
+}
+
+
+
+.HomeBannerSubImgRow{
+
+margin-top:8px;
+
+gap:12px;
+
+min-height:65px;
+
+}
+
+
+
+.HomeBannerSubImgMain{
+
+height:65px;
+
+}
+
+
+
+.HomeBannerSubImg{
+
+width:62px;
+
+}
+
+
+
+.HomeBannerSubImgTitle{
+
+font-size:11px;
+
+}
+
+
+
+}
+
+@media(max-width:991px){
+
+.MoltenMetalCanvas{
+
+opacity:.55;
+
+}
+
+
+
+}
+
+
+@media(max-width:767px){
+
+.MoltenMetalCanvas{
+
+opacity:.35;
+
+}
+
+
+.HomeBannerContainer{
+
+min-height:auto;
+
+}
+
 }
