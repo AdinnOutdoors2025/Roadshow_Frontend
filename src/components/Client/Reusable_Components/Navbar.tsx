@@ -263,6 +263,15 @@ export default function Navbar() {
      hero->docked stage animation). Measuring the button directly is the
      only way this tracks correctly through both axes at once. */
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  // Fade the pill out while the user is stationary on a section (so it
+  // doesn't sit on top of section content) and bring it back the moment
+  // they scroll again. Suppressed while the account dropdown is open or the
+  // pointer is resting on the header itself, so it never vanishes out from
+  // under an in-progress interaction.
+  const [isNavIdle, setIsNavIdle] = useState(false);
+  const openRef = useRef(false);
+  const hoveredRef = useRef(false);
+  const idleTimerRef = useRef<number | undefined>(undefined);
   const navbarRef =
     useRef<HTMLElement | null>(null);
   const dropdownRef =
@@ -295,7 +304,75 @@ export default function Navbar() {
   }, [mounted, pathname]);
   useEffect(() => {
     setOpen(false);
+    setIsNavIdle(false);
   }, [pathname]);
+  // Idle-fade is home-page-only: every other roadshow page keeps the pill
+  // permanently sticky/visible.
+  const isHomePage = pathname === "/";
+  // Idle-fade: hides the pill after IDLE_HIDE_DELAY of no scroll, brings it
+  // back on the next scroll event. openRef mirrors `open` into a ref so the
+  // scroll listener (bound once) always reads the current dropdown state
+  // without needing to rebind on every toggle.
+  useEffect(() => {
+    openRef.current = open;
+    if (open) {
+      if (idleTimerRef.current !== undefined) {
+        window.clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = undefined;
+      }
+      setIsNavIdle(false);
+    }
+  }, [open]);
+  useEffect(() => {
+    if (!mounted || !isHomePage) return;
+    const IDLE_HIDE_DELAY = 1500;
+    // Never fade while still on the first screen (the hero) — only once the
+    // user has scrolled down into the sections below it.
+    const isPastFirstScreen = () => window.scrollY > window.innerHeight;
+    const clearIdleTimer = () => {
+      if (idleTimerRef.current !== undefined) {
+        window.clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = undefined;
+      }
+    };
+    const scheduleIdle = () => {
+      clearIdleTimer();
+      if (!isPastFirstScreen()) return;
+      idleTimerRef.current = window.setTimeout(() => {
+        if (!openRef.current && !hoveredRef.current) {
+          setIsNavIdle(true);
+        }
+      }, IDLE_HIDE_DELAY);
+    };
+    const handleScroll = () => {
+      setIsNavIdle(false);
+      scheduleIdle();
+    };
+    scheduleIdle();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      clearIdleTimer();
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [mounted, isHomePage]);
+  const handleHeaderMouseEnter = () => {
+    hoveredRef.current = true;
+    if (idleTimerRef.current !== undefined) {
+      window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = undefined;
+    }
+    setIsNavIdle(false);
+  };
+  const handleHeaderMouseLeave = () => {
+    hoveredRef.current = false;
+    if (!isHomePage || openRef.current) return;
+    if (window.scrollY <= window.innerHeight) return;
+    idleTimerRef.current = window.setTimeout(() => {
+      if (!openRef.current && !hoveredRef.current) {
+        setIsNavIdle(true);
+      }
+    }, 1500);
+  };
   // First-paint entrance: logo + tabs flip in from a 3D tilt with a
   // staggered bounce, instead of just sitting there static until hover.
   useEffect(() => {
@@ -629,7 +706,9 @@ export default function Navbar() {
           ref={navbarRef}
           data-theme={NAV_LIGHT_THEME ? "light" : "dark"}
           data-innerpage={isInnerPage ? "true" : undefined}
-          className="RS_NewHeader"
+          className={`RS_NewHeader ${isNavIdle ? "RS_NewHeader--idle" : ""}`}
+          onMouseEnter={handleHeaderMouseEnter}
+          onMouseLeave={handleHeaderMouseLeave}
         >
           <div className="RS_NewHeaderShell">
             <Link

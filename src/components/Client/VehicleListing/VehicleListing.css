@@ -425,7 +425,7 @@ background: black;
   width: max-content;
   gap: 30px;
 
-  margin-top: 24px;
+  margin-top: 5px;
   margin-left: auto;
   padding: 10px;
 
@@ -668,12 +668,6 @@ background: black;
   font-weight: 500;
   color: #171719;
   white-space: nowrap;
-}
-
-/* Inherits the shared cursor-bleed pill from HomePageSection1.css */
-.RS_VehListBookBtn {
-  padding: 15px 26px;
-  font-size: 16px;
 }
 
 /* Only action left in .RS_VehListActions now that "View Details" is gone —
@@ -1025,6 +1019,36 @@ background: black;
 
 /* --------------------------- RESPONSIVE --------------------------- */
 
+/* Small desktops (1024px - 1439px): the card image stayed fixed at
+   the large-desktop 250px across this whole range (it only dropped
+   at <=768px), which was the main reason the homepage's "Our Roadshow
+   Vehicles" section needed a second scroll to reach Book Now/carousel
+   controls at these widths. Shrink the card stack a bit, matching how
+   the tabbed/carousel image below 768px already shrinks. */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .RS_VehListImg,
+  .RS_VehListSkelImg {
+    height: 210px;
+  }
+
+  .RS_VehListCardBody {
+    padding: 14px;
+    padding-top: 2px;
+  }
+
+  .RS_VehListName {
+    font-size: 21px;
+  }
+
+  .RS_VehListMeta {
+    margin: 8px 0 10px;
+  }
+
+  .RS_VehListNavRow {
+    margin-top: 3px;
+  }
+}
+
 @media (max-width: 1024px) {
   .RS_VehListTitle {
     font-size: 46px;
@@ -1069,7 +1093,7 @@ background: black;
 
   .RS_VehListImg,
   .RS_VehListSkelImg {
-    height: 210px;
+    height: 200px;
   }
 
   /* Matches the shorter mobile skeleton image (210px + the same 174px
@@ -1103,7 +1127,7 @@ background: black;
 
   .RS_VehListSpecBtn,
   .RS_VehListBookBtn {
-    flex: 1 1 auto;
+    /* flex: 1 1 auto; */
     padding: 13px 18px;
     font-size: 15px;
   }

@@ -35,6 +35,7 @@ import VehicleUnavailable from "./VehicleUnavailableTab";
 import OrderReportPDF from "./OrderReportPDF";
 import ClientClosureTab from "./ClientClosureTab";
 import CampaignCalculatorTab from "./CampaignCalculatorTab";
+import VehicleAvailabilityNotificationTab from "../../../components/shared/VehicleAvailabilityNotificationTab";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -72,7 +73,7 @@ interface Order {
     customerCategory?: string;
 }
 
-type Tab = "overview" | "comments" | "pipeline" | "onRoad";
+type Tab = "overview" | "comments" | "pipeline" | "onRoad" | "notification";
 
 
 const STAGE_MAP: Record<string, { label: string; gradient: string; color: string; bg: string }> = {
@@ -216,6 +217,7 @@ export default function DetailDrawer({
         { key: "overview", label: "Overview" },
         { key: "comments", label: "Comments" },
         { key: "history", label: "History" },
+        { key: "notification", label: "Notification" },
         ...(hasReachedProjectExecution
             ? [{ key: "projectExecution", label: "Project Execution" }]
             : []),
@@ -385,12 +387,19 @@ useEffect(() => {
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
-                                className={`px-3 py-2.5 text-md font-medium border-b-2 transition-all -mb-px whitespace-nowrap ${activeTab === tab.key
+                                className={`flex items-center gap-1.5 px-3 py-2.5 text-md font-medium border-b-2 transition-all -mb-px whitespace-nowrap ${activeTab === tab.key
                                     ? "border-blue-500 text-blue-600 dark:text-blue-400"
                                     : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                                     }`}
                             >
                                 {tab.label}
+
+                                {tab.key === "notification" && (
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                                    </span>
+                                )}
                             </button>
                         ))}
 
@@ -530,6 +539,10 @@ useEffect(() => {
 
                     {activeTab === "onRoad" && (
                         <OnRoadTab order={order} onRefresh={onRefresh} vehicleTypes={vehicleTypes} />
+                    )}
+
+                    {activeTab === "notification" && (
+                        <VehicleAvailabilityNotificationTab order={order} />
                     )}
 
                     {activeTab === "campaignCalculator" && (

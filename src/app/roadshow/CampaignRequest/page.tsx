@@ -1450,11 +1450,14 @@ export default function CampaignRequestPage() {
               </p>
 
               <h2 className="rdsw_crfProdDetails2ndHeading">
-                Product Details
+                {/* Product Details */}
+                CHOOSE YOUR RIDE. SET YOUR REACH.
               </h2>
 
               <p className="rdsw_crfProdDetailsDesc">
-                Choose your roadshow vehicles and campaign dates. You can add campaign details in the next step.
+                {/* Choose your roadshow vehicles and campaign dates. You can add campaign details in the next step. */}
+             Pick your roadshow vehicle and campaign dates. <br></br>
+Add your campaign details in the next step.
               </p>
             </div>
 

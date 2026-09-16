@@ -146,66 +146,19 @@ transition={
         `}
       >
         <Icon
-          className="
-            size-[23px]
-            sm:size-[27px]
-            md:size-7
-            lg:size-8
-            xl:size-9
-          "
+          className="size-[23px] sm:size-[27px] md:size-7 lg:size-8 xl:size-9"
           strokeWidth={1.25}
         />
       </div>
 
       <h3
-        className="
-          mt-5
-          w-full
-          min-w-0
-          font-display
-          text-[18px]
-          font-semibold
-          leading-[1.14]
-          tracking-[-0.04em]
-          text-[#071426]
-
-          sm:text-[20px]
-
-          md:mt-8
-          md:text-[18px]
-          md:leading-[1.18]
-
-          lg:mt-10
-          lg:text-[22px]
-
-          xl:mt-12
-          xl:text-[25px]
-        "
+        className="mt-5 w-full min-w-0 font-display text-[18px] font-semibold leading-[1.14] tracking-[-0.04em] text-[#071426] sm:text-[20px] md:mt-8 md:text-[18px] md:leading-[1.18] lg:mt-10 lg:text-[22px] xl:mt-12 xl:text-[25px]"
       >
         {step.title}
       </h3>
 
       <p
-        className="
-          mt-2
-          w-full
-          min-w-0
-          text-[13px]
-          leading-[1.45]
-          text-[#4D5563]
-
-          sm:text-[14px]
-
-          md:mt-3
-          md:text-[13px]
-          md:leading-6
-
-          lg:mt-4
-          lg:text-[15px]
-          lg:leading-7
-
-          xl:text-[16px]
-        "
+        className="mt-2 w-full min-w-0 text-[13px] leading-[1.45] text-[#4D5563] sm:text-[14px] md:mt-3 md:text-[13px] md:leading-6 lg:mt-4 lg:text-[15px] lg:leading-7 xl:text-[16px]"
       >
         {step.desc}
       </p>
@@ -237,26 +190,10 @@ export function Process() {
     <section
       ref={sectionRef}
       id="process"
-      className="
-        relative
-        overflow-hidden
-        bg-transparent
-        py-16
-        md:py-24
-        lg:py-0
-      "
+      className="relative overflow-hidden bg-transparent py-16 md:py-24 lg:py-0"
     >
       {/* <div
-        className="
-          relative
-          z-10
-          w-full
-          px-4
-          sm:px-6
-          md:px-8
-          lg:px-14
-          xl:px-16
-        "
+        className="relative z-10 w-full px-4 sm:px-6 md:px-8 lg:px-14 xl:px-16"
       >
         {isMobile ? (
           <motion.h2
@@ -267,33 +204,14 @@ export function Process() {
               duration: 0.45,
               ease: [0.22, 1, 0.36, 1],
             }}
-            className="
-              max-w-5xl
-              font-display
-              text-[26px]
-              font-semibold
-              leading-[1.05]
-              tracking-[-0.055em]
-              text-[#071426]
-              sm:text-[28px]
-            "
+            className="max-w-5xl font-display text-[26px] font-semibold leading-[1.05] tracking-[-0.055em] text-[#071426] sm:text-[28px]"
           >
             From campaign idea to street-level visibility
           </motion.h2>
         ) : (
           <Reveal delay={1}>
             <h2
-              className="
-                max-w-5xl
-                font-display
-                text-[28px]
-                font-semibold
-                leading-[1.05]
-                tracking-[-0.055em]
-                text-[#071426]
-                md:text-[32px]
-                lg:text-[34px]
-              "
+              className="max-w-5xl font-display text-[28px] font-semibold leading-[1.05] tracking-[-0.055em] text-[#071426] md:text-[32px] lg:text-[34px]"
             >
               From campaign idea to street-level visibility
             </h2>

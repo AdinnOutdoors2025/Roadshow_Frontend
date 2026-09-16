@@ -14,6 +14,7 @@ import RevealText from "@/components/motion/RevealText";
 import { Testimonials as RdswWebTestimonialsSection } from "./Testimonials";
 import { GPSTracking as RdswWebGPSTrackingSection } from "./GPSTracking";
 import { useNewsletterSubscribe } from "@/components/Client/Reusable_Components/useNewsletterSubscribe";
+import HelpCenterFAQv2 from "./HelpCenterFAQv2";
 
 
 function StarRating({ rating, size = 20 }) {
@@ -980,11 +981,7 @@ function HomePageSection2() {
 
             <div className="RA_ResponsiveOnly">
 <div
-                className="
-                    RA_Main
-                    px-30
-                    mx-auto
-                "
+                className="RA_Main px-30 mx-auto"
             >
 
 
@@ -996,19 +993,14 @@ function HomePageSection2() {
 
 
                     <SplitHeading
-                        className="
-                            RS_OurRdwHeadingContent1
-                        "
+                        className="RS_OurRdwHeadingContent1"
                     >
                         Roadshow
                     </SplitHeading>
 
 
                     <RevealText
-                        className="
-                            RS_OurRdwHeadingContent1
-                            RS_OurRdwHeadingContent2
-                        "
+                        className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
                         effect="wipe"
                         delay={0.18}
                     >
@@ -1080,34 +1072,23 @@ function HomePageSection2() {
                                         {/* HEADER */}
 
                                         <div
-                                            className="
-                                                RA_leftContentMain
-                                                flex
-                                                justify-between
-                                            "
+                                            className="RA_leftContentMain flex justify-between"
                                         >
 
 
                                             <div
-                                                className="
-                                                    RA_leftContentHeading
-                                                "
+                                                className="RA_leftContentHeading"
                                             >
                                                 {RA.name}
                                             </div>
 
 
                                             <div
-                                                className="
-                                                    RA_leftContentIcon
-                                                "
+                                                className="RA_leftContentIcon"
                                             >
 
                                                 <i
-                                                    className="
-                                                        fa-solid
-                                                        fa-plus
-                                                    "
+                                                    className="fa-solid fa-plus"
                                                 />
 
                                             </div>
@@ -1132,9 +1113,7 @@ function HomePageSection2() {
                                         >
 
                                             <div
-                                                className="
-                                                    RA_leftContentDesc
-                                                "
+                                                className="RA_leftContentDesc"
                                             >
                                                 {RA.desc}
                                             </div>
@@ -1212,20 +1191,7 @@ function HomePageSection2() {
 
 
                                 <div
-                                    className="
-                                        RA_RightContent2Main
-                                        flex
-                                        gap-5
-                                        items-center
-                                        bg-white
-                                        rounded-full
-                                        overflow-hidden
-                                        pr-1
-                                        pl-4
-                                        py-1
-                                        w-full
-                                        max-w-xs
-                                    "
+                                    className="RA_RightContent2Main flex gap-5 items-center bg-white rounded-full overflow-hidden pr-1 pl-4 py-1 w-full max-w-xs"
                                 >
 
 
@@ -1240,17 +1206,7 @@ function HomePageSection2() {
                                         onChange={(event) => onRaEmailChange(event.target.value)}
                                         onKeyDown={handleRaKeyDown}
 
-                                        className="
-                                            RA_RightContent2Input
-                                            flex-1
-                                            bg-transparent
-                                            text-black
-                                            text-md
-                                            outline-none
-                                            placeholder-gray-400
-                                            min-w-0
-                                            disabled:opacity-60
-                                        "
+                                        className="RA_RightContent2Input flex-1 bg-transparent text-black text-md outline-none placeholder-gray-400 min-w-0 disabled:opacity-60"
 
                                     />
 
@@ -1283,10 +1239,7 @@ function HomePageSection2() {
                                             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
                                         ) : (
                                             <i
-                                                className="
-                                                    fa-solid
-                                                    fa-chevron-right
-                                                "
+                                                className="fa-solid fa-chevron-right"
                                             />
                                         )}
 
@@ -1390,6 +1343,17 @@ function HomePageSection2() {
 
             </div>
   {raCaptchaModal}
+
+            {/* =========================================================
+                HELP CENTER — VERSION 2 (active)
+                Original Help Center markup below is kept intact but
+                disabled via `{false && (...)}` instead of deleted —
+                see HelpCenterFAQv2.tsx / .css for the new design.
+            ========================================================= */}
+            <HelpCenterFAQv2 />
+
+            {false && (
+            <>
             {/* =========================================================
                 OLD RESPONSIVE HELP CENTER
                 MOBILE + TABLET ONLY (0 - 1023px)
@@ -1473,18 +1437,12 @@ function HomePageSection2() {
             ========================================================= */}
 
             <div
-                className="
-                    HC_Main
-                    HC_Main_Cropped
-                "
+                className="HC_Main HC_Main_Cropped"
             >
 
 
                 <div
-                    className="
-                        px-30
-                        mx-auto
-                    "
+                    className="px-30 mx-auto"
                 >
 
 
@@ -1492,18 +1450,14 @@ function HomePageSection2() {
 
 
                         <SplitHeading
-                            className="
-                                HC_HeadingContent1
-                            "
+                            className="HC_HeadingContent1"
                         >
                             Help Center
                         </SplitHeading>
 
 
                         <SplitHeading
-                            className="
-                                HC_HeadingContent2
-                            "
+                            className="HC_HeadingContent2"
                             delay={0.12}
                         >
 
@@ -1517,11 +1471,7 @@ function HomePageSection2() {
 
 
                     <div
-                        className="
-                            px-30
-                            mx-auto
-                            HC_FAQMain
-                        "
+                        className="px-30 mx-auto HC_FAQMain"
                     >
 
 
@@ -1535,9 +1485,7 @@ function HomePageSection2() {
 
                                         key={faq.id}
 
-                                        className="
-                                            HC_FAQ_QnAnsMain
-                                        "
+                                        className="HC_FAQ_QnAnsMain"
 
                                         role="button"
                                         tabIndex={0}
@@ -1581,10 +1529,7 @@ function HomePageSection2() {
                                             >
 
                                                 <i
-                                                    className="
-                                                        fa-solid
-                                                        fa-chevron-down
-                                                    "
+                                                    className="fa-solid fa-chevron-down"
                                                 />
 
                                             </div>
@@ -1684,6 +1629,8 @@ function HomePageSection2() {
                 </div>
             </div>
             </div>
+            </>
+            )}
 
         </>
     );

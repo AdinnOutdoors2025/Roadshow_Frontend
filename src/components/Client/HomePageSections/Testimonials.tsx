@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AnimatePresence,
   motion,
@@ -21,13 +21,6 @@ type TestimonialItem = {
   role: string;
   c: string;
   avatar: string;
-};
-
-type LedLayout = {
-  width: string;
-  height: string;
-  left: string;
-  top: string;
 };
 
 const items: TestimonialItem[] = [
@@ -77,138 +70,14 @@ const items: TestimonialItem[] = [
 
 const AUTO_CHANGE_TIME = 2000;
 
-/* ============================================================
-   ============================================================
-      LED RESPONSIVE ADJUSTMENT AREA
-   ============================================================
-   ============================================================
-
-   ONLY CHANGE VALUES INSIDE THIS AREA.
-
-   width:
-   increase = wider
-   decrease = narrower
-
-   height:
-   increase = taller
-   decrease = shorter
-
-   left:
-   increase = RIGHT
-   decrease = LEFT
-
-   top:
-   increase = DOWN
-   decrease = UP
-============================================================ */
-
-
-/* ============================================================
-   LARGE DESKTOP
-   1441px AND ABOVE
-
-   KEEP YOUR ORIGINAL DESKTOP VALUES.
-============================================================ */
-
-const LARGE_DESKTOP_LED_LAYOUT: LedLayout = {
-  width: "85.5%",
-  height: "86%",
-  left: "4%",
-  top: "17.5%",
-};
-
-
-/* ============================================================
-   LAPTOP / COMPACT DESKTOP
-   1101px - 1440px
-
-   ✅ YOUR 1366 × 768 SCREEN USES THIS
-
-   SCREENSHOT-TUNED VALUES:
-   width  = unchanged
-   height = approximately 3.8% taller
-   top    = moved upward
-============================================================ */
-
-const LAPTOP_LED_LAYOUT: LedLayout = {
-  width: "85.5%",
-  height: "89.25%",
-  left: "4%",
-  top: "14.25%",
-};
-
-
-/* ============================================================
-   TABLET
-   768px - 1100px
-
-   ✅ ADJUST TABLET HERE
-============================================================ */
-
-const TABLET_LED_LAYOUT: LedLayout = {
-  width: "97%",
-  height: "100%",
-  left: "0%",
-  top: "7%",
-};
-
-
-/* ============================================================
-   MOBILE
-   BELOW 768px
-
-   ✅ ADJUST MOBILE HERE
-============================================================ */
-
-const MOBILE_LED_LAYOUT: LedLayout = {
-  width: "69%",
-  height: "54%",
-  left: "27.5%",
-  top: "17.5%",
-};
-
-
-/* ============================================================
-   END OF ADJUSTMENT AREA
-
-   NO NEED TO CHANGE ANYTHING BELOW.
-============================================================ */
-
+/* LED overlay sizing/position is handled purely by the
+   ".adinn-led-screen-overlay" @media rules at the end of
+   Testimonials.css (one rule per breakpoint) — no JS/inline-style
+   involved, so it applies instantly on paint/refresh and recomputes
+   natively on resize instead of waiting for an effect to run. */
 
 function getNextIndex(index: number) {
   return (index + 1) % items.length;
-}
-
-
-/* ============================================================
-   RESPONSIVE LED SELECTION
-============================================================ */
-
-function getLedLayout(viewportWidth: number): LedLayout {
-  /* MOBILE */
-  if (viewportWidth < 768) {
-    return MOBILE_LED_LAYOUT;
-  }
-
-  /* TABLET */
-  if (viewportWidth <= 1100) {
-    return TABLET_LED_LAYOUT;
-  }
-
-  /* LAPTOP / COMPACT DESKTOP
-     Includes:
-     1152
-     1280
-     1366
-     1400
-     1440
-  */
-  if (viewportWidth <= 1440) {
-    return LAPTOP_LED_LAYOUT;
-  }
-
-  /* LARGE DESKTOP */
-  return LARGE_DESKTOP_LED_LAYOUT;
 }
 
 
@@ -286,136 +155,7 @@ export function Testimonials() {
   const [isPaused, setIsPaused] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
 
-  const ledScreenRef = useRef<HTMLDivElement>(null);
-
   const selectedItem = items[selectedIndex];
-
-
-  /* ============================================================
-     APPLY RESPONSIVE LED SIZE / POSITION
-  ============================================================ */
-
-  useEffect(() => {
-    const ledScreen = ledScreenRef.current;
-
-    if (!ledScreen) return;
-
-    let resizeFrame: number | null = null;
-
-    const applyLedLayout = () => {
-      const viewportWidth = window.innerWidth;
-
-      const layout = getLedLayout(viewportWidth);
-
-      ledScreen.style.setProperty(
-        "width",
-        layout.width,
-        "important"
-      );
-
-      ledScreen.style.setProperty(
-        "height",
-        layout.height,
-        "important"
-      );
-
-      ledScreen.style.setProperty(
-        "left",
-        layout.left,
-        "important"
-      );
-
-      ledScreen.style.setProperty(
-        "top",
-        layout.top,
-        "important"
-      );
-
-      ledScreen.style.setProperty(
-        "right",
-        "auto",
-        "important"
-      );
-
-      ledScreen.style.setProperty(
-        "bottom",
-        "auto",
-        "important"
-      );
-
-      ledScreen.style.setProperty(
-        "min-width",
-        "0",
-        "important"
-      );
-
-      ledScreen.style.setProperty(
-        "min-height",
-        "0",
-        "important"
-      );
-
-      ledScreen.style.setProperty(
-        "max-width",
-        "none",
-        "important"
-      );
-
-      ledScreen.style.setProperty(
-        "max-height",
-        "none",
-        "important"
-      );
-    };
-
-
-    const handleResize = () => {
-      if (resizeFrame !== null) {
-        window.cancelAnimationFrame(resizeFrame);
-      }
-
-      resizeFrame = window.requestAnimationFrame(() => {
-        applyLedLayout();
-
-        resizeFrame = null;
-      });
-    };
-
-
-    /* Initial application */
-    applyLedLayout();
-
-
-    /* Responsive resize */
-    window.addEventListener(
-      "resize",
-      handleResize
-    );
-
-
-    /* Mobile/tablet rotation */
-    window.addEventListener(
-      "orientationchange",
-      handleResize
-    );
-
-
-    return () => {
-      window.removeEventListener(
-        "resize",
-        handleResize
-      );
-
-      window.removeEventListener(
-        "orientationchange",
-        handleResize
-      );
-
-      if (resizeFrame !== null) {
-        window.cancelAnimationFrame(resizeFrame);
-      }
-    };
-  }, []);
 
 
   /* ============================================================
@@ -450,17 +190,14 @@ export function Testimonials() {
           ================================================== */}
 
           <div className="adinn-testimonial-heading">
-            <div className="RS_OurRdwHeading">
+            <div className="RS_OurRdwHeading RS_OurRdwHeadingTestimonialsHeading">
 
               <SplitHeading className="RS_OurRdwHeadingContent1">
                 Trusted by Brands Across
               </SplitHeading>
 
               <RevealText
-                className="
-                  RS_OurRdwHeadingContent1
-                  RS_OurRdwHeadingContent2
-                "
+                className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
                 effect="wipe"
                 delay={0.18}
               >
@@ -541,7 +278,6 @@ export function Testimonials() {
               ================================================= */}
 
               <div
-                ref={ledScreenRef}
                 className="adinn-led-screen-overlay"
                 aria-live="polite"
               >
