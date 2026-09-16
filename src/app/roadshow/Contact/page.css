@@ -972,6 +972,7 @@
 ========================================================= */
 
 .ContactCaptchaOverlay {
+      z-index: 999999;
   animation: ContactCaptchaOverlayIn 220ms ease-out both;
 }
 

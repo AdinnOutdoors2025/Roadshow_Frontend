@@ -57,7 +57,7 @@ import {
 } from "lucide-react";
 
 import "./page.css";
-
+import  '@/components/Client/Reusable_Components/Footer.css';
 gsap.registerPlugin(ScrollTrigger);
 
 /* =========================================================
@@ -968,7 +968,7 @@ export default function ContactPage() {
        actual sent mail. `image` is already live. Switch this back to
        `selectedService.mailImage` once those files are pushed/deployed. */
     const selectedVehicleImageUrl = new URL(
-      selectedService.image,
+      selectedService.mailImage,
       `${mailImageUrl}/`,
     ).href;
 

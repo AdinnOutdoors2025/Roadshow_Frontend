@@ -1433,7 +1433,7 @@ export default function ImpactCtaBanner({
         <div
           ref={introRef}
           className="pointer-events-none absolute left-1/2 top-[clamp(135px,14vh,165px)] z-30 w-[min(900px,76vw)] -translate-x-1/2 text-center">
-          <div className=" overflow-hidden " >
+          <div className=" rdswImpact1stHeading overflow-hidden " >
             <p
               data-intro-reveal
               className="m-0 rdswimpactHeading1 transform-gpu will-change-transform font-sans text-[clamp(32px,3.6vw,58px)] font-normal leading-[0.98] tracking-[-0.05em] text-[#a2a19e]" >
@@ -1448,7 +1448,7 @@ export default function ImpactCtaBanner({
             className=" mt-1 overflow-hidden "  >
             <h2
               data-intro-reveal
-              className=" mx-auto max-w-[820px] transform-gpu will-change-transform font-sans text-[clamp(38px,4.3vw,68px)] font-medium  leading-[0.98] tracking-[-0.058em] text-[#111111] " >
+              className="rdswImpact2ndHeading  mx-auto max-w-[820px] transform-gpu will-change-transform font-sans text-[clamp(38px,4.3vw,68px)] font-medium  leading-[0.98] tracking-[-0.058em] text-[#111111] " >
               Take your message beyond screens
             </h2>
           </div>
@@ -1459,7 +1459,7 @@ export default function ImpactCtaBanner({
         ================================================= */}
 
         <div
-          className="pointer-events-none absolute left-1/2 top-[53%] z-20 w-[min(780px,43vw)] -translate-x-1/2 -translate-y-1/2"
+          className="rdswImpactVehImage pointer-events-none absolute left-1/2 top-[53%] z-20 w-[min(780px,43vw)] -translate-x-1/2 -translate-y-1/2"
         >
           <div
             ref={desktopVehicleRef}

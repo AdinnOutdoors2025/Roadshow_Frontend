@@ -1607,9 +1607,11 @@
     font-size: 22px;
   }
 
-  .RS_VehicleButton {
-    padding: 13px 26px;
-    font-size: 17px;
+ .RS_VehicleButton {
+    height: 46px;
+    min-height: 46px;
+    padding: 0 21px;
+    font-size: 14px;
   }
 
   /* The left panel is a fixed 405px column; pull it in a bit so
@@ -1626,7 +1628,7 @@
      that mismatch is why "Clients" and "Why Adinn" looked fine on one
      laptop and cramped/oversized on the other. */
   .RS_ClientsSection {
-    --rs-orbit-f: 0.95;
+    --rs-orbit-f: 0.7;
   }
 
   .RS_ClientsOrbitArea {
@@ -2825,17 +2827,7 @@
   }
 }
 
-/* Small desktop */
-@media (min-width: 1281px) and (max-width: 1439px) {
-  .RS_VehicleButton {
-    height: 46px;
-    min-height: 46px;
 
-    padding: 0 21px;
-
-    font-size: 14px;
-  }
-}
 
 /* Laptop */
 @media (min-width: 992px) and (max-width: 1280px) {

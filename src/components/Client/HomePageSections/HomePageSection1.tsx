@@ -504,7 +504,7 @@ export default function HomePageSection1() {
       1,
       Math.ceil(
         ourClients.length /
-          CLIENT_BUBBLE_SLOTS,
+        CLIENT_BUBBLE_SLOTS,
       ),
     );
 
@@ -528,7 +528,7 @@ export default function HomePageSection1() {
           const index =
             (
               clientPage *
-                CLIENT_BUBBLE_SLOTS +
+              CLIENT_BUBBLE_SLOTS +
               slot
             ) %
             ourClients.length;
@@ -675,21 +675,21 @@ export default function HomePageSection1() {
     const hexToRgb = (
       hex: string,
     ) => [
-      parseInt(
-        hex.slice(1, 3),
-        16,
-      ),
+        parseInt(
+          hex.slice(1, 3),
+          16,
+        ),
 
-      parseInt(
-        hex.slice(3, 5),
-        16,
-      ),
+        parseInt(
+          hex.slice(3, 5),
+          16,
+        ),
 
-      parseInt(
-        hex.slice(5, 7),
-        16,
-      ),
-    ];
+        parseInt(
+          hex.slice(5, 7),
+          16,
+        ),
+      ];
 
     const interpolate = (
       start: number,
@@ -698,8 +698,8 @@ export default function HomePageSection1() {
     ) =>
       Math.round(
         start +
-          (end - start) *
-            progress,
+        (end - start) *
+        progress,
       );
 
     const rgbToHex = (
@@ -791,7 +791,7 @@ export default function HomePageSection1() {
       const currentIndex =
         Math.floor(
           elapsed /
-            stepDuration,
+          stepDuration,
         );
 
       const progress =
@@ -802,23 +802,23 @@ export default function HomePageSection1() {
       const easedProgress =
         progress < 0.5
           ? 2 *
-            progress *
-            progress
+          progress *
+          progress
           : -1 +
-            (4 -
-              2 *
-                progress) *
-              progress;
+          (4 -
+            2 *
+            progress) *
+          progress;
 
       const currentGradient =
         gradients[
-          currentIndex
+        currentIndex
         ];
 
       const nextGradient =
         gradients[
-          (currentIndex + 1) %
-            gradients.length
+        (currentIndex + 1) %
+        gradients.length
         ];
 
       stopTop.setAttribute(
@@ -995,7 +995,7 @@ export default function HomePageSection1() {
      */
     setWhyEnterFromLeft(
       direction ===
-        "backward",
+      "backward",
     );
 
     /*
@@ -1037,7 +1037,7 @@ export default function HomePageSection1() {
       ) {
         triggerWhyTransition(
           whyAdinnWorksBest.length -
-            1,
+          1,
           "backward",
         );
 
@@ -1144,7 +1144,7 @@ export default function HomePageSection1() {
      */
     const direction =
       activeWhyIndex < 0 ||
-      index >
+        index >
         activeWhyIndex
         ? "forward"
         : "backward";
@@ -1278,11 +1278,11 @@ export default function HomePageSection1() {
           </div>
         </div>
       </section>
-{/* =====================================================
+      {/* =====================================================
     3D OFFERS SECTION
 ===================================================== */}
 
-{/* <Offers3DSection /> */}
+      {/* <Offers3DSection /> */}
       {/* =====================================================
           CTA
       ===================================================== */}
@@ -1307,46 +1307,46 @@ export default function HomePageSection1() {
     VEHICLES
 ===================================================== */}
 
-<div
-  id="our-roadshow-vehicles"
-  className="RS_OurRdwMainSection w-full bg-[#f5f5f7] px-5 pt-[70px] sm:px-8 sm:pt-[80px] md:px-12 md:pt-[90px] lg:px-20 lg:pt-[110px]"
->
-  <VehicleListing
-    layout="carousel"
-    reveal
-    onLoaded={() => {
-      setVehiclesReady(true);
-    }}
-    heading={
-      <div className="RS_OurRdwHeading">
-        <div>
-          <SplitHeading className="RS_OurRdwHeadingContent1">
-          Our Roadshow
-        </SplitHeading>
-          </div>
+      <div
+        id="our-roadshow-vehicles"
+        className="RS_OurRdwMainSection w-full bg-[#f5f5f7] px-5 pt-[70px] sm:px-8 sm:pt-[80px] md:px-12 md:pt-[90px] lg:px-20 lg:pt-[110px]"
+      >
+        <VehicleListing
+          layout="carousel"
+          reveal
+          onLoaded={() => {
+            setVehiclesReady(true);
+          }}
+          heading={
+            <div className="RS_OurRdwHeading">
+              <div>
+                <SplitHeading className="RS_OurRdwHeadingContent1">
+                  Our Roadshow
+                </SplitHeading>
+              </div>
 
-        <div>
-          <RevealText
-          className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
-          effect="wipe"
-          delay={0.18}
-        >
-          Vehicles
-        </RevealText>
-          </div>
+              <div>
+                <RevealText
+                  className="RS_OurRdwHeadingContent1 RS_OurRdwHeadingContent2"
+                  effect="wipe"
+                  delay={0.18}
+                >
+                  Vehicles
+                </RevealText>
+              </div>
+            </div>
+          }
+        />
       </div>
-    }
-  />
-</div>
-          <RoadshowProcessSection />
+      <RoadshowProcessSection />
 
       {/* =====================================================
           WHY ADINN ROADSHOWS
       ===================================================== */}
 
-      <div id="why-adinn"  className="mx-auto px-30 RS_WhyAdRSSectionWrap RS_WhyAdRSFigmaUI">
+      <div id="why-adinn" className="mx-auto px-30 RS_WhyAdRSSectionWrap RS_WhyAdRSFigmaUI">
         <div className="RS_OurRdwHeading">
-          <RevealText id="why-adinn" 
+          <RevealText id="why-adinn"
             className="RS_OurRdwHeadingContent1"
             effect="blur"
           >
@@ -1570,6 +1570,16 @@ export default function HomePageSection1() {
           ================================================= */
 
           @media (min-width: 768px) and (max-width: 1023px) {
+          .RS_WhyAdRS_ImageLayer img {
+          transform: scale(0.6); /*  0.52 to 0.8*/
+          }
+          .RS_WhyAdRSMain{
+          height:500px !important;
+          }
+          .RS_WhyAdRS_Left {
+            top: 82px;
+            // left: 88px;
+          }
             .RS_WhyAdRSFigmaUI {
               padding-left: 24px !important;
               padding-right: 24px !important;
@@ -1581,12 +1591,12 @@ export default function HomePageSection1() {
                  and give the complete 6-item list enough usable height. */
               min-height: 430px !important;
               height: auto !important;
-              padding: 14px 24px 60px 24px !important;
+              padding: 14px 24px 0px 24px !important;
               border-radius: 44px !important;
 
               display: grid !important;
               grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
-              column-gap: 18px !important;
+              column-gap: 40px !important;
               align-items: center !important;
 
               overflow: hidden !important;
@@ -1789,6 +1799,21 @@ export default function HomePageSection1() {
               padding-bottom: 40px !important;
             }
           }
+             @media (min-width: 1281px) and (max-width: 1439px) {
+
+            .RS_WhyAdRSFigmaUI .RS_WhyAdRSMain {
+              min-height: 560px !important;
+              height: auto !important;
+              padding-bottom: 40px !important;
+            }
+              .RS_WhyAdRS_Left {
+              z-index: 20;
+              width: 405px;
+              position: absolute;
+              top: 65px;
+              left: 88px;
+            }
+          }
 
           @media (max-width: 767px) {
             .RS_WhyAdRSFigmaUI .RS_WhyAdRSMain {
@@ -1907,11 +1932,10 @@ export default function HomePageSection1() {
                         feature.name
                       }
                       type="button"
-                      className={`RS_WhyAdRSItem ${
-                        isActive
+                      className={`RS_WhyAdRSItem ${isActive
                           ? "active"
                           : ""
-                      }`}
+                        }`}
                       style={
                         {
                           "--collapsed-width": `${feature.collapsedWidth}px`,
@@ -1966,11 +1990,10 @@ export default function HomePageSection1() {
 
                           <span
                             id={`why-adinn-description-${index}`}
-                            className={`RS_WhyAdRS_CollapseWrapper ${
-                              isActive
+                            className={`RS_WhyAdRS_CollapseWrapper ${isActive
                                 ? "open"
                                 : ""
-                            }`}
+                              }`}
                           >
                             <span className="RS_WhyAdRS_ItemDesc">
                               {

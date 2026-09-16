@@ -1611,3 +1611,77 @@
     margin-left: -25px;
   }
 }
+
+/* =========================================================
+   LED SCREEN OVERLAY — SIZE / POSITION PER BREAKPOINT
+
+   Single source of truth for ".adinn-led-screen-overlay"
+   sizing/position. Earlier in this file (and previously in a
+   JS resize-effect in Testimonials.tsx, now removed) several
+   older rules targeted the same element with conflicting
+   numbers — e.g. the max-width:640px and 1024px-1280px blocks
+   above disagreed with each other on which value belonged to
+   which breakpoint. Rather than editing/removing that history,
+   this final block is placed last on purpose: for equal
+   specificity (single class selector, same as all the older
+   rules), the LAST declaration in the file wins the cascade —
+   so these six rules are what actually renders at every width,
+   with no !important needed and no JS involved. Pure @media
+   queries also apply instantly on first paint/refresh and
+   recompute natively on resize, unlike the old JS approach
+   which needed an effect to run first.
+========================================================= */
+
+@media (max-width: 639px) {
+  .adinn-led-screen-overlay {
+    width: 69%;
+    height: 54%;
+    top: 17.5%;
+    left: 27.5%;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 767px) {
+  .adinn-led-screen-overlay {
+    width: 86%;
+    height: 83.45%;
+    top: 17.25%;
+    left: 4%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+     .adinn-led-screen-overlay {
+        width: 97% !important;
+        height: 100% !important;
+        top: 7% !important;
+        left: 0% !important;
+    }
+}
+
+@media (min-width: 1024px) and (max-width: 1100px) {
+  .adinn-led-screen-overlay {
+    width: 85%;
+    height: 80%;
+    top: 15.5%;
+    left: 4.5%;
+  }
+}
+
+@media (min-width: 1101px) and (max-width: 1440px) {
+  .adinn-led-screen-overlay {
+    width: 85.5%;
+    height: 89.25%;
+    top: 14.25%;
+    left: 4%;
+  }
+}
+
+@media (min-width: 1441px) {
+  .adinn-led-screen-overlay {
+    width: 85.5%;
+    height: 86%;
+    top: 17.5%;
+    left: 4%;
+  }
+}
