@@ -162,17 +162,17 @@ export function Testimonials() {
      TESTIMONIAL AUTOPLAY
   ============================================================ */
 
-  // useEffect(() => {
-  //   if (shouldReduceMotion || isPaused) return;
+  useEffect(() => {
+    if (shouldReduceMotion || isPaused) return;
 
-  //   const timer = window.setInterval(() => {
-  //     setSelectedIndex((prev) => getNextIndex(prev));
-  //   }, AUTO_CHANGE_TIME);
+    const timer = window.setInterval(() => {
+      setSelectedIndex((prev) => getNextIndex(prev));
+    }, AUTO_CHANGE_TIME);
 
-  //   return () => {
-  //     window.clearInterval(timer);
-  //   };
-  // }, [shouldReduceMotion, isPaused]);
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [shouldReduceMotion, isPaused]);
 
 
   return (
