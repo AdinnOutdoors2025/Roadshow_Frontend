@@ -677,7 +677,7 @@ export default function CampaignHistoryPanel({
                             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                               {seg.driverName || "—"}
                             </p>
-                            <p className="text-xs text-gray-400 font-mono">
+                            <p className="text-sm text-gray-500 font-mono">
                               {seg.driverPhone} · {seg.vehicleRegistrationNumber}
                             </p>
                           </div>
@@ -699,7 +699,7 @@ export default function CampaignHistoryPanel({
                         {fmtDt(seg.startDate)} → {seg.isOngoing ? "Ongoing" : fmtDt(seg.endDate)}
                       </p>
 
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-sm text-gray-400 mt-1">
                         {seg.action === "created" ? "Driver added" : "Driver updated"} by{" "}
                         {seg.changedBy || "—"}
                       </p>
@@ -828,7 +828,7 @@ export default function CampaignHistoryPanel({
                                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                                   {seg.driverName || "—"}
                                 </p>
-                                <p className="text-xs text-gray-400 font-mono">
+                                <p className="text-sm text-gray-500 font-mono">
                                   {seg.driverPhone} · {seg.vehicleRegistrationNumber}
                                 </p>
                               </div>
@@ -846,7 +846,7 @@ export default function CampaignHistoryPanel({
                           <p className="text-sm text-gray-600 dark:text-gray-400">
                             Driving on {fmtD(selectedDateKey)}
                           </p>
-                          <p className="text-xs text-gray-400 mt-0.5">
+                          <p className="text-sm text-gray-400 mt-0.5">
                             {fmtDt(seg.startDate)} → {seg.isOngoing ? "Ongoing" : fmtDt(seg.endDate)}
                           </p>
 

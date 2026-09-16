@@ -727,12 +727,12 @@ function VehicleExecutionCard({ vehicle, vehicleIndex, order, onRefresh, vehicle
                     >
                       Driver History
                     </button>
-                    {/* <button
+                    <button
                       onClick={() => setLiveTab("campaign")}
                       className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${liveTab === "campaign" ? "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
                     >
                       Campaign History
-                    </button> */}
+                    </button>
                   </div>
                   {liveStatusEntries.filter(e => e.onRoadStatus === 1).length > 0 && (
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
