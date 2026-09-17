@@ -149,25 +149,25 @@ function Footer() {
             <div className="FooterCol1Contact">
               <div className="flex items-center gap-2 flex-wrap">
                 <a
-                  href="tel:7373785057"
+                  href="tel:7339509090"
                   style={{
                     textDecoration:
                       "none",
                   }}
                 >
-                  +91 73737 85057
+                  +91 73395 09090
                 </a>
 
                 <span>|</span>
 
                 <a
-                  href="tel:9626987861"
+                  href="tel:9500388761"
                   style={{
                     textDecoration:
                       "none",
                   }}
                 >
-                  +91 96269 87861
+                  +91  95003 88761
                 </a>
               </div>
 
