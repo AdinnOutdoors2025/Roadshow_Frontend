@@ -370,6 +370,7 @@ transform:translate3d(3%,4%,0) scale(1.08);
 
     .HomeBannerSubImgBtn.active {
         outline-color: #7057c3;
+        outline-offset: 1px;
         transform: translateY(-4px) scale(1.06);
     }
 }

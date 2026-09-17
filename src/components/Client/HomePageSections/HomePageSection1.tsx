@@ -409,7 +409,13 @@ const ourClients = [
   },
 ];
 
-const CLIENT_BUBBLE_SLOTS = 15;
+const CLIENT_BUBBLE_SLOTS_DESKTOP = 15;
+
+/* Phones show fewer bubbles per page so the orbit doesn't read as
+   crowded. Slots 0-9 are the original, evenly-spread ring from
+   before slots 10-14 were added to fill desktop corners, so no new
+   position CSS is needed for the mobile count. */
+const CLIENT_BUBBLE_SLOTS_MOBILE = 10;
 
 type WhyExitDirection =
   | "exit-left"
@@ -499,6 +505,36 @@ export default function HomePageSection1() {
      CLIENT PAGES
   ======================================================= */
 
+  const [
+    isMobileClients,
+    setIsMobileClients,
+  ] = useState(false);
+
+  useEffect(() => {
+    const checkMobileClients = () => {
+      setIsMobileClients(
+        window.innerWidth <= 767,
+      );
+    };
+
+    checkMobileClients();
+    window.addEventListener(
+      "resize",
+      checkMobileClients,
+    );
+
+    return () =>
+      window.removeEventListener(
+        "resize",
+        checkMobileClients,
+      );
+  }, []);
+
+  const CLIENT_BUBBLE_SLOTS =
+    isMobileClients
+      ? CLIENT_BUBBLE_SLOTS_MOBILE
+      : CLIENT_BUBBLE_SLOTS_DESKTOP;
+
   const CLIENT_PAGE_COUNT =
     Math.max(
       1,
@@ -539,7 +575,7 @@ export default function HomePageSection1() {
           };
         },
       );
-    }, [clientPage]);
+    }, [clientPage, CLIENT_BUBBLE_SLOTS]);
 
   const showMoreClients = () => {
     if (!ourClients.length) {

@@ -83,7 +83,7 @@ import "./page.css";
  * "Next Vehicle" guard and the final Review check all call this, so there is
  * exactly one definition of "this vehicle is done" and they cannot drift.
  */
-const getVehicleErrors = (vehicle, details) => {
+export const getVehicleErrors = (vehicle, details) => {
   const vehicleErrors = {};
 
   if (!vehicle.startDate || !vehicle.endDate) {
