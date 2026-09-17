@@ -177,7 +177,7 @@ test.describe("QA-06 Integration (backend change -> client refresh)", () => {
     state.tracking = {
       ...state.tracking,
       bookingSummary: {
-        ...state.tracking.bookingSummary,
+        ...(state.tracking.bookingSummary as object),
       },
       onRoad: { day: 4, totalDays: 6 },
       lastUpdatedAt: "2026-08-23T12:00:00.000Z",

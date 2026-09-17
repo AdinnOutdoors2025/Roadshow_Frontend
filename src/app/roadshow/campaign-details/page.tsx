@@ -84,7 +84,7 @@ import "./page.css";
  * exactly one definition of "this vehicle is done" and they cannot drift.
  */
 export const getVehicleErrors = (vehicle, details) => {
-  const vehicleErrors = {};
+  const vehicleErrors: Record<string, string> = {};
 
   if (!vehicle.startDate || !vehicle.endDate) {
     vehicleErrors.dates = "Select campaign dates for this vehicle.";
