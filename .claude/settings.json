@@ -1,4 +1,14 @@
 {
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId=19712\")",
+      "PowerShell(Stop-Process -Id 19712 -Force -ErrorAction SilentlyContinue)",
+      "Bash(nohup npm run dev:fresh)",
+      "Bash(disown)",
+      "Bash(timeout 40 bash -c 'until curl -sf http://127.0.0.1:3000 >/dev/null 2>&1; do sleep 1; done')",
+      "Read(//tmp/**)"
+    ]
+  },
   "hooks": {
     "TaskCompleted": [
       {

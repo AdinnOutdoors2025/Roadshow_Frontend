@@ -1697,11 +1697,7 @@ export default function ImpactCtaBanner({
                 height={720}
                 priority
                 draggable={false}
-                sizes="
-                  (max-width:639px) 160vw,
-                  (max-width:1023px) 64vw,
-                  43vw
-                "
+                sizes="(max-width:639px) 160vw, (max-width:1023px) 64vw, 43vw"
                 className="relative z-[2] block !h-auto !w-full max-w-none select-none object-contain drop-shadow-[0_20px_18px_rgba(0,0,0,0.15)]"
                 onLoad={() => {
                   window.requestAnimationFrame(
