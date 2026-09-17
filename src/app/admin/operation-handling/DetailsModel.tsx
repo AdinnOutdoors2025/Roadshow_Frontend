@@ -224,9 +224,9 @@ export default function DetailDrawer({
         ...(hasReachedOnRoad
             ? [{ key: "onRoad", label: "On Road" }]
             : []),
-        ...(hasReachedOnRoad
-            ? [{ key: "campaignCalculator", label: "Campaign Calculator" }]
-            : []),
+        // ...(hasReachedOnRoad
+        //     ? [{ key: "campaignCalculator", label: "Campaign Calculator" }]
+        //     : []),
 
         ...(hasReachedOnRoad
             ? [{ key: "VehicleUnavailable", label: "Vehicle Unavailable" }]
