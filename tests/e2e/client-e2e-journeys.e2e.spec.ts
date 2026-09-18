@@ -138,9 +138,8 @@ test.describe("QA-13 Journey 2 â€” returning user reviews, tracks and downl
     await expect(page.getByText("Acme Product Launch").first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Day 3 of 6", { exact: true }).first()).toBeVisible();
 
-// Live-location vehicles (switch to the second vehicle tab for its reg)
+// Live-location vehicles — the flat vehicle list shows every registration at once
     await expect(page.getByText("TN-01-AB-1234").first()).toBeVisible({ timeout: 15_000 });
-    await page.getByRole("tab").nth(1).click();
     await expect(page.getByText("TN-01-CD-5678").first()).toBeVisible({ timeout: 15_000 });
 
     // Activity / day-wise report from the tracking payload
