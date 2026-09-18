@@ -19,6 +19,7 @@
 /*  shifting meaning.                                                         */
 
 import {
+  calculateRtoCost,
   getInclusiveDayCount,
   toSafeNumber,
   type DateValue,
@@ -150,9 +151,11 @@ export const priceVehicleLine = (
 
   const promoterCost = promoterChargePerDay * promoterDays * promoterQuantity;
 
-  // RTO is a one-time flat charge per vehicle, from the matched package.
+  // RTO scales in 30-day slabs of the campaign's own duration (days, the
+  // same inclusive count above — not any extended/extra days): 1-30 days
+  // = 1x the package's rtoCharges rate per vehicle, 31-60 days = 2x, etc.
   const rtoCharges = toSafeNumber(vehicle.packageDetails?.rtoCharges);
-  const rtoCost = rtoCharges * quantity;
+  const rtoCost = calculateRtoCost(rtoCharges, days, quantity);
 
   // Branding Cost — only ever set on a Hybrid vehicle's package.
   const brandingCost = toSafeNumber(vehicle.packageDetails?.brandingCost) * quantity;

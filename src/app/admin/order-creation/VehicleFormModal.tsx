@@ -14,6 +14,7 @@ import { languages } from "../../utils/collection.json";
 import CitySelect from "./cityselect";
 import { toast, Toaster } from "react-hot-toast";
 import { checkVehicleAvailability } from "../../utils/Adminorderapi";
+import { calculateRtoCost } from "../../utils/currency";
 
 interface PackageOption {
   _id: string;
@@ -140,10 +141,10 @@ export function calcPricing(
     : 0;
 
 
-  // RTO is a one-time flat charge per vehicle-type slot (from the selected
-  // package), applied once regardless of totalDays — mirrors how the
-  // backend's Campaign Calculator applies it on the campaign's first day.
-  const rtoCost = (pkg.rtoCharges || 0) * quantity;
+  // RTO scales in 30-day slabs of the campaign's own duration (baseDays,
+  // not totalDays with extraDays folded in): 1-30 days = 1x the package's
+  // rtoCharges rate per vehicle, 31-60 days = 2x, etc. See calculateRtoCost.
+  const rtoCost = calculateRtoCost(pkg.rtoCharges || 0, baseDays, quantity);
 
   // Branding Cost — only ever set on a Hybrid vehicle's package; same
   // one-time-per-vehicle-slot pattern as RTO.
