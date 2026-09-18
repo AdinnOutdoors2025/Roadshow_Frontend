@@ -24,11 +24,23 @@ import {
   toSafeNumber,
   type DateValue,
 } from "@/app/utils/currency";
+import { RTO_CYCLE_DAYS } from "@/BaseUrl";
 
 /** Per-promoter, per-day charge — same env var admin's calcPricing reads. */
 export const DEFAULT_PROMOTER_CHARGE = parseFloat(
   process.env.NEXT_PUBLIC_DEFAULT_PROMOTER_CHARGE || "1000"
 );
+
+/**
+ * RTO cycle length in days, for the client flow only. One RTO charge per
+ * vehicle per cycle (ceil(days / RTO_CYCLE_DAYS)). Sourced from
+ * src/BaseUrl.tsx (default 30) so the value lives in one place and admin
+ * order-creation can read the same constant once RTO there is scoped.
+ * Admin's calcPricing keeps its own flat rtoCharges * quantity formula for
+ * now — do not reuse this constant there without a separate decision to
+ * change admin RTO behavior too.
+ */
+export { RTO_CYCLE_DAYS };
 
 /**
  * Seller's GST state code. Adinn bills from Tamil Nadu (33), so a customer
@@ -69,6 +81,8 @@ export type PricedVehicle = {
   promoterDays: number;
   promoterCost: number;
   rtoCharges: number;
+  /** ceil(days / RTO_CYCLE_DAYS) — one RTO charge per vehicle per cycle. */
+  rtoCycles: number;
   rtoCost: number;
   brandingCost: number;
   /** rentalCost + promoterCost + rtoCost + brandingCost */
@@ -151,11 +165,11 @@ export const priceVehicleLine = (
 
   const promoterCost = promoterChargePerDay * promoterDays * promoterQuantity;
 
-  // RTO scales in 30-day slabs of the campaign's own duration (days, the
-  // same inclusive count above — not any extended/extra days): 1-30 days
-  // = 1x the package's rtoCharges rate per vehicle, 31-60 days = 2x, etc.
+  // RTO is duration-based: one RTO cycle per 30 campaign days, charged per
+  // vehicle, at the matched package's rate.
   const rtoCharges = toSafeNumber(vehicle.packageDetails?.rtoCharges);
-  const rtoCost = calculateRtoCost(rtoCharges, days, quantity);
+  const rtoCycles = days > 0 ? Math.ceil(days / RTO_CYCLE_DAYS) : 0;
+  const rtoCost = rtoCharges * rtoCycles * quantity;
 
   // Branding Cost — only ever set on a Hybrid vehicle's package.
   const brandingCost = toSafeNumber(vehicle.packageDetails?.brandingCost) * quantity;
@@ -172,6 +186,7 @@ export const priceVehicleLine = (
     promoterDays,
     promoterCost,
     rtoCharges,
+    rtoCycles,
     rtoCost,
     brandingCost,
     lineTotal: Number.isFinite(lineTotal) ? lineTotal : 0,

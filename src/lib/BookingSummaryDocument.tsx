@@ -233,6 +233,13 @@ export default function BookingSummaryDocument({
   const hasCgstSgst = Boolean(data.cgstAmount || data.sgstAmount);
   const hasIgst = !hasCgstSgst && Boolean(data.igstAmount);
 
+  /* Not a separate top-level field from the backend — summed here from
+     each vehicle line's rtoCost, same as My Bookings/Thank You page do. */
+  const rtoTotal = (data.vehicleTypes || []).reduce(
+    (sum, vehicle) => sum + Number(vehicle.rtoCost || 0),
+    0
+  );
+
   return (
     <div style={S.page}>
       {/* ══ HEADER ══ */}
@@ -450,6 +457,13 @@ export default function BookingSummaryDocument({
           <div style={S.priceRow}>
             <span>Promoter Charges (included)</span>
             <span style={S.priceValue}>{formatINR(data.promoterTotal)}</span>
+          </div>
+        ) : null}
+
+        {rtoTotal > 0 ? (
+          <div style={S.priceRow}>
+            <span>RTO Charges (included)</span>
+            <span style={S.priceValue}>{formatINR(rtoTotal)}</span>
           </div>
         ) : null}
 

@@ -953,12 +953,60 @@ export default function CampaignRequestPage() {
   const scrollProducts = (
     direction: "left" | "right"
   ) => {
-    productScrollerRef.current?.scrollBy({
-      left:
-        direction === "left"
-          ? -320
-          : 320,
-      behavior: "smooth",
+    const scroller = productScrollerRef.current;
+
+    if (!scroller) return;
+
+    const cards = Array.from(
+      scroller.querySelectorAll<HTMLElement>(
+        ".rdsw_crfProdDetailsCardMain"
+      )
+    );
+
+    if (cards.length === 0) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } =
+      scroller;
+
+    const maxScrollLeft = scrollWidth - clientWidth;
+
+    let target: number;
+
+    if (direction === "right") {
+      const next = cards.find(
+        (card) => card.offsetLeft > scrollLeft + 4
+      );
+
+      target = next
+        ? next.offsetLeft
+        : maxScrollLeft;
+    } else {
+      const previous = [...cards]
+        .reverse()
+        .find(
+          (card) => card.offsetLeft < scrollLeft - 4
+        );
+
+      target = previous
+        ? previous.offsetLeft
+        : 0;
+    }
+
+    target = Math.max(
+      0,
+      Math.min(target, maxScrollLeft)
+    );
+
+    const prefersReducedMotion =
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+    scroller.scrollTo({
+      left: target,
+      behavior: prefersReducedMotion
+        ? "auto"
+        : "smooth",
     });
   };
 
@@ -1004,6 +1052,323 @@ export default function CampaignRequestPage() {
       );
     };
   }, [vehicles, loadingVehicles]);
+
+  /* Edge-hover auto-scroll: hovering within EDGE_ZONE px of either side of
+     the carousel scrolls it toward that edge, speeding up (eased, not
+     linear) the closer the pointer is to it, and stops the moment the
+     pointer leaves that zone. The --autoScrolling class (page.css) drops
+     scroll-snap-type AND scroll-behavior for the duration — left on,
+     mandatory snap re-snaps after every per-frame write and the base rule's
+     `scroll-behavior: smooth` tries to animate every one of those writes
+     too, so consecutive frames fight each other and the row stalls,
+     especially the moment direction reverses. */
+  useEffect(() => {
+    const scroller = productScrollerRef.current;
+
+    if (!scroller) return;
+
+    const prefersReducedMotion =
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+    if (prefersReducedMotion) return;
+
+    const EDGE_ZONE = 100;
+    const MAX_SPEED = 15;
+
+    let rafId: number | null = null;
+    let direction: "left" | "right" | null = null;
+    let speed = 0;
+
+    const stop = () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+
+      direction = null;
+
+      scroller.classList.remove(
+        "rdsw_crfProdDetailsScroller--autoScrolling"
+      );
+    };
+
+    const tick = () => {
+      if (!direction) return;
+
+      const maxScrollLeft =
+        scroller.scrollWidth - scroller.clientWidth;
+
+      scroller.scrollLeft = Math.max(
+        0,
+        Math.min(
+          scroller.scrollLeft +
+            (direction === "right" ? speed : -speed),
+          maxScrollLeft
+        )
+      );
+
+      if (
+        (direction === "right" &&
+          scroller.scrollLeft >= maxScrollLeft) ||
+        (direction === "left" &&
+          scroller.scrollLeft <= 0)
+      ) {
+        stop();
+
+        return;
+      }
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    const handlePointerMove = (
+      event: PointerEvent
+    ) => {
+      const rect = scroller.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const distFromLeft = x;
+      const distFromRight = rect.width - x;
+
+      /* Quadratic ease: barely moves near the inner edge of the zone,
+         ramps up to MAX_SPEED only right at the physical edge — reads as a
+         gradual pull instead of an instant jump to full speed. */
+      if (
+        distFromRight >= 0 &&
+        distFromRight <= EDGE_ZONE
+      ) {
+        direction = "right";
+
+        const proximity =
+          1 - distFromRight / EDGE_ZONE;
+
+        speed = MAX_SPEED * proximity * proximity;
+      } else if (
+        distFromLeft >= 0 &&
+        distFromLeft <= EDGE_ZONE
+      ) {
+        direction = "left";
+
+        const proximity =
+          1 - distFromLeft / EDGE_ZONE;
+
+        speed = MAX_SPEED * proximity * proximity;
+      } else {
+        stop();
+
+        return;
+      }
+
+      scroller.classList.add(
+        "rdsw_crfProdDetailsScroller--autoScrolling"
+      );
+
+      if (rafId === null) {
+        rafId = requestAnimationFrame(tick);
+      }
+    };
+
+    scroller.addEventListener(
+      "pointermove",
+      handlePointerMove
+    );
+
+    scroller.addEventListener("pointerleave", stop);
+    scroller.addEventListener("pointerdown", stop);
+
+    return () => {
+      stop();
+
+      scroller.removeEventListener(
+        "pointermove",
+        handlePointerMove
+      );
+
+      scroller.removeEventListener(
+        "pointerleave",
+        stop
+      );
+
+      scroller.removeEventListener(
+        "pointerdown",
+        stop
+      );
+    };
+  }, []);
+
+  /* Manual click-and-drag scrolling. Mouse only — touch already scrolls
+     this row natively via swipe, and hooking pointer events for it too
+     would fight the browser's own touch scrolling. A small threshold
+     before the drag "arms" tells a real drag apart from a click that
+     happens to twitch by a pixel; once armed, the trailing capture-phase
+     click listener swallows the click so dragging across "Add Vehicle"
+     doesn't also toggle it. */
+  useEffect(() => {
+    const scroller = productScrollerRef.current;
+
+    if (!scroller) return;
+
+    const DRAG_THRESHOLD = 6;
+
+    let pointerId: number | null = null;
+    let startX = 0;
+    let startScrollLeft = 0;
+    let dragArmed = false;
+
+    const endDrag = () => {
+      if (pointerId !== null) {
+        try {
+          scroller.releasePointerCapture(pointerId);
+        } catch {
+          /* pointer already released/lost — nothing to clean up */
+        }
+      }
+
+      pointerId = null;
+
+      scroller.classList.remove(
+        "rdsw_crfProdDetailsScroller--dragging"
+      );
+    };
+
+    const handlePointerDown = (
+      event: PointerEvent
+    ) => {
+      if (event.pointerType !== "mouse") return;
+
+      if (event.button !== 0) return;
+
+      pointerId = event.pointerId;
+      startX = event.clientX;
+      startScrollLeft = scroller.scrollLeft;
+      dragArmed = false;
+
+      /* Deliberately NOT calling setPointerCapture here — capturing on
+         every mousedown, before a drag is even confirmed, retargets the
+         eventual "click" to the scroller and it never reaches the card
+         button underneath, silently breaking every "Add Vehicle"/"Remove"
+         click. Capture is only taken once the threshold below confirms
+         this is an actual drag. */
+    };
+
+    const handlePointerMove = (
+      event: PointerEvent
+    ) => {
+      if (
+        pointerId === null ||
+        event.pointerId !== pointerId
+      ) {
+        return;
+      }
+
+      const delta = event.clientX - startX;
+
+      if (
+        !dragArmed &&
+        Math.abs(delta) < DRAG_THRESHOLD
+      ) {
+        return;
+      }
+
+      if (!dragArmed) {
+        scroller.setPointerCapture(pointerId);
+      }
+
+      dragArmed = true;
+
+      scroller.classList.add(
+        "rdsw_crfProdDetailsScroller--dragging"
+      );
+
+      const maxScrollLeft =
+        scroller.scrollWidth - scroller.clientWidth;
+
+      scroller.scrollLeft = Math.max(
+        0,
+        Math.min(
+          startScrollLeft - delta,
+          maxScrollLeft
+        )
+      );
+
+      event.preventDefault();
+    };
+
+    const handlePointerUp = () => {
+      endDrag();
+    };
+
+    /* Runs during the capture phase, ahead of the card buttons' own
+       (bubble-phase) click handlers, so a real drag never also fires
+       "Add Vehicle"/"Remove". Only swallows the click that ends an armed
+       drag — a genuine click passes through untouched. */
+    const handleClickCapture = (
+      event: MouseEvent
+    ) => {
+      if (!dragArmed) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      dragArmed = false;
+    };
+
+    scroller.addEventListener(
+      "pointerdown",
+      handlePointerDown
+    );
+
+    scroller.addEventListener(
+      "pointermove",
+      handlePointerMove
+    );
+
+    scroller.addEventListener(
+      "pointerup",
+      handlePointerUp
+    );
+
+    scroller.addEventListener(
+      "pointercancel",
+      handlePointerUp
+    );
+
+    scroller.addEventListener(
+      "click",
+      handleClickCapture,
+      { capture: true }
+    );
+
+    return () => {
+      endDrag();
+
+      scroller.removeEventListener(
+        "pointerdown",
+        handlePointerDown
+      );
+
+      scroller.removeEventListener(
+        "pointermove",
+        handlePointerMove
+      );
+
+      scroller.removeEventListener(
+        "pointerup",
+        handlePointerUp
+      );
+
+      scroller.removeEventListener(
+        "pointercancel",
+        handlePointerUp
+      );
+
+      scroller.removeEventListener(
+        "click",
+        handleClickCapture,
+        { capture: true } as EventListenerOptions
+      );
+    };
+  }, []);
 
   const validateForm = () => {
     if (!user) {
