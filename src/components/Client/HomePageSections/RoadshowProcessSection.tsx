@@ -41,7 +41,7 @@ const DESKTOP_MEDIA_QUERY = "(min-width: 1024px)";
 const PROCESS_STEPS: ProcessStep[] = [
   {
     id: "requirement",
-    title: "01 — Tell Us What You Want",
+    title: "Tell Us What You Want",
     description:
       "Share your goal, target locations, timeline and campaign needs. We'll help you choose the right vehicle and coverage.",
     image: "/images/process/requirement.jpg",
@@ -49,7 +49,7 @@ const PROCESS_STEPS: ProcessStep[] = [
   },
   {
     id: "planning",
-    title: "02 — We Plan & Launch",
+    title: "We Plan & Launch",
     description:
       "We take care of the routes, timings, branding, permissions and on-ground execution to get your campaign moving.",
     image: "/images/process/planning.jpg",
@@ -57,7 +57,7 @@ const PROCESS_STEPS: ProcessStep[] = [
   },
   {
     id: "tracking",
-    title: "03 — Track It As It Happens",
+    title: "Track It As It Happens",
     description:
       "Stay updated with live GPS tracking, location updates and campaign reports while your roadshow is on the move.",
     image: "/images/process/tracking.jpg",
@@ -593,6 +593,9 @@ export default function RoadshowProcessSection() {
                       <h3
                         className=" rdswHTRWHeading max-w-[480px] text-[17px] font-medium leading-[1.22] tracking-[-0.025em] text-[#1b1b1b] min-[375px]:text-[18px] sm:text-[20px] md:text-[21px] lg:text-[24px] lg:leading-[1.18]"
                       >
+                        <span className="hidden lg:inline">
+                          {getStepNumber(index)} —
+                        </span>
                         {step.title}
                       </h3>
 
