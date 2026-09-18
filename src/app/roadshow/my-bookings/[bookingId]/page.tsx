@@ -611,7 +611,13 @@ function TrackingPageContent({
       moved: false,
     };
     setTabsDragging(true);
-    element.setPointerCapture?.(event.pointerId);
+    // Pointer capture is deliberately NOT taken here: capturing on every
+    // pointerdown (even a plain click, since this only requires overflow,
+    // not actual movement) makes the browser retarget the eventual
+    // mouseup/click to this container instead of the tab button under the
+    // pointer, silently swallowing ordinary clicks whenever the strip
+    // overflows (e.g. narrower viewports). Capture is deferred to
+    // moveTabsDrag below, once a real drag is confirmed.
   }
 
   function moveTabsDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -622,7 +628,12 @@ function TrackingPageContent({
 
     // A few px of jitter shouldn't count as "dragged" — only a real drag
     // should suppress the tab's own click below.
-    if (Math.abs(delta) > 4) tabsDragRef.current.moved = true;
+    if (Math.abs(delta) > 4 && !tabsDragRef.current.moved) {
+      tabsDragRef.current.moved = true;
+      // Only now do we know this is an actual drag, not a click — capture
+      // the pointer so the drag keeps tracking even if it leaves the strip.
+      element.setPointerCapture?.(event.pointerId);
+    }
 
     element.scrollLeft = tabsDragRef.current.scrollLeft - delta;
   }
