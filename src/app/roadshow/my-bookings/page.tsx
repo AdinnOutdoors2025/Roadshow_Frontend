@@ -104,6 +104,7 @@ type Vehicle = {
   quantity: number;
   ratePerDay: number;
   total: number;
+  rtoCost: number;
   campaignType: string;
   campaignLocation: string;
 };
@@ -146,6 +147,9 @@ type Booking = {
 
   subtotal: number;
   gstAmount: number;
+  /* Sum of vehicleTypes[].rtoCost — not a separate top-level field from the
+     backend, so it's derived client-side in mapClientRequestToBooking. */
+  rtoTotal: number;
   estimatedTotal: number;
 
   campaignName: string;
@@ -188,6 +192,7 @@ type ClientRequestVehicleRaw = {
 
   pricePerDay?: number;
   lineTotal?: number;
+  rtoCost?: number;
 
   campaignName?: string;
   campaignType?: string;
@@ -454,6 +459,10 @@ function mapClientRequestToBooking(
 
     subtotal: Number(request.subtotal || 0),
     gstAmount: Number(request.gstAmount || 0),
+    rtoTotal: vehicleTypes.reduce(
+      (sum, vehicle) => sum + Number(vehicle.rtoCost || 0),
+      0,
+    ),
     estimatedTotal: Number(request.estimatedTotal || 0),
 
     campaignName:
@@ -496,6 +505,7 @@ function mapClientRequestToBooking(
       quantity: Number(vehicle.quantity || 0),
       ratePerDay: Number(vehicle.pricePerDay || 0),
       total: Number(vehicle.lineTotal || 0),
+      rtoCost: Number(vehicle.rtoCost || 0),
 
       campaignType: vehicle.campaignType || campaignType,
       campaignLocation: vehicle.campaignLocation || location,
@@ -2036,6 +2046,13 @@ function BookingModal({
                         )}
                       </strong>
                     </div>
+
+                    {booking.rtoTotal > 0 && (
+                      <div>
+                        <span>RTO Charges</span>
+                        <strong>{formatINR(booking.rtoTotal)}</strong>
+                      </div>
+                    )}
 
                     <div>
                       <span>Taxes & Charges</span>

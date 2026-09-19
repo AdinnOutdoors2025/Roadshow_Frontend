@@ -73,6 +73,7 @@ type ClientRequestVehicle = {
   pricePerDay?: number;
   lineTotal?: number;
   rentalCost?: number;
+  rtoCost?: number;
 
   needPromoter?: boolean;
 
@@ -742,6 +743,14 @@ export default function BookingRequestSubmittedPage() {
     request?.igstAmount ||
     request?.gstAmount ||
     0;
+
+  /* Not a separate top-level field from the backend — summed client-side
+     from each vehicle line's rtoCost, same as My Bookings does. */
+  const rtoTotal =
+    request?.vehicleTypes?.reduce(
+      (sum, vehicle) => sum + Number(vehicle?.rtoCost || 0),
+      0,
+    ) || 0;
 
   /* =========================================================
      COPY REQUEST ID
@@ -1435,6 +1444,13 @@ export default function BookingRequestSubmittedPage() {
                     {formatMoney(
                       taxAmount,
                     )}
+                    {rtoTotal > 0 ? (
+                      <>
+                        {" "}
+                        (incl. RTO{" "}
+                        {formatMoney(rtoTotal)})
+                      </>
+                    ) : null}
                   </p>
                 ) : null}
               </div>

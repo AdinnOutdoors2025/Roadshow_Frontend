@@ -42,6 +42,7 @@ export type PdfVehicleType = {
   pricePerDay?: number;
   lineTotal?: number;
   rentalCost?: number;
+  rtoCost?: number;
   needPromoter?: boolean;
   promoterType?: string;
   promoterGender?: string;

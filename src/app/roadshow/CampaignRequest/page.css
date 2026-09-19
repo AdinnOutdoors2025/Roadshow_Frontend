@@ -202,6 +202,29 @@
   display: none;
 }
 
+/* Manual click-and-drag affordance (page.tsx handles the actual drag) — open
+   hand at rest, closed hand while a drag is armed (--dragging below). */
+.rdsw_crfProdDetailsScroller {
+  cursor: grab;
+}
+
+/* Applied while either the edge-hover auto-scroll loop or a manual drag
+   (page.tsx) is driving scrollLeft directly. Mandatory snap re-snaps after
+   every per-frame write, and the base rule's `scroll-behavior: smooth`
+   tries to animate every one of those writes too — both fight the
+   loop/drag and make it stutter or stall, especially when direction
+   reverses. Both are suspended for the duration and resume as soon as the
+   loop/drag stops. */
+.rdsw_crfProdDetailsScroller--autoScrolling,
+.rdsw_crfProdDetailsScroller--dragging {
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+}
+
+.rdsw_crfProdDetailsScroller--dragging {
+  cursor: grabbing;
+}
+
 /* Card */
 
 .rdsw_crfProdDetailsCardMain {
@@ -223,7 +246,7 @@
 }
 
 .rdsw_crfProdDetailsCardMain:hover {
-  transform: translateY(-5px);
+  /* transform: translateY(-5px); */
   /* box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12); */
 }
 

@@ -220,3 +220,22 @@ export const getInclusiveDayCount = (
     0
   );
 };
+
+/**
+ * RTO charges scale in 30-day slabs of the campaign's own duration
+ * (fromDate–toDate, inclusive — not the totalDays used for rental, which
+ * can include extraDays): 1-30 days = 1x the package's rtoCharges rate,
+ * 31-60 days = 2x, 61-90 days = 3x, and so on. Multiplied by vehicle
+ * quantity, same as the flat charge it replaces.
+ */
+export const calculateRtoCost = (
+  ratePerSlab: number,
+  campaignDays: number,
+  quantity: number
+): number => {
+  if (!ratePerSlab || campaignDays <= 0 || quantity <= 0) return 0;
+
+  const slabMultiplier = Math.ceil(campaignDays / 30);
+
+  return ratePerSlab * slabMultiplier * quantity;
+};
