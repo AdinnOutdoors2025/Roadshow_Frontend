@@ -250,7 +250,7 @@ export function Testimonials() {
                   ? ""
                   : "adinn-testimonial-bg-video--loading"
               }`}
-              poster="/assets/led-truck_testimonials1.png"
+              poster="/images/assets/led-truck_testimonials1.png"
               autoPlay
               muted
               loop
@@ -260,7 +260,7 @@ export function Testimonials() {
               onCanPlay={() => setVideoReady(true)}
             >
               <source
-                src="./images/assets/Rdsw_Testimonials_BgVideoCopy.mp4"
+                src="/images/assets/Rdsw_Testimonials_BgVideoCopy1.mp4"
                 type="video/mp4"
               />
             </video>
