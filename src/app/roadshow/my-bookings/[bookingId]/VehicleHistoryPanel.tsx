@@ -118,6 +118,56 @@ function pickerDateToTimeString(date: Date | null) {
   ).padStart(2, "0")}`;
 }
 
+/* Lenis (this route's global smooth-scroll) intercepts wheel events
+   everywhere unless an element opts out via data-lenis-prevent — the
+   react-datepicker time list never got that, so mouse-wheel scrolling
+   inside it silently did nothing. react-datepicker doesn't expose a ref
+   to that internal list, so it's grabbed from the DOM once the popup is
+   open (onCalendarOpen/onCalendarClose below) and wired for both wheel
+   scroll (via the attribute) and click-drag-to-scroll. */
+function attachTimeListDragScroll(element: HTMLElement) {
+  element.setAttribute("data-lenis-prevent", "");
+
+  let active = false;
+  let startY = 0;
+  let startScrollTop = 0;
+
+  function onPointerDown(event: PointerEvent) {
+    if (event.pointerType === "touch") return;
+
+    active = true;
+    startY = event.clientY;
+    startScrollTop = element.scrollTop;
+    element.setPointerCapture?.(event.pointerId);
+    element.classList.add("RST_TimeList--dragging");
+  }
+
+  function onPointerMove(event: PointerEvent) {
+    if (!active) return;
+
+    element.scrollTop = startScrollTop - (event.clientY - startY);
+  }
+
+  function onPointerUp() {
+    active = false;
+    element.classList.remove("RST_TimeList--dragging");
+  }
+
+  element.addEventListener("pointerdown", onPointerDown);
+  element.addEventListener("pointermove", onPointerMove);
+  element.addEventListener("pointerup", onPointerUp);
+  element.addEventListener("pointercancel", onPointerUp);
+  element.addEventListener("lostpointercapture", onPointerUp);
+
+  return () => {
+    element.removeEventListener("pointerdown", onPointerDown);
+    element.removeEventListener("pointermove", onPointerMove);
+    element.removeEventListener("pointerup", onPointerUp);
+    element.removeEventListener("pointercancel", onPointerUp);
+    element.removeEventListener("lostpointercapture", onPointerUp);
+  };
+}
+
 function isFutureDate(date: Date) {
   const today = dateKeyToPickerDate(todayIndiaKey());
 
@@ -221,7 +271,7 @@ function HistoryVehicle({
 }: {
   vehicle: VehicleHistoryVehicle;
 }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   const tableWrapRef = useRef<HTMLDivElement | null>(null);
   const tableDragRef = useRef({
@@ -569,6 +619,25 @@ export default function VehicleHistoryPanel({
   const [fromTime, setFromTime] = useState("00:00");
   const [toTime, setToTime] = useState("23:59");
 
+  const timeListCleanupRef = useRef<(() => void) | null>(null);
+
+  function handleTimeCalendarOpen() {
+    window.setTimeout(() => {
+      const list = document.querySelector<HTMLElement>(
+        ".react-datepicker__time-list",
+      );
+
+      if (list) {
+        timeListCleanupRef.current = attachTimeListDragScroll(list);
+      }
+    }, 0);
+  }
+
+  function handleTimeCalendarClose() {
+    timeListCleanupRef.current?.();
+    timeListCleanupRef.current = null;
+  }
+
   useEffect(() => {
     if (selectedVehicle && vehicleFilter !== "all") {
       setVehicleFilter(selectedVehicle);
@@ -754,7 +823,7 @@ export default function VehicleHistoryPanel({
       </div>
 
       {preset === "custom" && (
-        <div className="RST_HistoryCustomRange">
+        <div className="RST_HistoryCustomRange" data-lenis-prevent>
           <label>
             <span>From date</span>
 
@@ -808,6 +877,8 @@ export default function VehicleHistoryPanel({
                     pickerDateToTimeString(date),
                   )
                 }
+                onCalendarOpen={handleTimeCalendarOpen}
+                onCalendarClose={handleTimeCalendarClose}
                 showTimeSelect
                 showTimeSelectOnly
                 timeIntervals={15}
@@ -876,6 +947,8 @@ export default function VehicleHistoryPanel({
                     pickerDateToTimeString(date),
                   )
                 }
+                onCalendarOpen={handleTimeCalendarOpen}
+                onCalendarClose={handleTimeCalendarClose}
                 showTimeSelect
                 showTimeSelectOnly
                 timeIntervals={15}

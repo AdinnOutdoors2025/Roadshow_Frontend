@@ -4452,6 +4452,15 @@
   background: #287de0 !important;
 }
 
+.react-datepicker__time-list {
+  cursor: grab;
+}
+
+.react-datepicker__time-list.RST_TimeList--dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
 .RST_FutureDateHint {
   display: flex;
   grid-column: 1 / -1;
@@ -5501,20 +5510,25 @@
 /* ---------- recent activity: colored icon badges ---------- */
 
 .RST_Activity li {
+  position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--rst-line);
+  padding: 0 0 18px;
 }
 
 .RST_Activity li:last-child {
   padding-bottom: 0;
-  border-bottom: 0;
 }
 
 .RST_Activity li:not(:last-child)::before {
-  content: none;
+  content: "";
+  position: absolute;
+  top: 36px;
+  bottom: 0;
+  left: 17px;
+  width: 1.5px;
+  background: var(--rst-line);
 }
 
 .RST_Activity .RST_ActivityIcon {
@@ -5724,14 +5738,28 @@
   grid-row: auto;
 }
 
+/* The map card follows the right column's natural height instead of the
+   other way around — it stretches (or shrinks, down to .RST_Map's
+   min-height) to match whatever height the vehicle carousel + snapshot
+   cards need, via flex so .RST_Map can grow/shrink to fill the leftover
+   space after its header/footer/legend chrome. This overrides the
+   pre-redesign `.RST_MapCard { align-self: start }` rule above, which
+   only fit the old 3-column layout. */
+.RST_LiveTrackingGrid > .RST_MapCard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  align-self: stretch;
+}
+
 .RST_LiveRightCol {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  /* The map beside this column is taller than a short vehicle list +
-     snapshot naturally is — align to the top instead of stretching to
-     match it, so the leftover height is plain page background rather
-     than dead space inside (or an overlap from a forced grow) a card. */
+  /* Sized to its own natural content (vehicle carousel + snapshot), not
+     stretched — the map card is what adjusts to match this column's
+     height (see .RST_LiveTrackingGrid > .RST_MapCard below), so the gap
+     between these two cards stays their normal, natural size. */
   align-self: start;
   gap: clamp(12px, 0.9vw, 17px);
 }
@@ -5745,8 +5773,16 @@
   box-shadow: var(--rst-shadow);
 }
 
-.RST_Map {
-  height: clamp(420px, 34vw, 560px);
+/* Scoped + higher specificity than the various breakpoint-specific fixed
+   .RST_Map heights elsewhere in this file (leftover from the pre-redesign
+   .RST_LiveShell layout, which no longer exists in the JSX but whose bare,
+   unscoped selectors still match here) — this is what actually lets the
+   map grow/shrink with .RST_MapCard's flex height above, at every width
+   this grid is active. */
+.RST_LiveTrackingGrid .RST_Map {
+  flex: 1 1 auto;
+  min-height: 320px;
+  height: auto;
 }
 
 .RST_MapLegend {
@@ -6012,6 +6048,31 @@
   border: 1px solid #e6eaef;
   border-radius: 15px;
   background: #fbfcfd;
+  /* More rows stay inside a controlled table viewport instead of growing
+     the full tracking page indefinitely — same pattern already used for
+     the GPS history and driving-history tables on this page. */
+  max-height: min(56vh, 620px);
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  cursor: grab;
+}
+
+.RS_DayWiseTable.RS_DayWiseTable--dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.RS_DayWiseTable::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.RS_DayWiseTable::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(126, 136, 149, 0.42);
+  background-clip: padding-box;
 }
 
 .RS_DayWiseHeaderRow,
@@ -6032,6 +6093,9 @@
 }
 
 .RS_DayWiseHeaderRow {
+  position: sticky;
+  top: 0;
+  z-index: 3;
   border-bottom: 1px solid #dfe5ec;
   background: rgba(246, 249, 252, 0.98);
   color: #65717e;

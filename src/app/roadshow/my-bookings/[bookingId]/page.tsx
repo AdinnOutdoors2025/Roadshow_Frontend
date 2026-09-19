@@ -186,6 +186,26 @@ function statusClass(status?: string) {
   return "RST_State--unknown";
 }
 
+/* The backend only merges speedKmh (and the rest of its live-location
+   fields) onto a vehicle when its registration was actually found in the
+   Vamosys GPS feed — see toClientSafeLocation() in the backend's
+   vamosysClient.js. If it's missing entirely, this vehicle simply isn't
+   reporting to Vamosys right now (offline device, not yet paired, etc.) —
+   a different, more actionable situation than the backend's own "Unknown"
+   status label, which means "found, but its movement state wasn't
+   classified". Mirrors the same logic in VehicleListPanel.tsx. */
+function vehicleStatusLabel(vehicle?: {
+  isStale?: boolean;
+  speedKmh?: number;
+  status?: string;
+}) {
+  if (!vehicle) return "Unknown";
+  if (vehicle.isStale) return "GPS delayed";
+  if (vehicle.speedKmh === undefined) return "GPS not connected";
+
+  return vehicle.status || "Unknown";
+}
+
 /* Picks an icon/tone for a Recent Activity row purely from its existing
    label text (no new data) — matches the colored-icon activity feed style
    without needing the backend to send a category field. */
@@ -488,38 +508,9 @@ function TrackingPageContent({
     return (key && vehicleImageMap[key]) || VEHICLE_IMAGE;
   }
 
-  /* Auto-selects a sensible default vehicle out of the whole flat list —
-     prefers one that's actually trackable (live) over merely unavailable,
-     and prefers either of those over a "pending" placeholder (which has no
-     registration/GPS data at all, so selecting it first would leave the
-     map with nothing to show even when a sibling vehicle is live). */
-  useEffect(() => {
-    if (!liveVehicles.length) {
-      setSelectedVehicleReg("");
-      return;
-    }
-
-    setSelectedVehicleReg((current) => {
-      const currentVehicle = liveVehicles.find(
-        (vehicle) => vehicle.registrationNumber === current,
-      );
-
-      if (currentVehicle && !currentVehicle.unavailable && !currentVehicle.pending) {
-        return current;
-      }
-
-      const firstAvailable = liveVehicles.find(
-        (vehicle) => !vehicle.unavailable && !vehicle.pending,
-      );
-      const firstUnavailable = liveVehicles.find(
-        (vehicle) => vehicle.unavailable,
-      );
-
-      return (
-        firstAvailable || firstUnavailable || liveVehicles[0]
-      ).registrationNumber;
-    });
-  }, [liveVehicles]);
+  /* Picking a sensible default (and correcting a stale/invalid) selection
+     is owned by VehicleListPanel now — it knows about the active model tab,
+     which this flat liveVehicles list doesn't. */
 
   const selectedLiveVehicle = useMemo(
     () =>
@@ -846,9 +837,7 @@ function TrackingPageContent({
                         ? "Awaiting assignment"
                         : selectedLiveVehicle.unavailable
                           ? "Unavailable"
-                          : selectedLiveVehicle.isStale
-                            ? "Location delayed"
-                            : selectedLiveVehicle.status}
+                          : vehicleStatusLabel(selectedLiveVehicle)}
                     </span>
                     )}
                   </div>
@@ -934,7 +923,7 @@ function TrackingPageContent({
 
                           <div>
                             <small>Status</small>
-                            <strong>{selectedLiveVehicle.status}</strong>
+                            <strong>{vehicleStatusLabel(selectedLiveVehicle)}</strong>
                           </div>
                         </div>
                       )}
@@ -1131,16 +1120,14 @@ function TrackingPageContent({
                         </div>
                       )}
 
-                    {selectedLiveVehicle.status && (
-                      <div>
-                        <small>Movement</small>
-                        <strong>
-                          {selectedLiveVehicle.unavailable
-                            ? "Unavailable"
-                            : selectedLiveVehicle.status}
-                        </strong>
-                      </div>
-                    )}
+                    <div>
+                      <small>Movement</small>
+                      <strong>
+                        {selectedLiveVehicle.unavailable
+                          ? "Unavailable"
+                          : vehicleStatusLabel(selectedLiveVehicle)}
+                      </strong>
+                    </div>
 
                     <div>
                       <small>GPS</small>

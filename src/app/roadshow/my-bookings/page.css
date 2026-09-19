@@ -8707,3 +8707,569 @@ html {
     padding-bottom: 18px !important;
   }
 }
+
+/* =========================================================
+   RESPONSIVE FONT-SIZE SWEEP: 1024 / 1281-1439 / 1440 / 768 / MOBILE
+   19 SEP 2026
+
+   Typography-only pass across every tier catalogued in this file
+   (page heading, subtitle, stat label/value, controls, cell
+   label/primary/secondary, status badges, card/timeline/modal text,
+   footer/fine-print). No layout, spacing, color or structural
+   property is touched here — font-size only, since nothing in this
+   sweep clips at these sizes/line-heights.
+
+   Deliberately appended last so it is the final word in the cascade
+   for these selectors (all plain classes, so equal specificity —
+   source order decides). Ordered narrow-exclusive-last within each
+   direction so overlapping ranges resolve correctly:
+     min-width:1024px (unbounded) -> min-width:1281px/max-width:1439px
+     (overrides the 1281-1439 slice of the 1024+ rule) -> min-width:1440px
+     (overrides the 1024+ rule for 1440 and up)
+   then, independently:
+     max-width:1023px (unbounded down) -> max-width:767px (overrides the
+     mobile slice) -> max-width:420px (overrides the very-small-mobile
+     slice), matching this file's existing 420/430px small-mobile
+     convention (see "VERY SMALL MOBILE" above).
+========================================================= */
+
+/* ---- 1024px and up (refined at 1281-1439 and 1440+ below) ---- */
+@media (min-width: 1024px) {
+  .RS_PageHeader h1 {
+    font-size: 38px !important;
+  }
+
+  .RS_PageHeader p,
+  .RS_PageGuide {
+    font-size: 14.5px !important;
+  }
+
+  .RS_StatLabel {
+    font-size: 12.5px !important;
+  }
+
+  .RS_StatValue {
+    font-size: 24px !important;
+  }
+
+  .RS_SearchField input,
+  .RS_SortButton,
+  .RS_FilterTab {
+    font-size: 12.5px !important;
+  }
+
+  .RS_CellLabel {
+    font-size: 12px !important;
+  }
+
+  .RS_BookingId {
+    font-size: 17px !important;
+  }
+
+  .RS_CellPrimary,
+  .RS_RowPeriod {
+    font-size: 14.5px !important;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 11.5px !important;
+  }
+
+  .RS_StatusBadge,
+  .RS_DashboardStatusBadge,
+  .RS_StageBadge {
+    font-size: 12px !important;
+  }
+
+  .RS_CardHeading h3,
+  .RS_TimelineCardHeader h3,
+  .RS_ModalCardTitle h3 {
+    font-size: 15px !important;
+  }
+
+  .RS_TrackingTitle h2,
+  .RS_ModalHeader h2 {
+    font-size: 22px !important;
+  }
+
+  .RS_TimelineEyebrow,
+  .RS_CardEyebrow,
+  .RS_ModalEyebrow,
+  .RS_TrackingTitle p {
+    font-size: 10px !important;
+  }
+
+  .RS_DetailValue,
+  .RS_ModalHeader p,
+  .RS_TimelineContent strong {
+    font-size: 12.5px !important;
+  }
+
+  .RS_TimelineContent small,
+  .RS_DetailLabel {
+    font-size: 10.5px !important;
+  }
+
+  .RS_Pagination p,
+  .RS_PaginationControls button,
+  .RS_ModalFooterButton,
+  .RS_DetailRefreshState,
+  .RS_TrackingMeta,
+  .RS_SupportLink,
+  .RS_HelpCard p,
+  .RS_TrackingPane--empty p {
+    font-size: 11.5px !important;
+  }
+}
+
+/* ---- 1281px to 1439px ---- */
+@media (min-width: 1281px) and (max-width: 1439px) {
+  .RS_PageHeader h1 {
+    font-size: 41px !important;
+  }
+
+  .RS_PageHeader p,
+  .RS_PageGuide {
+    font-size: 15.5px !important;
+  }
+
+  .RS_StatLabel {
+    font-size: 13.5px !important;
+  }
+
+  .RS_StatValue {
+    font-size: 27px !important;
+  }
+
+  .RS_SearchField input,
+  .RS_SortButton,
+  .RS_FilterTab {
+    font-size: 13.5px !important;
+  }
+
+  .RS_CellLabel {
+    font-size: 13px !important;
+  }
+
+  .RS_BookingId {
+    font-size: 18.5px !important;
+  }
+
+  .RS_CellPrimary,
+  .RS_RowPeriod {
+    font-size: 16px !important;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 12.5px !important;
+  }
+
+  .RS_StatusBadge,
+  .RS_DashboardStatusBadge,
+  .RS_StageBadge {
+    font-size: 12.5px !important;
+  }
+
+  .RS_CardHeading h3,
+  .RS_TimelineCardHeader h3,
+  .RS_ModalCardTitle h3 {
+    font-size: 16.5px !important;
+  }
+
+  .RS_TrackingTitle h2,
+  .RS_ModalHeader h2 {
+    font-size: 25px !important;
+  }
+
+  .RS_TimelineEyebrow,
+  .RS_CardEyebrow,
+  .RS_ModalEyebrow,
+  .RS_TrackingTitle p {
+    font-size: 10.5px !important;
+  }
+
+  .RS_DetailValue,
+  .RS_ModalHeader p,
+  .RS_TimelineContent strong {
+    font-size: 13.5px !important;
+  }
+
+  .RS_TimelineContent small,
+  .RS_DetailLabel {
+    font-size: 11px !important;
+  }
+
+  .RS_Pagination p,
+  .RS_PaginationControls button,
+  .RS_ModalFooterButton,
+  .RS_DetailRefreshState,
+  .RS_TrackingMeta,
+  .RS_SupportLink,
+  .RS_HelpCard p,
+  .RS_TrackingPane--empty p {
+    font-size: 12.5px !important;
+  }
+}
+
+/* ---- 1440px and up ---- */
+@media (min-width: 1440px) {
+  .RS_PageHeader h1 {
+    font-size: 44px !important;
+  }
+
+  .RS_PageHeader p,
+  .RS_PageGuide {
+    font-size: 16.5px !important;
+  }
+
+  .RS_StatLabel {
+    font-size: 14.5px !important;
+  }
+
+  .RS_StatValue {
+    font-size: 30px !important;
+  }
+
+  .RS_SearchField input,
+  .RS_SortButton,
+  .RS_FilterTab {
+    font-size: 14.5px !important;
+  }
+
+  .RS_CellLabel {
+    font-size: 14px !important;
+  }
+
+  .RS_BookingId {
+    font-size: 20px !important;
+  }
+
+  .RS_CellPrimary,
+  .RS_RowPeriod {
+    font-size: 17.5px !important;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 13.5px !important;
+  }
+
+  .RS_StatusBadge,
+  .RS_DashboardStatusBadge,
+  .RS_StageBadge {
+    font-size: 13.5px !important;
+  }
+
+  .RS_CardHeading h3,
+  .RS_TimelineCardHeader h3,
+  .RS_ModalCardTitle h3 {
+    font-size: 18px !important;
+  }
+
+  .RS_TrackingTitle h2,
+  .RS_ModalHeader h2 {
+    font-size: 28px !important;
+  }
+
+  .RS_TimelineEyebrow,
+  .RS_CardEyebrow,
+  .RS_ModalEyebrow,
+  .RS_TrackingTitle p {
+    font-size: 11.5px !important;
+  }
+
+  .RS_DetailValue,
+  .RS_ModalHeader p,
+  .RS_TimelineContent strong {
+    font-size: 14.5px !important;
+  }
+
+  .RS_TimelineContent small,
+  .RS_DetailLabel {
+    font-size: 11.5px !important;
+  }
+
+  .RS_Pagination p,
+  .RS_PaginationControls button,
+  .RS_ModalFooterButton,
+  .RS_DetailRefreshState,
+  .RS_TrackingMeta,
+  .RS_SupportLink,
+  .RS_HelpCard p,
+  .RS_TrackingPane--empty p {
+    font-size: 13.5px !important;
+  }
+}
+
+/* ---- up to 1023px (tablet/small-desktop; refined below 768px and 420px) ---- */
+@media (max-width: 1023px) {
+  .RS_PageHeader h1 {
+    font-size: 34px !important;
+  }
+
+  .RS_PageHeader p,
+  .RS_PageGuide {
+    font-size: 13.5px !important;
+  }
+
+  .RS_StatLabel {
+    font-size: 11px !important;
+  }
+
+  .RS_StatValue {
+    font-size: 21px !important;
+  }
+
+  .RS_SearchField input,
+  .RS_SortButton,
+  .RS_FilterTab {
+    font-size: 12px !important;
+  }
+
+  .RS_CellLabel {
+    font-size: 10.5px !important;
+  }
+
+  .RS_BookingId {
+    font-size: 15.5px !important;
+  }
+
+  .RS_CellPrimary,
+  .RS_RowPeriod {
+    font-size: 13px !important;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 10.5px !important;
+  }
+
+  .RS_StatusBadge,
+  .RS_DashboardStatusBadge,
+  .RS_StageBadge {
+    font-size: 11px !important;
+  }
+
+  .RS_CardHeading h3,
+  .RS_TimelineCardHeader h3,
+  .RS_ModalCardTitle h3 {
+    font-size: 14px !important;
+  }
+
+  .RS_TrackingTitle h2,
+  .RS_ModalHeader h2 {
+    font-size: 20px !important;
+  }
+
+  .RS_TimelineEyebrow,
+  .RS_CardEyebrow,
+  .RS_ModalEyebrow,
+  .RS_TrackingTitle p {
+    font-size: 9px !important;
+  }
+
+  .RS_DetailValue,
+  .RS_ModalHeader p,
+  .RS_TimelineContent strong {
+    font-size: 11.5px !important;
+  }
+
+  .RS_TimelineContent small,
+  .RS_DetailLabel {
+    font-size: 9.5px !important;
+  }
+
+  .RS_Pagination p,
+  .RS_PaginationControls button,
+  .RS_ModalFooterButton,
+  .RS_DetailRefreshState,
+  .RS_TrackingMeta,
+  .RS_SupportLink,
+  .RS_HelpCard p,
+  .RS_TrackingPane--empty p {
+    font-size: 10.5px !important;
+  }
+}
+
+/* ---- up to 767px (mobile; refined below 420px) ---- */
+@media (max-width: 767px) {
+  .RS_PageHeader h1 {
+    font-size: 30px !important;
+  }
+
+  .RS_PageHeader p,
+  .RS_PageGuide {
+    font-size: 12.5px !important;
+  }
+
+  .RS_StatLabel {
+    font-size: 9px !important;
+  }
+
+  .RS_StatValue {
+    font-size: 18px !important;
+  }
+
+  .RS_SearchField input,
+  .RS_SortButton,
+  .RS_FilterTab {
+    font-size: 11px !important;
+  }
+
+  .RS_CellLabel {
+    font-size: 9px !important;
+  }
+
+  .RS_BookingId {
+    font-size: 14px !important;
+  }
+
+  .RS_CellPrimary,
+  .RS_RowPeriod {
+    font-size: 12px !important;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 10px !important;
+  }
+
+  .RS_StatusBadge,
+  .RS_DashboardStatusBadge,
+  .RS_StageBadge {
+    font-size: 9.5px !important;
+  }
+
+  .RS_CardHeading h3,
+  .RS_TimelineCardHeader h3,
+  .RS_ModalCardTitle h3 {
+    font-size: 13px !important;
+  }
+
+  .RS_TrackingTitle h2,
+  .RS_ModalHeader h2 {
+    font-size: 18px !important;
+  }
+
+  .RS_TimelineEyebrow,
+  .RS_CardEyebrow,
+  .RS_ModalEyebrow,
+  .RS_TrackingTitle p {
+    font-size: 8px !important;
+  }
+
+  .RS_DetailValue,
+  .RS_ModalHeader p,
+  .RS_TimelineContent strong {
+    font-size: 10.5px !important;
+  }
+
+  .RS_TimelineContent small,
+  .RS_DetailLabel {
+    font-size: 8.5px !important;
+  }
+
+  .RS_Pagination p,
+  .RS_PaginationControls button,
+  .RS_ModalFooterButton,
+  .RS_DetailRefreshState,
+  .RS_TrackingMeta,
+  .RS_SupportLink,
+  .RS_HelpCard p,
+  .RS_TrackingPane--empty p {
+    font-size: 9.5px !important;
+  }
+}
+
+/* ---- very small mobile, up to 420px (matches this file's existing 420/430px convention) ---- */
+@media (max-width: 420px) {
+  .RS_PageHeader h1 {
+    font-size: 26px !important;
+  }
+
+  .RS_PageHeader p,
+  .RS_PageGuide {
+    font-size: 11.5px !important;
+  }
+
+  .RS_StatLabel {
+    font-size: 8px !important;
+  }
+
+  .RS_StatValue {
+    font-size: 16px !important;
+  }
+
+  .RS_SearchField input,
+  .RS_SortButton,
+  .RS_FilterTab {
+    font-size: 10.5px !important;
+  }
+
+  .RS_CellLabel {
+    font-size: 8.5px !important;
+  }
+
+  .RS_BookingId {
+    font-size: 13px !important;
+  }
+
+  .RS_CellPrimary,
+  .RS_RowPeriod {
+    font-size: 11px !important;
+  }
+
+  .RS_BookingDate,
+  .RS_CellSecondary {
+    font-size: 9px !important;
+  }
+
+  .RS_StatusBadge,
+  .RS_DashboardStatusBadge,
+  .RS_StageBadge {
+    font-size: 8.5px !important;
+  }
+
+  .RS_CardHeading h3,
+  .RS_TimelineCardHeader h3,
+  .RS_ModalCardTitle h3 {
+    font-size: 12px !important;
+  }
+
+  .RS_TrackingTitle h2,
+  .RS_ModalHeader h2 {
+    font-size: 16px !important;
+    line-height: 1.25 !important;
+  }
+
+  .RS_TimelineEyebrow,
+  .RS_CardEyebrow,
+  .RS_ModalEyebrow,
+  .RS_TrackingTitle p {
+    font-size: 7.5px !important;
+  }
+
+  .RS_DetailValue,
+  .RS_ModalHeader p,
+  .RS_TimelineContent strong {
+    font-size: 9.5px !important;
+  }
+
+  .RS_TimelineContent small,
+  .RS_DetailLabel {
+    font-size: 8px !important;
+  }
+
+  .RS_Pagination p,
+  .RS_PaginationControls button,
+  .RS_ModalFooterButton,
+  .RS_DetailRefreshState,
+  .RS_TrackingMeta,
+  .RS_SupportLink,
+  .RS_HelpCard p,
+  .RS_TrackingPane--empty p {
+    font-size: 8.5px !important;
+  }
+}
