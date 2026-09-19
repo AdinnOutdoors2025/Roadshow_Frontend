@@ -218,8 +218,7 @@ test.describe("QA-07 Data consistency", () => {
     await expect(page.getByText("Acme Product Launch").first().first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Chennai").first().first()).toBeVisible();
 
-    // Vehicle cards carry reg numbers as supplied by the API (second vehicle tab)
-    await page.getByRole("tab").nth(1).click();
+    // Vehicle list rows carry reg numbers as supplied by the API
     await expect(page.getByText("TN-01-CD-5678").first()).toBeVisible({ timeout: 10_000 });
   });
 

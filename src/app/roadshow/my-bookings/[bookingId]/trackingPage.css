@@ -4452,6 +4452,15 @@
   background: #287de0 !important;
 }
 
+.react-datepicker__time-list {
+  cursor: grab;
+}
+
+.react-datepicker__time-list.RST_TimeList--dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
 .RST_FutureDateHint {
   display: flex;
   grid-column: 1 / -1;
@@ -5391,4 +5400,855 @@
   color: var(--rst-muted);
   font-size: 12.5px;
   font-weight: 650;
+}
+
+/* =========================================================
+   DASHBOARD-STYLE VISUAL REFRESH
+   Darker hero banner, stat-tile cards, colored activity
+   icons and a CTA-style footer, matching the requested
+   reference look. Visual only — every element below reuses
+   the same markup/classes already driven by page.tsx state;
+   no data, hooks or handlers change here.
+========================================================= */
+
+/* ---------- hero: true dark banner + warm accent glow ---------- */
+
+.RST_Hero {
+  background:
+    radial-gradient(circle at 92% 4%, rgba(239, 62, 70, 0.4), transparent 42%),
+    radial-gradient(circle at 2% 110%, rgba(239, 62, 70, 0.16), transparent 48%),
+    linear-gradient(125deg, #0a0c12 0%, #12161f 46%, #1c212c 100%);
+  box-shadow: 0 26px 70px rgba(10, 14, 22, 0.3);
+}
+
+.RST_Hero::after {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.09), transparent 66%);
+}
+
+.RST_HeroVehicle {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.RST_HeroPeriod {
+  border-left-color: rgba(255, 255, 255, 0.16);
+}
+
+/* ---------- snapshot metrics + progress stats as stat tiles ---------- */
+
+.RST_SnapshotMetrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 10px;
+}
+
+.RST_TodayMetric {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--rst-line);
+  border-radius: 14px;
+  background: var(--rst-soft);
+  padding: 13px;
+}
+
+.RST_TodayMetric:last-child {
+  border-bottom: 1px solid var(--rst-line);
+}
+
+.RST_MetricIcon {
+  width: 40px;
+  height: 40px;
+}
+
+.RST_ProgressStats {
+  gap: 6px;
+}
+
+.RST_ProgressStats > div {
+  position: relative;
+  border-bottom: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 10px 12px 10px 26px;
+}
+
+.RST_ProgressStats > div::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rst-muted-2);
+  transform: translateY(-50%);
+}
+
+.RST_ProgressStats > div:nth-child(1)::before { background: var(--rst-blue); }
+.RST_ProgressStats > div:nth-child(2)::before { background: var(--rst-green); }
+.RST_ProgressStats > div:nth-child(3)::before { background: var(--rst-orange); }
+
+@media (max-width: 480px) {
+  .RST_SnapshotMetrics {
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  }
+}
+
+/* ---------- vehicle status pill: leading status dot ---------- */
+
+.RST_VehicleState::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+}
+
+/* ---------- recent activity: colored icon badges ---------- */
+
+.RST_Activity li {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0 0 18px;
+}
+
+.RST_Activity li:last-child {
+  padding-bottom: 0;
+}
+
+.RST_Activity li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 36px;
+  bottom: 0;
+  left: 17px;
+  width: 1.5px;
+  background: var(--rst-line);
+}
+
+.RST_Activity .RST_ActivityIcon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #f1f3f5;
+  color: #6c7580;
+}
+
+.RST_Activity .RST_ActivityIcon--green { background: var(--rst-green-soft); color: var(--rst-green); }
+.RST_Activity .RST_ActivityIcon--blue { background: var(--rst-blue-soft); color: var(--rst-blue); }
+.RST_Activity .RST_ActivityIcon--orange { background: var(--rst-orange-soft); color: var(--rst-orange); }
+.RST_Activity .RST_ActivityIcon--red { background: var(--rst-red-soft); color: var(--rst-red); }
+.RST_Activity .RST_ActivityIcon--purple { background: var(--rst-purple-soft); color: var(--rst-purple); }
+.RST_Activity .RST_ActivityIcon--grey { background: #f1f3f5; color: #6c7580; }
+
+.RST_Activity .RST_ActivityBody {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.RST_Activity .RST_ActivityBody strong {
+  display: block;
+  color: #343b45;
+  font-size: 12.5px;
+  font-weight: 620;
+}
+
+.RST_Activity small.RST_ActivityTime {
+  flex: 0 0 auto;
+  margin-top: 0;
+  color: #9199a3;
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+/* ---------- footer: dark CTA-style bar ---------- */
+
+.RST_Footer {
+  border-radius: 18px;
+  background: linear-gradient(120deg, #14171f 0%, #1c2028 55%, #232a34 100%);
+  padding: 14px 18px;
+  color: #b7bfc9;
+}
+
+.RST_Footer button {
+  border-color: var(--rst-red);
+  background: var(--rst-red);
+  color: #fff;
+}
+
+.RST_Footer button:hover {
+  border-color: #d9333b;
+  background: #d9333b;
+  box-shadow: 0 10px 26px rgba(239, 62, 70, 0.28);
+}
+
+.RST_Footer > span svg {
+  color: var(--rst-red);
+}
+
+@media (max-width: 767px) {
+  .RST_Footer {
+    padding: 14px;
+  }
+}
+
+/* =========================================================
+   DASHBOARD REBUILD — hero greeting, KPI stat cards, live
+   tracking grid (map + vehicle list), analytics row, and the
+   day-wise schedule / photos gallery components.
+========================================================= */
+
+/* ---------- hero: greeting layout ---------- */
+
+.RST_Hero {
+  flex-wrap: wrap;
+}
+
+.RST_HeroIdentity {
+  flex: 1 1 320px;
+}
+
+.RST_HeroCopy {
+  min-width: 0;
+}
+
+.RST_HeroGreeting {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(26px, 2.1vw, 40px);
+  font-weight: 730;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.RST_HeroGreeting span {
+  color: #fff;
+}
+
+.RST_HeroSub {
+  margin: 6px 0 0;
+  color: #c7cedb;
+  font-size: clamp(12px, 0.85vw, 15px);
+}
+
+.RST_HeroCampaignName {
+  margin: 14px 0 0;
+  color: #fff;
+  font-size: clamp(16px, 1.15vw, 21px);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.RST_HeroRight {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: clamp(14px, 1.15vw, 21px);
+}
+
+@media (max-width: 900px) {
+  .RST_HeroRight {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+/* ---------- KPI stat cards ---------- */
+
+.RST_StatsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(12px, 0.9vw, 17px);
+  margin-top: clamp(13px, 0.95vw, 17px);
+}
+
+.RST_StatCard {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid var(--rst-line);
+  border-radius: var(--rst-radius-lg, 18px);
+  background: var(--rst-card);
+  padding: clamp(15px, 1.1vw, 20px);
+  box-shadow: var(--rst-shadow);
+  animation: RST_Enter 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.RST_StatIcon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 14px;
+}
+
+.RST_StatCard--red .RST_StatIcon { background: var(--rst-red-soft); color: var(--rst-red); }
+.RST_StatCard--blue .RST_StatIcon { background: var(--rst-blue-soft); color: var(--rst-blue); }
+.RST_StatCard--green .RST_StatIcon { background: var(--rst-green-soft); color: var(--rst-green); }
+.RST_StatCard--purple .RST_StatIcon { background: var(--rst-purple-soft); color: var(--rst-purple); }
+
+.RST_StatBody {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.RST_StatBody strong {
+  color: #171c24;
+  font-size: clamp(19px, 1.35vw, 26px);
+  font-weight: 730;
+  letter-spacing: -0.02em;
+}
+
+.RST_StatBody span {
+  color: var(--rst-muted);
+  font-size: clamp(10.5px, 0.68vw, 12.5px);
+  font-weight: 600;
+}
+
+/* ---------- live tracking: map + vehicle list ---------- */
+
+.RST_LiveTrackingGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+  align-items: stretch;
+  gap: clamp(12px, 0.9vw, 17px);
+  margin-top: clamp(13px, 0.95vw, 17px);
+}
+
+/* .RST_MapCard/.RST_LiveSidebar/.RST_TodayCard carry explicit grid-column/
+   grid-row placement from the old 3-column .RST_LiveShell layout (see the
+   "2026 CLIENT TRACKING REDESIGN" section above) — this grid only has two
+   children now (.RST_MapCard, .RST_LiveRightCol), so that leftover explicit
+   placement must be cleared or it forces a phantom implicit column. */
+.RST_LiveTrackingGrid > .RST_MapCard,
+.RST_LiveTrackingGrid .RST_LiveSidebar,
+.RST_LiveTrackingGrid .RST_TodayCard {
+  grid-column: auto;
+  grid-row: auto;
+}
+
+/* The map card follows the right column's natural height instead of the
+   other way around — it stretches (or shrinks, down to .RST_Map's
+   min-height) to match whatever height the vehicle carousel + snapshot
+   cards need, via flex so .RST_Map can grow/shrink to fill the leftover
+   space after its header/footer/legend chrome. This overrides the
+   pre-redesign `.RST_MapCard { align-self: start }` rule above, which
+   only fit the old 3-column layout. */
+.RST_LiveTrackingGrid > .RST_MapCard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  align-self: stretch;
+}
+
+.RST_LiveRightCol {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  /* Sized to its own natural content (vehicle carousel + snapshot), not
+     stretched — the map card is what adjusts to match this column's
+     height (see .RST_LiveTrackingGrid > .RST_MapCard below), so the gap
+     between these two cards stays their normal, natural size. */
+  align-self: start;
+  gap: clamp(12px, 0.9vw, 17px);
+}
+
+.RST_LiveSidebar,
+.RST_TodayCard {
+  border: 1px solid var(--rst-line);
+  border-radius: var(--rst-radius-lg, 18px);
+  background: var(--rst-card);
+  padding: clamp(14px, 1.05vw, 20px);
+  box-shadow: var(--rst-shadow);
+}
+
+/* Scoped + higher specificity than the various breakpoint-specific fixed
+   .RST_Map heights elsewhere in this file (leftover from the pre-redesign
+   .RST_LiveShell layout, which no longer exists in the JSX but whose bare,
+   unscoped selectors still match here) — this is what actually lets the
+   map grow/shrink with .RST_MapCard's flex height above, at every width
+   this grid is active. */
+.RST_LiveTrackingGrid .RST_Map {
+  flex: 1 1 auto;
+  min-height: 320px;
+  height: auto;
+}
+
+.RST_MapLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  border-top: 1px solid #edf0f3;
+  padding: 11px 16px;
+  color: #67707c;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.RST_MapLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.RST_MapLegend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.RST_MapLegend i.RST_State--moving { background: var(--rst-green); }
+.RST_MapLegend i.RST_State--idle { background: var(--rst-orange); }
+.RST_MapLegend i.RST_State--parked { background: var(--rst-blue); }
+.RST_MapLegend i.RST_VehicleState--unavailable { background: var(--rst-red); }
+
+.RST_VehicleListPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  max-height: clamp(320px, 30vw, 460px);
+  overflow-y: auto;
+}
+
+.RST_VehicleListRow {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid #e8edf1;
+  border-radius: 13px;
+  background: #fbfcfd;
+  padding: 10px;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.RST_VehicleListRow:hover {
+  border-color: #d5dbe2;
+  transform: translateY(-1px);
+}
+
+.RST_VehicleListRow--active {
+  border-color: rgba(40, 125, 224, 0.48);
+  background: #f3f8ff;
+  box-shadow: 0 8px 22px rgba(40, 125, 224, 0.075);
+}
+
+.RST_VehicleListThumb {
+  width: 52px;
+  height: 46px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #f0f3f6;
+}
+
+.RST_VehicleListThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.RST_VehicleListBody {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.RST_VehicleListBody strong {
+  overflow: hidden;
+  color: #242a33;
+  font-size: 12.5px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RST_VehicleListBody small {
+  overflow: hidden;
+  color: #818a95;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RST_VehicleListSpeed {
+  flex: 0 0 auto;
+  color: #454d58;
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+@media (max-width: 1199px) {
+  .RST_LiveTrackingGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- analytics row ---------- */
+
+.RST_AnalyticsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 0.9vw, 17px);
+  margin-top: clamp(13px, 0.95vw, 17px);
+}
+
+.RST_AnalyticsCard {
+  border: 1px solid var(--rst-line);
+  border-radius: var(--rst-radius-lg, 18px);
+  background: var(--rst-card);
+  padding: clamp(17px, 1.25vw, 24px);
+  box-shadow: var(--rst-shadow);
+  animation: RST_Enter 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.RST_AnalyticsCard--performance {
+  background:
+    radial-gradient(circle at 25% 20%, rgba(150, 88, 224, 0.12), transparent 55%),
+    linear-gradient(145deg, #fbf8ff 0%, #f2ebff 100%);
+}
+
+.RST_AnalyticsCard--coverage {
+  background:
+    radial-gradient(circle at 80% 15%, rgba(32, 165, 152, 0.12), transparent 55%),
+    linear-gradient(145deg, #f4fdfc 0%, #e7f8f6 100%);
+}
+
+.RST_ProgressRing--teal {
+  background:
+    conic-gradient(
+      var(--rst-teal) 0 var(--rst-progress, 0deg),
+      rgba(32, 165, 152, 0.14) var(--rst-progress, 0deg) 360deg
+    );
+}
+
+.RST_ProgressRing--teal > div {
+  background: #eefbf9;
+}
+
+.RST_ProgressRing--teal strong {
+  color: #0f5f56;
+}
+
+.RST_ProgressRing--teal small {
+  color: var(--rst-teal);
+}
+
+.RST_UtilBars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+  height: 168px;
+  overflow-x: auto;
+  padding-top: 8px;
+}
+
+.RST_UtilBar {
+  display: flex;
+  min-width: 26px;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+}
+
+.RST_UtilBarTrack {
+  display: flex;
+  width: 100%;
+  max-width: 22px;
+  height: 100%;
+  flex: 1 1 auto;
+  align-items: flex-end;
+  border-radius: 999px;
+  background: var(--rst-blue-soft);
+}
+
+.RST_UtilBarFill {
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #4a9bf0, var(--rst-blue));
+  transition: height 300ms ease;
+}
+
+.RST_UtilBar--today .RST_UtilBarFill {
+  background: linear-gradient(180deg, #ff7278, var(--rst-red));
+}
+
+.RST_UtilBar--future .RST_UtilBarTrack {
+  background: #eef0f3;
+}
+
+.RST_UtilBar--future .RST_UtilBarFill {
+  background: #d6dbe1;
+}
+
+.RST_UtilBar small {
+  color: #8a929c;
+  font-size: 9px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.RST_UtilBar--today small {
+  color: var(--rst-red);
+  font-weight: 700;
+}
+
+@media (max-width: 1199px) {
+  .RST_AnalyticsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .RST_AnalyticsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- bottom grid now holds two cards, not three ---------- */
+
+.RST_BottomGrid {
+  grid-template-columns: 1fr 1.2fr;
+}
+
+@media (max-width: 900px) {
+  .RST_BottomGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- day-wise campaign schedule table ---------- */
+
+.RS_DayWiseTable {
+  overflow-x: auto;
+  border: 1px solid #e6eaef;
+  border-radius: 15px;
+  background: #fbfcfd;
+  /* More rows stay inside a controlled table viewport instead of growing
+     the full tracking page indefinitely — same pattern already used for
+     the GPS history and driving-history tables on this page. */
+  max-height: min(56vh, 620px);
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  cursor: grab;
+}
+
+.RS_DayWiseTable.RS_DayWiseTable--dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.RS_DayWiseTable::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.RS_DayWiseTable::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(126, 136, 149, 0.42);
+  background-clip: padding-box;
+}
+
+.RS_DayWiseHeaderRow,
+.RS_DayWiseRow {
+  display: grid;
+  grid-template-columns:
+    minmax(100px, 0.8fr)
+    minmax(160px, 1.4fr)
+    minmax(80px, 0.7fr)
+    minmax(80px, 0.6fr)
+    minmax(60px, 0.5fr)
+    minmax(90px, 0.7fr)
+    minmax(120px, 0.9fr);
+  gap: 12px;
+  min-width: 860px;
+  align-items: center;
+  padding: 12px 16px;
+}
+
+.RS_DayWiseHeaderRow {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  border-bottom: 1px solid #dfe5ec;
+  background: rgba(246, 249, 252, 0.98);
+  color: #65717e;
+  font-size: 11px;
+  font-weight: 760;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.RS_DayWiseRowGroup:not(:last-child) .RS_DayWiseRow {
+  border-bottom: 1px solid #edf0f3;
+}
+
+.RS_DayWiseRow {
+  width: 100%;
+  border: 0;
+  background: #fff;
+  color: #37414d;
+  cursor: default;
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  transition: background-color 160ms ease;
+}
+
+.RS_DayWiseRow:hover {
+  background: #f6f9fc;
+  cursor: pointer;
+}
+
+.RS_DayWiseRow > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RS_DayWiseStatusCell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  overflow: visible;
+}
+
+.RS_DayWiseStatusBadge {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 10.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.RS_DayWiseStatusBadge--completed { background: var(--rst-green-soft); color: var(--rst-green); }
+.RS_DayWiseStatusBadge--ongoing { background: var(--rst-blue-soft); color: var(--rst-blue); }
+.RS_DayWiseStatusBadge--upcoming { background: #f1f3f5; color: #747c86; }
+.RS_DayWiseStatusBadge--not_reported { background: var(--rst-orange-soft); color: var(--rst-orange); }
+
+.RS_DayWiseChevron {
+  flex: 0 0 auto;
+  color: #929aa4;
+  transition: transform 180ms ease;
+}
+
+.RS_DayWiseChevron--open {
+  transform: rotate(180deg);
+}
+
+.RS_DayWisePhotos {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 860px;
+  border-top: 1px dashed #e4e9ef;
+  padding: 12px 16px;
+}
+
+.RS_DayWisePhotos img {
+  width: 100%;
+  height: 84px;
+  border-radius: 9px;
+  object-fit: cover;
+}
+
+@media (max-width: 767px) {
+  .RS_DayWisePhotos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- photos gallery + lightbox ---------- */
+
+.RS_PhotosGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.RS_PhotoThumb {
+  overflow: hidden;
+  border: 0;
+  border-radius: 12px;
+  background: #f0f3f5;
+  padding: 0;
+  cursor: pointer;
+}
+
+.RS_PhotoThumb img {
+  display: block;
+  width: 100%;
+  height: clamp(88px, 6.6vw, 122px);
+  object-fit: cover;
+  transition: transform 300ms ease;
+}
+
+.RS_PhotoThumb:hover img {
+  transform: scale(1.035);
+}
+
+.RS_PhotoLightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 13, 18, 0.86);
+  padding: 24px;
+}
+
+.RS_PhotoLightbox img {
+  max-width: min(920px, 100%);
+  max-height: 88vh;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.RS_PhotoLightboxClose {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+}
+
+.RS_PhotoLightboxClose:hover {
+  background: rgba(255, 255, 255, 0.16);
 }

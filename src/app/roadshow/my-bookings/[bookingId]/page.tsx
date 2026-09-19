@@ -2,21 +2,12 @@
 // @ts-nocheck
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Clock3,
   Flag,
   Image as ImageIcon,
@@ -24,11 +15,9 @@ import {
   MapPin,
   MapPinned,
   Navigation,
-  Radio,
   RefreshCw,
   Route,
   ShieldCheck,
-  Sparkles,
   Truck,
   Users,
   Zap,
@@ -38,15 +27,20 @@ import { useAuth } from "@/context/AuthContext";
 import { fetchAllRoadshowVehicles } from "@/lib/roadshowVehicles";
 
 import { useCampaignTracking } from "../useCampaignTracking";
-import {
-  useLiveLocation,
-  type LiveVehicle,
-} from "../[bookingId]/useLiveLocation";
+import { useLiveLocation } from "../[bookingId]/useLiveLocation";
 import { useRouteTrack } from "../[bookingId]/useRouteTrack";
 import { useDrivingSummary } from "../[bookingId]/useDrivingSummary";
 import DrivingSummaryPanel from "../[bookingId]/DrivingSummaryPanel";
 import DrivingHistoryTable from "../[bookingId]/DrivingHistoryTable";
 import VehicleHistoryPanel from "../[bookingId]/VehicleHistoryPanel";
+import DayWiseReportTable from "../[bookingId]/DayWiseReportTable";
+import PhotosGallery from "../[bookingId]/PhotosGallery";
+import HeroBanner from "../[bookingId]/HeroBanner";
+import StatsCards, { type StatCardData } from "../[bookingId]/StatsCards";
+import VehicleListPanel from "../[bookingId]/VehicleListPanel";
+import AnalyticsRow, {
+  type UtilizationDay,
+} from "../[bookingId]/AnalyticsRow";
 import {
   JOURNEY_STAGE_COPY,
   type JourneyStageKey,
@@ -192,23 +186,70 @@ function statusClass(status?: string) {
   return "RST_State--unknown";
 }
 
-function reportStatusLabel(status?: string) {
-  switch (status) {
-    case "completed":
-      return "Completed";
-    case "ongoing":
-      return "Ongoing";
-    case "upcoming":
-      return "Upcoming";
-    default:
-      return "Not reported";
+/* The backend only merges speedKmh (and the rest of its live-location
+   fields) onto a vehicle when its registration was actually found in the
+   Vamosys GPS feed — see toClientSafeLocation() in the backend's
+   vamosysClient.js. If it's missing entirely, this vehicle simply isn't
+   reporting to Vamosys right now (offline device, not yet paired, etc.) —
+   a different, more actionable situation than the backend's own "Unknown"
+   status label, which means "found, but its movement state wasn't
+   classified". Mirrors the same logic in VehicleListPanel.tsx. */
+function vehicleStatusLabel(vehicle?: {
+  isStale?: boolean;
+  speedKmh?: number;
+  status?: string;
+}) {
+  if (!vehicle) return "Unknown";
+  if (vehicle.isStale) return "GPS delayed";
+  if (vehicle.speedKmh === undefined) return "GPS not connected";
+
+  return vehicle.status || "Unknown";
+}
+
+/* Picks an icon/tone for a Recent Activity row purely from its existing
+   label text (no new data) — matches the colored-icon activity feed style
+   without needing the backend to send a category field. */
+function activityVisual(label?: string) {
+  const text = String(label || "").toLowerCase();
+
+  if (text.includes("complet")) return { Icon: CheckCircle2, tone: "green" };
+
+  if (text.includes("maintenance") || text.includes("unavailable")) {
+    return { Icon: Zap, tone: "orange" };
   }
+
+  if (
+    text.includes("reach") ||
+    text.includes("checkpoint") ||
+    text.includes("location")
+  ) {
+    return { Icon: MapPin, tone: "blue" };
+  }
+
+  if (
+    text.includes("vehicle") ||
+    text.includes("start") ||
+    text.includes("assign") ||
+    text.includes("road")
+  ) {
+    return { Icon: Truck, tone: "red" };
+  }
+
+  if (
+    text.includes("submit") ||
+    text.includes("request") ||
+    text.includes("book")
+  ) {
+    return { Icon: ShieldCheck, tone: "purple" };
+  }
+
+  return { Icon: Clock3, tone: "grey" };
 }
 
-function reportStatusClass(status?: string) {
-  return `RST_ReportStatus--${status || "not_reported"}`;
-}
-
+/* Kept exported even though the on-page day-timeline that used to call
+   this was replaced by DayWiseReportTable (which derives "upcoming" from
+   the backend's own row.status instead) — tests/unit/bookingTrackingHelpers
+   still covers this pure helper directly. */
 export function isFutureCampaignDay(value?: string | null) {
   if (!value) return false;
 
@@ -305,9 +346,11 @@ function CampaignStatusStrip({
 function TrackingPageContent({
   mongoId,
   token,
+  userName,
 }: {
   mongoId: string;
   token: string | null;
+  userName: string;
 }) {
   const router = useRouter();
 
@@ -426,8 +469,6 @@ function TrackingPageContent({
 
   const [selectedVehicleReg, setSelectedVehicleReg] = useState("");
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
-  const dayTimelineRef = useRef<HTMLDivElement | null>(null);
-  const dayDragRef = useRef({ active: false, startX: 0, scrollLeft: 0 });
   const [vehicleImageMap, setVehicleImageMap] = useState<
     Record<string, string>
   >({});
@@ -467,236 +508,9 @@ function TrackingPageContent({
     return (key && vehicleImageMap[key]) || VEHICLE_IMAGE;
   }
 
-  /* Vehicles grouped by booking line (vehicleIndex) — one tab per vehicle
-     MODEL, so a 2-model × 2-quantity booking shows as 2 tabs of 2 cards
-     each instead of one flat list of 4. Order follows first appearance,
-     i.e. the order bookingItems were booked in. */
-  const vehicleGroups = useMemo(() => {
-    const order: Array<number | undefined> = [];
-    const byIndex = new Map<
-      number | undefined,
-      { vehicleIndex: number | undefined; vehicleName: string; vehicles: LiveVehicle[] }
-    >();
-
-    liveVehicles.forEach((vehicle) => {
-      const key = vehicle.vehicleIndex;
-
-      if (!byIndex.has(key)) {
-        byIndex.set(key, {
-          vehicleIndex: key,
-          vehicleName: vehicle.vehicleName || "Roadshow Vehicle",
-          vehicles: [],
-        });
-        order.push(key);
-      }
-
-      byIndex.get(key)!.vehicles.push(vehicle);
-    });
-
-    return order.map((key) => byIndex.get(key)!);
-  }, [liveVehicles]);
-
-  const [activeVehicleGroup, setActiveVehicleGroup] = useState<
-    number | undefined
-  >(undefined);
-
-  useEffect(() => {
-    if (!vehicleGroups.length) return;
-
-    setActiveVehicleGroup((current) => {
-      const stillValid = vehicleGroups.some(
-        (group) => group.vehicleIndex === current,
-      );
-
-      return stillValid ? current : vehicleGroups[0].vehicleIndex;
-    });
-  }, [vehicleGroups]);
-
-  const activeGroupVehicles = useMemo(
-    () =>
-      vehicleGroups.find((group) => group.vehicleIndex === activeVehicleGroup)
-        ?.vehicles || liveVehicles,
-    [vehicleGroups, activeVehicleGroup, liveVehicles],
-  );
-
-  /* Position of the currently selected vehicle within the active tab —
-     drives which single card the carousel shows, and what the prev/next
-     buttons step relative to. Falls back to 0 rather than -1 so a stale
-     selectedVehicleReg (about to be corrected by the effect below) never
-     makes activeGroupVehicles[activeVehicleSlot] read as undefined. */
-  const activeVehicleSlot = Math.max(
-    0,
-    activeGroupVehicles.findIndex(
-      (vehicle) => vehicle.registrationNumber === selectedVehicleReg,
-    ),
-  );
-
-  const goToVehicleOffset = (offset: number) => {
-    if (activeGroupVehicles.length < 2) return;
-
-    const nextIndex =
-      (activeVehicleSlot + offset + activeGroupVehicles.length) %
-      activeGroupVehicles.length;
-
-    setSelectedVehicleReg(activeGroupVehicles[nextIndex].registrationNumber);
-  };
-
-  /* Drag-to-page the carousel card, in addition to the prev/next buttons.
-     Mirrors the pointer-drag pattern VehicleHistoryPanel's table already
-     uses (setPointerCapture + delta tracking), but — unlike that one —
-     doesn't exclude touch, since swipe is the whole point here. */
-  const carouselDragRef = useRef({ active: false, startX: 0 });
-  const [carouselDragX, setCarouselDragX] = useState(0);
-  const [carouselDragging, setCarouselDragging] = useState(false);
-
-  const CAROUSEL_DRAG_THRESHOLD = 48;
-
-  function startCarouselDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (activeGroupVehicles.length < 2) return;
-
-    carouselDragRef.current = { active: true, startX: event.clientX };
-    setCarouselDragging(true);
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-  }
-
-  function moveCarouselDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (!carouselDragRef.current.active) return;
-
-    setCarouselDragX(event.clientX - carouselDragRef.current.startX);
-  }
-
-  function endCarouselDrag() {
-    if (!carouselDragRef.current.active) return;
-
-    carouselDragRef.current.active = false;
-    setCarouselDragging(false);
-
-    if (carouselDragX <= -CAROUSEL_DRAG_THRESHOLD) {
-      goToVehicleOffset(1);
-    } else if (carouselDragX >= CAROUSEL_DRAG_THRESHOLD) {
-      goToVehicleOffset(-1);
-    }
-
-    setCarouselDragX(0);
-  }
-
-  /* Drag-to-scroll the model tab strip (see the .RST_VehicleTabs comment
-     in trackingPage.css for why it's nowrap+overflow-x instead of wrap).
-     Touch already scrolls a horizontally-overflowing element natively, so
-     — same as VehicleHistoryPanel's table-drag — this only handles mouse,
-     which has no built-in click-drag-to-scroll. */
-  const tabsRef = useRef<HTMLDivElement | null>(null);
-  const tabsDragRef = useRef({
-    active: false,
-    startX: 0,
-    scrollLeft: 0,
-    moved: false,
-  });
-  const [tabsDragging, setTabsDragging] = useState(false);
-
-  function startTabsDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "touch") return;
-
-    const element = tabsRef.current;
-    if (!element) return;
-
-    // Nothing to scroll means nothing to drag — never arm the drag/jitter
-    // logic below, so an ordinary click on a tab is never mistaken for one.
-    if (element.scrollWidth <= element.clientWidth) return;
-
-    tabsDragRef.current = {
-      active: true,
-      startX: event.clientX,
-      scrollLeft: element.scrollLeft,
-      moved: false,
-    };
-    setTabsDragging(true);
-    // Pointer capture is deliberately NOT taken here: capturing on every
-    // pointerdown (even a plain click, since this only requires overflow,
-    // not actual movement) makes the browser retarget the eventual
-    // mouseup/click to this container instead of the tab button under the
-    // pointer, silently swallowing ordinary clicks whenever the strip
-    // overflows (e.g. narrower viewports). Capture is deferred to
-    // moveTabsDrag below, once a real drag is confirmed.
-  }
-
-  function moveTabsDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    const element = tabsRef.current;
-    if (!element || !tabsDragRef.current.active) return;
-
-    const delta = event.clientX - tabsDragRef.current.startX;
-
-    // A few px of jitter shouldn't count as "dragged" — only a real drag
-    // should suppress the tab's own click below.
-    if (Math.abs(delta) > 4 && !tabsDragRef.current.moved) {
-      tabsDragRef.current.moved = true;
-      // Only now do we know this is an actual drag, not a click — capture
-      // the pointer so the drag keeps tracking even if it leaves the strip.
-      element.setPointerCapture?.(event.pointerId);
-    }
-
-    element.scrollLeft = tabsDragRef.current.scrollLeft - delta;
-  }
-
-  function endTabsDrag() {
-    tabsDragRef.current.active = false;
-    setTabsDragging(false);
-
-    // suppressTabClickAfterDrag normally consumes `moved` on the click that
-    // ends a drag, but some browsers/gestures never fire that click at all
-    // (release outside the element, pointer capture lost mid-drag, etc.).
-    // Without this fallback, `moved` would stay stuck true and every later
-    // genuine tab click would keep getting swallowed.
-    if (tabsDragRef.current.moved) {
-      window.setTimeout(() => {
-        tabsDragRef.current.moved = false;
-      }, 300);
-    }
-  }
-
-  // Runs in the capture phase, before a tab button's own onClick — swallows
-  // the click that would otherwise fire on whichever tab the pointer
-  // happened to release over at the end of a drag.
-  function suppressTabClickAfterDrag(event: ReactMouseEvent) {
-    if (!tabsDragRef.current.moved) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    tabsDragRef.current.moved = false;
-  }
-
-  useEffect(() => {
-    if (!activeGroupVehicles.length) {
-      setSelectedVehicleReg("");
-      return;
-    }
-
-    setSelectedVehicleReg((current) => {
-      const currentVehicle = activeGroupVehicles.find(
-        (vehicle) => vehicle.registrationNumber === current,
-      );
-
-      if (currentVehicle && !currentVehicle.unavailable && !currentVehicle.pending) {
-        return current;
-      }
-
-      /* Prefer a vehicle that's actually trackable (live) over one that's
-         merely unavailable, and prefer either of those over a "pending"
-         placeholder — a pending slot has no registration/GPS data at all,
-         so auto-selecting it first would leave the map with nothing to
-         show even when a sibling vehicle on the same booking is live. */
-      const firstAvailable = activeGroupVehicles.find(
-        (vehicle) => !vehicle.unavailable && !vehicle.pending,
-      );
-      const firstUnavailable = activeGroupVehicles.find(
-        (vehicle) => vehicle.unavailable,
-      );
-
-      return (
-        firstAvailable || firstUnavailable || activeGroupVehicles[0]
-      ).registrationNumber;
-    });
-  }, [activeGroupVehicles]);
+  /* Picking a sensible default (and correcting a stale/invalid) selection
+     is owned by VehicleListPanel now — it knows about the active model tab,
+     which this flat liveVehicles list doesn't. */
 
   const selectedLiveVehicle = useMemo(
     () =>
@@ -760,65 +574,46 @@ function TrackingPageContent({
   const selectedDay =
     dayRows[selectedDayIndex] || dayRows[0] || null;
 
-  /* selectedDay.distanceCoveredKm comes from the manually-submitted
-     day-wise report, which isn't reliably populated in the backend (see
-     "Not reported" status) and shows as a permanent 0.00 km as a result.
-     Fall back to the real GPS driving summary for that same campaign day,
-     summed across every vehicle, so this section reflects actual movement
-     instead of a report that was never filed. */
-  const { vehicles: reportDaySummaryVehicles, loading: reportDaySummaryLoading } =
-    useDrivingSummary(
-      mongoId,
-      token,
-      Boolean(mongoId && selectedDay?.day),
-      selectedDay?.day || undefined,
-    );
+  /* Booking-scoped KPI/analytics numbers — every value below is derived
+     from data already returned by useCampaignTracking (dayRows/summary),
+     no extra fetches. This intentionally does NOT mirror the reference
+     dashboard's fleet-wide numbers (total vehicles across all bookings,
+     active campaigns across all clients, etc.) — those aggregates don't
+     exist on this single-booking tracking API and this task explicitly
+     rules out inventing them or adding a new endpoint for them. */
+  const activeOnRoadCount = useMemo(
+    () => liveVehicles.filter((v) => !v.pending && !v.unavailable).length,
+    [liveVehicles],
+  );
 
-  const reportDayDistanceKm = useMemo(() => {
-    const withSummary = reportDaySummaryVehicles.filter(
-      (vehicle) => vehicle.drivingSummary,
-    );
+  const totalDistanceKm = useMemo(
+    () =>
+      dayRows.reduce((sum, row) => sum + Number(row.distanceCoveredKm || 0), 0),
+    [dayRows],
+  );
 
-    if (!withSummary.length) return null;
+  const daysRun = useMemo(
+    () =>
+      dayRows.filter(
+        (row) =>
+          Number(row.distanceCoveredKm || 0) > 0 ||
+          row.status === "completed" ||
+          row.status === "ongoing",
+      ).length,
+    [dayRows],
+  );
 
-    return withSummary.reduce(
-      (total, vehicle) =>
-        total + (vehicle.drivingSummary?.tripDistanceKm || 0),
-      0,
-    );
-  }, [reportDaySummaryVehicles]);
+  const utilizationDays: UtilizationDay[] = useMemo(() => {
+    const todayKey = todayIndiaDateKey();
 
-  function scrollDayTimeline(direction: -1 | 1) {
-    dayTimelineRef.current?.scrollBy({
-      left: direction * Math.max(280, dayTimelineRef.current.clientWidth * 0.72),
-      behavior: "smooth",
-    });
-  }
-
-  function handleDayTimelinePointerDown(event: any) {
-    const el = dayTimelineRef.current;
-    if (!el) return;
-    if (event.target?.closest?.("a, button, input, select")) return;
-    dayDragRef.current = {
-      active: true,
-      startX: event.clientX,
-      scrollLeft: el.scrollLeft,
-    };
-    el.setPointerCapture?.(event.pointerId);
-    el.classList.add("RST_DayTimeline--dragging");
-  }
-
-  function handleDayTimelinePointerMove(event: any) {
-    const el = dayTimelineRef.current;
-    if (!el || !dayDragRef.current.active) return;
-    const delta = event.clientX - dayDragRef.current.startX;
-    el.scrollLeft = dayDragRef.current.scrollLeft - delta;
-  }
-
-  function stopDayTimelineDrag() {
-    dayDragRef.current.active = false;
-    dayTimelineRef.current?.classList.remove("RST_DayTimeline--dragging");
-  }
+    return dayRows.map((row) => ({
+      key: row.day,
+      label: formatShortDate(row.day) || row.day,
+      km: Number(row.distanceCoveredKm || 0),
+      isToday: row.day === todayKey,
+      isFuture: row.day > todayKey,
+    }));
+  }, [dayRows]);
 
   const stageMeta = data
     ? JOURNEY_STAGE_COPY[
@@ -867,6 +662,53 @@ function TrackingPageContent({
 
   const summary = data.bookingSummary;
 
+  const coveragePercent = summary.totalDays
+    ? Math.round((daysRun / summary.totalDays) * 100)
+    : 0;
+
+  const statCards: StatCardData[] = [
+    {
+      key: "vehicles",
+      icon: Truck,
+      tone: "red",
+      label: "Vehicles in this Booking",
+      value: String(summary.vehicleCount || 0),
+    },
+    {
+      key: "onroad",
+      icon: MapPin,
+      tone: "blue",
+      label: "Active on Road",
+      value: String(activeOnRoadCount),
+    },
+    {
+      key: "days",
+      icon: CalendarDays,
+      tone: "green",
+      label: "Campaign Days",
+      value: String(summary.totalDays || 0),
+    },
+    {
+      key: "distance",
+      icon: Route,
+      tone: "purple",
+      label: "Distance Covered",
+      value: `${totalDistanceKm.toFixed(1)} km`,
+    },
+  ];
+
+  const heroVehicleImage = resolveVehicleImage(
+    selectedLiveVehicle?.registrationNumber || liveVehicles[0]?.registrationNumber,
+  );
+
+  const heroPeriodLabel = `${formatDate(summary.startDate)} – ${formatDate(summary.endDate)}`;
+  const heroPeriodDaysLabel = summary.totalDays
+    ? `${summary.totalDays} ${summary.totalDays === 1 ? "Day" : "Days"}`
+    : "Duration not available";
+  const heroDayLabel = data.onRoad
+    ? `Day ${data.onRoad.day} of ${data.onRoad.totalDays}`
+    : null;
+
   return (
     <main className="RST_Root">
       <div className="RST_Container">
@@ -889,77 +731,22 @@ function TrackingPageContent({
           </div>
         </header>
 
-        <section className="RST_Hero">
-          <div className="RST_HeroIdentity">
-            <div className="RST_HeroVehicle">
-              <img
-                src={resolveVehicleImage(
-                  selectedLiveVehicle?.registrationNumber ||
-                    liveVehicles[0]?.registrationNumber,
-                )}
-                alt="Campaign vehicle"
-              />
-            </div>
+        <HeroBanner
+          userName={userName}
+          campaignName={summary.campaignName}
+          clientOrderId={data.clientOrderId}
+          location={summary.location}
+          vehicleCount={summary.vehicleCount}
+          stageLabel={stageMeta?.label}
+          StageIcon={StageIcon}
+          stageClassName={stageMeta?.className}
+          dayLabel={heroDayLabel}
+          vehicleImage={heroVehicleImage}
+          periodLabel={heroPeriodLabel}
+          periodDaysLabel={heroPeriodDaysLabel}
+        />
 
-            <div className="RST_HeroCopy">
-              <div className="RST_HeroBadges">
-                {stageMeta && (
-                  <span
-                    className={`RS_StageBadge ${stageMeta.className}`}
-                  >
-                    {StageIcon && <StageIcon size={14} />}
-                    {stageMeta.label}
-                  </span>
-                )}
-
-                {data.onRoad && (
-                  <span className="RS_DayBadge">
-                    Day {data.onRoad.day} of {data.onRoad.totalDays}
-                  </span>
-                )}
-              </div>
-
-              <h1>{summary.campaignName}</h1>
-
-              <div className="RST_HeroMeta">
-                <span>
-                  <ShieldCheck size={15} />
-                  {data.clientOrderId}
-                </span>
-
-                <span>
-                  <MapPin size={15} />
-                  {summary.location || "Location not available"}
-                </span>
-
-                <span>
-                  <Truck size={15} />
-                  {summary.vehicleCount}{" "}
-                  {summary.vehicleCount === 1 ? "Vehicle" : "Vehicles"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="RST_HeroPeriod">
-            <span className="RST_HeroPeriodIcon">
-              <CalendarDays size={18} />
-            </span>
-            <div>
-              <span>Campaign Period</span>
-              <strong>
-                {formatDate(summary.startDate)} – {formatDate(summary.endDate)}
-              </strong>
-              <small>
-                {summary.totalDays
-                  ? `${summary.totalDays} ${
-                      summary.totalDays === 1 ? "Day" : "Days"
-                    }`
-                  : "Duration not available"}
-              </small>
-            </div>
-          </div>
-        </section>
+        <StatsCards stats={statCards} />
 
         {data.vehicleUnavailable && (
           <section className="RST_Notice RST_Notice--warning">
@@ -1005,217 +792,7 @@ function TrackingPageContent({
 
         {onRoadEnabled ? (
           <>
-            <section className="RST_LiveShell">
-              <div className="RST_LiveSidebar">
-                <div className="RST_SectionHeading RST_SectionHeading--compact">
-                  <div>
-                    <span>VEHICLES</span>
-                    <h2>Live vehicles</h2>
-                  </div>
-
-                  <span className="RST_LiveHeaderMeta">
-                    {data.onRoad?.totalDays ? (
-                      <span className="RST_LiveDayChip">
-                        Day {data.onRoad.day} of {data.onRoad.totalDays}
-                      </span>
-                    ) : null}
-
-                    <span className="RST_LiveBadge">
-                      <i /> LIVE
-                    </span>
-                  </span>
-                </div>
-
-                {vehicleGroups.length > 1 && (
-                  <div
-                    ref={tabsRef}
-                    className={`RST_VehicleTabs ${
-                      tabsDragging ? "RST_VehicleTabs--dragging" : ""
-                    }`}
-                    role="tablist"
-                    aria-label="Vehicle models in this booking"
-                    onPointerDown={startTabsDrag}
-                    onPointerMove={moveTabsDrag}
-                    onPointerUp={endTabsDrag}
-                    onPointerCancel={endTabsDrag}
-                    onLostPointerCapture={endTabsDrag}
-                    onClickCapture={suppressTabClickAfterDrag}
-                  >
-                    {vehicleGroups.map((group) => (
-                      <button
-                        key={group.vehicleIndex ?? group.vehicleName}
-                        type="button"
-                        role="tab"
-                        aria-selected={
-                          activeVehicleGroup === group.vehicleIndex
-                        }
-                        className={`RST_VehicleTab ${
-                          activeVehicleGroup === group.vehicleIndex
-                            ? "RST_VehicleTab--active"
-                            : ""
-                        }`}
-                        onClick={() =>
-                          setActiveVehicleGroup(group.vehicleIndex)
-                        }
-                      >
-                        {group.vehicleName}
-                        <span className="RST_VehicleTabCount">
-                          {group.vehicles.length}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {liveLoading && !liveVehicles.length ? (
-                  <div className="RST_MiniLoading">
-                    <LoaderCircle className="RST_Spin" size={20} />
-                    Loading live vehicles...
-                  </div>
-                ) : liveVehicles.length ? (
-                  <div className="RST_VehicleCarousel">
-                    {/* Only shown when the active tab has more than one
-                        unit — a single-vehicle tab renders its one card
-                        with no paging controls at all. Paging (not a
-                        stacked list) keeps this section's height constant
-                        regardless of how many units a model line has,
-                        which is also what stopped the sidebar from
-                        out-growing the map card next to it. */}
-                    {activeGroupVehicles.length > 1 && (
-                      <div className="RST_VehicleCarouselNav">
-                        <button
-                          type="button"
-                          aria-label="Previous vehicle"
-                          onClick={() => goToVehicleOffset(-1)}
-                        >
-                          <ChevronLeft size={16} />
-                        </button>
-
-                        <span>
-                          {activeVehicleSlot + 1} / {activeGroupVehicles.length}
-                        </span>
-
-                        <button
-                          type="button"
-                          aria-label="Next vehicle"
-                          onClick={() => goToVehicleOffset(1)}
-                        >
-                          <ChevronRight size={16} />
-                        </button>
-                      </div>
-                    )}
-
-                    {activeGroupVehicles[activeVehicleSlot] && (
-                      <div
-                        className={`RST_VehicleCard RST_VehicleCard--current ${
-                          activeGroupVehicles.length > 1
-                            ? "RST_VehicleCard--draggable"
-                            : ""
-                        } ${carouselDragging ? "RST_VehicleCard--dragging" : ""}`}
-                        style={
-                          activeGroupVehicles.length > 1
-                            ? {
-                                transform: `translateX(${carouselDragX}px)`,
-                                transition: carouselDragging
-                                  ? "none"
-                                  : "transform 200ms ease",
-                              }
-                            : undefined
-                        }
-                        onPointerDown={startCarouselDrag}
-                        onPointerMove={moveCarouselDrag}
-                        onPointerUp={endCarouselDrag}
-                        onPointerCancel={endCarouselDrag}
-                        onLostPointerCapture={endCarouselDrag}
-                      >
-                        <span className="RST_VehicleThumb">
-                          <img
-                            src={resolveVehicleImage(
-                              activeGroupVehicles[activeVehicleSlot]
-                                .registrationNumber,
-                            )}
-                            alt=""
-                          />
-                        </span>
-
-                        <span className="RST_VehicleCopy">
-                          <strong>
-                            {vehicleGroups.length > 1
-                              ? `Unit ${String(activeVehicleSlot + 1).padStart(2, "0")}`
-                              : activeGroupVehicles[activeVehicleSlot]
-                                  .vehicleName || "Vehicle 01"}
-                          </strong>
-                          <small>
-                            {activeGroupVehicles[activeVehicleSlot].pending
-                              ? "Not yet assigned"
-                              : formatVehicleChain(
-                                  activeGroupVehicles[activeVehicleSlot],
-                                )}
-                          </small>
-                          {activeGroupVehicles[activeVehicleSlot].pending ? (
-                            <span className="RST_VehicleState RST_VehicleState--pending">
-                              Awaiting assignment
-                            </span>
-                          ) : activeGroupVehicles[activeVehicleSlot]
-                              .unavailable ? (
-                            <span className="RST_VehicleState RST_VehicleState--unavailable">
-                              Unavailable
-                            </span>
-                          ) : (
-                            <span
-                              className={`RST_VehicleState ${statusClass(
-                                activeGroupVehicles[activeVehicleSlot].status,
-                              )}`}
-                            >
-                              {activeGroupVehicles[activeVehicleSlot].isStale
-                                ? "GPS delayed"
-                                : activeGroupVehicles[activeVehicleSlot]
-                                    .status}
-                            </span>
-                          )}
-                        </span>
-
-                        {activeGroupVehicles[activeVehicleSlot].pending ? (
-                          <span className="RST_VehicleKm">
-                            <small>Status</small>
-                            <strong>Pending</strong>
-                          </span>
-                        ) : activeGroupVehicles[activeVehicleSlot]
-                            .unavailable ? (
-                          <span className="RST_VehicleKm">
-                            <small>Status</small>
-                            <strong>Not tracked</strong>
-                          </span>
-                        ) : (
-                          <span className="RST_VehicleKm">
-                            <small>KM covered</small>
-                            <strong>
-                              {Number(
-                                activeGroupVehicles[activeVehicleSlot]
-                                  .distanceCoveredKm || 0,
-                              ).toFixed(2)}{" "}
-                              km
-                            </strong>
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="RST_EmptyMini">
-                    <Radio size={22} />
-                    <strong>No live vehicle returned yet</strong>
-                    <p>
-                      Tracking will appear automatically when the GPS feed
-                      becomes available.
-                    </p>
-                  </div>
-                )}
-
-                {liveError && (
-                  <div className="RST_InlineError">{liveError}</div>
-                )}
-              </div>
+            <section className="RST_LiveTrackingGrid">
 
               <div className="RST_MapCard">
                 <div className="RST_MapHeader">
@@ -1260,9 +837,7 @@ function TrackingPageContent({
                         ? "Awaiting assignment"
                         : selectedLiveVehicle.unavailable
                           ? "Unavailable"
-                          : selectedLiveVehicle.isStale
-                            ? "Location delayed"
-                            : selectedLiveVehicle.status}
+                          : vehicleStatusLabel(selectedLiveVehicle)}
                     </span>
                     )}
                   </div>
@@ -1348,7 +923,7 @@ function TrackingPageContent({
 
                           <div>
                             <small>Status</small>
-                            <strong>{selectedLiveVehicle.status}</strong>
+                            <strong>{vehicleStatusLabel(selectedLiveVehicle)}</strong>
                           </div>
                         </div>
                       )}
@@ -1392,7 +967,62 @@ function TrackingPageContent({
                     </strong>
                   </div>
                 </div>
+
+                <div className="RST_MapLegend">
+                  <span>
+                    <i className="RST_State--moving" />
+                    Moving
+                  </span>
+                  <span>
+                    <i className="RST_State--idle" />
+                    Idle
+                  </span>
+                  <span>
+                    <i className="RST_State--parked" />
+                    Parked
+                  </span>
+                  <span>
+                    <i className="RST_VehicleState--unavailable" />
+                    Unavailable
+                  </span>
+                </div>
               </div>
+
+              <div className="RST_LiveRightCol">
+                <div className="RST_LiveSidebar">
+                  <div className="RST_SectionHeading RST_SectionHeading--compact">
+                    <div>
+                      <span>VEHICLES</span>
+                      <h2>Vehicles on Road ({liveVehicles.length})</h2>
+                    </div>
+
+                    <span className="RST_LiveHeaderMeta">
+                      {data.onRoad?.totalDays ? (
+                        <span className="RST_LiveDayChip">
+                          Day {data.onRoad.day} of {data.onRoad.totalDays}
+                        </span>
+                      ) : null}
+
+                      <span className="RST_LiveBadge">
+                        <i /> LIVE
+                      </span>
+                    </span>
+                  </div>
+
+                  <VehicleListPanel
+                    vehicles={liveVehicles}
+                    selectedReg={selectedVehicleReg}
+                    onSelect={setSelectedVehicleReg}
+                    resolveVehicleImage={resolveVehicleImage}
+                    statusClass={statusClass}
+                    formatVehicleChain={formatVehicleChain}
+                    loading={liveLoading}
+                  />
+
+                  {liveError && (
+                    <div className="RST_InlineError">{liveError}</div>
+                  )}
+                </div>
 
               <aside className="RST_TodayCard">
                 <div className="RST_SectionHeading RST_SectionHeading--compact">
@@ -1444,9 +1074,7 @@ function TrackingPageContent({
                       </span>
                       <div>
                         <small>People engaged</small>
-                        {/* <strong>{Number(selectedDay.peopleEngaged)}</strong> */}
-                        <strong>2000+</strong>
-
+                        <strong>{Number(selectedDay.peopleEngaged)}</strong>
                       </div>
                     </div>
                   )}
@@ -1492,16 +1120,14 @@ function TrackingPageContent({
                         </div>
                       )}
 
-                    {selectedLiveVehicle.status && (
-                      <div>
-                        <small>Movement</small>
-                        <strong>
-                          {selectedLiveVehicle.unavailable
-                            ? "Unavailable"
-                            : selectedLiveVehicle.status}
-                        </strong>
-                      </div>
-                    )}
+                    <div>
+                      <small>Movement</small>
+                      <strong>
+                        {selectedLiveVehicle.unavailable
+                          ? "Unavailable"
+                          : vehicleStatusLabel(selectedLiveVehicle)}
+                      </strong>
+                    </div>
 
                     <div>
                       <small>GPS</small>
@@ -1516,6 +1142,7 @@ function TrackingPageContent({
                   </div>
                 )}
               </aside>
+              </div>
             </section>
 
             {(drivingSummaryVehicles.some(
@@ -1615,180 +1242,47 @@ function TrackingPageContent({
           </section>
         )}
 
-        {/* <section className="RST_ReportSection">
-          <div className="RST_ReportTopline">
-            <div className="RST_SectionHeading">
-              <div>
-                <span>CAMPAIGN DATE TIMELINE</span>
-                <h2>Move through every campaign day</h2>
-              </div>
+        <AnalyticsRow
+          performance={{
+            percent: campaignProgress,
+            statusLabel: stageMeta?.label || "Preparing",
+            totalDays: summary.totalDays || "—",
+            completedDays: data.onRoad?.day
+              ? Math.max(0, data.onRoad.day)
+              : data.journeyStage?.key === "completed"
+                ? summary.totalDays || "—"
+                : 0,
+            remainingDays: data.onRoad?.totalDays
+              ? Math.max(0, data.onRoad.totalDays - data.onRoad.day)
+              : data.journeyStage?.key === "completed"
+                ? 0
+                : summary.totalDays || "—",
+          }}
+          utilizationDays={utilizationDays}
+          coverage={{
+            totalKm: totalDistanceKm,
+            daysRun,
+            totalDays: summary.totalDays || "—",
+            location: summary.location,
+            percent: coveragePercent,
+          }}
+        />
 
-              <small>
-                Grab and drag the timeline, use the arrows, or select any date
-                to open its complete campaign report.
-              </small>
+        <section className="RST_ReportSection">
+          <div className="RST_SectionHeading">
+            <div>
+              <span>CAMPAIGN SCHEDULE</span>
+              <h2>Day-wise campaign schedule</h2>
             </div>
 
-            {dayRows.length > 1 && (
-              <div className="RST_DayTimelineControls">
-                <button type="button" onClick={() => scrollDayTimeline(-1)} aria-label="Previous campaign dates">
-                  <ChevronLeft size={20} />
-                </button>
-                <button type="button" onClick={() => scrollDayTimeline(1)} aria-label="Next campaign dates">
-                  <ChevronRight size={20} />
-                </button>
-              </div>
-            )}
+            <small>
+              Every day of this campaign, with distance, activations, leads
+              and people engaged as reported.
+            </small>
           </div>
 
           {dayRows.length ? (
-            <>
-              <div
-                ref={dayTimelineRef}
-                className="RST_DayTimeline"
-                onPointerDown={handleDayTimelinePointerDown}
-                onPointerMove={handleDayTimelinePointerMove}
-                onPointerUp={stopDayTimelineDrag}
-                onPointerCancel={stopDayTimelineDrag}
-                onPointerLeave={stopDayTimelineDrag}
-              >
-                <div className="RST_DayTimelineTrack">
-                  {dayRows.map((row, index) => {
-                    const futureDay = isFutureCampaignDay(row.day);
-
-                    return (
-                      <button
-                        key={`${row.day}-${index}`}
-                        type="button"
-                        disabled={futureDay}
-                        title={
-                          futureDay
-                            ? "Future campaign dates can't be accessed until that day arrives."
-                            : `Open campaign report for ${formatDate(row.day)}`
-                        }
-                        className={[
-                          "RST_DayTimelineItem",
-                          selectedDayIndex === index &&
-                            "RST_DayTimelineItem--active",
-                          futureDay &&
-                            "RST_DayTimelineItem--future",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                        onClick={() => {
-                          if (!futureDay) {
-                            setSelectedDayIndex(index);
-                          }
-                        }}
-                      >
-                        <span
-                          className={`RST_DayTimelineDot ${reportStatusClass(
-                            row.status,
-                          )}`}
-                        />
-
-                        <span className="RST_DayTimelineCopy">
-                          <small>
-                            Day {String(index + 1).padStart(2, "0")}
-                          </small>
-
-                          <strong>{formatDate(row.day)}</strong>
-
-                          <em>
-                            {futureDay
-                              ? "Upcoming · Locked"
-                              : reportStatusLabel(row.status)}
-                          </em>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {selectedDay && (
-                <div className="RST_DayDetail RST_DayDetail--wide">
-                  <div className="RST_DayDetailHeader">
-                    <div>
-                      <span>SELECTED CAMPAIGN DAY</span>
-                      <h3>{formatDate(selectedDay.day)}</h3>
-                    </div>
-
-                    <span className={`RST_ReportStatus ${reportStatusClass(selectedDay.status)}`}>
-                      {reportStatusLabel(selectedDay.status)}
-                    </span>
-                  </div>
-
-                  <div
-                    className={`RST_ReportMetricsZone ${
-                      reportDaySummaryLoading
-                        ? "RST_ReportMetricsZone--loading"
-                        : ""
-                    }`}
-                  >
-                    {reportDaySummaryLoading && (
-                      <div className="RST_ReportMetricsOverlay">
-                        <RefreshCw size={18} className="RST_Spin" />
-                        <span>Refreshing…</span>
-                      </div>
-                    )}
-
-                    <div className="RST_ReportMetrics">
-                      <div className="RST_ReportMetric RST_ReportMetric--blue">
-                        <span className="RST_ReportMetricIcon"><Route size={21} /></span>
-                        <span>
-                          <small>Distance covered</small>
-                          <strong>
-                            {reportDayDistanceKm != null
-                              ? `${reportDayDistanceKm.toFixed(2)} km`
-                              : selectedDay.distanceCoveredKm != null
-                                ? `${Number(selectedDay.distanceCoveredKm).toFixed(2)} km`
-                                : "0.00 km"}
-                          </strong>
-                        </span>
-                      </div>
-                      <div className="RST_ReportMetric RST_ReportMetric--green">
-                        <span className="RST_ReportMetricIcon"><Sparkles size={21} /></span>
-                        <span><small>Activations</small><strong>{selectedDay.activationsCount || 0}</strong></span>
-                      </div>
-                      <div className="RST_ReportMetric RST_ReportMetric--teal">
-                        <span className="RST_ReportMetricIcon"><CheckCircle2 size={21} /></span>
-                        <span><small>Leads collected</small><strong>{selectedDay.leadsCollected || 0}</strong></span>
-                      </div>
-                      <div className="RST_ReportMetric RST_ReportMetric--purple">
-                        <span className="RST_ReportMetricIcon"><Users size={21} /></span>
-                        <span><small>People engaged</small><strong>{selectedDay.peopleEngaged || 0}</strong></span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="RST_RouteNote">
-                    <MapPin size={20} />
-                    <div>
-                      <span>Route / campaign note</span>
-                      <strong>{selectedDay.routeNote || "No route note has been reported for this day."}</strong>
-                    </div>
-                  </div>
-
-                  {selectedDay.isAbsentDay && (
-                    <div className="RST_Absent">This day is marked as an absent / non-running campaign day.</div>
-                  )}
-
-                  {selectedDay.photos?.length > 0 && (
-                    <div className="RST_ReportPhotosWrap">
-                      <div className="RST_ReportPhotosLabel"><ImageIcon size={17} /> Photos from this day</div>
-                      <div className="RST_DayPhotos">
-                        {selectedDay.photos.slice(0, 6).map((url, index) => (
-                          <a key={`${url}-${index}`} href={url} target="_blank" rel="noreferrer">
-                            <img src={url} alt={`Campaign proof ${index + 1}`} />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
+            <DayWiseReportTable rows={dayRows} />
           ) : (
             <div className="RST_EmptyReport">
               <CalendarDays size={30} />
@@ -1796,7 +1290,7 @@ function TrackingPageContent({
               <p>Reports will appear here automatically when they are available.</p>
             </div>
           )}
-        </section> */}
+        </section>
 
         <section className="RST_BottomGrid">
           <div className="RST_ActivityCard">
@@ -1809,82 +1303,32 @@ function TrackingPageContent({
 
             {data.activity?.length ? (
               <ol className="RST_Activity">
-                {data.activity.slice(0, 8).map((item, index) => (
-                  <li key={`${item.label}-${item.at}-${index}`}>
-                    <span className="RST_ActivityDot" />
-                    <div>
-                      <strong>{item.label}</strong>
-                      <small>{formatDateTime(item.at)}</small>
-                    </div>
-                  </li>
-                ))}
+                {data.activity.slice(0, 8).map((item, index) => {
+                  const { Icon: ActivityIcon, tone } = activityVisual(
+                    item.label,
+                  );
+
+                  return (
+                    <li key={`${item.label}-${item.at}-${index}`}>
+                      <span
+                        className={`RST_ActivityIcon RST_ActivityIcon--${tone}`}
+                      >
+                        <ActivityIcon size={15} />
+                      </span>
+                      <div className="RST_ActivityBody">
+                        <strong>{item.label}</strong>
+                      </div>
+                      <small className="RST_ActivityTime">
+                        {formatDateTime(item.at)}
+                      </small>
+                    </li>
+                  );
+                })}
               </ol>
             ) : (
               <div className="RST_EmptyMini">
                 <Clock3 size={22} />
                 <strong>No campaign activity yet</strong>
-              </div>
-            )}
-          </div>
-
-          <div className="RST_ProgressCard">
-            <div className="RST_SectionHeading RST_SectionHeading--compact">
-              <div>
-                <span>CAMPAIGN PROGRESS</span>
-                <h2>Overall completion</h2>
-              </div>
-            </div>
-
-            <div className="RST_ProgressBody">
-              <div
-                className="RST_ProgressRing"
-                style={{ "--rst-progress": `${(campaignProgress ?? 0) * 3.6}deg` } as any}
-              >
-                <div>
-                  <strong>
-                    {campaignProgress === null
-                      ? stageMeta?.label || "Preparing"
-                      : `${campaignProgress}%`}
-                  </strong>
-                  <small>{campaignProgress === null ? "Status" : "Completed"}</small>
-                </div>
-              </div>
-
-              <div className="RST_ProgressStats">
-                <div>
-                  <span>Total Days</span>
-                  <strong>{summary.totalDays || "—"}</strong>
-                </div>
-                <div>
-                  <span>Days Completed</span>
-                  <strong>
-                    {data.onRoad?.day
-                      ? Math.max(0, data.onRoad.day)
-                      : data.journeyStage?.key === "completed"
-                        ? summary.totalDays || "—"
-                        : 0}
-                  </strong>
-                </div>
-                <div>
-                  <span>Days Remaining</span>
-                  <strong>
-                    {data.onRoad?.totalDays
-                      ? Math.max(
-                          0,
-                          data.onRoad.totalDays - data.onRoad.day,
-                        )
-                      : data.journeyStage?.key === "completed"
-                        ? 0
-                        : summary.totalDays || "—"}
-                  </strong>
-                </div>
-              </div>
-            </div>
-
-            {selectedDay?.routeNote && (
-              <div className="RST_ProgressRoute">
-                <MapPin size={16} />
-                <span>{selectedDay.routeNote}</span>
               </div>
             )}
           </div>
@@ -1898,22 +1342,7 @@ function TrackingPageContent({
             </div>
 
             {data.photos?.length ? (
-              <div className="RST_PhotoGrid">
-                {data.photos.slice(0, 6).map((photo, index) => (
-                  <a
-                    key={`${photo.url}-${index}`}
-                    href={photo.url}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <img
-                      src={photo.url}
-                      alt={`${photo.day || "Campaign"} photo ${index + 1}`}
-                    />
-                    <span>{photo.day || "Campaign"}</span>
-                  </a>
-                ))}
-              </div>
+              <PhotosGallery photos={data.photos} />
             ) : (
               <div className="RST_EmptyMini">
                 <ImageIcon size={22} />
@@ -1993,5 +1422,11 @@ export default function CampaignTrackingPage() {
     );
   }
 
-  return <TrackingPageContent mongoId={mongoId} token={token} />;
+  return (
+    <TrackingPageContent
+      mongoId={mongoId}
+      token={token}
+      userName={user?.name || ""}
+    />
+  );
 }
