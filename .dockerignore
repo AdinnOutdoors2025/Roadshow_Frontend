@@ -1,0 +1,33 @@
+# deps / build output
+node_modules
+.next
+out
+build
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# env files — never baked into images (passed as build secret / env_file)
+.env
+.env.*
+
+# VCS / tooling / local artefacts
+.git
+.gitignore
+.claude
+.qa
+.vscode
+.idea
+qa-reports
+test-results
+playwright-report
+tests
+docs
+_tmp_*.js
+tsc_report.txt
+/*.png
+*.md
+
+# docker
+Dockerfile
+.dockerignore
