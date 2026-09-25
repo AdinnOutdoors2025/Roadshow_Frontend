@@ -1,33 +1,22 @@
 # syntax=docker/dockerfile:1.7
-# Roadshow frontend (Next.js 16) — multi-stage, standalone output.
+# Roadshow frontend (Next.js 16) — runtime-only image.
+#
+# The app is built on the HOST first (npm run build:docker), then this image
+# receives ONLY the standalone build output (.next/standalone, .next/static,
+# public). No source code, no npm install of the project, no build step here.
+# NEXT_PUBLIC_* values are inlined at host build time from the local .env.
 
 ARG NODE_VERSION=24
 
-# ---------- deps ----------
-FROM node:${NODE_VERSION}-bookworm-slim AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
-
-# ---------- build ----------
-FROM node:${NODE_VERSION}-bookworm-slim AS builder
-WORKDIR /app
-ENV NEXT_TELEMETRY_DISABLED=1 \
-    NEXT_OUTPUT_STANDALONE=true
-
-# NEXT_PUBLIC_* values are inlined into the browser bundle at build time.
-# The real .env is mounted as a BuildKit secret for the build step only
-# (never copied into a layer); these args override individual values.
-ARG NEXT_PUBLIC_API_BASE
-ARG NEXT_PUBLIC_API_BASE_LIVE
-ARG INTERNAL_API_BASE
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-# Standalone output copies .env files next to server.js — strip them in the
-# same step so the secret never lands in a layer (runtime uses env_file).
-RUN --mount=type=secret,id=frontend_env,target=/app/.env,required=false \
-    npm run build && rm -f .next/standalone/.env .next/standalone/.env.*
+# ---------- sharp (Linux binary for next/image) ----------
+# A Windows host build traces only the win32 sharp binary; install the Linux
+# one at the same version so image optimisation works inside the container.
+FROM node:${NODE_VERSION}-bookworm-slim AS sharp
+WORKDIR /sharp
+COPY .next/standalone/node_modules/sharp/package.json /tmp/sharp-package.json
+RUN npm init -y >/dev/null \
+    && npm install --no-audit --no-fund --omit=dev \
+       "sharp@$(node -p "require('/tmp/sharp-package.json').version")"
 
 # ---------- runtime ----------
 FROM node:${NODE_VERSION}-bookworm-slim AS runner
@@ -37,9 +26,10 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 
-COPY --from=builder --chown=node:node /app/public ./public
-COPY --from=builder --chown=node:node /app/.next/standalone ./
-COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+COPY --chown=node:node public ./public
+COPY --chown=node:node .next/standalone ./
+COPY --chown=node:node .next/static ./.next/static
+COPY --from=sharp --chown=node:node /sharp/node_modules ./node_modules
 
 USER node
 EXPOSE 3000

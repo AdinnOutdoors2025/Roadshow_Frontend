@@ -1,33 +1,12 @@
-# deps / build output
-node_modules
-.next
-out
-build
-coverage
-*.tsbuildinfo
-next-env.d.ts
+# Runtime-only image: send ONLY the host-built output to Docker.
+# Everything else (src, node_modules, docs, tests, .git, …) is excluded.
+*
+!public
+!.next/standalone
+!.next/static
 
-# env files — never baked into images (passed as build secret / env_file)
-.env
-.env.*
-
-# VCS / tooling / local artefacts
-.git
-.gitignore
-.claude
-.qa
-.vscode
-.idea
-qa-reports
-test-results
-playwright-report
-tests
-docs
-_tmp_*.js
-tsc_report.txt
-/*.png
-*.md
-
-# docker
-Dockerfile
-.dockerignore
+# env files copied into the standalone output by Next.js — never bake them in
+# (runtime env comes from env_file / -e).
+.next/standalone/.env
+.next/standalone/.env.*
+.next/standalone/.next/cache
