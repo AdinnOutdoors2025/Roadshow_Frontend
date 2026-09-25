@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   reactStrictMode: false,
+  // Standalone output only for Docker builds (set in Dockerfile); Vercel/Netlify
+  // builds keep the default output.
+  ...(process.env.NEXT_OUTPUT_STANDALONE === "true" ? { output: "standalone" as const } : {}),
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
