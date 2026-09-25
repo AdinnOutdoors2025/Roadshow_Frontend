@@ -184,7 +184,8 @@ export const getVehicleErrors = (vehicle, details) => {
 
 export default function CampaignDetailsPage() {
   const router = useRouter();
-  const { user, openAuth, authLoading, isAgency, logoutUser } = useAuth();
+  const { user, openAuth, authLoading, isAgency, logoutUser, justLoggedOut } =
+    useAuth();
 
   const agencyBusiness = isAgency ? user?.business || null : null;
 
@@ -262,9 +263,11 @@ export default function CampaignDetailsPage() {
       if (!authPromptedRef.current) {
         authPromptedRef.current = true;
 
-        toast.error("Please login to continue booking.", {
-          id: "campaign-details-login-required",
-        });
+        if (!justLoggedOut) {
+          toast.error("Please login to continue booking.", {
+            id: "campaign-details-login-required",
+          });
+        }
 
         openAuth("login");
       }
@@ -273,7 +276,7 @@ export default function CampaignDetailsPage() {
     }
 
     authPromptedRef.current = false;
-  }, [user, authLoading, openAuth]);
+  }, [user, authLoading, openAuth, justLoggedOut]);
 
   /* ── Catalogue ─────────────────────────────────────────────────────── */
   useEffect(() => {

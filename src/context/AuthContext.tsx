@@ -63,11 +63,18 @@ interface AuthContextType {
   screen: AuthScreen;
   /** True when the signed-in customer is a verified agency. */
   isAgency: boolean;
+  /**
+   * True for a brief window right after logoutUser() runs. Restricted
+   * booking pages (CampaignRequest, campaign-details, review-order) use
+   * this to skip their own "please login" toast so a manual sign-out
+   * shows a single combined notification instead of two stacked ones.
+   */
+  justLoggedOut: boolean;
   setScreen: (screen: AuthScreen) => void;
   openAuth: (screen?: AuthScreen) => void;
   closeAuth: () => void;
   loginUser: (user: User, token: string) => void;
-  logoutUser: () => void;
+  logoutUser: (message?: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -78,6 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [justLoggedOut, setJustLoggedOut] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("roadshow_user");
@@ -162,13 +170,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setOpen(false);
   }, []);
 
-  const logoutUser = useCallback(() => {
+  const logoutUser = useCallback((message?: string) => {
     setUser(null);
     setToken(null);
     localStorage.removeItem("roadshow_user");
     localStorage.removeItem("roadshow_token");
     localStorage.removeItem("roadshow_session_expiry");
-    toast.success("You have been signed out successfully.");
+
+    setJustLoggedOut(true);
+    toast.success(message ?? "You have been signed out successfully.", {
+      id: "roadshow-auth-notice",
+    });
+    /* Reset shortly after so a later, unrelated "please login" prompt
+       (e.g. a fresh session expiry) isn't silently swallowed. */
+    setTimeout(() => setJustLoggedOut(false), 1000);
   }, []);
 
   return (
@@ -180,6 +195,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         open,
         screen,
         isAgency: user?.accountType === "agency",
+        justLoggedOut,
         setScreen,
         openAuth,
         closeAuth,

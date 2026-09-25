@@ -75,7 +75,7 @@ import "./page.css";
 
 export default function ReviewOrderPage() {
   const router = useRouter();
-  const { user, openAuth, authLoading, isAgency } = useAuth();
+  const { user, openAuth, authLoading, isAgency, justLoggedOut } = useAuth();
 
   const agencyBusiness = isAgency ? user?.business || null : null;
 
@@ -108,9 +108,11 @@ export default function ReviewOrderPage() {
       if (!authPromptedRef.current) {
         authPromptedRef.current = true;
 
-        toast.error("Please login to continue booking.", {
-          id: "review-order-login-required",
-        });
+        if (!justLoggedOut) {
+          toast.error("Please login to continue booking.", {
+            id: "review-order-login-required",
+          });
+        }
 
         openAuth("login");
       }
@@ -119,7 +121,7 @@ export default function ReviewOrderPage() {
     }
 
     authPromptedRef.current = false;
-  }, [user, authLoading, openAuth]);
+  }, [user, authLoading, openAuth, justLoggedOut]);
 
   /* ── Rebuild the order from cart + draft ─────────────────────────────
      Re-runs on a customer switch so the review screen shows the order of

@@ -694,7 +694,22 @@ export default function Navbar() {
       return;
     }
     if (action === "signout") {
-      logoutUser();
+      const RESTRICTED_BOOKING_PREFIXES = [
+        "/roadshow/CampaignRequest",
+        "/roadshow/campaign-details",
+        "/roadshow/review-order",
+        "/roadshow/my-bookings",
+        "/roadshow/booking-request-submitted",
+      ];
+      const onRestrictedPage = RESTRICTED_BOOKING_PREFIXES.some((prefix) =>
+        pathname?.startsWith(prefix)
+      );
+
+      logoutUser(
+        onRestrictedPage
+          ? "You have been signed out successfully. Please login to continue booking."
+          : undefined
+      );
     }
   };
   if (!mounted)

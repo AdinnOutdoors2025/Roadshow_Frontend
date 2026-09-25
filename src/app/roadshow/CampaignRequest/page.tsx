@@ -100,7 +100,7 @@ const getNextAvailableDate = (
 /* CAMPAIGN REQUEST PAGE */
 export default function CampaignRequestPage() {
   const router = useRouter();
-  const { user, openAuth, authLoading, isAgency } = useAuth();
+  const { user, openAuth, authLoading, isAgency, justLoggedOut } = useAuth();
 
   /* Agencies verified their GST at signup — nothing here is re-typed */
   const agencyBusiness = isAgency ? user?.business || null : null;
@@ -226,12 +226,14 @@ export default function CampaignRequestPage() {
       if (!authPromptedRef.current) {
         authPromptedRef.current = true;
 
-        toast.error(
-          "Please login to continue booking.",
-          {
-            id: "campaign-login-required",
-          }
-        );
+        if (!justLoggedOut) {
+          toast.error(
+            "Please login to continue booking.",
+            {
+              id: "campaign-login-required",
+            }
+          );
+        }
 
         openAuth("login");
       }
@@ -246,7 +248,7 @@ export default function CampaignRequestPage() {
       phone: user?.phone || "",
       email: user?.email || "",
     });
-  }, [user, authLoading, openAuth]);
+  }, [user, authLoading, openAuth, justLoggedOut]);
 
   /* Load all campaign vehicles through API */
   useEffect(() => {
