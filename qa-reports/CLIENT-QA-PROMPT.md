@@ -6,6 +6,16 @@ Discover exact routes from `src/app/` before testing — don't assume the list a
 
 **Never touch `/admin/*`** — read-only reference only if a client page calls a shared/admin-owned API.
 
+## Pre-flight (do this before running any e2e/Playwright test)
+Check `src/BaseUrl.tsx`'s `baseUrl` (and `IS_LIVE`) **and** every `NEXT_PUBLIC_API_BASE`
+consumer — this codebase has **two separate base-URL constants** and they can drift out of
+sync (confirmed 2026-09-16: `BaseUrl.tsx` was pointed at the live production backend while
+`tests/e2e/client-mock-data.ts` only intercepts `localhost:3001`, so the whole "mocked" e2e
+suite silently hit production instead). If either constant points anywhere other than
+`localhost:3001`/the mock's target, **stop and confirm with the user before running any test
+that submits data** (Contact, booking creation, order edits) — don't assume mocked tests are
+safe just because they exist and use `page.route()`.
+
 ## Hard constraints (non-negotiable)
 - No redesign, no layout/CSS changes beyond the smallest safe fix. **Never touch layout CSS to fix overflow** — find the actual overflowing element.
 - No removing/altering: animations, smooth scrolling, loaders, 3D sections, navbar behavior, booking flow, routes.

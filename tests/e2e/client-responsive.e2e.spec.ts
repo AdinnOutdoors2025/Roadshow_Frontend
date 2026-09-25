@@ -78,22 +78,26 @@ for (const viewport of VIEWPORTS) {
 test.describe("QA-09 navigation shell on mobile", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test("mobile menu opens, lists client links, and closes", async ({ page }) => {
+  test("account menu opens, lists sign-in options, and closes", async ({ page }) => {
     const state = makeBackendState();
     await installMockBackend(page, state);
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await waitForMainLoaderGone(page);
 
-    await page.getByRole("button", { name: "Open account menu" }).click();
-    const menu = page.getByLabel("Account menu");
-    await expect(menu).toBeVisible({ timeout: 5_000 });
+    // Single toggle button; its accessible name stays "Account menu" in both
+    // states (aria-expanded flips instead of the label) — see Navbar.tsx.
+    const accountButton = page.getByRole("button", { name: "Account menu" });
+    await accountButton.click();
 
-    const mobileNav = menu.getByLabel("Mobile navigation");
-    await expect(mobileNav).toBeVisible();
+    // No separate labelled landmark on the dropdown panel itself, so assert
+    // via its actual signed-out content (Sign In / Sign Up actions).
+    const signInAction = page.getByRole("button", { name: "Sign In" });
+    await expect(signInAction).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole("button", { name: "Sign Up" })).toBeVisible();
 
-    await page.getByRole("button", { name: "Close account menu" }).click();
-    await expect(menu).toBeHidden({ timeout: 5_000 });
+    await accountButton.click();
+    await expect(signInAction).toBeHidden({ timeout: 5_000 });
   });
 
   test("home page content is vertically scrollable (smooth-scroll shell intact)", async ({ page }) => {
@@ -128,7 +132,9 @@ test.describe("QA-09 desktop navigation", () => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await waitForMainLoaderGone(page);
 
-    await expect(page.getByLabel("Main navigation")).toBeVisible({ timeout: 10_000 });
+    // The nav element (Navbar.tsx's `.RS_TabBar`) carries no aria-label, so
+    // assert on the landmark itself rather than an accessible name.
+    await expect(page.locator("nav.RS_TabBar")).toBeVisible({ timeout: 10_000 });
   });
 });
 

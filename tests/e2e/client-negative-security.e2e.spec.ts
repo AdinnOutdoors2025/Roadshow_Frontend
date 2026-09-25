@@ -134,7 +134,19 @@ test.describe("QA-08 Negative", () => {
 
     const button = page.getByRole("button", { name: /submit enquiry/i });
     await button.click();
-    await button.click({ noWaitAfter: true }).catch(() => {});
+
+    // Every valid submit now opens a "Human Verification" math captcha
+    // before the real POST fires (Contact/page.tsx's openCaptchaPopup) —
+    // solve it, then duplicate-click the actual commit action (Verify &
+    // Continue) to exercise the same double-submit guard the test
+    // originally targeted.
+    const question = await page.getByText(/^\d+ \+ \d+ = \?$/).innerText();
+    const [a, b] = question.match(/\d+/g)!.map(Number);
+    await page.getByLabel("Security question answer").fill(String(a + b));
+
+    const verifyButton = page.getByRole("button", { name: "Verify & Continue" });
+    await verifyButton.click();
+    await verifyButton.click({ noWaitAfter: true }).catch(() => {});
 
     await expect
       .poll(() => state.contactPosts, { timeout: 8_000 })
