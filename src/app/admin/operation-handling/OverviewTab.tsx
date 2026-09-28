@@ -4,6 +4,7 @@
 
 "use client";
 
+import { baseUrl } from "@/BaseUrl";
 import {
     X, ChevronRight, ChevronDown, Clock, Phone, Mail,
     MapPin, Hash, User, Tag, Calendar, Building2,
@@ -847,7 +848,7 @@ function DocItem({ docPath, label, notes, by, at }: {
             .split("/")
             .map((segment) => encodeURIComponent(segment))
             .join("/");
-        return `http://localhost:3001${encodedPath}`;
+        return `${baseUrl}${encodedPath}`;
     };
 
     const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);

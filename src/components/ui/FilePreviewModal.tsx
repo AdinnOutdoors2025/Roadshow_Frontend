@@ -1,4 +1,5 @@
 "use client";
+import { baseUrl } from "@/BaseUrl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, X, Loader2, FileText } from "lucide-react";
 
@@ -18,7 +19,7 @@ export function resolveFileUrl(p: string): string {
     .split("/")
     .map((segment) => encodeURIComponent(segment))
     .join("/");
-  return `${process.env.NEXT_PUBLIC_API_BASE?.replace("/api", "") || "http://localhost:3001"}${encoded}`;
+  return `${baseUrl}${encoded}`;
 }
 
 interface FilePreviewModalProps {

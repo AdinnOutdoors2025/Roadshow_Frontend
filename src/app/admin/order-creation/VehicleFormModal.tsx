@@ -2,6 +2,7 @@
 // @ts-nocheck
 "use client";
 
+import { baseUrl } from "@/BaseUrl";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { VehicleConfig, AdditionalCharge } from "./AdminOrderForm";
 import { PricingPreview, getPackagesForOrder } from "../../utils/Adminorderapi";
@@ -1539,7 +1540,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                     {(form.existingImages || []).map((url: string, idx: number) => (
                       <div key={idx} className="relative group rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100"
                         style={{ width: "60px", height: "60px" }}>
-                        <img src={url.startsWith("http") ? url : `http://localhost:3001${url}`} alt="" className="w-full h-full object-cover" />
+                        <img src={url.startsWith("http") ? url : `${baseUrl}${url}`} alt="" className="w-full h-full object-cover" />
                         <button
                           type="button"
                           onClick={() => set("existingImages", (form.existingImages || []).filter((_: any, i: number) => i !== idx) as any)}

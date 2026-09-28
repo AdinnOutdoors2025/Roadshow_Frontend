@@ -4,6 +4,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
+import { baseUrl } from "@/BaseUrl";
 import { useRef, useState } from "react";
 import {
     HiOutlineShoppingBag,
@@ -190,7 +191,7 @@ export default function OrderDetailDrawer({
     const getImageUrl = (path: string) => {
         if (!path) return "";
         if (path.startsWith("http")) return path;
-        return `http://localhost:3001${path.startsWith("/") ? path : `/${path}`}`;
+        return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
     };
 
     const getVehicleTypeName = (vehicleTypeId: string) => {

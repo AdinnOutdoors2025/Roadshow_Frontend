@@ -1,3 +1,4 @@
+import { baseUrl } from "@/BaseUrl";
 import { useState } from "react";
 import { Download } from "lucide-react";
 import FilePreviewModal from "@/components/ui/FilePreviewModal";
@@ -11,7 +12,7 @@ const fmtDatetime = (s?: string) =>
 const getImageUrl = (url: string) => {
     if (!url) return null;
     if (url.startsWith("http")) return url;
-    return `${process.env.NEXT_PUBLIC_API_BASE?.replace("/api", "") || "http://localhost:3001"}${url}`;
+    return `${baseUrl}${url}`;
 };
 
 export default function UnavailableHistoryTab({ order, vehicleTypes }: { order: any; vehicleTypes: any[] }) {

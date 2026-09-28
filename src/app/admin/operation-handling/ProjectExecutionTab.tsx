@@ -4,6 +4,7 @@
 // @ts-nocheck
 "use client";
 
+import { baseUrl } from "@/BaseUrl";
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -436,7 +437,7 @@ function DriverForm({ vehicleIndex, slotIndex, orderId, existingEntry, onSaved, 
           </label>
           {isSaved && existingEntry?.gatepassPhoto ? (
             <a
-              href={existingEntry.gatepassPhoto.startsWith("http") ? existingEntry.gatepassPhoto : `http://localhost:3001${existingEntry.gatepassPhoto}`}
+              href={existingEntry.gatepassPhoto.startsWith("http") ? existingEntry.gatepassPhoto : `${baseUrl}${existingEntry.gatepassPhoto}`}
               target="_blank" rel="noreferrer"
               className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-all"
             >

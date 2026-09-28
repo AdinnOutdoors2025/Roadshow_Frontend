@@ -4,6 +4,7 @@
 // @ts-nocheck
 "use client";
 
+import { baseUrl } from "@/BaseUrl";
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -236,7 +237,7 @@ export default function DriverForm({
               href={
                 existingEntry.gatepassPhoto.startsWith("http")
                   ? existingEntry.gatepassPhoto
-                  : `http://localhost:3001${existingEntry.gatepassPhoto}`
+                  : `${baseUrl}${existingEntry.gatepassPhoto}`
               }
               target="_blank"
               rel="noreferrer"

@@ -4,6 +4,7 @@
 
 "use client";
 
+import { baseUrl } from "@/BaseUrl";
 import {
     X, ChevronRight, ChevronDown, Clock, Phone, Mail,
     MapPin, Hash, User, Tag, Calendar, Building2,
@@ -135,7 +136,7 @@ const fmtRelative = (s?: string) => {
 const getFileUrl = (p: string) => {
     if (!p) return "";
     if (p.startsWith("http")) return p;
-    return `http://localhost:3001${p.startsWith("/") ? p : `/${p}`}`;
+    return `${baseUrl}${p.startsWith("/") ? p : `/${p}`}`;
 };
 
 const isImage = (f: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f);
