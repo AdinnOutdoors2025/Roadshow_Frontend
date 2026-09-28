@@ -2,7 +2,7 @@
 
 This file is a reusable, stack-agnostic policy for gating feature/module completion behind a QA workflow. It's designed to be copied verbatim into any other project's `CLAUDE.md` (or an equivalent instructions file) to reproduce the same behavior there.
 
-## Core rule
+## Core rules
 
 ```
 Do not run QA after every prompt.
