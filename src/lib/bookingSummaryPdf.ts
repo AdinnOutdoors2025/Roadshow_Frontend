@@ -27,10 +27,29 @@ import { createElement } from "react";
    mirroring the jspdf/html2canvas dynamic-import convention below. */
 const FALLBACK_VEHICLE_ICON = "/images/Truck_Image.jpg";
 
+/* Local duplicate of roadshowVehicles.tsx's own helper (not exported there)
+   — kept local for the same reason FALLBACK_VEHICLE_ICON is above. */
+const normalizeModelName = (value: unknown): string =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+
 export type PdfVehicleType = {
   vehicleId?: string;
+  /* Package rate-card's vehicleType id + the model name string — a booking
+     line is placed against a Package (type + model name), not a specific
+     vehicleDetails catalog document, so these are what resolveVehicleImages
+     actually has to match the live catalog against. */
+  vehicleTypeId?: string;
+  vehicleModel?: string;
   vehicleType?: string | { _id?: string; name?: string } | null;
   vehicleName?: string;
+  /* Pre-resolved server-side (ClientRequestController's attachTrackingSummary)
+     by matching vehicleType directly against the vehicleDetails catalog —
+     when a caller already supplies this, it's at least as good as anything
+     resolveVehicleImages could recompute, so it's used as-is. */
+  vehicleTypeImage?: string | null;
   quantity?: number;
   fromDate?: string;
   toDate?: string;
@@ -77,10 +96,35 @@ export type BookingSummaryPdfData = {
   estimatedTotal?: number;
 };
 
-/** Best-effort real photo per vehicle line, matched by vehicleId against
- *  the public vehicle inventory. Falls back to the generic vehicle icon
- *  per line — offline, a deleted vehicle, or a missing vehicleId all
- *  degrade to that rather than failing the whole PDF. */
+/** Resolves vehicle.vehicleType whether it arrives as a flat id string (the
+ *  emailed-PDF path) or a populated {_id, name} object (ClientRequestController's
+ *  /client-requests/:id response). */
+const extractVehicleTypeId = (vehicle: PdfVehicleType): string => {
+  if (vehicle.vehicleTypeId) return String(vehicle.vehicleTypeId);
+
+  const type = vehicle.vehicleType;
+  if (type && typeof type === "object") return String(type._id || "");
+  if (typeof type === "string") return type;
+
+  return "";
+};
+
+/** Best-effort real photo per vehicle line, in priority order:
+ *  1. vehicleTypeImage, when the caller already resolved one server-side
+ *     (ClientRequestController does this by matching vehicleType directly
+ *     against the vehicleDetails catalog).
+ *  2. An exact vehicleId match against the public vehicle inventory (valid
+ *     if a caller ever has a real vehicleDetails catalog id).
+ *  3. vehicleType + model name match — what admin-created bookings actually
+ *     carry, since those are placed against a Package rate card, not a
+ *     specific catalog document.
+ *  4. vehicleType alone — a booking's Package-level "model" (e.g.
+ *     "Non-Customizable Vehicle") is a pricing-tier label, not the catalog's
+ *     model name, so it very often can't match anything in step 3 even when
+ *     the catalog has exactly one (obviously correct) photo for that type.
+ *  Falls back to the generic vehicle icon per line — offline, a deleted
+ *  vehicle, or no match at all degrade to that rather than failing the
+ *  whole PDF. */
 export async function resolveVehicleImages(vehicleTypes: PdfVehicleType[]): Promise<string[]> {
   if (!vehicleTypes?.length) return [];
 
@@ -89,10 +133,31 @@ export async function resolveVehicleImages(vehicleTypes: PdfVehicleType[]): Prom
     const vehicles = await fetchAllRoadshowVehicles();
     const imageById = new Map(vehicles.map((vehicle) => [String(vehicle.id), vehicle.image]));
 
-    return vehicleTypes.map(
-      (vehicle) =>
-        (vehicle.vehicleId && imageById.get(String(vehicle.vehicleId))) || FALLBACK_VEHICLE_ICON
-    );
+    return vehicleTypes.map((vehicle) => {
+      if (vehicle.vehicleTypeImage) return vehicle.vehicleTypeImage;
+
+      const direct = vehicle.vehicleId && imageById.get(String(vehicle.vehicleId));
+      if (direct) return direct;
+
+      const typeId = extractVehicleTypeId(vehicle);
+      const modelKey = normalizeModelName(vehicle.vehicleModel);
+
+      const matchedByTypeAndModel =
+        typeId && modelKey
+          ? vehicles.find(
+              (v) => String(v.vehicleTypeId) === typeId && normalizeModelName(v.name) === modelKey
+            )
+          : null;
+
+      const matchedByTypeOnly =
+        !matchedByTypeAndModel && typeId
+          ? vehicles.find((v) => String(v.vehicleTypeId) === typeId)
+          : null;
+
+      return (
+        matchedByTypeAndModel?.image || matchedByTypeOnly?.image || FALLBACK_VEHICLE_ICON
+      );
+    });
   } catch {
     return vehicleTypes.map(() => FALLBACK_VEHICLE_ICON);
   }
