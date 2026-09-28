@@ -44,7 +44,7 @@ const LOCAL_MAIL_IMAGE_URL =
   "http://localhost:3000";
 
 const PRODUCTION_MAIL_IMAGE_URL =
-  "https://roadshowfrontend.netlify.app";
+  "https://www.adinnroadshows.com";
 
 export const mailImageUrl = IS_LIVE
   ? PRODUCTION_MAIL_IMAGE_URL
