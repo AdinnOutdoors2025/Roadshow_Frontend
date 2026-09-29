@@ -39,6 +39,7 @@ import {
   MeshBasicMaterial,
   Object3D,
   PerspectiveCamera,
+  RepeatWrapping,
   SRGBColorSpace,
   Texture,
   TextureLoader,
@@ -179,6 +180,11 @@ const HYBRID_NON_CABIN_BRANDING_MESH_NAMES = HYBRID_LED_BRANDING_MESH_NAMES.filt
 );
 
 const DEMO_VIDEO_SRC = "/assets/demo-campaign.mp4";
+
+// ultra.glb only: plays this video on the surfaceShader6 material (matched by material name).
+const ULTRA_LED_VIDEO_VEHICLE_ID = "ultra";
+const ULTRA_LED_VIDEO_MATERIAL_NAME = "surfaceShader6";
+const ULTRA_LED_VIDEO_SRC = "/models/led-video.mp4";
 
 const ENABLE_LED_VIDEO_TEXTURE = false;
 
@@ -1350,7 +1356,7 @@ function useSingleSideBrandingTextures(enabled: boolean, maxAnisotropy: number) 
   return textures;
 }
 
-function useLedVideoTexture(src: string, enabled: boolean) {
+function useLedVideoTexture(src: string, enabled: boolean, bypassGlobalFlag = false) {
   const [state, setState] = useState<{
     texture: VideoTexture | null;
 
@@ -1366,7 +1372,7 @@ function useLedVideoTexture(src: string, enabled: boolean) {
   });
 
   useEffect(() => {
-    if (!ENABLE_LED_VIDEO_TEXTURE || !enabled) {
+    if ((!ENABLE_LED_VIDEO_TEXTURE && !bypassGlobalFlag) || !enabled) {
       setState({
         texture: null,
 
@@ -1516,7 +1522,7 @@ function useLedVideoTexture(src: string, enabled: boolean) {
 
       texture.dispose();
     };
-  }, [src, enabled]);
+  }, [src, enabled, bypassGlobalFlag]);
 
   return state;
 }
@@ -1878,6 +1884,12 @@ function VehicleModel({ vehicle }: { vehicle: VehicleItem }) {
     shouldLoadLedVideoTexture,
   );
 
+  const { texture: ultraLedVideoTexture, isReady: isUltraLedVideoReady } = useLedVideoTexture(
+    ULTRA_LED_VIDEO_SRC,
+    vehicle.id === ULTRA_LED_VIDEO_VEHICLE_ID,
+    true,
+  );
+
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true) as Group;
     const clonedMaterialMap = new Map<Mesh, any[]>();
@@ -2141,6 +2153,29 @@ function VehicleModel({ vehicle }: { vehicle: VehicleItem }) {
             }
           }
 
+          if (
+            ultraLedVideoTexture &&
+            isUltraLedVideoReady &&
+            vehicle.id === ULTRA_LED_VIDEO_VEHICLE_ID &&
+            material.name === ULTRA_LED_VIDEO_MATERIAL_NAME
+          ) {
+            // surfaceShader6 UVs sit outside 0..1 (u -2..-1, v -3..-2) and rely on the GLB's
+            // default repeat sampler; the shared video hook clamps, which samples one edge texel (black).
+            if (ultraLedVideoTexture.wrapS !== RepeatWrapping) {
+              ultraLedVideoTexture.wrapS = RepeatWrapping;
+              ultraLedVideoTexture.wrapT = RepeatWrapping;
+              ultraLedVideoTexture.needsUpdate = true;
+            }
+
+            material.map = ultraLedVideoTexture;
+
+            // surfaceShader6 also glows its old screen image via emissiveMap (strength 2);
+            // swap it too so the video is not overlaid by the static image.
+            if (material.emissiveMap) {
+              material.emissiveMap = ultraLedVideoTexture;
+            }
+          }
+
           material.needsUpdate = true;
         });
       }
@@ -2164,6 +2199,8 @@ function VehicleModel({ vehicle }: { vehicle: VehicleItem }) {
     vehicle,
     ledVideoTexture,
     isVideoReady,
+    ultraLedVideoTexture,
+    isUltraLedVideoReady,
     vehicleLogoTexture,
     hybridLedBrandingTextures,
     singleSideBrandingTextures,
