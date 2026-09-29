@@ -74,6 +74,18 @@ const VEHICLES: VehicleItem[] = [
   },
 
   {
+    id: "ultra_17",
+
+    label: "3 Sided LED 17ft",
+
+    path: "/models/ultra_17.glb",
+
+    scale: 1,
+
+    rotationY: -0.25,
+  },
+
+  {
     id: "l_type_led",
 
     label: "2 Sided LED",
@@ -277,6 +289,15 @@ const AFTER_SWITCH_CAMERA_CONFIG_BY_VEHICLE: Record<string, VehicleCameraConfig>
   },
 
   ultra: {
+    position: [6.85, 1.42, 7.75],
+    fov: 30.4,
+    boundsMargin: 1.28,
+    zoomSpeed: 0.42,
+    minDistance: 5.1,
+    maxDistance: 10.2,
+  },
+
+  ultra_17: {
     position: [6.85, 1.42, 7.75],
     fov: 30.4,
     boundsMargin: 1.28,
