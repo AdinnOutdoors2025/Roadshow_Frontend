@@ -19,16 +19,30 @@ export const dynamic = "force-dynamic";
 
 async function fetchBookingSummaryData(orderId: string): Promise<BookingSummaryPdfData | null> {
   const secret = process.env.INTERNAL_API_SECRET || "";
+  const url = `${API_BASE}admin/internal/orders/${orderId}/booking-summary-data`;
 
-  const res = await fetch(`${API_BASE}admin/internal/orders/${orderId}/booking-summary-data`, {
-    method: "GET",
-    headers: { "x-internal-secret": secret },
-    cache: "no-store",
-  });
+  /* A network-level failure (unreachable INTERNAL_API_BASE, DNS, refused
+     connection) used to throw here and 500 the whole route — Puppeteer then
+     never saw PdfReadySignal and the campaign mail went out with no PDF.
+     Degrade to the "not found" page instead, and log why. */
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "GET",
+      headers: { "x-internal-secret": secret },
+      cache: "no-store",
+    });
+  } catch (error) {
+    console.error(`print-summary: fetch failed for ${url} —`, (error as Error)?.message);
+    return null;
+  }
 
   const result = await res.json().catch(() => null);
 
-  if (!res.ok || !result?.success || !result?.data) return null;
+  if (!res.ok || !result?.success || !result?.data) {
+    console.error(`print-summary: ${url} -> ${res.status} ${result?.message || ""}`);
+    return null;
+  }
 
   return result.data as BookingSummaryPdfData;
 }

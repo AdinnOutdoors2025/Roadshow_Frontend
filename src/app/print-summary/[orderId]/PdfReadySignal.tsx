@@ -30,7 +30,9 @@ function waitForImages(): Promise<void> {
 
   return Promise.all(
     images.map((img) =>
-      img.complete && img.naturalWidth > 0
+      // complete is also true for an image that already failed (naturalWidth
+      // 0) — its error event has fired already, so waiting on it would hang.
+      img.complete
         ? Promise.resolve()
         : new Promise<void>((resolve) => {
             img.addEventListener("load", () => resolve(), { once: true });
@@ -46,7 +48,11 @@ export default function PdfReadySignal() {
 
     const fontsReady = document.fonts?.ready ?? Promise.resolve();
 
-    Promise.all([fontsReady, waitForImages()]).then(() => {
+    // Hard cap below Puppeteer's 20s waitForFunction timeout, so one stuck
+    // font/image yields a PDF (maybe missing that asset) instead of no PDF.
+    const safetyTimeout = new Promise<void>((resolve) => setTimeout(resolve, 12000));
+
+    Promise.race([Promise.all([fontsReady, waitForImages()]), safetyTimeout]).then(() => {
       if (cancelled) return;
 
       window.__BOOKING_SUMMARY_READY__ = true;
