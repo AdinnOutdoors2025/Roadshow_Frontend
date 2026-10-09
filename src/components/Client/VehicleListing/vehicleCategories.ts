@@ -97,11 +97,25 @@ export const categoryLabelOf = (
   );
 };
 
+/* Display order of the "All" tab: LED first, then Hybrid, then the rest.
+   Independent of the tab-pill order in VEHICLE_CATEGORIES. */
+const ALL_TAB_ORDER = ["led", "hybrid", "flex", UNCATEGORISED_ID];
+
+const allTabRank = (vehicle: RoadshowVehicle): number => {
+  const rank = ALL_TAB_ORDER.indexOf(categoryIdOf(vehicle));
+
+  return rank === -1 ? ALL_TAB_ORDER.length : rank;
+};
+
 export const filterByCategory = (
   vehicles: RoadshowVehicle[],
   categoryId: string
 ): RoadshowVehicle[] => {
-  if (categoryId === ALL_CATEGORY_ID) return vehicles;
+  /* Stable sort — vehicles keep their API (newest-first) order inside
+     each group. Copied first so the caller's array is never mutated. */
+  if (categoryId === ALL_CATEGORY_ID) {
+    return [...vehicles].sort((a, b) => allTabRank(a) - allTabRank(b));
+  }
 
   return vehicles.filter(
     (vehicle) => categoryIdOf(vehicle) === categoryId
