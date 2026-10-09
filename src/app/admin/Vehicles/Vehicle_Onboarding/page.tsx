@@ -825,7 +825,7 @@ const AddVehicleModal = ({
         setIsCheckingDuplicate(true);
         try {
           const isDuplicate = await onCheckDuplicate(cleanValue, editingVehicle?.registrationNumber);
-          if (isDuplicate && !editingVehicle) {
+          if (isDuplicate) {
             setRegistrationError("This registration number already exists");
           } else {
             setRegistrationError("");
@@ -942,7 +942,7 @@ const AddVehicleModal = ({
     }
 
     const isDuplicate = await onCheckDuplicate(cleanReg, editingVehicle?.registrationNumber);
-    if (isDuplicate && !editingVehicle) {
+    if (isDuplicate) {
       toast.error("This registration number already exists", { position: "bottom-right", autoClose: 3000 });
       return;
     }
@@ -1638,7 +1638,7 @@ export default function VehicleOnboardingForm() {
       return false;
     } catch (error) {
       console.error("Save step error:", error);
-      toast.error("Failed to save step", { position: "bottom-right", autoClose: 3000 });
+      toast.error(error?.response?.data?.message || "Failed to save step", { position: "bottom-right", autoClose: 3000 });
       return false;
     }
   };
