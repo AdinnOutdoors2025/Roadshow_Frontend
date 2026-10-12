@@ -723,9 +723,9 @@ export default function ContactPage() {
       return "Please enter a valid contact number.";
     }
 
-    if (!form.email.trim()) {
-      return "Please enter your email address.";
-    }
+    // if (!form.email.trim()) {
+    //   return "Please enter your email address.";
+    // }
 
     if (!EMAIL_PATTERN.test(form.email.trim())) {
       return "Please enter a valid email address.";
@@ -1427,8 +1427,7 @@ export default function ContactPage() {
                 name="email"
                 value={form.email}
                 type="email"
-                placeholder="Enter email address"
-                required
+                placeholder="Enter email address"           
                 maxLength={FIELD_LIMITS.email}
                 inputMode="email"
                 autoComplete="email"
