@@ -20,6 +20,7 @@
 
 import {
   calculateRtoCost,
+  formatCurrency,
   getInclusiveDayCount,
   toSafeNumber,
   type DateValue,
@@ -308,9 +309,7 @@ export const priceOrder = (
  * the vehicle carousel and cart rely on, so this does not change it.
  */
 export const formatMoney = (amount: unknown): string =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  formatCurrency(amount, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(toSafeNumber(amount));
+  });

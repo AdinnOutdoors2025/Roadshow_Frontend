@@ -55,6 +55,43 @@ export const toSafeNumber = (value: unknown): number => {
 };
 
 /**
+ * Indian digit grouping (lakh/crore): 102660.5 -> "1,02,660.50".
+ * Done in code rather than via Intl "en-IN", because some browsers fall
+ * back to western grouping ("102,660") when their locale data is missing.
+ */
+export const formatIndianNumber = (
+  value: unknown,
+  minimumFractionDigits = 0,
+  maximumFractionDigits = minimumFractionDigits
+): string => {
+  const numericValue = toSafeNumber(value);
+
+  const fixed = Math.abs(numericValue).toFixed(
+    Math.max(minimumFractionDigits, maximumFractionDigits)
+  );
+
+  let [integerPart, decimalPart = ""] = fixed.split(".");
+
+  // Trim optional trailing zeros down to the minimum precision.
+  while (
+    decimalPart.length > minimumFractionDigits &&
+    decimalPart.endsWith("0")
+  ) {
+    decimalPart = decimalPart.slice(0, -1);
+  }
+
+  if (integerPart.length > 3) {
+    integerPart = `${integerPart
+      .slice(0, -3)
+      .replace(/\B(?=(\d{2})+$)/g, ",")},${integerPart.slice(-3)}`;
+  }
+
+  const sign = numericValue < 0 && Number(fixed) !== 0 ? "-" : "";
+
+  return `${sign}${integerPart}${decimalPart ? `.${decimalPart}` : ""}`;
+};
+
+/**
  * Common currency formatter.
  * Defaults to Indian Rupees.
  */
@@ -70,6 +107,18 @@ export const formatCurrency = (
   } = options;
 
   const numericAmount = toSafeNumber(amount);
+
+  if (currency === "INR" && locale === "en-IN") {
+    const formatted = formatIndianNumber(
+      numericAmount,
+      minimumFractionDigits,
+      maximumFractionDigits
+    );
+
+    return formatted.startsWith("-")
+      ? `-₹${formatted.slice(1)}`
+      : `₹${formatted}`;
+  }
 
   return new Intl.NumberFormat(locale, {
     style: "currency",
