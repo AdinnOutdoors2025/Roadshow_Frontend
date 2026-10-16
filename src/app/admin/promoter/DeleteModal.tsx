@@ -29,7 +29,7 @@ export default function DeleteConfirmModal({ loading, onConfirm, onCancel }: Pro
                         Are You Sure You Want to Delete?
                     </h3>
                     <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        This action cannot be undone. The package will be permanently removed.
+                        This action cannot be undone. The promoter charge will be permanently removed.
                     </p>
                 </div>
 

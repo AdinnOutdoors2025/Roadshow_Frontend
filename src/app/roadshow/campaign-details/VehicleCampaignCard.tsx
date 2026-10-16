@@ -27,6 +27,7 @@ import {
 import { FALLBACK_VEHICLE_IMAGE } from "@/lib/roadshowVehicles";
 import { formatDate } from "@/app/utils/currency";
 import { formatMoney } from "@/lib/roadshowPricing";
+import { filterToSupportedStates } from "@/app/utils/locationCharges";
 import CampaignMediaUpload from "./CampaignMediaUpload";
 
 export const PROMOTER_TYPE_OPTIONS = [
@@ -45,6 +46,7 @@ export default function VehicleCampaignCard({
   media,
   campaignTypes,
   languageOptions,
+  locationData,
   errors,
   showApplyToAll,
   appliedToAll,
@@ -639,6 +641,61 @@ export default function VehicleCampaignCard({
               <p className="rdsw_cdError">
                 {fieldError("campaignLocation")}
               </p>
+            )}
+          </label>
+
+          <label className="rdsw_cdField">
+            <span className="rdsw_cdFieldLabel">
+              State <i>*</i>
+            </span>
+
+            <select
+              value={details.state}
+              onChange={(event) =>
+                onDetailsChange({ state: event.target.value, city: "" })
+              }
+              className="rdsw_cdInput"
+            >
+              <option value="">Select state</option>
+              {filterToSupportedStates(Object.keys(locationData || {}))
+                .sort()
+                .map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+            </select>
+
+            {fieldError("state") && (
+              <p className="rdsw_cdError">{fieldError("state")}</p>
+            )}
+          </label>
+
+          <label className="rdsw_cdField">
+            <span className="rdsw_cdFieldLabel">
+              City <i>*</i>
+            </span>
+
+            <select
+              value={details.city}
+              onChange={(event) =>
+                onDetailsChange({ city: event.target.value })
+              }
+              disabled={!details.state}
+              className="rdsw_cdInput"
+            >
+              <option value="">
+                {details.state ? "Select city" : "Select a state first"}
+              </option>
+              {Array.from(new Set(locationData?.[details.state] || [])).map((city: string) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
+
+            {fieldError("city") && (
+              <p className="rdsw_cdError">{fieldError("city")}</p>
             )}
           </label>
         </div>

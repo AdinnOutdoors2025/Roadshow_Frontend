@@ -39,6 +39,12 @@ export type VehicleCampaignDetails = {
   otherCampaignType: string;
   campaignName: string;
   campaignLocation: string;
+  /* Drive Package/Promoter Management's location-wise RTO/Branding/Promoter
+     charges — see src/app/utils/locationCharges.ts. Limited to the 5
+     supported states; city only meaningfully splits Tamil Nadu (Chennai vs
+     ROTN). */
+  state: string;
+  city: string;
 
   needPromoter: boolean;
   promoterType: string;
@@ -100,6 +106,8 @@ export const emptyCampaignDetails = (
   otherCampaignType: "",
   campaignName: "",
   campaignLocation: "",
+  state: "",
+  city: "",
   needPromoter: false,
   promoterType: "",
   otherPromoterType: "",
@@ -143,6 +151,8 @@ const normalizeDetails = (
     otherCampaignType: String(source.otherCampaignType ?? ""),
     campaignName: String(source.campaignName ?? ""),
     campaignLocation: String(source.campaignLocation ?? ""),
+    state: String(source.state ?? ""),
+    city: String(source.city ?? ""),
     needPromoter: Boolean(source.needPromoter),
     promoterType: String(source.promoterType ?? ""),
     otherPromoterType: String(source.otherPromoterType ?? ""),

@@ -11,15 +11,26 @@ import {
   DEFAULT_PROMOTER_CHARGE,
 } from "@/lib/roadshowPricing";
 
+// State/city resolve to the "chennai" location bucket (Tamil Nadu + city
+// Chennai) — see src/app/utils/locationCharges.ts. RTO/Branding now come
+// from the matched package's per-location charges, not a flat rate.
 const baseLine = {
   startDate: "2026-01-10",
   endDate: "2026-01-12", // 3 inclusive days
   quantity: 2,
   rate: 1000,
-  packageDetails: { rtoCharges: 500, brandingCost: 300, perDayRentalCost: 800 },
+  packageDetails: {
+    perDayRentalCost: 800,
+    locationCharges: { chennai: { rtoCharges: 500, brandingCost: 300 } },
+  },
   needPromoter: false,
   promoterQuantity: 0,
+  state: "Tamil Nadu",
+  city: "Chennai",
 };
+
+// Promoter Management's resolved charge map — keyed by normalized state.
+const promoterChargeMap = { "tamil nadu": DEFAULT_PROMOTER_CHARGE };
 
 describe("priceVehicleLine", () => {
   it("computes rental/RTO/branding for a simple line with no promoter", () => {
@@ -60,7 +71,7 @@ describe("priceVehicleLine", () => {
       promoterQuantity: 2,
       promoterFromDate: "2026-01-10",
       promoterToDate: "2026-01-10", // 1 day, not the 3-day campaign
-    });
+    }, promoterChargeMap);
 
     expect(r.promoterDays).toBe(1);
     expect(r.promoterChargePerDay).toBe(DEFAULT_PROMOTER_CHARGE);
@@ -68,9 +79,16 @@ describe("priceVehicleLine", () => {
   });
 
   it("charges no promoter cost when promoter is needed but no promoter dates are set yet", () => {
-    const r = priceVehicleLine({ ...baseLine, needPromoter: true, promoterQuantity: 2 });
+    const r = priceVehicleLine({ ...baseLine, needPromoter: true, promoterQuantity: 2 }, promoterChargeMap);
     expect(r.promoterDays).toBe(0);
     expect(r.promoterCost).toBe(0);
+  });
+
+  it("flags a missing location charge instead of silently pricing it as 0", () => {
+    const r = priceVehicleLine({ ...baseLine, state: "Goa", city: "Panaji" });
+    expect(r.rtoCost).toBe(0);
+    expect(r.brandingCost).toBe(0);
+    expect(r.locationChargeErrors.length).toBeGreaterThan(0);
   });
 
   it("never returns a non-finite lineTotal", () => {

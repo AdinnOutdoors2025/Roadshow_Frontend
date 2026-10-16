@@ -26,6 +26,12 @@ import {
   type DateValue,
 } from "@/app/utils/currency";
 import { RTO_CYCLE_DAYS } from "@/BaseUrl";
+import {
+  resolveRtoCharge,
+  resolveBrandingCharge,
+  resolvePromoterCharge,
+  type PackageLocationCharges,
+} from "@/app/utils/locationCharges";
 
 /** Per-promoter, per-day charge — same env var admin's calcPricing reads. */
 export const DEFAULT_PROMOTER_CHARGE = parseFloat(
@@ -61,13 +67,21 @@ export type PricedVehicleInput = {
   quantity: number;
   /** Per-day rental. Falls back to packageDetails.perDayRentalCost. */
   rate: number;
-  /** The matched package, used for rtoCharges/brandingCost. */
-  packageDetails?: { rtoCharges?: number; brandingCost?: number; perDayRentalCost?: number } | null;
+  /** The matched package, used for locationCharges (RTO/Branding). */
+  packageDetails?: {
+    rtoCharges?: number;
+    brandingCost?: number;
+    perDayRentalCost?: number;
+    locationCharges?: PackageLocationCharges;
+  } | null;
   /** Promoter's own date range — must stay within startDate/endDate. Falls
    *  back to the full campaign day count when either is unset, matching
    *  admin's calcPricing() so older saved lines keep pricing the same way. */
   promoterFromDate?: DateValue;
   promoterToDate?: DateValue;
+  /** State/city for Package/Promoter Management's location-wise charges. */
+  state?: string | null;
+  city?: string | null;
 } & PromoterRequirement;
 
 export type PricedVehicle = {
@@ -88,6 +102,8 @@ export type PricedVehicle = {
   brandingCost: number;
   /** rentalCost + promoterCost + rtoCost + brandingCost */
   lineTotal: number;
+  /** Non-empty when this line's state/city has no configured RTO/Branding/Promoter charge — never silently priced as 0. */
+  locationChargeErrors: string[];
 };
 
 export type TaxSplit = {
@@ -127,7 +143,9 @@ export type OrderPricing = {
  * arrives at the same inclusive count via `ceil(diff) + 1`.
  */
 export const priceVehicleLine = (
-  vehicle: PricedVehicleInput
+  vehicle: PricedVehicleInput,
+  /** { "<state, lowercased/trimmed>": chargePerDay } from Promoter Management — fetched once by the caller. */
+  promoterChargeMap?: Record<string, number>
 ): PricedVehicle => {
   const days = getInclusiveDayCount(vehicle.startDate, vehicle.endDate);
 
@@ -147,13 +165,6 @@ export const priceVehicleLine = (
     ? Math.max(Math.floor(toSafeNumber(vehicle.promoterQuantity)), 0)
     : 0;
 
-  /* Promoter charge mirrors admin: flat env rate × selected promoter days ×
-     promoter count. The toggle being off zeroes the whole line, not just
-     the quantity. */
-  const promoterChargePerDay = vehicle.needPromoter
-    ? DEFAULT_PROMOTER_CHARGE
-    : 0;
-
   /* Promoter is priced only for the days actually selected (Promoter
      From/To, inclusive). Unlike admin's calcPricing() — which falls back to
      the full campaign day count for orders saved before this field existed
@@ -164,16 +175,31 @@ export const priceVehicleLine = (
       ? getInclusiveDayCount(vehicle.promoterFromDate, vehicle.promoterToDate)
       : 0;
 
+  // State/city-wise charges — resolved from Package Management (RTO,
+  // Branding) and Promoter Management (promoter/day), same resolver admin
+  // order-creation uses. null means not configured for this line's state/city.
+  const resolvedRto = resolveRtoCharge(vehicle.packageDetails?.locationCharges, vehicle.state, vehicle.city);
+  const resolvedBranding = resolveBrandingCharge(vehicle.packageDetails?.locationCharges, vehicle.state, vehicle.city);
+  const resolvedPromoterCharge = vehicle.needPromoter
+    ? resolvePromoterCharge(promoterChargeMap, vehicle.state)
+    : 0;
+
+  const locationChargeErrors: string[] = [];
+  if (resolvedRto === null) locationChargeErrors.push("RTO charge is not configured for this vehicle's state/city");
+  if (resolvedBranding === null) locationChargeErrors.push("Branding cost is not configured for this vehicle's state/city");
+  if (vehicle.needPromoter && resolvedPromoterCharge === null) locationChargeErrors.push("Promoter charge is not configured for this vehicle's state");
+
+  const promoterChargePerDay = resolvedPromoterCharge || 0;
   const promoterCost = promoterChargePerDay * promoterDays * promoterQuantity;
 
   // RTO is duration-based: one RTO cycle per 30 campaign days, charged per
-  // vehicle, at the matched package's rate.
-  const rtoCharges = toSafeNumber(vehicle.packageDetails?.rtoCharges);
+  // vehicle, at the resolved location's rate.
+  const rtoCharges = resolvedRto || 0;
   const rtoCycles = days > 0 ? Math.ceil(days / RTO_CYCLE_DAYS) : 0;
   const rtoCost = rtoCharges * rtoCycles * quantity;
 
   // Branding Cost — only ever set on a Hybrid vehicle's package.
-  const brandingCost = toSafeNumber(vehicle.packageDetails?.brandingCost) * quantity;
+  const brandingCost = (resolvedBranding || 0) * quantity;
 
   const lineTotal = rentalCost + promoterCost + rtoCost + brandingCost;
 
@@ -191,6 +217,7 @@ export const priceVehicleLine = (
     rtoCost,
     brandingCost,
     lineTotal: Number.isFinite(lineTotal) ? lineTotal : 0,
+    locationChargeErrors,
   };
 };
 

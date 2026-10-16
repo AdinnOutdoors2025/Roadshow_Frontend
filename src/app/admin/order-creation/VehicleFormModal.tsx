@@ -16,6 +16,14 @@ import CitySelect from "./cityselect";
 import { toast, Toaster } from "react-hot-toast";
 import { checkVehicleAvailability } from "../../utils/Adminorderapi";
 import { calculateRtoCost } from "../../utils/currency";
+import { getToken } from "../../utils/auth";
+import {
+  filterToSupportedStates,
+  resolveRtoCharge,
+  resolveBrandingCharge,
+  resolvePromoterCharge,
+  type PackageLocationCharges,
+} from "../../utils/locationCharges";
 
 interface PackageOption {
   _id: string;
@@ -25,6 +33,7 @@ interface PackageOption {
   driverCharges: number;
   rtoCharges: number;
   brandingCost: number;
+  locationCharges?: PackageLocationCharges;
   dailyKmLimit: number;
   additionalHourCharges: number;
   promoterAvailable: boolean;
@@ -103,6 +112,9 @@ export function calcPricing(
   dailyKmcharges: number,
   promoterFromDate?: string,
   promoterToDate?: string,
+  state?: string,
+  city?: string,
+  promoterChargeMap?: Record<string, number>,
 ): PricingPreview | null {
 
 
@@ -117,14 +129,6 @@ export function calcPricing(
   const rentalCost = pkg.perDayRentalCost * totalDays * quantity;
   const driverCost = pkg.driverCharges * totalDays * quantity;
 
-  const DEFAULT_PROMOTER_CHARGE = parseFloat(
-    process.env.NEXT_PUBLIC_DEFAULT_PROMOTER_CHARGE || "1000"
-  );
-
-  // const promoterCost = needPromoter
-  //   ? (pkg.promoterChargePerDay || 0) * totalDays * promoterQuantity
-  //   : 0;
-
   // Promoter is priced only for the days actually selected (Promoter
   // From/To, inclusive) — falls back to the full campaign totalDays when
   // no promoter date range is set yet (keeps older saved orders working).
@@ -137,19 +141,35 @@ export function calcPricing(
     }
   }
 
+  // State/city-wise charges — resolved from Package Management (RTO,
+  // Branding) and Promoter Management (promoter/day). null means this
+  // vehicle's state/city has no configured charge — never silently
+  // fall back to 0 or a hardcoded env default, surface it as an error.
+  const resolvedRto = resolveRtoCharge(pkg.locationCharges, state, city);
+  const resolvedBranding = resolveBrandingCharge(pkg.locationCharges, state, city);
+  const resolvedPromoterCharge = needPromoter
+    ? resolvePromoterCharge(promoterChargeMap, state)
+    : 0;
+
+  const locationChargeErrors: string[] = [];
+  if (resolvedRto === null) locationChargeErrors.push("RTO charge is not configured for this vehicle's state/city");
+  if (resolvedBranding === null) locationChargeErrors.push("Branding cost is not configured for this vehicle's state/city");
+  if (needPromoter && resolvedPromoterCharge === null) locationChargeErrors.push("Promoter charge is not configured for this vehicle's state");
+
+  const promoterChargePerDay = resolvedPromoterCharge || 0;
   const promoterCost = needPromoter
-    ? DEFAULT_PROMOTER_CHARGE * promoterDays * promoterQuantity
+    ? promoterChargePerDay * promoterDays * promoterQuantity
     : 0;
 
 
   // RTO scales in 30-day slabs of the campaign's own duration (baseDays,
-  // not totalDays with extraDays folded in): 1-30 days = 1x the package's
-  // rtoCharges rate per vehicle, 31-60 days = 2x, etc. See calculateRtoCost.
-  const rtoCost = calculateRtoCost(pkg.rtoCharges || 0, baseDays, quantity);
+  // not totalDays with extraDays folded in): 1-30 days = 1x the resolved
+  // location's RTO rate per vehicle, 31-60 days = 2x, etc. See calculateRtoCost.
+  const rtoCost = calculateRtoCost(resolvedRto || 0, baseDays, quantity);
 
   // Branding Cost — only ever set on a Hybrid vehicle's package; same
   // one-time-per-vehicle-slot pattern as RTO.
-  const brandingCost = (pkg.brandingCost || 0) * quantity;
+  const brandingCost = (resolvedBranding || 0) * quantity;
 
   const extraKmCost = extraKm > 0 ? pkg.perKmCharge * extraKm : 0;
   const extraHourCost = extraHours > 0 ? pkg.additionalHourCharges * extraHours : 0;
@@ -192,11 +212,11 @@ export function calcPricing(
     totalDays,
     perDayRentalCost: pkg.perDayRentalCost,
     driverCharges: pkg.driverCharges,
-    // promoterChargePerDay: needPromoter ? pkg.promoterChargePerDay : 0,
-    promoterChargePerDay: needPromoter ? DEFAULT_PROMOTER_CHARGE : 0,
+    promoterChargePerDay: needPromoter ? promoterChargePerDay : 0,
     promoterDays,
-    rtoCharges: pkg.rtoCharges,
+    rtoCharges: resolvedRto || 0,
     brandingCost,
+    locationChargeErrors,
     additionalHourCharges: pkg.additionalHourCharges,
     dailyKmLimit: pkg.dailyKmLimit,
     dailyKmcharges: pkg.perKmCharge || dailyKmcharges || 0,
@@ -306,6 +326,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
   const [pkgSaved, setPkgSaved] = useState(false);
   const [changedKeys, setChangedKeys] = useState<string[]>([]);
   const [locationData, setLocationData] = useState<Record<string, string[]>>({});
+  const [promoterChargeMap, setPromoterChargeMap] = useState<Record<string, number>>({});
   const [cityOptions, setCityOptions] = useState<string[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<any>([]);
   const [addCityModalOpen, setAddCityModalOpen] = useState(false);
@@ -440,11 +461,14 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
       mergedPkg.perKmCharge || 0,
       form.promoterFromDate,
       form.promoterToDate,
+      form.state,
+      form.city,
+      promoterChargeMap,
     );
     setForm(f => ({ ...f, pricing: p }));
   }, [selectedPackage, editablePackage, form.fromDate, form.toDate,
     form.quantity, form.needPromoter, form.extraKm, form.extraDays, form.additionalCharges, form.promoterQuantity,
-    form.promoterFromDate, form.promoterToDate]);
+    form.promoterFromDate, form.promoterToDate, form.state, form.city, promoterChargeMap]);
 
 
   const VEHICLE_TYPES = ["Non-Customizable Vehicle", "Customizable Vehicle"];
@@ -467,6 +491,28 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
   };
 
   useEffect(() => { fetchVehicleTypes(); }, []);
+
+  // Promoter Management's location-wise charges — fetched once, resolved
+  // per vehicle line by state inside calcPricing (see locationCharges.ts).
+  const fetchPromoterCharges = async () => {
+    try {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}promoters`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch promoter charges");
+      const data = await res.json();
+      const map: Record<string, number> = {};
+      (data?.data?.data || []).forEach((row: { state: string; promoterCharge: number }) => {
+        map[String(row.state || "").trim().toLowerCase()] = row.promoterCharge;
+      });
+      setPromoterChargeMap(map);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => { fetchPromoterCharges(); }, []);
 
 
 
@@ -600,10 +646,13 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
       selectedPackage.perKmCharge || 0,
       form.promoterFromDate,
       form.promoterToDate,
+      form.state,
+      form.city,
+      promoterChargeMap,
     );
     setForm((f) => ({ ...f, pricing: p }));
   }, [selectedPackage, form.fromDate, form.toDate, form.quantity, form.needPromoter, form.extraKm, form.extraDays, form.extraHours, form.additionalCharges, form.promoterQuantity,
-    form.promoterFromDate, form.promoterToDate]);
+    form.promoterFromDate, form.promoterToDate, form.state, form.city, promoterChargeMap]);
 
   const set = useCallback(<K extends keyof VehicleConfig>(key: K, val: VehicleConfig[K]) => {
     setForm((f) => ({ ...f, [key]: val }));
@@ -700,6 +749,11 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
     if (form.fromDate && form.toDate && new Date(form.fromDate) >= new Date(form.toDate))
       e.toDate = "End date must be after start date";
     if (!form.campaignLocation.trim()) e.campaignLocation = "Enter campaign location";
+    if (!form.state) e.state = "Select state";
+    if (!form.city) e.city = "Select city";
+    if ((form.pricing as any)?.locationChargeErrors?.length > 0) {
+      e.locationCharges = (form.pricing as any).locationChargeErrors.join("; ");
+    }
 
     if (!form.quantity || form.quantity < 1) {
       e.quantity = "Please add valid quantity (minimum 1)";
@@ -1464,7 +1518,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                     className={inputClass(!!errors.state)}
                   >
                     <option value="">Select state</option>
-                    {Object.keys(locationData).sort().map((s) => (
+                    {filterToSupportedStates(Object.keys(locationData)).sort().map((s) => (
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
@@ -1744,6 +1798,19 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
             </FormField>
           </div>
 
+
+          {p && (p as any).locationChargeErrors?.length > 0 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/10 p-3">
+              <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                Charges not configured for this vehicle's state/city:
+              </p>
+              <ul className="list-disc list-inside text-xs text-amber-600 dark:text-amber-400 mt-1">
+                {(p as any).locationChargeErrors.map((msg: string, i: number) => (
+                  <li key={i}>{msg}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {p && selectedPackage && (
             <section className="rounded-xl border border-blue-100 bg-blue-50/60 dark:border-blue-900/30 dark:bg-blue-900/10 p-4 space-y-1.5">

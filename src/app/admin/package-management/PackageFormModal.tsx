@@ -7,6 +7,12 @@ import { IoMdClose } from "react-icons/io";
 import API_BASE from "../../../../baseurl";
 import { inputClass, selectClass } from "../../../components/reusableFormField";
 import FormField from "../../../components/reusableFormField";
+import {
+  LOCATION_BUCKETS,
+  LOCATION_BUCKET_LABELS,
+  type LocationBucket,
+  type PackageLocationCharges,
+} from "../../utils/locationCharges";
 
 
 interface VehicleType {
@@ -36,10 +42,31 @@ interface PackageFormData {
   driverCharges: number;
   rtoCharges: number;
   brandingCost: number;
+  locationCharges: PackageLocationCharges;
   perKmCharge: number;
   isActive: boolean;
   inactiveReason: string;
 }
+
+const emptyLocationCharges = (): PackageLocationCharges =>
+  LOCATION_BUCKETS.reduce((acc, bucket) => {
+    acc[bucket] = { rtoCharges: undefined, brandingCost: undefined };
+    return acc;
+  }, {} as PackageLocationCharges);
+
+/** Fills in any location bucket missing from a loaded package with blanks, so every card always renders. */
+const mergeLocationCharges = (existing?: PackageLocationCharges): PackageLocationCharges => {
+  const base = emptyLocationCharges();
+  LOCATION_BUCKETS.forEach((bucket) => {
+    if (existing?.[bucket]) {
+      base[bucket] = {
+        rtoCharges: existing[bucket]?.rtoCharges ?? undefined,
+        brandingCost: existing[bucket]?.brandingCost ?? undefined,
+      };
+    }
+  });
+  return base;
+};
 
 const defaultForm: PackageFormData = {
   vehicleType: "",
@@ -53,6 +80,7 @@ const defaultForm: PackageFormData = {
   driverCharges: 0,
   rtoCharges: 0,
   brandingCost: 0,
+  locationCharges: emptyLocationCharges(),
   perKmCharge: 0,
   isActive: true,
   inactiveReason: "",
@@ -158,6 +186,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
         driverCharges: editingPackage.driverCharges,
         rtoCharges: editingPackage.rtoCharges,
         brandingCost: (editingPackage as any).brandingCost || 0,
+        locationCharges: mergeLocationCharges(editingPackage.locationCharges),
         perKmCharge: editingPackage.perKmCharge,
         isActive: editingPackage.isActive,
         inactiveReason: editingPackage.inactiveReason || "",
@@ -215,6 +244,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
               driverCharges: existing.driverCharges || 0,
               rtoCharges: existing.rtoCharges || 0,
               brandingCost: existing.brandingCost || 0,
+              locationCharges: mergeLocationCharges(existing.locationCharges),
               perKmCharge: existing.perKmCharge || 0,
               isActive: existing.isActive ?? true,
               inactiveReason: existing.inactiveReason || "",
@@ -232,6 +262,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
               driverCharges: 0,
               rtoCharges: 0,
               brandingCost: 0,
+              locationCharges: emptyLocationCharges(),
               perKmCharge: 0,
             }));
           }
@@ -272,6 +303,28 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
     }
   };
 
+  const [locationErrors, setLocationErrors] = useState<Partial<Record<LocationBucket, { rtoCharges?: string; brandingCost?: string }>>>({});
+
+  const handleLocationChargeChange = (
+    bucket: LocationBucket,
+    field: "rtoCharges" | "brandingCost",
+    raw: string
+  ) => {
+    const cleaned = raw.replace(/,/g, "");
+    if (cleaned !== "" && !/^\d*$/.test(cleaned)) return;
+    setForm((prev) => ({
+      ...prev,
+      locationCharges: {
+        ...prev.locationCharges,
+        [bucket]: {
+          ...prev.locationCharges[bucket],
+          [field]: cleaned === "" ? undefined : Number(cleaned),
+        },
+      },
+    }));
+    setLocationErrors((prev) => ({ ...prev, [bucket]: { ...prev[bucket], [field]: undefined } }));
+  };
+
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof PackageFormData, string>> = {};
     const finalReason = form.inactiveReason?.trim() || "";
@@ -293,7 +346,22 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
     // if (!form.driverCharges || form.driverCharges <= 0) newErrors.driverCharges = "Enter driver charges";
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    const newLocationErrors: Partial<Record<LocationBucket, { rtoCharges?: string; brandingCost?: string }>> = {};
+    LOCATION_BUCKETS.forEach((bucket) => {
+      const entry = form.locationCharges[bucket] || {};
+      const bucketErrors: { rtoCharges?: string; brandingCost?: string } = {};
+      if (entry.rtoCharges === undefined || entry.rtoCharges === null || entry.rtoCharges < 0) {
+        bucketErrors.rtoCharges = `RTO Charges for ${LOCATION_BUCKET_LABELS[bucket]} is required`;
+      }
+      if (isHybrid && (entry.brandingCost === undefined || entry.brandingCost === null || entry.brandingCost < 0)) {
+        bucketErrors.brandingCost = `Branding Cost for ${LOCATION_BUCKET_LABELS[bucket]} is required for a Hybrid vehicle`;
+      }
+      if (Object.keys(bucketErrors).length > 0) newLocationErrors[bucket] = bucketErrors;
+    });
+    setLocationErrors(newLocationErrors);
+
+    return Object.keys(newErrors).length === 0 && Object.keys(newLocationErrors).length === 0;
   };
 
   const handleSubmit = async () => {
@@ -311,6 +379,14 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
       driverCharges: Number(form.driverCharges),
       rtoCharges: Number(form.rtoCharges),
       brandingCost: isHybrid ? Number(form.brandingCost) : 0,
+      locationCharges: LOCATION_BUCKETS.reduce((acc, bucket) => {
+        const entry = form.locationCharges[bucket] || {};
+        acc[bucket] = {
+          rtoCharges: Number(entry.rtoCharges) || 0,
+          brandingCost: isHybrid ? Number(entry.brandingCost) || 0 : 0,
+        };
+        return acc;
+      }, {} as Record<LocationBucket, { rtoCharges: number; brandingCost: number }>),
       perKmCharge: Number(form.perKmCharge),
       isActive: form.isActive,
       inactiveReason: form.isActive ? "" : form.inactiveReason || "",
@@ -469,28 +545,6 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
               />
             </FormField>
 
-              <FormField label="RTO Charges (₹)">
-              <input
-                type="text"
-                value={form.rtoCharges ? formatAmount(form.rtoCharges) : ""}
-                onChange={(e) => handleAmountChange("rtoCharges", e.target.value)}
-                placeholder="e.g. 500"
-                className={inputClass(false)}
-              />
-            </FormField>
-
-            {isHybrid && (
-              <FormField label="Branding Cost (₹)" error={errors.brandingCost} required>
-                <input
-                  type="text"
-                  value={form.brandingCost ? formatAmount(form.brandingCost) : ""}
-                  onChange={(e) => handleAmountChange("brandingCost", e.target.value)}
-                  placeholder="e.g. 5,000"
-                  className={inputClass(!!errors.brandingCost)}
-                />
-              </FormField>
-            )}
-
             {/* <FormField label="End User Customization Permission">
               <select
                 value={form.endUserCustomizationPermission ? "yes" : "no"}
@@ -543,7 +597,51 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-           
+
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              RTO Charges & Branding Cost — by Location <span className="text-red-500">*</span>
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {LOCATION_BUCKETS.map((bucket) => {
+                const entry = form.locationCharges[bucket] || {};
+                const bucketErrors = locationErrors[bucket] || {};
+                return (
+                  <div
+                    key={bucket}
+                    className="rounded-xl border border-gray-200 bg-gray-50/70 p-3 dark:border-gray-700 dark:bg-gray-800/40"
+                  >
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      {LOCATION_BUCKET_LABELS[bucket]}
+                    </p>
+                    <div className="space-y-2">
+                      <FormField label="RTO (₹)" error={bucketErrors.rtoCharges} required>
+                        <input
+                          type="text"
+                          value={entry.rtoCharges ? formatAmount(entry.rtoCharges) : ""}
+                          onChange={(e) => handleLocationChargeChange(bucket, "rtoCharges", e.target.value)}
+                          placeholder="e.g. 500"
+                          className={inputClass(!!bucketErrors.rtoCharges)}
+                        />
+                      </FormField>
+                      {isHybrid && (
+                        <FormField label="Branding (₹)" error={bucketErrors.brandingCost} required>
+                          <input
+                            type="text"
+                            value={entry.brandingCost ? formatAmount(entry.brandingCost) : ""}
+                            onChange={(e) => handleLocationChargeChange(bucket, "brandingCost", e.target.value)}
+                            placeholder="e.g. 5,000"
+                            className={inputClass(!!bucketErrors.brandingCost)}
+                          />
+                        </FormField>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex items-center justify-start gap-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800">

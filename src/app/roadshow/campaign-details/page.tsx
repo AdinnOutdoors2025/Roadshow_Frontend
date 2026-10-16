@@ -111,6 +111,14 @@ export const getVehicleErrors = (vehicle, details) => {
     vehicleErrors.campaignLocation = "Enter a campaign location.";
   }
 
+  if (!details.state) {
+    vehicleErrors.state = "Select a state.";
+  }
+
+  if (!details.city) {
+    vehicleErrors.city = "Select a city.";
+  }
+
   if (details.needPromoter) {
     if (!details.promoterType.trim()) {
       vehicleErrors.promoterType = "Select a promoter type.";
@@ -204,6 +212,8 @@ export default function CampaignDetailsPage() {
   }));
   const [mediaByVehicle, setMediaByVehicle] = useState({});
   const [campaignTypes, setCampaignTypes] = useState<string[]>([]);
+  const [locationData, setLocationData] = useState<Record<string, string[]>>({});
+  const [promoterChargeMap, setPromoterChargeMap] = useState<Record<string, number>>({});
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
   const [activeDateVehicleId, setActiveDateVehicleId] = useState<
@@ -333,6 +343,50 @@ export default function CampaignDetailsPage() {
       .catch(() => {
         /* Optional list — the customer can still pick "Others". */
       });
+
+    return () => {
+      componentMounted = false;
+    };
+  }, []);
+
+  /* ── State/City locations + Promoter charges ───────────────────────────
+     Same dynamic Location collection and Promoter Management charges the
+     admin order-creation screen reads, via unauthenticated mirrors (same
+     pattern as /packages/ already being public) — drives Package/Promoter
+     Management's location-wise RTO/Branding/Promoter pricing below. */
+  useEffect(() => {
+    let componentMounted = true;
+
+    fetch(`${baseUrl}/locations`)
+      .then((response) => response.json())
+      .then((result) => {
+        if (!componentMounted) return;
+        if (result?.success && result?.data?.locations?.length > 0) {
+          const raw = result.data.locations[0];
+          const map: Record<string, string[]> = {};
+          Object.entries(raw).forEach(([key, value]) => {
+            if (key === "_id" || key === "cities" || key === "__v") return;
+            if (Array.isArray(value)) map[key] = value as string[];
+          });
+          setLocationData(map);
+        }
+      })
+      .catch(() => {});
+
+    fetch(`${baseUrl}/promoters/public/list`)
+      .then((response) => response.json())
+      .then((result) => {
+        if (!componentMounted) return;
+        const rows = result?.data?.data;
+        if (Array.isArray(rows)) {
+          const map: Record<string, number> = {};
+          rows.forEach((row: { state: string; promoterCharge: number }) => {
+            map[String(row.state || "").trim().toLowerCase()] = row.promoterCharge;
+          });
+          setPromoterChargeMap(map);
+        }
+      })
+      .catch(() => {});
 
     return () => {
       componentMounted = false;
@@ -780,7 +834,9 @@ export default function CampaignDetailsPage() {
         promoterQuantity: details.promoterQuantity,
         promoterFromDate: details.promoterFromDate,
         promoterToDate: details.promoterToDate,
-      });
+        state: details.state,
+        city: details.city,
+      }, promoterChargeMap);
 
       return {
         vehicle,
@@ -789,7 +845,7 @@ export default function CampaignDetailsPage() {
         media: mediaByVehicle[id] || { images: [], videos: [] },
       };
     });
-  }, [selectedVehicles, draft, mediaByVehicle]);
+  }, [selectedVehicles, draft, mediaByVehicle, promoterChargeMap]);
 
   const pricedLines = useMemo(
     () => rows.map((row) => row.pricing),
@@ -1236,6 +1292,7 @@ export default function CampaignDetailsPage() {
                   media={activeRow.media}
                   campaignTypes={campaignTypes}
                   languageOptions={LANGUAGE_OPTIONS}
+                  locationData={locationData}
                   errors={errors[String(activeRow.vehicle.id)]}
                   showApplyToAll={rows.length > 1}
                   /* Checked on EVERY card while the details are shared, not

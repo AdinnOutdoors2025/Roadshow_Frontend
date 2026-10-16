@@ -6,6 +6,9 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { calcPricing } from "@/app/admin/order-creation/VehicleFormModal";
 
+// State/city resolve to the "chennai" location bucket (Tamil Nadu + city
+// Chennai) — see src/app/utils/locationCharges.ts. RTO/Branding now come
+// from the package's per-location charges, not a flat rate.
 const basePkg = {
   _id: "pkg1",
   vehicleType: "t1",
@@ -14,6 +17,7 @@ const basePkg = {
   driverCharges: 200,
   rtoCharges: 500,
   brandingCost: 300,
+  locationCharges: { chennai: { rtoCharges: 500, brandingCost: 300 } },
   dailyKmLimit: 100,
   additionalHourCharges: 50,
   promoterAvailable: true,
@@ -22,6 +26,11 @@ const basePkg = {
   perKmCharge: 10,
   dailyKmcharges: 10,
 };
+
+const STATE = "Tamil Nadu";
+const CITY = "Chennai";
+// Promoter Management's resolved charge map — keyed by normalized state.
+const promoterChargeMap = { "tamil nadu": 1000 };
 
 const origEnv = { ...process.env };
 afterEach(() => {
@@ -62,9 +71,12 @@ describe("calcPricing — promoter cost", () => {
     expect(r.promoterCost).toBe(0);
   });
 
-  it("uses the default promoter charge (₹1000/day) and full campaign days when no promoter date range is set", () => {
-    const r = calcPricing(basePkg as any, "2026-07-21", "2026-07-25", 1, true, 0, 0, 0, [], 2, 0)!;
-    // 5 total days * 1000 default charge * 2 promoters
+  it("uses Promoter Management's resolved charge (per state) and full campaign days when no promoter date range is set", () => {
+    const r = calcPricing(
+      basePkg as any, "2026-07-21", "2026-07-25", 1, true, 0, 0, 0, [], 2, 0,
+      undefined, undefined, STATE, CITY, promoterChargeMap
+    )!;
+    // 5 total days * 1000 resolved charge * 2 promoters
     expect(r.promoterDays).toBe(5);
     expect(r.promoterCost).toBe(5 * 1000 * 2);
   });
@@ -83,22 +95,31 @@ describe("calcPricing — promoter cost", () => {
       1,
       0,
       "2026-07-22",
-      "2026-07-23" // 2-day promoter sub-range
+      "2026-07-23", // 2-day promoter sub-range
+      STATE,
+      CITY,
+      promoterChargeMap
     )!;
     expect(r.promoterDays).toBe(2);
     expect(r.promoterCost).toBe(2 * 1000 * 1);
   });
 
-  it("respects a custom NEXT_PUBLIC_DEFAULT_PROMOTER_CHARGE", () => {
-    process.env.NEXT_PUBLIC_DEFAULT_PROMOTER_CHARGE = "1500";
-    const r = calcPricing(basePkg as any, "2026-07-21", "2026-07-21", 1, true, 0, 0, 0, [], 1, 0)!;
-    expect(r.promoterCost).toBe(1500);
+  it("flags a missing promoter charge instead of silently falling back to a hardcoded default", () => {
+    const r = calcPricing(
+      basePkg as any, "2026-07-21", "2026-07-25", 1, true, 0, 0, 0, [], 1, 0,
+      undefined, undefined, "Goa", "Panaji", {}
+    )!;
+    expect(r.promoterCost).toBe(0);
+    expect(r.locationChargeErrors).toContain("Promoter charge is not configured for this vehicle's state");
   });
 });
 
 describe("calcPricing — one-time RTO/branding and extras", () => {
   it("applies RTO and branding once per vehicle quantity regardless of day count", () => {
-    const r = calcPricing(basePkg as any, "2026-07-21", "2026-07-25", 3, false, 0, 0, 0, [], 0, 0)!;
+    const r = calcPricing(
+      basePkg as any, "2026-07-21", "2026-07-25", 3, false, 0, 0, 0, [], 0, 0,
+      undefined, undefined, STATE, CITY
+    )!;
     expect(r.rtoCost).toBe(500 * 3);
     expect(r.brandingCost).toBe(300 * 3);
   });

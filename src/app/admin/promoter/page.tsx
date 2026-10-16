@@ -12,11 +12,12 @@ import PromoterFormModal, { Promoter } from "./PromoterFormModal";
 import DeleteConfirmModal from "./DeleteModal";
 import { getToken } from "../../utils/auth";
 
-const HEADERS = ["S.NO", "Name", "Phone", "Email", "Language", "Gender", "Charge/Day", "Status", "Actions"];
+const HEADERS = ["S.NO", "State", "Charge/Day", "Actions"];
 const ITEMS_PER_PAGE = 10;
 
 export default function PromoterTable() {
     const [promoters, setPromoters] = useState<Promoter[]>([]);
+    const [allowedStates, setAllowedStates] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -28,19 +29,25 @@ export default function PromoterTable() {
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
 
     const fetchPromoters = async () => {
         try {
             setLoading(true);
             setError(null);
             const token = getToken();
-            const res = await fetch(`${API_BASE}promoters`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!res.ok) throw new Error("Failed to fetch promoters");
-            const data = await res.json();
+            const [promotersRes, statesRes] = await Promise.all([
+                fetch(`${API_BASE}promoters`, { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(`${API_BASE}promoters/allowed-states`, { headers: { Authorization: `Bearer ${token}` } }),
+            ]);
+            if (!promotersRes.ok) throw new Error("Failed to fetch promoter charges");
+            const data = await promotersRes.json();
             setPromoters(data.data.data);
+
+            if (statesRes.ok) {
+                const statesData = await statesRes.json();
+                setAllowedStates(statesData.data || []);
+            }
+
             setCurrentPage(1);
         } catch (err: any) {
             setError(err.message || "Something went wrong");
@@ -53,19 +60,10 @@ export default function PromoterTable() {
 
     const filteredPromoters = promoters.filter((p) => {
         const q = searchQuery.toLowerCase();
-        const matchesSearch =
-            p.name.toLowerCase().includes(q) ||
-            String(p.phone).includes(q) ||
-            p.email.toLowerCase().includes(q) ||
-            (Array.isArray(p.language)
-                ? p.language.some((l) => l.toLowerCase().includes(q))
-                : false) ||
-            p.gender.toLowerCase().includes(q) ||
-            String(p.promoterCharge).includes(q) ||
-            p.status.toLowerCase().includes(q);
-        const matchesStatus =
-            statusFilter === "all" ? true : p.status === statusFilter;
-        return matchesSearch && matchesStatus;
+        return (
+            (p.state || "").toLowerCase().includes(q) ||
+            String(p.promoterCharge).includes(q)
+        );
     });
 
     const totalItems = filteredPromoters.length;
@@ -73,10 +71,15 @@ export default function PromoterTable() {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const currentItems = filteredPromoters.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
+    // States that don't already have a charge row configured — the only
+    // ones selectable when adding a new row (one row per state, max 5).
+    const unconfiguredStates = allowedStates.filter(
+        (s) => !promoters.some((p) => p.state === s)
+    );
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, statusFilter]);
+    }, [searchQuery]);
 
     const handleDeleteConfirm = async () => {
         if (!deletingId) return;
@@ -91,7 +94,7 @@ export default function PromoterTable() {
             await fetchPromoters();
             setShowDeleteModal(false);
             setDeletingId(null);
-            toast.success("Promoter deleted successfully!");
+            toast.success("Promoter charge deleted successfully!");
         } catch (err: any) {
             toast.error(err.message || "Delete failed");
         } finally {
@@ -113,17 +116,17 @@ export default function PromoterTable() {
                 </div>
                 <button
                     onClick={() => { setEditingPromoter(null); setShowFormModal(true); }}
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 active:scale-95 transition-all"
+                    disabled={unconfiguredStates.length === 0}
+                    title={unconfiguredStates.length === 0 ? "All states already have a promoter charge configured" : undefined}
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
                 >
                     <HiOutlinePlus className="h-4 w-4 stroke-2" />
-                    Add Promoter
+                    Add Promoter Charge
                 </button>
             </div>
 
-            {/* Search + Filter Bar */}
+            {/* Search Bar */}
             <div className="flex flex-wrap items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-
-                {/* Search Input */}
                 <div className="relative w-72">
                     <svg
                         className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
@@ -134,12 +137,11 @@ export default function PromoterTable() {
                     </svg>
                     <input
                         type="text"
-                        placeholder="Search by name, phone or email..."
+                        placeholder="Search by state..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-4 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                     />
-
                     {searchQuery && (
                         <button
                             onClick={() => setSearchQuery("")}
@@ -151,35 +153,6 @@ export default function PromoterTable() {
                         </button>
                     )}
                 </div>
-
-
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")}
-                    className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 cursor-pointer"
-                >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                </select>
-
-
-                {(searchQuery || statusFilter !== "all") && (
-                    <button
-                        onClick={() => {
-                            setSearchQuery("");
-                            setStatusFilter("all");
-                            setCurrentPage(1);
-                        }}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-100 transition-colors dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
-                    >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Clear Filter
-                    </button>
-                )}
-
             </div>
 
             <div className="p-4 sm:p-6">
@@ -200,7 +173,7 @@ export default function PromoterTable() {
                 {!loading && !error && (
                     <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[900px] border-collapse text-sm">
+                            <table className="w-full min-w-[500px] border-collapse text-sm">
                                 <thead>
                                     <tr className="bg-gray-50 dark:bg-gray-800/60">
                                         {HEADERS.map((h) => (
@@ -217,7 +190,7 @@ export default function PromoterTable() {
                                     {currentItems.length === 0 ? (
                                         <tr>
                                             <td colSpan={HEADERS.length} className="px-5 py-16 text-center text-sm text-gray-500">
-                                                No promoters found.
+                                                No promoter charges configured yet.
                                             </td>
                                         </tr>
                                     ) : (
@@ -229,58 +202,10 @@ export default function PromoterTable() {
                                             >
                                                 <td className="px-5 py-4 text-gray-600 dark:text-gray-300">{startIndex + idx + 1}</td>
 
-                                                <td className="px-5 py-4 font-medium text-gray-800 dark:text-gray-200">{promoter.name}</td>
-
-                                                <td className="px-5 py-4 text-gray-600 dark:text-gray-300">
-                                                    {promoter.phone ? `+91 ${promoter.phone}` : "—"}
-                                                </td>
-
-                                                <td className="px-5 py-4 text-gray-600 dark:text-gray-300 max-w-[180px] truncate">
-                                                    {promoter.email || "—"}
-                                                </td>
-
-                                                <td className="px-5 py-4">
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {Array.isArray(promoter.language) && promoter.language.length > 0 ? (
-                                                            promoter.language.map((lang) => (
-                                                                <span
-                                                                    key={lang}
-                                                                    className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
-                                                                >
-                                                                    {lang}
-                                                                </span>
-                                                            ))
-                                                        ) : (
-                                                            <span className="text-gray-400">—</span>
-                                                        )}
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-5 py-4">
-                                                    <span className="inline-flex items-center rounded-lg bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                                                        {promoter.gender || "—"}
-                                                    </span>
-                                                </td>
+                                                <td className="px-5 py-4 font-medium text-gray-800 dark:text-gray-200">{promoter.state || "—"}</td>
 
                                                 <td className="px-5 py-4 text-gray-700 dark:text-gray-300 font-medium">
                                                     ₹{Number(promoter.promoterCharge).toLocaleString("en-IN")}
-                                                </td>
-
-                                                <td className="px-5 py-4">
-                                                    <span
-                                                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-                                                        style={
-                                                            promoter.status === "active"
-                                                                ? { background: "#dcfce7", color: "#15803d" }
-                                                                : { background: "#fee2e2", color: "#dc2626" }
-                                                        }
-                                                    >
-                                                        <span
-                                                            className={`h-1.5 w-1.5 rounded-full ${promoter.status === "active" ? "bg-green-500 animate-pulse" : "bg-red-400"
-                                                                }`}
-                                                        />
-                                                        {promoter.status === "active" ? "Active" : "Inactive"}
-                                                    </span>
                                                 </td>
 
                                                 <td className="px-5 py-4">
@@ -334,6 +259,7 @@ export default function PromoterTable() {
             {showFormModal && (
                 <PromoterFormModal
                     editingPromoter={editingPromoter}
+                    availableStates={unconfiguredStates}
                     onSuccess={() => { setShowFormModal(false); fetchPromoters(); }}
                     onClose={() => { setShowFormModal(false); setEditingPromoter(null); }}
                 />

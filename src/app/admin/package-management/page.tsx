@@ -12,6 +12,7 @@ import { HiOutlinePlus } from "react-icons/hi2";
 import { HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi";
 import { useSearch } from "@/context/SearchContext";
 import { useAuthGuard } from "../../utils/useAuthGuard";
+import { LOCATION_BUCKETS, type PackageLocationCharges } from "../../utils/locationCharges";
 
 export interface Package {
   _id: string;
@@ -26,10 +27,26 @@ export interface Package {
   driverCharges: number;
   rtoCharges: number;
   brandingCost?: number;
+  locationCharges?: PackageLocationCharges;
   perKmCharge: number;
   isActive: boolean;
   inactiveReason?: string;
 }
+
+/** Formats the 6 location values as a "₹min - ₹max" range, or "—" if unset. */
+const formatLocationRange = (
+  locationCharges: PackageLocationCharges | undefined,
+  field: "rtoCharges" | "brandingCost"
+): string => {
+  const values = LOCATION_BUCKETS.map((bucket) => locationCharges?.[bucket]?.[field])
+    .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+  if (values.length === 0) return "—";
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  return min === max
+    ? `₹${min.toLocaleString("en-IN")}`
+    : `₹${min.toLocaleString("en-IN")} - ₹${max.toLocaleString("en-IN")}`;
+};
 
 interface VehicleType {
   _id: string;
@@ -460,10 +477,10 @@ export default function PackageTable() {
                           {formatINR(pkg.driverCharges)}
                         </td> */}
                         <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
-                          {formatINR(pkg.rtoCharges)}
+                          {formatLocationRange(pkg.locationCharges, "rtoCharges")}
                         </td>
                         <td className="px-5 py-4 text-center text-gray-600 dark:text-gray-300">
-                          {pkg.brandingCost ? formatINR(pkg.brandingCost) : "—"}
+                          {formatLocationRange(pkg.locationCharges, "brandingCost")}
                         </td>
                         <td className="px-5 py-4">
                           <button

@@ -115,6 +115,11 @@ export const buildClientRequestPayload = ({
 
       quantity: line.quantity,
       campaignLocation: details.campaignLocation.trim(),
+      /* Drive Package/Promoter Management's location-wise RTO/Branding/
+         Promoter charges server-side (see ClientRequestController.js
+         priceBookingItemFromPackage / Utils/locationChargeResolver.js). */
+      state: details.state,
+      city: details.city,
       fromDate: formatDateForApi(vehicle.startDate),
       toDate: formatDateForApi(vehicle.endDate),
       pricePerDay: line.perDayRentalCost,

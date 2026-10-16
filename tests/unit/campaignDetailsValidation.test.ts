@@ -12,6 +12,8 @@ const validDetails = () => ({
   otherCampaignType: "",
   campaignName: "Spring Launch",
   campaignLocation: "Chennai",
+  state: "Tamil Nadu",
+  city: "Chennai",
   needPromoter: false,
   promoterType: "",
   otherPromoterType: "",
