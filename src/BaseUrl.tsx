@@ -3,12 +3,12 @@
 ========================================================= */
 
 // Local backend
-// export const baseUrl = "http://localhost:3001";
+export const baseUrl = "http://localhost:3001";
 
 // Production backend
-export const baseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_LIVE?.replace(/\/+$/, "") ||
-  "https://roadshow-backend.onrender.com";
+// export const baseUrl =
+//   process.env.NEXT_PUBLIC_API_BASE_LIVE?.replace(/\/+$/, "") ||
+//   "https://roadshow-backend.onrender.com";
 
 // Local network backend
 // export const baseUrl = "http://192.168.2.134:3001";
@@ -35,21 +35,22 @@ export const RTO_CYCLE_DAYS = 30;
 ========================================================= */
 
 /*
-  true  = Production / Live
-  false = Localhost
+  Public site URL used for images inside outgoing mails.
+  Set NEXT_PUBLIC_SITE_URL per environment (e.g. http://localhost:3000
+  locally, https://www.adinnroadshows.com on live). Falls back to the live
+  site, which is what the old IS_LIVE = true toggle always produced.
 */
-const IS_LIVE = true;
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL || "https://www.adinnroadshows.com"
+).replace(/\/+$/, "");
 
-const LOCAL_MAIL_IMAGE_URL =
-  "http://localhost:3000";
-
-const PRODUCTION_MAIL_IMAGE_URL =
-  "https://www.adinnroadshows.com";
-
-export const mailImageUrl = IS_LIVE
-  ? PRODUCTION_MAIL_IMAGE_URL
-  : LOCAL_MAIL_IMAGE_URL;
+export const mailImageUrl = SITE_URL;
 
 
-//WHATSAPP NUMBER FOR ADMIN 
-export const NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER = "9626907861";
+//WHATSAPP NUMBER FOR ADMIN
+export const NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER =
+  process.env.NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER || "9626907861";
+
+/* Vamosys public tracking embed (gpsvts.vamosys.com iframe) account id. */
+export const VAMOSYS_TRACK_USER_ID =
+  process.env.NEXT_PUBLIC_VAMOSYS_USER_ID || "ADINN12";

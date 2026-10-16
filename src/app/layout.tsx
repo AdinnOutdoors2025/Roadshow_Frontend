@@ -10,11 +10,10 @@ import AuthModal from "@/components/auth/ClientAuthModal";
 import GlobalToastGate from "@/components/Notify/GlobalToastGate";
 import { AuthProvider } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
-const SITE_URL = "https://www.adinnroadshows.com";
-
-const GOOGLE_ANALYTICS_ID = "G-SVL3CWLJZF";
-const GOOGLE_TAG_MANAGER_ID = "GTM-T2MDR4W";
-const MICROSOFT_CLARITY_ID = "qu4xyuprxg";
+// Analytics IDs per environment (.env). A script is only rendered when its
+// ID is set, so localhost/staging builds don't report into live analytics.
+const GOOGLE_ANALYTICS_ID = process.env.NEXT_PUBLIC_GA_ID || "";
+const MICROSOFT_CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID || "";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -61,6 +60,8 @@ export default function RootLayout({
         <AuthProvider>
 
 
+         {GOOGLE_ANALYTICS_ID && (
+        <>
          {/* Direct Google Analytics GA4 library */}
         <Script
           id="google-analytics-library"
@@ -95,7 +96,11 @@ export default function RootLayout({
             );
           `}
         </Script>
+        </>
+         )}
 
+        {MICROSOFT_CLARITY_ID && (
+        <>
         {/* Microsoft Clarity */}
         <Script
           id="microsoft-clarity"
@@ -126,6 +131,8 @@ export default function RootLayout({
             );
           `}
         </Script>
+        </>
+        )}
 
 
           {children}

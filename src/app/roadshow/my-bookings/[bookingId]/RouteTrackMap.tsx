@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouteTrackVehicle } from "./useRouteTrack";
+import { VAMOSYS_TRACK_USER_ID } from "@/BaseUrl";
 
 /* Vamosys's own public embed — the same widget the admin OnRoadTab iframes
    in (see OnRoadTab.tsx), showing the live speedometer and an animated
@@ -26,7 +27,7 @@ export default function RouteTrackMap({
 
           <iframe
             key={vehicle.trackId}
-            src={`https://gpsvts.vamosys.com/gps/public/track?vehicleId=${vehicle.trackId}&maps=track&userID=ADINN12`}
+            src={`https://gpsvts.vamosys.com/gps/public/track?vehicleId=${vehicle.trackId}&maps=track&userID=${VAMOSYS_TRACK_USER_ID}`}
             className="RS_RouteTrackFrame"
             title={`Live route for ${vehicle.registrationNumber}`}
             allowFullScreen

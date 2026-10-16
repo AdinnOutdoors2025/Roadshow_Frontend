@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
+import { VAMOSYS_TRACK_USER_ID } from "@/BaseUrl";
 import { fetchAllRoadshowVehicles } from "@/lib/roadshowVehicles";
 
 import { useCampaignTracking } from "../useCampaignTracking";
@@ -879,7 +880,7 @@ function TrackingPageContent({
                       key={selectedTrack.trackId}
                       src={`https://gpsvts.vamosys.com/gps/public/track?vehicleId=${encodeURIComponent(
                         selectedTrack.trackId,
-                      )}&maps=track&userID=ADINN12`}
+                      )}&maps=track&userID=${VAMOSYS_TRACK_USER_ID}`}
                       title="Live campaign route"
                       loading="lazy"
                       allowFullScreen

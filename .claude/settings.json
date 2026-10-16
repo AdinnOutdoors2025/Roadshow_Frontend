@@ -6,7 +6,12 @@
       "Bash(nohup npm run dev:fresh)",
       "Bash(disown)",
       "Bash(timeout 40 bash -c 'until curl -sf http://127.0.0.1:3000 >/dev/null 2>&1; do sleep 1; done')",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(awk -F= '/^NEXT_PUBLIC_API_BASE/{v=substr\\($0,index\\($0,\"=\"\\)+1\\); gsub\\(/\\\\r/,\"\",v\\); print $1\" endsWithSlash=\"\\(substr\\(v,length\\(v\\),1\\)==\"/\"\\)\" isLocalhost=\"\\(v~/localhost|127\\\\.0|192\\\\.168/\\)\" onrender=\"\\(v~/onrender/\\)} /^NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER/{v=substr\\($0,index\\($0,\"=\"\\)+1\\); gsub\\(/\\\\r/,\"\",v\\); print \"whatsapp_matches_BaseUrl=\"\\(v==\"9626907861\"\\)}' .env)",
+      "Bash(grep -n \"^#\\\\|^$\" .env)"
+    ],
+    "additionalDirectories": [
+      "D:\\Roadshow-Backend\\roadshow_Backend"
     ]
   },
   "hooks": {
