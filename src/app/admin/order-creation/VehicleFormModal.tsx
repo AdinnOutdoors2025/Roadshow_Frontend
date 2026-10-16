@@ -1170,6 +1170,59 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
           </section>
 
+            <section className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Location</p>
+            <div className="grid grid-cols-2 gap-4">
+
+              <div id="field-state">
+                <FormField label="State" error={errors.state} required>
+                  <select
+                    value={form.state}
+                    onChange={(e) => handleStateChange(e.target.value)}
+                    className={inputClass(!!errors.state)}
+                  >
+                    <option value="">Select state</option>
+                    {filterToSupportedStates(Object.keys(locationData)).sort().map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+
+
+              <div id="field-city">
+                <FormField label="City" error={errors.city} required>
+                  <CitySelect
+                    value={form.city}
+                    options={cityOptions}
+                    disabled={!form.state}
+                    error={errors.city}
+                    stateName={form.state}
+                    onChange={(city) => set("city", city)}
+                    onAddCity={(newCity) => {
+                      setLocationData(prev => {
+                        const existing = prev[form.state] || [];
+                        if (existing.includes(newCity)) return prev;
+                        return { ...prev, [form.state]: [...existing, newCity] };
+                      });
+                      setCityOptions(prev =>
+                        prev.includes(newCity) ? prev : [...prev, newCity]
+                      );
+                      set("city", newCity);
+                    }}
+                  />
+                </FormField>
+              </div>
+
+
+              <div id="field-campaignLocation">
+                <FormField label="Campaign Location" error={errors.campaignLocation} required>
+                  <input type="text" value={form.campaignLocation} onChange={(e) => set("campaignLocation", toTitleCase(e.target.value))} placeholder="Campaign location" className={inputClass(!!errors.campaignLocation)} />
+                </FormField>
+              </div>
+            </div>
+          </section>
+
 
           <section className="space-y-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Booking Details</p>
@@ -1506,58 +1559,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
               </div>
               {/* )} */}
 
-          <section className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Location</p>
-            <div className="grid grid-cols-2 gap-4">
-
-              <div id="field-state">
-                <FormField label="State" error={errors.state}>
-                  <select
-                    value={form.state}
-                    onChange={(e) => handleStateChange(e.target.value)}
-                    className={inputClass(!!errors.state)}
-                  >
-                    <option value="">Select state</option>
-                    {filterToSupportedStates(Object.keys(locationData)).sort().map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </FormField>
-              </div>
-
-
-              <div id="field-city">
-                <FormField label="City" error={errors.city}>
-                  <CitySelect
-                    value={form.city}
-                    options={cityOptions}
-                    disabled={!form.state}
-                    error={errors.city}
-                    stateName={form.state}
-                    onChange={(city) => set("city", city)}
-                    onAddCity={(newCity) => {
-                      setLocationData(prev => {
-                        const existing = prev[form.state] || [];
-                        if (existing.includes(newCity)) return prev;
-                        return { ...prev, [form.state]: [...existing, newCity] };
-                      });
-                      setCityOptions(prev =>
-                        prev.includes(newCity) ? prev : [...prev, newCity]
-                      );
-                      set("city", newCity);
-                    }}
-                  />
-                </FormField>
-              </div>
-
-
-              <div id="field-campaignLocation">
-                <FormField label="Campaign Location" error={errors.campaignLocation} required>
-                  <input type="text" value={form.campaignLocation} onChange={(e) => set("campaignLocation", toTitleCase(e.target.value))} placeholder="Campaign location" className={inputClass(!!errors.campaignLocation)} />
-                </FormField>
-              </div>
-            </div>
-          </section>
+        
 
           <section className="space-y-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Campaign Media</p>
@@ -1822,7 +1824,7 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
               {(() => {
                 const hasExtraHours = form.extraHours > 0;
                 const hasExtraKm = form.extraKm > 0;
-                const hasPromoter = form.needPromoter;
+                const hasPromoter = form.needPromoter && !!form.promoterFromDate && !!form.promoterToDate;
 
 
                 const hasRto = p.rtoCost > 0;

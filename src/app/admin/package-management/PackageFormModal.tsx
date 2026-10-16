@@ -351,10 +351,10 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
     LOCATION_BUCKETS.forEach((bucket) => {
       const entry = form.locationCharges[bucket] || {};
       const bucketErrors: { rtoCharges?: string; brandingCost?: string } = {};
-      if (entry.rtoCharges === undefined || entry.rtoCharges === null || entry.rtoCharges < 0) {
+      if (entry.rtoCharges === undefined || entry.rtoCharges === null || entry.rtoCharges <= 0) {
         bucketErrors.rtoCharges = `RTO Charges for ${LOCATION_BUCKET_LABELS[bucket]} is required`;
       }
-      if (isHybrid && (entry.brandingCost === undefined || entry.brandingCost === null || entry.brandingCost < 0)) {
+      if (isHybrid && (entry.brandingCost === undefined || entry.brandingCost === null || entry.brandingCost <= 0)) {
         bucketErrors.brandingCost = `Branding Cost for ${LOCATION_BUCKET_LABELS[bucket]} is required for a Hybrid vehicle`;
       }
       if (Object.keys(bucketErrors).length > 0) newLocationErrors[bucket] = bucketErrors;
@@ -602,7 +602,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
 
           <div className="space-y-3">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              RTO Charges & Branding Cost — by Location <span className="text-red-500">*</span>
+              {isHybrid ? "RTO Charges & Branding Cost — by Location" : "RTO Charges — by Location"} <span className="text-red-500">*</span>
             </p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {LOCATION_BUCKETS.map((bucket) => {
@@ -620,7 +620,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                       <FormField label="RTO (₹)" error={bucketErrors.rtoCharges} required>
                         <input
                           type="text"
-                          value={entry.rtoCharges ? formatAmount(entry.rtoCharges) : ""}
+                          value={entry.rtoCharges !== undefined && entry.rtoCharges !== null ? formatAmount(entry.rtoCharges) : ""}
                           onChange={(e) => handleLocationChargeChange(bucket, "rtoCharges", e.target.value)}
                           placeholder="e.g. 500"
                           className={inputClass(!!bucketErrors.rtoCharges)}
@@ -630,7 +630,7 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                         <FormField label="Branding (₹)" error={bucketErrors.brandingCost} required>
                           <input
                             type="text"
-                            value={entry.brandingCost ? formatAmount(entry.brandingCost) : ""}
+                            value={entry.brandingCost !== undefined && entry.brandingCost !== null ? formatAmount(entry.brandingCost) : ""}
                             onChange={(e) => handleLocationChargeChange(bucket, "brandingCost", e.target.value)}
                             placeholder="e.g. 5,000"
                             className={inputClass(!!bucketErrors.brandingCost)}
