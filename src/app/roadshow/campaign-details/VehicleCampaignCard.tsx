@@ -28,6 +28,11 @@ import { FALLBACK_VEHICLE_IMAGE } from "@/lib/roadshowVehicles";
 import { formatDate } from "@/app/utils/currency";
 import { formatMoney } from "@/lib/roadshowPricing";
 import { filterToSupportedStates } from "@/app/utils/locationCharges";
+// Reused as-is from admin order-creation — same search + scrollable list +
+// "Add new city" UX, same duplicate-city handling (backend's case/trim
+// -insensitive 409 check), so there is exactly one City dropdown
+// implementation instead of a second copy for the public site.
+import CitySelect from "@/app/admin/order-creation/cityselect";
 import CampaignMediaUpload from "./CampaignMediaUpload";
 
 export const PROMOTER_TYPE_OPTIONS = [
@@ -47,6 +52,7 @@ export default function VehicleCampaignCard({
   campaignTypes,
   languageOptions,
   locationData,
+  onCityAdded,
   errors,
   showApplyToAll,
   appliedToAll,
@@ -243,7 +249,172 @@ export default function VehicleCampaignCard({
         )}
       </section>
 
-      {/* ── Promoter requirement ────────────────────────────────────────── */}
+    
+
+      {/* ── Campaign details ────────────────────────────────────────────── */}
+      <section className="rdsw_cdSection">
+        <p className="rdsw_cdSectionTitle">Campaign Details</p>
+
+        <div className="rdsw_cdGrid">
+          <label className="rdsw_cdField">
+            <span className="rdsw_cdFieldLabel">
+              Campaign Type <i>*</i>
+            </span>
+
+            <select
+              value={details.campaignType}
+              onChange={(event) =>
+                onDetailsChange({ campaignType: event.target.value })
+              }
+              className="rdsw_cdInput"
+            >
+              <option value="">Select</option>
+
+              {campaignTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+
+              <option value="Others">Others</option>
+            </select>
+
+            {fieldError("campaignType") && (
+              <p className="rdsw_cdError">{fieldError("campaignType")}</p>
+            )}
+          </label>
+
+          {details.campaignType === "Others" && (
+            <label className="rdsw_cdField">
+              <span className="rdsw_cdFieldLabel">
+                Specify Campaign Type <i>*</i>
+              </span>
+
+              <input
+                type="text"
+                value={details.otherCampaignType}
+                onChange={(event) =>
+                  onDetailsChange({
+                    otherCampaignType: event.target.value,
+                  })
+                }
+                placeholder="Eg. KFC Campaign"
+                className="rdsw_cdInput"
+              />
+
+              {fieldError("otherCampaignType") && (
+                <p className="rdsw_cdError">
+                  {fieldError("otherCampaignType")}
+                </p>
+              )}
+            </label>
+          )}
+
+          <label className="rdsw_cdField">
+            <span className="rdsw_cdFieldLabel">
+              Campaign Name <i>*</i>
+            </span>
+
+            <input
+              type="text"
+              value={details.campaignName}
+              onChange={(event) =>
+                onDetailsChange({ campaignName: event.target.value })
+              }
+              placeholder="Enter campaign name"
+              className="rdsw_cdInput"
+            />
+
+            {fieldError("campaignName") && (
+              <p className="rdsw_cdError">{fieldError("campaignName")}</p>
+            )}
+          </label>
+
+          <label className="rdsw_cdField">
+            <span className="rdsw_cdFieldLabel">
+              Campaign Location <i>*</i>
+            </span>
+
+            <input
+              type="text"
+              value={details.campaignLocation}
+              onChange={(event) =>
+                onDetailsChange({
+                  campaignLocation: event.target.value,
+                })
+              }
+              placeholder="Where should this campaign run?"
+              className="rdsw_cdInput"
+            />
+
+            {fieldError("campaignLocation") && (
+              <p className="rdsw_cdError">
+                {fieldError("campaignLocation")}
+              </p>
+            )}
+          </label>
+
+          <label className="rdsw_cdField">
+            <span className="rdsw_cdFieldLabel">
+              State <i>*</i>
+            </span>
+
+            <select
+              value={details.state}
+              onChange={(event) =>
+                onDetailsChange({ state: event.target.value, city: "" })
+              }
+              className="rdsw_cdInput"
+            >
+              <option value="">Select state</option>
+              {filterToSupportedStates(Object.keys(locationData || {}))
+                .sort()
+                .map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+            </select>
+
+            {fieldError("state") && (
+              <p className="rdsw_cdError">{fieldError("state")}</p>
+            )}
+          </label>
+
+          {/* A plain div, not a <label> — CitySelect renders its own nested
+              buttons (the trigger, "+ Add new city", Cancel/Add), and a
+              browser forwards a click on any non-form-control descendant of
+              a <label> to the label's first associated control. That was
+              silently re-toggling CitySelect's trigger button closed right
+              after "+ Add new city" set its internal `adding` state, which
+              is what made the Add City form "disappear" until a second
+              click. Admin's FormField wrapper never had this bug because it
+              only wraps the label *text* in <label>, not the field's
+              children. */}
+          <div className="rdsw_cdField">
+            <span className="rdsw_cdFieldLabel">
+              City <i>*</i>
+            </span>
+
+            <CitySelect
+              value={details.city}
+              options={Array.from(new Set(locationData?.[details.state] || []))}
+              disabled={!details.state}
+              error={fieldError("city")}
+              stateName={details.state}
+              onChange={(city) => onDetailsChange({ city })}
+              onAddCity={(city) => onCityAdded?.(details.state, city)}
+              triggerClassName="rdsw_cdInput"
+            />
+
+            {fieldError("city") && (
+              <p className="rdsw_cdError">{fieldError("city")}</p>
+            )}
+          </div>
+        </div>
+      </section>
+
+        {/* ── Promoter requirement ────────────────────────────────────────── */}
       <section className="rdsw_cdSection">
         <div className="rdsw_cdToggleRow">
           <div className="rdsw_cdToggleCopy">
@@ -539,166 +710,6 @@ export default function VehicleCampaignCard({
             </p>
           </div>
         )}
-      </section>
-
-      {/* ── Campaign details ────────────────────────────────────────────── */}
-      <section className="rdsw_cdSection">
-        <p className="rdsw_cdSectionTitle">Campaign Details</p>
-
-        <div className="rdsw_cdGrid">
-          <label className="rdsw_cdField">
-            <span className="rdsw_cdFieldLabel">
-              Campaign Type <i>*</i>
-            </span>
-
-            <select
-              value={details.campaignType}
-              onChange={(event) =>
-                onDetailsChange({ campaignType: event.target.value })
-              }
-              className="rdsw_cdInput"
-            >
-              <option value="">Select</option>
-
-              {campaignTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-
-              <option value="Others">Others</option>
-            </select>
-
-            {fieldError("campaignType") && (
-              <p className="rdsw_cdError">{fieldError("campaignType")}</p>
-            )}
-          </label>
-
-          {details.campaignType === "Others" && (
-            <label className="rdsw_cdField">
-              <span className="rdsw_cdFieldLabel">
-                Specify Campaign Type <i>*</i>
-              </span>
-
-              <input
-                type="text"
-                value={details.otherCampaignType}
-                onChange={(event) =>
-                  onDetailsChange({
-                    otherCampaignType: event.target.value,
-                  })
-                }
-                placeholder="Eg. KFC Campaign"
-                className="rdsw_cdInput"
-              />
-
-              {fieldError("otherCampaignType") && (
-                <p className="rdsw_cdError">
-                  {fieldError("otherCampaignType")}
-                </p>
-              )}
-            </label>
-          )}
-
-          <label className="rdsw_cdField">
-            <span className="rdsw_cdFieldLabel">
-              Campaign Name <i>*</i>
-            </span>
-
-            <input
-              type="text"
-              value={details.campaignName}
-              onChange={(event) =>
-                onDetailsChange({ campaignName: event.target.value })
-              }
-              placeholder="Enter campaign name"
-              className="rdsw_cdInput"
-            />
-
-            {fieldError("campaignName") && (
-              <p className="rdsw_cdError">{fieldError("campaignName")}</p>
-            )}
-          </label>
-
-          <label className="rdsw_cdField">
-            <span className="rdsw_cdFieldLabel">
-              Campaign Location <i>*</i>
-            </span>
-
-            <input
-              type="text"
-              value={details.campaignLocation}
-              onChange={(event) =>
-                onDetailsChange({
-                  campaignLocation: event.target.value,
-                })
-              }
-              placeholder="Where should this campaign run?"
-              className="rdsw_cdInput"
-            />
-
-            {fieldError("campaignLocation") && (
-              <p className="rdsw_cdError">
-                {fieldError("campaignLocation")}
-              </p>
-            )}
-          </label>
-
-          <label className="rdsw_cdField">
-            <span className="rdsw_cdFieldLabel">
-              State <i>*</i>
-            </span>
-
-            <select
-              value={details.state}
-              onChange={(event) =>
-                onDetailsChange({ state: event.target.value, city: "" })
-              }
-              className="rdsw_cdInput"
-            >
-              <option value="">Select state</option>
-              {filterToSupportedStates(Object.keys(locationData || {}))
-                .sort()
-                .map((state) => (
-                  <option key={state} value={state}>
-                    {state}
-                  </option>
-                ))}
-            </select>
-
-            {fieldError("state") && (
-              <p className="rdsw_cdError">{fieldError("state")}</p>
-            )}
-          </label>
-
-          <label className="rdsw_cdField">
-            <span className="rdsw_cdFieldLabel">
-              City <i>*</i>
-            </span>
-
-            <select
-              value={details.city}
-              onChange={(event) =>
-                onDetailsChange({ city: event.target.value })
-              }
-              disabled={!details.state}
-              className="rdsw_cdInput"
-            >
-              <option value="">
-                {details.state ? "Select city" : "Select a state first"}
-              </option>
-              {Array.from(new Set(locationData?.[details.state] || [])).map((city: string) => (
-                <option key={city} value={city}>
-                  {city}
-                </option>
-              ))}
-            </select>
-
-            {fieldError("city") && (
-              <p className="rdsw_cdError">{fieldError("city")}</p>
-            )}
-          </label>
-        </div>
       </section>
 
       {/* ── Campaign media ──────────────────────────────────────────────── */}

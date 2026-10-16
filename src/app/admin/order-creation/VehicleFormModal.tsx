@@ -585,12 +585,29 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
 
   const handleAddCity = async () => {
-    if (!newCityName.trim()) {
+    const trimmedCity = newCityName.trim();
+
+    if (!trimmedCity) {
       setAddCityError("City name is required");
       return;
     }
     if (!form.state) {
       setAddCityError("Please select a state first");
+      return;
+    }
+
+    // Case-insensitive, trim-insensitive duplicate check against the full
+    // city list for this state (not just whatever the search box currently
+    // filters down to) — blocks "madurai"/"MADURAI"/" Madurai " when
+    // "Madurai" already exists, without a round-trip to the backend.
+    const existingCities = locationData[form.state] || [];
+    const isDuplicate = existingCities.some(
+      (city) => city.trim().toLowerCase() === trimmedCity.toLowerCase()
+    );
+    if (isDuplicate) {
+      const message = `City '${trimmedCity}' already exists in ${form.state}.`;
+      setAddCityError(message);
+      toast.error(message);
       return;
     }
 
@@ -601,10 +618,17 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
       const res = await fetch(`${API_BASE}locations/${encodeURIComponent(form.state)}/cities`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ city: newCityName.trim() }),
+        body: JSON.stringify({ city: trimmedCity }),
       });
 
       const data = await res.json();
+
+      if (res.status === 409) {
+        const message = `City '${trimmedCity}' already exists in ${form.state}.`;
+        setAddCityError(message);
+        toast.error(message);
+        return;
+      }
 
       if (!res.ok) throw new Error(data.message || "Failed to add city");
 

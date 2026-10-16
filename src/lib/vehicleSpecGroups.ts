@@ -87,6 +87,8 @@ export const buildSpecGroups = (vehicle: RoadshowVehicle): SpecGroup[] => {
   const specs = vehicle?.techSpecs || {};
   const pkg = vehicle?.packageDetails || {};
 
+  console.log("pkg", pkg);
+
   const registrations = Array.isArray(vehicle?.registrationVehicles) ? vehicle.registrationVehicles : [];
 
   const screenCount = text(specs?.numberOfScreens);
@@ -131,7 +133,8 @@ export const buildSpecGroups = (vehicle: RoadshowVehicle): SpecGroup[] => {
 
   const commercialRows: SpecRow[] = [
     { label: "Per Day Rental", value: money(pkg?.perDayRentalCost ?? vehicle?.rate) },
-    { label: "RTO Charges", value: money(pkg?.rtoCharges) },
+    // { label: "RTO Charges", value: money(pkg?.rtoCharges) },
+    { label: "RTO Charges", value: money(pkg?.locationCharges?.rotn?.rtoCharges) },
     {
       label: "Daily KM Limit",
       value: withUnit(Number(pkg?.dailyKmLimit) > 0 ? pkg.dailyKmLimit : "", "km / day"),

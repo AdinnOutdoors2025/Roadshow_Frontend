@@ -1293,6 +1293,13 @@ export default function CampaignDetailsPage() {
                   campaignTypes={campaignTypes}
                   languageOptions={LANGUAGE_OPTIONS}
                   locationData={locationData}
+                  onCityAdded={(state, city) =>
+                    setLocationData((prev) => {
+                      const existing = prev[state] || [];
+                      if (existing.includes(city)) return prev;
+                      return { ...prev, [state]: [...existing, city] };
+                    })
+                  }
                   errors={errors[String(activeRow.vehicle.id)]}
                   showApplyToAll={rows.length > 1}
                   /* Checked on EVERY card while the details are shared, not

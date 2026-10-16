@@ -10,6 +10,11 @@ export default function CitySelect({
   stateName,
   onChange,
   onAddCity,
+  /** Overrides the trigger button's sizing/style class — defaults to this
+   *  component's own admin `inputClass` so order-creation is unaffected;
+   *  callers embedding this in a differently-styled form (e.g. the public
+   *  campaign-details page) pass their own field class to match. */
+  triggerClassName,
 }: {
   value: string;
   options: string[];
@@ -18,6 +23,7 @@ export default function CitySelect({
   stateName: string;
   onChange: (city: string) => void;
   onAddCity: (city: string) => void;
+  triggerClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -93,7 +99,7 @@ export default function CitySelect({
         type="button"
         disabled={disabled}
         onClick={() => { if (!disabled) setOpen((o) => !o); }}
-        className={inputClass(!!error) + " flex items-center justify-between w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"}
+        className={(triggerClassName ?? inputClass(!!error)) + " flex items-center justify-between w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"}
       >
         <span className={value ? "text-gray-900 dark:text-white" : "text-gray-400"}>
           {value || (disabled ? "Select state first" : "Select city")}
@@ -161,7 +167,22 @@ export default function CitySelect({
           ) : (
             <>
              
-              <div className="max-h-44 overflow-y-auto">
+              {/* data-lenis-prevent: the public roadshow pages run Lenis, a
+                  smooth-scroll library that preventDefault()s every wheel
+                  event to drive page scroll itself in JS — plain CSS
+                  (overscroll-behavior below) can't stop that, since Lenis
+                  intercepts the event before native per-element scroll
+                  targeting applies. This is the same attribute
+                  CampaignMediaUpload.tsx's lightbox and ReviewOrderModal.tsx
+                  already use to exempt themselves from it. Admin's modal
+                  usage doesn't run Lenis, so this is a harmless no-op there.
+                  overscrollBehavior:contain stops the page from scrolling
+                  once the list hits its own top/bottom boundary. */}
+              <div
+                className="max-h-44 overflow-y-auto"
+                data-lenis-prevent
+                style={{ overscrollBehavior: "contain" }}
+              >
                 {filtered.length === 0 ? (
                   <p className="px-3 py-3 text-xs text-gray-400 text-center">No cities found</p>
                 ) : (
