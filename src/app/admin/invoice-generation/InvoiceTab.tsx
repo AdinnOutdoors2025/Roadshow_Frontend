@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import API_BASE from "../../../../baseurl";
+import { filterToSupportedStates } from "../../utils/locationCharges";
 import { getToken } from "../../utils/auth";
 import DatePicker from "../../utils/datepicker";
 
@@ -217,7 +218,7 @@ export default function InvoiceTab({ order, vehicleTypes, onRefresh, disabled = 
             .filter(([key, value]) => key !== "_id" && key !== "cities" && key !== "__v" && Array.isArray(value))
             .map(([key]) => key)
             .sort();
-          setStateOptions(states);
+          setStateOptions(filterToSupportedStates(states));
         }
       })
       .catch(() => {});

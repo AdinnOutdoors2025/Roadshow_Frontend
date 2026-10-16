@@ -53,7 +53,7 @@ const ROLE_GATED_PREFIXES: [string, string][] = [
   ["/admin/sales-handling", "/admin/sales-handling"],
   ["/admin/operation-handling", "/admin/operation-handling"],
   ["/admin/package-management", "/admin/package-management"],
-  ["/admin/driver", "/admin/driver"],
+  // ["/admin/driver", "/admin/driver"],
   ["/admin/promoter", "/admin/promoter"],
   ["/admin/project-setting", "/admin/project-setting"],
   ["/admin/invoice-generation", "/admin/invoice-generation"],

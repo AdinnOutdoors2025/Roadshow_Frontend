@@ -291,10 +291,10 @@ const MENU_OPTIONS: {
     key: "/admin/package-management",
     label: "Package Management",
   },
-  {
-    key: "/admin/driver",
-    label: "Driver Management",
-  },
+  // {
+  //   key: "/admin/driver",
+  //   label: "Driver Management",
+  // },
   {
     key: "/admin/promoter",
     label: "Promoter",
