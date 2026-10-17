@@ -29,6 +29,7 @@ import { RTO_CYCLE_DAYS } from "@/BaseUrl";
 import {
   resolveRtoCharge,
   resolveBrandingCharge,
+  resolveBrandingIncludedInRental,
   resolvePromoterCharge,
   type PackageLocationCharges,
 } from "@/app/utils/locationCharges";
@@ -99,7 +100,11 @@ export type PricedVehicle = {
   /** ceil(days / RTO_CYCLE_DAYS) — one RTO charge per vehicle per cycle. */
   rtoCycles: number;
   rtoCost: number;
+  /** Per-vehicle Branding rate (not the total) — used to show the combined per-day rate when brandingIncludedInRental is true. */
+  brandingCharges: number;
   brandingCost: number;
+  /** When true, Branding Cost is folded into the per-day Rental rate and brandingCost above was scaled by days accordingly — this changes lineTotal, it is not a display-only choice. */
+  brandingIncludedInRental: boolean;
   /** rentalCost + promoterCost + rtoCost + brandingCost */
   lineTotal: number;
   /** Non-empty when this line's state/city has no configured RTO/Branding/Promoter charge — never silently priced as 0. */
@@ -122,6 +127,10 @@ export type OrderPricing = {
   promoterTotal: number;
   rtoTotal: number;
   brandingTotal: number;
+  /** rentalTotal + whichever lines' brandingCost is flagged brandingIncludedInRental — for DISPLAY only (e.g. the Estimate panel's "Vehicle Rental" row), never used in subtotal/grandTotal math. */
+  rentalDisplayTotal: number;
+  /** brandingTotal minus whatever rentalDisplayTotal absorbed — the amount that still needs its own "Branding Cost" row; 0 means hide that row entirely. */
+  brandingDisplayTotal: number;
   /** rental + promoter + rto + branding */
   subtotal: number;
   /** Always 0 on the public site — no entry point exists. */
@@ -180,6 +189,7 @@ export const priceVehicleLine = (
   // order-creation uses. null means not configured for this line's state/city.
   const resolvedRto = resolveRtoCharge(vehicle.packageDetails?.locationCharges, vehicle.state, vehicle.city);
   const resolvedBranding = resolveBrandingCharge(vehicle.packageDetails?.locationCharges, vehicle.state, vehicle.city);
+  const brandingIncludedInRental = resolveBrandingIncludedInRental(vehicle.packageDetails?.locationCharges, vehicle.state, vehicle.city);
   const resolvedPromoterCharge = vehicle.needPromoter
     ? resolvePromoterCharge(promoterChargeMap, vehicle.state)
     : 0;
@@ -198,8 +208,13 @@ export const priceVehicleLine = (
   const rtoCycles = days > 0 ? Math.ceil(days / RTO_CYCLE_DAYS) : 0;
   const rtoCost = rtoCharges * rtoCycles * quantity;
 
-  // Branding Cost — only ever set on a Hybrid vehicle's package.
-  const brandingCost = (resolvedBranding || 0) * quantity;
+  // Branding Cost — only ever set on a Hybrid vehicle's package. Normally a
+  // one-time-per-vehicle flat charge; but when this location's "Rental
+  // Included" toggle is on, the rate is folded into the per-day rental and
+  // scales by days like rentalCost does — mirrors calcPricing.
+  const brandingCost = brandingIncludedInRental
+    ? (resolvedBranding || 0) * days * quantity
+    : (resolvedBranding || 0) * quantity;
 
   const lineTotal = rentalCost + promoterCost + rtoCost + brandingCost;
 
@@ -215,7 +230,9 @@ export const priceVehicleLine = (
     rtoCharges,
     rtoCycles,
     rtoCost,
+    brandingCharges: resolvedBranding || 0,
     brandingCost,
+    brandingIncludedInRental,
     lineTotal: Number.isFinite(lineTotal) ? lineTotal : 0,
     locationChargeErrors,
   };
@@ -298,6 +315,15 @@ export const priceOrder = (
     0
   );
 
+  // Display-only split (see OrderPricing types above) — the underlying
+  // rentalTotal/brandingTotal/subtotal never change.
+  const brandingIncludedTotal = lines.reduce(
+    (total, line) => total + (line.brandingIncludedInRental ? toSafeNumber(line.brandingCost) : 0),
+    0
+  );
+  const rentalDisplayTotal = rentalTotal + brandingIncludedTotal;
+  const brandingDisplayTotal = brandingTotal - brandingIncludedTotal;
+
   const subtotal = rentalTotal + promoterTotal + rtoTotal + brandingTotal;
 
   /* No public entry point for either — kept so Review Order can show the
@@ -319,6 +345,8 @@ export const priceOrder = (
     promoterTotal,
     rtoTotal,
     brandingTotal,
+    rentalDisplayTotal,
+    brandingDisplayTotal,
     subtotal,
     additionalCharges,
     discount,

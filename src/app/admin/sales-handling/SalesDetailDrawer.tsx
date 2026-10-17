@@ -357,10 +357,16 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
           </div>
           {/* Price breakdown */}
           <div className="border-t border-gray-100 dark:border-gray-700 pt-2 space-y-1">
+            {/* Package Management's per-location "Rental Included" toggle,
+                snapshotted on this booking item at order time — when on,
+                Branding Cost folds into the Rental row instead of its own
+                line. Never changes item.totalAmount below. */}
             {item.rentalCost > 0 && (
               <div className="flex justify-between text-xs">
                 <span className="text-gray-500">Rental</span>
-                <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(item.rentalCost)}</span>
+                <span className="font-semibold text-gray-800 dark:text-gray-200">
+                  {fmt(item.rentalCost + (item.brandingIncludedInRental ? (item.brandingCost || 0) : 0))}
+                </span>
               </div>
             )}
             {item.promoterCost > 0 && (
@@ -375,7 +381,7 @@ function VehicleItemCard({ item, index }: { item: any; index: number }) {
                 <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(item.rtoCost)}</span>
               </div>
             )}
-            {item.brandingCost > 0 && (
+            {item.brandingCost > 0 && !item.brandingIncludedInRental && (
               <div className="flex justify-between text-xs">
                 <span className="text-gray-500">Branding Cost</span>
                 <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(item.brandingCost)}</span>
@@ -785,10 +791,10 @@ function OverviewTab({
                 {currentVehicle.rentalCost > 0 && (
                   <div className="flex justify-between items-center py-1">
                     <span className="text-gray-600 dark:text-gray-400 text-md">
-                      Rental ({currentVehicle.totalDays}D × {formatINR(currentVehicle.perDayRentalCost)} × {currentVehicle.quantity})
+                      Rental ({currentVehicle.totalDays}D × {formatINR(currentVehicle.brandingIncludedInRental ? currentVehicle.perDayRentalCost + (currentVehicle.brandingCharges || 0) : currentVehicle.perDayRentalCost)} × {currentVehicle.quantity})
                     </span>
                     <span className="text-gray-800 dark:text-gray-200 font-medium">
-                      {formatINR(currentVehicle.rentalCost)}
+                      {formatINR(currentVehicle.rentalCost + (currentVehicle.brandingIncludedInRental ? (currentVehicle.brandingCost || 0) : 0))}
                     </span>
                   </div>
                 )}
@@ -813,7 +819,7 @@ function OverviewTab({
                   </div>
                 )}
 
-                {(currentVehicle.brandingCost ?? 0) > 0 && (
+                {(currentVehicle.brandingCost ?? 0) > 0 && !currentVehicle.brandingIncludedInRental && (
                   <div className="flex justify-between items-center py-1">
                     <span className="text-gray-600 dark:text-gray-400 text-md">Branding Cost</span>
                     <span className="text-gray-800 dark:text-gray-200 font-medium">

@@ -50,7 +50,7 @@ interface PackageFormData {
 
 const emptyLocationCharges = (): PackageLocationCharges =>
   LOCATION_BUCKETS.reduce((acc, bucket) => {
-    acc[bucket] = { rtoCharges: undefined, brandingCost: undefined };
+    acc[bucket] = { rtoCharges: undefined, brandingCost: undefined, brandingIncludedInRental: false };
     return acc;
   }, {} as PackageLocationCharges);
 
@@ -62,6 +62,7 @@ const mergeLocationCharges = (existing?: PackageLocationCharges): PackageLocatio
       base[bucket] = {
         rtoCharges: existing[bucket]?.rtoCharges ?? undefined,
         brandingCost: existing[bucket]?.brandingCost ?? undefined,
+        brandingIncludedInRental: Boolean(existing[bucket]?.brandingIncludedInRental),
       };
     }
   });
@@ -325,6 +326,19 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
     setLocationErrors((prev) => ({ ...prev, [bucket]: { ...prev[bucket], [field]: undefined } }));
   };
 
+  const handleBrandingIncludedChange = (bucket: LocationBucket, included: boolean) => {
+    setForm((prev) => ({
+      ...prev,
+      locationCharges: {
+        ...prev.locationCharges,
+        [bucket]: {
+          ...prev.locationCharges[bucket],
+          brandingIncludedInRental: included,
+        },
+      },
+    }));
+  };
+
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof PackageFormData, string>> = {};
     const finalReason = form.inactiveReason?.trim() || "";
@@ -384,9 +398,10 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
         acc[bucket] = {
           rtoCharges: Number(entry.rtoCharges) || 0,
           brandingCost: isHybrid ? Number(entry.brandingCost) || 0 : 0,
+          brandingIncludedInRental: isHybrid ? Boolean(entry.brandingIncludedInRental) : false,
         };
         return acc;
-      }, {} as Record<LocationBucket, { rtoCharges: number; brandingCost: number }>),
+      }, {} as Record<LocationBucket, { rtoCharges: number; brandingCost: number; brandingIncludedInRental: boolean }>),
       perKmCharge: Number(form.perKmCharge),
       isActive: form.isActive,
       inactiveReason: form.isActive ? "" : form.inactiveReason || "",
@@ -627,15 +642,38 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                         />
                       </FormField>
                       {isHybrid && (
-                        <FormField label="Branding (₹)" error={bucketErrors.brandingCost} required>
-                          <input
-                            type="text"
-                            value={entry.brandingCost !== undefined && entry.brandingCost !== null ? formatAmount(entry.brandingCost) : ""}
-                            onChange={(e) => handleLocationChargeChange(bucket, "brandingCost", e.target.value)}
-                            placeholder="e.g. 5,000"
-                            className={inputClass(!!bucketErrors.brandingCost)}
-                          />
-                        </FormField>
+                        <div>
+                          <FormField label="Branding (₹)" error={bucketErrors.brandingCost} required>
+                            <input
+                              type="text"
+                              value={entry.brandingCost !== undefined && entry.brandingCost !== null ? formatAmount(entry.brandingCost) : ""}
+                              onChange={(e) => handleLocationChargeChange(bucket, "brandingCost", e.target.value)}
+                              placeholder="e.g. 5,000"
+                              className={inputClass(!!bucketErrors.brandingCost)}
+                            />
+                          </FormField>
+
+                          {/* Per-location display choice: when checked, this location's
+                              Branding Cost is folded into the Rental row wherever pricing is
+                              shown (order-creation, campaign-details, invoice, sales/operation
+                              -handling overview) instead of its own line. Never changes
+                              totals/GST — display grouping only. A checkbox reads at a glance
+                              as checked/unchecked, unlike the earlier toggle-button label. */}
+                          <label
+                            className="mt-1.5 flex cursor-pointer items-center gap-1.5 select-none"
+                            title="Whether this location's Branding Cost is folded into the Rental row on pricing screens, or shown as its own line"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={!!entry.brandingIncludedInRental}
+                              onChange={(e) => handleBrandingIncludedChange(bucket, e.target.checked)}
+                              className="h-3.5 w-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800"
+                            />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              Rental {entry.brandingIncludedInRental ? "Included" : "Excluded"}
+                            </span>
+                          </label>
+                        </div>
                       )}
                     </div>
                   </div>

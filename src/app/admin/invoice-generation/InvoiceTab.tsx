@@ -115,7 +115,14 @@ function buildDefaultLineItems(order, vehicleTypes) {
     const vname = getVehicleTypeName(b.vehicleType, vehicleTypes);
     const vehicleQty = b.quantity || 1;
     const groupLabel = vname;
-    const rentalRatePerVehicle = Math.round((b.perDayRentalCost || 0) * (b.totalDays || 0));
+    // Package Management's per-location "Rental Included" toggle, snapshotted
+    // on this booking item at order time — when on, Branding Cost is folded
+    // into the Rent & Fuel Cost line instead of its own row. Never changes
+    // the invoice total, only how it's broken into rows.
+    const brandingIncluded = Boolean(b.brandingIncludedInRental) && Boolean(b.brandingCost);
+    const rentalRatePerVehicle =
+      Math.round((b.perDayRentalCost || 0) * (b.totalDays || 0)) +
+      (brandingIncluded ? Math.round((b.brandingCost || 0) / vehicleQty) : 0);
 
     items.push({
       id: uid(),
@@ -147,7 +154,7 @@ function buildDefaultLineItems(order, vehicleTypes) {
         rate: Math.round((b.rtoCost || 0) / vehicleQty),
       });
     }
-    if (b.brandingCost) {
+    if (b.brandingCost && !brandingIncluded) {
       items.push({
         id: uid(),
         groupLabel,

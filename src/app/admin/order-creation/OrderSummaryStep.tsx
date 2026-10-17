@@ -204,14 +204,25 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
                 ))}
             </div>
 
-            {p && (
+            {p && (() => {
+              // Package Management's per-location "Rental Included" toggle: when on,
+              // the Branding rate is folded into the per-day Rental rate/row
+              // (brandingCost was already scaled by totalDays — see calcPricing) and
+              // the separate Branding row is skipped.
+              const brandingIncluded = !!(p as any).brandingIncludedInRental;
+              const combinedPerDayRate = brandingIncluded
+                ? p.perDayRentalCost + ((p as any).brandingCharges || 0)
+                : p.perDayRentalCost;
+              const rentalAmount = brandingIncluded ? p.rentalCost + (p as any).brandingCost : p.rentalCost;
+
+              return (
               <div className="border-t border-gray-100 dark:border-gray-700 pt-3 space-y-1">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Pricing Breakdown</p>
                 {[
-                  { label: `Rental (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × ${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"})`, val: p.rentalCost },
+                  { label: `Rental (${p.totalDays}D × ${formatINR(combinedPerDayRate)} × ${totalVehicleCount} ${totalVehicleCount === 1 ? "Vehicle" : "Vehicles"})`, val: rentalAmount },
                   v.needPromoter && p.promoterCost > 0 ? { label: `Promoter (${(p as any).promoterDays ?? p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${v.promoterQuantity})`, val: p.promoterCost } : null,
                   p.rtoCost > 0 ? { label: "RTO Charges", val: p.rtoCost } : null,
-                  (p as any).brandingCost > 0 ? { label: "Branding Cost", val: (p as any).brandingCost } : null,
+                  (p as any).brandingCost > 0 && !brandingIncluded ? { label: "Branding Cost", val: (p as any).brandingCost } : null,
                   (p as any).extraKmCost > 0 ? { label: `Extra KM (${v.extraKm} × ₹${(p as any).dailyKmcharges || ""})`, val: (p as any).extraKmCost } : null,
                   (p as any).extraHourCost > 0 ? { label: `Extra Hours (${v.extraHours} × ${formatINR(p.additionalHourCharges)})`, val: (p as any).extraHourCost } : null,
                 ].filter(Boolean).map((row: any, i) => (
@@ -245,7 +256,8 @@ export default function OrderSummaryStep({ order, onBack, onSubmit, loading ,get
                   <span>{formatINR(p.totalAmount)}</span>
                 </div>
               </div>
-            )}
+              );
+            })()}
           </div>
         )}
       </div>

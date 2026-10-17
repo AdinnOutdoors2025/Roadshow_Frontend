@@ -21,6 +21,7 @@ import {
   filterToSupportedStates,
   resolveRtoCharge,
   resolveBrandingCharge,
+  resolveBrandingIncludedInRental,
   resolvePromoterCharge,
   type PackageLocationCharges,
 } from "../../utils/locationCharges";
@@ -147,6 +148,7 @@ export function calcPricing(
   // fall back to 0 or a hardcoded env default, surface it as an error.
   const resolvedRto = resolveRtoCharge(pkg.locationCharges, state, city);
   const resolvedBranding = resolveBrandingCharge(pkg.locationCharges, state, city);
+  const brandingIncludedInRental = resolveBrandingIncludedInRental(pkg.locationCharges, state, city);
   const resolvedPromoterCharge = needPromoter
     ? resolvePromoterCharge(promoterChargeMap, state)
     : 0;
@@ -167,9 +169,15 @@ export function calcPricing(
   // location's RTO rate per vehicle, 31-60 days = 2x, etc. See calculateRtoCost.
   const rtoCost = calculateRtoCost(resolvedRto || 0, baseDays, quantity);
 
-  // Branding Cost — only ever set on a Hybrid vehicle's package; same
-  // one-time-per-vehicle-slot pattern as RTO.
-  const brandingCost = (resolvedBranding || 0) * quantity;
+  // Branding Cost — only ever set on a Hybrid vehicle's package. Normally a
+  // one-time-per-vehicle-slot flat charge (same pattern as RTO); but when
+  // this location's "Rental Included" toggle is on, the rate is folded into
+  // the per-day rental and scales by totalDays like rentalCost does — an
+  // intentional business choice that changes the order's total, not a
+  // display-only grouping.
+  const brandingCost = brandingIncludedInRental
+    ? (resolvedBranding || 0) * totalDays * quantity
+    : (resolvedBranding || 0) * quantity;
 
   const extraKmCost = extraKm > 0 ? pkg.perKmCharge * extraKm : 0;
   const extraHourCost = extraHours > 0 ? pkg.additionalHourCharges * extraHours : 0;
@@ -215,7 +223,9 @@ export function calcPricing(
     promoterChargePerDay: needPromoter ? promoterChargePerDay : 0,
     promoterDays,
     rtoCharges: resolvedRto || 0,
+    brandingCharges: resolvedBranding || 0,
     brandingCost,
+    brandingIncludedInRental,
     locationChargeErrors,
     additionalHourCharges: pkg.additionalHourCharges,
     dailyKmLimit: pkg.dailyKmLimit,
@@ -1852,7 +1862,18 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
 
 
                 const hasRto = p.rtoCost > 0;
-                const hasBranding = (p as any).brandingCost > 0;
+                // Package Management's per-location "Rental Included" toggle: when on,
+                // the Branding rate is folded into the per-day Rental rate — the Rental
+                // row shows the combined per-day rate and its scaled total, and the
+                // separate Branding row is hidden. brandingCost itself was already
+                // computed scaled by totalDays (see calcPricing), so this does change
+                // the order's total, not just how it's displayed.
+                const brandingIncluded = !!(p as any).brandingIncludedInRental;
+                const hasBranding = (p as any).brandingCost > 0 && !brandingIncluded;
+                const combinedPerDayRate = brandingIncluded
+                  ? selectedPackage.perDayRentalCost + ((p as any).brandingCharges || 0)
+                  : selectedPackage.perDayRentalCost;
+                const rentalDisplayValue = brandingIncluded ? p.rentalCost + (p as any).brandingCost : p.rentalCost;
 
                 const lastRow = hasExtraHours
                   ? "extraHours"
@@ -1875,8 +1896,8 @@ export default function VehicleFormModal({ editing, onSave, onClose, selectedCli
                   <>
 
                     <SummaryRow
-                      label={`Rental (${p.totalDays}D × ${formatINR(selectedPackage.perDayRentalCost)} × Qty ${form.quantity})`}
-                      val={p.rentalCost}
+                      label={`Rental (${p.totalDays}D × ${formatINR(combinedPerDayRate)} × Qty ${form.quantity})`}
+                      val={rentalDisplayValue}
                       isLast={lastRow === "rental"}
                       hasCharges={form.additionalCharges.length > 0}
                       onAdd={() => set("additionalCharges", [...form.additionalCharges, makeCharge()])}

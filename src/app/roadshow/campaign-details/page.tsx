@@ -1408,7 +1408,7 @@ export default function CampaignDetailsPage() {
               <div className="rdsw_cdSummaryRows">
                 <div className="rdsw_cdSummaryRow">
                   <span>Vehicle Rental</span>
-                  <span>{formatMoney(pricing.rentalTotal)}</span>
+                  <span>{formatMoney(pricing.rentalDisplayTotal)}</span>
                 </div>
 
                 {/* Optional charges appear only when they apply — a row of
@@ -1428,10 +1428,13 @@ export default function CampaignDetailsPage() {
                   </div>
                 )}
 
-                {pricing.brandingTotal > 0 && (
+                {/* brandingDisplayTotal — 0 when every priced line has its
+                    package's "Rental Included" toggle on for its location,
+                    in which case the amount above already absorbed it. */}
+                {pricing.brandingDisplayTotal > 0 && (
                   <div className="rdsw_cdSummaryRow">
                     <span>Branding Cost</span>
-                    <span>{formatMoney(pricing.brandingTotal)}</span>
+                    <span>{formatMoney(pricing.brandingDisplayTotal)}</span>
                   </div>
                 )}
 

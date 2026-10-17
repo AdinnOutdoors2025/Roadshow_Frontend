@@ -723,7 +723,7 @@ export default function OrderDetailDrawer({
                                                                 Rental
                                                             </span>
                                                             <span className="text-gray-800 dark:text-gray-200 font-medium text-sm ">
-                                                                ₹{(item.rentalCost || 0).toLocaleString("en-IN")}
+                                                                ₹{((item.rentalCost || 0) + ((item as any).brandingIncludedInRental ? (item.brandingCost || 0) : 0)).toLocaleString("en-IN")}
                                                             </span>
                                                         </div>
                                                     ) : null}
@@ -754,7 +754,7 @@ export default function OrderDetailDrawer({
                                                         </div>
                                                     )}
 
-                                                    {(item.brandingCost ?? 0) > 0 && (
+                                                    {(item.brandingCost ?? 0) > 0 && !(item as any).brandingIncludedInRental && (
                                                         <div className="flex justify-between items-center py-1">
                                                             <span className="text-gray-600 dark:text-gray-400 text-sm">
                                                                 Branding Cost

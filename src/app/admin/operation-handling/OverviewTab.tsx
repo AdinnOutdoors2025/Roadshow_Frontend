@@ -651,10 +651,10 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                                 {currentVehicle.rentalCost > 0 && (
                                     <div className="flex justify-between items-center py-1">
                                         <span className="text-gray-600 dark:text-gray-400 text-md">
-                                            Rental ({currentVehicle.totalDays}D × {formatINR(currentVehicle.perDayRentalCost)} × {currentVehicle.quantity})
+                                            Rental ({currentVehicle.totalDays}D × {formatINR(currentVehicle.brandingIncludedInRental ? currentVehicle.perDayRentalCost + (currentVehicle.brandingCharges || 0) : currentVehicle.perDayRentalCost)} × {currentVehicle.quantity})
                                         </span>
                                         <span className="text-gray-800 dark:text-gray-200 font-medium">
-                                            {formatINR(currentVehicle.rentalCost)}
+                                            {formatINR(currentVehicle.rentalCost + (currentVehicle.brandingIncludedInRental ? (currentVehicle.brandingCost || 0) : 0))}
                                         </span>
                                     </div>
                                 )}
@@ -679,7 +679,7 @@ export default function OverviewTab({ order, onRefresh, onStageMove, vehicleType
                                     </div>
                                 )}
 
-                                {(currentVehicle.brandingCost ?? 0) > 0 && (
+                                {(currentVehicle.brandingCost ?? 0) > 0 && !currentVehicle.brandingIncludedInRental && (
                                     <div className="flex justify-between items-center py-1">
                                         <span className="text-gray-600 dark:text-gray-400 text-md">Branding Cost</span>
                                         <span className="text-gray-800 dark:text-gray-200 font-medium">

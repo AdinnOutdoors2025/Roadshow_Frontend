@@ -232,14 +232,24 @@ function PricingBreakdown({ vehicle: v, formatINR }: { vehicle: VehicleConfig; f
   //   { label: `Rental (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × Qty ${v.quantity})`, amount: p.rentalCost },
   //   { label: `Driver (${p.totalDays}D × ${formatINR(p.driverCharges)} × Qty ${v.quantity})`, amount: p.driverCost },
   // ];
+  // Package Management's per-location "Rental Included" toggle: when on, the
+  // Branding rate is folded into the per-day Rental rate/row (brandingCost
+  // itself was already computed scaled by totalDays — see calcPricing) and
+  // the separate Branding row is skipped.
+  const brandingIncluded = !!(p as any).brandingIncludedInRental;
+  const combinedPerDayRate = brandingIncluded
+    ? p.perDayRentalCost + ((p as any).brandingCharges || 0)
+    : p.perDayRentalCost;
+  const rentalAmount = brandingIncluded ? p.rentalCost + (p as any).brandingCost : p.rentalCost;
+
   const rows: { label: string; amount: number }[] = [
-    { label: `Rental (${p.totalDays}D × ${formatINR(p.perDayRentalCost)} × Qty ${v.quantity})`, amount: p.rentalCost },
+    { label: `Rental (${p.totalDays}D × ${formatINR(combinedPerDayRate)} × Qty ${v.quantity})`, amount: rentalAmount },
   ];
   if (v.needPromoter && p.promoterCost > 0)
     rows.push({ label: `Promoter (${(p as any).promoterDays ?? p.totalDays}D × ${formatINR(p.promoterChargePerDay)} × ${v.promoterQuantity} promoter)`, amount: p.promoterCost });
   if (p.rtoCost > 0)
     rows.push({ label: "RTO Charges", amount: p.rtoCost });
-  if ((p as any).brandingCost > 0)
+  if ((p as any).brandingCost > 0 && !brandingIncluded)
     rows.push({ label: "Branding Cost", amount: (p as any).brandingCost });
   if ((p as any).extraKmCost > 0)
     rows.push({ label: `Extra KM / K (${v.extraKm} × ${formatINR((p as any).dailyKmcharges || 0)})`, amount: (p as any).extraKmCost });

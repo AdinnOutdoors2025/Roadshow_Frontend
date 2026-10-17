@@ -46,6 +46,26 @@ describe("priceVehicleLine", () => {
     expect(r.lineTotal).toBe(r.rentalCost + r.rtoCost + r.brandingCost);
   });
 
+  it("scales Branding Cost by days when brandingIncludedInRental is on, instead of a flat one-time charge", () => {
+    const r = priceVehicleLine({
+      ...baseLine,
+      quantity: 1,
+      rate: 0, // use package.perDayRentalCost (800) so the combined-rate math is easy to check
+      packageDetails: {
+        perDayRentalCost: 800,
+        locationCharges: { chennai: { rtoCharges: 500, brandingCost: 300, brandingIncludedInRental: true } },
+      },
+    });
+
+    // 3-day campaign, branding rate folded into the per-day rental:
+    // (800 + 300) * 3 days * 1 qty = 3300 — not 800*3 + 300*1 = 2700.
+    expect(r.brandingCharges).toBe(300);
+    expect(r.brandingCost).toBe(300 * 3 * 1);
+    expect(r.rentalCost).toBe(800 * 3 * 1);
+    expect(r.rentalCost + r.brandingCost).toBe((800 + 300) * 3 * 1);
+    expect(r.lineTotal).toBe(r.rentalCost + r.rtoCost + r.brandingCost);
+  });
+
   it("falls back to package.perDayRentalCost when rate is 0", () => {
     const r = priceVehicleLine({ ...baseLine, rate: 0 });
     expect(r.perDayRentalCost).toBe(800);

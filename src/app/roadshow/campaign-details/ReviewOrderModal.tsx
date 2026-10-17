@@ -371,7 +371,11 @@ export default function ReviewOrderModal({
                               <span>Rate Per Day</span>
 
                               <strong>
-                                {formatMoney(line.perDayRentalCost)}
+                                {formatMoney(
+                                  line.brandingIncludedInRental
+                                    ? line.perDayRentalCost + (line.brandingCharges || 0)
+                                    : line.perDayRentalCost
+                                )}
                               </strong>
                             </div>
 
@@ -383,7 +387,7 @@ export default function ReviewOrderModal({
                               </strong>
                             </div>
 
-                            {line.brandingCost > 0 && (
+                            {line.brandingCost > 0 && !line.brandingIncludedInRental && (
                               <div className="rdsw_rvStat">
                                 <span>Branding Costs</span>
                                 <strong>{formatMoney(line.brandingCost)}</strong>
@@ -493,7 +497,7 @@ export default function ReviewOrderModal({
 
                     <div className="rdsw_rvPricingRow rdsw_rvPricingDivider">
                       <span>Vehicle Rental</span>
-                      <span>{formatMoney(pricing.rentalTotal)}</span>
+                      <span>{formatMoney(pricing.rentalDisplayTotal)}</span>
                     </div>
 
                     {/* Only charges that actually apply are listed. A column of
@@ -508,10 +512,13 @@ export default function ReviewOrderModal({
                       </div>
                     )}
 
-                    {pricing.brandingTotal > 0 && (
+                    {/* brandingDisplayTotal — 0 when every line's package has
+                        "Rental Included" on for its location, in which case
+                        Vehicle Rental above already absorbed the amount. */}
+                    {pricing.brandingDisplayTotal > 0 && (
                       <div className="rdsw_rvPricingRow">
                         <span>Branding Cost</span>
-                        <span>{formatMoney(pricing.brandingTotal)}</span>
+                        <span>{formatMoney(pricing.brandingDisplayTotal)}</span>
                       </div>
                     )}
 

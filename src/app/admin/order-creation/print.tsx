@@ -959,7 +959,7 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, resolvedOrd
                                   {item.rentalCost > 0 && (
                                     <tr>
                                       <td>Rental & Driver Charges</td>
-                                      <td>₹{fmt(item.rentalCost)}</td>
+                                      <td>₹{fmt(item.rentalCost + ((item as any).brandingIncludedInRental ? (item.brandingCost || 0) : 0))}</td>
                                     </tr>
                                   )}
                                   {item.promoterCost > 0 && (
@@ -976,7 +976,7 @@ export default function OrderPDFView({ order, onClose, vehicleTypes, resolvedOrd
                                       <td>₹{fmt(item.rtoCost)}</td>
                                     </tr>
                                   )}
-                                  {item.brandingCost > 0 && (
+                                  {item.brandingCost > 0 && !(item as any).brandingIncludedInRental && (
                                     <tr>
                                       <td>Branding Cost</td>
                                       <td>₹{fmt(item.brandingCost)}</td>

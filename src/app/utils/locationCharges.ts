@@ -6,7 +6,12 @@
  * to what the backend will compute when the order/request is saved.
  */
 
-export type LocationCharge = { rtoCharges?: number | null; brandingCost?: number | null };
+export type LocationCharge = {
+  rtoCharges?: number | null;
+  brandingCost?: number | null;
+  /** When true, this location's Branding Cost is folded into the displayed Rental row instead of shown separately. Per-location, display-only — never changes totals/GST. */
+  brandingIncludedInRental?: boolean;
+};
 
 export type PackageLocationCharges = {
   chennai?: LocationCharge;
@@ -81,6 +86,16 @@ export const resolveBrandingCharge = (
   if (!bucket) return null;
   const value = locationCharges?.[bucket]?.brandingCost;
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+};
+
+export const resolveBrandingIncludedInRental = (
+  locationCharges: PackageLocationCharges | undefined | null,
+  state?: string | null,
+  city?: string | null
+): boolean => {
+  const bucket = resolveLocationBucket(state, city);
+  if (!bucket) return false;
+  return Boolean(locationCharges?.[bucket]?.brandingIncludedInRental);
 };
 
 /** `chargesByState` keyed by Promoter row's own `state` string, normalized (trim+lowercase) — no fixed key set. */
