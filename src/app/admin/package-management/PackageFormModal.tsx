@@ -659,15 +659,12 @@ export default function PackageFormModal({ editingPackage, onSuccess, onClose }:
                               -handling overview) instead of its own line. Never changes
                               totals/GST — display grouping only. A checkbox reads at a glance
                               as checked/unchecked, unlike the earlier toggle-button label. */}
-                          <label
-                            className="mt-1.5 flex cursor-pointer items-center gap-1.5 select-none"
-                            title="Whether this location's Branding Cost is folded into the Rental row on pricing screens, or shown as its own line"
-                          >
+                          <label className="mt-1.5 flex items-center gap-1.5 select-none">
                             <input
                               type="checkbox"
                               checked={!!entry.brandingIncludedInRental}
                               onChange={(e) => handleBrandingIncludedChange(bucket, e.target.checked)}
-                              className="h-3.5 w-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800"
+                              className="h-3.5 w-3.5 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800"
                             />
                             <span className="text-sm text-gray-600 dark:text-gray-400">
                               Rental {entry.brandingIncludedInRental ? "Included" : "Excluded"}
