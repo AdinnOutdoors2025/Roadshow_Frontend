@@ -128,7 +128,11 @@ export default function VehicleCampaignCard({
           <h3 className="rdsw_cdCardTitle">{vehicle.name}</h3>
 
           <p className="rdsw_cdCardRate">
-            {formatMoney(pricing.perDayRentalCost)}
+            {formatMoney(
+              pricing.brandingIncludedInRental
+                ? pricing.perDayRentalCost + (pricing.brandingCharges || 0)
+                : pricing.perDayRentalCost
+            )}
             <span> / per day</span>
           </p>
         </div>
@@ -137,7 +141,11 @@ export default function VehicleCampaignCard({
           <span className="rdsw_cdCardHeadTotalLabel">Vehicle Rental</span>
 
           <strong className="rdsw_cdCardHeadTotalValue">
-            {formatMoney(pricing.rentalCost)}
+            {formatMoney(
+              pricing.brandingIncludedInRental
+                ? pricing.rentalCost + pricing.brandingCost
+                : pricing.rentalCost
+            )}
           </strong>
 
           <span className="rdsw_cdCardHeadTotalNote">
